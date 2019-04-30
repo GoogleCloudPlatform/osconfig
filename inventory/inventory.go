@@ -23,12 +23,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GoogleCloudPlatform/compute-image-tools/cli_tools/google-osconfig-agent/attributes"
-	"github.com/GoogleCloudPlatform/compute-image-tools/cli_tools/google-osconfig-agent/config"
-	"github.com/GoogleCloudPlatform/compute-image-tools/cli_tools/google-osconfig-agent/logger"
-	"github.com/GoogleCloudPlatform/compute-image-tools/cli_tools/google-osconfig-agent/tasker"
 	"github.com/GoogleCloudPlatform/compute-image-tools/go/osinfo"
 	"github.com/GoogleCloudPlatform/compute-image-tools/go/packages"
+	"github.com/GoogleCloudPlatform/osconfig/attributes"
+	"github.com/GoogleCloudPlatform/osconfig/config"
+	"github.com/GoogleCloudPlatform/osconfig/logger"
+	"github.com/GoogleCloudPlatform/osconfig/tasker"
 )
 
 const (

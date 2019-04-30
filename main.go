@@ -23,14 +23,14 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/GoogleCloudPlatform/compute-image-tools/cli_tools/google-osconfig-agent/config"
-	"github.com/GoogleCloudPlatform/compute-image-tools/cli_tools/google-osconfig-agent/inventory"
-	"github.com/GoogleCloudPlatform/compute-image-tools/cli_tools/google-osconfig-agent/logger"
-	"github.com/GoogleCloudPlatform/compute-image-tools/cli_tools/google-osconfig-agent/ospackage"
-	"github.com/GoogleCloudPlatform/compute-image-tools/cli_tools/google-osconfig-agent/ospatch"
-	"github.com/GoogleCloudPlatform/compute-image-tools/cli_tools/google-osconfig-agent/tasker"
 	"github.com/GoogleCloudPlatform/compute-image-tools/go/packages"
 	"github.com/GoogleCloudPlatform/compute-image-tools/go/service"
+	"github.com/GoogleCloudPlatform/osconfig/config"
+	"github.com/GoogleCloudPlatform/osconfig/guestpolicy"
+	"github.com/GoogleCloudPlatform/osconfig/inventory"
+	"github.com/GoogleCloudPlatform/osconfig/logger"
+	"github.com/GoogleCloudPlatform/osconfig/ospatch"
+	"github.com/GoogleCloudPlatform/osconfig/tasker"
 )
 
 var version string
@@ -60,11 +60,12 @@ func run(ctx context.Context) {
 		ospatch.Configure(ctx)
 
 		if config.OSPackageEnabled() {
-			ospackage.Run(ctx, config.Instance())
+			guestpolicy.Run(ctx, config.Instance())
 		}
 
 		if config.OSInventoryEnabled() {
-			// This should always run after ospackage.SetConfig.
+			// This should always run after ospackage.SetConfig. // TODO: ??
+			// setConfig?
 			inventory.Run()
 		}
 
@@ -122,8 +123,8 @@ func main() {
 		inventory.Run()
 		tasker.Close()
 		return
-	case "ospackage":
-		ospackage.Run(ctx, config.Instance())
+	case "guestpolicy":
+		guestpolicy.Run(ctx, config.Instance())
 		tasker.Close()
 		return
 	case "ospatch":

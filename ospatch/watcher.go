@@ -25,7 +25,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GoogleCloudPlatform/compute-image-tools/cli_tools/google-osconfig-agent/logger"
+	"github.com/GoogleCloudPlatform/osconfig/logger"
 )
 
 const (

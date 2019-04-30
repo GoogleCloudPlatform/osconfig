@@ -21,7 +21,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/GoogleCloudPlatform/compute-image-tools/cli_tools/google-osconfig-agent/logger"
+	"github.com/GoogleCloudPlatform/osconfig/logger"
 )
 
 // disableAutoUpdates disables system auto updates.
