@@ -33,7 +33,7 @@ func obtainLock() {
 
 	f, err := os.OpenFile(lockFile, os.O_RDWR|os.O_CREATE, 0600)
 	if err != nil && !os.IsExist(err) {
-		logger.Fatalf("Cannot obtain agent lock: %v", err)
+		llogger.Fatalf("Cannot obtain agent lock: %v", err)
 	}
 
 	c := make(chan error)
