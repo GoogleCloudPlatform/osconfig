@@ -20,7 +20,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/GoogleCloudPlatform/osconfig/logger"
+	llogger "github.com/GoogleCloudPlatform/osconfig/logger"
 )
 
 func obtainLock() {
@@ -28,7 +28,7 @@ func obtainLock() {
 
 	err := os.MkdirAll(filepath.Dir(lockFile), 0755)
 	if err != nil && !os.IsExist(err) {
-		logger.Fatalf("Cannot obtain agent lock: %v", err)
+		llogger.Fatalf("Cannot obtain agent lock: %v", err)
 	}
 
 	f, err := os.OpenFile(lockFile, os.O_RDWR|os.O_CREATE, 0600)
@@ -43,10 +43,10 @@ func obtainLock() {
 	select {
 	case err := <-c:
 		if err != nil {
-			logger.Fatalf("Cannot obtain agent lock, is the agent already running? Error: %v", err)
+			llogger.Fatalf("Cannot obtain agent lock, is the agent already running? Error: %v", err)
 		}
 	case <-time.After(time.Second):
-		logger.Fatalf("OSConfig agent lock already held, is the agent already running?")
+		llogger.Fatalf("OSConfig agent lock already held, is the agent already running?")
 	}
 
 	deferredFuncs = append(deferredFuncs, func() { syscall.Flock(int(f.Fd()), syscall.LOCK_UN); f.Close(); os.Remove(lockFile) })
