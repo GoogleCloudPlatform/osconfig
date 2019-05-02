@@ -18,7 +18,7 @@ package tasker
 import (
 	"sync"
 
-	"github.com/GoogleCloudPlatform/compute-image-tools/cli_tools/google-osconfig-agent/logger"
+	"github.com/GoogleCloudPlatform/osconfig/logger"
 )
 
 var (
