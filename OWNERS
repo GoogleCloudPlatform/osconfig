@@ -1,0 +1,8 @@
+# This file lists acceptable approvers for PRs
+# See the OWNERS docs at https://go.k8s.io/owners
+
+approvers:
+  - hopkiw
+  - rofuentes
+  - iamsubratp
+  - wrigri
