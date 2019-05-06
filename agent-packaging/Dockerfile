@@ -22,4 +22,4 @@ COPY --from=0 /daisy daisy
 
 ENV GOOGLE_APPLICATION_CREDENTIALS /etc/compute-image-tools-test-service-account
 
-ENTRYPOINT ["/bin/bash", "-c", "./main.sh"]
+ENTRYPOINT ["/bin/bash", "-c", "/run_daisy_workflow.sh"]
