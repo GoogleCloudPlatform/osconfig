@@ -13,17 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-source packaging/common.sh
 
-working_dir=${PWD}
+set -e
 
-sudo apt-get update
+echo "running common script..."
+source ${BASE_DIR}/common.sh
 
 # DEB creation tools.
-DEBIAN_FRONTEND=noninteractive sudo apt-get -y install debhelper devscripts build-essential curl tar
+DEBIAN_FRONTEND=noninteractive  apt-get -y install debhelper devscripts build-essential curl tar
 
 # Build dependencies.
-DEBIAN_FRONTEND=noninteractive sudo apt-get -y install dh-golang dh-systemd golang-go
+DEBIAN_FRONTEND=noninteractive  apt-get -y install dh-golang dh-systemd golang-go
 
 dpkg-checkbuilddeps packaging/debian/control
 

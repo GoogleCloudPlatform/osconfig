@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-source packaging/common.sh
+source packaging/common.sh 
 
 rpm_working_dir=/tmp/rpmpackage/
 
@@ -24,12 +24,9 @@ rm -rf /tmp/rpmpackage
 mkdir -p ${rpm_working_dir}/{SOURCES,SPECS}
 
 cp packaging/${NAME}.spec ${rpm_working_dir}/SPECS/
-cp packaging/*.{conf,service,preset} ./
 
 tar czvf ${rpm_working_dir}/SOURCES/${NAME}_${VERSION}.orig.tar.gz \
   --exclude .git --exclude packaging --transform "s/^\./${NAME}-${VERSION}/" .
-
-rm *.{conf,service,preset}
 
 rpmbuild --define "_topdir ${rpm_working_dir}/" --define "_version ${VERSION}" \
   --define "_go ${GO}" --define "_arch x86_64" --define "_gopath ${GOPATH}" \

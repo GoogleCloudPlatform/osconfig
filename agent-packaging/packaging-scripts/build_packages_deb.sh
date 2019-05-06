@@ -15,22 +15,21 @@
 
 set -e
 
-function exit_error
-{
-  echo "build failed"
-  exit 1
-}
+BASE_DIR=${PWD}
 
-trap exit_error ERR
+echo "started build..."
+GCS_PATH="osconfig-agent-package"
+BASE_REPO="GoogleCloudPlatform"
 
-URL="http://metadata/computeMetadata/v1/instance/attributes"
-GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
-BASE_REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/base-repo)
-
+apt-get -y update && apt-get -y upgrade
 apt-get install -y git-core
 git clone "https://github.com/${BASE_REPO}/compute-image-tools.git"
+
 cd compute-image-tools/cli_tools/google-osconfig-agent
-packaging/setup_goo.sh
-gsutil cp google-osconfig-agent*.goo "${GCS_PATH}/"
+
+echo $PWD
+
+${BASE_DIR}/setup_deb.sh
+gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${GCS_PATH}/" 
 
 echo 'Package build success'

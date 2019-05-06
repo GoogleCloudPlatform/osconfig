@@ -13,24 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -e
+source packaging/common.sh 
 
-function exit_error
-{
-  echo "build failed"
-  exit 1
-}
+rm -rf ${GOPATH}/src/github.com/GoogleCloudPlatform/compute-image-tools
+sudo cp -r ../../../compute-image-tools/ /usr/share/gocode/src/github.com/GoogleCloudPlatform/
 
-trap exit_error ERR
-
-URL="http://metadata/computeMetadata/v1/instance/attributes"
-GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
-BASE_REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/base-repo)
-
-apt-get install -y git-core 
-git clone "https://github.com/${BASE_REPO}/compute-image-tools.git"
-cd compute-image-tools/cli_tools/google-osconfig-agent 
-packaging/setup_deb.sh 
-gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${GCS_PATH}/" 
-
-echo 'Package build success'
+echo "Building package"
+sudo su -c "GOPATH=${GOPATH} ${GO} get -d github.com/google/googet/goopack"
+$GO run github.com/google/googet/goopack packaging/googet/google-osconfig-agent.goospec
