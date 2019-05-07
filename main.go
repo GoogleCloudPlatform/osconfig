@@ -23,14 +23,14 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/GoogleCloudPlatform/compute-image-tools/go/packages"
+	"github.com/GoogleCloudPlatform/compute-image-tools/go/service"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/logger"
 	"github.com/GoogleCloudPlatform/osconfig/ospackage"
 	"github.com/GoogleCloudPlatform/osconfig/ospatch"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
-	"github.com/GoogleCloudPlatform/compute-image-tools/go/packages"
-	"github.com/GoogleCloudPlatform/compute-image-tools/go/service"
 )
 
 var version string

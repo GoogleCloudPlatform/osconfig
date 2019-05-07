@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoogleCloudPlatform/compute-image-tools/go/packages"
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
 	"github.com/GoogleCloudPlatform/osconfig/logger"
-	"github.com/GoogleCloudPlatform/compute-image-tools/go/packages"
 )
 
 // TODO: Write repo_gpgcheck, pkg_gpgcheck, type
