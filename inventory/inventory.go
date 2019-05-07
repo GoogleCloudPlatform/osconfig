@@ -23,12 +23,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GoogleCloudPlatform/compute-image-tools/go/osinfo"
+	"github.com/GoogleCloudPlatform/compute-image-tools/go/packages"
 	"github.com/GoogleCloudPlatform/osconfig/attributes"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/logger"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
-	"github.com/GoogleCloudPlatform/compute-image-tools/go/osinfo"
-	"github.com/GoogleCloudPlatform/compute-image-tools/go/packages"
 )
 
 const (
