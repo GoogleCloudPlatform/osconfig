@@ -13,11 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-source packaging/common.sh 
+echo "running common script..."
+source ./agent-packaging/packaging-scripts/common.sh
 
-rm -rf ${GOPATH}/src/github.com/GoogleCloudPlatform/compute-image-tools
-sudo cp -r ../../../compute-image-tools/ /usr/share/gocode/src/github.com/GoogleCloudPlatform/
+rm -rf ${GOPATH}/src/github.com/GoogleCloudPlatform/osconfig
+sudo cp -r ../../../osconfig/ /usr/share/gocode/src/github.com/GoogleCloudPlatform/
 
 echo "Building package"
 sudo su -c "GOPATH=${GOPATH} ${GO} get -d github.com/google/googet/goopack"
-$GO run github.com/google/googet/goopack packaging/googet/google-osconfig-agent.goospec
+$GO run github.com/google/googet/goopack agent-packaging/packaging-scripts/googet/google-osconfig-agent.goospec

@@ -23,10 +23,6 @@ function exit_error
 
 trap exit_error ERR
 
-URL="http://metadata/computeMetadata/v1/instance/attributes"
-GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
-BASE_REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/base-repo)
-
 n=0
 while ! yum install -y git-core; do
   if [[ n -gt 3 ]]; then
@@ -36,9 +32,10 @@ while ! yum install -y git-core; do
   sleep 5
 done
 
-git clone "https://github.com/${BASE_REPO}/compute-image-tools.git"
-cd compute-image-tools/cli_tools/google-osconfig-agent 
-packaging/setup_rpm.sh
-gsutil cp /tmp/rpmpackage/RPMS/x86_64/google-osconfig-agent-*.rpm "${GCS_PATH}/"
+git clone "https://github.com/GoogleCloudPlatform/osconfig.git"
+cd osconfig
+
+agent-packaging/packaging-scripts/setup_rpm.sh
+gsutil cp /tmp/rpmpackage/RPMS/x86_64/google-osconfig-agent-*.rpm "gs://osconfig-agent-package/"
 
 echo 'Package build success'

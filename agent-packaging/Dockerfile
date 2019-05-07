@@ -22,7 +22,7 @@ RUN apk add --update bash
 COPY packaging-scripts /
 COPY --from=1 /daisy daisy
 
-ENV GOOGLE_APPLICATION_CREDENTIALS /creds.json
+ENV GOOGLE_APPLICATION_CREDENTIALS /etc/compute-image-tools-test/creds.json
 
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 

@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-source packaging/common.sh 
+echo "running common script..."
+source ./agent-packaging/packaging-scripts/common.sh
 
 rpm_working_dir=/tmp/rpmpackage/
 

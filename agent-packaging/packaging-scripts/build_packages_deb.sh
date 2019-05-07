@@ -19,11 +19,9 @@ echo "started build..."
 
 apt-get -y update && apt-get -y upgrade
 apt-get install -y git-core
-git clone --branch agent-build "https://github.com/iamsubratp/osconfig.git"
+git clone --branch agent-build "https://github.com/GoogleCloudPlatform/osconfig.git"
 
 cd osconfig
-ls -ltra
-echo $PWD
 
 source ./agent-packaging/packaging-scripts/setup_deb.sh
 gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "gs://osconfig-agent-package/"
