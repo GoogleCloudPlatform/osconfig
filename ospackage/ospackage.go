@@ -27,11 +27,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/GoogleCloudPlatform/compute-image-tools/go/osinfo"
-	"github.com/GoogleCloudPlatform/compute-image-tools/go/packages"
 	osconfig "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/cloud.google.com/go/osconfig/apiv1alpha1"
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
 	"github.com/GoogleCloudPlatform/osconfig/config"
+	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
+	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 	"github.com/GoogleCloudPlatform/osconfig/logger"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
 	"github.com/kylelemons/godebug/pretty"
