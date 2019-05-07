@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+FROM golang:alpine
+
 FROM gcr.io/compute-image-tools/daisy:latest
 
 FROM alpine
@@ -18,8 +20,10 @@ FROM alpine
 RUN apk add --update bash
 
 COPY packaging-scripts /
-COPY --from=0 /daisy daisy
+COPY --from=1 /daisy daisy
 
-ENV GOOGLE_APPLICATION_CREDENTIALS /etc/compute-image-tools-test-service-account
+ENV GOOGLE_APPLICATION_CREDENTIALS /creds.json
+
+COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 ENTRYPOINT ["/bin/bash", "-c", "/run_daisy_workflow.sh"]

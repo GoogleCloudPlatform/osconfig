@@ -15,4 +15,4 @@
 
 set -e
 
-./daisy -project gcp-guest -zone us-central1-c -var:gcs_path=gs://osconfig-agent-package ./build_packages.wf.json
+/daisy -project gcp-guest -zone us-central1-c -var:gcs_path=gs://osconfig-agent-package /build_packages.wf.json

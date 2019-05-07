@@ -15,17 +15,17 @@
 
 set -e
 
-BASE_DIR=${PWD}
-
 echo "started build..."
 
 apt-get -y update && apt-get -y upgrade
 apt-get install -y git-core
 git clone "https://github.com/GoogleCloudPlatform/osconfig.git"
 
+cd osconfig
+ls -ltra
 echo $PWD
 
-source ${BASE_DIR}/agent-packaging/packaging-scripts/setup_deb.sh
+source ./agent-packaging/packaging-scripts/setup_deb.sh
 gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "gs://osconfig-agent-package/"
 
 echo 'Package build success'
