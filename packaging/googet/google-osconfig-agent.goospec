@@ -6,7 +6,8 @@
   "license": "http://www.apache.org/licenses/LICENSE-2.0",
   "description": "Google OSConfig agent",
   "files": {
-    "google_osconfig_agent.exe": "<ProgramFiles>/Google/OSConfig/google_osconfig_agent.exe"
+    "google_osconfig_agent.exe": "<ProgramFiles>/Google/OSConfig/google_osconfig_agent.exe",
+    "LICENSE": "<ProgramFiles>/Google/OSConfig/LICENSE.txt"
   },
   "releaseNotes": [
     "0.5.0 - Add ospatch functionality",
@@ -23,7 +24,8 @@
       "include": [
         "google_osconfig_agent.exe",
         "packaging/googet/install.ps1",
-        "packaging/googet/uninstall.ps1"
+        "packaging/googet/uninstall.ps1",
+        "LICENSE"
       ]
   }],
   "build": {

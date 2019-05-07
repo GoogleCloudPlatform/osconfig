@@ -15,13 +15,13 @@
 
 NAME="google-osconfig-agent"
 VERSION="0.5.2"
-GOLANG="go1.12.1.linux-amd64.tar.gz"
+GOLANG="go1.12.5.linux-amd64.tar.gz"
 GO=/tmp/go/bin/go
 export GOPATH=/usr/share/gocode
 export GOCACHE=/tmp/.cache
 
 working_dir=${PWD}
-if [[ $(basename "$working_dir") != $NAME ]]; then
+if [[ $(basename "$working_dir") != "osconfig" ]]; then
   echo "Packaging scripts must be run from top of package dir."
   exit 1
 fi
@@ -35,5 +35,5 @@ echo "Extracting Go"
 tar -C /tmp/go/ --strip-components=1 -xf /tmp/go/go.tar.gz
 
 echo "Pulling dependencies"
-sudo su -c "GOPATH=${GOPATH} ${GO} get -d ./..."
-sudo su -c "GOOS=windows GOPATH=${GOPATH} ${GO} get -d ./..."
+[[ -d ${GOPATH} ]] && rm -rf ${GOPATH}
+GOPATH=${GOPATH} ${GO} mod download

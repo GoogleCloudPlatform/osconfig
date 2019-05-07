@@ -28,8 +28,8 @@ GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
 BASE_REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/base-repo)
 
 apt-get install -y git-core 
-git clone "https://github.com/${BASE_REPO}/compute-image-tools.git"
-cd compute-image-tools/cli_tools/google-osconfig-agent 
+git clone "https://github.com/${BASE_REPO}/osconfig.git"
+cd osconfig
 packaging/setup_deb.sh 
 gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${GCS_PATH}/" 
 

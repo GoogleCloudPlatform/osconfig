@@ -27,17 +27,30 @@ URL="http://metadata/computeMetadata/v1/instance/attributes"
 GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
 BASE_REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/base-repo)
 
-n=0
-while ! yum install -y git-core; do
-  if [[ n -gt 3 ]]; then
-    exit 1
-  fi
-  n=$[$n+1]
-  sleep 5
-done
+# centos6 has some issues with network on first boot
+el6_install(){
+  n=0
+  while ! yum install -y https://rhel6.iuscommunity.org/ius-release.rpm; do
+    if [[ n -gt 3 ]]; then
+      exit 1
+    fi
+    n=$[$n+1]
+    sleep 5
+  done
+}
 
-git clone "https://github.com/${BASE_REPO}/compute-image-tools.git"
-cd compute-image-tools/cli_tools/google-osconfig-agent 
+# Install git2 as this is not avaiable in centos 6/7
+RELEASE_RPM=$(rpm -qf /etc/redhat-release)
+RELEASE=$(rpm -q --qf '%{VERSION}' ${RELEASE_RPM})
+case ${RELEASE} in
+  6*) el6_install;;
+  7*) yum -y install https://rhel7.iuscommunity.org/ius-release.rpm;;
+esac
+rpm --import /etc/pki/rpm-gpg/IUS-COMMUNITY-GPG-KEY
+yum install -y git2u
+
+git clone "https://github.com/${BASE_REPO}/osconfig.git"
+cd osconfig
 packaging/setup_rpm.sh
 gsutil cp /tmp/rpmpackage/RPMS/x86_64/google-osconfig-agent-*.rpm "${GCS_PATH}/"
 
