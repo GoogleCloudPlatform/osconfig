@@ -18,18 +18,14 @@ set -e
 BASE_DIR=${PWD}
 
 echo "started build..."
-GCS_PATH="osconfig-agent-package"
-BASE_REPO="GoogleCloudPlatform"
 
 apt-get -y update && apt-get -y upgrade
 apt-get install -y git-core
-git clone "https://github.com/${BASE_REPO}/compute-image-tools.git"
-
-cd compute-image-tools/cli_tools/google-osconfig-agent
+git clone "https://github.com/GoogleCloudPlatform/osconfig.git"
 
 echo $PWD
 
-${BASE_DIR}/setup_deb.sh
-gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${GCS_PATH}/" 
+source ${BASE_DIR}/agent-packaging/packaging-scripts/setup_deb.sh
+gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "gs://osconfig-agent-package/"
 
 echo 'Package build success'

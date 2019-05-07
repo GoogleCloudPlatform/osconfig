@@ -23,7 +23,7 @@ export GOPATH=/usr/share/gocode
 export GOCACHE=/tmp/.cache
 
 working_dir=${PWD}
-if [[ $(basename "$working_dir") != $NAME ]]; then
+if [[ $(basename "$working_dir") != "osconfig" ]]; then
   echo "Packaging scripts must be run from top of package dir."
   exit 1
 fi
