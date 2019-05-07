@@ -5,11 +5,12 @@ package osconfig
 
 import (
 	fmt "fmt"
+	math "math"
+
 	proto "github.com/golang/protobuf/proto"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	field_mask "google.golang.org/genproto/protobuf/field_mask"
-	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
