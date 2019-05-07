@@ -15,22 +15,27 @@
 
 set -e
 
-function exit_error
-{
-  echo "build failed"
-  exit 1
-}
+echo "started build..."
 
-trap exit_error ERR
+apt-get -y update && apt-get -y upgrade
+apt-get install -y git-core
+git clone --branch agent-build "https://github.com/GoogleCloudPlatform/osconfig.git"
 
-URL="http://metadata/computeMetadata/v1/instance/attributes"
-GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
-BASE_REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/base-repo)
+cd osconfig
 
+<<<<<<< HEAD:packaging/build_packages_deb.sh
 apt-get install -y git-core 
 git clone "https://github.com/${BASE_REPO}/osconfig.git"
 cd osconfig
 packaging/setup_deb.sh 
+<<<<<<< HEAD:packaging/build_packages_deb.sh
 gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${GCS_PATH}/"
+=======
+gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${GCS_PATH}/" 
+=======
+source ./agent-packaging/packaging-scripts/setup_deb.sh
+gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "gs://osconfig-agent-package/"
+>>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/build_packages_deb.sh
+>>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/build_packages_deb.sh
 
 echo 'Package build success'

@@ -23,6 +23,7 @@ function exit_error
 
 trap exit_error ERR
 
+<<<<<<< HEAD:packaging/build_packages_rpm.sh
 URL="http://metadata/computeMetadata/v1/instance/attributes"
 GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
 BASE_REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/base-repo)
@@ -59,5 +60,21 @@ git clone "https://github.com/${BASE_REPO}/osconfig.git"
 cd osconfig
 packaging/setup_rpm.sh
 gsutil cp /tmp/rpmpackage/RPMS/x86_64/google-osconfig-agent-*.rpm "${GCS_PATH}/"
+=======
+n=0
+while ! yum install -y git-core; do
+  if [[ n -gt 3 ]]; then
+    exit 1
+  fi
+  n=$[$n+1]
+  sleep 5
+done
+
+git clone "https://github.com/GoogleCloudPlatform/osconfig.git"
+cd osconfig
+
+agent-packaging/packaging-scripts/setup_rpm.sh
+gsutil cp /tmp/rpmpackage/RPMS/x86_64/google-osconfig-agent-*.rpm "gs://osconfig-agent-package/"
+>>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/build_packages_rpm.sh
 
 echo 'Package build success'
