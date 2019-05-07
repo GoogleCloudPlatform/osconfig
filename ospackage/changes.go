@@ -15,7 +15,7 @@
 package ospackage
 
 import (
-	"github.com/GoogleCloudPlatform/compute-image-tools/go/packages"
+	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
 )

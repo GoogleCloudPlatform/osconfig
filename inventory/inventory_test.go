@@ -26,7 +26,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/GoogleCloudPlatform/compute-image-tools/go/packages"
+	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 )
 
 func decodePackages(str string) packages.Packages {
