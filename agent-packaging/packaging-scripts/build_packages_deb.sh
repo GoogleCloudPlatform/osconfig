@@ -19,7 +19,7 @@ echo "started build..."
 
 apt-get -y update && apt-get -y upgrade
 apt-get install -y git-core
-git clone "https://github.com/GoogleCloudPlatform/osconfig.git"
+git clone --branch agent-build "https://github.com/iamsubratp/osconfig.git"
 
 cd osconfig
 ls -ltra
