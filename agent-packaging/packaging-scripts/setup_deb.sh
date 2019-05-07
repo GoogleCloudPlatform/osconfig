@@ -13,31 +13,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-source packaging/common.sh 
 
-working_dir=${PWD}
+set -e
 
-sudo apt-get update
+echo "running common script..."
+source ./agent-packaging/packaging-scripts/common.sh
 
 # DEB creation tools.
-DEBIAN_FRONTEND=noninteractive sudo apt-get -y install debhelper devscripts build-essential curl tar
+DEBIAN_FRONTEND=noninteractive  apt-get -y install debhelper devscripts build-essential curl tar
 
 # Build dependencies.
+<<<<<<< HEAD:packaging/setup_deb.sh
 DEBIAN_FRONTEND=noninteractive sudo apt-get -y install dh-golang dh-systemd golang-go  # golang-go is unused but required for debuild being happy with static binaries.
+=======
+DEBIAN_FRONTEND=noninteractive  apt-get -y install dh-golang dh-systemd golang-go
+>>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/setup_deb.sh
 
-dpkg-checkbuilddeps packaging/debian/control
+dpkg-checkbuilddeps ./agent-packaging/packaging-scripts/debian/control
 
 [[ -d /tmp/debpackage ]] && rm -rf /tmp/debpackage
 mkdir /tmp/debpackage
-tar czvf /tmp/debpackage/${NAME}_${VERSION}.orig.tar.gz --exclude .git --exclude packaging --transform "s/^\./${NAME}-${VERSION}/" .
+tar czvf /tmp/debpackage/${NAME}_${VERSION}.orig.tar.gz --exclude .git --exclude agent-packaging --transform "s/^\./${NAME}-${VERSION}/" .
 
 pushd /tmp/debpackage
 tar xzvf ${NAME}_${VERSION}.orig.tar.gz
 
 cd ${NAME}-${VERSION}
 
-cp -r ${working_dir}/packaging/debian ./
-cp -r ${working_dir}/*.service ./debian/
+cp -r ${working_dir}/agent-packaging/packaging-scripts/debian ./
+cp -r ${working_dir}/agent-packaging/packaging-scripts/*.service ./debian/
 
 debuild -e "VERSION=${VERSION}" -us -uc
 

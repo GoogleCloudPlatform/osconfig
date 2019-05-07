@@ -15,22 +15,10 @@
 
 set -e
 
-function exit_error
-{
-  echo "build failed"
-  exit 1
-}
-
-trap exit_error ERR
-
-URL="http://metadata/computeMetadata/v1/instance/attributes"
-GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
-BASE_REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/base-repo)
-
-apt-get install -y git-core
-git clone "https://github.com/${BASE_REPO}/osconfig.git" 
-cd osconfig
-packaging/setup_goo.sh
-gsutil cp google-osconfig-agent*.goo "${GCS_PATH}/"
-
-echo 'Package build success'
+<<<<<<< HEAD:packaging/setup_goo.sh
+echo "Building package"
+GOPATH=${GOPATH} ${GO} get github.com/google/googet/v2/goopack
+${GOPATH}/bin/goopack -var:version=${VERSION} packaging/googet/google-osconfig-agent.goospec
+=======
+/daisy -project gcp-guest -zone us-central1-c -var:gcs_path=gs://osconfig-agent-package /build_packages.wf.json
+>>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/run_daisy_workflow.sh

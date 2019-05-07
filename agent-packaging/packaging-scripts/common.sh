@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -e
+
 NAME="google-osconfig-agent"
 VERSION="0.6.0"
 GOLANG="go1.12.5.linux-amd64.tar.gz"
@@ -26,6 +28,8 @@ if [[ $(basename "$working_dir") != "osconfig" ]]; then
   exit 1
 fi
 
+apt-get install -y curl
+
 # Golang setup
 [[ -d /tmp/go ]] && rm -rf /tmp/go
 mkdir -p /tmp/go/
@@ -35,5 +39,10 @@ echo "Extracting Go"
 tar -C /tmp/go/ --strip-components=1 -xf /tmp/go/go.tar.gz
 
 echo "Pulling dependencies"
+<<<<<<< HEAD:packaging/common.sh
 [[ -d ${GOPATH} ]] && rm -rf ${GOPATH}
 GOPATH=${GOPATH} ${GO} mod download
+=======
+GOPATH=${GOPATH} ${GO} get -d ./...
+GOOS=windows GOPATH=${GOPATH} ${GO} get -d ./...
+>>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/common.sh
