@@ -14,7 +14,7 @@
 # limitations under the License.
 
 echo "running common script..."
-source ./agent-packaging/packaging-scripts/common.sh
+source ./packaging/common.sh
 
 <<<<<<< HEAD:packaging/setup_goo.sh
 echo "Building package"
@@ -26,5 +26,9 @@ sudo cp -r ../../../osconfig/ /usr/share/gocode/src/github.com/GoogleCloudPlatfo
 
 echo "Building package"
 sudo su -c "GOPATH=${GOPATH} ${GO} get -d github.com/google/googet/goopack"
+<<<<<<< HEAD:agent-packaging/packaging-scripts/setup_goo.sh
 $GO run github.com/google/googet/goopack agent-packaging/packaging-scripts/googet/google-osconfig-agent.goospec
 >>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/setup_goo.sh
+=======
+$GO run github.com/google/googet/goopack packaging/googet/google-osconfig-agent.goospec
+>>>>>>> Move back  packaging code to where it was:packaging/setup_goo.sh
