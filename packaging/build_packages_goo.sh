@@ -33,7 +33,7 @@ gsutil cp google-osconfig-agent*.goo "${GCS_PATH}/"
 git clone "https://github.com/GoogleCloudPlatform/osconfig.git"
 cd osconfig
 
-packaging/setup_goo.sh
+source ./packaging/setup_goo.sh
 gsutil cp google-osconfig-agent*.goo "gs://osconfig-agent-package/"
 >>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/build_packages_goo.sh
 
