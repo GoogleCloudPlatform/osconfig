@@ -17,6 +17,8 @@
 package ospatch
 
 import (
+	"os/exec"
+
 	"github.com/GoogleCloudPlatform/osconfig/logger"
 	"golang.org/x/sys/windows/registry"
 )
@@ -40,4 +42,8 @@ func disableAutoUpdates() {
 	if err := k.SetDWordValue("NoAutoUpdate", 1); err != nil {
 		logger.Errorf("error disabling Windows auto updates, error: %v", err)
 	}
+}
+
+func rebootSystem() error {
+	return exec.Command("shutdown", "/r", "/t", "00", "/f", "/d", "p:2:3").Run()
 }

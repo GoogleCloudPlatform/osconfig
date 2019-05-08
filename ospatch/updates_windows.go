@@ -18,7 +18,6 @@ package ospatch
 
 import (
 	"fmt"
-	"os/exec"
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
@@ -246,8 +245,4 @@ func runUpdates(r *patchRun) error {
 	}
 
 	return nil
-}
-
-func rebootSystem() error {
-	return exec.Command("shutdown", "/r", "/t", "00", "/f", "/d", "p:2:3").Run()
 }
