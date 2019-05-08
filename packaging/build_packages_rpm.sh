@@ -73,7 +73,7 @@ done
 git clone "https://github.com/GoogleCloudPlatform/osconfig.git"
 cd osconfig
 
-agent-packaging/packaging-scripts/setup_rpm.sh
+packaging/setup_rpm.sh
 gsutil cp /tmp/rpmpackage/RPMS/x86_64/google-osconfig-agent-*.rpm "gs://osconfig-agent-package/"
 >>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/build_packages_rpm.sh
 

@@ -17,7 +17,7 @@
 set -e
 
 echo "running common script..."
-source ./agent-packaging/packaging-scripts/common.sh
+source ./packaging/common.sh
 
 # DEB creation tools.
 DEBIAN_FRONTEND=noninteractive  apt-get -y install debhelper devscripts build-essential curl tar
@@ -29,19 +29,19 @@ DEBIAN_FRONTEND=noninteractive sudo apt-get -y install dh-golang dh-systemd gola
 DEBIAN_FRONTEND=noninteractive  apt-get -y install dh-golang dh-systemd golang-go
 >>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/setup_deb.sh
 
-dpkg-checkbuilddeps ./agent-packaging/packaging-scripts/debian/control
+dpkg-checkbuilddeps ./packaging/debian/control
 
 [[ -d /tmp/debpackage ]] && rm -rf /tmp/debpackage
 mkdir /tmp/debpackage
-tar czvf /tmp/debpackage/${NAME}_${VERSION}.orig.tar.gz --exclude .git --exclude agent-packaging --transform "s/^\./${NAME}-${VERSION}/" .
+tar czvf /tmp/debpackage/${NAME}_${VERSION}.orig.tar.gz --exclude .git --exclude packaging --transform "s/^\./${NAME}-${VERSION}/" .
 
 pushd /tmp/debpackage
 tar xzvf ${NAME}_${VERSION}.orig.tar.gz
 
 cd ${NAME}-${VERSION}
 
-cp -r ${working_dir}/agent-packaging/packaging-scripts/debian ./
-cp -r ${working_dir}/agent-packaging/packaging-scripts/*.service ./debian/
+cp -r ${working_dir}/packaging/debian ./
+cp -r ${working_dir}/packaging/*.service ./debian/
 
 debuild -e "VERSION=${VERSION}" -us -uc
 

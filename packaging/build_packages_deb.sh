@@ -15,14 +15,23 @@
 
 set -e
 
+function exit_error
+{
+  echo "build failed"
+  exit 1
+}
+
+trap exit_error ERR
+
 echo "started build..."
 
 apt-get -y update && apt-get -y upgrade
 apt-get install -y git-core
-git clone --branch agent-build "https://github.com/GoogleCloudPlatform/osconfig.git"
+git clone "https://github.com/GoogleCloudPlatform/osconfig.git"
 
 cd osconfig
 
+<<<<<<< HEAD:agent-packaging/packaging-scripts/build_packages_deb.sh
 <<<<<<< HEAD:packaging/build_packages_deb.sh
 apt-get install -y git-core 
 git clone "https://github.com/${BASE_REPO}/osconfig.git"
@@ -34,6 +43,9 @@ gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${GCS_PATH}/"
 gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${GCS_PATH}/" 
 =======
 source ./agent-packaging/packaging-scripts/setup_deb.sh
+=======
+source ./packaging/setup_deb.sh
+>>>>>>> Move back  packaging code to where it was:packaging/build_packages_deb.sh
 gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "gs://osconfig-agent-package/"
 >>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/build_packages_deb.sh
 >>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/build_packages_deb.sh
