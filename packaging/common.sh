@@ -23,12 +23,6 @@ export GOPATH=/usr/share/gocode
 export GOCACHE=/tmp/.cache
 
 working_dir=${PWD}
-echo ${working_dir}
-
-if [[ $(basename "$working_dir") != "osconfig" ]]; then
-  echo "Packaging scripts must be run from top of package dir."
-  exit 1
-fi
 
 apt-get install -y curl
 

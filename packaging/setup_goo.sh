@@ -16,12 +16,16 @@
 echo "running common script..."
 source ./packaging/common.sh
 
+<<<<<<< HEAD
 <<<<<<< HEAD:packaging/setup_goo.sh
 echo "Building package"
 GOPATH=${GOPATH} ${GO} get github.com/google/googet/goopack
 ${GOPATH}/bin/goopack packaging/googet/google-osconfig-agent.goospec
 =======
 rm -rf ${GOPATH}/src/github.com/GoogleCloudPlatform/osconfig
+=======
+rm -rf ${GOPATH}/src/github.com/${BASE_REPO}/osconfig
+>>>>>>> Use environment variables replacements instead of hard coding
 sudo cp -r ../../../osconfig/ /usr/share/gocode/src/github.com/GoogleCloudPlatform/
 
 echo "Building package"
