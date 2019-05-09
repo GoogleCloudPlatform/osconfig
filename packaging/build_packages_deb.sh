@@ -27,7 +27,7 @@ echo "started build..."
 
 apt-get -y update && apt-get -y upgrade
 apt-get install -y git-core
-git clone "https://github.com/GoogleCloudPlatform/osconfig.git"
+git clone "https://github.com/${BASE_REPO}/osconfig.git"
 
 cd osconfig
 
@@ -45,9 +45,16 @@ gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${GCS_PATH}/"
 source ./agent-packaging/packaging-scripts/setup_deb.sh
 =======
 source ./packaging/setup_deb.sh
+<<<<<<< HEAD
 >>>>>>> Move back  packaging code to where it was:packaging/build_packages_deb.sh
 gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "gs://osconfig-agent-package/"
 >>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/build_packages_deb.sh
+<<<<<<< HEAD
 >>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/build_packages_deb.sh
+=======
+=======
+gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${PKG_GCS_OUT_DIR}/"
+>>>>>>> Use environment variables replacements instead of hard coding
+>>>>>>> Use environment variables replacements instead of hard coding
 
 echo 'Package build success'

@@ -24,6 +24,7 @@ function exit_error
 trap exit_error ERR
 
 apt-get install -y git-core
+<<<<<<< HEAD
 <<<<<<< HEAD:packaging/build_packages_goo.sh
 git clone "https://github.com/${BASE_REPO}/osconfig.git" 
 cd osconfig
@@ -36,5 +37,12 @@ cd osconfig
 source ./packaging/setup_goo.sh
 gsutil cp google-osconfig-agent*.goo "gs://osconfig-agent-package/"
 >>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/build_packages_goo.sh
+=======
+git clone "https://github.com/${BASE_REPO}/osconfig.git"
+cd osconfig
+
+source ./packaging/setup_goo.sh
+gsutil cp google-osconfig-agent*.goo "${PKG_GCS_OUT_DIR}/"
+>>>>>>> Use environment variables replacements instead of hard coding
 
 echo 'Package build success'
