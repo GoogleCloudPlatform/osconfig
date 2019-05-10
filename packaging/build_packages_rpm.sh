@@ -23,6 +23,7 @@ function exit_error
 
 trap exit_error ERR
 
+<<<<<<< HEAD
 <<<<<<< HEAD:packaging/build_packages_rpm.sh
 URL="http://metadata/computeMetadata/v1/instance/attributes"
 GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
@@ -61,6 +62,11 @@ cd osconfig
 packaging/setup_rpm.sh
 gsutil cp /tmp/rpmpackage/RPMS/x86_64/google-osconfig-agent-*.rpm "${GCS_PATH}/"
 =======
+=======
+URL="http://metadata/computeMetadata/v1/instance/attributes"
+GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
+
+>>>>>>> Change env variable used to dump artifacts
 n=0
 while ! yum install -y git-core; do
   if [[ n -gt 3 ]]; then
@@ -75,10 +81,14 @@ cd osconfig
 
 source ./packaging/setup_rpm.sh
 <<<<<<< HEAD
+<<<<<<< HEAD
 gsutil cp /tmp/rpmpackage/RPMS/x86_64/google-osconfig-agent-*.rpm "gs://osconfig-agent-package/"
 >>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/build_packages_rpm.sh
 =======
 gsutil cp /tmp/rpmpackage/RPMS/x86_64/google-osconfig-agent-*.rpm "${PKG_GCS_OUT_DIR}/"
 >>>>>>> Use environment variables replacements instead of hard coding
+=======
+gsutil cp /tmp/rpmpackage/RPMS/x86_64/google-osconfig-agent-*.rpm "${GCS_PATH}/"
+>>>>>>> Change env variable used to dump artifacts
 
 echo 'Package build success'

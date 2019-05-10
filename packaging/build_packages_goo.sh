@@ -23,6 +23,9 @@ function exit_error
 
 trap exit_error ERR
 
+URL="http://metadata/computeMetadata/v1/instance/attributes"
+GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
+
 apt-get install -y git-core
 <<<<<<< HEAD
 <<<<<<< HEAD:packaging/build_packages_goo.sh
@@ -42,7 +45,12 @@ git clone "https://github.com/${BASE_REPO}/osconfig.git"
 cd osconfig
 
 source ./packaging/setup_goo.sh
+<<<<<<< HEAD
 gsutil cp google-osconfig-agent*.goo "${PKG_GCS_OUT_DIR}/"
 >>>>>>> Use environment variables replacements instead of hard coding
+=======
+gsutil cp google-osconfig-agent*.goo "${GCS_PATH}/"
+
+>>>>>>> Change env variable used to dump artifacts
 
 echo 'Package build success'

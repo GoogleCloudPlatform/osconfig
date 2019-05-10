@@ -6,11 +6,6 @@
     "build_rpm.sh": "./build_packages_rpm.sh"
   },
   "Vars": {
-    "gcs_path": {
-      "Value": "",
-      "Required": true,
-      "Description": "GCS path to dump the built packages in: gs://my-bucket/packages"
-    },
     "base_repo": {
       "Value": "GoogleCloudPlatform",
       "Description": "Base GitHub repo"

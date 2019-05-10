@@ -23,6 +23,9 @@ function exit_error
 
 trap exit_error ERR
 
+URL="http://metadata/computeMetadata/v1/instance/attributes"
+GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
+
 echo "started build..."
 
 apt-get -y update && apt-get -y upgrade
@@ -46,6 +49,7 @@ source ./agent-packaging/packaging-scripts/setup_deb.sh
 =======
 source ./packaging/setup_deb.sh
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> Move back  packaging code to where it was:packaging/build_packages_deb.sh
 gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "gs://osconfig-agent-package/"
 >>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/build_packages_deb.sh
@@ -55,6 +59,12 @@ gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "gs://osconfig-agent-packag
 =======
 gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${PKG_GCS_OUT_DIR}/"
 >>>>>>> Use environment variables replacements instead of hard coding
+<<<<<<< HEAD
 >>>>>>> Use environment variables replacements instead of hard coding
+=======
+=======
+gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${GCS_PATH}/"
+>>>>>>> Change env variable used to dump artifacts
+>>>>>>> Change env variable used to dump artifacts
 
 echo 'Package build success'
