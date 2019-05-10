@@ -87,7 +87,7 @@ func systemRebootRequired() (bool, error) {
 	// TODO: implement something like this for rpm based distros to fall back to:
 	// https://bugzilla.redhat.com/attachment.cgi?id=1187437&action=diff
 
-	return false, fmt.Errorf("no recognized package manager installed, can't determin if reboot is required")
+	return false, fmt.Errorf("no recognized package manager installed, can't determine if reboot is required")
 }
 
 func runUpdates(r *patchRun) error {
