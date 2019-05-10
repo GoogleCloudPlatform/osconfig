@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"os"
 	"os/exec"
+	"syscall"
 
 	"github.com/GoogleCloudPlatform/osconfig/logger"
 )
@@ -54,4 +55,25 @@ func disableAutoUpdates() {
 			logger.Errorf("error disabling unattended-upgrades, error: %v, out: %s", err, out)
 		}
 	}
+}
+
+func rebootSystem() error {
+	// Start with systemctl and work down a list of reboot methods.
+	if e, _ := exists(systemctl); e {
+		logger.Debugf("Rebooting using systemctl.")
+		return exec.Command(systemctl, "reboot").Run()
+	}
+	if e, _ := exists(reboot); e {
+		logger.Debugf("Rebooting using reboot command.")
+		return exec.Command(reboot).Run()
+	}
+	if e, _ := exists(shutdown); e {
+		logger.Debugf("Rebooting using shutdown command.")
+		return exec.Command(shutdown, "-r", "-t", "0").Run()
+	}
+
+	// Fall back to reboot(2) system call
+	logger.Debugf("No suitable reboot command found, rebooting using reboot(2).")
+	syscall.Sync()
+	return syscall.Reboot(syscall.LINUX_REBOOT_CMD_RESTART)
 }

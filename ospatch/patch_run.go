@@ -234,6 +234,7 @@ func (r *patchRun) rebootIfNeeded(prePatch bool) error {
 	}
 
 	r.RebootCount++
+	saveState()
 	if err := rebootSystem(); err != nil {
 		return fmt.Errorf("failed to reboot system: %v", err)
 	}
@@ -342,20 +343,23 @@ func ackPatch(ctx context.Context, patchJobName string) {
 	// Notify the server if we haven't yet. If we've already been notified about this Job,
 	// the server may have inadvertantly notified us twice (at least once deliver) so we
 	// can ignore it.
-	if !liveState.alreadyAckedJob(patchJobName) {
-		j := &patchJob{&osconfigpb.ReportPatchJobInstanceDetailsResponse{PatchJob: patchJobName}}
-		pr := &patchRun{ctx: ctx, Job: j}
-		if err := pr.createClient(); err != nil {
-			logger.Errorf("Error creating osconfig client: %v", err)
-		}
-		if err := pr.reportPatchDetails(osconfigpb.Instance_ACKED, 0, ""); err != nil {
-			logger.Errorf("reportPatchDetails Error: %v", err)
-			pr.complete()
-			return
-		}
-		pr.setStep(acked)
-		tasker.Enqueue("Run patch", pr.runPatch)
+	if liveState.alreadyAckedJob(patchJobName) {
+		return
 	}
+
+	j := &patchJob{&osconfigpb.ReportPatchJobInstanceDetailsResponse{PatchJob: patchJobName}}
+	pr := &patchRun{ctx: ctx, Job: j}
+	liveState.addPatchRun(pr)
+	if err := pr.createClient(); err != nil {
+		logger.Errorf("Error creating osconfig client: %v", err)
+	}
+	if err := pr.reportPatchDetails(osconfigpb.Instance_ACKED, 0, ""); err != nil {
+		logger.Errorf("reportPatchDetails Error: %v", err)
+		pr.complete()
+		return
+	}
+	pr.setStep(acked)
+	tasker.Enqueue("Run patch", pr.runPatch)
 }
 
 // retry tries to retry f for no more than maxRetryTime.

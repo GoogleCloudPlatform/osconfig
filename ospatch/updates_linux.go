@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"syscall"
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
@@ -68,9 +67,13 @@ func systemRebootRequired() (bool, error) {
 				return false, nil
 			}
 			if eerr, ok := err.(*exec.ExitError); ok {
-				if eerr.ExitCode() == 1 {
+				switch eerr.ExitCode() {
+				case 1:
 					logger.Debugf("'/usr/bin/needs-restarting -r' exit code 1 indicating a reboot is required")
 					return true, nil
+				case 2:
+					logger.Infof("/usr/bin/needs-restarting is too old, can't easily determine if reboot is required")
+					return false, nil
 				}
 			}
 			return false, err
@@ -78,12 +81,13 @@ func systemRebootRequired() (bool, error) {
 		logger.Infof("/usr/bin/needs-restarting does not exist, can't check if reboot is required. Try installing the 'yum-utils' package.")
 		return false, nil
 	case packages.ZypperExists:
-		// TODO: implement
 		logger.Errorf("systemRebootRequired not implemented for zypper")
 		return false, nil
 	}
+	// TODO: implement something like this for rpm based distros to fall back to:
+	// https://bugzilla.redhat.com/attachment.cgi?id=1187437&action=diff
 
-	return false, fmt.Errorf("no recognized package manager installed, can't if reboot is required")
+	return false, fmt.Errorf("no recognized package manager installed, can't determine if reboot is required")
 }
 
 func runUpdates(r *patchRun) error {
@@ -91,25 +95,4 @@ func runUpdates(r *patchRun) error {
 		return err
 	}
 	return packages.UpdatePackages()
-}
-
-func rebootSystem() error {
-	// Start with systemctl and work down a list of reboot methods.
-	if e, _ := exists(systemctl); e {
-		logger.Debugf("Rebooting using systemctl.")
-		return exec.Command(systemctl, "reboot").Run()
-	}
-	if e, _ := exists(reboot); e {
-		logger.Debugf("Rebooting using reboot command.")
-		return exec.Command(reboot).Run()
-	}
-	if e, _ := exists(shutdown); e {
-		logger.Debugf("Rebooting using shutdown command.")
-		return exec.Command(shutdown, "-r", "-t", "0").Run()
-	}
-
-	// Fall back to reboot(2) system call
-	logger.Debugf("No suitable reboot command found, rebooting using reboot(2).")
-	syscall.Sync()
-	return syscall.Reboot(syscall.LINUX_REBOOT_CMD_RESTART)
 }
