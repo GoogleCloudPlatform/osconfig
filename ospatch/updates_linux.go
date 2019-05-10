@@ -67,9 +67,13 @@ func systemRebootRequired() (bool, error) {
 				return false, nil
 			}
 			if eerr, ok := err.(*exec.ExitError); ok {
-				if eerr.ExitCode() == 1 {
+				switch eerr.ExitCode() {
+				case 1:
 					logger.Debugf("'/usr/bin/needs-restarting -r' exit code 1 indicating a reboot is required")
 					return true, nil
+				case 2:
+					logger.Infof("/usr/bin/needs-restarting is too old, can't easily determine if reboot is required")
+					return false, nil
 				}
 			}
 			return false, err
@@ -77,12 +81,13 @@ func systemRebootRequired() (bool, error) {
 		logger.Infof("/usr/bin/needs-restarting does not exist, can't check if reboot is required. Try installing the 'yum-utils' package.")
 		return false, nil
 	case packages.ZypperExists:
-		// TODO: implement
 		logger.Errorf("systemRebootRequired not implemented for zypper")
 		return false, nil
 	}
+	// TODO: implement something like this for rpm based distros to fall back to:
+	// https://bugzilla.redhat.com/attachment.cgi?id=1187437&action=diff
 
-	return false, fmt.Errorf("no recognized package manager installed, can't if reboot is required")
+	return false, fmt.Errorf("no recognized package manager installed, can't determin if reboot is required")
 }
 
 func runUpdates(r *patchRun) error {

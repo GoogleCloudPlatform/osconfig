@@ -17,7 +17,9 @@
 package ospatch
 
 import (
+	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/GoogleCloudPlatform/osconfig/logger"
 	"golang.org/x/sys/windows/registry"
@@ -45,5 +47,9 @@ func disableAutoUpdates() {
 }
 
 func rebootSystem() error {
-	return exec.Command("shutdown", "/r", "/t", "00", "/f", "/d", "p:2:3").Run()
+	root := os.Getenv("SystemRoot")
+	if root == "" {
+		root = `C:\Windows`
+	}
+	return exec.Command(filepath.Join(root, `System32\shutdown.exe`), "/r", "/t", "00", "/f", "/d", "p:2:3").Run()
 }
