@@ -28,6 +28,11 @@ trap exit_error ERR
 URL="http://metadata/computeMetadata/v1/instance/attributes"
 GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
 BASE_REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/base-repo)
+<<<<<<< HEAD
+=======
+REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/repo)
+PULL_REF=$(curl -f -H Metadata-Flavor:Google ${URL}/pull-ref)
+>>>>>>> Implement feedback from reviewers
 
 # centos6 has some issues with network on first boot
 el6_install(){
@@ -76,7 +81,7 @@ while ! yum install -y git-core; do
   sleep 5
 done
 
-git clone "https://github.com/${BASE_REPO}/osconfig.git"
+git clone --branch ${PULL_REF} "https://github.com/${BASE_REPO}/${REPO}.git"
 cd osconfig
 
 source ./packaging/setup_rpm.sh

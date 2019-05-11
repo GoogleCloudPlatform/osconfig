@@ -17,6 +17,7 @@ echo "running common script..."
 source ./packaging/common.sh
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 <<<<<<< HEAD:packaging/setup_goo.sh
 echo "Building package"
 GOPATH=${GOPATH} ${GO} get github.com/google/googet/goopack
@@ -26,6 +27,9 @@ rm -rf ${GOPATH}/src/github.com/GoogleCloudPlatform/osconfig
 =======
 rm -rf ${GOPATH}/src/github.com/${BASE_REPO}/osconfig
 >>>>>>> Use environment variables replacements instead of hard coding
+=======
+rm -rf ${GOPATH}/src/github.com/${BASE_REPO}/${REPO}
+>>>>>>> Implement feedback from reviewers
 sudo cp -r ../../../osconfig/ /usr/share/gocode/src/github.com/GoogleCloudPlatform/
 
 echo "Building package"
