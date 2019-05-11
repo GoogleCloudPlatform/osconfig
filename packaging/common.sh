@@ -35,10 +35,5 @@ echo "Extracting Go"
 tar -C /tmp/go/ --strip-components=1 -xf /tmp/go/go.tar.gz
 
 echo "Pulling dependencies"
-<<<<<<< HEAD:packaging/common.sh
 [[ -d ${GOPATH} ]] && rm -rf ${GOPATH}
 GOPATH=${GOPATH} ${GO} mod download
-=======
-GOPATH=${GOPATH} ${GO} get -d ./...
-GOOS=windows GOPATH=${GOPATH} ${GO} get -d ./...
->>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/common.sh

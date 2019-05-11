@@ -14,7 +14,8 @@
 # limitations under the License.
 
 echo "running common script..."
-source ./packaging/common.sh
+
+source packaging/common.sh
 
 rpm_working_dir=/tmp/rpmpackage/
 
