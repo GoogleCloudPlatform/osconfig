@@ -14,29 +14,10 @@
 # limitations under the License.
 
 echo "running common script..."
-source ./packaging/common.sh
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD:packaging/setup_goo.sh
+source packaging/common.sh
+
 echo "Building package"
+
 GOPATH=${GOPATH} ${GO} get github.com/google/googet/goopack
 ${GOPATH}/bin/goopack packaging/googet/google-osconfig-agent.goospec
-=======
-rm -rf ${GOPATH}/src/github.com/GoogleCloudPlatform/osconfig
-=======
-rm -rf ${GOPATH}/src/github.com/${BASE_REPO}/osconfig
->>>>>>> Use environment variables replacements instead of hard coding
-=======
-rm -rf ${GOPATH}/src/github.com/${BASE_REPO}/${REPO}
->>>>>>> Implement feedback from reviewers
-sudo cp -r ../../../osconfig/ /usr/share/gocode/src/github.com/GoogleCloudPlatform/
-
-echo "Building package"
-sudo su -c "GOPATH=${GOPATH} ${GO} get -d github.com/google/googet/goopack"
-<<<<<<< HEAD:agent-packaging/packaging-scripts/setup_goo.sh
-$GO run github.com/google/googet/goopack agent-packaging/packaging-scripts/googet/google-osconfig-agent.goospec
->>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/setup_goo.sh
-=======
-$GO run github.com/google/googet/goopack packaging/googet/google-osconfig-agent.goospec
->>>>>>> Move back  packaging code to where it was:packaging/setup_goo.sh

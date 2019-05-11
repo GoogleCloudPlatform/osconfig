@@ -38,6 +38,7 @@ git clone --branch ${PULL_REF} "https://github.com/${BASE_REPO}/${REPO}.git"
 
 cd osconfig
 
+<<<<<<< HEAD
 <<<<<<< HEAD:agent-packaging/packaging-scripts/build_packages_deb.sh
 <<<<<<< HEAD:packaging/build_packages_deb.sh
 apt-get install -y git-core 
@@ -70,5 +71,11 @@ gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${PKG_GCS_OUT_DIR}/"
 gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${GCS_PATH}/"
 >>>>>>> Change env variable used to dump artifacts
 >>>>>>> Change env variable used to dump artifacts
+=======
+packaging/setup_deb.sh
+source ./packaging/setup_deb.sh
+
+gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${GCS_PATH}/"
+>>>>>>> Fix merge conflicts
 
 echo 'Package build success'

@@ -17,19 +17,19 @@
 set -e
 
 echo "running common script..."
-source ./packaging/common.sh
+source packaging/common.sh
+
+working_dir=${PWD}
+
+sudo apt-get update
 
 # DEB creation tools.
-DEBIAN_FRONTEND=noninteractive  apt-get -y install debhelper devscripts build-essential curl tar
+DEBIAN_FRONTEND=noninteractive sudo apt-get -y install debhelper devscripts build-essential curl tar
 
 # Build dependencies.
-<<<<<<< HEAD:packaging/setup_deb.sh
 DEBIAN_FRONTEND=noninteractive sudo apt-get -y install dh-golang dh-systemd golang-go  # golang-go is unused but required for debuild being happy with static binaries.
-=======
-DEBIAN_FRONTEND=noninteractive  apt-get -y install dh-golang dh-systemd golang-go
->>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/setup_deb.sh
 
-dpkg-checkbuilddeps ./packaging/debian/control
+dpkg-checkbuilddeps packaging/debian/control
 
 [[ -d /tmp/debpackage ]] && rm -rf /tmp/debpackage
 mkdir /tmp/debpackage
@@ -41,7 +41,7 @@ tar xzvf ${NAME}_${VERSION}.orig.tar.gz
 cd ${NAME}-${VERSION}
 
 cp -r ${working_dir}/packaging/debian ./
-cp -r ${working_dir}/packaging/*.service ./debian/
+cp -r ${working_dir}/*.service ./debian/
 
 debuild -e "VERSION=${VERSION}" -us -uc
 

@@ -30,34 +30,11 @@ REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/repo)
 PULL_REF=$(curl -f -H Metadata-Flavor:Google ${URL}/pull-ref)
 
 apt-get install -y git-core
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD:packaging/build_packages_goo.sh
-git clone "https://github.com/${BASE_REPO}/osconfig.git" 
-cd osconfig
-packaging/setup_goo.sh
-gsutil cp google-osconfig-agent*.goo "${GCS_PATH}/"
-=======
-git clone "https://github.com/GoogleCloudPlatform/osconfig.git"
-cd osconfig
 
-source ./packaging/setup_goo.sh
-gsutil cp google-osconfig-agent*.goo "gs://osconfig-agent-package/"
->>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/build_packages_goo.sh
-=======
-git clone "https://github.com/${BASE_REPO}/osconfig.git"
-=======
 git clone --branch ${PULL_REF} "https://github.com/${BASE_REPO}/${REPO}.git"
->>>>>>> Implement feedback from reviewers
+
 cd osconfig
-
 source ./packaging/setup_goo.sh
-<<<<<<< HEAD
-gsutil cp google-osconfig-agent*.goo "${PKG_GCS_OUT_DIR}/"
->>>>>>> Use environment variables replacements instead of hard coding
-=======
 gsutil cp google-osconfig-agent*.goo "${GCS_PATH}/"
-
->>>>>>> Change env variable used to dump artifacts
 
 echo 'Package build success'
