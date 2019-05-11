@@ -9,6 +9,15 @@
     "base_repo": {
       "Value": "GoogleCloudPlatform",
       "Description": "Base GitHub repo"
+    },
+    "repo": {
+      "Value": "Osconfig",
+      "Description": "Github Repository"
+    },
+    "pull_ref": {
+      "Value": "",
+      "Required": true,
+      "Description": "Branch against which agent need to build"
     }
   },
   "Steps": {
@@ -21,7 +30,9 @@
             }
           ],
           "Metadata": {
-            "base-repo": "${base_repo}"
+            "base-repo": "${base_repo}",
+            "repo": "${repo}",
+            "pull-ref": "${pull_ref}"
           },
           "machineType": "n1-standard-2",
           "name": "inst-build-deb",
@@ -35,7 +46,9 @@
             }
           ],
           "Metadata": {
-            "base-repo": "${base_repo}"
+            "base-repo": "${base_repo}",
+            "repo": "${repo}",
+            "pull-ref": "${pull_ref}"
           },
           "machineType": "n1-standard-2",
           "name": "inst-build-goo",
@@ -49,7 +62,9 @@
             }
           ],
           "Metadata": {
-            "base-repo": "${base_repo}"
+            "base-repo": "${base_repo}",
+            "repo": "${repo}",
+            "pull-ref": "${pull_ref}"
           },
           "machineType": "n1-standard-2",
           "name": "inst-build-el6",
@@ -63,7 +78,9 @@
             }
           ],
           "Metadata": {
-            "base-repo": "${base_repo}"
+            "base-repo": "${base_repo}",
+            "repo": "${repo}",
+            "pull-ref": "${pull_ref}"
           },
           "machineType": "n1-standard-2",
           "name": "inst-build-el7",

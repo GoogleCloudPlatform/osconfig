@@ -25,8 +25,12 @@ trap exit_error ERR
 
 URL="http://metadata/computeMetadata/v1/instance/attributes"
 GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
+BASE_REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/base-repo)
+REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/repo)
+PULL_REF=$(curl -f -H Metadata-Flavor:Google ${URL}/pull-ref)
 
 apt-get install -y git-core
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD:packaging/build_packages_goo.sh
 git clone "https://github.com/${BASE_REPO}/osconfig.git" 
@@ -42,6 +46,9 @@ gsutil cp google-osconfig-agent*.goo "gs://osconfig-agent-package/"
 >>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/build_packages_goo.sh
 =======
 git clone "https://github.com/${BASE_REPO}/osconfig.git"
+=======
+git clone --branch ${PULL_REF} "https://github.com/${BASE_REPO}/${REPO}.git"
+>>>>>>> Implement feedback from reviewers
 cd osconfig
 
 source ./packaging/setup_goo.sh
