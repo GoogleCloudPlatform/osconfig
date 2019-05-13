@@ -17,4 +17,4 @@ source packaging/common.sh
 
 echo "Building package"
 GOPATH=${GOPATH} ${GO} get github.com/google/googet/goopack
-${GOPATH}/bin/goopack packaging/googet/google-osconfig-agent.goospec
+${GOPATH}/bin/goopack -var:version=${VERSION} packaging/googet/google-osconfig-agent.goospec
