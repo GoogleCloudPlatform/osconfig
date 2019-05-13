@@ -24,13 +24,15 @@ import (
 
 	"cloud.google.com/go/compute/metadata"
 	osconfig "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/cloud.google.com/go/osconfig/apiv1alpha1"
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
 	"github.com/GoogleCloudPlatform/osconfig/config"
+	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/logger"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
 	"github.com/golang/protobuf/jsonpb"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc/status"
+
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
 )
 
 type patchStep string
@@ -271,6 +273,11 @@ func (r *patchRun) runPatch() {
 		logger.Errorf("Error creating osconfig client: %v", err)
 	}
 	defer r.complete()
+	defer func() {
+		if config.OSInventoryEnabled() {
+			inventory.Run()
+		}
+	}()
 
 	for {
 		switch r.PatchStep {

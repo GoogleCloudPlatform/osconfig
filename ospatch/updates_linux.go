@@ -20,10 +20,12 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"time"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 	"github.com/GoogleCloudPlatform/osconfig/logger"
+
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
 )
 
 const (
@@ -94,5 +96,6 @@ func runUpdates(r *patchRun) error {
 	if err := r.reportContinuingState(osconfigpb.Instance_APPLYING_PATCHES); err != nil {
 		return err
 	}
-	return packages.UpdatePackages()
+
+	return retry(3*time.Minute, "installing package updates", packages.UpdatePackages)
 }
