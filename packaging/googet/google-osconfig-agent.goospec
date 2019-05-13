@@ -1,6 +1,6 @@
 {
   "name": "google-osconfig-agent",
-  "version": "{{.version}}",
+  "version": "{{.version}}@1",
   "arch": "x86_64",
   "authors": "Google Inc.",
   "license": "http://www.apache.org/licenses/LICENSE-2.0",
