@@ -28,6 +28,8 @@ import (
 	cloudkms "cloud.google.com/go/kms/apiv1"
 )
 
+// The values are used for testing only. The values will be replaced with actual ones
+// before merging the commit
 var (
 	dump   = &pretty.Config{IncludeUnexported: true}
 
