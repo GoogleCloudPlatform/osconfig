@@ -26,7 +26,6 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 	kmspb "google.golang.org/genproto/googleapis/cloud/kms/v1"
 	cloudkms "cloud.google.com/go/kms/apiv1"
-
 )
 
 var (
@@ -39,7 +38,7 @@ var (
 	keyRingID = flag.String("key_ring", "subratp-testing-gpg", "key ring used for decryption")
 	keyName = flag.String("key_name", "rpm-gpg", "key name used for decryption")
 	keyLocation = flag.String("location", "global", "GCP location where the kms key is stored")
-	kmsKeyName = fmt.Sprintf("projects/%s/locations/%s/keyRings/%/cryptoKeys/%s", projectID, keyLocation, keyRingID, keyName)
+	kmsKeyName = fmt.Sprintf("projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s", projectID, keyLocation, keyRingID, keyName)
 	outFileName = flag.String("out_path", "/tmp/RPM-GPG-KEY-subrat-decrypted", "output file path name")
 
 )
