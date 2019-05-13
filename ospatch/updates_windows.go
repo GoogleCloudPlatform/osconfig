@@ -18,13 +18,15 @@ package ospatch
 
 import (
 	"fmt"
+	"time"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 	"github.com/GoogleCloudPlatform/osconfig/logger"
 	ole "github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
 	"golang.org/x/sys/windows/registry"
+
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
 )
 
 func systemRebootRequired() (bool, error) {
@@ -239,7 +241,7 @@ func runUpdates(r *patchRun) error {
 			return err
 		}
 
-		if err := packages.InstallGooGetUpdates(); err != nil {
+		if err := retry(3*time.Minute, "installing package updates", packages.InstallGooGetUpdates); err != nil {
 			return err
 		}
 	}
