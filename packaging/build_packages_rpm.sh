@@ -57,7 +57,8 @@ case ${RELEASE} in
 esac
 yum install -y git2u
 
-cd osconfig
+packaging/pull_repository.sh
+
 packaging/setup_rpm.sh
 gsutil cp /tmp/rpmpackage/RPMS/x86_64/google-osconfig-agent-*.rpm "${GCS_PATH}/"
 
