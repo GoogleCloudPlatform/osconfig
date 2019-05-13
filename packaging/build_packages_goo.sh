@@ -34,7 +34,7 @@ apt-get install -y git-core
 git clone --branch ${PULL_REF} "https://github.com/${BASE_REPO}/${REPO}.git"
 
 cd osconfig
-source ./packaging/setup_goo.sh
+./packaging/setup_goo.sh
 gsutil cp google-osconfig-agent*.goo "${GCS_PATH}/"
 
 echo 'Package build success'
