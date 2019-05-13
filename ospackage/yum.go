@@ -22,7 +22,7 @@ import (
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
-	"github.com/GoogleCloudPlatform/osconfig/logger"
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 )
 
 func yumRepositories(repos []*osconfigpb.YumRepository, repoFile string) error {

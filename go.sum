@@ -3,6 +3,11 @@ cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 cloud.google.com/go v0.38.0 h1:ROfEUZz+Gh5pa62DJWXSaonyu3StP6EA6lPEXPI6mCo=
 cloud.google.com/go v0.38.0/go.mod h1:990N+gfupTy94rShfmMCWGDn0LpTmnzTp2qbd1dvSRU=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
+github.com/GoogleCloudPlatform/compute-image-tools v0.0.0-20190513155852-4d0828004f36 h1:1PzoGTU79S8bjdFwAbUVCf5uEJrWWGlJs5ocQ6SeLfQ=
+github.com/GoogleCloudPlatform/compute-image-tools v0.0.0-20190513155852-4d0828004f36/go.mod h1:fZ41ZusKqa5cT+fzLarvG09dT6eBbEpoyPnYw/1lKfA=
+github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20190510234319-5d4770fc537a h1:LaDz0bGE+SJ+XWeTJFEHoZdL0BQuCJ3KWuCATGBZHfM=
+github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20190513222546-a4d046b85e91 h1:zwgdBznpBEhlAOblMEuNlRLAZwNTYZULFFXiAE4v4wU=
+github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20190513222546-a4d046b85e91/go.mod h1:U3Zt5udP9CYYUrY7ukWwp1dhV9rvW0ZGu/NTklHBczA=
 github.com/StackExchange/wmi v0.0.0-20181212234831-e0a55b97c705 h1:UUppSQnhf4Yc6xGxSkoQpPhb7RVzuv5Nb1mwJ5VId9s=
 github.com/StackExchange/wmi v0.0.0-20181212234831-e0a55b97c705/go.mod h1:3eOhrUMpNV+6aFIbp5/iudMxNCF27Vw2OZgy4xEx0Fg=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
@@ -95,6 +100,8 @@ google.golang.org/genproto v0.0.0-20190307195333-5fe7a883aa19/go.mod h1:VzzqZJRn
 google.golang.org/genproto v0.0.0-20190418145605-e7d98fc518a7/go.mod h1:VzzqZJRnGkLBvHegQrXjBqPurQTc5/KpmUdxsrq26oE=
 google.golang.org/genproto v0.0.0-20190502173448-54afdca5d873 h1:nfPFGzJkUDX6uBmpN/pSw7MbOAWegH5QDQuoXFHedLg=
 google.golang.org/genproto v0.0.0-20190502173448-54afdca5d873/go.mod h1:VzzqZJRnGkLBvHegQrXjBqPurQTc5/KpmUdxsrq26oE=
+google.golang.org/genproto v0.0.0-20190508193815-b515fa19cec8 h1:x913Lq/RebkvUmRSdQ8MNb0GZKn+SR1ESfoetcQSeak=
+google.golang.org/genproto v0.0.0-20190513181449-d00d292a067c h1:m9avZ3wyOWBR0fLC+qWbMBulk+Jiiqelngssgp8jfIs=
 google.golang.org/grpc v1.19.0/go.mod h1:mqu4LbDTu4XGKhr4mRzUsmM4RtVoemTSY81AxZiDr8c=
 google.golang.org/grpc v1.20.1 h1:Hz2g2wirWK7H0qIIhGIqRGTuMwTE8HEKFnDZZ7lm9NU=
 google.golang.org/grpc v1.20.1/go.mod h1:10oTOabMzJvdu6/UiuZezV6QK5dSlG84ov/aaiqXj38=

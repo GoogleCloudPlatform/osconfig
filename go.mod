@@ -4,6 +4,8 @@ go 1.12
 
 require (
 	cloud.google.com/go v0.38.0
+	github.com/GoogleCloudPlatform/compute-image-tools v0.0.0-20190513155852-4d0828004f36
+	github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20190513222546-a4d046b85e91
 	github.com/StackExchange/wmi v0.0.0-20181212234831-e0a55b97c705
 	github.com/go-ole/go-ole v1.2.4
 	github.com/golang/protobuf v1.3.1

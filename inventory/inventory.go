@@ -23,11 +23,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/attributes"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
-	"github.com/GoogleCloudPlatform/osconfig/logger"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
 )
 

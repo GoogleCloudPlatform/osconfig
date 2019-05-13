@@ -25,7 +25,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GoogleCloudPlatform/osconfig/logger"
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 )
 
 const (

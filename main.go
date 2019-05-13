@@ -23,10 +23,10 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
-	"github.com/GoogleCloudPlatform/osconfig/logger"
 	"github.com/GoogleCloudPlatform/osconfig/ospackage"
 	"github.com/GoogleCloudPlatform/osconfig/ospatch"
 	"github.com/GoogleCloudPlatform/osconfig/service"
@@ -42,10 +42,10 @@ func init() {
 	obtainLock()
 }
 
-type logWritter struct{}
+type logWriter struct{}
 
-func (l *logWritter) Write(b []byte) (int, error) {
-	logger.Debug(logger.LogEntry{CallDepth: 3, Message: string(b)})
+func (l *logWriter) Write(b []byte) (int, error) {
+	logger.Debugf(string(b))
 	return len(b), nil
 }
 
@@ -96,9 +96,9 @@ func main() {
 		logger.Fatalf(err.Error())
 	}
 
-	packages.DebugLogger = log.New(&logWritter{}, "", 0)
+	packages.DebugLogger = log.New(&logWriter{}, "", 0)
 
-	logger.Init(ctx, config.ProjectID())
+	logger.Init(ctx, logger.LogOpts{LoggerName: "OSConfig Agent", ProjectName: config.ProjectID()})
 	defer logger.Close()
 
 	c := make(chan os.Signal, 1)
