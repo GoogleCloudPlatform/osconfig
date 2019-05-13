@@ -34,9 +34,8 @@ echo "started build..."
 
 apt-get -y update && apt-get -y upgrade
 apt-get install -y git-core
-git clone --branch ${PULL_REF} "https://github.com/${BASE_REPO}/${REPO}.git"
 
-cd osconfig
+packaging/pull_repository.sh
 
 <<<<<<< HEAD
 <<<<<<< HEAD:agent-packaging/packaging-scripts/build_packages_deb.sh

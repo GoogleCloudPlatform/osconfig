@@ -23,17 +23,15 @@ function exit_error
 
 trap exit_error ERR
 
-URL="http://metadata/computeMetadata/v1/instance/attributes"
-GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
-BASE_REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/base-repo)
-REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/repo)
-PULL_REF=$(curl -f -H Metadata-Flavor:Google ${URL}/pull-ref)
+# pull the repository from github - start
+mkdir -p $REPO
+cd $REPO
+git init
 
-apt-get install -y git-core
+# fetch only the branch that we want to build
+GIT_CMD="git fetch https://github.com/${BASE_REPO}/${REPO}.git $PULL_REF"
 
-packaging/pull_repository.sh
+echo "Running $GIT_CMD"
+$GIT_CMD
 
-./packaging/setup_goo.sh
-gsutil cp google-osconfig-agent*.goo "${GCS_PATH}/"
-
-echo 'Package build success'
+# pull the repository from github - end
