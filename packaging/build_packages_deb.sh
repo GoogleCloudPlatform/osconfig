@@ -73,7 +73,6 @@ gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${GCS_PATH}/"
 >>>>>>> Change env variable used to dump artifacts
 =======
 packaging/setup_deb.sh
-source ./packaging/setup_deb.sh
 
 gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${GCS_PATH}/"
 >>>>>>> Fix merge conflicts
