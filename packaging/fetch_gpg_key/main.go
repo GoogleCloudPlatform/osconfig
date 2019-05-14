@@ -40,7 +40,7 @@ var (
 	keyRingID = flag.String("key_ring", "subratp-testing-gpg", "key ring used for decryption")
 	keyName = flag.String("key_name", "rpm-gpg", "key name used for decryption")
 	keyLocation = flag.String("location", "global", "GCP location where the kms key is stored")
-	kmsKeyName = fmt.Sprintf("projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s", projectID, keyLocation, keyRingID, keyName)
+	kmsKeyName = fmt.Sprintf("projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s", *projectID, *keyLocation, *keyRingID, *keyName)
 	outFileName = flag.String("out_path", "/tmp/RPM-GPG-KEY-subrat-decrypted", "output file path name")
 
 )
@@ -48,21 +48,22 @@ var (
 func main() {
 	ctx := context.Background()
 	fmt.Println("reading encrpyted file...")
-	dat, _ := readFromGcs(ctx, gcsBucket, gcsObject)
+	dat, err := readFromGcs(ctx, gcsBucket, gcsObject)
+	check(err)
 	fmt.Printf("decrypting file...\n")
-	ddata, _ := decrypt(kmsKeyName, dat)
-	fmt.Printf("decrypted data: \n%s\n", string(ddata))
+	ddata, err := decrypt(ctx, kmsKeyName, dat)
+	check(err)
 	fmt.Println("writing data to file")
 	writeFile(ddata, "/tmp/RPM-GPG-KEY-subrat-decrypted")
 	fmt.Println("stored decrypted signature file")
 }
 
-func writeFile(data []byte, outFilePath string) {
-	errr := ioutil.WriteFile(outFilePath, data, 0400)
-	check(errr)
+func writeFile(data *[]byte, outFilePath string) {
+	err := ioutil.WriteFile(outFilePath, *data, 0400)
+	check(err)
 }
 
-func readFromGcs(ctx context.Context, bucket, object string) ([]byte, error) {
+func readFromGcs(ctx context.Context, bucket, object string) (*[]byte, error) {
 
 	client, err := storage.NewClient(ctx)
 	rc, err := client.Bucket(bucket).Object(object).NewReader(ctx)
@@ -75,11 +76,10 @@ func readFromGcs(ctx context.Context, bucket, object string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return data, nil
+	return &data, nil
 }
 
-func decrypt(keyName string, ciphertext []byte) ([]byte, error) {
-	ctx := context.Background()
+func decrypt(ctx context.Context, keyName string, ciphertext *[]byte) (*[]byte, error) {
 	client, err := cloudkms.NewKeyManagementClient(ctx)
 	if err != nil {
 		fmt.Printf("error: %+v\n", err)
@@ -89,16 +89,16 @@ func decrypt(keyName string, ciphertext []byte) ([]byte, error) {
 	// Build the request.
 	req := &kmspb.DecryptRequest{
 		Name: keyName,
-		Ciphertext: ciphertext,
+		Ciphertext: *ciphertext,
 	}
 	fmt.Printf("request: %s\n", req)
 	// Call the API.
 	response, err := client.Decrypt(ctx, req)
-	fmt.Printf("response: %s\n", dump.Sprint(response))
+	fmt.Printf("response: %s\n", dump.Sprint(nil))
 	if err != nil {
 		return nil, fmt.Errorf("decryption request failed: %+v", err)
 	}
-	return response.Plaintext, nil
+	return &response.Plaintext, nil
 }
 
 func check(e error) {
