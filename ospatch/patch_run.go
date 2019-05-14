@@ -99,7 +99,7 @@ func Run(ctx context.Context, cancel <-chan struct{}) {
 	liveState.RLock()
 	for _, pr := range liveState.PatchRuns {
 		pr.ctx = ctx
-		tasker.Enqueue("Run patch", pr.runPatch)
+		go tasker.Enqueue("Run patch", pr.runPatch)
 	}
 	liveState.RUnlock()
 
@@ -372,7 +372,7 @@ func ackPatch(ctx context.Context, patchJobName string) {
 		return
 	}
 	pr.setStep(acked)
-	tasker.Enqueue("Run patch", pr.runPatch)
+	go tasker.Enqueue("Run patch", pr.runPatch)
 }
 
 // retry tries to retry f for no more than maxRetryTime.
