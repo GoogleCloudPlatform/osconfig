@@ -22,27 +22,26 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	cloudkms "cloud.google.com/go/kms/apiv1"
 	"cloud.google.com/go/storage"
 	"github.com/kylelemons/godebug/pretty"
 	kmspb "google.golang.org/genproto/googleapis/cloud/kms/v1"
-	cloudkms "cloud.google.com/go/kms/apiv1"
 )
 
 // The values are used for testing only. The values will be replaced with actual ones
 // before merging the commit
 var (
-	dump   = &pretty.Config{IncludeUnexported: true}
+	dump = &pretty.Config{IncludeUnexported: true}
 
 	gcsBucket = "signing-certificate"
 	gcsObject = "RPM-GPG-KEY-subrat.encrypted"
 
-	projectID = flag.String("gcs_project", "subratp-project", "GCS project where the certificate is stored")
-	keyRingID = flag.String("key_ring", "subratp-testing-gpg", "key ring used for decryption")
-	keyName = flag.String("key_name", "rpm-gpg", "key name used for decryption")
+	projectID   = flag.String("gcs_project", "subratp-project", "GCS project where the certificate is stored")
+	keyRingID   = flag.String("key_ring", "subratp-testing-gpg", "key ring used for decryption")
+	keyName     = flag.String("key_name", "rpm-gpg", "key name used for decryption")
 	keyLocation = flag.String("location", "global", "GCP location where the kms key is stored")
-	kmsKeyName = fmt.Sprintf("projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s", *projectID, *keyLocation, *keyRingID, *keyName)
+	kmsKeyName  = fmt.Sprintf("projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s", *projectID, *keyLocation, *keyRingID, *keyName)
 	outFileName = flag.String("out_path", "/tmp/RPM-GPG-KEY-subrat-decrypted", "output file path name")
-
 )
 
 func main() {
@@ -88,7 +87,7 @@ func decrypt(ctx context.Context, keyName string, ciphertext *[]byte) (*[]byte, 
 
 	// Build the request.
 	req := &kmspb.DecryptRequest{
-		Name: keyName,
+		Name:       keyName,
 		Ciphertext: *ciphertext,
 	}
 	fmt.Printf("request: %s\n", req)
