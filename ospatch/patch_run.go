@@ -280,7 +280,7 @@ func (r *patchRun) runPatch() {
 	defer func() {
 		r.complete()
 		if config.OSInventoryEnabled() {
-			inventory.Run()
+			go inventory.Run()
 		}
 	}()
 
