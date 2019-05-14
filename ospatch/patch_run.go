@@ -383,7 +383,7 @@ func retry(maxRetryTime time.Duration, desc string, f func() error) error {
 		nf := math.Min(float64(i)*float64(i)+float64(rnd.Intn(i)), 300)
 		ns := time.Duration(int(nf)) * time.Second
 		tot += ns
-		if tot < maxRetryTime {
+		if tot > maxRetryTime {
 			return err
 		}
 
