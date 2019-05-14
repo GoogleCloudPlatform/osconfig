@@ -11,12 +11,11 @@
       "Description": "Base GitHub repo"
     },
     "repo": {
-      "Value": "Osconfig",
+      "Value": "osconfig",
       "Description": "Github Repository"
     },
     "pull_ref": {
       "Value": "",
-      "Required": true,
       "Description": "Branch against which agent need to build"
     }
   },
@@ -149,14 +148,6 @@
           }
         }
       ]
-    },
-    "copy-packages": {
-      "CopyGCSObjects": [
-        {
-          "Source": "${OUTSPATH}/",
-          "Destination": "${gcs_path}/"
-        }
-      ]
     }
   },
   "Dependencies": {
@@ -165,9 +156,6 @@
     ],
     "wait-for-build": [
       "build-packages"
-    ],
-    "copy-packages": [
-      "wait-for-build"
     ]
   }
 }
