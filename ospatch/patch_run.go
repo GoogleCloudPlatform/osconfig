@@ -30,6 +30,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
 	"github.com/golang/protobuf/jsonpb"
 	"google.golang.org/api/option"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
@@ -43,7 +44,7 @@ const (
 	acked          = "acked"
 	prePatchReboot = "prePatchReboot"
 	patching       = "patching"
-	complete       = "complete"
+	reportSucceded = "reportSucceded"
 )
 
 var (
@@ -54,6 +55,10 @@ func initPatch(ctx context.Context) {
 	cancelC = make(chan struct{})
 	disableAutoUpdates()
 	go Run(ctx, cancelC)
+	// Sleep just long enough for Run to register any pending patches.
+	// TODO: Find a cleaner way to ensure any pending patch runs start before
+	// other tasks immediately after startup.
+	time.Sleep(1 * time.Second)
 }
 
 // Configure manages the background patch service.
@@ -93,6 +98,7 @@ func Run(ctx context.Context, cancel <-chan struct{}) {
 
 	liveState.RLock()
 	for _, pr := range liveState.PatchRuns {
+		pr.ctx = ctx
 		tasker.Enqueue("Run patch", pr.runPatch)
 	}
 	liveState.RUnlock()
@@ -105,12 +111,10 @@ type patchRun struct {
 	ctx    context.Context
 	client *osconfig.Client
 
-	Job                *patchJob
-	StartedAt, EndedAt time.Time `json:",omitempty"`
-	Complete           bool
-	Errors             []string `json:",omitempty"`
-	PatchStep          patchStep
-	RebootCount        int
+	Job         *patchJob
+	StartedAt   time.Time `json:",omitempty"`
+	PatchStep   patchStep
+	RebootCount int
 	// TODO add Attempts and track number of retries with backoff, jitter, etc.
 }
 
@@ -251,6 +255,7 @@ func (r *patchRun) rebootIfNeeded(prePatch bool) error {
 func (r *patchRun) createClient() error {
 	if r.client == nil {
 		var err error
+		logger.Debugf("Creating new OSConfig client.")
 		r.client, err = osconfig.NewClient(r.ctx, option.WithEndpoint(config.SvcEndpoint()), option.WithCredentialsFile(config.OAuthPath()))
 		if err != nil {
 			return fmt.Errorf("osconfig.NewClient Error: %v", err)
@@ -268,24 +273,24 @@ func (r *patchRun) createClient() error {
  * - The process was unexpectedly restarted and we are continuing from where we left off.
  */
 func (r *patchRun) runPatch() {
-	logger.Debugf("Running patch job %s", r.Job.PatchJob)
+	logger.Debugf("Running patch job %s.", r.Job.PatchJob)
 	if err := r.createClient(); err != nil {
 		logger.Errorf("Error creating osconfig client: %v", err)
 	}
-	defer r.complete()
 	defer func() {
+		r.complete()
 		if config.OSInventoryEnabled() {
 			inventory.Run()
 		}
 	}()
 
 	for {
+		logger.Debugf("PatchJob %s: running PatchStep %q.", r.Job.PatchJob, r.PatchStep)
 		switch r.PatchStep {
 		default:
 			r.reportFailedState(fmt.Sprintf("unknown step: %q", r.PatchStep))
 			return
 		case acked:
-			logger.Debugf("Starting patchJob %s", r.Job)
 			r.StartedAt = time.Now()
 			if err := r.setStep(prePatchReboot); err != nil {
 				r.reportFailedState(fmt.Sprintf("Error saving agent step: %v", err))
@@ -305,11 +310,11 @@ func (r *patchRun) runPatch() {
 				return
 			}
 		case patching:
+			if err := r.reportContinuingState(osconfigpb.Instance_APPLYING_PATCHES); err != nil {
+				r.handleErrorState(err.Error(), err)
+				return
+			}
 			if r.Job.DryRun {
-				if err := r.reportContinuingState(osconfigpb.Instance_APPLYING_PATCHES); err != nil {
-					r.handleErrorState(err.Error(), err)
-					return
-				}
 				logger.Infof("Dry run - No updates applied for patch job '%s'", r.Job.PatchJob)
 			} else {
 				if err := runUpdates(r); err != nil {
@@ -322,10 +327,10 @@ func (r *patchRun) runPatch() {
 				return
 			}
 			// We have not rebooted so patching is complete.
-			if err := r.setStep(complete); err != nil {
+			if err := r.setStep(reportSucceded); err != nil {
 				r.reportFailedState(fmt.Sprintf("Error saving agent step: %v", err))
 			}
-		case complete:
+		case reportSucceded:
 			isRebootRequired, err := systemRebootRequired()
 			if err != nil {
 				r.reportFailedState(fmt.Sprintf("Error checking if system reboot is required: %v", err))
@@ -338,7 +343,8 @@ func (r *patchRun) runPatch() {
 			}
 
 			if err := r.reportPatchDetails(finalState, 0, ""); err != nil {
-				logger.Errorf("Failed to report state %s. Error: %v", finalState, err)
+				logger.Errorf("Failed to report state %s: %v", finalState, err)
+				return
 			}
 			logger.Debugf("Successfully completed patchJob %s", r.Job)
 			return
@@ -394,6 +400,7 @@ func retry(maxRetryTime time.Duration, desc string, f func() error) error {
 
 // reportPatchDetails tries to report patch details for 35m.
 func (r *patchRun) reportPatchDetails(patchState osconfigpb.Instance_PatchState, attemptCount int64, failureReason string) error {
+	var retErr error
 	err := retry(2100*time.Second, "reporting patch details", func() error {
 		// This can't be cached.
 		identityToken, err := metadata.Get(identityTokenPath)
@@ -415,7 +422,15 @@ func (r *patchRun) reportPatchDetails(patchState osconfigpb.Instance_PatchState,
 		res, err := r.client.ReportPatchJobInstanceDetails(r.ctx, &request)
 		if err != nil {
 			if s, ok := status.FromError(err); ok {
-				return fmt.Errorf("code: %q, message: %q, details: %q", s.Code(), s.Message(), s.Details())
+				err := fmt.Errorf("code: %q, message: %q, details: %q", s.Code(), s.Message(), s.Details())
+				switch s.Code() {
+				// Errors we should retry.
+				case codes.DeadlineExceeded, codes.Unavailable, codes.Aborted, codes.Internal:
+					return err
+				default:
+					retErr = err
+					return nil
+				}
 			}
 			return err
 		}
@@ -424,6 +439,9 @@ func (r *patchRun) reportPatchDetails(patchState osconfigpb.Instance_PatchState,
 	})
 	if err != nil {
 		return fmt.Errorf("error reporting patch details: %v", err)
+	}
+	if retErr != nil {
+		return fmt.Errorf("error reporting patch details: %v", retErr)
 	}
 	return nil
 }

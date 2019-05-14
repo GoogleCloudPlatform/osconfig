@@ -49,7 +49,7 @@ type InstanceInventory struct {
 }
 
 func write(state *InstanceInventory, url string) {
-	logger.Infof("Writing instance inventory.")
+	logger.Debugf("Writing instance inventory.")
 
 	if err := attributes.PostAttribute(url+"/LastUpdated", strings.NewReader(time.Now().UTC().Format(time.RFC3339))); err != nil {
 		logger.Errorf("postAttribute error: %v", err)
@@ -76,7 +76,7 @@ func write(state *InstanceInventory, url string) {
 
 // Get generates inventory data.
 func Get() *InstanceInventory {
-	logger.Infof("Gathering instance inventory.")
+	logger.Debugf("Gathering instance inventory.")
 
 	hs := &InstanceInventory{}
 

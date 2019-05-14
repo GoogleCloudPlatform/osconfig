@@ -97,5 +97,6 @@ func runUpdates(r *patchRun) error {
 		return err
 	}
 
+	logger.Debugf("Installing package updates.")
 	return retry(3*time.Minute, "installing package updates", packages.UpdatePackages)
 }

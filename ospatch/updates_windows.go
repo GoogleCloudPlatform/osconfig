@@ -69,7 +69,6 @@ func installUpdate(r *patchRun, classFilter, excludes map[string]struct{}, sessi
 		return fmt.Errorf(`getIterativeProp(updt, "KBArticleIDs"): %v`, err)
 	}
 
-	logger.Debugf("filtering out KBs: %q\n", excludes)
 	for i := 0; i < int(kbArticleIDsCount); i++ {
 		kbRaw, err := kbArticleIDs.GetProperty("Item", i)
 		if err != nil {
@@ -81,7 +80,6 @@ func installUpdate(r *patchRun, classFilter, excludes map[string]struct{}, sessi
 		}
 	}
 
-	logger.Debugf("filtering by classifications: %q\n", classFilter)
 	if len(classFilter) != 0 {
 		categories, categoriesCount, err := getIterativeProp(updt, "Categories")
 		if err != nil {
@@ -132,18 +130,12 @@ func installUpdate(r *patchRun, classFilter, excludes map[string]struct{}, sessi
 		return fmt.Errorf(`updateColl.CallMethod("Add", updt): %v`, err)
 	}
 
-	if err := r.reportContinuingState(osconfigpb.Instance_DOWNLOADING_PATCHES); err != nil {
-		return err
-	}
-
+	logger.Debugf("Downloading update %s", title.Value())
 	if err := packages.DownloadWUAUpdateCollection(session, updateColl); err != nil {
 		return fmt.Errorf("DownloadWUAUpdateCollection error: %v", err)
 	}
 
-	if err := r.reportContinuingState(osconfigpb.Instance_APPLYING_PATCHES); err != nil {
-		return err
-	}
-
+	logger.Debugf("Installing update %s", title.Value())
 	if err := packages.InstallWUAUpdateCollection(session, updateColl); err != nil {
 		return fmt.Errorf("InstallWUAUpdateCollection error: %v", err)
 	}
@@ -152,6 +144,7 @@ func installUpdate(r *patchRun, classFilter, excludes map[string]struct{}, sessi
 }
 
 func installWUAUpdates(r *patchRun) error {
+	logger.Debugf("Installing WUA updates.")
 	if err := ole.CoInitializeEx(0, ole.COINIT_MULTITHREADED); err != nil {
 		return err
 	}
@@ -169,6 +162,7 @@ func installWUAUpdates(r *patchRun) error {
 	}
 	defer session.Release()
 
+	logger.Debugf("Searching for available WUA updates.")
 	updts, err := packages.GetWUAUpdateCollection(session, "IsInstalled=0")
 	if err != nil {
 		return fmt.Errorf("GetWUAUpdateCollection error: %v", err)
@@ -185,9 +179,9 @@ func installWUAUpdates(r *patchRun) error {
 		return nil
 	}
 
-	logger.Debugf("DEBUG: %d Windows updates available\n", count)
+	logger.Debugf("%d Windows updates available\n", count)
 
-	class := make(map[string]struct{})
+	classFilter := make(map[string]struct{})
 	excludes := make(map[string]struct{})
 	if r.Job.PatchConfig.WindowsUpdate != nil {
 		for _, c := range r.Job.PatchConfig.WindowsUpdate.Classifications {
@@ -195,7 +189,7 @@ func installWUAUpdates(r *patchRun) error {
 			if !ok {
 				return fmt.Errorf("Unknown classification: %s", c)
 			}
-			class[sc] = struct{}{}
+			classFilter[sc] = struct{}{}
 		}
 
 		for _, e := range r.Job.PatchConfig.WindowsUpdate.Excludes {
@@ -203,7 +197,12 @@ func installWUAUpdates(r *patchRun) error {
 		}
 	}
 
+	logger.Debugf("Filtering by classifications: %q\n", classFilter)
+	logger.Debugf("Filtering out KBs: %q\n", excludes)
 	for i := 0; i < int(count); i++ {
+		if err := r.reportContinuingState(osconfigpb.Instance_APPLYING_PATCHES); err != nil {
+			return err
+		}
 		updtRaw, err := updts.GetProperty("Item", i)
 		if err != nil {
 			return err
@@ -211,7 +210,7 @@ func installWUAUpdates(r *patchRun) error {
 		updt := updtRaw.ToIDispatch()
 		defer updt.Release()
 
-		if err := installUpdate(r, class, excludes, session, updt); err != nil {
+		if err := installUpdate(r, classFilter, excludes, session, updt); err != nil {
 			return fmt.Errorf(`installUpdate(class, excludes, updt): %v`, err)
 		}
 	}
@@ -232,6 +231,7 @@ var classifications = map[osconfigpb.WindowsUpdateSettings_Classification]string
 }
 
 func runUpdates(r *patchRun) error {
+	
 	if err := installWUAUpdates(r); err != nil {
 		return err
 	}
@@ -241,6 +241,7 @@ func runUpdates(r *patchRun) error {
 			return err
 		}
 
+		logger.Debugf("Installing package updates.")
 		if err := retry(3*time.Minute, "installing package updates", packages.InstallGooGetUpdates); err != nil {
 			return err
 		}
