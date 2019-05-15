@@ -23,19 +23,26 @@ function exit_error
 
 trap exit_error ERR
 
+GIT_LOCAL_BRANCH="packaging"
+
 # pull the repository from github - start
 mkdir -p $REPO
 cd $REPO
 git init
 
 # fetch only the branch that we want to build
-GIT_CMD="git fetch https://github.com/${BASE_REPO}/${REPO}.git"
+GIT_CMD="git fetch https://github.com/${BASE_REPO}/${REPO}.git "
 
-if [[ "$PULL_NUMBER" != "" ]]; then
-  GIT_CMD+=" pull/${PULL_NUMBER}/head:pr-${PULL_NUMBER}"
+# append the pull ref; this is for presubmit tasks
+if [[ "$PULL_REF" != "" ]]; then
+  $PULL_REF="master"
 fi
+
+GIT_CMD+="${PULL_REF}:${GIT_LOCAL_BRANCH}"
 
 echo "Running $GIT_CMD"
 $GIT_CMD
+
+git checkout ${GIT_LOCAL_BRANCH}
 
 # pull the repository from github - end

@@ -36,43 +36,8 @@ apt-get install -y git-core
 
 packaging/pull_repository.sh
 
-<<<<<<< HEAD
-<<<<<<< HEAD:agent-packaging/packaging-scripts/build_packages_deb.sh
-<<<<<<< HEAD:packaging/build_packages_deb.sh
-apt-get install -y git-core 
-git clone "https://github.com/${BASE_REPO}/osconfig.git"
-cd osconfig
-packaging/setup_deb.sh 
-<<<<<<< HEAD:packaging/build_packages_deb.sh
-gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${GCS_PATH}/"
-=======
-gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${GCS_PATH}/" 
-=======
-source ./agent-packaging/packaging-scripts/setup_deb.sh
-=======
-source ./packaging/setup_deb.sh
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> Move back  packaging code to where it was:packaging/build_packages_deb.sh
-gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "gs://osconfig-agent-package/"
->>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/build_packages_deb.sh
-<<<<<<< HEAD
->>>>>>> Add osconfig agent packaging scripts and docker file:agent-packaging/packaging-scripts/build_packages_deb.sh
-=======
-=======
-gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${PKG_GCS_OUT_DIR}/"
->>>>>>> Use environment variables replacements instead of hard coding
-<<<<<<< HEAD
->>>>>>> Use environment variables replacements instead of hard coding
-=======
-=======
-gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${GCS_PATH}/"
->>>>>>> Change env variable used to dump artifacts
->>>>>>> Change env variable used to dump artifacts
-=======
 packaging/setup_deb.sh
 
 gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${GCS_PATH}/"
->>>>>>> Fix merge conflicts
 
 echo 'Package build success'
