@@ -22,7 +22,7 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/GoogleCloudPlatform/osconfig/logger"
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 )
 
 // disableAutoUpdates disables system auto updates.

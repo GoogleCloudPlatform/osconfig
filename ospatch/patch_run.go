@@ -23,10 +23,10 @@ import (
 	"time"
 
 	"cloud.google.com/go/compute/metadata"
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	osconfig "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/cloud.google.com/go/osconfig/apiv1alpha1"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
-	"github.com/GoogleCloudPlatform/osconfig/logger"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
 	"github.com/golang/protobuf/jsonpb"
 	"google.golang.org/api/option"

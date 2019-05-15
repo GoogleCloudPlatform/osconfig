@@ -31,6 +31,6 @@ apt-get install -y git-core
 git clone "https://github.com/${BASE_REPO}/osconfig.git"
 cd osconfig
 packaging/setup_deb.sh 
-gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${GCS_PATH}/" 
+gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${GCS_PATH}/"
 
 echo 'Package build success'

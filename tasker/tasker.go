@@ -18,7 +18,7 @@ package tasker
 import (
 	"sync"
 
-	"github.com/GoogleCloudPlatform/osconfig/logger"
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 )
 
 var (

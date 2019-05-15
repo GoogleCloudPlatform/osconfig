@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
-	"github.com/GoogleCloudPlatform/osconfig/logger"
 )
 
 var debArchiveTypeMap = map[osconfigpb.AptRepository_ArchiveType]string{

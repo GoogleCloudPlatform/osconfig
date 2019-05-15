@@ -20,7 +20,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/GoogleCloudPlatform/osconfig/logger"
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 )
 
 func obtainLock() {
