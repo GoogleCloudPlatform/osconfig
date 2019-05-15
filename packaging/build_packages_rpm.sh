@@ -30,7 +30,7 @@ BASE_REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/base-repo)
 # centos6 has some issues with network on first boot
 el6_install(){
   n=0
-  while ! yum install -y https://rhel6.iuscommunity.org/ius-release.rpm; do
+  while ! yum install -y https://centos6.iuscommunity.org/ius-release.rpm; do
     if [[ n -gt 3 ]]; then
       exit 1
     fi
@@ -42,7 +42,7 @@ el6_install(){
 }
 
 el7_install(){
-  yum install -y https://rhel7.iuscommunity.org/ius-release.rpm
+  yum install -y https://centos7.iuscommunity.org/ius-release.rpm
   rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-IUS-7
 }
 
