@@ -29,7 +29,11 @@ cd $REPO
 git init
 
 # fetch only the branch that we want to build
-GIT_CMD="git fetch https://github.com/${BASE_REPO}/${REPO}.git $PULL_REF"
+GIT_CMD="git fetch https://github.com/${BASE_REPO}/${REPO}.git"
+
+if [[ "$PULL_NUMBER" != "" ]]; then
+  GIT_CMD+=" pull/${PULL_NUMBER}/head:pr-${PULL_NUMBER}"
+fi
 
 echo "Running $GIT_CMD"
 $GIT_CMD
