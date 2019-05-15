@@ -23,12 +23,11 @@ function exit_error
 
 trap exit_error ERR
 
-URL="http://metadata/computeMetadata/v1/instance/attributes"
-GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
-BASE_REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/base-repo)
-REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/repo)
-PULL_REF=$(curl -f -H Metadata-Flavor:Google ${URL}/pull-ref)
-
+export URL="http://metadata/computeMetadata/v1/instance/attributes"
+export GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
+export BASE_REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/base-repo)
+export REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/repo)
+export PULL_REF=$(curl -f -H Metadata-Flavor:Google ${URL}/pull-ref)
 
 echo "started build..."
 
