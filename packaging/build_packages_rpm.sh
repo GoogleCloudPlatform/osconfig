@@ -27,8 +27,12 @@ URL="http://metadata/computeMetadata/v1/instance/attributes"
 GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
 BASE_REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/base-repo)
 
+import_gpg() {
+  rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-IUS-$1
+}
+
 # centos6 has some issues with network on first boot
-el6_install(){
+el6_install_import(){
   n=0
   while ! yum install -y https://rhel6.iuscommunity.org/ius-release.rpm; do
     if [[ n -gt 3 ]]; then
@@ -37,16 +41,30 @@ el6_install(){
     n=$[$n+1]
     sleep 5
   done
+
+  import_gpg "6"
+}
+
+el7_install_import(){
+  n=0
+  while ! yum -y install https://rhel7.iuscommunity.org/ius-release.rpm; do
+    if [[ n -gt 3 ]]; then
+      exit 1
+    fi
+    n=$[$n+1]
+    sleep 5
+  done
+
+  import_gpg "7"
 }
 
 # Install git2 as this is not avaiable in centos 6/7
 RELEASE_RPM=$(rpm -qf /etc/redhat-release)
 RELEASE=$(rpm -q --qf '%{VERSION}' ${RELEASE_RPM})
 case ${RELEASE} in
-  6*) el6_install;;
-  7*) yum -y install https://rhel7.iuscommunity.org/ius-release.rpm;;
+  6*) el6_install_import;;
+  7*) el7_install_import;;
 esac
-rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-IUS-7
 yum install -y git2u
 
 git clone "https://github.com/${BASE_REPO}/osconfig.git"
