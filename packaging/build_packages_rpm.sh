@@ -46,7 +46,7 @@ case ${RELEASE} in
   6*) el6_install;;
   7*) yum -y install https://rhel7.iuscommunity.org/ius-release.rpm;;
 esac
-rpm --import /etc/pki/rpm-gpg/IUS-COMMUNITY-GPG-KEY
+rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-IUS-7
 yum install -y git2u
 
 git clone "https://github.com/${BASE_REPO}/osconfig.git"
