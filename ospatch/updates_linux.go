@@ -97,33 +97,28 @@ func systemRebootRequired() (bool, error) {
 func updatePackages(r *patchRun) error {
 	var errs []string
 	if packages.AptExists {
+		var opts []packages.AptGetUpgradeOption
 		if r.Job.ReportPatchJobInstanceDetailsResponse.PatchConfig.Apt != nil {
 			switch r.Job.ReportPatchJobInstanceDetailsResponse.PatchConfig.Apt.Type {
-			case osconfigpb.AptSettings_TYPE_UNSPECIFIED:
-				if err := packages.AptUpgrade(); err != nil {
-					errs = append(errs, err.Error())
-				}
 			case osconfigpb.AptSettings_DIST:
-				if err := packages.AptDistUpgrade(); err != nil {
-					errs = append(errs, err.Error())
-				}
+				opts = append(opts, packages.AptGetUpgradeType(packages.AptGetDistUpgrade))
 			}
-		} else {
-			if err := packages.AptUpgrade(); err != nil {
-				errs = append(errs, err.Error())
-			}
+		}
+		if err := packages.AptGetUpgrade(opts...); err != nil {
+			errs = append(errs, err.Error())
 		}
 	}
 	if packages.YumExists {
+		var opts []packages.YumUpdateOption
 		if r.Job.ReportPatchJobInstanceDetailsResponse.PatchConfig.Yum != nil {
-			opts := []packages.YumUpdateOption{
+			opts = []packages.YumUpdateOption{
 				packages.YumUpdateSecurity(r.Job.ReportPatchJobInstanceDetailsResponse.PatchConfig.Yum.GetSecurity()),
 				packages.YumUpdateMinimal(r.Job.ReportPatchJobInstanceDetailsResponse.PatchConfig.Yum.GetMinimal()),
 				packages.YumUpdateExcludes(r.Job.ReportPatchJobInstanceDetailsResponse.PatchConfig.Yum.GetExcludes()),
 			}
-			if err := packages.YumUpdate(opts...); err != nil {
-				errs = append(errs, err.Error())
-			}
+		}
+		if err := packages.YumUpdate(opts...); err != nil {
+			errs = append(errs, err.Error())
 		}
 	}
 	if packages.ZypperExists {
