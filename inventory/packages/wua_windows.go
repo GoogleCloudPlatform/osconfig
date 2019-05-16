@@ -118,8 +118,6 @@ func WUAUpdates(query string) ([]WUAPackage, error) {
 		return nil, nil
 	}
 
-	DebugLogger.Printf("%d WUA updates available", updtCnt)
-
 	var packages []WUAPackage
 	for i := 0; i < int(updtCnt); i++ {
 		updtRaw, err := updts.GetProperty("Item", i)
@@ -222,7 +220,6 @@ func DownloadWUAUpdateCollection(session IUpdateSession, updates IUpdateCollecti
 		return fmt.Errorf("error calling PutProperty Updates on IUpdateDownloader: %v", err)
 	}
 
-	DebugLogger.Println("Downloading WUA updates")
 	if _, err := downloader.CallMethod("Download"); err != nil {
 		return fmt.Errorf("error calling method Download on IUpdateDownloader: %v", err)
 	}
@@ -244,7 +241,6 @@ func InstallWUAUpdateCollection(session IUpdateSession, updates IUpdateCollectio
 		return fmt.Errorf("error calling PutProperty Updates on IUpdateInstaller: %v", err)
 	}
 
-	DebugLogger.Println("Installing WUA updates")
 	// TODO: Look into using the async methods and attempt to track/log progress.
 	if _, err := installer.CallMethod("Install"); err != nil {
 		return fmt.Errorf("error calling method Install on IUpdateInstaller: %v", err)
@@ -264,7 +260,6 @@ func GetWUAUpdateCollection(session IUpdateSession, query string) (IUpdateCollec
 	searcher := searcherRaw.ToIDispatch()
 	defer searcherRaw.Clear()
 
-	DebugLogger.Printf("Querying Windows Update Agent Search with query %q.", query)
 	// returns ISearchResult
 	// https://msdn.microsoft.com/en-us/library/windows/desktop/aa386077(v=vs.85).aspx
 	resultRaw, err := searcher.CallMethod("Search", query)

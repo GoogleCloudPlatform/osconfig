@@ -191,14 +191,14 @@ func installWUAUpdates(r *patchRun) error {
 			}
 			classFilter[sc] = struct{}{}
 		}
+		logger.Debugf("Filtering by classifications: %q\n", r.Job.PatchConfig.WindowsUpdate.Classifications)
 
 		for _, e := range r.Job.PatchConfig.WindowsUpdate.Excludes {
 			excludes[e] = struct{}{}
 		}
+		logger.Debugf("Filtering out KBs: %q\n", r.Job.PatchConfig.WindowsUpdate.Excludes)
 	}
 
-	logger.Debugf("Filtering by classifications: %q\n", classFilter)
-	logger.Debugf("Filtering out KBs: %q\n", excludes)
 	for i := 0; i < int(count); i++ {
 		if err := r.reportContinuingState(osconfigpb.Instance_APPLYING_PATCHES); err != nil {
 			return err
@@ -231,8 +231,7 @@ var classifications = map[osconfigpb.WindowsUpdateSettings_Classification]string
 }
 
 func runUpdates(r *patchRun) error {
-	
-	if err := installWUAUpdates(r); err != nil {
+	if err := retry(30*time.Minute, "installing wua updates", func() error {return installWUAUpdates(r)}; err != nil {
 		return err
 	}
 
