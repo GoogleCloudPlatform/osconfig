@@ -84,8 +84,8 @@ func InstallZypperUpdates() error {
 	return nil
 }
 
-// update zypper packages
-func zypperUpdate() error {
+// ZypperUpdate runs zypper update.
+func ZypperUpdate() error {
 	if _, err := run(exec.Command(zypper, zypperUpdateArgs...)); err != nil {
 		return err
 	}
