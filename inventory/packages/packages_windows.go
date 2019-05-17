@@ -32,6 +32,7 @@ func GetPackageUpdates() (Packages, []string) {
 			pkgs.GooGet = googet
 		}
 	}
+	DebugLogger.Println("Searching for available WUA updates.")
 	if wua, err := WUAUpdates("IsInstalled=0"); err != nil {
 		msg := fmt.Sprintf("error listing installed Windows updates: %v", err)
 		DebugLogger.Println("Error:", msg)
@@ -58,6 +59,7 @@ func GetInstalledPackages() (Packages, []string) {
 		}
 	}
 
+	DebugLogger.Println("Searching for installed WUA updates.")
 	if wua, err := WUAUpdates("IsInstalled=1"); err != nil {
 		msg := fmt.Sprintf("error listing installed Windows updates: %v", err)
 		DebugLogger.Println("Error:", msg)

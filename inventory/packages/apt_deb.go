@@ -29,12 +29,14 @@ var (
 	dpkgquery string
 	aptGet    string
 
-	dpkgqueryArgs        = []string{"-W", "-f", `${Package} ${Architecture} ${Version}\n`}
-	aptGetInstallArgs    = []string{"install", "-y"}
-	aptGetRemoveArgs     = []string{"remove", "-y"}
-	aptGetUpdateArgs     = []string{"update"}
-	aptGetUpgradeArgs    = []string{"upgrade", "-y"}
-	aptGetUpgradableArgs = []string{"upgrade", "--just-print"}
+	dpkgQueryArgs         = []string{"-W", "-f", `${Package} ${Architecture} ${Version}\n`}
+	aptGetInstallArgs     = []string{"install", "-y"}
+	aptGetRemoveArgs      = []string{"remove", "-y"}
+	aptGetUpdateArgs      = []string{"update"}
+	aptGetUpgradeArgs     = []string{"upgrade", "-y"}
+	aptGetFullUpgradeArgs = []string{"full-upgrade", "-y"}
+	aptGetDistUpgradeArgs = []string{"dist-upgrade", "-y"}
+	aptGetUpgradableArgs  = []string{"full-upgrade", "--just-print", "-V"}
 )
 
 func init() {
@@ -75,13 +77,57 @@ func RemoveAptPackages(pkgs []string) error {
 	return nil
 }
 
-// update apt packages
-func aptUpgrade() error {
+type aptGetUpgradeType int
+
+const (
+	aptGetUpgrade aptGetUpgradeType = iota
+	// AptGetDistUpgrade specifies apt-get dist-upgrade should be run.
+	AptGetDistUpgrade
+	// AptGetFullUpgrade specifies apt-get full-upgrade should be run.
+	AptGetFullUpgrade
+)
+
+type aptGetUpgradeOpts struct {
+	upgradeType aptGetUpgradeType
+}
+
+// AptGetUpgradeOption is an option for apt-get update.
+type AptGetUpgradeOption func(*aptGetUpgradeOpts)
+
+// AptGetUpgradeType returns a AptGetUpgradeOption that specifies upgrade type.
+func AptGetUpgradeType(upgradeType aptGetUpgradeType) AptGetUpgradeOption {
+	return func(args *aptGetUpgradeOpts) {
+		args.upgradeType = upgradeType
+	}
+}
+
+// AptGetUpgrade runs apt-get upgrade.
+func AptGetUpgrade(opts ...AptGetUpgradeOption) error {
+	aptOpts := &aptGetUpgradeOpts{
+		upgradeType: aptGetUpgrade,
+	}
+
+	for _, opt := range opts {
+		opt(aptOpts)
+	}
+
 	if _, err := run(exec.Command(aptGet, aptGetUpdateArgs...)); err != nil {
 		return err
 	}
 
-	upgrade := exec.Command(aptGet, aptGetUpgradeArgs...)
+	var args []string
+	switch aptOpts.upgradeType {
+	case aptGetUpgrade:
+		args = aptGetUpgradeArgs
+	case AptGetDistUpgrade:
+		args = aptGetDistUpgradeArgs
+	case AptGetFullUpgrade:
+		args = aptGetFullUpgradeArgs
+	default:
+		return fmt.Errorf("uknown upgarde type: %q", aptOpts.upgradeType)
+	}
+
+	upgrade := exec.Command(aptGet, args...)
 	upgrade.Env = append(os.Environ(),
 		"DEBIAN_FRONTEND=noninteractive",
 	)
@@ -104,23 +150,23 @@ func AptUpdates() ([]PkgInfo, error) {
 		return nil, err
 	}
 	/*
-	   NOTE: This is only a simulation!
-	         apt-get needs root privileges for real execution.
-	         Keep also in mind that locking is deactivated,
-	         so don't depend on the relevance to the real current situation!
-	   Reading package lists... Done
-	   Building dependency tree
-	   Reading state information... Done
-	   Calculating upgrade... Done
-	   The following packages will be upgraded:
-	     google-cloud-sdk libdns-export162 libisc-export160
-	   3 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.
-	   Inst google-cloud-sdk [168.0.0-0] (171.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [all])
-	   Inst python2.7 [2.7.13-2] (2.7.13-2+deb9u2 Debian:9.3/stable [amd64]) []
-	   Inst libdns-export162 [1:9.10.3.dfsg.P4-12.3+deb9u2] (1:9.10.3.dfsg.P4-12.3+deb9u3 Debian:stable-updates [amd64])
-	   Conf google-cloud-sdk (171.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [all])
-	   Conf libisc-export160 (1:9.10.3.dfsg.P4-12.3+deb9u3 Debian:stable-updates [amd64])
-	   Conf libdns-export162 (1:9.10.3.dfsg.P4-12.
+		Reading package lists... Done
+		Building dependency tree
+		Reading state information... Done
+		Calculating upgrade... Done
+		The following NEW packages will be installed:
+		  firmware-linux-free linux-image-4.9.0-9-amd64
+		The following packages will be upgraded:
+		  google-cloud-sdk linux-image-amd64
+		2 upgraded, 2 newly installed, 0 to remove and 0 not upgraded.
+		Inst firmware-linux-free (3.4 Debian:9.9/stable [all])
+		Inst google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [all])
+		Inst linux-image-4.9.0-9-amd64 (4.9.168-1+deb9u2 Debian-Security:9/stable [amd64])
+		Inst linux-image-amd64 [4.9+80+deb9u6] (4.9+80+deb9u7 Debian:9.9/stable [amd64])
+		Conf firmware-linux-free (3.4 Debian:9.9/stable [all])
+		Conf google-cloud-sdk (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [all])
+		Conf linux-image-4.9.0-9-amd64 (4.9.168-1+deb9u2 Debian-Security:9/stable [amd64])
+		Conf linux-image-amd64 (4.9+80+deb9u7 Debian:9.9/stable [amd64])
 	*/
 
 	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
@@ -131,7 +177,12 @@ func AptUpdates() ([]PkgInfo, error) {
 		if pkg[0] != "Inst" {
 			continue
 		}
-		if len(pkg) < 6 {
+		if len(pkg) == 5 {
+			// We don't want to record new installs.
+			// Inst firmware-linux-free (3.4 Debian:9.9/stable [all])
+			continue
+		}
+		if len(pkg) != 6 {
 			DebugLogger.Printf("%q does not represent an apt update\n", ln)
 			continue
 		}
@@ -144,7 +195,7 @@ func AptUpdates() ([]PkgInfo, error) {
 
 // InstalledDebPackages queries for all installed deb packages.
 func InstalledDebPackages() ([]PkgInfo, error) {
-	out, err := run(exec.Command(dpkgquery, dpkgqueryArgs...))
+	out, err := run(exec.Command(dpkgquery, dpkgQueryArgs...))
 	if err != nil {
 		return nil, err
 	}

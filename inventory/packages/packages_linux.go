@@ -14,35 +14,8 @@ limitations under the License.
 package packages
 
 import (
-	"errors"
 	"fmt"
-	"strings"
 )
-
-// UpdatePackages installs all available package updates for all known system
-// package managers.
-func UpdatePackages() error {
-	var errs []string
-	if AptExists {
-		if err := aptUpgrade(); err != nil {
-			errs = append(errs, err.Error())
-		}
-	}
-	if YumExists {
-		if err := yumUpdate(); err != nil {
-			errs = append(errs, err.Error())
-		}
-	}
-	if ZypperExists {
-		if err := zypperUpdate(); err != nil {
-			errs = append(errs, err.Error())
-		}
-	}
-	if errs == nil {
-		return nil
-	}
-	return errors.New(strings.Join(errs, ",\n"))
-}
 
 // GetPackageUpdates gets all available package updates from any known
 // installed package manager.
