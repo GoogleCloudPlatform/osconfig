@@ -231,7 +231,7 @@ var classifications = map[osconfigpb.WindowsUpdateSettings_Classification]string
 }
 
 func runUpdates(r *patchRun) error {
-	if err := retry(30*time.Minute, "installing wua updates", func() error {return installWUAUpdates(r)}); err != nil {
+	if err := retry(30*time.Minute, "installing wua updates", func() error { return installWUAUpdates(r) }); err != nil {
 		return err
 	}
 

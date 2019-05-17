@@ -29,7 +29,7 @@ var (
 	dpkgquery string
 	aptGet    string
 
-	dpkgqueryArgs         = []string{"-W", "-f", `${Package} ${Architecture} ${Version}\n`}
+	dpkgQueryArgs         = []string{"-W", "-f", `${Package} ${Architecture} ${Version}\n`}
 	aptGetInstallArgs     = []string{"install", "-y"}
 	aptGetRemoveArgs      = []string{"remove", "-y"}
 	aptGetUpdateArgs      = []string{"update"}
@@ -195,7 +195,7 @@ func AptUpdates() ([]PkgInfo, error) {
 
 // InstalledDebPackages queries for all installed deb packages.
 func InstalledDebPackages() ([]PkgInfo, error) {
-	out, err := run(exec.Command(dpkgquery, dpkgqueryArgs...))
+	out, err := run(exec.Command(dpkgquery, dpkgQueryArgs...))
 	if err != nil {
 		return nil, err
 	}

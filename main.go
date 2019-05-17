@@ -98,8 +98,9 @@ func main() {
 
 	packages.DebugLogger = log.New(&logWriter{}, "", 0)
 
-	logger.Init(ctx, logger.LogOpts{LoggerName: "OSConfig Agent", ProjectName: config.ProjectID()})
+	logger.Init(ctx, logger.LogOpts{LoggerName: "OSConfigAgent", ProjectName: config.ProjectID(), Debug: config.Debug(), Stdout: config.Stdout()})
 	defer logger.Close()
+	logger.Infof("OSConfig Agent (version %s) Started", config.Version())
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)

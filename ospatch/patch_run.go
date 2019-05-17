@@ -273,7 +273,7 @@ func (r *patchRun) createClient() error {
  * - The process was unexpectedly restarted and we are continuing from where we left off.
  */
 func (r *patchRun) runPatch() {
-	logger.Debugf("Running patch job %s.", r.Job.PatchJob)
+	logger.Infof("Running patch job %s.", r.Job.PatchJob)
 	if err := r.createClient(); err != nil {
 		logger.Errorf("Error creating osconfig client: %v", err)
 	}
@@ -346,7 +346,7 @@ func (r *patchRun) runPatch() {
 				logger.Errorf("Failed to report state %s: %v", finalState, err)
 				return
 			}
-			logger.Debugf("Successfully completed patchJob %s", r.Job)
+			logger.Infof("Successfully completed patchJob %s", r.Job.PatchJob)
 			return
 		}
 	}
@@ -417,7 +417,8 @@ func (r *patchRun) reportPatchDetails(patchState osconfigpb.Instance_PatchState,
 			AttemptCount:     attemptCount,
 			FailureReason:    failureReason,
 		}
-		logger.Debugf("Reporting patch details request: %+v", request)
+		logger.Debugf("Reporting patch details request: {Resource: %s, InstanceSystemId: %s, PatchJob: %s, State: %s, FailureReason: %q}",
+			request.Resource, request.InstanceSystemId, request.PatchJob, request.State, request.FailureReason)
 
 		res, err := r.client.ReportPatchJobInstanceDetails(r.ctx, &request)
 		if err != nil {
@@ -425,7 +426,7 @@ func (r *patchRun) reportPatchDetails(patchState osconfigpb.Instance_PatchState,
 				err := fmt.Errorf("code: %q, message: %q, details: %q", s.Code(), s.Message(), s.Details())
 				switch s.Code() {
 				// Errors we should retry.
-				case codes.DeadlineExceeded, codes.Unavailable, codes.Aborted, codes.Internal:
+				case codes.DeadlineExceeded, codes.Unavailable, codes.Aborted, codes.Internal, codes.ResourceExhausted:
 					return err
 				default:
 					retErr = err

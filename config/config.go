@@ -59,6 +59,7 @@ var (
 	endpoint         = flag.String("endpoint", prodEndpoint, "osconfig endpoint override")
 	oauth            = flag.String("oauth", "", "path to oauth json file")
 	debug            = flag.Bool("debug", false, "set debug log verbosity")
+	stdout           = flag.Bool("stdout", false, "log to stdout")
 
 	agentConfig   = &config{}
 	agentConfigMx sync.RWMutex
@@ -277,6 +278,11 @@ func ResourceOverride() string {
 // Debug sets the debug log verbosity.
 func Debug() bool {
 	return (*debug || getAgentConfig().debugEnabled)
+}
+
+// Stdout flag.
+func Stdout() bool {
+	return *stdout
 }
 
 // OAuthPath is the local location of the OAuth credentials file.
