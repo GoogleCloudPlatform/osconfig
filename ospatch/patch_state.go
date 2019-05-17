@@ -29,8 +29,8 @@ var liveState state
 const pastJobsNum = 10
 
 type state struct {
-	PatchRuns []*patchRun
-	PastJobs  []string
+	PatchRuns []*patchRun `json:",omitempty"`
+	PastJobs  []string    `json:",omitempty"`
 
 	sync.RWMutex `json:"-"`
 }
