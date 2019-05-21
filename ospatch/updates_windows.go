@@ -230,7 +230,7 @@ var classifications = map[osconfigpb.WindowsUpdateSettings_Classification]string
 }
 
 func (r *patchRun) runUpdates() error {
-	if err := retry(30*time.Minute, "installing wua updates", r.installWUAUpdates); err != nil {
+	if err := retry(30*time.Minute, "installing wua updates", r.debugf, r.installWUAUpdates); err != nil {
 		return err
 	}
 
@@ -241,7 +241,7 @@ func (r *patchRun) runUpdates() error {
 
 		r.debugf("Installing GooGet package updates.")
 		opts := []GooGetUpdateOption{GooGetUpdateRunner(patchRunRunner(r))}
-		if err := retry(3*time.Minute, "installing GooGet package updates", func() error { return RunGooGetUpdate(opts...) }); err != nil {
+		if err := retry(3*time.Minute, "installing GooGet package updates",r.debugf,  func() error { return RunGooGetUpdate(opts...) }); err != nil {
 			return err
 		}
 	}

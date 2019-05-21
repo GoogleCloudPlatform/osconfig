@@ -18,9 +18,11 @@ package ospatch
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
 	"syscall"
+	"time"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 )
@@ -31,7 +33,7 @@ func disableAutoUpdates() {
 	if _, err := os.Stat("/usr/sbin/yum-cron"); err == nil {
 		out, err := exec.Command("chkconfig", "yum-cron").CombinedOutput()
 		if err != nil {
-			logger.Errorf("error checking status of yum-cron, error: %v, out: %s", err, out)
+			logger.Errorf("Error checking status of yum-cron, error: %v, out: %s", err, out)
 		}
 		if bytes.Contains(out, []byte("disabled")) {
 			return
@@ -40,7 +42,7 @@ func disableAutoUpdates() {
 		logger.Debugf("Disabling yum-cron")
 		out, err = exec.Command("chkconfig", "yum-cron", "off").CombinedOutput()
 		if err != nil {
-			logger.Errorf("error disabling yum-cron, error: %v, out: %s", err, out)
+			logger.Errorf("Error disabling yum-cron, error: %v, out: %s", err, out)
 		}
 	}
 
@@ -50,9 +52,15 @@ func disableAutoUpdates() {
 	// /etc/apt/apt.conf.d/ and setting APT::Periodic::Unattended-Upgrade to 0.
 	if _, err := os.Stat("/usr/bin/unattended-upgrades"); err == nil {
 		logger.Debugf("Removing unattended-upgrades package")
-		out, err := exec.Command("apt-get", "remove", "-y", "unattended-upgrades").CombinedOutput()
-		if err != nil {
-			logger.Errorf("error disabling unattended-upgrades, error: %v, out: %s", err, out)
+		f := func() error {
+			out, err := exec.Command(aptGet, "remove", "-y", "unattended-upgrades").CombinedOutput()
+			if err != nil {
+				return fmt.Errorf("%v, out: %s", err, out)
+			}
+			return nil
+		}
+		if err := retry(1*time.Minute, "removing unattended-upgrades package", logger.Debugf, f); err != nil {
+			logger.Errorf("Error removing unattended-upgrades, error: %v", err)
 		}
 	}
 }
@@ -60,7 +68,7 @@ func disableAutoUpdates() {
 func rebootSystem() error {
 	// Start with systemctl and work down a list of reboot methods.
 	if e, _ := exists(systemctl); e {
-		return exec.Command(systemctl, "reboot").Run()
+		return exec.Command(systemctl, "reboot").Start()
 	}
 	if e, _ := exists(reboot); e {
 		return exec.Command(reboot).Run()

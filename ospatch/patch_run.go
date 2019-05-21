@@ -391,7 +391,7 @@ func ackPatch(ctx context.Context, patchJobName string) {
 }
 
 // retry tries to retry f for no more than maxRetryTime.
-func retry(maxRetryTime time.Duration, desc string, f func() error) error {
+func retry(maxRetryTime time.Duration, desc string, logF func(string, ...interface{}), f func() error) error {
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
 	var tot time.Duration
 	for i := 1; ; i++ {
@@ -408,7 +408,7 @@ func retry(maxRetryTime time.Duration, desc string, f func() error) error {
 			return err
 		}
 
-		logger.Debugf("Error %s, attempt %d, retrying in %s: %v", desc, i, ns, err)
+		logF("Error %s, attempt %d, retrying in %s: %v", desc, i, ns, err)
 		time.Sleep(ns)
 	}
 }
@@ -416,7 +416,7 @@ func retry(maxRetryTime time.Duration, desc string, f func() error) error {
 // reportPatchDetails tries to report patch details for 35m.
 func (r *patchRun) reportPatchDetails(patchState osconfigpb.Instance_PatchState, attemptCount int64, failureReason string) error {
 	var retErr error
-	err := retry(2100*time.Second, "reporting patch details", func() error {
+	err := retry(2100*time.Second, "reporting patch details", r.debugf, func() error {
 		// This can't be cached.
 		identityToken, err := metadata.Get(identityTokenPath)
 		if err != nil {
@@ -432,7 +432,7 @@ func (r *patchRun) reportPatchDetails(patchState osconfigpb.Instance_PatchState,
 			AttemptCount:     attemptCount,
 			FailureReason:    failureReason,
 		}
-		logger.Debugf("Reporting patch details request: {Resource: %s, InstanceSystemId: %s, PatchJob: %s, State: %s, FailureReason: %q}",
+		r.debugf("Reporting patch details request: {Resource: %s, InstanceSystemId: %s, PatchJob: %s, State: %s, FailureReason: %q}",
 			request.GetResource(), request.GetInstanceSystemId(), request.GetPatchJob(), request.GetState(), request.GetFailureReason())
 
 		res, err := r.client.ReportPatchJobInstanceDetails(r.ctx, &request)
