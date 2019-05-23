@@ -13,11 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-echo "running common script..."
+set -e
 
-source packaging/common.sh
+. packaging/common.sh
+
+echo "Installing go"
+install_go
+
+# Pull go deps
+$GO mod download
+
+# Install dependencies.
+$GO get github.com/google/googet/goopack
 
 echo "Building package"
-
-GOPATH=${GOPATH} ${GO} get github.com/google/googet/goopack
-${GOPATH}/bin/goopack packaging/googet/google-osconfig-agent.goospec
+goopack packaging/googet/google-osconfig-agent.goospec

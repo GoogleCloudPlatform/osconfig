@@ -13,26 +13,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -e
+URL="http://metadata/computeMetadata/v1/instance/attributes"
+GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
+SRC_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-sources-path)
+BASE_REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/base-repo)
+REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/repo)
+PULL_REF=$(curl -f -H Metadata-Flavor:Google ${URL}/pull-ref)
 
-function exit_error
-{
-  echo "build failed"
-  exit 1
-}
+echo "Started build..."
 
-trap exit_error ERR
-export URL="http://metadata/computeMetadata/v1/instance/attributes"
-export GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
-export BASE_REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/base-repo)
-export REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/repo)
-export PULL_REF=$(curl -f -H Metadata-Flavor:Google ${URL}/pull-ref)
+gsutil cp "${SRC_PATH}/common.sh" ./
 
+. common.sh
+
+apt-get -y update && apt-get -y upgrade
 apt-get install -y git-core
 
-packaging/pull_repository.sh
+git_checkout "$BASE_REPO" "$REPO" "$PULL_REF"
 
-./packaging/setup_goo.sh
+./packaging/build_goo.sh
 gsutil cp google-osconfig-agent*.goo "${GCS_PATH}/"
 
-echo 'Package build success'
+echo "Package build success: built `echo *.goo|xargs -n1 basename`"

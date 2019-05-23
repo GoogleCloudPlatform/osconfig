@@ -1,9 +1,10 @@
 {
   "Name": "build-packages",
   "Sources": {
-    "build_deb.sh": "./build_packages_deb.sh",
-    "build_goo.sh": "./build_packages_goo.sh",
-    "build_rpm.sh": "./build_packages_rpm.sh"
+    "startup_deb.sh": "./daisy_startupscript_deb.sh",
+    "startup_goo.sh": "./daisy_startupscript_goo.sh",
+    "startup_rpm.sh": "./daisy_startupscript_rpm.sh",
+    "common.sh": "./common.sh"
   },
   "Vars": {
     "base_repo": {
@@ -15,7 +16,7 @@
       "Description": "Github Repository"
     },
     "pull_ref": {
-      "Value": "",
+      "Value": "master",
       "Description": "Branch against which agent need to build"
     }
   },
@@ -35,7 +36,7 @@
           },
           "machineType": "n1-standard-2",
           "name": "inst-build-deb",
-          "StartupScript": "build_deb.sh",
+          "StartupScript": "startup_deb.sh",
 	      "Scopes": ["https://www.googleapis.com/auth/devstorage.read_write"]
         },
         {
@@ -51,7 +52,7 @@
           },
           "machineType": "n1-standard-2",
           "name": "inst-build-goo",
-          "StartupScript": "build_goo.sh",
+          "StartupScript": "startup_goo.sh",
 	      "Scopes": ["https://www.googleapis.com/auth/devstorage.read_write"]
         },
         {
@@ -67,7 +68,7 @@
           },
           "machineType": "n1-standard-2",
           "name": "inst-build-el6",
-          "StartupScript": "build_rpm.sh",
+          "StartupScript": "startup_rpm.sh",
 	      "Scopes": ["https://www.googleapis.com/auth/devstorage.read_write"]
         },
         {
@@ -83,7 +84,7 @@
           },
           "machineType": "n1-standard-2",
           "name": "inst-build-el7",
-          "StartupScript": "build_rpm.sh",
+          "StartupScript": "startup_rpm.sh",
 	      "Scopes": ["https://www.googleapis.com/auth/devstorage.read_write"]
         }
       ]
@@ -113,14 +114,15 @@
       ]
     },
     "wait-for-build": {
-      "Timeout": "30m",
+      "Timeout": "10m",
       "WaitForInstancesSignal": [
         {
           "Name": "inst-build-deb",
           "SerialOutput": {
             "Port": 1,
             "SuccessMatch": "Package build success",
-            "FailureMatch": "build failed"
+            "FailureMatch": "build failed",
+            "StatusMatch": "build status"
           }
         },
         {
@@ -128,7 +130,8 @@
           "SerialOutput": {
             "Port": 1,
             "SuccessMatch": "Package build success",
-            "FailureMatch": "build failed"
+            "FailureMatch": "build failed",
+            "StatusMatch": "build status"
           }
         },
         {
@@ -136,7 +139,8 @@
           "SerialOutput": {
             "Port": 1,
             "SuccessMatch": "Package build success",
-            "FailureMatch": "build failed"
+            "FailureMatch": "build failed",
+            "StatusMatch": "build status"
           }
         },
         {
@@ -144,7 +148,8 @@
           "SerialOutput": {
             "Port": 1,
             "SuccessMatch": "Package build success",
-            "FailureMatch": "build failed"
+            "FailureMatch": "build failed",
+            "StatusMatch": "build status"
           }
         }
       ]

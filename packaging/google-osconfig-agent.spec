@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Don't build debuginfo packages.
+%define debug_package %{nil}
+
 Name: google-osconfig-agent
 Version: %{_version}
 Release: 1%{?dist}
