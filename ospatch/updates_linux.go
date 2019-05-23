@@ -94,35 +94,36 @@ func systemRebootRequired() (bool, error) {
 	return false, fmt.Errorf("no recognized package manager installed, can't determine if reboot is required")
 }
 
-func updatePackages(r *patchRun) error {
+func (r *patchRun) runUpdates() error {
 	var errs []string
+	const retryPeriod = 3 * time.Minute
 	if packages.AptExists {
-		var opts []packages.AptGetUpgradeOption
-		if r.Job.ReportPatchJobInstanceDetailsResponse.PatchConfig.Apt != nil {
-			switch r.Job.ReportPatchJobInstanceDetailsResponse.PatchConfig.Apt.Type {
-			case osconfigpb.AptSettings_DIST:
-				opts = append(opts, packages.AptGetUpgradeType(packages.AptGetDistUpgrade))
-			}
+		opts := []AptGetUpgradeOption{AptGetUpgradeRunner(patchRunRunner(r))}
+		switch r.Job.GetPatchConfig().GetApt().GetType() {
+		case osconfigpb.AptSettings_DIST:
+			opts = append(opts, AptGetUpgradeType(AptGetDistUpgrade))
 		}
-		if err := packages.AptGetUpgrade(opts...); err != nil {
+		r.debugf("Installing APT package updates.")
+		if err := retry(retryPeriod, "installing APT package updates", r.debugf, func() error { return RunAptGetUpgrade(opts...) }); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}
 	if packages.YumExists {
-		var opts []packages.YumUpdateOption
-		if r.Job.ReportPatchJobInstanceDetailsResponse.PatchConfig.Yum != nil {
-			opts = []packages.YumUpdateOption{
-				packages.YumUpdateSecurity(r.Job.ReportPatchJobInstanceDetailsResponse.PatchConfig.Yum.GetSecurity()),
-				packages.YumUpdateMinimal(r.Job.ReportPatchJobInstanceDetailsResponse.PatchConfig.Yum.GetMinimal()),
-				packages.YumUpdateExcludes(r.Job.ReportPatchJobInstanceDetailsResponse.PatchConfig.Yum.GetExcludes()),
-			}
+		opts := []YumUpdateOption{
+			YumUpdateRunner(patchRunRunner(r)),
+			YumUpdateSecurity(r.Job.GetPatchConfig().GetYum().GetSecurity()),
+			YumUpdateMinimal(r.Job.GetPatchConfig().GetYum().GetMinimal()),
+			YumUpdateExcludes(r.Job.GetPatchConfig().GetYum().GetExcludes()),
 		}
-		if err := packages.YumUpdate(opts...); err != nil {
+		r.debugf("Installing YUM package updates.")
+		if err := retry(retryPeriod, "installing YUM package updates", r.debugf, func() error { return RunYumUpdate(opts...) }); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}
 	if packages.ZypperExists {
-		if err := packages.ZypperUpdate(); err != nil {
+		opts := []ZypperUpdateOption{ZypperUpdateRunner(patchRunRunner(r))}
+		r.debugf("Installing Zypper package updates.")
+		if err := retry(retryPeriod, "installing Zypper package updates", r.debugf, func() error { return RunZypperUpdate(opts...) }); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}
@@ -130,13 +131,4 @@ func updatePackages(r *patchRun) error {
 		return nil
 	}
 	return errors.New(strings.Join(errs, ",\n"))
-}
-
-func runUpdates(r *patchRun) error {
-	if err := r.reportContinuingState(osconfigpb.Instance_APPLYING_PATCHES); err != nil {
-		return err
-	}
-
-	logger.Debugf("Installing package updates.")
-	return retry(3*time.Minute, "installing package updates", func() error { return updatePackages(r) })
 }

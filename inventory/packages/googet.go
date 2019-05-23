@@ -26,7 +26,6 @@ import (
 var (
 	googet string
 
-	googetUpdateArgs         = []string{"-noconfirm", "update"}
 	googetUpdateQueryArgs    = []string{"update"}
 	googetInstalledQueryArgs = []string{"installed"}
 	googetInstallArgs        = []string{"-noconfirm", "install"}
@@ -99,20 +98,6 @@ func RemoveGooGetPackages(pkgs []string) error {
 		msg += fmt.Sprintf("  %s\n", s)
 	}
 	DebugLogger.Printf("GooGet remove output:\n%s", msg)
-	return nil
-}
-
-// InstallGooGetUpdates installs all available GooGet updates.
-func InstallGooGetUpdates() error {
-	out, err := run(exec.Command(googet, googetUpdateArgs...))
-	if err != nil {
-		return err
-	}
-	var msg string
-	for _, s := range strings.Split(string(out), "\n") {
-		msg += fmt.Sprintf("  %s\n", s)
-	}
-	DebugLogger.Printf("GooGet update output:\n%s", msg)
 	return nil
 }
 

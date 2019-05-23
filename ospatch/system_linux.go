@@ -18,9 +18,11 @@ package ospatch
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
 	"syscall"
+	"time"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 )
@@ -29,18 +31,39 @@ import (
 func disableAutoUpdates() {
 	// yum-cron on el systems
 	if _, err := os.Stat("/usr/sbin/yum-cron"); err == nil {
-		out, err := exec.Command("chkconfig", "yum-cron").CombinedOutput()
+		out, err := exec.Command("/sbin/chkconfig", "yum-cron").CombinedOutput()
 		if err != nil {
-			logger.Errorf("error checking status of yum-cron, error: %v, out: %s", err, out)
+			logger.Errorf("Error checking status of yum-cron, error: %v, out: %s", err, out)
 		}
 		if bytes.Contains(out, []byte("disabled")) {
 			return
 		}
 
 		logger.Debugf("Disabling yum-cron")
-		out, err = exec.Command("chkconfig", "yum-cron", "off").CombinedOutput()
+		out, err = exec.Command("/sbin/chkconfig", "yum-cron", "off").CombinedOutput()
 		if err != nil {
-			logger.Errorf("error disabling yum-cron, error: %v, out: %s", err, out)
+			logger.Errorf("Error disabling yum-cron, error: %v, out: %s", err, out)
+		}
+	}
+
+	// dnf-automatic on el8 systems
+	if _, err := os.Stat("/usr/lib/systemd/system/dnf-automatic.timer"); err == nil {
+		out, err := exec.Command("/bin/systemctl", "list-timers", "dnf-automatic.timer").CombinedOutput()
+		if err != nil {
+			logger.Errorf("Error checking status of dnf-automatic, error: %v, out: %s", err, out)
+		}
+		if bytes.Contains(out, []byte("0 timers listed")) {
+			return
+		}
+
+		logger.Debugf("Disabling dnf-automatic")
+		out, err = exec.Command("/bin/systemctl", "stop", "dnf-automatic.timer").CombinedOutput()
+		if err != nil {
+			logger.Errorf("Error stopping yum-cron, error: %v, out: %s", err, out)
+		}
+		out, err = exec.Command("/bin/systemctl", "disable", "dnf-automatic.timer").CombinedOutput()
+		if err != nil {
+			logger.Errorf("Error disabling yum-cron, error: %v, out: %s", err, out)
 		}
 	}
 
@@ -50,9 +73,15 @@ func disableAutoUpdates() {
 	// /etc/apt/apt.conf.d/ and setting APT::Periodic::Unattended-Upgrade to 0.
 	if _, err := os.Stat("/usr/bin/unattended-upgrades"); err == nil {
 		logger.Debugf("Removing unattended-upgrades package")
-		out, err := exec.Command("apt-get", "remove", "-y", "unattended-upgrades").CombinedOutput()
-		if err != nil {
-			logger.Errorf("error disabling unattended-upgrades, error: %v, out: %s", err, out)
+		f := func() error {
+			out, err := exec.Command(aptGet, "remove", "-y", "unattended-upgrades").CombinedOutput()
+			if err != nil {
+				return fmt.Errorf("%v, out: %s", err, out)
+			}
+			return nil
+		}
+		if err := retry(1*time.Minute, "removing unattended-upgrades package", logger.Debugf, f); err != nil {
+			logger.Errorf("Error removing unattended-upgrades, error: %v", err)
 		}
 	}
 }
@@ -60,20 +89,16 @@ func disableAutoUpdates() {
 func rebootSystem() error {
 	// Start with systemctl and work down a list of reboot methods.
 	if e, _ := exists(systemctl); e {
-		logger.Debugf("Rebooting using systemctl.")
-		return exec.Command(systemctl, "reboot").Run()
+		return exec.Command(systemctl, "reboot").Start()
 	}
 	if e, _ := exists(reboot); e {
-		logger.Debugf("Rebooting using reboot command.")
 		return exec.Command(reboot).Run()
 	}
 	if e, _ := exists(shutdown); e {
-		logger.Debugf("Rebooting using shutdown command.")
 		return exec.Command(shutdown, "-r", "-t", "0").Run()
 	}
 
 	// Fall back to reboot(2) system call
-	logger.Debugf("No suitable reboot command found, rebooting using reboot(2).")
 	syscall.Sync()
 	return syscall.Reboot(syscall.LINUX_REBOOT_CMD_RESTART)
 }

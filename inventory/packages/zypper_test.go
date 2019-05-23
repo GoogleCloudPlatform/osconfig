@@ -46,17 +46,3 @@ func TestRemoveZypperReturnError(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
-
-func TestInstallZypperUpdates(t *testing.T) {
-	run = getMockRun([]byte("TestInstallZypperUpdates"), nil)
-	if err := InstallZypperUpdates(); err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-}
-
-func TestInstallZypperUpdatesReturnError(t *testing.T) {
-	run = getMockRun([]byte(""), errors.New("Could not find package"))
-	if err := InstallZypperUpdates(); err == nil {
-		t.Errorf("did not get expected error")
-	}
-}

@@ -26,7 +26,7 @@ import (
 )
 
 var (
-	testPatchRunJSON = "{\"PatchRuns\":[{\"Job\":{\"ReportPatchJobInstanceDetailsResponse\":{\"patchJob\":\"flipyflappy\",\"patchConfig\":{\"rebootConfig\":\"ALWAYS\"}}},\"StartedAt\":\"0001-01-01T00:00:00Z\",\"PatchStep\":\"\",\"RebootCount\":0}],\"PastJobs\":null}"
+	testPatchRunJSON = "{\"PatchRuns\":[{\"Job\":{\"ReportPatchJobInstanceDetailsResponse\":{\"patchJob\":\"flipyflappy\",\"patchConfig\":{\"rebootConfig\":\"ALWAYS\"}}},\"StartedAt\":\"0001-01-01T00:00:00Z\",\"RebootCount\":0}]}"
 	testPatchRun     = &patchRun{
 		Job: &patchJob{
 			&osconfigpb.ReportPatchJobInstanceDetailsResponse{
@@ -114,7 +114,7 @@ func TestStateSave(t *testing.T) {
 		{
 			"blank state",
 			&state{},
-			"{\"PatchRuns\":null,\"PastJobs\":null}",
+			"{}",
 		},
 		{
 			"test patchWindow",

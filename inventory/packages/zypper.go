@@ -28,7 +28,6 @@ var (
 
 	zypperInstallArgs     = []string{"install", "--no-confirm"}
 	zypperRemoveArgs      = []string{"remove", "--no-confirm"}
-	zypperUpdateArgs      = []string{"update"}
 	zypperListArgs        = []string{"packages", "--installed-only"}
 	zypperListUpdatesArgs = []string{"-q", "list-updates"}
 )
@@ -67,28 +66,6 @@ func RemoveZypperPackages(pkgs []string) error {
 		msg += fmt.Sprintf("  %s\n", s)
 	}
 	DebugLogger.Printf("Zypper remove output:\n%s\n", msg)
-	return nil
-}
-
-// InstallZypperUpdates installs all available Zypper updates.
-func InstallZypperUpdates() error {
-	out, err := run(exec.Command(zypper, zypperUpdateArgs...))
-	if err != nil {
-		return err
-	}
-	var msg string
-	for _, s := range strings.Split(string(out), "\n") {
-		msg += fmt.Sprintf("  %s\n", s)
-	}
-	DebugLogger.Printf("Zypper update output:\n%s\n", msg)
-	return nil
-}
-
-// ZypperUpdate runs zypper update.
-func ZypperUpdate() error {
-	if _, err := run(exec.Command(zypper, zypperUpdateArgs...)); err != nil {
-		return err
-	}
 	return nil
 }
 

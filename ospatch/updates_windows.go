@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 	ole "github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
@@ -58,7 +57,7 @@ func getIterativeProp(src *ole.IDispatch, prop string) (*ole.IDispatch, int32, e
 	return dis, count, nil
 }
 
-func installUpdate(r *patchRun, classFilter, excludes map[string]struct{}, session, updt *ole.IDispatch) error {
+func (r *patchRun) installUpdate(classFilter, excludes map[string]struct{}, session, updt *ole.IDispatch) error {
 	title, err := updt.GetProperty("Title")
 	if err != nil {
 		return fmt.Errorf(`updt.GetProperty("Title"): %v`, err)
@@ -75,7 +74,7 @@ func installUpdate(r *patchRun, classFilter, excludes map[string]struct{}, sessi
 			return err
 		}
 		if _, ok := excludes[kbRaw.ToString()]; ok {
-			logger.Debugf("Update %s (%s) matched exclude list\n", title.ToString(), kbRaw.ToString())
+			r.debugf("Update %s (%s) matched exclude list\n", title.ToString(), kbRaw.ToString())
 			return nil
 		}
 	}
@@ -125,17 +124,17 @@ func installUpdate(r *patchRun, classFilter, excludes map[string]struct{}, sessi
 		return fmt.Errorf(`updt.GetProperty("EulaAccepted"): %v`, err)
 	}
 
-	logger.Debugf("%s\n  - EulaAccepted: %v\n", title.Value(), eula.Value())
+	r.debugf("%s - EulaAccepted: %v", title.Value(), eula.Value())
 	if _, err := updateColl.CallMethod("Add", updt); err != nil {
 		return fmt.Errorf(`updateColl.CallMethod("Add", updt): %v`, err)
 	}
 
-	logger.Debugf("Downloading update %s", title.Value())
+	r.debugf("Downloading update %s", title.Value())
 	if err := packages.DownloadWUAUpdateCollection(session, updateColl); err != nil {
 		return fmt.Errorf("DownloadWUAUpdateCollection error: %v", err)
 	}
 
-	logger.Debugf("Installing update %s", title.Value())
+	r.debugf("Installing update %s", title.Value())
 	if err := packages.InstallWUAUpdateCollection(session, updateColl); err != nil {
 		return fmt.Errorf("InstallWUAUpdateCollection error: %v", err)
 	}
@@ -143,8 +142,8 @@ func installUpdate(r *patchRun, classFilter, excludes map[string]struct{}, sessi
 	return nil
 }
 
-func installWUAUpdates(r *patchRun) error {
-	logger.Debugf("Installing WUA updates.")
+func (r *patchRun) installWUAUpdates() error {
+	r.debugf("Installing WUA updates.")
 	if err := ole.CoInitializeEx(0, ole.COINIT_MULTITHREADED); err != nil {
 		return err
 	}
@@ -162,7 +161,7 @@ func installWUAUpdates(r *patchRun) error {
 	}
 	defer session.Release()
 
-	logger.Debugf("Searching for available WUA updates.")
+	r.debugf("Searching for available WUA updates.")
 	updts, err := packages.GetWUAUpdateCollection(session, "IsInstalled=0")
 	if err != nil {
 		return fmt.Errorf("GetWUAUpdateCollection error: %v", err)
@@ -175,11 +174,11 @@ func installWUAUpdates(r *patchRun) error {
 	count, _ := countRaw.Value().(int32)
 
 	if count == 0 {
-		logger.Infof("No Windows updates to install")
+		r.infof("No Windows updates to install")
 		return nil
 	}
 
-	logger.Debugf("%d Windows updates available\n", count)
+	r.debugf("%d Windows updates available\n", count)
 
 	classFilter := make(map[string]struct{})
 	excludes := make(map[string]struct{})
@@ -191,12 +190,12 @@ func installWUAUpdates(r *patchRun) error {
 			}
 			classFilter[sc] = struct{}{}
 		}
-		logger.Debugf("Filtering by classifications: %q\n", r.Job.PatchConfig.WindowsUpdate.Classifications)
+		r.debugf("Filtering by classifications: %q\n", r.Job.PatchConfig.WindowsUpdate.Classifications)
 
 		for _, e := range r.Job.PatchConfig.WindowsUpdate.Excludes {
 			excludes[e] = struct{}{}
 		}
-		logger.Debugf("Filtering out KBs: %q\n", r.Job.PatchConfig.WindowsUpdate.Excludes)
+		r.debugf("Filtering out KBs: %q\n", r.Job.PatchConfig.WindowsUpdate.Excludes)
 	}
 
 	for i := 0; i < int(count); i++ {
@@ -210,7 +209,7 @@ func installWUAUpdates(r *patchRun) error {
 		updt := updtRaw.ToIDispatch()
 		defer updt.Release()
 
-		if err := installUpdate(r, classFilter, excludes, session, updt); err != nil {
+		if err := r.installUpdate(classFilter, excludes, session, updt); err != nil {
 			return fmt.Errorf(`installUpdate(class, excludes, updt): %v`, err)
 		}
 	}
@@ -230,8 +229,8 @@ var classifications = map[osconfigpb.WindowsUpdateSettings_Classification]string
 	osconfigpb.WindowsUpdateSettings_UPDATE:        "cd5ffd1e-e932-4e3a-bf74-18bf0b1bbd83",
 }
 
-func runUpdates(r *patchRun) error {
-	if err := retry(30*time.Minute, "installing wua updates", func() error { return installWUAUpdates(r) }); err != nil {
+func (r *patchRun) runUpdates() error {
+	if err := retry(30*time.Minute, "installing wua updates", r.debugf, r.installWUAUpdates); err != nil {
 		return err
 	}
 
@@ -240,8 +239,9 @@ func runUpdates(r *patchRun) error {
 			return err
 		}
 
-		logger.Debugf("Installing package updates.")
-		if err := retry(3*time.Minute, "installing package updates", packages.InstallGooGetUpdates); err != nil {
+		r.debugf("Installing GooGet package updates.")
+		opts := []GooGetUpdateOption{GooGetUpdateRunner(patchRunRunner(r))}
+		if err := retry(3*time.Minute, "installing GooGet package updates", r.debugf, func() error { return RunGooGetUpdate(opts...) }); err != nil {
 			return err
 		}
 	}

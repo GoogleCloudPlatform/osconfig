@@ -16,7 +16,6 @@ package packages
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -29,14 +28,11 @@ var (
 	dpkgquery string
 	aptGet    string
 
-	dpkgQueryArgs         = []string{"-W", "-f", `${Package} ${Architecture} ${Version}\n`}
-	aptGetInstallArgs     = []string{"install", "-y"}
-	aptGetRemoveArgs      = []string{"remove", "-y"}
-	aptGetUpdateArgs      = []string{"update"}
-	aptGetUpgradeArgs     = []string{"upgrade", "-y"}
-	aptGetFullUpgradeArgs = []string{"full-upgrade", "-y"}
-	aptGetDistUpgradeArgs = []string{"dist-upgrade", "-y"}
-	aptGetUpgradableArgs  = []string{"full-upgrade", "--just-print", "-V"}
+	dpkgQueryArgs        = []string{"-W", "-f", `${Package} ${Architecture} ${Version}\n`}
+	aptGetInstallArgs    = []string{"install", "-y"}
+	aptGetRemoveArgs     = []string{"remove", "-y"}
+	aptGetUpdateArgs     = []string{"update"}
+	aptGetUpgradableArgs = []string{"full-upgrade", "--just-print", "-V"}
 )
 
 func init() {
@@ -74,67 +70,6 @@ func RemoveAptPackages(pkgs []string) error {
 		msg += fmt.Sprintf(" %s\n", s)
 	}
 	DebugLogger.Printf("apt remove output:\n%s\n", msg)
-	return nil
-}
-
-type aptGetUpgradeType int
-
-const (
-	aptGetUpgrade aptGetUpgradeType = iota
-	// AptGetDistUpgrade specifies apt-get dist-upgrade should be run.
-	AptGetDistUpgrade
-	// AptGetFullUpgrade specifies apt-get full-upgrade should be run.
-	AptGetFullUpgrade
-)
-
-type aptGetUpgradeOpts struct {
-	upgradeType aptGetUpgradeType
-}
-
-// AptGetUpgradeOption is an option for apt-get update.
-type AptGetUpgradeOption func(*aptGetUpgradeOpts)
-
-// AptGetUpgradeType returns a AptGetUpgradeOption that specifies upgrade type.
-func AptGetUpgradeType(upgradeType aptGetUpgradeType) AptGetUpgradeOption {
-	return func(args *aptGetUpgradeOpts) {
-		args.upgradeType = upgradeType
-	}
-}
-
-// AptGetUpgrade runs apt-get upgrade.
-func AptGetUpgrade(opts ...AptGetUpgradeOption) error {
-	aptOpts := &aptGetUpgradeOpts{
-		upgradeType: aptGetUpgrade,
-	}
-
-	for _, opt := range opts {
-		opt(aptOpts)
-	}
-
-	if _, err := run(exec.Command(aptGet, aptGetUpdateArgs...)); err != nil {
-		return err
-	}
-
-	var args []string
-	switch aptOpts.upgradeType {
-	case aptGetUpgrade:
-		args = aptGetUpgradeArgs
-	case AptGetDistUpgrade:
-		args = aptGetDistUpgradeArgs
-	case AptGetFullUpgrade:
-		args = aptGetFullUpgradeArgs
-	default:
-		return fmt.Errorf("uknown upgarde type: %q", aptOpts.upgradeType)
-	}
-
-	upgrade := exec.Command(aptGet, args...)
-	upgrade.Env = append(os.Environ(),
-		"DEBIAN_FRONTEND=noninteractive",
-	)
-	if _, err := run(upgrade); err != nil {
-		return err
-	}
-
 	return nil
 }
 
