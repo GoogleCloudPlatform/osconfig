@@ -96,6 +96,7 @@ func systemRebootRequired() (bool, error) {
 
 func (r *patchRun) runUpdates() error {
 	var errs []string
+	const retryPeriod = 3 * time.Minute
 	if packages.AptExists {
 		opts := []AptGetUpgradeOption{AptGetUpgradeRunner(patchRunRunner(r))}
 		switch r.Job.GetPatchConfig().GetApt().GetType() {
@@ -103,7 +104,7 @@ func (r *patchRun) runUpdates() error {
 			opts = append(opts, AptGetUpgradeType(AptGetDistUpgrade))
 		}
 		r.debugf("Installing APT package updates.")
-		if err := retry(3*time.Minute, "installing APT package updates", r.debugf, func() error { return RunAptGetUpgrade(opts...) }); err != nil {
+		if err := retry(retryPeriod, "installing APT package updates", r.debugf, func() error { return RunAptGetUpgrade(opts...) }); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}
@@ -115,14 +116,14 @@ func (r *patchRun) runUpdates() error {
 			YumUpdateExcludes(r.Job.GetPatchConfig().GetYum().GetExcludes()),
 		}
 		r.debugf("Installing YUM package updates.")
-		if err := retry(3*time.Minute, "installing YUM package updates", r.debugf, func() error { return RunYumUpdate(opts...) }); err != nil {
+		if err := retry(retryPeriod, "installing YUM package updates", r.debugf, func() error { return RunYumUpdate(opts...) }); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}
 	if packages.ZypperExists {
 		opts := []ZypperUpdateOption{ZypperUpdateRunner(patchRunRunner(r))}
 		r.debugf("Installing Zypper package updates.")
-		if err := retry(3*time.Minute, "installing Zypper package updates", r.debugf, func() error { return RunZypperUpdate(opts...) }); err != nil {
+		if err := retry(retryPeriod, "installing Zypper package updates", r.debugf, func() error { return RunZypperUpdate(opts...) }); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}

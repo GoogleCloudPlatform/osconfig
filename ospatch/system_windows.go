@@ -17,9 +17,11 @@
 package ospatch
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"golang.org/x/sys/windows/registry"
@@ -55,7 +57,7 @@ func disableAutoUpdates() {
 			return nil
 		}
 		if err := retry(1*time.Minute, "removing google-compute-engine-auto-updater package", logger.Debugf, f); err != nil {
-			logger.Errorf("Error removing google-compute-engine-auto-updater: %v", msg, err)
+			logger.Errorf("Error removing google-compute-engine-auto-updater: %v", err)
 		}
 	}
 }

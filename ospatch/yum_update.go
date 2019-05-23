@@ -18,9 +18,9 @@ import (
 	"os/exec"
 )
 
-var (
-	yum = "/usr/bin/yum"
+const yum = "/usr/bin/yum"
 
+var (
 	yumUpdateArgs        = []string{"update", "-y"}
 	yumUpdateMinimalArgs = []string{"update-minimal", "-y"}
 )

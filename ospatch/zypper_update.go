@@ -18,9 +18,9 @@ import (
 	"os/exec"
 )
 
-var (
-	zypper = "/usr/bin/zypper"
+const zypper = "/usr/bin/zypper"
 
+var (
 	zypperUpdateArgs = []string{"update"}
 )
 

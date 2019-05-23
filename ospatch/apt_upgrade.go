@@ -20,9 +20,9 @@ import (
 	"os/exec"
 )
 
-var (
-	aptGet = "/usr/bin/apt-get"
+const aptGet = "/usr/bin/apt-get"
 
+var (
 	aptGetUpdateArgs      = []string{"update"}
 	aptGetUpgradeArgs     = []string{"upgrade", "-y"}
 	aptGetFullUpgradeArgs = []string{"full-upgrade", "-y"}

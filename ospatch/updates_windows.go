@@ -241,7 +241,7 @@ func (r *patchRun) runUpdates() error {
 
 		r.debugf("Installing GooGet package updates.")
 		opts := []GooGetUpdateOption{GooGetUpdateRunner(patchRunRunner(r))}
-		if err := retry(3*time.Minute, "installing GooGet package updates",r.debugf,  func() error { return RunGooGetUpdate(opts...) }); err != nil {
+		if err := retry(3*time.Minute, "installing GooGet package updates", r.debugf, func() error { return RunGooGetUpdate(opts...) }); err != nil {
 			return err
 		}
 	}
