@@ -31,7 +31,7 @@ import (
 func disableAutoUpdates() {
 	// yum-cron on el systems
 	if _, err := os.Stat("/usr/sbin/yum-cron"); err == nil {
-		out, err := exec.Command("chkconfig", "yum-cron").CombinedOutput()
+		out, err := exec.Command("/sbin/chkconfig", "yum-cron").CombinedOutput()
 		if err != nil {
 			logger.Errorf("Error checking status of yum-cron, error: %v, out: %s", err, out)
 		}
@@ -40,7 +40,28 @@ func disableAutoUpdates() {
 		}
 
 		logger.Debugf("Disabling yum-cron")
-		out, err = exec.Command("chkconfig", "yum-cron", "off").CombinedOutput()
+		out, err = exec.Command("/sbin/chkconfig", "yum-cron", "off").CombinedOutput()
+		if err != nil {
+			logger.Errorf("Error disabling yum-cron, error: %v, out: %s", err, out)
+		}
+	}
+
+	// dnf-automatic on el8 systems
+	if _, err := os.Stat("/usr/lib/systemd/system/dnf-automatic.timer"); err == nil {
+		out, err := exec.Command("/bin/systemctl", "list-timers", "dnf-automatic.timer").CombinedOutput()
+		if err != nil {
+			logger.Errorf("Error checking status of dnf-automatic, error: %v, out: %s", err, out)
+		}
+		if bytes.Contains(out, []byte("0 timers listed")) {
+			return
+		}
+
+		logger.Debugf("Disabling dnf-automatic")
+		out, err = exec.Command("/bin/systemctl", "stop", "dnf-automatic.timer").CombinedOutput()
+		if err != nil {
+			logger.Errorf("Error stopping yum-cron, error: %v, out: %s", err, out)
+		}
+		out, err = exec.Command("/bin/systemctl", "disable", "dnf-automatic.timer").CombinedOutput()
 		if err != nil {
 			logger.Errorf("Error disabling yum-cron, error: %v, out: %s", err, out)
 		}
