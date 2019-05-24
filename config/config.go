@@ -119,11 +119,12 @@ type projectJSON struct {
 }
 
 type attributesJSON struct {
-	InventoryEnabled   string       `json:"os-inventory-enabled"`
-	PreReleaseFeatures string       `json:"os-config-enabled-prerelease-features"`
-	DebugEnabled       string       `json:"os-config-debug-enabled"`
-	OSConfigEndpoint   string       `json:"os-config-endpoint"`
-	PollInterval       *json.Number `json:"os-config-poll-interval"`
+	InventoryEnabledOld string       `json:"os-inventory-enabled"`
+	InventoryEnabled    string       `json:"enable-os-inventory"`
+	PreReleaseFeatures  string       `json:"os-config-enabled-prerelease-features"`
+	DebugEnabled        string       `json:"enable-os-config-debug"`
+	OSConfigEndpoint    string       `json:"os-config-endpoint"`
+	PollInterval        *json.Number `json:"os-config-poll-interval"`
 }
 
 func createConfigFromMetadata(md metadataJSON) *config {
@@ -165,6 +166,9 @@ func createConfigFromMetadata(md metadataJSON) *config {
 	}
 
 	// Check project first then instance as instance metadata overrides project.
+	if md.Project.Attributes.InventoryEnabledOld != "" {
+		c.osInventoryEnabled = parseBool(md.Project.Attributes.InventoryEnabledOld)
+	}
 	if md.Project.Attributes.InventoryEnabled != "" {
 		c.osInventoryEnabled = parseBool(md.Project.Attributes.InventoryEnabled)
 	}

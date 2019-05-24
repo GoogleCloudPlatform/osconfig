@@ -221,15 +221,11 @@ func (r *patchRun) postPatchReboot() error {
 }
 
 func (r *patchRun) rebootIfNeeded(prePatch bool) error {
-	if r.Job.GetPatchConfig().GetRebootConfig() == osconfigpb.PatchConfig_NEVER {
-		return nil
-	}
-
 	var reboot bool
 	var err error
 	if r.Job.GetPatchConfig().GetRebootConfig() == osconfigpb.PatchConfig_ALWAYS && !prePatch && r.RebootCount == 0 {
 		reboot = true
-		r.infof("PatchConfig dictates a reboot.")
+		r.infof("PatchConfig RebootConfig set to %s.", osconfigpb.PatchConfig_ALWAYS)
 	} else {
 		reboot, err = systemRebootRequired()
 		if err != nil {
@@ -243,6 +239,11 @@ func (r *patchRun) rebootIfNeeded(prePatch bool) error {
 	}
 
 	if !reboot {
+		return nil
+	}
+
+	if r.Job.GetPatchConfig().GetRebootConfig() == osconfigpb.PatchConfig_NEVER {
+		r.infof("Skipping reboot because of PatchConfig RebootConfig set to %s.", osconfigpb.PatchConfig_NEVER)
 		return nil
 	}
 

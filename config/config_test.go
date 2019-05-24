@@ -29,7 +29,7 @@ import (
 
 func TestSetConfig(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, `{"project":{"numericProjectID":12345,"projectId":"projectId","attributes":{"os-config-endpoint":"bad!!1","os-inventory-enabled":"false"}},"instance":{"id":12345,"name":"name","zone":"zone","attributes":{"os-config-endpoint":"SvcEndpoint","os-inventory-enabled":"1","os-config-debug-enabled":"true","os-config-enabled-prerelease-features":"ospackage,ospatch", "os-config-poll-interval":"3"}}}`)
+		fmt.Fprintln(w, `{"project":{"numericProjectID":12345,"projectId":"projectId","attributes":{"os-config-endpoint":"bad!!1","enable-os-inventory":"false"}},"instance":{"id":12345,"name":"name","zone":"zone","attributes":{"os-config-endpoint":"SvcEndpoint","enable-os-inventory":"1","enable-os-config-debug":"true","os-config-enabled-prerelease-features":"ospackage,ospatch", "os-config-poll-interval":"3"}}}`)
 	}))
 	defer ts.Close()
 
