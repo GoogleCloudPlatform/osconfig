@@ -121,7 +121,7 @@ type projectJSON struct {
 type attributesJSON struct {
 	InventoryEnabledOld string       `json:"os-inventory-enabled"`
 	InventoryEnabled    string       `json:"enable-os-inventory"`
-	PreReleaseFeatures  string       `json:"enable-os-config-prerelease-features"`
+	PreReleaseFeatures  string       `json:"os-config-enabled-prerelease-features"`
 	DebugEnabled        string       `json:"enable-os-config-debug"`
 	OSConfigEndpoint    string       `json:"os-config-endpoint"`
 	PollInterval        *json.Number `json:"os-config-poll-interval"`
