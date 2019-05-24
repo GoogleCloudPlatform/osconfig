@@ -51,10 +51,6 @@ type InstanceInventory struct {
 func write(state *InstanceInventory, url string) {
 	logger.Debugf("Writing instance inventory.")
 
-	if err := attributes.PostAttribute(url+"/LastUpdated", strings.NewReader(time.Now().UTC().Format(time.RFC3339))); err != nil {
-		logger.Errorf("postAttribute error: %v", err)
-	}
-
 	e := reflect.ValueOf(state).Elem()
 	t := e.Type()
 	for i := 0; i < e.NumField(); i++ {
@@ -71,6 +67,10 @@ func write(state *InstanceInventory, url string) {
 				logger.Errorf("postAttributeCompressed error: %v", err)
 			}
 		}
+	}
+
+	if err := attributes.PostAttribute(url+"/LastUpdated", strings.NewReader(time.Now().UTC().Format(time.RFC3339))); err != nil {
+		logger.Errorf("postAttribute error: %v", err)
 	}
 }
 
