@@ -227,7 +227,7 @@ func (r *patchRun) rebootIfNeeded(prePatch bool) error {
 		reboot = true
 		r.infof("PatchConfig RebootConfig set to %s.", osconfigpb.PatchConfig_ALWAYS)
 	} else {
-		reboot, err = systemRebootRequired()
+		reboot, err = r.systemRebootRequired()
 		if err != nil {
 			return fmt.Errorf("error checking if a system reboot is required: %v", err)
 		}
@@ -342,7 +342,7 @@ func (r *patchRun) runPatch() {
 				r.reportFailedState(fmt.Sprintf("Error saving agent step: %v", err))
 			}
 		case postPatch:
-			isRebootRequired, err := systemRebootRequired()
+			isRebootRequired, err := r.systemRebootRequired()
 			if err != nil {
 				r.reportFailedState(fmt.Sprintf("Error checking if system reboot is required: %v", err))
 				return

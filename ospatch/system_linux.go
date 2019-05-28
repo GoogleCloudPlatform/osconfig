@@ -30,7 +30,27 @@ import (
 // disableAutoUpdates disables system auto updates.
 func disableAutoUpdates() {
 	// yum-cron on el systems
-	if _, err := os.Stat("/usr/sbin/yum-cron"); err == nil {
+	if _, err := os.Stat("/usr/lib/systemd/system/yum-cron.service"); err == nil {
+		out, err := exec.Command("/bin/systemctl", "is-enabled", "yum-cron.service").CombinedOutput()
+		if err != nil {
+			if eerr, ok := err.(*exec.ExitError); ok {
+				// Error code of 1 indicates disabled.
+				if eerr.ExitCode() != 1 {
+					return
+				}
+			}
+		}
+
+		logger.Debugf("Disabling yum-cron")
+		out, err = exec.Command("/bin/systemctl", "stop", "yum-cron.service").CombinedOutput()
+		if err != nil {
+			logger.Errorf("Error stopping yum-cron, error: %v, out: %s", err, out)
+		}
+		out, err = exec.Command("/bin/systemctl", "disable", "yum-cron.service").CombinedOutput()
+		if err != nil {
+			logger.Errorf("Error disabling yum-cron, error: %v, out: %s", err, out)
+		}
+	} else if _, err := os.Stat("/usr/sbin/yum-cron"); err == nil {
 		out, err := exec.Command("/sbin/chkconfig", "yum-cron").CombinedOutput()
 		if err != nil {
 			logger.Errorf("Error checking status of yum-cron, error: %v, out: %s", err, out)
@@ -59,11 +79,11 @@ func disableAutoUpdates() {
 		logger.Debugf("Disabling dnf-automatic")
 		out, err = exec.Command("/bin/systemctl", "stop", "dnf-automatic.timer").CombinedOutput()
 		if err != nil {
-			logger.Errorf("Error stopping yum-cron, error: %v, out: %s", err, out)
+			logger.Errorf("Error stopping dnf-automatic, error: %v, out: %s", err, out)
 		}
 		out, err = exec.Command("/bin/systemctl", "disable", "dnf-automatic.timer").CombinedOutput()
 		if err != nil {
-			logger.Errorf("Error disabling yum-cron, error: %v, out: %s", err, out)
+			logger.Errorf("Error disabling dnf-automatic, error: %v, out: %s", err, out)
 		}
 	}
 
