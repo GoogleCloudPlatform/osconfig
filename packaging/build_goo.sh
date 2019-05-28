@@ -15,22 +15,16 @@
 
 set -e
 
-function exit_error
-{
-  echo "build failed"
-  exit 1
-}
+. packaging/common.sh
 
-trap exit_error ERR
+echo "Installing go"
+install_go
 
-URL="http://metadata/computeMetadata/v1/instance/attributes"
-GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
-BASE_REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/base-repo)
+# Pull go deps
+$GO mod download
 
-apt-get install -y git-core
-git clone "https://github.com/${BASE_REPO}/osconfig.git" 
-cd osconfig
-packaging/setup_goo.sh
-gsutil cp google-osconfig-agent*.goo "${GCS_PATH}/"
+# Install dependencies.
+$GO get github.com/google/googet/v2/goopack
 
-echo 'Package build success'
+echo "Building package"
+goopack -var:version=${VERSION} packaging/googet/google-osconfig-agent.goospec

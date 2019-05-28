@@ -13,24 +13,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -e
-
-function exit_error
-{
-  echo "build failed"
-  exit 1
-}
-
-trap exit_error ERR
-
 URL="http://metadata/computeMetadata/v1/instance/attributes"
 GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
+SRC_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-sources-path)
 BASE_REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/base-repo)
+REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/repo)
+PULL_REF=$(curl -f -H Metadata-Flavor:Google ${URL}/pull-ref)
 
-apt-get install -y git-core 
-git clone "https://github.com/${BASE_REPO}/osconfig.git"
-cd osconfig
-packaging/setup_deb.sh 
+DEBIAN_FRONTEND=noninteractive
+
+echo "Started build..."
+
+gsutil cp "${SRC_PATH}/common.sh" ./
+
+. common.sh
+
+apt-get -y update && apt-get -y upgrade
+apt-get install -y git-core
+
+git_checkout "$BASE_REPO" "$REPO" "$PULL_REF"
+
+./packaging/build_deb.sh
 gsutil cp /tmp/debpackage/google-osconfig-agent*.deb "${GCS_PATH}/"
 
-echo 'Package build success'
+echo "Package build success: built `echo /tmp/debpackage/*.deb|xargs -n1 basename`"

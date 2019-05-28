@@ -13,51 +13,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -e
-
-function exit_error
-{
-  echo "build failed"
-  exit 1
-}
-
-trap exit_error ERR
-
 URL="http://metadata/computeMetadata/v1/instance/attributes"
 GCS_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)
+SRC_PATH=$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-sources-path)
 BASE_REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/base-repo)
+REPO=$(curl -f -H Metadata-Flavor:Google ${URL}/repo)
+PULL_REF=$(curl -f -H Metadata-Flavor:Google ${URL}/pull-ref)
 
-# centos6 has some issues with network on first boot
-el6_install(){
-  n=0
-  while ! yum install -y https://centos6.iuscommunity.org/ius-release.rpm; do
-    if [[ n -gt 3 ]]; then
-      exit 1
-    fi
-    n=$[$n+1]
-    sleep 5
-  done
+echo "Started build..."
 
-  rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-IUS-6
-}
+gsutil cp "${SRC_PATH}/common.sh" ./
 
-el7_install(){
-  yum install -y https://centos7.iuscommunity.org/ius-release.rpm
-  rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-IUS-7
-}
+. common.sh
 
-# Install git2 as this is not avaiable in centos 6/7
+# Install git2 as this is not available in centos 6/7
 RELEASE_RPM=$(rpm -qf /etc/redhat-release)
 RELEASE=$(rpm -q --qf '%{VERSION}' ${RELEASE_RPM})
 case ${RELEASE} in
-  6*) el6_install;;
-  7*) el7_install;;
+  6*) 
+    try_command yum install -y https://rhel6.iuscommunity.org/ius-release.rpm
+    ;;
+  7*) 
+    try_command yum install -y https://rhel7.iuscommunity.org/ius-release.rpm
+    ;;
 esac
+rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-IUS-${RELEASE}
 yum install -y git2u
 
-git clone "https://github.com/${BASE_REPO}/osconfig.git"
-cd osconfig
-packaging/setup_rpm.sh
+git_checkout "$BASE_REPO" "$REPO" "$PULL_REF"
+
+packaging/build_rpm.sh
 gsutil cp /tmp/rpmpackage/RPMS/x86_64/google-osconfig-agent-*.rpm "${GCS_PATH}/"
 
-echo 'Package build success'
+echo "Package build success: built `echo /tmp/rpmpackage/RPMS/x86_64/*.rpm|xargs -n1 basename`"
