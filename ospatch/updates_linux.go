@@ -19,6 +19,7 @@ package ospatch
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -50,16 +51,16 @@ func (r *patchRun) systemRebootRequired() (bool, error) {
 	switch {
 	case packages.AptExists:
 		r.debugf("Checking if reboot required by looking at /var/run/reboot-required.")
-		rr, err := exists("/var/run/reboot-required")
+		data, err := ioutil.ReadFile("/var/run/reboot-required")
+		if os.IsNotExist(err) {
+			r.debugf("/var/run/reboot-required does not exist, indicating no reboot is required.")
+			return false, nil
+		}
 		if err != nil {
 			return false, err
 		}
-		if rr {
-			r.debugf("/var/run/reboot-required exists indicating a reboot is required.")
-			return true, nil
-		}
-		r.debugf("/var/run/reboot-required does not exist, indicating no reboot is required.")
-		return false, nil
+		r.debugf("/var/run/reboot-required exists indicating a reboot is required, content:\n%s", string(data))
+		return true, nil
 	case packages.YumExists:
 		r.debugf("Checking if reboot required by querying /usr/bin/needs-restarting.")
 		if e, _ := exists("/usr/bin/needs-restarting"); e {
