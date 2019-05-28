@@ -24,7 +24,7 @@ install_go
 $GO mod download
 
 # Install dependencies.
-$GO get github.com/google/googet/goopack
+$GO get github.com/google/googet/v2/goopack
 
 echo "Building package"
-goopack packaging/googet/google-osconfig-agent.goospec
+goopack -var:version=${VERSION} packaging/googet/google-osconfig-agent.goospec
