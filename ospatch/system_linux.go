@@ -39,6 +39,7 @@ func disableAutoUpdates() {
 					return
 				}
 			}
+			logger.Errorf("Error checking status of yum-cron, error: %v, out: %s", err, out)
 		}
 
 		logger.Debugf("Disabling yum-cron")
