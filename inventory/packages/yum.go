@@ -27,11 +27,9 @@ import (
 var (
 	yum string
 
-	yumInstallArgs       = []string{"install", "-y"}
-	yumRemoveArgs        = []string{"remove", "-y"}
-	yumUpdateArgs        = []string{"update", "-y"}
-	yumUpdateMinimalArgs = []string{"update-minimal", "-y"}
-	yumCheckUpdateArgs   = []string{"-y", "check-update", "--quiet"}
+	yumInstallArgs     = []string{"install", "-y"}
+	yumRemoveArgs      = []string{"remove", "-y"}
+	yumCheckUpdateArgs = []string{"-y", "check-update", "--quiet"}
 )
 
 func init() {
@@ -102,35 +100,6 @@ func YumUpdateExcludes(excludes []string) YumUpdateOption {
 	return func(args *yumUpdateOpts) {
 		args.excludes = excludes
 	}
-}
-
-// YumUpdate runs yum update.
-func YumUpdate(opts ...YumUpdateOption) error {
-	yumOpts := &yumUpdateOpts{
-		security: false,
-		minimal:  false,
-		excludes: nil,
-	}
-
-	for _, opt := range opts {
-		opt(yumOpts)
-	}
-
-	args := yumUpdateArgs
-	if yumOpts.minimal {
-		args = yumUpdateMinimalArgs
-	}
-	if yumOpts.security {
-		args = append(args, "--security")
-	}
-	for _, e := range yumOpts.excludes {
-		args = append(args, "--exclude="+e)
-	}
-
-	if _, err := run(exec.Command(yum, args...)); err != nil {
-		return err
-	}
-	return nil
 }
 
 // YumUpdates queries for all available yum updates.

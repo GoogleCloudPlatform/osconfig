@@ -28,16 +28,21 @@ import (
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
 )
 
-func systemRebootRequired() (bool, error) {
-	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired`, registry.QUERY_VALUE)
+func (r *patchRun) systemRebootRequired() (bool, error) {
+	reg := `SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired`
+	regPath := `HKLM:\` + reg
+	r.debugf("Checking if reboot required by looking at %s", regPath)
+	k, err := registry.OpenKey(registry.LOCAL_MACHINE, reg, registry.QUERY_VALUE)
 	if err != nil {
 		if err == registry.ErrNotExist {
+			r.debugf("%s does not exist, indicating no reboot is required.", regPath)
 			return false, nil
 		}
 		return false, err
 	}
 	k.Close()
 
+	r.debugf("%s exists indicating a reboot is required.", regPath)
 	return true, nil
 }
 

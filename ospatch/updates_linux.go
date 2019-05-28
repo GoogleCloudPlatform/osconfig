@@ -19,12 +19,12 @@ package ospatch
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
 
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
@@ -47,45 +47,45 @@ func exists(path string) (bool, error) {
 	return true, nil
 }
 
-func systemRebootRequired() (bool, error) {
+func (r *patchRun) systemRebootRequired() (bool, error) {
 	switch {
 	case packages.AptExists:
-		logger.Debugf("Checking if reboot required by looking at /var/run/reboot-required.")
-		rr, err := exists("/var/run/reboot-required")
+		r.debugf("Checking if reboot required by looking at /var/run/reboot-required.")
+		data, err := ioutil.ReadFile("/var/run/reboot-required")
+		if os.IsNotExist(err) {
+			r.debugf("/var/run/reboot-required does not exist, indicating no reboot is required.")
+			return false, nil
+		}
 		if err != nil {
 			return false, err
 		}
-		if rr {
-			logger.Debugf("/var/run/reboot-required exists indicating a reboot is required.")
-			return true, nil
-		}
-		logger.Debugf("/var/run/reboot-required does not exist, indicating no reboot is required.")
-		return false, nil
+		r.debugf("/var/run/reboot-required exists indicating a reboot is required, content:\n%s", string(data))
+		return true, nil
 	case packages.YumExists:
-		logger.Debugf("Checking if reboot required by querying /usr/bin/needs-restarting.")
+		r.debugf("Checking if reboot required by querying /usr/bin/needs-restarting.")
 		if e, _ := exists("/usr/bin/needs-restarting"); e {
-			cmd := exec.Command("/usr/bin/needs-restarting", "-r")
-			err := cmd.Run()
+			out, err := exec.Command("/usr/bin/needs-restarting", "-r").CombinedOutput()
+			r.debugf("'/usr/bin/needs-restarting -r' output:\n%s", string(out))
 			if err == nil {
-				logger.Debugf("'/usr/bin/needs-restarting -r' exit code 0 indicating no reboot is required.")
+				r.debugf("'/usr/bin/needs-restarting -r' exit code 0 indicating no reboot is required.")
 				return false, nil
 			}
 			if eerr, ok := err.(*exec.ExitError); ok {
 				switch eerr.ExitCode() {
 				case 1:
-					logger.Debugf("'/usr/bin/needs-restarting -r' exit code 1 indicating a reboot is required")
+					r.debugf("'/usr/bin/needs-restarting -r' exit code 1 indicating a reboot is required")
 					return true, nil
 				case 2:
-					logger.Infof("/usr/bin/needs-restarting is too old, can't easily determine if reboot is required")
+					r.infof("/usr/bin/needs-restarting is too old, can't easily determine if reboot is required")
 					return false, nil
 				}
 			}
 			return false, err
 		}
-		logger.Infof("/usr/bin/needs-restarting does not exist, can't check if reboot is required. Try installing the 'yum-utils' package.")
+		r.infof("/usr/bin/needs-restarting does not exist, can't check if reboot is required. Try installing the 'yum-utils' package.")
 		return false, nil
 	case packages.ZypperExists:
-		logger.Errorf("systemRebootRequired not implemented for zypper")
+		r.errorf("systemRebootRequired not implemented for zypper")
 		return false, nil
 	}
 	// TODO: implement something like this for rpm based distros to fall back to:
