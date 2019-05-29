@@ -56,6 +56,16 @@ func run(ctx context.Context) {
 			logger.Errorf(err.Error())
 		}
 
+		if _, err := os.Stat(config.RestartFile()); err == nil {
+			logger.Infof("Restart signal recieved, waiting for tasks to complete.")
+			tasker.Close()
+			logger.Infof("All tasks completed, stopping agent.")
+			if err := os.Remove(config.RestartFile()); err != nil && !os.IsNotExist(err) {
+				logger.Errorf("Error removing restart signal file: %v", err)
+			}
+			return
+		}
+
 		// This sets up the patching system to run in the background.
 		ospatch.Configure(ctx)
 
@@ -72,7 +82,6 @@ func run(ctx context.Context) {
 		case <-ticker.C:
 			continue
 		case <-ctx.Done():
-			logger.Close()
 			return
 		}
 	}
@@ -116,6 +125,7 @@ func main() {
 		if err := service.Register(ctx, "google_osconfig_agent", "Google OSConfig Agent", "", run, "run"); err != nil {
 			logger.Fatalf("service.Register error: %v", err)
 		}
+		return
 	case "noservice":
 		run(ctx)
 		return

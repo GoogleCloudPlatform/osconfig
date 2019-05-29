@@ -15,6 +15,7 @@ override_dh_auto_install:
 	# Binary-only package.
 	dh_auto_install -- --no-source
 	mv debian/google-osconfig-agent/usr/bin/osconfig debian/google-osconfig-agent/usr/bin/google_osconfig_agent
+	dh_installdirs /etc/osconfig
 
 override_dh_golang:
 	# We don't use any packaged dependencies, so skip dh_golang step.
