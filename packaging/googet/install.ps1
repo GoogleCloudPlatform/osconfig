@@ -21,9 +21,9 @@ try {
                 -BinaryPathName '"C:\Program Files\Google\OSConfig\google_osconfig_agent.exe"' `
                 -StartupType Automatic `
                 -Description 'Google OSConfig service agent'
-  }
 
-  Restart-Service google_osconfig_agent -Verbose -ErrorAction Stop
+    Start-Service google_osconfig_agent -Verbose -ErrorAction Stop
+  }
 }
 catch {
   Write-Output $_.InvocationInfo.PositionMessage
