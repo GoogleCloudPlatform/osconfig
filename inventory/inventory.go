@@ -46,6 +46,7 @@ type InstanceInventory struct {
 	OSConfigAgentVersion string
 	InstalledPackages    packages.Packages
 	PackageUpdates       packages.Packages
+	LastUpdated          string
 }
 
 func write(state *InstanceInventory, url string) {
@@ -56,21 +57,18 @@ func write(state *InstanceInventory, url string) {
 	for i := 0; i < e.NumField(); i++ {
 		f := e.Field(i)
 		u := fmt.Sprintf("%s/%s", url, t.Field(i).Name)
-		logger.Debugf("postAttribute %s: %+v", u, f)
 		switch f.Kind() {
 		case reflect.String:
+			logger.Debugf("postAttribute %s: %+v", u, f)
 			if err := attributes.PostAttribute(u, strings.NewReader(f.String())); err != nil {
 				logger.Errorf("postAttribute error: %v", err)
 			}
 		case reflect.Struct:
+			logger.Debugf("postAttributeCompressed %s: %+v", u, f)
 			if err := attributes.PostAttributeCompressed(u, f.Interface()); err != nil {
 				logger.Errorf("postAttributeCompressed error: %v", err)
 			}
 		}
-	}
-
-	if err := attributes.PostAttribute(url+"/LastUpdated", strings.NewReader(time.Now().UTC().Format(time.RFC3339))); err != nil {
-		logger.Errorf("postAttribute error: %v", err)
 	}
 }
 
@@ -109,6 +107,8 @@ func Get() *InstanceInventory {
 	if len(errs) != 0 {
 		logger.Errorf("packages.GetPackageUpdates() error: %v", err)
 	}
+
+	hs.LastUpdated = time.Now().UTC().Format(time.RFC3339)
 
 	return hs
 }
