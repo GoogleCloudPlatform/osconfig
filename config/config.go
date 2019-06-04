@@ -174,6 +174,9 @@ func createConfigFromMetadata(md metadataJSON) *config {
 	}
 	c.parsePreRelease(md.Project.Attributes.PreReleaseFeatures)
 
+	if md.Instance.Attributes.InventoryEnabledOld != "" {
+		c.osInventoryEnabled = parseBool(md.Instance.Attributes.InventoryEnabledOld)
+	}
 	if md.Instance.Attributes.InventoryEnabled != "" {
 		c.osInventoryEnabled = parseBool(md.Instance.Attributes.InventoryEnabled)
 	}
