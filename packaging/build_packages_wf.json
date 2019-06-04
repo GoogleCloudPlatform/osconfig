@@ -7,6 +7,10 @@
     "common.sh": "./common.sh"
   },
   "Vars": {
+    "gcs_path": {
+      "Value": "${SCRATCHPATH}/packages",
+      "Description": "GCS path to dump the built packages in: gs://my-bucket/packages"
+    },
     "base_repo": {
       "Value": "GoogleCloudPlatform",
       "Description": "Base GitHub repo"
@@ -153,6 +157,14 @@
           }
         }
       ]
+    },
+    "copy-packages": {
+      "CopyGCSObjects": [
+        {
+          "Source": "${OUTSPATH}/",
+          "Destination": "${gcs_path}/"
+        }
+      ]
     }
   },
   "Dependencies": {
@@ -161,6 +173,9 @@
     ],
     "wait-for-build": [
       "build-packages"
+    ],
+    "copy-packages": [
+      "wait-for-build"
     ]
   }
 }
