@@ -10,6 +10,7 @@
     "LICENSE": "<ProgramFiles>/Google/OSConfig/LICENSE.txt"
   },
   "releaseNotes": [
+    "0.6.1 - Add agent restart on upgrade",
     "0.6.0 - Rework ospatch, fix a number of bugs",
     "0.5.0 - Add ospatch functionality",
     "0.4.2 - Add version info to binary",
