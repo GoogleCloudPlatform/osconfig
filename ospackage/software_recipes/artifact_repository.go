@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"path"
 	"regexp"
 	"strings"
@@ -30,7 +29,6 @@ import (
 
 type Artifact struct {
 	name           string
-	protocol       Protocol
 	url            string
 	checksum       string
 	allow_insecure bool
@@ -39,9 +37,9 @@ type Artifact struct {
 type Protocol string
 
 const (
-	GCS   Protocol = "gcs"
-	Https Protocol = "https"
-	Http  Protocol = "http"
+	GCS   = "gcs"
+	Https = "https"
+	Http  = "http"
 )
 
 var (
@@ -49,6 +47,7 @@ var (
 	gcsRegex          = regexp.MustCompile("gcs://([^/]+)/(.+)")
 	testStorageClient *storage.Client
 	testHttpClient    *http.Client
+	testFileHandler   FileHandler
 )
 
 func newStorageClient(ctx context.Context) (*storage.Client, error) {
@@ -65,7 +64,16 @@ func newHttpClient() *http.Client {
 	return &http.Client{}
 }
 
-func fetchArtifacts(ctx context.Context, artifacts []Artifact, directory string) (map[string]string, error) {
+func newFileHandler() FileHandler {
+	if testFileHandler != nil {
+		return testFileHandler
+	}
+	return &OSFileHandler{}
+}
+
+// Takes in a slice of artifacs and dowloads them into the specified directory,
+// Returns a map of artifact names to their new locations on the local disk.
+func FetchArtifacts(ctx context.Context, artifacts []Artifact, directory string) (map[string]string, error) {
 	localNames := make(map[string]string)
 
 	for _, a := range artifacts {
@@ -79,21 +87,27 @@ func fetchArtifacts(ctx context.Context, artifacts []Artifact, directory string)
 	return localNames, nil
 }
 
-func fetchArtifact(ctx context.Context, new Artifact, directory string) (string, error) {
-	path := path.Join(directory, new.name)
-	switch new.protocol {
+func fetchArtifact(ctx context.Context, a Artifact, directory string) (string, error) {
+	path := path.Join(directory, a.name)
+	resource := strings.SplitN(a.url, "://", 2)
+	if len(resource) < 2 {
+		return "", fmt.Errorf("error parsing url %q in artifact %q", a.url, a.name)
+	}
+	protocol := resource[0]
+
+	switch protocol {
 	case GCS:
-		err := fetchFromGCS(ctx, new, path)
+		err := fetchFromGCS(ctx, a, path)
 		if err != nil {
 			return "", err
 		}
 	case Https, Http:
-		err := fetchViaHttp(ctx, new, path)
+		err := fetchViaHttp(ctx, a, path)
 		if err != nil {
 			return "", err
 		}
 	default:
-		return "", fmt.Errorf("Protocol %q not supported", new.protocol)
+		return "", fmt.Errorf("protocol %q found in artifact %q not supported", protocol, a.name)
 	}
 
 	return path, nil
@@ -122,22 +136,6 @@ func fetchFromGCS(ctx context.Context, a Artifact, path string) error {
 	return fetchStream(r, a, path)
 }
 
-func fetchStream(r io.Reader, a Artifact, path string) error {
-	file, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	hasher := sha256.New()
-	io.Copy(io.MultiWriter(file, hasher), r)
-	checksum := fmt.Sprintf("%64x", hasher.Sum(nil))
-	if !strings.EqualFold(checksum, a.checksum) {
-		return fmt.Errorf("Checksum for artifact with id %q is %q expected %q", a.name, checksum, a.checksum)
-	}
-	return nil
-}
-
 func fetchViaHttp(ctx context.Context, a Artifact, path string) error {
 	resp, err := newHttpClient().Get(a.url)
 	if err != nil {
@@ -152,20 +150,18 @@ func fetchViaHttp(ctx context.Context, a Artifact, path string) error {
 	return fetchStream(resp.Body, a, path)
 }
 
-type FakeArtifactRepository struct {
-	AddedArtifacts []Artifact
-	Artifacts      map[string]io.Reader
-}
-
-func (fake *FakeArtifactRepository) AddArtifact(new Artifact) error {
-	_ = append(fake.AddedArtifacts, new)
-	return nil
-}
-
-func (fake *FakeArtifactRepository) GetArtifact(name string) (io.Reader, func() error, error) {
-	a, ok := fake.Artifacts[name]
-	if !ok {
-		return nil, nil, fmt.Errorf("Artifact with name %q doesn't exist", name)
+func fetchStream(r io.Reader, a Artifact, path string) error {
+	file, err := newFileHandler().Create(path)
+	if err != nil {
+		return err
 	}
-	return a, func() error { return nil }, nil
+	defer file.Close()
+
+	hasher := sha256.New()
+	io.Copy(io.MultiWriter(file, hasher), r)
+	checksum := fmt.Sprintf("%64x", hasher.Sum(nil))
+	if a.checksum != "" && !strings.EqualFold(checksum, a.checksum) {
+		return fmt.Errorf("Checksum for artifact with id %q is %q expected %q", a.name, checksum, a.checksum)
+	}
+	return nil
 }
