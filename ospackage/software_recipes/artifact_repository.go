@@ -39,9 +39,9 @@ type Artifact struct {
 type Protocol string
 
 const (
-	GCS   = "gcs"
-	Https = "https"
-	Http  = "http"
+	GCS   Protocol = "gcs"
+	Https Protocol = "https"
+	Http  Protocol = "http"
 )
 
 var (
@@ -65,56 +65,38 @@ func newHttpClient() *http.Client {
 	return &http.Client{}
 }
 
-func NewArtifactRepository(directory string) ArtifactRepository {
-	return &FileRepository{
-		directory: directory,
+func fetchArtifacts(ctx context.Context, artifacts []Artifact, directory string) (map[string]string, error) {
+	localNames := make(map[string]string)
+
+	for _, a := range artifacts {
+		path, err := fetchArtifact(ctx, a, directory)
+		if err != nil {
+			return nil, err
+		}
+		localNames[a.name] = path
 	}
+
+	return localNames, nil
 }
 
-type ArtifactRepository interface {
-	AddArtifact(context.Context, Artifact) error
-	GetArtifact(string) (io.Reader, func() error, error)
-}
-
-// ArtifactRepository that stores the artifacts on disk
-type FileRepository struct {
-	directory  string
-	localNames map[string]string
-}
-
-// Gets the file associated with the given artifact name.
-func (ar *FileRepository) GetArtifact(name string) (io.Reader, func() error, error) {
-	localName, ok := ar.localNames[name]
-	if !ok {
-		return nil, nil, fmt.Errorf("Could not find artifact with name %q", name)
-	}
-	// need to check to make sure this can't leak files
-	f, err := os.Open(path.Join(ar.directory, localName))
-	if err != nil {
-		return nil, nil, err
-	}
-	return f, f.Close, nil
-}
-
-func (ar *FileRepository) AddArtifact(ctx context.Context, new Artifact) error {
-	path := path.Join(ar.directory, "todo.jpg")
+func fetchArtifact(ctx context.Context, new Artifact, directory string) (string, error) {
+	path := path.Join(directory, new.name)
 	switch new.protocol {
 	case GCS:
 		err := fetchFromGCS(ctx, new, path)
 		if err != nil {
-			return err
+			return "", err
 		}
 	case Https, Http:
 		err := fetchViaHttp(ctx, new, path)
 		if err != nil {
-			return err
+			return "", err
 		}
 	default:
-		return fmt.Errorf("Protocol %q not supported", new.protocol)
+		return "", fmt.Errorf("Protocol %q not supported", new.protocol)
 	}
 
-	ar.localNames[new.name] = path
-	return nil
+	return path, nil
 }
 
 func fetchFromGCS(ctx context.Context, a Artifact, path string) error {
