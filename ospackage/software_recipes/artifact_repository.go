@@ -144,7 +144,7 @@ func fetchViaHttp(ctx context.Context, a Artifact, path string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("todo")
+		return fmt.Errorf("When downloading artifact %q got http status %d", a.name, resp.StatusCode)
 	}
 
 	return fetchStream(resp.Body, a, path)
