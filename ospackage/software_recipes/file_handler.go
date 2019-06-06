@@ -55,6 +55,9 @@ func (wc *StringWriteCloser) GetWrittenString() string {
 
 func (fh *FakeFileHandler) Create(path string) (io.WriteCloser, error) {
 	wc := &StringWriteCloser{Buffer: &bytes.Buffer{}}
+	if fh.CreatedFiles == nil {
+		fh.CreatedFiles = make(map[string]*StringWriteCloser)
+	}
 	fh.CreatedFiles[path] = wc
 	return wc, nil
 }
