@@ -32,7 +32,7 @@ try {
   } 
   else {
     Set-FailureMode
-    New-Item -Path 'C:\Program Files\Google\OSConfig\restart_required' -Force
+    New-Item -Path 'C:\Windows\Temp\osconfig_agent_restart_required' -Force
   }
 }
 catch {

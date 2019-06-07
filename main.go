@@ -57,7 +57,7 @@ func run(ctx context.Context) {
 		}
 
 		if _, err := os.Stat(config.RestartFile()); err == nil {
-			logger.Infof("Restart signal recieved, waiting for tasks to complete.")
+			logger.Infof("Restart required marker file exists, beginning agent shutdown, waiting for tasks to complete.")
 			tasker.Close()
 			logger.Infof("All tasks completed, stopping agent.")
 			if err := os.Remove(config.RestartFile()); err != nil && !os.IsNotExist(err) {

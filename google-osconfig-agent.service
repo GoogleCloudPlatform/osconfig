@@ -2,6 +2,8 @@
 Description=Google OSConfig Agent
 After=local-fs.target network-online.target network.target
 Wants=local-fs.target network-online.target network.target
+StartLimitInterval=120
+StartLimitBurst=3
 
 [Service]
 ExecStart=/usr/bin/google_osconfig_agent

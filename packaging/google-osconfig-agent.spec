@@ -38,7 +38,6 @@ Contains the OSConfig agent binary and startup scripts
 GOPATH=%{_gopath} CGO_ENABLED=0 %{_go} build -ldflags="-s -w -X main.version=%{_version}" -mod=readonly -o google_osconfig_agent
 
 %install
-install -d %{buildroot}/etc/osconfig
 install -d %{buildroot}%{_bindir}
 install -p -m 0755 google_osconfig_agent %{buildroot}%{_bindir}/google_osconfig_agent
 %if 0%{?el7}
@@ -77,7 +76,7 @@ if [ $1 -eq 1 ]; then
 fi
 
 if [ $1 -eq 2 ]; then
-  touch /etc/osconfig/restart_required
+  touch /tmp/osconfig_agent_restart_required
 fi
 
 %preun
