@@ -4,19 +4,20 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"os"
 	"strings"
+
+	"github.com/google/googet/oswrap"
 )
 
 // Wraps the file creation to allow a fake to be substituted for testing.
 type OSFileHandler struct{}
 
 func (fh *OSFileHandler) Create(path string) (io.WriteCloser, error) {
-	return os.Create(path)
+	return oswrap.Create(path)
 }
 
 func (fh *OSFileHandler) Open(path string) (io.ReadCloser, error) {
-	return os.Open(path)
+	return oswrap.Open(path)
 }
 
 type FileHandler interface {
