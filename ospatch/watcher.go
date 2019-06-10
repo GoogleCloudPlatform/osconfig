@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	defaultEtag = ""
+	defaultEtag = "NONE"
 )
 
 var (
@@ -81,7 +81,6 @@ func watchMetadata(c chan watchMetadataRet, etag *string) {
 
 	var metadata attributesJSON
 	err = json.Unmarshal(md, &metadata)
-
 	c <- watchMetadataRet{
 		attr: &metadata,
 		err:  err,

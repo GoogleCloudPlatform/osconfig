@@ -35,7 +35,7 @@ func disableAutoUpdates() {
 		if err != nil {
 			if eerr, ok := err.(*exec.ExitError); ok {
 				// Error code of 1 indicates disabled.
-				if eerr.ExitCode() != 1 {
+				if eerr.ExitCode() == 1 {
 					return
 				}
 			}

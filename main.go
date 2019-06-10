@@ -38,8 +38,6 @@ var version string
 func init() {
 	// We do this here so the -X value doesn't need the full path.
 	config.SetVersion(version)
-
-	obtainLock()
 }
 
 type logWriter struct{}
@@ -93,6 +91,11 @@ func main() {
 	flag.Parse()
 	ctx := context.Background()
 
+	logger.Init(ctx, logger.LogOpts{LoggerName: "OSConfigAgent", ProjectName: config.ProjectID(), Debug: config.Debug(), Stdout: config.Stdout()})
+	defer logger.Close()
+
+	obtainLock()
+
 	logger.DeferredFatalFuncs = append(logger.DeferredFatalFuncs, deferredFuncs...)
 	defer func() {
 		for _, f := range deferredFuncs {
@@ -100,16 +103,14 @@ func main() {
 		}
 	}()
 
+	packages.DebugLogger = log.New(&logWriter{}, "", 0)
+
+	logger.Infof("OSConfig Agent (version %s) Started", config.Version())
+
 	// If this call to SetConfig fails (like a metadata error) we can't continue.
 	if err := config.SetConfig(); err != nil {
 		logger.Fatalf(err.Error())
 	}
-
-	packages.DebugLogger = log.New(&logWriter{}, "", 0)
-
-	logger.Init(ctx, logger.LogOpts{LoggerName: "OSConfigAgent", ProjectName: config.ProjectID(), Debug: config.Debug(), Stdout: config.Stdout()})
-	defer logger.Close()
-	logger.Infof("OSConfig Agent (version %s) Started", config.Version())
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
