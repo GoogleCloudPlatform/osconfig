@@ -48,8 +48,12 @@ const (
 	osPatchEnabledDefault     = false
 	debugEnabledDefault       = false
 
-	osPatchStateFileWindows = `C:\Program Files\Google\OSConfig\osconfig_patch.state`
-	osPatchStateFileLinux   = "/etc/osconfig/osconfig_patch.state"
+	configDirWindows        = `C:\Program Files\Google\OSConfig`
+	configDirLinux          = "/etc/osconfig"
+	osPatchStateFileWindows = configDirWindows + `\osconfig_patch.state`
+	osPatchStateFileLinux   = configDirLinux + "/osconfig_patch.state"
+	restartFileWindows      = `C:\Windows\Temp\osconfig_agent_restart_required`
+	restartFileLinux        = "/tmp/osconfig_agent_restart_required"
 
 	osConfigPollIntervalDefault = 10
 )
@@ -389,4 +393,13 @@ func PatchStateFile() string {
 	}
 
 	return osPatchStateFileLinux
+}
+
+// RestartFile is the location of the restart required file.
+func RestartFile() string {
+	if runtime.GOOS == "windows" {
+		return restartFileWindows
+	}
+
+	return restartFileLinux
 }

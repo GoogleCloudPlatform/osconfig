@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -e 
+
+if [ $1 = upgrade ]; then
+	touch /tmp/osconfig_agent_restart_required
+fi
+
+exit 0
