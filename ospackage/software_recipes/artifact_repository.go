@@ -178,7 +178,6 @@ func fetchArtifact(ctx context.Context, a Artifact, directory string) (string, e
 }
 
 func fetchFromGCS(ctx context.Context, a Artifact, u *url.URL, path string) error {
-
 	client, err := newStorageClient(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create storage client: %v", err)

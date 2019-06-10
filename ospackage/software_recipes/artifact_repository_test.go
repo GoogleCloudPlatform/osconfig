@@ -1,3 +1,17 @@
+//  Copyright 2019 Google Inc. All Rights Reserved.
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
 package software_recipes
 
 import (
@@ -27,6 +41,7 @@ func createHandler(responseMap map[string]string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		fmt.Println(r.URL.String())
+		fmt.Println("IN HANDLER************************************")
 		resp, ok := responseMap[path]
 		if !ok {
 			w.WriteHeader(404)
@@ -73,8 +88,9 @@ func TestGetHttpArtifact(t *testing.T) {
 }
 
 func TestGetGCSArtifact(t *testing.T) {
+	ctx := context.Background()
 	urls := []string{"gs://testbucket/testobject"}
-	s := httptest.NewTLSServer(createHandler(map[string]string{
+	s := httptest.NewServer(createHandler(map[string]string{
 		"/testartifact": "testartifact body",
 	}))
 	defer s.Close()
@@ -83,7 +99,7 @@ func TestGetGCSArtifact(t *testing.T) {
 	}
 	var err error
 	fmt.Println(s.URL)
-	testStorageClient, err = storage.NewClient(context.Background(), option.WithEndpoint(s.URL), option.WithHTTPClient(s.Client()), option.WithoutAuthentication())
+	testStorageClient, err = storage.NewClient(ctx, option.WithEndpoint(s.URL), option.WithHTTPClient(s.Client()), option.WithoutAuthentication())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,7 +117,7 @@ func TestGetGCSArtifact(t *testing.T) {
 				url:      url,
 				checksum: "d53a628153c63429b3709e0a50a326efea2fc40b7c4afd70101c4b5bc16054ae",
 			}}
-			files, err := FetchArtifacts(context.Background(), artifacts, directory)
+			files, err := FetchArtifacts(ctx, artifacts, directory)
 			if err != nil {
 				t.Fatalf("FetchArtifacts(ctx, %v, %q) returned unexpected error %q", artifacts, directory, err)
 			}
