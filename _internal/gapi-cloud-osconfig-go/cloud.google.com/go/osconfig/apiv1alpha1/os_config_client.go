@@ -1,4 +1,4 @@
-// Copyright 2018 Google LLC
+// Copyright 2019 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,12 +18,13 @@ package osconfig
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"time"
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
 	"github.com/golang/protobuf/proto"
-	gax "github.com/googleapis/gax-go"
+	gax "github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	"google.golang.org/api/transport"
@@ -156,13 +157,15 @@ func (c *Client) Close() error {
 // the `x-goog-api-client` header passed on each request. Intended for
 // use by Google-written clients.
 func (c *Client) setGoogleClientInfo(keyval ...string) {
-	kv := append([]string{"gax", gax.Version, "grpc", grpc.Version}, keyval...)
+	kv := append([]string{"gl-go", versionGo()}, keyval...)
+	kv = append(kv, "gapic", versionClient, "gax", gax.Version, "grpc", grpc.Version)
 	c.xGoogMetadata = metadata.Pairs("x-goog-api-client", gax.XGoogHeader(kv...))
 }
 
 // CreateOsConfig create an OsConfig.
 func (c *Client) CreateOsConfig(ctx context.Context, req *osconfigpb.CreateOsConfigRequest, opts ...gax.CallOption) (*osconfigpb.OsConfig, error) {
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "parent", req.GetParent()))
+	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.CreateOsConfig[0:len(c.CallOptions.CreateOsConfig):len(c.CallOptions.CreateOsConfig)], opts...)
 	var resp *osconfigpb.OsConfig
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -178,7 +181,8 @@ func (c *Client) CreateOsConfig(ctx context.Context, req *osconfigpb.CreateOsCon
 
 // GetOsConfig get an OsConfig.
 func (c *Client) GetOsConfig(ctx context.Context, req *osconfigpb.GetOsConfigRequest, opts ...gax.CallOption) (*osconfigpb.OsConfig, error) {
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", req.GetName()))
+	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.GetOsConfig[0:len(c.CallOptions.GetOsConfig):len(c.CallOptions.GetOsConfig)], opts...)
 	var resp *osconfigpb.OsConfig
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -194,7 +198,8 @@ func (c *Client) GetOsConfig(ctx context.Context, req *osconfigpb.GetOsConfigReq
 
 // ListOsConfigs get a page of OsConfigs.
 func (c *Client) ListOsConfigs(ctx context.Context, req *osconfigpb.ListOsConfigsRequest, opts ...gax.CallOption) *OsConfigIterator {
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "parent", req.GetParent()))
+	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.ListOsConfigs[0:len(c.CallOptions.ListOsConfigs):len(c.CallOptions.ListOsConfigs)], opts...)
 	it := &OsConfigIterator{}
 	req = proto.Clone(req).(*osconfigpb.ListOsConfigsRequest)
@@ -231,7 +236,8 @@ func (c *Client) ListOsConfigs(ctx context.Context, req *osconfigpb.ListOsConfig
 
 // UpdateOsConfig update an OsConfig.
 func (c *Client) UpdateOsConfig(ctx context.Context, req *osconfigpb.UpdateOsConfigRequest, opts ...gax.CallOption) (*osconfigpb.OsConfig, error) {
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", req.GetName()))
+	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.UpdateOsConfig[0:len(c.CallOptions.UpdateOsConfig):len(c.CallOptions.UpdateOsConfig)], opts...)
 	var resp *osconfigpb.OsConfig
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -247,7 +253,8 @@ func (c *Client) UpdateOsConfig(ctx context.Context, req *osconfigpb.UpdateOsCon
 
 // DeleteOsConfig delete an OsConfig.
 func (c *Client) DeleteOsConfig(ctx context.Context, req *osconfigpb.DeleteOsConfigRequest, opts ...gax.CallOption) error {
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", req.GetName()))
+	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.DeleteOsConfig[0:len(c.CallOptions.DeleteOsConfig):len(c.CallOptions.DeleteOsConfig)], opts...)
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
@@ -259,7 +266,8 @@ func (c *Client) DeleteOsConfig(ctx context.Context, req *osconfigpb.DeleteOsCon
 
 // CreateAssignment create an OS Config Assignment.
 func (c *Client) CreateAssignment(ctx context.Context, req *osconfigpb.CreateAssignmentRequest, opts ...gax.CallOption) (*osconfigpb.Assignment, error) {
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "parent", req.GetParent()))
+	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.CreateAssignment[0:len(c.CallOptions.CreateAssignment):len(c.CallOptions.CreateAssignment)], opts...)
 	var resp *osconfigpb.Assignment
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -275,7 +283,8 @@ func (c *Client) CreateAssignment(ctx context.Context, req *osconfigpb.CreateAss
 
 // GetAssignment get an OS Config Assignment.
 func (c *Client) GetAssignment(ctx context.Context, req *osconfigpb.GetAssignmentRequest, opts ...gax.CallOption) (*osconfigpb.Assignment, error) {
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", req.GetName()))
+	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.GetAssignment[0:len(c.CallOptions.GetAssignment):len(c.CallOptions.GetAssignment)], opts...)
 	var resp *osconfigpb.Assignment
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -291,7 +300,8 @@ func (c *Client) GetAssignment(ctx context.Context, req *osconfigpb.GetAssignmen
 
 // ListAssignments get a page of OS Config Assignments.
 func (c *Client) ListAssignments(ctx context.Context, req *osconfigpb.ListAssignmentsRequest, opts ...gax.CallOption) *AssignmentIterator {
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "parent", req.GetParent()))
+	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.ListAssignments[0:len(c.CallOptions.ListAssignments):len(c.CallOptions.ListAssignments)], opts...)
 	it := &AssignmentIterator{}
 	req = proto.Clone(req).(*osconfigpb.ListAssignmentsRequest)
@@ -328,7 +338,8 @@ func (c *Client) ListAssignments(ctx context.Context, req *osconfigpb.ListAssign
 
 // UpdateAssignment update an OS Config Assignment.
 func (c *Client) UpdateAssignment(ctx context.Context, req *osconfigpb.UpdateAssignmentRequest, opts ...gax.CallOption) (*osconfigpb.Assignment, error) {
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", req.GetName()))
+	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.UpdateAssignment[0:len(c.CallOptions.UpdateAssignment):len(c.CallOptions.UpdateAssignment)], opts...)
 	var resp *osconfigpb.Assignment
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -344,7 +355,8 @@ func (c *Client) UpdateAssignment(ctx context.Context, req *osconfigpb.UpdateAss
 
 // DeleteAssignment delete an OS Config Assignment.
 func (c *Client) DeleteAssignment(ctx context.Context, req *osconfigpb.DeleteAssignmentRequest, opts ...gax.CallOption) error {
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", req.GetName()))
+	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.DeleteAssignment[0:len(c.CallOptions.DeleteAssignment):len(c.CallOptions.DeleteAssignment)], opts...)
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
@@ -358,7 +370,8 @@ func (c *Client) DeleteAssignment(ctx context.Context, req *osconfigpb.DeleteAss
 // Returns NOT_FOUND error if the OsConfig does not exist. Returns an empty
 // policy if the resource exists but does not have a policy set.
 func (c *Client) GetIamPolicy(ctx context.Context, req *iampb.GetIamPolicyRequest, opts ...gax.CallOption) (*iampb.Policy, error) {
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "resource", req.GetResource()))
+	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.GetIamPolicy[0:len(c.CallOptions.GetIamPolicy):len(c.CallOptions.GetIamPolicy)], opts...)
 	var resp *iampb.Policy
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -375,7 +388,8 @@ func (c *Client) GetIamPolicy(ctx context.Context, req *iampb.GetIamPolicyReques
 // SetIamPolicy sets the access control policy for an OsConfig or an OS Config Assignment.
 // Replaces any existing policy.
 func (c *Client) SetIamPolicy(ctx context.Context, req *iampb.SetIamPolicyRequest, opts ...gax.CallOption) (*iampb.Policy, error) {
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "resource", req.GetResource()))
+	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.SetIamPolicy[0:len(c.CallOptions.SetIamPolicy):len(c.CallOptions.SetIamPolicy)], opts...)
 	var resp *iampb.Policy
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -391,7 +405,8 @@ func (c *Client) SetIamPolicy(ctx context.Context, req *iampb.SetIamPolicyReques
 
 // TestIamPermissions test the access control policy for an OsConfig or an OS Config Assignment.
 func (c *Client) TestIamPermissions(ctx context.Context, req *iampb.TestIamPermissionsRequest, opts ...gax.CallOption) (*iampb.TestIamPermissionsResponse, error) {
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "resource", req.GetResource()))
+	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.TestIamPermissions[0:len(c.CallOptions.TestIamPermissions):len(c.CallOptions.TestIamPermissions)], opts...)
 	var resp *iampb.TestIamPermissionsResponse
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -412,7 +427,8 @@ func (c *Client) TestIamPermissions(ctx context.Context, req *iampb.TestIamPermi
 // called directly to see what configs
 // This
 func (c *Client) LookupConfigs(ctx context.Context, req *osconfigpb.LookupConfigsRequest, opts ...gax.CallOption) (*osconfigpb.LookupConfigsResponse, error) {
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "resource", req.GetResource()))
+	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.LookupConfigs[0:len(c.CallOptions.LookupConfigs):len(c.CallOptions.LookupConfigs)], opts...)
 	var resp *osconfigpb.LookupConfigsResponse
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -428,7 +444,8 @@ func (c *Client) LookupConfigs(ctx context.Context, req *osconfigpb.LookupConfig
 
 // ExecutePatchJob patch GCE instances by creating and running a PatchJob.
 func (c *Client) ExecutePatchJob(ctx context.Context, req *osconfigpb.ExecutePatchJobRequest, opts ...gax.CallOption) (*osconfigpb.PatchJob, error) {
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "parent", req.GetParent()))
+	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.ExecutePatchJob[0:len(c.CallOptions.ExecutePatchJob):len(c.CallOptions.ExecutePatchJob)], opts...)
 	var resp *osconfigpb.PatchJob
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -445,7 +462,8 @@ func (c *Client) ExecutePatchJob(ctx context.Context, req *osconfigpb.ExecutePat
 // GetPatchJob get the patch job. This can be used to track the progress of an
 // ongoing patch job or review the details of completed jobs.
 func (c *Client) GetPatchJob(ctx context.Context, req *osconfigpb.GetPatchJobRequest, opts ...gax.CallOption) (*osconfigpb.PatchJob, error) {
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", req.GetName()))
+	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.GetPatchJob[0:len(c.CallOptions.GetPatchJob):len(c.CallOptions.GetPatchJob)], opts...)
 	var resp *osconfigpb.PatchJob
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -462,7 +480,8 @@ func (c *Client) GetPatchJob(ctx context.Context, req *osconfigpb.GetPatchJobReq
 // CancelPatchJob cancel a patch job. The patch job must be active. Canceled patch jobs
 // cannot be restarted.
 func (c *Client) CancelPatchJob(ctx context.Context, req *osconfigpb.CancelPatchJobRequest, opts ...gax.CallOption) (*osconfigpb.PatchJob, error) {
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", req.GetName()))
+	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.CancelPatchJob[0:len(c.CallOptions.CancelPatchJob):len(c.CallOptions.CancelPatchJob)], opts...)
 	var resp *osconfigpb.PatchJob
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -478,7 +497,8 @@ func (c *Client) CancelPatchJob(ctx context.Context, req *osconfigpb.CancelPatch
 
 // ListPatchJobs get a page of patch jobs.
 func (c *Client) ListPatchJobs(ctx context.Context, req *osconfigpb.ListPatchJobsRequest, opts ...gax.CallOption) *PatchJobIterator {
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "parent", req.GetParent()))
+	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.ListPatchJobs[0:len(c.CallOptions.ListPatchJobs):len(c.CallOptions.ListPatchJobs)], opts...)
 	it := &PatchJobIterator{}
 	req = proto.Clone(req).(*osconfigpb.ListPatchJobsRequest)
@@ -522,7 +542,8 @@ func (c *Client) ListPatchJobs(ctx context.Context, req *osconfigpb.ListPatchJob
 // affect the state of the active patch job and prevent the patches from
 // being correctly applied to this instance.
 func (c *Client) ReportPatchJobInstanceDetails(ctx context.Context, req *osconfigpb.ReportPatchJobInstanceDetailsRequest, opts ...gax.CallOption) (*osconfigpb.ReportPatchJobInstanceDetailsResponse, error) {
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "resource", req.GetResource()))
+	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.ReportPatchJobInstanceDetails[0:len(c.CallOptions.ReportPatchJobInstanceDetails):len(c.CallOptions.ReportPatchJobInstanceDetails)], opts...)
 	var resp *osconfigpb.ReportPatchJobInstanceDetailsResponse
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -538,7 +559,8 @@ func (c *Client) ReportPatchJobInstanceDetails(ctx context.Context, req *osconfi
 
 // ListPatchJobInstanceDetails get a page of instances' details for a given patch job.
 func (c *Client) ListPatchJobInstanceDetails(ctx context.Context, req *osconfigpb.ListPatchJobInstanceDetailsRequest, opts ...gax.CallOption) *PatchJobInstanceDetailsIterator {
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "parent", req.GetParent()))
+	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.ListPatchJobInstanceDetails[0:len(c.CallOptions.ListPatchJobInstanceDetails):len(c.CallOptions.ListPatchJobInstanceDetails)], opts...)
 	it := &PatchJobInstanceDetailsIterator{}
 	req = proto.Clone(req).(*osconfigpb.ListPatchJobInstanceDetailsRequest)
