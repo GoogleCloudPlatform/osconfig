@@ -91,6 +91,11 @@ func main() {
 	flag.Parse()
 	ctx := context.Background()
 
+	// If this call to SetConfig fails (like a metadata error) we can't continue.
+	if err := config.SetConfig(); err != nil {
+		logger.Init(ctx, logger.LogOpts{LoggerName: "OSConfigAgent", ProjectName: config.ProjectID()})
+		logger.Fatalf(err.Error())
+	}
 	logger.Init(ctx, logger.LogOpts{LoggerName: "OSConfigAgent", ProjectName: config.ProjectID(), Debug: config.Debug(), Stdout: config.Stdout()})
 	defer logger.Close()
 
@@ -106,11 +111,6 @@ func main() {
 	packages.DebugLogger = log.New(&logWriter{}, "", 0)
 
 	logger.Infof("OSConfig Agent (version %s) Started", config.Version())
-
-	// If this call to SetConfig fails (like a metadata error) we can't continue.
-	if err := config.SetConfig(); err != nil {
-		logger.Fatalf(err.Error())
-	}
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
