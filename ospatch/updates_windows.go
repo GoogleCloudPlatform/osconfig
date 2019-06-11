@@ -166,60 +166,61 @@ func (r *patchRun) installWUAUpdates() error {
 	}
 	defer session.Release()
 
-	r.debugf("Searching for available WUA updates.")
-	updts, err := packages.GetWUAUpdateCollection(session, "IsInstalled=0")
-	if err != nil {
-		return fmt.Errorf("GetWUAUpdateCollection error: %v", err)
-	}
-
-	countRaw, err := updts.GetProperty("Count")
-	if err != nil {
-		return err
-	}
-	count, _ := countRaw.Value().(int32)
-
-	if count == 0 {
-		r.infof("No Windows updates to install")
-		return nil
-	}
-
-	r.debugf("%d Windows updates available\n", count)
-
-	classFilter := make(map[string]struct{})
-	excludes := make(map[string]struct{})
-	if r.Job.PatchConfig.WindowsUpdate != nil {
-		for _, c := range r.Job.PatchConfig.WindowsUpdate.Classifications {
-			sc, ok := classifications[c]
-			if !ok {
-				return fmt.Errorf("Unknown classification: %s", c)
-			}
-			classFilter[sc] = struct{}{}
+	// We keep searching for and installing updates until the count == 0 or there is an error.
+	for {
+		r.debugf("Searching for available WUA updates.")
+		updts, err := packages.GetWUAUpdateCollection(session, "IsInstalled=0")
+		if err != nil {
+			return fmt.Errorf("GetWUAUpdateCollection error: %v", err)
 		}
-		r.debugf("Filtering by classifications: %q\n", r.Job.PatchConfig.WindowsUpdate.Classifications)
 
-		for _, e := range r.Job.PatchConfig.WindowsUpdate.Excludes {
-			excludes[e] = struct{}{}
-		}
-		r.debugf("Filtering out KBs: %q\n", r.Job.PatchConfig.WindowsUpdate.Excludes)
-	}
-
-	for i := 0; i < int(count); i++ {
-		if err := r.reportContinuingState(osconfigpb.Instance_APPLYING_PATCHES); err != nil {
-			return err
-		}
-		updtRaw, err := updts.GetProperty("Item", i)
+		countRaw, err := updts.GetProperty("Count")
 		if err != nil {
 			return err
 		}
-		updt := updtRaw.ToIDispatch()
-		defer updt.Release()
+		count, _ := countRaw.Value().(int32)
 
-		if err := r.installUpdate(classFilter, excludes, session, updt); err != nil {
-			return fmt.Errorf(`installUpdate(class, excludes, updt): %v`, err)
+		if count == 0 {
+			r.infof("No Windows updates to install")
+			return nil
+		}
+
+		r.debugf("%d Windows updates available\n", count)
+
+		classFilter := make(map[string]struct{})
+		excludes := make(map[string]struct{})
+		if r.Job.PatchConfig.WindowsUpdate != nil {
+			for _, c := range r.Job.PatchConfig.WindowsUpdate.Classifications {
+				sc, ok := classifications[c]
+				if !ok {
+					return fmt.Errorf("Unknown classification: %s", c)
+				}
+				classFilter[sc] = struct{}{}
+			}
+			r.debugf("Filtering by classifications: %q\n", r.Job.PatchConfig.WindowsUpdate.Classifications)
+
+			for _, e := range r.Job.PatchConfig.WindowsUpdate.Excludes {
+				excludes[e] = struct{}{}
+			}
+			r.debugf("Filtering out KBs: %q\n", r.Job.PatchConfig.WindowsUpdate.Excludes)
+		}
+
+		for i := 0; i < int(count); i++ {
+			if err := r.reportContinuingState(osconfigpb.Instance_APPLYING_PATCHES); err != nil {
+				return err
+			}
+			updtRaw, err := updts.GetProperty("Item", i)
+			if err != nil {
+				return err
+			}
+			updt := updtRaw.ToIDispatch()
+			defer updt.Release()
+
+			if err := r.installUpdate(classFilter, excludes, session, updt); err != nil {
+				return fmt.Errorf(`installUpdate(class, excludes, updt): %v`, err)
+			}
 		}
 	}
-
-	return nil
 }
 
 var classifications = map[osconfigpb.WindowsUpdateSettings_Classification]string{
@@ -235,7 +236,7 @@ var classifications = map[osconfigpb.WindowsUpdateSettings_Classification]string
 }
 
 func (r *patchRun) runUpdates() error {
-	if err := retry(30*time.Minute, "installing wua updates", r.debugf, r.installWUAUpdates); err != nil {
+	if err := retry(30*time.Minute, "installing WUA updates", r.debugf, r.installWUAUpdates); err != nil {
 		return err
 	}
 
