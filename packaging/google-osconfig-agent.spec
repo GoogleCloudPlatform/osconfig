@@ -66,10 +66,6 @@ if [ $1 -eq 1 ]; then
   # Start the service on first install
   start -q -n google-osconfig-agent
 fi
-if [ $1 -eq 2 ]; then
-  # Restart on upgrade
-  restart -q -n google-osconfig-agent
-fi
 %endif
 
 %if 0%{?el7}
@@ -79,10 +75,14 @@ if [ $1 -eq 1 ]; then
   systemctl start google-osconfig-agent.service
 fi
 
+if [ $1 -eq 2 ]; then
+  touch /tmp/osconfig_agent_restart_required
+fi
+
 %preun
 %systemd_preun google-osconfig-agent.service
 
 %postun
-%systemd_postun_with_restart google-osconfig-agent.service
+%systemd_postun google-osconfig-agent.service
 
 %endif

@@ -38,8 +38,6 @@ var version string
 func init() {
 	// We do this here so the -X value doesn't need the full path.
 	config.SetVersion(version)
-
-	obtainLock()
 }
 
 type logWriter struct{}
@@ -54,6 +52,16 @@ func run(ctx context.Context) {
 	for {
 		if err := config.SetConfig(); err != nil {
 			logger.Errorf(err.Error())
+		}
+
+		if _, err := os.Stat(config.RestartFile()); err == nil {
+			logger.Infof("Restart required marker file exists, beginning agent shutdown, waiting for tasks to complete.")
+			tasker.Close()
+			logger.Infof("All tasks completed, stopping agent.")
+			if err := os.Remove(config.RestartFile()); err != nil && !os.IsNotExist(err) {
+				logger.Errorf("Error removing restart signal file: %v", err)
+			}
+			return
 		}
 
 		// This sets up the patching system to run in the background.
@@ -72,7 +80,6 @@ func run(ctx context.Context) {
 		case <-ticker.C:
 			continue
 		case <-ctx.Done():
-			logger.Close()
 			return
 		}
 	}
@@ -84,6 +91,16 @@ func main() {
 	flag.Parse()
 	ctx := context.Background()
 
+	// If this call to SetConfig fails (like a metadata error) we can't continue.
+	if err := config.SetConfig(); err != nil {
+		logger.Init(ctx, logger.LogOpts{LoggerName: "OSConfigAgent", ProjectName: config.ProjectID()})
+		logger.Fatalf(err.Error())
+	}
+	logger.Init(ctx, logger.LogOpts{LoggerName: "OSConfigAgent", ProjectName: config.ProjectID(), Debug: config.Debug(), Stdout: config.Stdout()})
+	defer logger.Close()
+
+	obtainLock()
+
 	logger.DeferredFatalFuncs = append(logger.DeferredFatalFuncs, deferredFuncs...)
 	defer func() {
 		for _, f := range deferredFuncs {
@@ -91,15 +108,8 @@ func main() {
 		}
 	}()
 
-	// If this call to SetConfig fails (like a metadata error) we can't continue.
-	if err := config.SetConfig(); err != nil {
-		logger.Fatalf(err.Error())
-	}
-
 	packages.DebugLogger = log.New(&logWriter{}, "", 0)
 
-	logger.Init(ctx, logger.LogOpts{LoggerName: "OSConfigAgent", ProjectName: config.ProjectID(), Debug: config.Debug(), Stdout: config.Stdout()})
-	defer logger.Close()
 	logger.Infof("OSConfig Agent (version %s) Started", config.Version())
 
 	c := make(chan os.Signal, 1)
@@ -116,6 +126,7 @@ func main() {
 		if err := service.Register(ctx, "google_osconfig_agent", "Google OSConfig Agent", "", run, "run"); err != nil {
 			logger.Fatalf("service.Register error: %v", err)
 		}
+		return
 	case "noservice":
 		run(ctx)
 		return

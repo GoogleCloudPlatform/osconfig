@@ -34,19 +34,19 @@ func TestWatcher(t *testing.T) {
 	}{
 		{
 			"normal case",
-			"?name=foo",
+			"?name=foo&last_etag=",
 			"",
 			true,
 		},
 		{
 			"no metadata",
-			"",
+			"?last_etag=",
 			"",
 			false,
 		},
 		{
 			"canceled case",
-			"?name=cancel",
+			"?name=cancel&last_etag=",
 			"",
 			false,
 		},

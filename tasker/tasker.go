@@ -24,6 +24,7 @@ import (
 var (
 	tc chan *task
 	wg sync.WaitGroup
+	mx sync.Mutex
 )
 
 func init() {
@@ -38,12 +39,14 @@ type task struct {
 
 // Enqueue adds a task to the task queue.
 func Enqueue(name string, f func()) {
+	mx.Lock()
 	tc <- &task{name: name, run: f}
+	mx.Unlock()
 }
 
-// Close closes the tasker queue waits for the queue to empty.
+// Close prevents any further tasks from being enqueued and waits for the queue to empty.
 func Close() {
-	close(tc)
+	mx.Lock()
 	wg.Wait()
 }
 
