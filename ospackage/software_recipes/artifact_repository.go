@@ -224,7 +224,10 @@ func fetchStream(r io.Reader, a Artifact, path string) error {
 	defer file.Close()
 
 	hasher := sha256.New()
-	io.Copy(io.MultiWriter(file, hasher), r)
+	_, err = io.Copy(io.MultiWriter(file, hasher), r)
+	if err != nil {
+		return err
+	}
 	checksum := fmt.Sprintf("%64x", hasher.Sum(nil))
 	if a.checksum != "" && !strings.EqualFold(checksum, a.checksum) {
 		return fmt.Errorf("Checksum for artifact with id %q is %q expected %q", a.name, checksum, a.checksum)
