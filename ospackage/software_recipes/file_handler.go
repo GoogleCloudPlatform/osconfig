@@ -20,7 +20,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/google/googet/oswrap"
+	"./oswrap"
 )
 
 // Wraps the file creation to allow a fake to be substituted for testing.

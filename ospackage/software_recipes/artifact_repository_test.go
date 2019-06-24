@@ -40,8 +40,6 @@ func TestGetArtifacts_NoArtifacts(t *testing.T) {
 func createHandler(responseMap map[string]string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-		fmt.Println(r.URL.String())
-		fmt.Println("IN HANDLER************************************")
 		resp, ok := responseMap[path]
 		if !ok {
 			w.WriteHeader(404)
@@ -89,7 +87,7 @@ func TestGetHttpArtifact(t *testing.T) {
 
 func TestGetGCSArtifact(t *testing.T) {
 	ctx := context.Background()
-	urls := []string{"gs://testbucket/testobject"}
+	urls := []string{"gs://testbucket/testobject", "https://testbucket.storage.googleapis.com/testobject", "http://storage.googleapis.com/testbucket/testobject", "https://storage.googleapis.com/testbucket/testobject"}
 	s := httptest.NewServer(createHandler(map[string]string{
 		"/testartifact": "testartifact body",
 	}))
@@ -98,7 +96,6 @@ func TestGetGCSArtifact(t *testing.T) {
 		CreatedFiles: map[string]*StringWriteCloser{},
 	}
 	var err error
-	fmt.Println(s.URL)
 	testStorageClient, err = storage.NewClient(ctx, option.WithEndpoint(s.URL), option.WithHTTPClient(s.Client()), option.WithoutAuthentication())
 	if err != nil {
 		t.Fatal(err)
