@@ -25,10 +25,12 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"google.golang.org/api/option"
+
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
 
 func TestGetArtifacts_NoArtifacts(t *testing.T) {
-	files, err := FetchArtifacts(context.Background(), []Artifact{}, "/test")
+	files, err := FetchArtifacts(context.Background(), []*osconfigpb.SoftwareRecipe_Artifact{}, "/test")
 	if err != nil {
 		t.Fatalf("FetchArtifacts(ctx, {}, \"/test\") returned unexpected error %q", err)
 	}
@@ -63,10 +65,10 @@ func TestGetHttpArtifact(t *testing.T) {
 	wantLocation := "/testdir/test"
 	wantMap := map[string]string{"test": wantLocation}
 
-	artifacts := []Artifact{Artifact{
-		name:     "test",
-		url:      s.URL + "/testartifact",
-		checksum: "d53a628153c63429b3709e0a50a326efea2fc40b7c4afd70101c4b5bc16054ae",
+	artifacts := []*osconfigpb.SoftwareRecipe_Artifact{{
+		Id:     "test",
+		Uri:      s.URL + "/testartifact",
+		Checksum: "d53a628153c63429b3709e0a50a326efea2fc40b7c4afd70101c4b5bc16054ae",
 	}}
 
 	files, err := FetchArtifacts(context.Background(), artifacts, directory)
@@ -109,10 +111,10 @@ func TestGetGCSArtifact(t *testing.T) {
 	wantMap := map[string]string{"test": wantLocation}
 	for _, url := range urls {
 		t.Run(url, func(t *testing.T) {
-			artifacts := []Artifact{Artifact{
-				name:     "test",
-				url:      url,
-				checksum: "d53a628153c63429b3709e0a50a326efea2fc40b7c4afd70101c4b5bc16054ae",
+			artifacts := []*osconfigpb.SoftwareRecipe_Artifact{{
+				Id:     "test",
+				Uri:      url,
+				Checksum: "d53a628153c63429b3709e0a50a326efea2fc40b7c4afd70101c4b5bc16054ae",
 			}}
 			files, err := FetchArtifacts(ctx, artifacts, directory)
 			if err != nil {

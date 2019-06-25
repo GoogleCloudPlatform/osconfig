@@ -27,14 +27,8 @@ import (
 	"strings"
 
 	"cloud.google.com/go/storage"
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
-
-type Artifact struct {
-	name           string
-	url            string
-	checksum       string
-	allow_insecure bool
-}
 
 type Protocol string
 
@@ -100,7 +94,7 @@ func newFileHandler() FileHandler {
 
 // Takes in a slice of artifacs and dowloads them into the specified directory,
 // Returns a map of artifact names to their new locations on the local disk.
-func FetchArtifacts(ctx context.Context, artifacts []Artifact, directory string) (map[string]string, error) {
+func FetchArtifacts(ctx context.Context, artifacts []*osconfigpb.SoftwareRecipe_Artifact, directory string) (map[string]string, error) {
 	localNames := make(map[string]string)
 
 	for _, a := range artifacts {
@@ -108,7 +102,7 @@ func FetchArtifacts(ctx context.Context, artifacts []Artifact, directory string)
 		if err != nil {
 			return nil, err
 		}
-		localNames[a.name] = path
+		localNames[a.Id] = path
 	}
 
 	return localNames, nil
@@ -138,14 +132,14 @@ func tryTransformGcsUrl(url string) (string, bool) {
 	return "", false
 }
 
-func fetchArtifact(ctx context.Context, a Artifact, directory string) (string, error) {
-	path := path.Join(directory, a.name)
-	u, err := url.Parse(a.url)
+func fetchArtifact(ctx context.Context, a *osconfigpb.SoftwareRecipe_Artifact, directory string) (string, error) {
+	path := path.Join(directory, a.Id)
+	u, err := url.Parse(a.Uri)
 	if err != nil {
-		return "", fmt.Errorf("Could not parse url %q for artifact %q", a.url, a.name)
+		return "", fmt.Errorf("Could not parse url %q for artifact %q", a.Uri, a.Id)
 	}
 	scheme := strings.ToLower(u.Scheme)
-
+	
 	switch scheme {
 	case GCS:
 		err := fetchFromGCS(ctx, a, u, path)
@@ -153,7 +147,7 @@ func fetchArtifact(ctx context.Context, a Artifact, directory string) (string, e
 			return "", err
 		}
 	case Https, Http:
-		gcsLoc, ok := tryTransformGcsUrl(a.url)
+		gcsLoc, ok := tryTransformGcsUrl(a.Uri)
 
 		if ok {
 			gcsUrl, err := url.Parse(gcsLoc)
@@ -171,13 +165,13 @@ func fetchArtifact(ctx context.Context, a Artifact, directory string) (string, e
 			return "", err
 		}
 	default:
-		return "", fmt.Errorf("protocol %q found in artifact %q not supported", scheme, a.name)
+		return "", fmt.Errorf("protocol %q found in artifact %q not supported", scheme, a.Id)
 	}
 
 	return path, nil
 }
 
-func fetchFromGCS(ctx context.Context, a Artifact, u *url.URL, path string) error {
+func fetchFromGCS(ctx context.Context, a *osconfigpb.SoftwareRecipe_Artifact, u *url.URL, path string) error {
 	client, err := newStorageClient(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create storage client: %v", err)
@@ -188,35 +182,35 @@ func fetchFromGCS(ctx context.Context, a Artifact, u *url.URL, path string) erro
 	if u.Fragment != "" {
 		gen, err := strconv.ParseInt(u.Fragment, 10, 64)
 		if err != nil {
-			return fmt.Errorf("couldn't parse gcs generation number %q for artifact %q", u.Fragment, a.name)
+			return fmt.Errorf("couldn't parse gcs generation number %q for artifact %q", u.Fragment, a.Id)
 		}
 		oh = oh.Generation(gen)
 	}
 
 	r, err := oh.NewReader(ctx)
 	if err != nil {
-		return fmt.Errorf("error reading gcs artifact %q: %v", a.name, err)
+		return fmt.Errorf("error reading gcs artifact %q: %v", a.Id, err)
 	}
 	defer r.Close()
 
 	return fetchStream(r, a, path)
 }
 
-func fetchViaHttp(ctx context.Context, a Artifact, u *url.URL, path string) error {
-	resp, err := newHttpClient().Get(a.url)
+func fetchViaHttp(ctx context.Context, a *osconfigpb.SoftwareRecipe_Artifact, u *url.URL, path string) error {
+	resp, err := newHttpClient().Get(a.Uri)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("When downloading artifact %q got http status %d", a.name, resp.StatusCode)
+		return fmt.Errorf("When downloading artifact %q got http status %d", a.Id, resp.StatusCode)
 	}
 
 	return fetchStream(resp.Body, a, path)
 }
 
-func fetchStream(r io.Reader, a Artifact, path string) error {
+func fetchStream(r io.Reader, a *osconfigpb.SoftwareRecipe_Artifact, path string) error {
 	file, err := newFileHandler().Create(path)
 	if err != nil {
 		return err
@@ -229,8 +223,8 @@ func fetchStream(r io.Reader, a Artifact, path string) error {
 		return err
 	}
 	checksum := fmt.Sprintf("%64x", hasher.Sum(nil))
-	if a.checksum != "" && !strings.EqualFold(checksum, a.checksum) {
-		return fmt.Errorf("Checksum for artifact with id %q is %q expected %q", a.name, checksum, a.checksum)
+	if a.Checksum != "" && !strings.EqualFold(checksum, a.Checksum) {
+		return fmt.Errorf("Checksum for artifact with id %q is %q expected %q", a.Id, checksum, a.Checksum)
 	}
 	return nil
 }
