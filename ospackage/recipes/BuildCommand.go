@@ -8,6 +8,7 @@ import (
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
 
+// BuildCommand builds a command []string based on the Step type and parameters.
 func BuildCommand(step *osconfigpb.SoftwareRecipe_Step, artifacts map[string]string) ([]string, error) {
 	switch v := step.Step.(type) {
 	case *osconfigpb.SoftwareRecipe_Step_FileCopy:
@@ -25,35 +26,41 @@ func BuildCommand(step *osconfigpb.SoftwareRecipe_Step, artifacts map[string]str
 	case *osconfigpb.SoftwareRecipe_Step_ScriptRun:
 		return StepScriptRun(v, artifacts)
 	default:
-		return nil, fmt.Errorf("I don't know about step type %T!\n", v)
+		return nil, fmt.Errorf("unknown step type %T", v)
 	}
 }
 
+// StepFileCopy builds the command for a FileCopy step
 func StepFileCopy(step *osconfigpb.SoftwareRecipe_Step_FileCopy, artifacts map[string]string) ([]string, error) {
 	fmt.Println("StepFileCopy")
 	return nil, nil
 }
 
+// StepArchiveExtraction builds the command for a ArchiveExtraction step
 func StepArchiveExtraction(step *osconfigpb.SoftwareRecipe_Step_ArchiveExtraction, artifacts map[string]string) ([]string, error) {
 	fmt.Println("StepArchiveExtraction")
 	return nil, nil
 }
 
+// StepMsiInstallation builds the command for a MsiInstallation step
 func StepMsiInstallation(step *osconfigpb.SoftwareRecipe_Step_MsiInstallation, artifacts map[string]string) ([]string, error) {
 	fmt.Println("StepMsiInstallation")
 	return nil, nil
 }
 
+// StepDpkgInstallation builds the command for a DpkgInstallation step
 func StepDpkgInstallation(step *osconfigpb.SoftwareRecipe_Step_DpkgInstallation, artifacts map[string]string) ([]string, error) {
 	fmt.Println("StepDpkgInstallation")
 	return nil, nil
 }
 
+// StepRpmInstallation builds the command for a FileCopy step
 func StepRpmInstallation(step *osconfigpb.SoftwareRecipe_Step_RpmInstallation, artifacts map[string]string) ([]string, error) {
 	fmt.Println("StepRpmInstallation")
 	return nil, nil
 }
 
+// StepFileExec builds the command for a FileExec step
 func StepFileExec(step *osconfigpb.SoftwareRecipe_Step_FileExec, artifacts map[string]string) ([]string, error) {
 	var path string
 	switch v := step.FileExec.LocationType.(type) {
@@ -66,7 +73,7 @@ func StepFileExec(step *osconfigpb.SoftwareRecipe_Step_FileExec, artifacts map[s
 			return nil, fmt.Errorf("%q not found in artifact map", v.ArtifactId)
 		}
 	default:
-		return nil, fmt.Errorf("Can't determine location type")
+		return nil, fmt.Errorf("can't determine location type")
 	}
 
 	res := []string{path}
@@ -74,6 +81,7 @@ func StepFileExec(step *osconfigpb.SoftwareRecipe_Step_FileExec, artifacts map[s
 	return res, nil
 }
 
+// StepScriptRun builds the command for a ScriptRun step
 func StepScriptRun(step *osconfigpb.SoftwareRecipe_Step_ScriptRun, artifacts map[string]string) ([]string, error) {
 	// TODO: should be putting this in stepN_type/ dir, but that needs me to know the dir way in advance..
 	// actually this is an artifact. we should have made them referenced as artifacts.. we'll have to repeat file creation logic here.

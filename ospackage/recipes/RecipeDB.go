@@ -6,24 +6,30 @@ import (
 	"strings"
 )
 
+// RecipeDB represents local state of installed recipes.
 type RecipeDB struct{}
 
 func newRecipeDB() RecipeDB {
 	return RecipeDB{}
 }
 
+// GetRecipe returns the Recipe object for the given recipe name.
 func (db *RecipeDB) GetRecipe(name string) (Recipe, bool) {
 	return Recipe{}, false
 }
 
+// AddRecipe marks a recipe as installed.
 func (db *RecipeDB) AddRecipe(name, version string) error {
 	return nil
 }
 
+// A Recipe represents one recipe installed on the system.
 type Recipe struct {
+	name    string
 	version []int
 }
 
+// SetVersion sets the version on a Recipe.
 func (r *Recipe) SetVersion(version string) error {
 	var err error
 	r.version, err = convertVersion(version)
@@ -69,11 +75,11 @@ func convertVersion(version string) ([]int, error) {
 	var ret []int
 	for idx, element := range strings.Split(version, ".") {
 		if idx > 3 {
-			return nil, fmt.Errorf("Invalid version string")
+			return nil, fmt.Errorf("invalid version string")
 		}
 		val, err := strconv.ParseUint(element, 10, 0)
 		if err != nil {
-			return nil, fmt.Errorf("Invalid version string")
+			return nil, fmt.Errorf("invalid version string")
 		}
 		ret = append(ret, int(val))
 	}
