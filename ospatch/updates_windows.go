@@ -25,7 +25,7 @@ import (
 	"github.com/go-ole/go-ole/oleutil"
 	"golang.org/x/sys/windows/registry"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
 
 func (r *patchRun) systemRebootRequired() (bool, error) {
@@ -128,8 +128,16 @@ func (r *patchRun) installUpdate(classFilter, excludes map[string]struct{}, sess
 	if err != nil {
 		return fmt.Errorf(`updt.GetProperty("EulaAccepted"): %v`, err)
 	}
+	// https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-oaut/7b39eb24-9d39-498a-bcd8-75c38e5823d0
+	if eula.Val == 0 {
+		r.infof("%s - Accepting EULA", title.Value())
+		if _, err := updt.CallMethod("AcceptEula"); err != nil {
+			return fmt.Errorf(`updateColl.CallMethod("AcceptEula"): %v`, err)
+		}
+	} else {
+		r.debugf("%s - EulaAccepted: %v", title.Value(), eula.Value())
+	}
 
-	r.debugf("%s - EulaAccepted: %v", title.Value(), eula.Value())
 	if _, err := updateColl.CallMethod("Add", updt); err != nil {
 		return fmt.Errorf(`updateColl.CallMethod("Add", updt): %v`, err)
 	}
