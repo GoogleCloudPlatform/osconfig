@@ -167,7 +167,8 @@ func (r *patchRun) installWUAUpdates() error {
 	defer session.Release()
 
 	// We keep searching for and installing updates until the count == 0 or there is an error.
-	for i := 0; i < 50; i++ {
+	retries := 50
+	for i := 0; i < retries; i++ {
 		r.debugf("Searching for available WUA updates.")
 		updts, err := packages.GetWUAUpdateCollection(session, "IsInstalled=0")
 		if err != nil {
@@ -222,7 +223,7 @@ func (r *patchRun) installWUAUpdates() error {
 		}
 	}
 
-	return fmt.Errorf("failed to install all updates after trying 50 times")
+	return fmt.Errorf("failed to install all updates after trying %d times", retries)
 }
 
 var classifications = map[osconfigpb.WindowsUpdateSettings_Classification]string{
