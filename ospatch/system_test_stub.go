@@ -17,3 +17,5 @@
 package ospatch
 
 func disableAutoUpdates() {}
+
+func rebootSystem() error { return nil }
