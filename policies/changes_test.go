@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-package ospackage
+package policies
 
 import (
 	"reflect"
@@ -20,7 +20,7 @@ import (
 
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
 
 func TestGetNecessaryChanges(t *testing.T) {

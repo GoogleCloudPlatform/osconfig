@@ -27,7 +27,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
-	"github.com/GoogleCloudPlatform/osconfig/ospackage"
+	"github.com/GoogleCloudPlatform/osconfig/policies"
 	"github.com/GoogleCloudPlatform/osconfig/ospatch"
 	"github.com/GoogleCloudPlatform/osconfig/service"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
@@ -68,7 +68,7 @@ func run(ctx context.Context) {
 		ospatch.Configure(ctx)
 
 		if config.OSPackageEnabled() {
-			ospackage.Run(ctx, config.Instance())
+			policies.Run(ctx, config.Instance())
 		}
 
 		if config.OSInventoryEnabled() {
@@ -134,8 +134,8 @@ func main() {
 		inventory.Run()
 		tasker.Close()
 		return
-	case "ospackage":
-		ospackage.Run(ctx, config.Instance())
+	case "policies":
+		policies.Run(ctx, config.Instance())
 		tasker.Close()
 		return
 	case "ospatch":

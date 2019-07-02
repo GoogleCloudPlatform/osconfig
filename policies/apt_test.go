@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-package ospackage
+package policies
 
 import (
 	"fmt"
@@ -21,7 +21,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
 
 func runAptRepositories(repos []*osconfigpb.AptRepository) (string, error) {

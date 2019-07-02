@@ -33,6 +33,8 @@ import (
 const (
 	// InstanceMetadata is the instance metadata URL.
 	InstanceMetadata = "http://metadata.google.internal/computeMetadata/v1/instance"
+	// IdentityTokenPath is the instance identity token path.
+	IdentityTokenPath = "instance/service-accounts/default/identity?audience=osconfig.googleapis.com&format=full"
 	// ReportURL is the guest attributes endpoint.
 	ReportURL = InstanceMetadata + "/guest-attributes"
 
