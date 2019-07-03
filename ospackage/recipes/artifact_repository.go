@@ -33,21 +33,21 @@ import (
 )
 
 var (
-	bucketRegex = `(P<bucket>[a-z0-9][-_.a-z0-9]*)`
-	objectRegex = `(P<object>.+)`
-	gsFormat    = "gs://%s/%s"
+	bucketRegex     = `(P<bucket>[a-z0-9][-_.a-z0-9]*)`
+	objectRegex     = `(P<object>[^#]+)`
+	generationRegex = `(P<generation>.+)`
 
 	// Many of the Google Storage URLs are supported below.
 	// It is preferred that customers specify their object using
 	// its gs://<bucket>/<object> URL.
-	gsRegex = regexp.MustCompile(fmt.Sprintf(`^gs://%s/%s$`, bucketRegex, objectRegex))
+	gsRegex = regexp.MustCompile(fmt.Sprintf(`^gs://%s/%s#?%s?$`, bucketRegex, objectRegex, generationRegex))
 	// Check for the Google Storage URLs:
 	// http://<bucket>.storage.googleapis.com/<object>
 	// https://<bucket>.storage.googleapis.com/<object>
-	gsHTTPRegex1 = regexp.MustCompile(fmt.Sprintf(`^http[s]?://%s\.storage\.googleapis\.com/%s$`, bucketRegex, objectRegex))
+	gsHTTPRegex1 = regexp.MustCompile(fmt.Sprintf(`^http[s]?://%s\.storage\.googleapis\.com/%s#?%s?$`, bucketRegex, objectRegex, generationRegex))
 	// http://storage.cloud.google.com/<bucket>/<object>
 	// https://storage.cloud.google.com/<bucket>/<object>
-	gsHTTPRegex2 = regexp.MustCompile(fmt.Sprintf(`^http[s]?://storage\.cloud\.google\.com/%s/%s$`, bucketRegex, objectRegex))
+	gsHTTPRegex2 = regexp.MustCompile(fmt.Sprintf(`^http[s]?://storage\.cloud\.google\.com/%s/%s#?%s?$`, bucketRegex, objectRegex, generationRegex))
 	// Check for the other possible Google Storage URLs:
 	// http://storage.googleapis.com/<bucket>/<object>
 	// https://storage.googleapis.com/<bucket>/<object>
@@ -55,7 +55,7 @@ var (
 	// The following are deprecated but checked:
 	// http://commondatastorage.googleapis.com/<bucket>/<object>
 	// https://commondatastorage.googleapis.com/<bucket>/<object>
-	gsHTTPRegex3 = regexp.MustCompile(fmt.Sprintf(`^http[s]?://(?:commondata)?storage\.googleapis\.com/%s/%s$`, bucketRegex, objectRegex))
+	gsHTTPRegex3 = regexp.MustCompile(fmt.Sprintf(`^http[s]?://(?:commondata)?storage\.googleapis\.com/%s/%s#?%s?$`, bucketRegex, objectRegex, generationRegex))
 
 	gcsAPIBase = "https://storage.cloud.google.com"
 
@@ -93,28 +93,34 @@ func FetchArtifacts(ctx context.Context, artifacts []*osconfigpb.SoftwareRecipe_
 	return localNames, nil
 }
 
-func tryGcsRegex(r *regexp.Regexp, url string) (string, string, bool) {
-	matches := gsHTTPRegex1.FindStringSubmatch(url)
-	if len(matches) == 3 {
-		return matches[1], matches[2], true
-	}
-	return "", "", false
+type objectLocation struct {
+	bucket string
+	path string
+	generation string
 }
 
-func tryTransformGcsURL(url string) (string, bool) {
-	bucket, object, ok := tryGcsRegex(gsHTTPRegex1, url)
-	if ok {
-		return fmt.Sprintf(gsFormat, bucket, object), true
+func tryGcsRegex(r *regexp.Regexp, url string) (objectLocation, bool) {
+	matches := gsHTTPRegex1.FindStringSubmatch(url)
+	if len(matches) == 3 {
+		return objectLocation{bucket: matches[1], path: matches[2]}, true
 	}
-	bucket, object, ok = tryGcsRegex(gsHTTPRegex2, url)
-	if ok {
-		return fmt.Sprintf(gsFormat, bucket, object), true
+	if len(matches) == 4 {
+		return objectLocation{bucket: matches[1], path: matches[2], generation: matches[3]}, true
 	}
-	bucket, object, ok = tryGcsRegex(gsHTTPRegex2, url)
-	if ok {
-		return fmt.Sprintf(gsFormat, bucket, object), true
+	return objectLocation{}, false
+}
+
+func tryParseGcsURL(url string) (objectLocation, bool) {
+	if loc, ok := tryGcsRegex(gsHTTPRegex1, url); ok {
+		return loc, true
 	}
-	return "", false
+	if loc, ok = tryGcsRegex(gsHTTPRegex2, url); ok {
+		return loc, true
+	}
+	if loc, ok = tryGcsRegex(gsHTTPRegex2, url); ok {
+		return loc, true
+	}
+	return objectLocation{}, false
 }
 
 func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Artifact, directory string) (string, error) {
@@ -127,27 +133,27 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 
 	switch scheme {
 	case "gcs":
-		err := fetchFromGCS(ctx, artifact, uri, path)
+		loc, ok := tryGcsRegex(gsRegex, artifact.Uri)
+		if !ok {
+			return "", fmt.Errorf("Could not parse gs url %q for artifact %q", artifact.Uri, artifact.Id)
+		}
+		err := fetchFromGCS(ctx, artifact, loc, path)
 		if err != nil {
 			return "", err
 		}
 	case "https", "http":
-		gcsLoc, ok := tryTransformGcsURL(artifact.Uri)
+		loc, ok  := tryParseGcsURL(artifact.Uri)
 
 		if ok {
-			gcsURL, err := url.Parse(gcsLoc)
+			err = fetchFromGCS(ctx, artifact, loc, path)
 			if err != nil {
 				return "", err
 			}
-			err = fetchFromGCS(ctx, artifact, gcsURL, path)
+		} else {
+			err := fetchViaHTTP(ctx, artifact, path)
 			if err != nil {
 				return "", err
 			}
-		}
-
-		err := fetchViaHTTP(ctx, artifact, path)
-		if err != nil {
-			return "", err
 		}
 	default:
 		return "", fmt.Errorf("protocol %q found in artifact %q not supported", scheme, artifact.Id)
@@ -156,7 +162,7 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 	return path, nil
 }
 
-func fetchFromGCS(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Artifact, uri *url.URL, path string) error {
+func fetchFromGCS(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Artifact, loc objectLocation, path string) error {
 	client, err := newStorageClient(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create storage client: %v", err)
