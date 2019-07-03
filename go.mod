@@ -8,7 +8,7 @@ require (
 	github.com/StackExchange/wmi v0.0.0-20181212234831-e0a55b97c705
 	github.com/go-ole/go-ole v1.2.4
 	github.com/golang/protobuf v1.3.1
-	github.com/google/go-cmp v0.3.0
+	github.com/google/go-cmp v0.3.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.0.4
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/kardianos/service v1.0.0

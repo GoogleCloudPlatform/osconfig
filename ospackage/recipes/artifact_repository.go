@@ -18,7 +18,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"github.com/GoogleCloudPlatform/osconfig/oswrap"
 	"io"
 	"net/http"
 	"net/url"
@@ -27,16 +26,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoogleCloudPlatform/osconfig/oswrap"
+
 	"cloud.google.com/go/storage"
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
-)
-
-type Protocol string
-
-const (
-	GCS   = "gs"
-	HTTPS = "https"
-	HTTP  = "http"
 )
 
 var (
@@ -72,7 +65,6 @@ var (
 
 func newStorageClient(ctx context.Context) (*storage.Client, error) {
 	if testStorageClient != nil {
-		fmt.Printf("%+#v\n", testStorageClient)
 		return testStorageClient, nil
 	}
 	return storage.NewClient(ctx)
@@ -125,82 +117,82 @@ func tryTransformGcsURL(url string) (string, bool) {
 	return "", false
 }
 
-func fetchArtifact(ctx context.Context, a *osconfigpb.SoftwareRecipe_Artifact, directory string) (string, error) {
-	path := path.Join(directory, a.Id)
-	u, err := url.Parse(a.Uri)
+func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Artifact, directory string) (string, error) {
+	path := path.Join(directory, artifact.Id)
+	uri, err := url.Parse(artifact.Uri)
 	if err != nil {
-		return "", fmt.Errorf("Could not parse url %q for artifact %q", a.Uri, a.Id)
+		return "", fmt.Errorf("Could not parse url %q for artifact %q", artifact.Uri, artifact.Id)
 	}
-	scheme := strings.ToLower(u.Scheme)
+	scheme := strings.ToLower(uri.Scheme)
 
 	switch scheme {
-	case GCS:
-		err := fetchFromGCS(ctx, a, u, path)
+	case "gcs":
+		err := fetchFromGCS(ctx, artifact, uri, path)
 		if err != nil {
 			return "", err
 		}
-	case HTTPS, HTTP:
-		gcsLoc, ok := tryTransformGcsURL(a.Uri)
+	case "https", "http":
+		gcsLoc, ok := tryTransformGcsURL(artifact.Uri)
 
 		if ok {
 			gcsURL, err := url.Parse(gcsLoc)
 			if err != nil {
 				return "", err
 			}
-			err = fetchFromGCS(ctx, a, gcsURL, path)
+			err = fetchFromGCS(ctx, artifact, gcsURL, path)
 			if err != nil {
 				return "", err
 			}
 		}
 
-		err := fetchViaHTTP(ctx, a, u, path)
+		err := fetchViaHTTP(ctx, artifact, path)
 		if err != nil {
 			return "", err
 		}
 	default:
-		return "", fmt.Errorf("protocol %q found in artifact %q not supported", scheme, a.Id)
+		return "", fmt.Errorf("protocol %q found in artifact %q not supported", scheme, artifact.Id)
 	}
 
 	return path, nil
 }
 
-func fetchFromGCS(ctx context.Context, a *osconfigpb.SoftwareRecipe_Artifact, u *url.URL, path string) error {
+func fetchFromGCS(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Artifact, uri *url.URL, path string) error {
 	client, err := newStorageClient(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create storage client: %v", err)
 	}
 	defer client.Close()
 
-	oh := client.Bucket(u.Hostname()).Object(u.Path)
-	if u.Fragment != "" {
-		gen, err := strconv.ParseInt(u.Fragment, 10, 64)
+	oh := client.Bucket(uri.Hostname()).Object(uri.Path)
+	if uri.Fragment != "" {
+		gen, err := strconv.ParseInt(uri.Fragment, 10, 64)
 		if err != nil {
-			return fmt.Errorf("couldn't parse gcs generation number %q for artifact %q", u.Fragment, a.Id)
+			return fmt.Errorf("couldn't parse gcs generation number %q for artifact %q", uri.Fragment, artifact.Id)
 		}
 		oh = oh.Generation(gen)
 	}
 
 	r, err := oh.NewReader(ctx)
 	if err != nil {
-		return fmt.Errorf("error reading gcs artifact %q: %v", a.Id, err)
+		return fmt.Errorf("error reading gcs artifact %q: %v", artifact.Id, err)
 	}
 	defer r.Close()
 
-	return fetchStream(r, a, path)
+	return fetchStream(r, artifact, path)
 }
 
-func fetchViaHTTP(ctx context.Context, a *osconfigpb.SoftwareRecipe_Artifact, u *url.URL, path string) error {
-	resp, err := newHTTPClient().Get(a.Uri)
+func fetchViaHTTP(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Artifact, path string) error {
+	resp, err := newHTTPClient().Get(artifact.Uri)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("When downloading artifact %q got http status %d", a.Id, resp.StatusCode)
+		return fmt.Errorf("When downloading artifact %q got http status %d", artifact.Id, resp.StatusCode)
 	}
 
-	return fetchStream(resp.Body, a, path)
+	return fetchStream(resp.Body, artifact, path)
 }
 
 func fetchStream(r io.Reader, a *osconfigpb.SoftwareRecipe_Artifact, path string) error {
