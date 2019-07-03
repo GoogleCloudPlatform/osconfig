@@ -18,6 +18,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"github.com/GoogleCloudPlatform/osconfig/oswrap"
 	"io"
 	"net/http"
 	"net/url"
@@ -34,8 +35,8 @@ type Protocol string
 
 const (
 	GCS   = "gs"
-	Https = "https"
-	Http  = "http"
+	HTTPS = "https"
+	HTTP  = "http"
 )
 
 var (
@@ -66,8 +67,7 @@ var (
 	gcsAPIBase = "https://storage.cloud.google.com"
 
 	testStorageClient *storage.Client
-	testHttpClient    *http.Client
-	testFileHandler   FileHandler
+	testHTTPClient    *http.Client
 )
 
 func newStorageClient(ctx context.Context) (*storage.Client, error) {
@@ -78,21 +78,14 @@ func newStorageClient(ctx context.Context) (*storage.Client, error) {
 	return storage.NewClient(ctx)
 }
 
-func newHttpClient() *http.Client {
-	if testHttpClient != nil {
-		return testHttpClient
+func newHTTPClient() *http.Client {
+	if testHTTPClient != nil {
+		return testHTTPClient
 	}
 	return &http.Client{}
 }
 
-func newFileHandler() FileHandler {
-	if testFileHandler != nil {
-		return testFileHandler
-	}
-	return &OSFileHandler{}
-}
-
-// Takes in a slice of artifacs and dowloads them into the specified directory,
+// FetchArtifacts takes in a slice of artifacs and dowloads them into the specified directory,
 // Returns a map of artifact names to their new locations on the local disk.
 func FetchArtifacts(ctx context.Context, artifacts []*osconfigpb.SoftwareRecipe_Artifact, directory string) (map[string]string, error) {
 	localNames := make(map[string]string)
@@ -116,7 +109,7 @@ func tryGcsRegex(r *regexp.Regexp, url string) (string, string, bool) {
 	return "", "", false
 }
 
-func tryTransformGcsUrl(url string) (string, bool) {
+func tryTransformGcsURL(url string) (string, bool) {
 	bucket, object, ok := tryGcsRegex(gsHTTPRegex1, url)
 	if ok {
 		return fmt.Sprintf(gsFormat, bucket, object), true
@@ -139,28 +132,28 @@ func fetchArtifact(ctx context.Context, a *osconfigpb.SoftwareRecipe_Artifact, d
 		return "", fmt.Errorf("Could not parse url %q for artifact %q", a.Uri, a.Id)
 	}
 	scheme := strings.ToLower(u.Scheme)
-	
+
 	switch scheme {
 	case GCS:
 		err := fetchFromGCS(ctx, a, u, path)
 		if err != nil {
 			return "", err
 		}
-	case Https, Http:
-		gcsLoc, ok := tryTransformGcsUrl(a.Uri)
+	case HTTPS, HTTP:
+		gcsLoc, ok := tryTransformGcsURL(a.Uri)
 
 		if ok {
-			gcsUrl, err := url.Parse(gcsLoc)
+			gcsURL, err := url.Parse(gcsLoc)
 			if err != nil {
 				return "", err
 			}
-			err = fetchFromGCS(ctx, a, gcsUrl, path)
+			err = fetchFromGCS(ctx, a, gcsURL, path)
 			if err != nil {
 				return "", err
 			}
 		}
 
-		err := fetchViaHttp(ctx, a, u, path)
+		err := fetchViaHTTP(ctx, a, u, path)
 		if err != nil {
 			return "", err
 		}
@@ -196,8 +189,8 @@ func fetchFromGCS(ctx context.Context, a *osconfigpb.SoftwareRecipe_Artifact, u 
 	return fetchStream(r, a, path)
 }
 
-func fetchViaHttp(ctx context.Context, a *osconfigpb.SoftwareRecipe_Artifact, u *url.URL, path string) error {
-	resp, err := newHttpClient().Get(a.Uri)
+func fetchViaHTTP(ctx context.Context, a *osconfigpb.SoftwareRecipe_Artifact, u *url.URL, path string) error {
+	resp, err := newHTTPClient().Get(a.Uri)
 	if err != nil {
 		return err
 	}
@@ -211,7 +204,7 @@ func fetchViaHttp(ctx context.Context, a *osconfigpb.SoftwareRecipe_Artifact, u 
 }
 
 func fetchStream(r io.Reader, a *osconfigpb.SoftwareRecipe_Artifact, path string) error {
-	file, err := newFileHandler().Create(path)
+	file, err := oswrap.Create(path)
 	if err != nil {
 		return err
 	}

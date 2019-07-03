@@ -9,15 +9,14 @@ require (
 	github.com/go-ole/go-ole v1.2.4
 	github.com/golang/protobuf v1.3.1
 	github.com/google/go-cmp v0.3.0
-	github.com/google/googet v2.13.0+incompatible
-	github.com/googleapis/gax-go v2.0.2+incompatible
+	github.com/googleapis/gax-go/v2 v2.0.4
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/kardianos/service v1.0.0
 	github.com/kylelemons/godebug v1.1.0
-	golang.org/x/net v0.0.0-20190520210107-018c4d40a106 // indirect
+	golang.org/x/net v0.0.0-20190628185345-da137c7871d7 // indirect
 	golang.org/x/oauth2 v0.0.0-20190517181255-950ef44c6e07 // indirect
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58 // indirect
-	golang.org/x/sys v0.0.0-20190520201301-c432e742b0af
+	golang.org/x/sys v0.0.0-20190626221950-04f50cda93cb
 	golang.org/x/text v0.3.2 // indirect
 	google.golang.org/api v0.5.0
 	google.golang.org/appengine v1.6.0 // indirect
