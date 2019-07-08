@@ -22,8 +22,6 @@ import (
 	"strings"
 )
 
-const MOVEFILE_DELAY_UNTIL_REBOOT = 4
-
 // normPath transforms a windows path into an extended-length path as described in
 // https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx#maxpath
 func normPath(path string) (string, error) {
