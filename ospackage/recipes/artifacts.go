@@ -21,8 +21,10 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
-	"regexp"
+	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -31,32 +33,6 @@ import (
 )
 
 var (
-	bucketRegex     = `(P<bucket>[a-z0-9][-_.a-z0-9]*)`
-	objectRegex     = `(P<object>[^#]+)`
-	generationRegex = `(P<generation>.+)`
-
-	// Many of the Google Storage URLs are supported below.
-	// It is preferred that customers specify their object using
-	// its gs://<bucket>/<object> URL.
-	gsRegex = regexp.MustCompile(fmt.Sprintf(`^gs://%s/%s#?%s?$`, bucketRegex, objectRegex, generationRegex))
-	// Check for the Google Storage URLs:
-	// http://<bucket>.storage.googleapis.com/<object>
-	// https://<bucket>.storage.googleapis.com/<object>
-	gsHTTPRegex1 = regexp.MustCompile(fmt.Sprintf(`^http[s]?://%s\.storage\.googleapis\.com/%s#?%s?$`, bucketRegex, objectRegex, generationRegex))
-	// http://storage.cloud.google.com/<bucket>/<object>
-	// https://storage.cloud.google.com/<bucket>/<object>
-	gsHTTPRegex2 = regexp.MustCompile(fmt.Sprintf(`^http[s]?://storage\.cloud\.google\.com/%s/%s#?%s?$`, bucketRegex, objectRegex, generationRegex))
-	// Check for the other possible Google Storage URLs:
-	// http://storage.googleapis.com/<bucket>/<object>
-	// https://storage.googleapis.com/<bucket>/<object>
-	//
-	// The following are deprecated but checked:
-	// http://commondatastorage.googleapis.com/<bucket>/<object>
-	// https://commondatastorage.googleapis.com/<bucket>/<object>
-	gsHTTPRegex3 = regexp.MustCompile(fmt.Sprintf(`^http[s]?://(?:commondata)?storage\.googleapis\.com/%s/%s#?%s?$`, bucketRegex, objectRegex, generationRegex))
-
-	gcsAPIBase = "https://storage.cloud.google.com"
-
 	testStorageClient *storage.Client
 	testHTTPClient    *http.Client
 )
@@ -91,36 +67,6 @@ func FetchArtifacts(ctx context.Context, artifacts []*osconfigpb.SoftwareRecipe_
 	return localNames, nil
 }
 
-type objectLocation struct {
-	bucket     string
-	path       string
-	generation string
-}
-
-func tryGcsRegex(r *regexp.Regexp, url string) (objectLocation, bool) {
-	matches := gsHTTPRegex1.FindStringSubmatch(url)
-	if len(matches) == 3 {
-		return objectLocation{bucket: matches[1], path: matches[2]}, true
-	}
-	if len(matches) == 4 {
-		return objectLocation{bucket: matches[1], path: matches[2], generation: matches[3]}, true
-	}
-	return objectLocation{}, false
-}
-
-func tryParseGcsURL(url string) (objectLocation, bool) {
-	if loc, ok := tryGcsRegex(gsHTTPRegex1, url); ok {
-		return loc, true
-	}
-	if loc, ok := tryGcsRegex(gsHTTPRegex2, url); ok {
-		return loc, true
-	}
-	if loc, ok := tryGcsRegex(gsHTTPRegex2, url); ok {
-		return loc, true
-	}
-	return objectLocation{}, false
-}
-
 func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Artifact, directory string) (string, error) {
 	localPath := path.Join(directory, artifact.Id)
 	uri, err := url.Parse(artifact.Uri)
@@ -131,25 +77,12 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 	var reader io.ReadCloser
 	switch strings.ToLower(uri.Scheme) {
 	case "gcs":
-		loc, ok := tryGcsRegex(gsRegex, artifact.Uri)
-		if !ok {
-			return "", fmt.Errorf("Could not parse gs url %q for artifact %q", artifact.Uri, artifact.Id)
-		}
-		reader, err = fetchWithGCS(ctx, loc)
+		reader, err = fetchWithGCS(ctx, uri.Host, uri.Path, uri.Fragment)
 		defer reader.Close()
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q from GCS: %v", artifact.Id, err)
 		}
 	case "https", "http":
-		if loc, ok := tryParseGcsURL(artifact.Uri); ok {
-			reader, err = fetchWithGCS(ctx, loc)
-			defer reader.Close()
-			if err != nil {
-				return "", fmt.Errorf("error fetching artifact %q from GCS: %v", artifact.Id, err)
-			}
-			break
-		}
-
 		reader, err = fetchWithHTTP(ctx, artifact.Uri)
 		defer reader.Close()
 		if err != nil {
@@ -159,25 +92,27 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 		return "", fmt.Errorf("artifact %q has unsupported protocol %s", artifact.Id, uri.Scheme)
 	}
 
-	downloadStream(reader, artifact.Checksum, localPath)
-
+	err = downloadStream(reader, artifact.Checksum, localPath)
+	if err != nil {
+		return "", err
+	}
 	return localPath, nil
 }
 
-func fetchWithGCS(ctx context.Context, loc objectLocation) (io.ReadCloser, error) {
+func fetchWithGCS(ctx context.Context, bucket, path, generation string) (io.ReadCloser, error) {
 	client, err := newStorageClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage client: %v", err)
 	}
 	defer client.Close()
 
-	oh := client.Bucket(loc.bucket).Object(loc.path)
-	if loc.generation != "" {
-		gen, err := strconv.ParseInt(loc.generation, 10, 64)
+	oh := client.Bucket(bucket).Object(path)
+	if generation != "" {
+		generationNumber, err := strconv.ParseInt(generation, 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("couldn't parse gcs generation number %q", loc.generation)
+			return nil, fmt.Errorf("couldn't parse gcs generation number %q", generation)
 		}
-		oh = oh.Generation(gen)
+		oh = oh.Generation(generationNumber)
 	}
 
 	r, err := oh.NewReader(ctx)
@@ -225,8 +160,7 @@ func downloadStream(r io.Reader, checksum string, localPath string) error {
 // when not running on windows it will just return the input path. Copied from
 // https://github.com/google/googet/blob/master/oswrap/oswrap_windows.go
 func normPath(path string) (string, error) {
-	if runtime.GOOS != "windows"
-	{
+	if runtime.GOOS != "windows" {
 		return path, nil
 	}
 
