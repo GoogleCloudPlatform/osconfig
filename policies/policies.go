@@ -210,7 +210,7 @@ func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
 			logger.Errorf("Error writing googet repo file: %v", err)
 			errs = append(errs, fmt.Sprintf("error writing googet repo file: %v", err))
 		}
-		if err := googetChanges(gooInstalled, gooRemoved, gooUpdated); err != nil {
+		if err := googetChanges(gooInstallPkgs, gooRemovePkgs, gooUpdatePkgs); err != nil {
 			errs = append(errs, fmt.Sprintf("error performing googet changes: %v", err))
 		}
 	}
@@ -227,7 +227,7 @@ func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
 			logger.Errorf("Error writing apt repo file: %v", err)
 			errs = append(errs, fmt.Sprintf("error writing apt repo file: %v", err))
 		}
-		if err := aptChanges(aptInstalled, aptRemoved, aptUpdated); err != nil {
+		if err := aptChanges(aptInstallPkgs, aptRemovePkgs, aptUpdatePkgs); err != nil {
 			errs = append(errs, fmt.Sprintf("error performing apt changes: %v", err))
 		}
 	}
@@ -244,7 +244,7 @@ func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
 			logger.Errorf("Error writing yum repo file: %v", err)
 			errs = append(errs, fmt.Sprintf("error writing yum repo file: %v", err))
 		}
-		if err := yumChanges(yumInstalled, yumRemoved, yumUpdated); err != nil {
+		if err := yumChanges(yumInstallPkgs, yumRemovePkgs, yumUpdatePkgs); err != nil {
 			errs = append(errs, fmt.Sprintf("error performing yum changes: %v", err))
 		}
 	}
@@ -261,7 +261,7 @@ func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
 			logger.Errorf("Error writing zypper repo file: %v", err)
 			errs = append(errs, fmt.Sprintf("error writing zypper repo file: %v", err))
 		}
-		if err := zypperChanges(zypperInstalled, zypperRemoved, zypperUpdated); err != nil {
+		if err := zypperChanges(zypperInstallPkgs, zypperRemovePkgs, zypperUpdatePkgs); err != nil {
 			errs = append(errs, fmt.Sprintf("error performing zypper changes: %v", err))
 		}
 	}
