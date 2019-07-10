@@ -25,62 +25,80 @@ import (
 
 func TestGetNecessaryChanges(t *testing.T) {
 	tests := [...]struct {
-		name            string
-		installedPkgs   []packages.PkgInfo
-		upgradablePkgs  []packages.PkgInfo
-		packageInstalls []*osconfigpb.Package
-		packageRemovals []*osconfigpb.Package
-		want            changes
+		name           string
+		installedPkgs  []packages.PkgInfo
+		upgradablePkgs []packages.PkgInfo
+		installPkgs    []*osconfigpb.Package
+		removePkgs     []*osconfigpb.Package
+		updatePkgs     []*osconfigpb.Package
+		want           changes
 	}{
 		{
-			name:            "install from empty",
-			installedPkgs:   createPkgInfos(),
-			upgradablePkgs:  createPkgInfos(),
-			packageInstalls: createPackages("foo"),
-			packageRemovals: createPackages(),
+			name:           "install from empty",
+			installedPkgs:  createPkgInfos(),
+			upgradablePkgs: createPkgInfos(),
+			installPkgs:    createPackages("foo"),
+			removePkgs:     createPackages(),
+			updatePkgs:     createPackages(),
+			want: changes{
+				packagesToInstall: []string{"foo"},
+				packagesToUpgrade: []string{},
+				packagesToRemove:  []string{},
+			},
+		},
+		{
+			name:           "upgrade from empty",
+			installedPkgs:  createPkgInfos(),
+			upgradablePkgs: createPkgInfos(),
+			installPkgs:    createPackages(),
+			removePkgs:     createPackages(),
+			updatePkgs:     createPackages("foo"),
 			want: changes{
 				packagesToInstall: []string{"foo"},
 				packagesToUpgrade: []string{},
 				packagesToRemove:  []string{},
 			},
 		}, {
-			name:            "single upgrade",
-			installedPkgs:   createPkgInfos("foo"),
-			upgradablePkgs:  createPkgInfos("foo"),
-			packageInstalls: createPackages("foo"),
-			packageRemovals: createPackages(),
+			name:           "single upgrade",
+			installedPkgs:  createPkgInfos("foo"),
+			upgradablePkgs: createPkgInfos("foo"),
+			installPkgs:    createPackages(),
+			removePkgs:     createPackages(),
+			updatePkgs:     createPackages("foo"),
 			want: changes{
 				packagesToInstall: []string{},
 				packagesToUpgrade: []string{"foo"},
 				packagesToRemove:  []string{},
 			},
 		}, {
-			name:            "remove",
-			installedPkgs:   createPkgInfos("foo"),
-			upgradablePkgs:  createPkgInfos("foo"),
-			packageInstalls: createPackages(),
-			packageRemovals: createPackages("foo"),
+			name:           "remove",
+			installedPkgs:  createPkgInfos("foo"),
+			upgradablePkgs: createPkgInfos("foo"),
+			installPkgs:    createPackages(),
+			removePkgs:     createPackages("foo"),
+			updatePkgs:     createPackages(),
 			want: changes{
 				packagesToInstall: []string{},
 				packagesToUpgrade: []string{},
 				packagesToRemove:  []string{"foo"},
 			},
 		}, {
-			name:            "mixed",
-			installedPkgs:   createPkgInfos("foo", "bar", "buz"),
-			upgradablePkgs:  createPkgInfos("bar"),
-			packageInstalls: createPackages("foo", "baz"),
-			packageRemovals: createPackages("buz"),
+			name:           "mixed",
+			installedPkgs:  createPkgInfos("foo", "bar", "buz"),
+			upgradablePkgs: createPkgInfos("bar", "boo"),
+			installPkgs:    createPackages("foo", "baz"),
+			removePkgs:     createPackages("buz"),
+			updatePkgs:     createPackages("bar"),
 			want: changes{
 				packagesToInstall: []string{"baz"},
-				packagesToUpgrade: []string{},
+				packagesToUpgrade: []string{"bar"},
 				packagesToRemove:  []string{"buz"},
 			},
 		},
 	}
 
 	for _, tt := range tests {
-		got := getNecessaryChanges(tt.installedPkgs, tt.upgradablePkgs, tt.packageInstalls, tt.packageRemovals)
+		got := getNecessaryChanges(tt.installedPkgs, tt.upgradablePkgs, tt.installPkgs, tt.removePkgs, tt.updatePkgs)
 
 		if !equalChanges(&got, &tt.want) {
 			t.Errorf("Did not get expected changes for '%s', got: %v, want: %v", tt.name, got, tt.want)
