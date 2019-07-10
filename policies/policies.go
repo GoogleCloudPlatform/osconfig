@@ -30,7 +30,6 @@ import (
 	"cloud.google.com/go/compute/metadata"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	osconfig "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/cloud.google.com/go/osconfig/apiv1alpha2"
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
@@ -38,6 +37,8 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc/status"
+
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
 
 var dump = &pretty.Config{IncludeUnexported: true}
@@ -62,7 +63,7 @@ func run(ctx context.Context, res string) {
 
 // Run looks up osconfigs and applies them using tasker.Enqueue.
 func Run(ctx context.Context, res string) {
-	tasker.Enqueue("Run OSPackage", func() { run(ctx, res) })
+	tasker.Enqueue("Run GuestPolicies", func() { run(ctx, res) })
 }
 
 func lookupEffectivePolicies(ctx context.Context, client *osconfig.Client, instance string) (*osconfigpb.LookupEffectiveGuestPoliciesResponse, error) {
@@ -131,65 +132,65 @@ func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
 		}
 	}
 
-	var aptInstalled, aptRemoved, aptUpdated []*osconfigpb.Package
-	var yumInstalled, yumRemoved, yumUpdated []*osconfigpb.Package
-	var zypperInstalled, zypperRemoved, zypperUpdated []*osconfigpb.Package
-	var gooInstalled, gooRemoved, gooUpdated []*osconfigpb.Package
+	var gooInstallPkgs, gooRemovePkgs, gooUpdatePkgs []*osconfigpb.Package
+	var aptInstallPkgs, aptRemovePkgs, aptUpdatePkgs []*osconfigpb.Package
+	var yumInstallPkgs, yumRemovePkgs, yumUpdatePkgs []*osconfigpb.Package
+	var zypperInstallPkgs, zypperRemovePkgs, zypperUpdatePkgs []*osconfigpb.Package
 	for _, pkg := range res.GetPackages() {
 		switch pkg.GetPackage().GetManager() {
 		case osconfigpb.Package_ANY:
 			switch pkg.GetPackage().GetDesiredState() {
 			case osconfigpb.DesiredState_INSTALLED:
-				gooInstalled = append(gooInstalled, pkg.GetPackage())
-				aptInstalled = append(aptInstalled, pkg.GetPackage())
-				yumInstalled = append(yumInstalled, pkg.GetPackage())
-				zypperInstalled = append(zypperInstalled, pkg.GetPackage())
+				gooInstallPkgs = append(gooInstallPkgs, pkg.GetPackage())
+				aptInstallPkgs = append(aptInstallPkgs, pkg.GetPackage())
+				yumInstallPkgs = append(yumInstallPkgs, pkg.GetPackage())
+				zypperInstallPkgs = append(zypperInstallPkgs, pkg.GetPackage())
 			case osconfigpb.DesiredState_REMOVED:
-				gooRemoved = append(gooRemoved, pkg.GetPackage())
-				aptRemoved = append(aptRemoved, pkg.GetPackage())
-				yumRemoved = append(yumRemoved, pkg.GetPackage())
-				zypperRemoved = append(zypperRemoved, pkg.GetPackage())
+				gooRemovePkgs = append(gooRemovePkgs, pkg.GetPackage())
+				aptRemovePkgs = append(aptRemovePkgs, pkg.GetPackage())
+				yumRemovePkgs = append(yumRemovePkgs, pkg.GetPackage())
+				zypperRemovePkgs = append(zypperRemovePkgs, pkg.GetPackage())
 			case osconfigpb.DesiredState_UPDATED:
-				gooUpdated = append(gooUpdated, pkg.GetPackage())
-				aptUpdated = append(aptUpdated, pkg.GetPackage())
-				yumUpdated = append(yumUpdated, pkg.GetPackage())
-				zypperUpdated = append(zypperUpdated, pkg.GetPackage())
+				gooUpdatePkgs = append(gooUpdatePkgs, pkg.GetPackage())
+				aptUpdatePkgs = append(aptUpdatePkgs, pkg.GetPackage())
+				yumUpdatePkgs = append(yumUpdatePkgs, pkg.GetPackage())
+				zypperUpdatePkgs = append(zypperUpdatePkgs, pkg.GetPackage())
 			}
 		case osconfigpb.Package_GOO:
 			switch pkg.GetPackage().GetDesiredState() {
 			case osconfigpb.DesiredState_INSTALLED:
-				gooInstalled = append(gooInstalled, pkg.GetPackage())
+				gooInstallPkgs = append(gooInstallPkgs, pkg.GetPackage())
 			case osconfigpb.DesiredState_REMOVED:
-				gooRemoved = append(gooRemoved, pkg.GetPackage())
+				gooRemovePkgs = append(gooRemovePkgs, pkg.GetPackage())
 			case osconfigpb.DesiredState_UPDATED:
-				gooUpdated = append(gooUpdated, pkg.GetPackage())
+				gooUpdatePkgs = append(gooUpdatePkgs, pkg.GetPackage())
 			}
 		case osconfigpb.Package_APT:
 			switch pkg.GetPackage().GetDesiredState() {
 			case osconfigpb.DesiredState_INSTALLED:
-				aptInstalled = append(aptInstalled, pkg.GetPackage())
+				aptInstallPkgs = append(aptInstallPkgs, pkg.GetPackage())
 			case osconfigpb.DesiredState_REMOVED:
-				aptRemoved = append(aptRemoved, pkg.GetPackage())
+				aptRemovePkgs = append(aptRemovePkgs, pkg.GetPackage())
 			case osconfigpb.DesiredState_UPDATED:
-				aptUpdated = append(aptUpdated, pkg.GetPackage())
+				aptUpdatePkgs = append(aptUpdatePkgs, pkg.GetPackage())
 			}
 		case osconfigpb.Package_YUM:
 			switch pkg.GetPackage().GetDesiredState() {
 			case osconfigpb.DesiredState_INSTALLED:
-				yumInstalled = append(yumInstalled, pkg.GetPackage())
+				yumInstallPkgs = append(yumInstallPkgs, pkg.GetPackage())
 			case osconfigpb.DesiredState_REMOVED:
-				yumRemoved = append(yumRemoved, pkg.GetPackage())
+				yumRemovePkgs = append(yumRemovePkgs, pkg.GetPackage())
 			case osconfigpb.DesiredState_UPDATED:
-				yumUpdated = append(yumUpdated, pkg.GetPackage())
+				yumUpdatePkgs = append(yumUpdatePkgs, pkg.GetPackage())
 			}
 		case osconfigpb.Package_ZYPPER:
 			switch pkg.GetPackage().GetDesiredState() {
 			case osconfigpb.DesiredState_INSTALLED:
-				zypperInstalled = append(zypperInstalled, pkg.GetPackage())
+				zypperInstallPkgs = append(zypperInstallPkgs, pkg.GetPackage())
 			case osconfigpb.DesiredState_REMOVED:
-				zypperRemoved = append(zypperRemoved, pkg.GetPackage())
+				zypperRemovePkgs = append(zypperRemovePkgs, pkg.GetPackage())
 			case osconfigpb.DesiredState_UPDATED:
-				zypperUpdated = append(zypperUpdated, pkg.GetPackage())
+				zypperUpdatePkgs = append(zypperUpdatePkgs, pkg.GetPackage())
 			}
 
 		}

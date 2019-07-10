@@ -134,7 +134,7 @@ func main() {
 		inventory.Run()
 		tasker.Close()
 		return
-	case "policies":
+	case "policies", "guestpolicies", "ospackage":
 		policies.Run(ctx, config.Instance())
 		tasker.Close()
 		return
