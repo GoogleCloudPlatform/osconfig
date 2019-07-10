@@ -202,7 +202,7 @@ func fetchWithHTTP(ctx context.Context, uri string) (io.ReadCloser, error) {
 }
 
 func downloadStream(r io.Reader, checksum string, localPath string) error {
-	file, err := Create(localPath)
+	file, err := createFile(localPath)
 	if err != nil {
 		return err
 	}
@@ -218,4 +218,35 @@ func downloadStream(r io.Reader, checksum string, localPath string) error {
 		return fmt.Errorf("got %q for checksum, expected %q", computed, checksum)
 	}
 	return nil
+}
+
+// normPath transforms a windows path into an extended-length path as described in
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx#maxpath
+// when not running on windows it will just return the input path. Copied from
+// https://github.com/google/googet/blob/master/oswrap/oswrap_windows.go
+func normPath(path string) (string, error) {
+	if runtime.GOOS != "windows"
+	{
+		return path, nil
+	}
+
+	if strings.HasPrefix(path, "\\\\?\\") {
+		return path, nil
+	}
+
+	path, err := filepath.Abs(path)
+	if err != nil {
+		return "", err
+	}
+	path = filepath.Clean(path)
+	return "\\\\?\\" + path, nil
+}
+
+// createFile calls os.Create with name normalized
+func createFile(name string) (*os.File, error) {
+	name, err := normPath(name)
+	if err != nil {
+		return nil, err
+	}
+	return os.Create(name)
 }
