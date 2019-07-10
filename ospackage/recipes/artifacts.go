@@ -99,7 +99,7 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 	return localPath, nil
 }
 
-func fetchWithGCS(ctx context.Context, bucket, path, generation string) (io.ReadCloser, error) {
+func fetchWithGCS(ctx context.Context, bucket, path, generation string) (*storage.Reader, error) {
 	client, err := newStorageClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage client: %v", err)
@@ -137,7 +137,11 @@ func fetchWithHTTP(ctx context.Context, uri string) (io.ReadCloser, error) {
 }
 
 func downloadStream(r io.Reader, checksum string, localPath string) error {
-	file, err := createFile(localPath)
+	localPath, err := normPath(localPath)
+	if err != nil {
+		return err
+	}
+	file, err := os.Create(localPath)
 	if err != nil {
 		return err
 	}
@@ -174,13 +178,4 @@ func normPath(path string) (string, error) {
 	}
 	path = filepath.Clean(path)
 	return "\\\\?\\" + path, nil
-}
-
-// createFile calls os.Create with name normalized
-func createFile(name string) (*os.File, error) {
-	name, err := normPath(name)
-	if err != nil {
-		return nil, err
-	}
-	return os.Create(name)
 }
