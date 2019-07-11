@@ -78,16 +78,17 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 	switch strings.ToLower(uri.Scheme) {
 	case "gcs":
 		reader, err = fetchWithGCS(ctx, uri.Host, uri.Path, uri.Fragment)
-		defer reader.Close()
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q from GCS: %v", artifact.Id, err)
 		}
-	case "https", "http":
-		reader, err = fetchWithHTTP(ctx, artifact.Uri)
 		defer reader.Close()
+	case "https", "http":
+		response, err := fetchWithHTTP(ctx, artifact.Uri)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q with http or https: %v", artifact.Id, err)
 		}
+		defer response.Body.Close()
+		reader = response.Body
 	default:
 		return "", fmt.Errorf("artifact %q has unsupported protocol %s", artifact.Id, uri.Scheme)
 	}
@@ -123,7 +124,7 @@ func fetchWithGCS(ctx context.Context, bucket, path, generation string) (*storag
 	return r, nil
 }
 
-func fetchWithHTTP(ctx context.Context, uri string) (io.ReadCloser, error) {
+func fetchWithHTTP(ctx context.Context, uri string) (*http.Response, error) {
 	resp, err := newHTTPClient().Get(uri)
 	if err != nil {
 		return nil, err
@@ -133,7 +134,7 @@ func fetchWithHTTP(ctx context.Context, uri string) (io.ReadCloser, error) {
 		return nil, fmt.Errorf("got http status %d when attempting to download artifact", resp.StatusCode)
 	}
 
-	return resp.Body, nil
+	return resp, nil
 }
 
 func downloadStream(r io.Reader, checksum string, localPath string) error {
