@@ -42,7 +42,11 @@ func InstallRecipe(ctx context.Context, recipe osconfigpb.SoftwareRecipe) error 
 			return nil
 		}
 	}
-	artifacts, err := FetchArtifacts(recipe.Artifacts)
+	dirName := recipe.Name
+	if recipe.Version != "" {
+		dirName = fmt.Sprintf("%s_%s", dirName, recipe.Version)
+	}
+	artifacts, err := FetchArtifacts(ctx, recipe.Artifacts, dirName)
 	if err != nil {
 		return err
 	}
@@ -52,10 +56,7 @@ func InstallRecipe(ctx context.Context, recipe osconfigpb.SoftwareRecipe) error 
 			return err
 		}
 		cmdObj := exec.Command(cmd[0], cmd[1:]...)
-		dirName := recipe.Name
-		if recipe.Version != "" {
-			dirName = fmt.Sprintf("%s_%s", dirName, recipe.Version)
-		}
+
 		cmdObj.Dir = path.Join(recipeBasePath, dirName, "runId", "stepName")
 		if err := os.MkdirAll(cmdObj.Dir, os.ModeDir|0755); err != nil {
 			return fmt.Errorf("failed to create working dir for step %d: %s", idx, err)
