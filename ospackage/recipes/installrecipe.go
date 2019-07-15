@@ -78,7 +78,7 @@ func InstallRecipe(ctx context.Context, recipe osconfigpb.SoftwareRecipe) error 
 }
 
 func generateDirName(recipe osconfigpb.SoftwareRecipe, runID string) string {
-	dirName := 	recipe.Name
+	dirName := recipe.Name
 	if recipe.Version != "" {
 		dirName = fmt.Sprintf("%s_%s", dirName, recipe.Version)
 	}
