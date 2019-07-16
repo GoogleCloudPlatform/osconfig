@@ -17,12 +17,12 @@ package recipes
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -68,7 +68,7 @@ func FetchArtifacts(ctx context.Context, artifacts []*osconfigpb.SoftwareRecipe_
 }
 
 func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Artifact, directory string) (string, error) {
-	localPath := path.Join(directory, artifact.Id)
+	localPath := filepath.Join(directory, artifact.Id)
 	uri, err := url.Parse(artifact.Uri)
 	if err != nil {
 		return "", fmt.Errorf("Could not parse url %q for artifact %q", artifact.Uri, artifact.Id)
@@ -76,7 +76,7 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 
 	var reader io.ReadCloser
 	switch strings.ToLower(uri.Scheme) {
-	case "gcs":
+	case "gs":
 		reader, err = fetchWithGCS(ctx, uri.Host, uri.Path, uri.Fragment)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q from GCS: %v", artifact.Id, err)
@@ -149,11 +149,10 @@ func downloadStream(r io.Reader, checksum string, localPath string) error {
 	defer file.Close()
 
 	hasher := sha256.New()
-	_, err = io.Copy(io.MultiWriter(file, hasher), r)
-	if err != nil {
+	if _, err = io.Copy(io.MultiWriter(file, hasher), r); err != nil {
 		return err
 	}
-	computed := fmt.Sprintf("%64x", hasher.Sum(nil))
+	computed := hex.EncodeToString(hasher.Sum(nil))
 	if checksum != "" && !strings.EqualFold(checksum, computed) {
 		return fmt.Errorf("got %q for checksum, expected %q", computed, checksum)
 	}

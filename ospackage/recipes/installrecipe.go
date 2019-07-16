@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
@@ -57,7 +57,7 @@ func InstallRecipe(ctx context.Context, recipe osconfigpb.SoftwareRecipe) error 
 		}
 		cmdObj := exec.Command(cmd[0], cmd[1:]...)
 
-		cmdObj.Dir = path.Join(runDir, "stepName")
+		cmdObj.Dir = filepath.Join(runDir, "stepName")
 		if err := os.MkdirAll(cmdObj.Dir, os.ModeDir|0755); err != nil {
 			return fmt.Errorf("failed to create working dir for step %d: %s", idx, err)
 		}
@@ -85,7 +85,7 @@ func createBaseDir(recipe osconfigpb.SoftwareRecipe, runID string) (string, erro
 	if recipe.Version != "" {
 		dirName = fmt.Sprintf("%s_%s", dirName, recipe.Version)
 	}
-	fullPath := path.Join(recipeBasePath, dirName, runID)
+	fullPath := filepath.Join(recipeBasePath, dirName, runID)
 
 	if err := os.MkdirAll(fullPath, os.ModeDir|0755); err != nil {
 		return "", fmt.Errorf("failed to create working dir for recipe: %q %s", recipe.Name, err)
