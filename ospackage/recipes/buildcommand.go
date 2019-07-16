@@ -16,9 +16,12 @@ package recipes
 
 import (
 	"fmt"
+	"io"
 	"os"
+	"strconv"
 	"strings"
 
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
 
@@ -46,8 +49,63 @@ func BuildCommand(step *osconfigpb.SoftwareRecipe_Step, artifacts map[string]str
 
 // StepFileCopy builds the command for a FileCopy step
 func StepFileCopy(step *osconfigpb.SoftwareRecipe_Step_FileCopy, artifacts map[string]string) ([]string, error) {
-	fmt.Println("StepFileCopy")
+	dest, err := normPath(step.FileCopy.Destination)
+	if err != nil {
+		return nil, err
+	}
+
+	permissions, err := parsePermissions(step.FileCopy.Permissions)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := os.Stat(dest); err != nil {
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+	} else {
+		// file exists
+		if !step.FileCopy.Overwrite {
+			logger.Infof("skipping FileCopy step as file at %s already exists", dest)
+			return nil, nil
+		}
+		os.Chmod(dest, permissions)
+	}
+
+	src, ok := artifacts[step.FileCopy.ArtifactId]
+	if !ok {
+		return nil, fmt.Errorf("Could not find location for artifact %q in CopyFile step", step.FileCopy.ArtifactId)
+	}
+
+	reader, err := os.Open(src)
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
+	writer, err := os.OpenFile(dest, os.O_TRUNC|os.O_WRONLY|os.O_CREATE, permissions)
+	if err != nil {
+		return nil, err
+	}
+	defer writer.Close()
+
+	_, err = io.Copy(writer, reader)
+	if err != nil {
+		return nil, err
+	}
+
 	return nil, nil
+}
+
+func parsePermissions(s string) (os.FileMode, error) {
+	if s == "" {
+		return 755, nil
+	}
+
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		return 0, err
+	}
+	return os.FileMode(i), nil
 }
 
 // StepArchiveExtraction builds the command for a ArchiveExtraction step
