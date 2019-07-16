@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
@@ -42,7 +42,11 @@ func InstallRecipe(ctx context.Context, recipe osconfigpb.SoftwareRecipe) error 
 			return nil
 		}
 	}
-	artifacts, err := FetchArtifacts(recipe.Artifacts)
+	runDir, err := createBaseDir(recipe, "runID")
+	if err != nil {
+		return err
+	}
+	artifacts, err := FetchArtifacts(ctx, recipe.Artifacts, runDir)
 	if err != nil {
 		return err
 	}
@@ -52,11 +56,8 @@ func InstallRecipe(ctx context.Context, recipe osconfigpb.SoftwareRecipe) error 
 			return err
 		}
 		cmdObj := exec.Command(cmd[0], cmd[1:]...)
-		dirName := recipe.Name
-		if recipe.Version != "" {
-			dirName = fmt.Sprintf("%s_%s", dirName, recipe.Version)
-		}
-		cmdObj.Dir = path.Join(recipeBasePath, dirName, "runId", "stepName")
+
+		cmdObj.Dir = filepath.Join(runDir, "stepName")
 		if err := os.MkdirAll(cmdObj.Dir, os.ModeDir|0755); err != nil {
 			return fmt.Errorf("failed to create working dir for step %d: %s", idx, err)
 		}
@@ -77,4 +78,18 @@ func InstallRecipe(ctx context.Context, recipe osconfigpb.SoftwareRecipe) error 
 		}
 	}
 	return recipeDB.AddRecipe(recipe.Name, recipe.Version)
+}
+
+func createBaseDir(recipe osconfigpb.SoftwareRecipe, runID string) (string, error) {
+	dirName := recipe.Name
+	if recipe.Version != "" {
+		dirName = fmt.Sprintf("%s_%s", dirName, recipe.Version)
+	}
+	fullPath := filepath.Join(recipeBasePath, dirName, runID)
+
+	if err := os.MkdirAll(fullPath, os.ModeDir|0755); err != nil {
+		return "", fmt.Errorf("failed to create working dir for recipe: %q %s", recipe.Name, err)
+	}
+
+	return fullPath, nil
 }
