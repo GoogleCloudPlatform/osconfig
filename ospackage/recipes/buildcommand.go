@@ -21,7 +21,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
 
@@ -66,8 +65,7 @@ func StepFileCopy(step *osconfigpb.SoftwareRecipe_Step_FileCopy, artifacts map[s
 	} else {
 		// file exists
 		if !step.FileCopy.Overwrite {
-			logger.Infof("skipping FileCopy step as file at %s already exists", dest)
-			return nil, nil
+			return nil, fmt.Errorf("in FileCopy step file already exists at path %q and Overwrite = false", step.FileCopy.Destination)
 		}
 		os.Chmod(dest, permissions)
 	}
