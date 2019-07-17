@@ -74,7 +74,7 @@ func StepFileCopy(step *osconfigpb.SoftwareRecipe_Step_FileCopy, artifacts map[s
 
 	src, ok := artifacts[step.FileCopy.ArtifactId]
 	if !ok {
-		return nil, fmt.Errorf("Could not find location for artifact %q in CopyFile step", step.FileCopy.ArtifactId)
+		return nil, fmt.Errorf("Could not find location for artifact %q in FileCopy step", step.FileCopy.ArtifactId)
 	}
 
 	reader, err := os.Open(src)
