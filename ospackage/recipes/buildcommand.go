@@ -101,7 +101,7 @@ func parsePermissions(s string) (os.FileMode, error) {
 		return 755, nil
 	}
 
-	i, err := strconv.Atoi(s)
+	i, err := strconv.ParseUint(s, 8, 32)
 	if err != nil {
 		return 0, err
 	}
