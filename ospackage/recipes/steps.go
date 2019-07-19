@@ -55,7 +55,7 @@ func StepRpmInstallation(step *osconfigpb.SoftwareRecipe_Step_RpmInstallation, a
 }
 
 // StepFileExec builds the command for a FileExec step
-func StepFileExec(step *osconfigpb.SoftwareRecipe_Step_FileExec, artifacts map[string]string, runEnvs []string, runDir string) error {
+func StepFileExec(step *osconfigpb.SoftwareRecipe_Step_FileExec, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	var path string
 	switch v := step.FileExec.LocationType.(type) {
 	case *osconfigpb.SoftwareRecipe_Step_ExecFile_LocalPath:
@@ -70,14 +70,22 @@ func StepFileExec(step *osconfigpb.SoftwareRecipe_Step_FileExec, artifacts map[s
 		return fmt.Errorf("can't determine location type")
 	}
 
-	return executeCommand(path, filepath.Join(runDir, "stepName"), runEnvs, step.FileExec.Args...)
+	if err := os.MkdirAll(stepDir, os.ModeDir|0755); err != nil {
+		return fmt.Errorf("failed to create working dir %q: %s", stepDir, err)
+	}
+
+	return executeCommand(path, stepDir, runEnvs, step.FileExec.Args...)
 }
 
 // StepScriptRun builds the command for a ScriptRun step
-func StepScriptRun(step *osconfigpb.SoftwareRecipe_Step_ScriptRun, artifacts map[string]string, runEnvs []string, runDir string) error {
-	// TODO: should be putting this in stepN_type/ dir, but that needs me to know the dir way in advance..
-	// actually this is an artifact. we should have made them referenced as artifacts.. we'll have to repeat file creation logic here.
-	f, err := os.Create("/tmp/scriptrun")
+func StepScriptRun(step *osconfigpb.SoftwareRecipe_Step_ScriptRun, artifacts map[string]string, runEnvs []string, stepDir string) error {
+	if err := os.MkdirAll(stepDir, os.ModeDir|0755); err != nil {
+		return fmt.Errorf("failed to create working dir %q: %s", stepDir, err)
+	}
+
+	scriptPath := filepath.Join(stepDir, "script")
+
+	f, err := os.Create(scriptPath)
 	if err != nil {
 		return err
 	}
@@ -93,19 +101,15 @@ func StepScriptRun(step *osconfigpb.SoftwareRecipe_Step_ScriptRun, artifacts map
 	for _, arg := range step.ScriptRun.Args {
 		qargs = append(qargs, fmt.Sprintf("%q", arg))
 	}
-	command := "/tmp/scriptrun" + " " + strings.Join(qargs, " ")
+	command := scriptPath + " " + strings.Join(qargs, " ")
 	args := []string{"-c", command}
-	return executeCommand("/bin/sh", filepath.Join(runDir, "stepName"), runEnvs, args...)
+	return executeCommand("/bin/sh", stepDir, runEnvs, args...)
 }
 
 func executeCommand(cmd string, workDir string, envs []string, args ...string) error {
 	cmdObj := exec.Command(cmd, args...)
 
 	cmdObj.Dir = workDir
-	if err := os.MkdirAll(cmdObj.Dir, os.ModeDir|0755); err != nil {
-		return fmt.Errorf("failed to create working dir %q: %s", workDir, err)
-	}
-
 	cmdObj.Env = append(cmdObj.Env, envs...)
 	cmdObj.Env = append(cmdObj.Env, fmt.Sprintf("PWD=%s", cmdObj.Dir))
 

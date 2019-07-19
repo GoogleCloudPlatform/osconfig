@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
@@ -41,7 +42,9 @@ func InstallRecipe(ctx context.Context, recipe osconfigpb.SoftwareRecipe) error 
 			return nil
 		}
 	}
-	runDir, err := createBaseDir(recipe, "runID")
+
+	runID := fmt.Sprintf("run_%d", time.Now().UnixNano())
+	runDir, err := createBaseDir(recipe, runID)
 	if err != nil {
 		return err
 	}
@@ -53,13 +56,13 @@ func InstallRecipe(ctx context.Context, recipe osconfigpb.SoftwareRecipe) error 
 	runEnvs := []string{
 		fmt.Sprintf("RECIPE_NAME=%s", recipe.Name),
 		fmt.Sprintf("RECIPE_VERSION=%s", recipe.Version),
-		fmt.Sprintf("RUNID=%s", "runId"),
+		fmt.Sprintf("RUNID=%s", runID),
 	}
 	for artifactID, artifactPath := range artifacts {
 		runEnvs = append(runEnvs, fmt.Sprintf("%s=%s", artifactID, artifactPath))
 	}
 
-	for _, step := range steps {
+	for i, step := range steps {
 		switch v := step.Step.(type) {
 		case *osconfigpb.SoftwareRecipe_Step_FileCopy:
 			if err := StepFileCopy(v, artifacts); err != nil {
@@ -82,11 +85,11 @@ func InstallRecipe(ctx context.Context, recipe osconfigpb.SoftwareRecipe) error 
 				return err
 			}
 		case *osconfigpb.SoftwareRecipe_Step_FileExec:
-			if err := StepFileExec(v, artifacts, runEnvs, runDir); err != nil {
+			if err := StepFileExec(v, artifacts, runEnvs, filepath.Join(runDir, fmt.Sprintf("step%d_FileExec", i))); err != nil {
 				return err
 			}
 		case *osconfigpb.SoftwareRecipe_Step_ScriptRun:
-			if err := StepScriptRun(v, artifacts, runEnvs, runDir); err != nil {
+			if err := StepScriptRun(v, artifacts, runEnvs, filepath.Join(runDir, fmt.Sprintf("step%d_ScriptRun", i))); err != nil {
 				return err
 			}
 		default:
