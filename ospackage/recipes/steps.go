@@ -81,10 +81,9 @@ func StepScriptRun(step *osconfigpb.SoftwareRecipe_Step_ScriptRun, artifacts map
 	if err != nil {
 		return err
 	}
-	defer f.Close()
 
 	f.WriteString(step.ScriptRun.Script)
-	f.Sync()
+	f.Close()
 	if err := os.Chmod("/tmp/scriptrun", 0755); err != nil {
 		return err
 	}
