@@ -70,19 +70,11 @@ func StepFileExec(step *osconfigpb.SoftwareRecipe_Step_FileExec, artifacts map[s
 		return fmt.Errorf("can't determine location type")
 	}
 
-	if err := os.MkdirAll(stepDir, os.ModeDir|0755); err != nil {
-		return fmt.Errorf("failed to create working dir %q: %s", stepDir, err)
-	}
-
 	return executeCommand(path, stepDir, runEnvs, step.FileExec.Args...)
 }
 
 // StepScriptRun builds the command for a ScriptRun step
 func StepScriptRun(step *osconfigpb.SoftwareRecipe_Step_ScriptRun, artifacts map[string]string, runEnvs []string, stepDir string) error {
-	if err := os.MkdirAll(stepDir, os.ModeDir|0755); err != nil {
-		return fmt.Errorf("failed to create working dir %q: %s", stepDir, err)
-	}
-
 	scriptPath := filepath.Join(stepDir, "script")
 
 	f, err := os.Create(scriptPath)
