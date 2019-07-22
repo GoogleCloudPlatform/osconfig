@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-package ospackage
+package policies
 
 import (
 	"bytes"
@@ -21,12 +21,12 @@ import (
 	"strings"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 )
 
-func yumRepositories(repos []*osconfigpb.YumRepository, repoFile string) error {
-	// TODO: Would it be easier to just use templates?
+// TODO: Write repo_gpgcheck, pkg_gpgcheck, type
+func zypperRepositories(repos []*osconfigpb.ZypperRepository, repoFile string) error {
 	/*
 		# Repo file managed by Google OSConfig agent
 		[repo1]
@@ -65,40 +65,40 @@ func yumRepositories(repos []*osconfigpb.YumRepository, repoFile string) error {
 	return writeIfChanged(buf.Bytes(), repoFile)
 }
 
-func yumChanges(packageInstalls, packageRemovals []*osconfigpb.Package) error {
+func zypperChanges(zypperInstalled, zypperRemoved, zypperUpdated []*osconfigpb.Package) error {
 	var errs []string
 
 	installed, err := packages.InstalledRPMPackages()
 	if err != nil {
 		return err
 	}
-	updates, err := packages.YumUpdates()
+	updates, err := packages.ZypperUpdates()
 	if err != nil {
 		return err
 	}
-	changes := getNecessaryChanges(installed, updates, packageInstalls, packageRemovals)
+	changes := getNecessaryChanges(installed, updates, zypperInstalled, zypperRemoved, zypperUpdated)
 
 	if changes.packagesToInstall != nil {
 		logger.Infof("Installing packages %s", changes.packagesToInstall)
-		if err := packages.InstallYumPackages(changes.packagesToInstall); err != nil {
-			logger.Errorf("Error installing yum packages: %v", err)
-			errs = append(errs, fmt.Sprintf("error installing yum packages: %v", err))
+		if err := packages.InstallZypperPackages(changes.packagesToInstall); err != nil {
+			logger.Errorf("Error installing zypper packages: %v", err)
+			errs = append(errs, fmt.Sprintf("error installing zypper packages: %v", err))
 		}
 	}
 
 	if changes.packagesToUpgrade != nil {
 		logger.Infof("Upgrading packages %s", changes.packagesToUpgrade)
-		if err := packages.InstallYumPackages(changes.packagesToUpgrade); err != nil {
-			logger.Errorf("Error upgrading yum packages: %v", err)
-			errs = append(errs, fmt.Sprintf("error upgrading yum packages: %v", err))
+		if err := packages.InstallZypperPackages(changes.packagesToUpgrade); err != nil {
+			logger.Errorf("Error upgrading zypper packages: %v", err)
+			errs = append(errs, fmt.Sprintf("error upgrading zypper packages: %v", err))
 		}
 	}
 
 	if changes.packagesToRemove != nil {
 		logger.Infof("Removing packages %s", changes.packagesToRemove)
-		if err := packages.RemoveYumPackages(changes.packagesToRemove); err != nil {
-			logger.Errorf("Error removing yum packages: %v", err)
-			errs = append(errs, fmt.Sprintf("error removing yum packages: %v", err))
+		if err := packages.RemoveZypperPackages(changes.packagesToRemove); err != nil {
+			logger.Errorf("Error removing zypper packages: %v", err)
+			errs = append(errs, fmt.Sprintf("error removing zypper packages: %v", err))
 		}
 	}
 

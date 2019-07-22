@@ -39,8 +39,6 @@ import (
 type patchStep string
 
 const (
-	identityTokenPath = "instance/service-accounts/default/identity?audience=osconfig.googleapis.com&format=full"
-
 	prePatch  = "PrePatch"
 	patching  = "Patching"
 	postPatch = "PostPatch"
@@ -419,7 +417,7 @@ func (r *patchRun) reportPatchDetails(patchState osconfigpb.Instance_PatchState,
 	var retErr error
 	err := retry(2100*time.Second, "reporting patch details", r.debugf, func() error {
 		// This can't be cached.
-		identityToken, err := metadata.Get(identityTokenPath)
+		identityToken, err := metadata.Get(config.IdentityTokenPath)
 		if err != nil {
 			return err
 		}
