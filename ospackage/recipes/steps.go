@@ -98,12 +98,11 @@ func StepScriptRun(step *osconfigpb.SoftwareRecipe_Step_ScriptRun, artifacts map
 	return executeCommand("/bin/sh", stepDir, runEnvs, args...)
 }
 
-func executeCommand(cmd string, workDir string, envs []string, args ...string) error {
+func executeCommand(cmd string, workDir string, runEnvs []string, args ...string) error {
 	cmdObj := exec.Command(cmd, args...)
 
 	cmdObj.Dir = workDir
-	cmdObj.Env = append(cmdObj.Env, envs...)
-	cmdObj.Env = append(cmdObj.Env, fmt.Sprintf("PWD=%s", cmdObj.Dir))
+	cmdObj.Env = append(cmdObj.Env, runEnvs...)
 
 	// TODO: log output from command.
 	_, err := cmdObj.Output()
