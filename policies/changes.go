@@ -12,12 +12,12 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-package ospackage
+package policies
 
 import (
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
 
 // changes represents the delta between the actual and the desired package installation state.
@@ -29,7 +29,7 @@ type changes struct {
 
 // getNecessaryChanges compares the current state and the desired state to determine which packages
 // need to be installed, upgraded, or removed.
-func getNecessaryChanges(installedPkgs []packages.PkgInfo, upgradablePkgs []packages.PkgInfo, packageInstalls []*osconfigpb.Package, packageRemovals []*osconfigpb.Package) changes {
+func getNecessaryChanges(installedPkgs []packages.PkgInfo, upgradablePkgs []packages.PkgInfo, installPkgs, removePkgs, updatePkgs []*osconfigpb.Package) changes {
 	installedPkgMap := make(map[string]bool)
 	for _, pkg := range installedPkgs {
 		installedPkgMap[pkg.Name] = true
@@ -41,25 +41,29 @@ func getNecessaryChanges(installedPkgs []packages.PkgInfo, upgradablePkgs []pack
 	}
 
 	var pkgsToInstall []string
+	var pkgsToRemove []string
 	var pkgsToUpgrade []string
 
-	for _, pkg := range packageInstalls {
-		_, isInstalled := installedPkgMap[pkg.Name]
-		_, isUpgradable := upgradeablePkgMap[pkg.Name]
-
-		if !isInstalled {
+	for _, pkg := range installPkgs {
+		if _, ok := installedPkgMap[pkg.Name]; !ok {
 			pkgsToInstall = append(pkgsToInstall, pkg.Name)
-		} else if isInstalled && isUpgradable {
-			pkgsToUpgrade = append(pkgsToUpgrade, pkg.Name)
 		}
 	}
 
-	var pkgsToRemove []string
-	for _, pkg := range packageRemovals {
-		_, isInstalled := installedPkgMap[pkg.Name]
-
-		if isInstalled {
+	for _, pkg := range removePkgs {
+		if _, ok := installedPkgMap[pkg.Name]; ok {
 			pkgsToRemove = append(pkgsToRemove, pkg.Name)
+		}
+	}
+
+	for _, pkg := range updatePkgs {
+		if _, ok := upgradeablePkgMap[pkg.Name]; ok {
+			pkgsToUpgrade = append(pkgsToUpgrade, pkg.Name)
+			continue
+		}
+		// If not installed we need to install it.
+		if _, ok := installedPkgMap[pkg.Name]; !ok {
+			pkgsToInstall = append(pkgsToInstall, pkg.Name)
 		}
 	}
 

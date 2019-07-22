@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-package ospackage
+package policies
 
 import (
 	"fmt"
@@ -21,10 +21,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
 
-func runYumRepositories(repos []*osconfigpb.YumRepository) (string, error) {
+func runZypperRepositories(repos []*osconfigpb.ZypperRepository) (string, error) {
 	td, err := ioutil.TempDir(os.TempDir(), "")
 	if err != nil {
 		return "", fmt.Errorf("error creating temp dir: %v", err)
@@ -32,8 +32,8 @@ func runYumRepositories(repos []*osconfigpb.YumRepository) (string, error) {
 	defer os.RemoveAll(td)
 	testRepo := filepath.Join(td, "testRepo")
 
-	if err := yumRepositories(repos, testRepo); err != nil {
-		return "", fmt.Errorf("error running yumRepositories: %v", err)
+	if err := zypperRepositories(repos, testRepo); err != nil {
+		return "", fmt.Errorf("error running zypperRepositories: %v", err)
 	}
 
 	data, err := ioutil.ReadFile(testRepo)
@@ -44,23 +44,23 @@ func runYumRepositories(repos []*osconfigpb.YumRepository) (string, error) {
 	return string(data), nil
 }
 
-func TestYumRepositories(t *testing.T) {
+func TestZypperRepositories(t *testing.T) {
 	tests := []struct {
 		desc  string
-		repos []*osconfigpb.YumRepository
+		repos []*osconfigpb.ZypperRepository
 		want  string
 	}{
-		{"no repos", []*osconfigpb.YumRepository{}, "# Repo file managed by Google OSConfig agent\n"},
+		{"no repos", []*osconfigpb.ZypperRepository{}, "# Repo file managed by Google OSConfig agent\n"},
 		{
 			"1 repo",
-			[]*osconfigpb.YumRepository{
+			[]*osconfigpb.ZypperRepository{
 				{BaseUrl: "http://repo1-url/", Id: "id"},
 			},
 			"# Repo file managed by Google OSConfig agent\n\n[id]\nname: id\nbaseurl: http://repo1-url/\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=1\n",
 		},
 		{
 			"2 repos",
-			[]*osconfigpb.YumRepository{
+			[]*osconfigpb.ZypperRepository{
 				{BaseUrl: "http://repo1-url/", Id: "id1", DisplayName: "displayName1", GpgKeys: []string{"https://url/key"}},
 				{BaseUrl: "http://repo1-url/", Id: "id2", DisplayName: "displayName2", GpgKeys: []string{"https://url/key1", "https://url/key2"}},
 			},
@@ -69,7 +69,7 @@ func TestYumRepositories(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got, err := runYumRepositories(tt.repos)
+		got, err := runZypperRepositories(tt.repos)
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-package ospackage
+package policies
 
 import (
 	"bytes"
@@ -21,7 +21,7 @@ import (
 	"strings"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha1"
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 )
 
@@ -53,7 +53,7 @@ func aptRepositories(repos []*osconfigpb.AptRepository, repoFile string) error {
 	return writeIfChanged(buf.Bytes(), repoFile)
 }
 
-func aptChanges(packageInstalls, packageRemovals []*osconfigpb.Package) error {
+func aptChanges(aptInstalled, aptRemoved, aptUpdated []*osconfigpb.Package) error {
 	var errs []string
 
 	installed, err := packages.InstalledDebPackages()
@@ -64,7 +64,7 @@ func aptChanges(packageInstalls, packageRemovals []*osconfigpb.Package) error {
 	if err != nil {
 		return err
 	}
-	changes := getNecessaryChanges(installed, updates, packageInstalls, packageRemovals)
+	changes := getNecessaryChanges(installed, updates, aptInstalled, aptRemoved, aptUpdated)
 
 	if changes.packagesToInstall != nil {
 		logger.Infof("Installing packages %s", changes.packagesToInstall)
