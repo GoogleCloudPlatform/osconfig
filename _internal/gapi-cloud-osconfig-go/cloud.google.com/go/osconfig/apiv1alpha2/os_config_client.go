@@ -233,6 +233,7 @@ func (c *Client) ListPatchJobs(ctx context.Context, req *osconfigpb.ListPatchJob
 	}
 	it.pageInfo, it.nextFunc = iterator.NewPageInfo(fetch, it.bufLen, it.takeBuf)
 	it.pageInfo.MaxSize = int(req.PageSize)
+	it.pageInfo.Token = req.PageToken
 	return it
 }
 
@@ -295,6 +296,7 @@ func (c *Client) ListPatchJobInstanceDetails(ctx context.Context, req *osconfigp
 	}
 	it.pageInfo, it.nextFunc = iterator.NewPageInfo(fetch, it.bufLen, it.takeBuf)
 	it.pageInfo.MaxSize = int(req.PageSize)
+	it.pageInfo.Token = req.PageToken
 	return it
 }
 
@@ -367,6 +369,7 @@ func (c *Client) ListGuestPolicies(ctx context.Context, req *osconfigpb.ListGues
 	}
 	it.pageInfo, it.nextFunc = iterator.NewPageInfo(fetch, it.bufLen, it.takeBuf)
 	it.pageInfo.MaxSize = int(req.PageSize)
+	it.pageInfo.Token = req.PageToken
 	return it
 }
 
