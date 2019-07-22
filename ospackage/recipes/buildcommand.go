@@ -65,14 +65,14 @@ func StepFileCopy(step *osconfigpb.SoftwareRecipe_Step_FileCopy, artifacts map[s
 	} else {
 		// file exists
 		if !step.FileCopy.Overwrite {
-			return nil, fmt.Errorf("in FileCopy step file already exists at path %q and Overwrite = false", step.FileCopy.Destination)
+			return nil, fmt.Errorf("file already exists at path %q and Overwrite = false", step.FileCopy.Destination)
 		}
 		os.Chmod(dest, permissions)
 	}
 
 	src, ok := artifacts[step.FileCopy.ArtifactId]
 	if !ok {
-		return nil, fmt.Errorf("Could not find location for artifact %q in FileCopy step", step.FileCopy.ArtifactId)
+		return nil, fmt.Errorf("could not find location for artifact %q", step.FileCopy.ArtifactId)
 	}
 
 	reader, err := os.Open(src)

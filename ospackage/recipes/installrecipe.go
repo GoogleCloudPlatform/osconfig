@@ -53,7 +53,7 @@ func InstallRecipe(ctx context.Context, recipe osconfigpb.SoftwareRecipe) error 
 	for idx, step := range steps {
 		cmd, err := BuildCommand(step, artifacts)
 		if err != nil {
-			return err
+			return fmt.Errorf("Got error in step #%d: %s", ids, err)
 		}
 		cmdObj := exec.Command(cmd[0], cmd[1:]...)
 
