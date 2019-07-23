@@ -18,8 +18,8 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"time"
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
@@ -42,7 +42,9 @@ func InstallRecipe(ctx context.Context, recipe osconfigpb.SoftwareRecipe) error 
 			return nil
 		}
 	}
-	runDir, err := createBaseDir(recipe, "runID")
+
+	runID := fmt.Sprintf("run_%d", time.Now().UnixNano())
+	runDir, err := createBaseDir(recipe, runID)
 	if err != nil {
 		return err
 	}
@@ -50,31 +52,56 @@ func InstallRecipe(ctx context.Context, recipe osconfigpb.SoftwareRecipe) error 
 	if err != nil {
 		return err
 	}
-	for idx, step := range steps {
-		cmd, err := BuildCommand(step, artifacts)
-		if err != nil {
-			return fmt.Errorf("Got error in step #%d: %s", ids, err)
-		}
-		cmdObj := exec.Command(cmd[0], cmd[1:]...)
 
-		cmdObj.Dir = filepath.Join(runDir, "stepName")
-		if err := os.MkdirAll(cmdObj.Dir, os.ModeDir|0755); err != nil {
-			return fmt.Errorf("failed to create working dir for step %d: %s", idx, err)
-		}
-		envs := []string{
-			fmt.Sprintf("RECIPE_NAME=%s", recipe.Name),
-			fmt.Sprintf("RECIPE_VERSION=%s", recipe.Version),
-			fmt.Sprintf("RUNID=%s", "runId"),
-			fmt.Sprintf("PWD=%s", cmdObj.Dir),
-		}
-		cmdObj.Env = append(cmdObj.Env, envs...)
-		for artifactID, artifactPath := range artifacts {
-			cmdObj.Env = append(cmdObj.Env, fmt.Sprintf("%s=%s", artifactID, artifactPath))
-		}
-		// TODO: log output from command.
-		_, err = cmdObj.Output()
-		if err != nil {
-			return err
+	runEnvs := []string{
+		fmt.Sprintf("RECIPE_NAME=%s", recipe.Name),
+		fmt.Sprintf("RECIPE_VERSION=%s", recipe.Version),
+		fmt.Sprintf("RUNID=%s", runID),
+	}
+	for artifactID, artifactPath := range artifacts {
+		runEnvs = append(runEnvs, fmt.Sprintf("%s=%s", artifactID, artifactPath))
+	}
+
+	for i, step := range steps {
+		switch v := step.Step.(type) {
+		case *osconfigpb.SoftwareRecipe_Step_FileCopy:
+			if err := StepFileCopy(v, artifacts); err != nil {
+				return err
+			}
+		case *osconfigpb.SoftwareRecipe_Step_ArchiveExtraction:
+			if err := StepArchiveExtraction(v, artifacts); err != nil {
+				return err
+			}
+		case *osconfigpb.SoftwareRecipe_Step_MsiInstallation:
+			if err := StepMsiInstallation(v, artifacts); err != nil {
+				return err
+			}
+		case *osconfigpb.SoftwareRecipe_Step_DpkgInstallation:
+			if err := StepDpkgInstallation(v, artifacts); err != nil {
+				return err
+			}
+		case *osconfigpb.SoftwareRecipe_Step_RpmInstallation:
+			if err := StepRpmInstallation(v, artifacts); err != nil {
+				return err
+			}
+		case *osconfigpb.SoftwareRecipe_Step_FileExec:
+			stepDir := filepath.Join(runDir, fmt.Sprintf("step%d_FileExec", i))
+			if err := os.MkdirAll(stepDir, 0755); err != nil {
+				return fmt.Errorf("failed to create working dir %q: %s", stepDir, err)
+			}
+			if err := StepFileExec(v, artifacts, runEnvs, stepDir); err != nil {
+				return err
+			}
+		case *osconfigpb.SoftwareRecipe_Step_ScriptRun:
+			stepDir := filepath.Join(runDir, fmt.Sprintf("step%d_ScriptRun", i))
+			if err := os.MkdirAll(stepDir, 0755); err != nil {
+				return fmt.Errorf("failed to create working dir %q: %s", stepDir, err)
+			}
+			if err := StepScriptRun(v, artifacts, runEnvs, stepDir); err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("unknown step type %T", v)
 		}
 	}
 	return recipeDB.AddRecipe(recipe.Name, recipe.Version)
