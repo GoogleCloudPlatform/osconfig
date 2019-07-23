@@ -43,9 +43,9 @@ func init() {
 	AptExists = exists(aptGet)
 }
 
-// InstallAptPackages installs apt packages.
-func InstallAptPackages(pkgs []string) error {
-	args := append(aptGetInstallArgs, pkgs...)
+// InstallAptPackage installs an apt package.
+func InstallAptPackage(pkgs string) error {
+	args := append(aptGetInstallArgs, pkgs)
 	out, err := run(exec.Command(aptGet, args...))
 	if err != nil {
 		return err
@@ -58,9 +58,9 @@ func InstallAptPackages(pkgs []string) error {
 	return nil
 }
 
-// RemoveAptPackages removes apt packages.
-func RemoveAptPackages(pkgs []string) error {
-	args := append(aptGetRemoveArgs, pkgs...)
+// RemoveAptPackage removes an apt packages.
+func RemoveAptPackage(pkgs string) error {
+	args := append(aptGetRemoveArgs, pkgs)
 	out, err := run(exec.Command(aptGet, args...))
 	if err != nil {
 		return err

@@ -19,16 +19,16 @@ import (
 	"testing"
 )
 
-func TestInstallAptPackages(t *testing.T) {
-	run = getMockRun([]byte("TestInstallAptPackages"), nil)
-	if err := InstallAptPackages(pkgs); err != nil {
+func TestInstallAptPackage(t *testing.T) {
+	run = getMockRun([]byte("TestInstallAptPackage"), nil)
+	if err := InstallAptPackage(pkgs[0]); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
 
 func TestInstallAptPackagesReturnsError(t *testing.T) {
 	run = getMockRun([]byte("TestInstallAptPackagesReturnsError"), errors.New("Could not install package"))
-	err := InstallAptPackages(pkgs)
+	err := InstallAptPackage(pkgs[0])
 	if err == nil {
 		t.Errorf("did not get expected error")
 	}
@@ -36,14 +36,14 @@ func TestInstallAptPackagesReturnsError(t *testing.T) {
 
 func TestRemoveApt(t *testing.T) {
 	run = getMockRun([]byte("TestRemoveApt"), nil)
-	if err := RemoveAptPackages(pkgs); err != nil {
+	if err := RemoveAptPackage(pkgs[0]); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
 
 func TestRemoveAptReturnError(t *testing.T) {
 	run = getMockRun([]byte("TestRemoveAptReturnError"), errors.New("Could not find package"))
-	if err := RemoveAptPackages(pkgs); err == nil {
+	if err := RemoveAptPackage(pkgs[0]); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }

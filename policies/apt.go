@@ -67,26 +67,32 @@ func aptChanges(aptInstalled, aptRemoved, aptUpdated []*osconfigpb.Package) erro
 	changes := getNecessaryChanges(installed, updates, aptInstalled, aptRemoved, aptUpdated)
 
 	if changes.packagesToInstall != nil {
-		logger.Infof("Installing packages %s", changes.packagesToInstall)
-		if err := packages.InstallAptPackages(changes.packagesToInstall); err != nil {
-			logger.Errorf("Error installing apt packages: %v", err)
-			errs = append(errs, fmt.Sprintf("error installing apt packages: %v", err))
+		for _, p := range changes.packagesToInstall {
+			logger.Infof("Installing package %s", p)
+			if err := packages.InstallAptPackage(p); err != nil {
+				logger.Errorf("Error installing apt package '%s': %v", p, err)
+				errs = append(errs, fmt.Sprintf("error installing apt package: %v", err))
+			}
 		}
 	}
 
 	if changes.packagesToUpgrade != nil {
-		logger.Infof("Upgrading packages %s", changes.packagesToUpgrade)
-		if err := packages.InstallAptPackages(changes.packagesToUpgrade); err != nil {
-			logger.Errorf("Error upgrading apt packages: %v", err)
-			errs = append(errs, fmt.Sprintf("error upgrading apt packages: %v", err))
+		for _, p := range changes.packagesToUpgrade {
+			logger.Infof("Upgrading package %s", p)
+			if err := packages.InstallAptPackage(p); err != nil {
+				logger.Errorf("Error upgrading apt package '%s': %v", p, err)
+				errs = append(errs, fmt.Sprintf("error upgrading apt package: %v", err))
+			}
 		}
 	}
 
 	if changes.packagesToRemove != nil {
-		logger.Infof("Removing packages %s", changes.packagesToRemove)
-		if err := packages.RemoveAptPackages(changes.packagesToRemove); err != nil {
-			logger.Errorf("Error removing apt packages: %v", err)
-			errs = append(errs, fmt.Sprintf("error removing apt packages: %v", err))
+		for _, p := range changes.packagesToRemove {
+			logger.Infof("Removing package %s", p)
+			if err := packages.RemoveAptPackage(p); err != nil {
+				logger.Errorf("Error removing apt package '%s': %v", p, err)
+				errs = append(errs, fmt.Sprintf("error removing apt package: %v", err))
+			}
 		}
 	}
 
