@@ -5,6 +5,7 @@ cloud.google.com/go v0.39.0 h1:UgQP9na6OTfp4dsAiz/eFpFA1C6tPdH5wiRdi19tuMw=
 cloud.google.com/go v0.39.0/go.mod h1:rVLT6fkc8chs9sfPtFc1SBH6em7n+ZoXaG+87tDISts=
 cloud.google.com/go v0.40.0 h1:FjSY7bOj+WzJe6TZRVtXI2b9kAYvtNg4lMbcH2+MUkk=
 cloud.google.com/go v0.40.0/go.mod h1:Tk58MuI9rbLMKlAjeO/bDnteAx7tX2gJIXw4T5Jwlro=
+github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/GoogleCloudPlatform/guest-logging-go/logger v0.0.0-20190520155548-67c9af6d7705 h1:/pTDX7cAtzVr5seNC12dnD/t+Gl6+Y50gtHc4fpbl5Y=
 github.com/GoogleCloudPlatform/guest-logging-go/logger v0.0.0-20190520155548-67c9af6d7705/go.mod h1:voC4JUccmybdnoVKwFwxQXd8pXpFwWs0aZIjv9XVInI=
