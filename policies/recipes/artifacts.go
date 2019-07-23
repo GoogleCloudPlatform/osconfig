@@ -25,7 +25,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
 
 	"cloud.google.com/go/storage"
@@ -69,51 +68,51 @@ func FetchArtifacts(ctx context.Context, artifacts []*osconfigpb.SoftwareRecipe_
 
 func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Artifact, directory string) (string, error) {
 	localPath := filepath.Join(directory, artifact.Id)
-	uri, err := url.Parse(artifact.Uri)
-	if err != nil {
-		return "", fmt.Errorf("Could not parse url %q for artifact %q", artifact.Uri, artifact.Id)
-	}
-
 	var reader io.ReadCloser
-	switch strings.ToLower(uri.Scheme) {
-	case "gs":
-		reader, err = fetchWithGCS(ctx, uri.Host, uri.Path, uri.Fragment)
+	var checksum string
+	switch v := artifact.Artifact.(type) {
+	case *osconfigpb.SoftwareRecipe_Artifact_Gcs_:
+		reader, err := fetchWithGCS(ctx, v.Gcs.Bucket, v.Gcs.Object, v.Gcs.Generation)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q from GCS: %v", artifact.Id, err)
 		}
 		defer reader.Close()
-	case "https", "http":
-		response, err := fetchWithHTTP(ctx, artifact.Uri)
+	case *osconfigpb.SoftwareRecipe_Artifact_Remote_:
+		uri, err := url.Parse(v.Remote.Uri)
+		if err != nil {
+			return "", fmt.Errorf("Could not parse url %q for artifact %q", v.Remote.Uri, artifact.Id)
+		}
+		if uri.Scheme != "http" && uri.Scheme != "https" {
+			return "", fmt.Errorf("error, artifact %q has unsupported protocol scheme %s", artifact.Id, uri.Scheme)
+		}
+		checksum = v.Remote.Checksum
+		response, err := fetchWithHTTP(ctx, v.Remote.Uri)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q with http or https: %v", artifact.Id, err)
 		}
 		defer response.Body.Close()
 		reader = response.Body
 	default:
-		return "", fmt.Errorf("artifact %q has unsupported protocol %s", artifact.Id, uri.Scheme)
+		return "", fmt.Errorf("unknown artifact type %T", v)
 	}
 
-	err = downloadStream(reader, artifact.Checksum, localPath)
+	err := downloadStream(reader, checksum, localPath)
 	if err != nil {
 		return "", err
 	}
 	return localPath, nil
 }
 
-func fetchWithGCS(ctx context.Context, bucket, path, generation string) (*storage.Reader, error) {
+func fetchWithGCS(ctx context.Context, bucket, object string, generation int64) (*storage.Reader, error) {
 	client, err := newStorageClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage client: %v", err)
 	}
 	defer client.Close()
 
-	oh := client.Bucket(bucket).Object(path)
-	if generation != "" {
-		generationNumber, err := strconv.ParseInt(generation, 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("couldn't parse gcs generation number %q", generation)
-		}
-		oh = oh.Generation(generationNumber)
+	oh := client.Bucket(bucket).Object(object)
+	if generation != 0 {
+		oh = oh.Generation(generation)
 	}
 
 	r, err := oh.NewReader(ctx)
