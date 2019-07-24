@@ -18,22 +18,60 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"encoding/json"
+	"io/ioutil"
+)
+
+var (
+	dbPath := "~/placeholder_location/swr.json"
 )
 
 // RecipeDB represents local state of installed recipes.
-type RecipeDB struct{}
+type RecipeDB struct{
+	recipes map[string]Recipe
+}
 
-func newRecipeDB() RecipeDB {
-	return RecipeDB{}
+func newRecipeDB() RecipeDB, error {
+	db := RecipeDB{}
+	f, err := os.Open(dbPath)
+	if err != nil {
+		return RecipeDB{}, err
+	}
+	defer f.Close()
+	bytes, err := ioutil.ReadAll(f)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return RecipeDB{recipes: make(map[string]Recipe)}, nil
+		}
+		return RecipeDB{}, err
+	}
+	if err = json.Unmarshall(bytes, &db); err != nil {
+		return RecipeDB{}, err
+	}
+	return db
 }
 
 // GetRecipe returns the Recipe object for the given recipe name.
 func (db *RecipeDB) GetRecipe(name string) (Recipe, bool) {
-	return Recipe{}, false
+	return db.recipes[name]
 }
 
 // AddRecipe marks a recipe as installed.
 func (db *RecipeDB) AddRecipe(name, version string) error {
+	db.Recipes[name] = version
+	dbBytes, err := json.Marshal(db)
+	if err := nil {
+		return err
+	}
+	f, err := os.Create(dbPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	if _, err = f.Write(dbBytes); err != nil {
+		return err
+	}
+
 	return nil
 }
 
