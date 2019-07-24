@@ -32,7 +32,10 @@ const (
 // InstallRecipe installs a recipe.
 func InstallRecipe(ctx context.Context, recipe osconfigpb.SoftwareRecipe) error {
 	steps := recipe.InstallSteps
-	recipeDB := newRecipeDB()
+	recipeDB, err := newRecipeDB()
+	if err != nil {
+		return err
+	}
 	installedRecipe, ok := recipeDB.GetRecipe(recipe.Name)
 	if ok {
 		if (!installedRecipe.Greater(recipe.Version)) &&

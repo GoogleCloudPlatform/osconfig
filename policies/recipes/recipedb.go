@@ -15,23 +15,24 @@
 package recipes
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
-	"encoding/json"
-	"io/ioutil"
 )
 
 var (
-	dbPath := "~/placeholder_location/swr.json"
+	dbPath = "~/placeholder_location/swr.json"
 )
 
 // RecipeDB represents local state of installed recipes.
-type RecipeDB struct{
+type RecipeDB struct {
 	recipes map[string]Recipe
 }
 
-func newRecipeDB() RecipeDB, error {
+func newRecipeDB() (RecipeDB, error) {
 	db := RecipeDB{}
 	f, err := os.Open(dbPath)
 	if err != nil {
@@ -45,22 +46,27 @@ func newRecipeDB() RecipeDB, error {
 		}
 		return RecipeDB{}, err
 	}
-	if err = json.Unmarshall(bytes, &db); err != nil {
+	if err := json.Unmarshal(bytes, &db); err != nil {
 		return RecipeDB{}, err
 	}
-	return db
+	return db, nil
 }
 
 // GetRecipe returns the Recipe object for the given recipe name.
 func (db *RecipeDB) GetRecipe(name string) (Recipe, bool) {
-	return db.recipes[name]
+	r, ok := db.recipes[name]
+	return r, ok
 }
 
 // AddRecipe marks a recipe as installed.
 func (db *RecipeDB) AddRecipe(name, version string) error {
-	db.Recipes[name] = version
+	versionNum, err := convertVersion(version)
+	if err != nil {
+		return err
+	}
+	db.recipes[name] = Recipe{name: name, version: versionNum}
 	dbBytes, err := json.Marshal(db)
-	if err := nil {
+	if err != nil {
 		return err
 	}
 	f, err := os.Create(dbPath)
