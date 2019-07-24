@@ -47,6 +47,24 @@ func exists(path string) (bool, error) {
 	return true, nil
 }
 
+func rpmReboot() bool {
+	// REBOOTPKGS = ['kernel', 'glibc', 'linux-firmware', 'systemd', 'udev', 'openssl-libs', 'gnutls', 'dbus']
+	/*
+		provides:kernel
+		dbus-1
+		glibc
+		gnutls
+		kernel-firmware
+		libopenssl1_0_0
+		libopenssl1_1
+		systemd
+		udev
+	*/
+
+	//rpm -q --queryformat "%{NAME} %{INSTALLTIME}\n" glibc --whatprovides kernel bash
+	return false
+}
+
 func (r *patchRun) systemRebootRequired() (bool, error) {
 	switch {
 	case packages.AptExists:
