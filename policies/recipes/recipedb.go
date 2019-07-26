@@ -19,12 +19,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var (
-	dbPath = "~/placeholder_location/swr.json"
+	dbPath = "/var/lib/google/osconfig_recipedb"
 )
 
 // RecipeDB represents local state of installed recipes.
@@ -59,14 +61,17 @@ func (db *RecipeDB) GetRecipe(name string) (Recipe, bool) {
 }
 
 // AddRecipe marks a recipe as installed.
-func (db *RecipeDB) AddRecipe(name, version string) error {
+func (db *RecipeDB) AddRecipe(name, version, hash string) error {
 	versionNum, err := convertVersion(version)
 	if err != nil {
 		return err
 	}
-	db.recipes[name] = Recipe{name: name, version: versionNum}
+	db.recipes[name] = Recipe{name: name, version: versionNum, hash: hash, installTime: time.Now().Unix()}
 	dbBytes, err := json.Marshal(db)
 	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {
 		return err
 	}
 	f, err := os.Create(dbPath)
@@ -83,8 +88,10 @@ func (db *RecipeDB) AddRecipe(name, version string) error {
 
 // A Recipe represents one recipe installed on the system.
 type Recipe struct {
-	name    string
-	version []int
+	name        string
+	version     []int
+	installTime int64
+	hash        string
 }
 
 // SetVersion sets the version on a Recipe.

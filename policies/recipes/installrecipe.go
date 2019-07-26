@@ -15,13 +15,17 @@
 package recipes
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
+	"github.com/golang/protobuf/jsonpb"
 )
 
 const (
@@ -29,8 +33,12 @@ const (
 	// TODO: move to constants, split linux and windows.
 )
 
+var (
+	marshaller = jsonpb.Marshaler{}
+)
+
 // InstallRecipe installs a recipe.
-func InstallRecipe(ctx context.Context, recipe osconfigpb.SoftwareRecipe) error {
+func InstallRecipe(ctx context.Context, recipe *osconfigpb.SoftwareRecipe) error {
 	steps := recipe.InstallSteps
 	recipeDB, err := newRecipeDB()
 	if err != nil {
@@ -44,6 +52,11 @@ func InstallRecipe(ctx context.Context, recipe osconfigpb.SoftwareRecipe) error 
 		} else {
 			return nil
 		}
+	}
+
+	hash, err := hashRecipe(recipe)
+	if err != nil {
+		return err
 	}
 
 	runID := fmt.Sprintf("run_%d", time.Now().UnixNano())
@@ -107,10 +120,20 @@ func InstallRecipe(ctx context.Context, recipe osconfigpb.SoftwareRecipe) error 
 			return fmt.Errorf("unknown step type %T", v)
 		}
 	}
-	return recipeDB.AddRecipe(recipe.Name, recipe.Version)
+
+	return recipeDB.AddRecipe(recipe.Name, recipe.Version, hash)
 }
 
-func createBaseDir(recipe osconfigpb.SoftwareRecipe, runID string) (string, error) {
+func hashRecipe(recipe *osconfigpb.SoftwareRecipe) (string, error) {
+	buf := &bytes.Buffer{}
+	if err := marshaller.Marshal(buf, recipe); err != nil {
+		return "", err
+	}
+	hashBytes := sha256.Sum256(buf.Bytes())
+	return hex.EncodeToString(hashBytes[:]), nil
+}
+
+func createBaseDir(recipe *osconfigpb.SoftwareRecipe, runID string) (string, error) {
 	dirName := recipe.Name
 	if recipe.Version != "" {
 		dirName = fmt.Sprintf("%s_%s", dirName, recipe.Version)
