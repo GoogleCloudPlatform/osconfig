@@ -138,9 +138,9 @@ func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
 	var zypperInstallPkgs, zypperRemovePkgs, zypperUpdatePkgs []*osconfigpb.Package
 	for _, pkg := range res.GetPackages() {
 		switch pkg.GetPackage().GetManager() {
-		case osconfigpb.Package_ANY:
+		case osconfigpb.Package_ANY, osconfigpb.Package_MANAGER_UNSPECIFIED:
 			switch pkg.GetPackage().GetDesiredState() {
-			case osconfigpb.DesiredState_INSTALLED:
+			case osconfigpb.DesiredState_INSTALLED, osconfigpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
 				gooInstallPkgs = append(gooInstallPkgs, pkg.GetPackage())
 				aptInstallPkgs = append(aptInstallPkgs, pkg.GetPackage())
 				yumInstallPkgs = append(yumInstallPkgs, pkg.GetPackage())
@@ -158,7 +158,7 @@ func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
 			}
 		case osconfigpb.Package_GOO:
 			switch pkg.GetPackage().GetDesiredState() {
-			case osconfigpb.DesiredState_INSTALLED:
+			case osconfigpb.DesiredState_INSTALLED, osconfigpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
 				gooInstallPkgs = append(gooInstallPkgs, pkg.GetPackage())
 			case osconfigpb.DesiredState_REMOVED:
 				gooRemovePkgs = append(gooRemovePkgs, pkg.GetPackage())
@@ -167,7 +167,7 @@ func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
 			}
 		case osconfigpb.Package_APT:
 			switch pkg.GetPackage().GetDesiredState() {
-			case osconfigpb.DesiredState_INSTALLED:
+			case osconfigpb.DesiredState_INSTALLED, osconfigpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
 				aptInstallPkgs = append(aptInstallPkgs, pkg.GetPackage())
 			case osconfigpb.DesiredState_REMOVED:
 				aptRemovePkgs = append(aptRemovePkgs, pkg.GetPackage())
@@ -176,7 +176,7 @@ func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
 			}
 		case osconfigpb.Package_YUM:
 			switch pkg.GetPackage().GetDesiredState() {
-			case osconfigpb.DesiredState_INSTALLED:
+			case osconfigpb.DesiredState_INSTALLED, osconfigpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
 				yumInstallPkgs = append(yumInstallPkgs, pkg.GetPackage())
 			case osconfigpb.DesiredState_REMOVED:
 				yumRemovePkgs = append(yumRemovePkgs, pkg.GetPackage())
@@ -185,7 +185,7 @@ func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
 			}
 		case osconfigpb.Package_ZYPPER:
 			switch pkg.GetPackage().GetDesiredState() {
-			case osconfigpb.DesiredState_INSTALLED:
+			case osconfigpb.DesiredState_INSTALLED, osconfigpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
 				zypperInstallPkgs = append(zypperInstallPkgs, pkg.GetPackage())
 			case osconfigpb.DesiredState_REMOVED:
 				zypperRemovePkgs = append(zypperRemovePkgs, pkg.GetPackage())

@@ -17,11 +17,14 @@
 package ospatch
 
 import (
+	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
@@ -47,22 +50,91 @@ func exists(path string) (bool, error) {
 	return true, nil
 }
 
-func rpmReboot() bool {
-	// REBOOTPKGS = ['kernel', 'glibc', 'linux-firmware', 'systemd', 'udev', 'openssl-libs', 'gnutls', 'dbus']
+func getBtime() (int, error) {
+	f, err := os.Open("/proc/stat")
+	if err != nil {
+		return 0, fmt.Errorf("error opening /proc/stat: %v", err)
+	}
+	defer f.Close()
+
+	var btime int
+	scnr := bufio.NewScanner(f)
+	for scnr.Scan() {
+		if bytes.HasPrefix(scnr.Bytes(), []byte("btime")) {
+			split := bytes.SplitN(scnr.Bytes(), []byte(" "), 2)
+			if len(split) != 2 {
+				return 0, fmt.Errorf("error parsing btime from /proc/stat: %q", scnr.Text())
+			}
+			btime, err = strconv.Atoi(string(bytes.TrimSpace(split[1])))
+			if err != nil {
+				return 0, fmt.Errorf("error parsing btime: %v", err)
+			}
+			break
+		}
+	}
+	if err := scnr.Err(); err != nil && btime == 0 {
+		return 0, fmt.Errorf("error scanning /proc/stat: %v", err)
+	}
+	if btime == 0 {
+		return 0, errors.New("could not find btime in /proc/stat")
+	}
+
+	return btime, nil
+}
+
+func rpmReboot() (bool, error) {
+	provides := []string{
+		// Common packages.
+		"kernel", "glibc", "gnutls",
+		// EL packages.
+		"linux-firmware", "openssl-libs", "dbus",
+		// Suse packages.
+		"kernel-firmware", "libopenssl1_1", "libopenssl1_0_0", "dbus-1",
+	}
+	args := append([]string{"-q", "--queryformat", `"%{INSTALLTIME}\n"`, "--whatprovides"}, provides...)
+	out, err := exec.Command("/usr/bin/rpm", args...).Output()
+	if err != nil {
+		// We don't care about return codes as we know some of these packages won't be installed.
+		if _, ok := err.(*exec.ExitError); !ok {
+			return false, fmt.Errorf("error running /usr/bin/rpm: %v", err)
+		}
+	}
+	fmt.Println(out)
 	/*
-		provides:kernel
-		dbus-1
-		glibc
-		gnutls
-		kernel-firmware
-		libopenssl1_0_0
-		libopenssl1_1
-		systemd
-		udev
+		glibc 1560900379
+		kernel-core 1560900156
+		kernel 1560900174
+		kernel-core 1560900385
+		kernel 1560900393
+		linux-firmware 1560900141
+		systemd 1560900382
+		systemd-udev 1560900383
+		openssl-libs 1560900148
+		gnutls 1560900149
+		dbus 1560900149
+		linux-firmware 1560900141
 	*/
 
-	//rpm -q --queryformat "%{NAME} %{INSTALLTIME}\n" glibc --whatprovides kernel bash
-	return false
+	btime, err := getBtime()
+	if err != nil {
+		return false, err
+	}
+
+	// Scanning this output is best effort, false negatives are much prefered
+	// to false positives, and keeping this as simple as possible is
+	// beneficial.
+	scnr := bufio.NewScanner(bytes.NewReader(out))
+	for scnr.Scan() {
+		itime, err := strconv.Atoi(scnr.Text())
+		if err != nil {
+			continue
+		}
+		if itime > btime {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (r *patchRun) systemRebootRequired() (bool, error) {
