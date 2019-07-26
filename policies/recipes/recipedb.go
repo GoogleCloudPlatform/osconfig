@@ -61,12 +61,12 @@ func (db *RecipeDB) GetRecipe(name string) (Recipe, bool) {
 }
 
 // AddRecipe marks a recipe as installed.
-func (db *RecipeDB) AddRecipe(name, version, hash string) error {
+func (db *RecipeDB) AddRecipe(name, version string) error {
 	versionNum, err := convertVersion(version)
 	if err != nil {
 		return err
 	}
-	db.recipes[name] = Recipe{name: name, version: versionNum, hash: hash, installTime: time.Now().Unix()}
+	db.recipes[name] = Recipe{name: name, version: versionNum, installTime: time.Now().Unix()}
 	dbBytes, err := json.Marshal(db)
 	if err != nil {
 		return err
@@ -91,7 +91,6 @@ type Recipe struct {
 	name        string
 	version     []int
 	installTime int64
-	hash        string
 }
 
 // SetVersion sets the version on a Recipe.
