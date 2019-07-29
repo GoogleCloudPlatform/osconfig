@@ -88,9 +88,8 @@ func (db *RecipeDB) AddRecipe(name, version string) error {
 	if _, err = f.Write(dbBytes); err != nil {
 		return err
 	}
-	os.Rename(f.Name(), filepath.Join(dbDir, dbFileName))
-
-	return nil
+	
+	return os.Rename(f.Name(), filepath.Join(dbDir, dbFileName))
 }
 
 func getDbDir() string {
