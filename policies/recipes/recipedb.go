@@ -26,7 +26,8 @@ import (
 )
 
 var (
-	dbPath = "/var/lib/google/osconfig_recipedb"
+	dbPath   = "/var/lib/google/osconfig_recipedb"
+	tempPath = filepath.Join(os.TempDir(), "osconfig_recipedb_temp")
 )
 
 // RecipeDB represents local state of installed recipes.
@@ -34,22 +35,22 @@ type RecipeDB struct {
 	recipes map[string]Recipe
 }
 
-func newRecipeDB() (RecipeDB, error) {
-	db := RecipeDB{}
+func newRecipeDB() (*RecipeDB, error) {
 	f, err := os.Open(dbPath)
 	if err != nil {
-		return RecipeDB{}, err
+		if os.IsNotExist(err) {
+			return &RecipeDB{recipes: make(map[string]Recipe)}, nil
+		}
+		return nil, err
 	}
 	defer f.Close()
 	bytes, err := ioutil.ReadAll(f)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return RecipeDB{recipes: make(map[string]Recipe)}, nil
-		}
-		return RecipeDB{}, err
+		return nil, err
 	}
+	db := &RecipeDB{}
 	if err := json.Unmarshal(bytes, &db); err != nil {
-		return RecipeDB{}, err
+		return nil, err
 	}
 	return db, nil
 }
@@ -74,7 +75,8 @@ func (db *RecipeDB) AddRecipe(name, version string) error {
 	if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {
 		return err
 	}
-	f, err := os.Create(dbPath)
+
+	f, err := os.Create(tempPath)
 	if err != nil {
 		return err
 	}
@@ -82,6 +84,7 @@ func (db *RecipeDB) AddRecipe(name, version string) error {
 	if _, err = f.Write(dbBytes); err != nil {
 		return err
 	}
+	os.Rename(tempPath, dbPath)
 
 	return nil
 }
