@@ -20,14 +20,16 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
 )
 
 var (
-	dbPath   = "/var/lib/google/osconfig_recipedb"
-	tempPath = filepath.Join(os.TempDir(), "osconfig_recipedb_temp")
+	dbDirWindows = "C:\\ProgramData\\Google"
+	dbDirUnix    = "/var/lib/google"
+	dbFileName   = "osconfig_recipedb"
 )
 
 // RecipeDB represents local state of installed recipes.
@@ -36,7 +38,7 @@ type RecipeDB struct {
 }
 
 func newRecipeDB() (*RecipeDB, error) {
-	f, err := os.Open(dbPath)
+	f, err := os.Open(filepath.Join(getDbDir(), dbFileName))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &RecipeDB{recipes: make(map[string]Recipe)}, nil
@@ -72,11 +74,13 @@ func (db *RecipeDB) AddRecipe(name, version string) error {
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {
+
+	dbDir := getDbDir()
+	if err := os.MkdirAll(dbDir, 0755); err != nil {
 		return err
 	}
 
-	f, err := os.Create(tempPath)
+	f, err := ioutil.TempFile(dbDir, dbFileName+"_*")
 	if err != nil {
 		return err
 	}
@@ -84,9 +88,16 @@ func (db *RecipeDB) AddRecipe(name, version string) error {
 	if _, err = f.Write(dbBytes); err != nil {
 		return err
 	}
-	os.Rename(tempPath, dbPath)
+	os.Rename(f.Name(), filepath.Join(dbDir, dbFileName))
 
 	return nil
+}
+
+func getDbDir() string {
+	if runtime.GOOS != "windows" {
+		return dbDirWindows
+	}
+	return dbDirUnix
 }
 
 // A Recipe represents one recipe installed on the system.
