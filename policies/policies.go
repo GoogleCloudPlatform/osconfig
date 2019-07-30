@@ -279,7 +279,7 @@ func checksum(r io.Reader) hash.Hash {
 }
 
 func writeIfChanged(content []byte, path string) error {
-	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0600)
+	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		return err
 	}
@@ -293,6 +293,10 @@ func writeIfChanged(content []byte, path string) error {
 	}
 
 	logger.Infof("Writing repo file %s with updated contents", path)
+	if err := file.Truncate(0); err != nil {
+		file.Close()
+		return err
+	}
 	if _, err := file.WriteAt(content, 0); err != nil {
 		file.Close()
 		return err

@@ -37,6 +37,7 @@ const (
 	systemctl = "/bin/systemctl"
 	reboot    = "/bin/reboot"
 	shutdown  = "/bin/shutdown"
+	rpm       = "/usr/bin/rpm"
 )
 
 func exists(path string) (bool, error) {
@@ -92,28 +93,13 @@ func rpmReboot() (bool, error) {
 		"kernel-firmware", "libopenssl1_1", "libopenssl1_0_0", "dbus-1",
 	}
 	args := append([]string{"-q", "--queryformat", `"%{INSTALLTIME}\n"`, "--whatprovides"}, provides...)
-	out, err := exec.Command("/usr/bin/rpm", args...).Output()
+	out, err := exec.Command(rpm, args...).Output()
 	if err != nil {
 		// We don't care about return codes as we know some of these packages won't be installed.
 		if _, ok := err.(*exec.ExitError); !ok {
-			return false, fmt.Errorf("error running /usr/bin/rpm: %v", err)
+			return false, fmt.Errorf("error running %s: %v", rpm, err)
 		}
 	}
-	fmt.Println(out)
-	/*
-		glibc 1560900379
-		kernel-core 1560900156
-		kernel 1560900174
-		kernel-core 1560900385
-		kernel 1560900393
-		linux-firmware 1560900141
-		systemd 1560900382
-		systemd-udev 1560900383
-		openssl-libs 1560900148
-		gnutls 1560900149
-		dbus 1560900149
-		linux-firmware 1560900141
-	*/
 
 	btime, err := getBtime()
 	if err != nil {
@@ -138,8 +124,7 @@ func rpmReboot() (bool, error) {
 }
 
 func (r *patchRun) systemRebootRequired() (bool, error) {
-	switch {
-	case packages.AptExists:
+	if packages.AptExists {
 		r.debugf("Checking if reboot required by looking at /var/run/reboot-required.")
 		data, err := ioutil.ReadFile("/var/run/reboot-required")
 		if os.IsNotExist(err) {
@@ -151,37 +136,13 @@ func (r *patchRun) systemRebootRequired() (bool, error) {
 		}
 		r.debugf("/var/run/reboot-required exists indicating a reboot is required, content:\n%s", string(data))
 		return true, nil
-	case packages.YumExists:
-		r.debugf("Checking if reboot required by querying /usr/bin/needs-restarting.")
-		if e, _ := exists("/usr/bin/needs-restarting"); e {
-			out, err := exec.Command("/usr/bin/needs-restarting", "-r").CombinedOutput()
-			r.debugf("'/usr/bin/needs-restarting -r' output:\n%s", string(out))
-			if err == nil {
-				r.debugf("'/usr/bin/needs-restarting -r' exit code 0 indicating no reboot is required.")
-				return false, nil
-			}
-			if eerr, ok := err.(*exec.ExitError); ok {
-				switch eerr.ExitCode() {
-				case 1:
-					r.debugf("'/usr/bin/needs-restarting -r' exit code 1 indicating a reboot is required")
-					return true, nil
-				case 2:
-					r.infof("/usr/bin/needs-restarting is too old, can't easily determine if reboot is required")
-					return false, nil
-				}
-			}
-			return false, err
-		}
-		r.infof("/usr/bin/needs-restarting does not exist, can't check if reboot is required. Try installing the 'yum-utils' package.")
-		return false, nil
-	case packages.ZypperExists:
-		r.errorf("systemRebootRequired not implemented for zypper")
-		return false, nil
 	}
-	// TODO: implement something like this for rpm based distros to fall back to:
-	// https://bugzilla.redhat.com/attachment.cgi?id=1187437&action=diff
+	if ok, _ := exists(rpm); ok {
+		r.debugf("Checking if reboot required by querying rpm database.")
+		return rpmReboot()
+	}
 
-	return false, fmt.Errorf("no recognized package manager installed, can't determine if reboot is required")
+	return false, errors.New("no recognized package manager installed, can't determine if reboot is required")
 }
 
 func (r *patchRun) runUpdates() error {
