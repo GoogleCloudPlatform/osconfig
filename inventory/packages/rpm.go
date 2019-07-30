@@ -25,7 +25,7 @@ import (
 var (
 	rpmquery string
 
-	rpmqueryArgs = []string{"-a", "--queryformat", `%{NAME} %{ARCH} %{VERSION}-%{RELEASE}\n`}
+	rpmqueryArgs = []string{"-a", "--queryformat", "%{NAME} %{ARCH} %{VERSION}-%{RELEASE}\n"}
 )
 
 func init() {

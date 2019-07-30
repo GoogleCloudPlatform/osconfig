@@ -84,12 +84,7 @@ type QFEPackage struct {
 
 var run = func(cmd *exec.Cmd) ([]byte, error) {
 	DebugLogger.Printf("Running %q with args %q\n", cmd.Path, cmd.Args[1:])
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		DebugLogger.Printf("error running %q with args %q: %v, stdout: %s", cmd.Path, cmd.Args, err, out)
-		return nil, err
-	}
-	return out, nil
+	return cmd.CombinedOutput()
 }
 
 func exists(name string) bool {
