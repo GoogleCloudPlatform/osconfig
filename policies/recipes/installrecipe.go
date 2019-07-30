@@ -30,9 +30,12 @@ const (
 )
 
 // InstallRecipe installs a recipe.
-func InstallRecipe(ctx context.Context, recipe osconfigpb.SoftwareRecipe) error {
+func InstallRecipe(ctx context.Context, recipe *osconfigpb.SoftwareRecipe) error {
 	steps := recipe.InstallSteps
-	recipeDB := newRecipeDB()
+	recipeDB, err := newRecipeDB()
+	if err != nil {
+		return err
+	}
 	installedRecipe, ok := recipeDB.GetRecipe(recipe.Name)
 	if ok {
 		if (!installedRecipe.Greater(recipe.Version)) &&
@@ -104,10 +107,11 @@ func InstallRecipe(ctx context.Context, recipe osconfigpb.SoftwareRecipe) error 
 			return fmt.Errorf("unknown step type %T", v)
 		}
 	}
+
 	return recipeDB.AddRecipe(recipe.Name, recipe.Version)
 }
 
-func createBaseDir(recipe osconfigpb.SoftwareRecipe, runID string) (string, error) {
+func createBaseDir(recipe *osconfigpb.SoftwareRecipe, runID string) (string, error) {
 	dirName := recipe.Name
 	if recipe.Version != "" {
 		dirName = fmt.Sprintf("%s_%s", dirName, recipe.Version)

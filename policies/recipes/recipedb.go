@@ -15,32 +15,95 @@
 package recipes
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
+	"time"
+)
+
+var (
+	dbDirWindows = "C:\\ProgramData\\Google"
+	dbDirUnix    = "/var/lib/google"
+	dbFileName   = "osconfig_recipedb"
 )
 
 // RecipeDB represents local state of installed recipes.
-type RecipeDB struct{}
+type RecipeDB struct {
+	recipes map[string]Recipe
+}
 
-func newRecipeDB() RecipeDB {
-	return RecipeDB{}
+func newRecipeDB() (*RecipeDB, error) {
+	f, err := os.Open(filepath.Join(getDbDir(), dbFileName))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return &RecipeDB{recipes: make(map[string]Recipe)}, nil
+		}
+		return nil, err
+	}
+	defer f.Close()
+	bytes, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+	db := &RecipeDB{}
+	if err := json.Unmarshal(bytes, &db); err != nil {
+		return nil, err
+	}
+	return db, nil
 }
 
 // GetRecipe returns the Recipe object for the given recipe name.
 func (db *RecipeDB) GetRecipe(name string) (Recipe, bool) {
-	return Recipe{}, false
+	r, ok := db.recipes[name]
+	return r, ok
 }
 
 // AddRecipe marks a recipe as installed.
 func (db *RecipeDB) AddRecipe(name, version string) error {
-	return nil
+	versionNum, err := convertVersion(version)
+	if err != nil {
+		return err
+	}
+	db.recipes[name] = Recipe{name: name, version: versionNum, installTime: time.Now().Unix()}
+	dbBytes, err := json.Marshal(db)
+	if err != nil {
+		return err
+	}
+
+	dbDir := getDbDir()
+	if err := os.MkdirAll(dbDir, 0755); err != nil {
+		return err
+	}
+
+	f, err := ioutil.TempFile(dbDir, dbFileName+"_*")
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	if _, err = f.Write(dbBytes); err != nil {
+		return err
+	}
+
+	return os.Rename(f.Name(), filepath.Join(dbDir, dbFileName))
+}
+
+func getDbDir() string {
+	if runtime.GOOS != "windows" {
+		return dbDirWindows
+	}
+	return dbDirUnix
 }
 
 // A Recipe represents one recipe installed on the system.
 type Recipe struct {
-	name    string
-	version []int
+	name        string
+	version     []int
+	installTime int64
 }
 
 // SetVersion sets the version on a Recipe.

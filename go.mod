@@ -7,7 +7,7 @@ require (
 	github.com/GoogleCloudPlatform/guest-logging-go/logger v0.0.0-20190520155548-67c9af6d7705
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d
 	github.com/go-ole/go-ole v1.2.4
-	github.com/golang/protobuf v1.3.1
+	github.com/golang/protobuf v1.3.2
 	github.com/googleapis/gax-go/v2 v2.0.5
 	github.com/kardianos/service v1.0.0
 	github.com/kylelemons/godebug v1.1.0
