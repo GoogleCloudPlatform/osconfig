@@ -37,7 +37,7 @@ const (
 	systemctl = "/bin/systemctl"
 	reboot    = "/bin/reboot"
 	shutdown  = "/bin/shutdown"
-	rpm       = "/usr/bin/rpm"
+	rpmQuery  = "/usr/bin/rpmquery"
 )
 
 func exists(path string) (bool, error) {
@@ -92,12 +92,12 @@ func rpmReboot() (bool, error) {
 		// Suse packages.
 		"kernel-firmware", "libopenssl1_1", "libopenssl1_0_0", "dbus-1",
 	}
-	args := append([]string{"-q", "--queryformat", `"%{INSTALLTIME}\n"`, "--whatprovides"}, provides...)
-	out, err := exec.Command(rpm, args...).Output()
+	args := append([]string{"--queryformat", `"%{INSTALLTIME}\n"`, "--whatprovides"}, provides...)
+	out, err := exec.Command(rpmQuery, args...).Output()
 	if err != nil {
 		// We don't care about return codes as we know some of these packages won't be installed.
 		if _, ok := err.(*exec.ExitError); !ok {
-			return false, fmt.Errorf("error running %s: %v", rpm, err)
+			return false, fmt.Errorf("error running %s: %v", rpmQuery, err)
 		}
 	}
 
@@ -137,7 +137,7 @@ func (r *patchRun) systemRebootRequired() (bool, error) {
 		r.debugf("/var/run/reboot-required exists indicating a reboot is required, content:\n%s", string(data))
 		return true, nil
 	}
-	if ok, _ := exists(rpm); ok {
+	if ok, _ := exists(rpmQuery); ok {
 		r.debugf("Checking if reboot required by querying rpm database.")
 		return rpmReboot()
 	}
