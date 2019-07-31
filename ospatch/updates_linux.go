@@ -42,7 +42,7 @@ func (r *patchRun) systemRebootRequired() (bool, error) {
 		r.debugf("/var/run/reboot-required exists indicating a reboot is required, content:\n%s", string(data))
 		return true, nil
 	}
-	if ok, _ := exists(rpmQuery); ok {
+	if ok, _ := exists(rpmquery); ok {
 		r.debugf("Checking if reboot required by querying rpm database.")
 		return rpmReboot()
 	}
