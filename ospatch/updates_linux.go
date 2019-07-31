@@ -18,10 +18,8 @@ package ospatch
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -30,26 +28,8 @@ import (
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
 
-const (
-	systemctl = "/bin/systemctl"
-	reboot    = "/bin/reboot"
-	shutdown  = "/bin/shutdown"
-)
-
-func exists(path string) (bool, error) {
-	if _, err := os.Stat(path); err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
-		return false, err
-	}
-
-	return true, nil
-}
-
 func (r *patchRun) systemRebootRequired() (bool, error) {
-	switch {
-	case packages.AptExists:
+	if packages.AptExists {
 		r.debugf("Checking if reboot required by looking at /var/run/reboot-required.")
 		data, err := ioutil.ReadFile("/var/run/reboot-required")
 		if os.IsNotExist(err) {
@@ -61,37 +41,13 @@ func (r *patchRun) systemRebootRequired() (bool, error) {
 		}
 		r.debugf("/var/run/reboot-required exists indicating a reboot is required, content:\n%s", string(data))
 		return true, nil
-	case packages.YumExists:
-		r.debugf("Checking if reboot required by querying /usr/bin/needs-restarting.")
-		if e, _ := exists("/usr/bin/needs-restarting"); e {
-			out, err := exec.Command("/usr/bin/needs-restarting", "-r").CombinedOutput()
-			r.debugf("'/usr/bin/needs-restarting -r' output:\n%s", string(out))
-			if err == nil {
-				r.debugf("'/usr/bin/needs-restarting -r' exit code 0 indicating no reboot is required.")
-				return false, nil
-			}
-			if eerr, ok := err.(*exec.ExitError); ok {
-				switch eerr.ExitCode() {
-				case 1:
-					r.debugf("'/usr/bin/needs-restarting -r' exit code 1 indicating a reboot is required")
-					return true, nil
-				case 2:
-					r.infof("/usr/bin/needs-restarting is too old, can't easily determine if reboot is required")
-					return false, nil
-				}
-			}
-			return false, err
-		}
-		r.infof("/usr/bin/needs-restarting does not exist, can't check if reboot is required. Try installing the 'yum-utils' package.")
-		return false, nil
-	case packages.ZypperExists:
-		r.errorf("systemRebootRequired not implemented for zypper")
-		return false, nil
 	}
-	// TODO: implement something like this for rpm based distros to fall back to:
-	// https://bugzilla.redhat.com/attachment.cgi?id=1187437&action=diff
+	if ok, _ := exists(rpmquery); ok {
+		r.debugf("Checking if reboot required by querying rpm database.")
+		return rpmReboot()
+	}
 
-	return false, fmt.Errorf("no recognized package manager installed, can't determine if reboot is required")
+	return false, errors.New("no recognized package manager installed, can't determine if reboot is required")
 }
 
 func (r *patchRun) runUpdates() error {

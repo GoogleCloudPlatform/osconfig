@@ -1,3 +1,9 @@
+google-osconfig-agent (1.1.0-1) stable; urgency=medium
+
+  * Move Patch (ALPHA) to using the v1alpha1 api.
+
+ -- Google Cloud Team <gc-team@google.com>  Fri, 02 July 2019 12:00:00 +0000
+
 google-osconfig-agent (1.0.0-1) stable; urgency=medium
 
   * Beta release of inventory functionality.
