@@ -100,7 +100,7 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 
 	localPath := filepath.Join(directory, artifact.Id)
 	if extension != "" {
-		localPath = localPath + "." + extension
+		localPath = localPath + extension
 	}
 	err := downloadStream(reader, checksum, localPath)
 	if err != nil {
