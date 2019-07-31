@@ -1,4 +1,4 @@
-//  Copyright 2018 Google Inc. All Rights Reserved.
+//  Copyright 2019 Google Inc. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	rpmQuery = "/usr/bin/rpmquery"
+	rpmquery = "/usr/bin/rpmquery"
 )
 
 func exists(path string) (bool, error) {
@@ -89,6 +89,11 @@ func rpmRebootRequired(pkgs []byte, btime int) bool {
 
 }
 
+// rpmReboot returns whether an rpm based system should reboot in order to
+// finish installing updates.
+// To get this signal we look at a set of well known packages and whether
+// install time > system boot time. This list is not meant to be exhastive,
+// just to provide a signal when core system packages are updated.
 func rpmReboot() (bool, error) {
 	provides := []string{
 		// Common packages.
@@ -99,11 +104,11 @@ func rpmReboot() (bool, error) {
 		"kernel-firmware", "libopenssl1_1", "libopenssl1_0_0", "dbus-1",
 	}
 	args := append([]string{"--queryformat", `"%{INSTALLTIME}\n"`, "--whatprovides"}, provides...)
-	out, err := exec.Command(rpmQuery, args...).Output()
+	out, err := exec.Command(rpmquery, args...).Output()
 	if err != nil {
 		// We don't care about return codes as we know some of these packages won't be installed.
 		if _, ok := err.(*exec.ExitError); !ok {
-			return false, fmt.Errorf("error running %s: %v", rpmQuery, err)
+			return false, fmt.Errorf("error running %s: %v", rpmquery, err)
 		}
 	}
 
