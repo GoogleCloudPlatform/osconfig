@@ -142,6 +142,10 @@ func YumUpdates() ([]PkgInfo, error) {
 			continue
 		}
 		name := strings.Split(pkg[0], ".")
+		if len(name) != 2 {
+			DebugLogger.Printf("%s does not represent a yum update\n", ln)
+			continue
+		}
 		pkgs = append(pkgs, PkgInfo{Name: name[0], Arch: osinfo.Architecture(name[1]), Version: pkg[1]})
 	}
 	return pkgs, nil

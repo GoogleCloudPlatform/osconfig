@@ -28,7 +28,7 @@ var (
 	dpkgquery string
 	aptGet    string
 
-	dpkgQueryArgs        = []string{"-W", "-f", `${Package} ${Architecture} ${Version}\n`}
+	dpkgQueryArgs        = []string{"-W", "-f", "${Package} ${Architecture} ${Version}\n"}
 	aptGetInstallArgs    = []string{"install", "-y"}
 	aptGetRemoveArgs     = []string{"remove", "-y"}
 	aptGetUpdateArgs     = []string{"update"}
@@ -94,6 +94,7 @@ func AptUpdates() ([]PkgInfo, error) {
 		The following packages will be upgraded:
 		  google-cloud-sdk linux-image-amd64
 		2 upgraded, 2 newly installed, 0 to remove and 0 not upgraded.
+		Inst libldap-common [2.4.45+dfsg-1ubuntu1.2] (2.4.45+dfsg-1ubuntu1.3 Ubuntu:18.04/bionic-updates, Ubuntu:18.04/bionic-security [all])
 		Inst firmware-linux-free (3.4 Debian:9.9/stable [all])
 		Inst google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [all])
 		Inst linux-image-4.9.0-9-amd64 (4.9.168-1+deb9u2 Debian-Security:9/stable [amd64])
@@ -112,17 +113,17 @@ func AptUpdates() ([]PkgInfo, error) {
 		if pkg[0] != "Inst" {
 			continue
 		}
-		if len(pkg) == 5 {
+		if strings.HasPrefix(pkg[2], "(") {
 			// We don't want to record new installs.
 			// Inst firmware-linux-free (3.4 Debian:9.9/stable [all])
 			continue
 		}
-		if len(pkg) != 6 {
+		if strings.HasPrefix(pkg[2], "[") && strings.HasPrefix(pkg[3], "(") && strings.HasSuffix(pkg[len(pkg)-1], "]") {
 			DebugLogger.Printf("%q does not represent an apt update\n", ln)
 			continue
 		}
 		ver := strings.Trim(pkg[3], "(")
-		arch := strings.Trim(pkg[5], "[])")
+		arch := strings.Trim(pkg[len(pkg)-1], "[])")
 		pkgs = append(pkgs, PkgInfo{Name: pkg[1], Arch: osinfo.Architecture(arch), Version: ver})
 	}
 	return pkgs, nil
