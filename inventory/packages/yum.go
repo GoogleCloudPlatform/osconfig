@@ -69,39 +69,6 @@ func RemoveYumPackages(pkgs []string) error {
 	return nil
 }
 
-type yumUpdateOpts struct {
-	security bool
-	minimal  bool
-	excludes []string
-}
-
-// YumUpdateOption is an option for yum update.
-type YumUpdateOption func(*yumUpdateOpts)
-
-// YumUpdateSecurity returns a YumUpdateOption that specifies the --security flag should
-// be used.
-func YumUpdateSecurity(security bool) YumUpdateOption {
-	return func(args *yumUpdateOpts) {
-		args.security = security
-	}
-}
-
-// YumUpdateMinimal returns a YumUpdateOption that specifies the update-minimal
-// command should be used.
-func YumUpdateMinimal(minimal bool) YumUpdateOption {
-	return func(args *yumUpdateOpts) {
-		args.minimal = minimal
-	}
-}
-
-// YumUpdateExcludes returns a YumUpdateOption that specifies what packages to add to
-// the --exclude flag.
-func YumUpdateExcludes(excludes []string) YumUpdateOption {
-	return func(args *yumUpdateOpts) {
-		args.excludes = excludes
-	}
-}
-
 // YumUpdates queries for all available yum updates.
 func YumUpdates() ([]PkgInfo, error) {
 	out, err := run(exec.Command(yum, yumCheckUpdateArgs...))
@@ -132,13 +99,12 @@ func YumUpdates() ([]PkgInfo, error) {
 	}
 
 	var pkgs []PkgInfo
-	for _, ln := range lines[1:] {
+	for _, ln := range lines {
 		pkg := strings.Fields(ln)
 		if len(pkg) == 2 && pkg[0] == "Obsoleting" && pkg[1] == "Packages" {
 			break
 		}
 		if len(pkg) != 3 {
-			DebugLogger.Printf("%s does not represent a yum update\n", ln)
 			continue
 		}
 		name := strings.Split(pkg[0], ".")

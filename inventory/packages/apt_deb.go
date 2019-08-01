@@ -16,6 +16,7 @@ package packages
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -46,7 +47,11 @@ func init() {
 // InstallAptPackages installs apt packages.
 func InstallAptPackages(pkgs []string) error {
 	args := append(aptGetInstallArgs, pkgs...)
-	out, err := run(exec.Command(aptGet, args...))
+	install := exec.Command(aptGet, args...)
+	install.Env = append(os.Environ(),
+		"DEBIAN_FRONTEND=noninteractive",
+	)
+	out, err := run(install)
 	if err != nil {
 		return err
 	}
@@ -61,7 +66,11 @@ func InstallAptPackages(pkgs []string) error {
 // RemoveAptPackages removes apt packages.
 func RemoveAptPackages(pkgs []string) error {
 	args := append(aptGetRemoveArgs, pkgs...)
-	out, err := run(exec.Command(aptGet, args...))
+	remove := exec.Command(aptGet, args...)
+	remove.Env = append(os.Environ(),
+		"DEBIAN_FRONTEND=noninteractive",
+	)
+	out, err := run(remove)
 	if err != nil {
 		return err
 	}

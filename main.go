@@ -43,7 +43,7 @@ func init() {
 type logWriter struct{}
 
 func (l *logWriter) Write(b []byte) (int, error) {
-	logger.Debugf(string(b))
+	logger.Log(logger.LogEntry{Message: string(b), Severity: logger.Debug})
 	return len(b), nil
 }
 
