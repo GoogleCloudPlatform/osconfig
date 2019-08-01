@@ -125,13 +125,13 @@ func InstalledGooGetPackages() ([]PkgInfo, error) {
 	for _, ln := range lines[1:] {
 		pkg := strings.Fields(ln)
 		if len(pkg) != 2 {
-			DebugLogger.Printf("%s does not represent a GooGet package", ln)
+			DebugLogger.Printf("'%s' does not represent a GooGet package", ln)
 			continue
 		}
 
 		p := strings.Split(pkg[0], ".")
 		if len(p) != 2 {
-			DebugLogger.Printf("%s does not represent a GooGet package", ln)
+			DebugLogger.Printf("'%s' does not represent a GooGet package", ln)
 			continue
 		}
 

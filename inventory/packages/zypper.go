@@ -50,7 +50,7 @@ func InstallZypperPackages(pkgs []string) error {
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf(" %s\n", s)
 	}
-	DebugLogger.Printf("Zypper install output:\n%s\n", msg)
+	DebugLogger.Printf("Zypper install output:\n%s", msg)
 	return nil
 }
 
@@ -65,7 +65,7 @@ func RemoveZypperPackages(pkgs []string) error {
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf("  %s\n", s)
 	}
-	DebugLogger.Printf("Zypper remove output:\n%s\n", msg)
+	DebugLogger.Printf("Zypper remove output:\n%s", msg)
 	return nil
 }
 
@@ -94,7 +94,7 @@ func ZypperUpdates() ([]PkgInfo, error) {
 	for _, ln := range lines[2:] {
 		pkg := strings.Fields(ln)
 		if len(pkg) != 11 {
-			DebugLogger.Printf("%s does not represent a zypper update\n", ln)
+			DebugLogger.Printf("'%s' does not represent a zypper update", ln)
 			continue
 		}
 		pkgs = append(pkgs, PkgInfo{Name: pkg[4], Arch: osinfo.Architecture(pkg[10]), Version: pkg[8]})

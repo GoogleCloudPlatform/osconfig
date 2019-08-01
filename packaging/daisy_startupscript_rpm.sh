@@ -32,13 +32,18 @@ RELEASE=$(rpm -q --qf '%{VERSION}' ${RELEASE_RPM})
 case ${RELEASE} in
   6*) 
     try_command yum install -y https://rhel6.iuscommunity.org/ius-release.rpm
+    rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-IUS-${RELEASE}
+    yum install -y git2u
     ;;
   7*) 
     try_command yum install -y https://rhel7.iuscommunity.org/ius-release.rpm
+    rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-IUS-${RELEASE}
+    yum install -y git2u
+    ;;
+  *) 
+    yum install -y git
     ;;
 esac
-rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-IUS-${RELEASE}
-yum install -y git2u
 
 git_checkout "$BASE_REPO" "$REPO" "$PULL_REF"
 
