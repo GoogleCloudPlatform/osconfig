@@ -120,7 +120,6 @@ func parseAptUpdates(data []byte) []PkgInfo {
 		// Make sure this line matches expectations:
 		// Inst google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [all])
 		if !strings.HasPrefix(pkg[2], "[") || !strings.HasPrefix(pkg[3], "(") || !strings.HasSuffix(pkg[len(pkg)-1], ")") {
-			DebugLogger.Printf("%q does not represent an apt update", ln)
 			continue
 		}
 		ver := strings.Trim(pkg[3], "(")
@@ -156,7 +155,6 @@ func parseInstalledDebpackages(data []byte) []PkgInfo {
 	for _, ln := range lines {
 		pkg := strings.Fields(ln)
 		if len(pkg) != 3 {
-			DebugLogger.Printf("'%s' does not represent a deb", ln)
 			continue
 		}
 

@@ -16,6 +16,7 @@ package packages
 
 import (
 	"errors"
+	"reflect"
 	"testing"
 )
 
@@ -44,5 +45,47 @@ func TestRemoveZypperReturnError(t *testing.T) {
 	run = getMockRun([]byte("TestRemoveZypperReturnError"), errors.New("Could not find package"))
 	if err := RemoveZypperPackages(pkgs); err == nil {
 		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestParseZypperUpdates(t *testing.T) {
+	normalCase := `S | Repository          | Name                   | Current Version | Available Version | Arch
+--+---------------------+------------------------+-----------------+-------------------+-------
+v | SLES12-SP3-Updates  | at                     | 3.1.14-7.3      | 3.1.14-8.3.1      | x86_64
+v | SLES12-SP3-Updates  | autoyast2-installation | 3.2.17-1.3      | 3.2.22-2.9.2      | noarch`
+
+	tests := []struct {
+		name string
+		data []byte
+		want []PkgInfo
+	}{
+		{"NormalCase", []byte(normalCase), []PkgInfo{{"at", "x86_64", "3.1.14-8.3.1"}, {"autoyast2-installation", "all", "3.2.22-2.9.2"}}},
+		{"NoPackages", []byte("nothing here"), nil},
+		{"nil", nil, nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := parseZypperUpdates(tt.data); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("parseZypperUpdates() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestZypperUpdates(t *testing.T) {
+	run = getMockRun([]byte("v | SLES12-SP3-Updates  | at                     | 3.1.14-7.3      | 3.1.14-8.3.1      | x86_64"), nil)
+	ret, err := ZypperUpdates()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	want := []PkgInfo{{"at", "x86_64", "3.1.14-8.3.1"}}
+	if !reflect.DeepEqual(ret, want) {
+		t.Errorf("ZypperUpdates() = %v, want %v", ret, want)
+	}
+
+	run = getMockRun(nil, errors.New("bad error"))
+	if _, err := ZypperUpdates(); err == nil {
+		t.Errorf("did not get expected error")
 	}
 }

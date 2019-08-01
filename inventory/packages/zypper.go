@@ -69,12 +69,7 @@ func RemoveZypperPackages(pkgs []string) error {
 	return nil
 }
 
-// ZypperUpdates queries for all available zypper updates.
-func ZypperUpdates() ([]PkgInfo, error) {
-	out, err := run(exec.Command(zypper, zypperListUpdatesArgs...))
-	if err != nil {
-		return nil, err
-	}
+func parseZypperUpdates(data []byte) []PkgInfo {
 	/*
 		      S | Repository          | Name                   | Current Version | Available Version | Arch
 		      --+---------------------+------------------------+-----------------+-------------------+-------
@@ -85,19 +80,24 @@ func ZypperUpdates() ([]PkgInfo, error) {
 
 	// We could use the XML output option, but parsing the lines is inline
 	// with other functions and pretty simple.
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
-	if len(lines) == 0 {
-		return nil, nil
-	}
+	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
 
 	var pkgs []PkgInfo
-	for _, ln := range lines[2:] {
+	for _, ln := range lines {
 		pkg := strings.Fields(ln)
 		if len(pkg) != 11 {
-			DebugLogger.Printf("'%s' does not represent a zypper update", ln)
 			continue
 		}
 		pkgs = append(pkgs, PkgInfo{Name: pkg[4], Arch: osinfo.Architecture(pkg[10]), Version: pkg[8]})
 	}
-	return pkgs, nil
+	return pkgs
+}
+
+// ZypperUpdates queries for all available zypper updates.
+func ZypperUpdates() ([]PkgInfo, error) {
+	out, err := run(exec.Command(zypper, zypperListUpdatesArgs...))
+	if err != nil {
+		return nil, err
+	}
+	return parseZypperUpdates(out), nil
 }

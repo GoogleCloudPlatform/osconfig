@@ -16,6 +16,9 @@ package packages
 
 import (
 	"errors"
+	"os"
+	"os/exec"
+	"reflect"
 	"testing"
 )
 
@@ -44,5 +47,63 @@ func TestRemoveYumReturnError(t *testing.T) {
 	run = getMockRun([]byte("TestRemoveYumReturnError"), errors.New("Could not find package"))
 	if err := RemoveYumPackages(pkgs); err == nil {
 		t.Errorf("did not get expected error")
+	}
+}
+
+func TestYumUpdates(t *testing.T) {
+	run = getMockRun([]byte("TestYumUpdatesError"), errors.New("Bad error"))
+	if _, err := YumUpdates(); err == nil {
+		t.Errorf("did not get expected error")
+	}
+}
+
+func TestYumUpdatesExitCode0(t *testing.T) {
+	run = getMockRun([]byte("TestYumUpdatesError"), nil)
+	ret, err := YumUpdates()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if ret != nil {
+		t.Errorf("unexpected return: %v", ret)
+	}
+}
+
+func TestYumUpdatesExitCode100(t *testing.T) {
+	if os.Getenv("EXIT100") == "1" {
+		os.Exit(100)
+	}
+
+	cmd := exec.Command(os.Args[0], "-test.run=TestYumUpdatesExitCode100")
+	cmd.Env = append(os.Environ(), "EXIT100=1")
+
+	run = getMockRun([]byte("foo.noarch 2.0.0-1 repo"), cmd.Run())
+	ret, err := YumUpdates()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	want := []PkgInfo{{"foo", "all", "2.0.0-1"}}
+	if !reflect.DeepEqual(ret, want) {
+		t.Errorf("YumUpdates() = %v, want %v", ret, want)
+	}
+}
+
+func TestParseYumUpdates(t *testing.T) {
+	tests := []struct {
+		name string
+		data []byte
+		want []PkgInfo
+	}{
+		{"NormalCase", []byte(" \nfoo.noarch 2.0.0-1 repo\nbar.x86_64 2.0.0-1 repo\nObsoleting Packages\nbaz.noarch 2.0.0-1 repo"), []PkgInfo{{"foo", "all", "2.0.0-1"}, {"bar", "x86_64", "2.0.0-1"}}},
+		{"NoPackages", []byte("nothing here"), nil},
+		{"nil", nil, nil},
+		{"UnrecognizedPackage", []byte("this.is.a bad package\nsomething we dont understand\n bar.noarch 1.2.3-4 repo"), []PkgInfo{{"bar", "all", "1.2.3-4"}}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := parseYumUpdates(tt.data); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("parseYumUpdates() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

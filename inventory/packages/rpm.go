@@ -46,7 +46,6 @@ func parseInstalledRPMPackages(data []byte) []PkgInfo {
 	for _, ln := range lines {
 		pkg := bytes.Fields(ln)
 		if len(pkg) != 3 {
-			DebugLogger.Printf("'%s' does not represent a rpm", ln)
 			continue
 		}
 
