@@ -90,7 +90,7 @@ func InstalledGemPackages() ([]PkgInfo, error) {
 	for _, ln := range lines[2:] {
 		pkg := strings.Fields(ln)
 		if len(pkg) < 2 {
-			DebugLogger.Printf("%q does not represent a gem", ln)
+			DebugLogger.Printf("'%s' does not represent a gem", ln)
 			continue
 		}
 		for _, ver := range strings.Split(strings.Trim(pkg[1], "()"), ", ") {

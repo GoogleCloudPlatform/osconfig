@@ -19,7 +19,6 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
-	"syscall"
 
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
 )
@@ -69,21 +68,7 @@ func RemoveYumPackages(pkgs []string) error {
 	return nil
 }
 
-// YumUpdates queries for all available yum updates.
-func YumUpdates() ([]PkgInfo, error) {
-	out, err := run(exec.Command(yum, yumCheckUpdateArgs...))
-	// Exit code 0 means no updates, 100 means there are updates.
-	if err == nil {
-		return nil, nil
-	}
-	if exitErr, ok := err.(*exec.ExitError); ok {
-		if status, ok := exitErr.Sys().(syscall.WaitStatus); ok && status.ExitStatus() == 100 {
-			err = nil
-		}
-	}
-	if err != nil {
-		return nil, fmt.Errorf("error checking yum upgradable packages: %v, stdout: %s", err, out)
-	}
+func parseYumUpdates(data []byte) []PkgInfo {
 	/*
 
 	   foo.noarch 2.0.0-1 repo
@@ -93,10 +78,7 @@ func YumUpdates() ([]PkgInfo, error) {
 	   ...
 	*/
 
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
-	if len(lines) == 0 {
-		return nil, nil
-	}
+	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
 
 	var pkgs []PkgInfo
 	for _, ln := range lines {
@@ -109,10 +91,28 @@ func YumUpdates() ([]PkgInfo, error) {
 		}
 		name := strings.Split(pkg[0], ".")
 		if len(name) != 2 {
-			DebugLogger.Printf("%s does not represent a yum update.", ln)
+			DebugLogger.Printf("'%s' does not represent a yum update.", ln)
 			continue
 		}
 		pkgs = append(pkgs, PkgInfo{Name: name[0], Arch: osinfo.Architecture(name[1]), Version: pkg[1]})
 	}
-	return pkgs, nil
+	return pkgs
+}
+
+// YumUpdates queries for all available yum updates.
+func YumUpdates() ([]PkgInfo, error) {
+	out, err := run(exec.Command(yum, yumCheckUpdateArgs...))
+	// Exit code 0 means no updates, 100 means there are updates.
+	if err == nil {
+		return nil, nil
+	}
+	if exitErr, ok := err.(*exec.ExitError); ok {
+		if exitErr.ExitCode() == 100 {
+			err = nil
+		}
+	}
+	if err != nil {
+		return nil, fmt.Errorf("error checking yum upgradable packages: %v, stdout: %s", err, out)
+	}
+	return parseYumUpdates(out), nil
 }

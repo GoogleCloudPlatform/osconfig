@@ -82,17 +82,7 @@ func RemoveAptPackages(pkgs []string) error {
 	return nil
 }
 
-// AptUpdates queries for all available apt updates.
-func AptUpdates() ([]PkgInfo, error) {
-	out, err := run(exec.Command(aptGet, aptGetUpdateArgs...))
-	if err != nil {
-		return nil, err
-	}
-
-	out, err = run(exec.Command(aptGet, aptGetUpgradableArgs...))
-	if err != nil {
-		return nil, err
-	}
+func parseAptUpdates(data []byte) []PkgInfo {
 	/*
 		Reading package lists... Done
 		Building dependency tree
@@ -114,12 +104,12 @@ func AptUpdates() ([]PkgInfo, error) {
 		Conf linux-image-amd64 (4.9+80+deb9u7 Debian:9.9/stable [amd64])
 	*/
 
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
 
 	var pkgs []PkgInfo
 	for _, ln := range lines {
 		pkg := strings.Fields(ln)
-		if pkg[0] != "Inst" {
+		if len(pkg) < 4 || pkg[0] != "Inst" {
 			continue
 		}
 		if strings.HasPrefix(pkg[2], "(") {
@@ -127,15 +117,52 @@ func AptUpdates() ([]PkgInfo, error) {
 			// Inst firmware-linux-free (3.4 Debian:9.9/stable [all])
 			continue
 		}
-		if strings.HasPrefix(pkg[2], "[") && strings.HasPrefix(pkg[3], "(") && strings.HasSuffix(pkg[len(pkg)-1], "]") {
-			DebugLogger.Printf("%q does not represent an apt update\n", ln)
+		// Make sure this line matches expectations:
+		// Inst google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [all])
+		if !strings.HasPrefix(pkg[2], "[") || !strings.HasPrefix(pkg[3], "(") || !strings.HasSuffix(pkg[len(pkg)-1], ")") {
+			DebugLogger.Printf("%q does not represent an apt update", ln)
 			continue
 		}
 		ver := strings.Trim(pkg[3], "(")
 		arch := strings.Trim(pkg[len(pkg)-1], "[])")
 		pkgs = append(pkgs, PkgInfo{Name: pkg[1], Arch: osinfo.Architecture(arch), Version: ver})
 	}
-	return pkgs, nil
+	return pkgs
+}
+
+// AptUpdates queries for all available apt updates.
+func AptUpdates() ([]PkgInfo, error) {
+	if _, err := run(exec.Command(aptGet, aptGetUpdateArgs...)); err != nil {
+		return nil, err
+	}
+
+	out, err := run(exec.Command(aptGet, aptGetUpgradableArgs...))
+	if err != nil {
+		return nil, err
+	}
+
+	return parseAptUpdates(out), nil
+}
+
+func parseInstalledDebpackages(data []byte) []PkgInfo {
+	/*
+	   foo amd64 1.2.3-4
+	   bar noarch 1.2.3-4
+	   ...
+	*/
+	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
+
+	var pkgs []PkgInfo
+	for _, ln := range lines {
+		pkg := strings.Fields(ln)
+		if len(pkg) != 3 {
+			DebugLogger.Printf("'%s' does not represent a deb", ln)
+			continue
+		}
+
+		pkgs = append(pkgs, PkgInfo{Name: pkg[0], Arch: osinfo.Architecture(pkg[1]), Version: pkg[2]})
+	}
+	return pkgs
 }
 
 // InstalledDebPackages queries for all installed deb packages.
@@ -144,28 +171,5 @@ func InstalledDebPackages() ([]PkgInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	/*
-	   foo amd64 1.2.3-4
-	   bar noarch 1.2.3-4
-	   ...
-	*/
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
-
-	if len(lines) == 0 {
-		DebugLogger.Println("No deb packages installed.")
-		return nil, nil
-	}
-
-	var pkgs []PkgInfo
-	for _, ln := range lines {
-		pkg := strings.Fields(ln)
-		if len(pkg) != 3 {
-			DebugLogger.Printf("%q does not represent a deb", ln)
-			continue
-		}
-
-		pkgs = append(pkgs, PkgInfo{Name: pkg[0], Arch: osinfo.Architecture(pkg[1]), Version: pkg[2]})
-	}
-	return pkgs, nil
+	return parseInstalledDebpackages(out), nil
 }

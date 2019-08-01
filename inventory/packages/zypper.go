@@ -94,7 +94,7 @@ func ZypperUpdates() ([]PkgInfo, error) {
 	for _, ln := range lines[2:] {
 		pkg := strings.Fields(ln)
 		if len(pkg) != 11 {
-			DebugLogger.Printf("%s does not represent a zypper update", ln)
+			DebugLogger.Printf("'%s' does not represent a zypper update", ln)
 			continue
 		}
 		pkgs = append(pkgs, PkgInfo{Name: pkg[4], Arch: osinfo.Architecture(pkg[10]), Version: pkg[8]})
