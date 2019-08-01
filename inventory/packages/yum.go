@@ -50,7 +50,7 @@ func InstallYumPackages(pkgs []string) error {
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf(" %s\n", s)
 	}
-	DebugLogger.Printf("yum install output:\n%s\n", msg)
+	DebugLogger.Printf("yum install output:\n%s", msg)
 	return nil
 }
 
@@ -65,7 +65,7 @@ func RemoveYumPackages(pkgs []string) error {
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf(" %s\n", s)
 	}
-	DebugLogger.Printf("yum remove output:\n%s\n", msg)
+	DebugLogger.Printf("yum remove output:\n%s", msg)
 	return nil
 }
 
@@ -109,7 +109,7 @@ func YumUpdates() ([]PkgInfo, error) {
 		}
 		name := strings.Split(pkg[0], ".")
 		if len(name) != 2 {
-			DebugLogger.Printf("%s does not represent a yum update\n", ln)
+			DebugLogger.Printf("%s does not represent a yum update.", ln)
 			continue
 		}
 		pkgs = append(pkgs, PkgInfo{Name: name[0], Arch: osinfo.Architecture(name[1]), Version: pkg[1]})

@@ -59,7 +59,7 @@ func InstallAptPackages(pkgs []string) error {
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf(" %s\n", s)
 	}
-	DebugLogger.Printf("apt install output:\n%s\n", msg)
+	DebugLogger.Printf("apt install output:\n%s", msg)
 	return nil
 }
 
@@ -78,7 +78,7 @@ func RemoveAptPackages(pkgs []string) error {
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf(" %s\n", s)
 	}
-	DebugLogger.Printf("apt remove output:\n%s\n", msg)
+	DebugLogger.Printf("apt remove output:\n%s", msg)
 	return nil
 }
 
@@ -161,7 +161,7 @@ func InstalledDebPackages() ([]PkgInfo, error) {
 	for _, ln := range lines {
 		pkg := strings.Fields(ln)
 		if len(pkg) != 3 {
-			DebugLogger.Printf("%q does not represent a deb\n", ln)
+			DebugLogger.Printf("%q does not represent a deb", ln)
 			continue
 		}
 

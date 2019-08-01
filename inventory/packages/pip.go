@@ -56,7 +56,7 @@ func PipUpdates() ([]PkgInfo, error) {
 	for _, ln := range lines {
 		pkg := strings.Fields(ln)
 		if len(pkg) != 6 {
-			DebugLogger.Printf("%q does not represent a pip update\n", ln)
+			DebugLogger.Printf("%q does not represent a pip update", ln)
 			continue
 		}
 		pkgs = append(pkgs, PkgInfo{Name: pkg[0], Arch: noarch, Version: pkg[4]})

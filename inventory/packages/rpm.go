@@ -57,7 +57,7 @@ func InstalledRPMPackages() ([]PkgInfo, error) {
 	for _, ln := range lines {
 		pkg := strings.Fields(ln)
 		if len(pkg) != 3 {
-			DebugLogger.Printf("%q does not represent a rpm\n", ln)
+			DebugLogger.Printf("%q does not represent a rpm", ln)
 			continue
 		}
 
