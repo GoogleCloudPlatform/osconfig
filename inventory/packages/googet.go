@@ -15,6 +15,7 @@
 package packages
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -78,30 +79,24 @@ func GooGetUpdates() ([]PkgInfo, error) {
 func InstallGooGetPackages(pkgs []string) error {
 	args := append(googetInstallArgs, pkgs...)
 	out, err := run(exec.Command(googet, args...))
-	if err != nil {
-		return err
-	}
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf("  %s\n", s)
 	}
 	DebugLogger.Printf("GooGet install output:\n%s", msg)
-	return nil
+	return err
 }
 
 // RemoveGooGetPackages installs GooGet packages.
 func RemoveGooGetPackages(pkgs []string) error {
 	args := append(googetRemoveArgs, pkgs...)
 	out, err := run(exec.Command(googet, args...))
-	if err != nil {
-		return err
-	}
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf("  %s\n", s)
 	}
 	DebugLogger.Printf("GooGet remove output:\n%s", msg)
-	return nil
+	return err
 }
 
 func parseInstalledGooGetPackages(data []byte) []PkgInfo {
@@ -111,21 +106,21 @@ func parseInstalledGooGetPackages(data []byte) []PkgInfo {
 	   bar.noarch 1.2.3@4
 	   ...
 	*/
-	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
+	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
 
 	var pkgs []PkgInfo
 	for _, ln := range lines {
-		pkg := strings.Fields(ln)
+		pkg := bytes.Fields(ln)
 		if len(pkg) != 2 {
 			continue
 		}
 
-		p := strings.Split(pkg[0], ".")
+		p := bytes.Split(pkg[0], []byte("."))
 		if len(p) != 2 {
 			continue
 		}
 
-		pkgs = append(pkgs, PkgInfo{Name: p[0], Arch: p[1], Version: pkg[1]})
+		pkgs = append(pkgs, PkgInfo{Name: string(p[0]), Arch: string(p[1]), Version: string(pkg[1])})
 	}
 	return pkgs
 }

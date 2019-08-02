@@ -15,6 +15,7 @@
 package packages
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -52,15 +53,12 @@ func InstallAptPackages(pkgs []string) error {
 		"DEBIAN_FRONTEND=noninteractive",
 	)
 	out, err := run(install)
-	if err != nil {
-		return err
-	}
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf(" %s\n", s)
 	}
 	DebugLogger.Printf("apt install output:\n%s", msg)
-	return nil
+	return err
 }
 
 // RemoveAptPackages removes apt packages.
@@ -71,15 +69,12 @@ func RemoveAptPackages(pkgs []string) error {
 		"DEBIAN_FRONTEND=noninteractive",
 	)
 	out, err := run(remove)
-	if err != nil {
-		return err
-	}
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf(" %s\n", s)
 	}
 	DebugLogger.Printf("apt remove output:\n%s", msg)
-	return nil
+	return err
 }
 
 func parseAptUpdates(data []byte) []PkgInfo {
@@ -104,27 +99,27 @@ func parseAptUpdates(data []byte) []PkgInfo {
 		Conf linux-image-amd64 (4.9+80+deb9u7 Debian:9.9/stable [amd64])
 	*/
 
-	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
+	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
 
 	var pkgs []PkgInfo
 	for _, ln := range lines {
-		pkg := strings.Fields(ln)
-		if len(pkg) < 4 || pkg[0] != "Inst" {
+		pkg := bytes.Fields(ln)
+		if len(pkg) < 4 || string(pkg[0]) != "Inst" {
 			continue
 		}
-		if strings.HasPrefix(pkg[2], "(") {
+		if strings.HasPrefix(string(pkg[2]), "(") {
 			// We don't want to record new installs.
 			// Inst firmware-linux-free (3.4 Debian:9.9/stable [all])
 			continue
 		}
 		// Make sure this line matches expectations:
 		// Inst google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [all])
-		if !strings.HasPrefix(pkg[2], "[") || !strings.HasPrefix(pkg[3], "(") || !strings.HasSuffix(pkg[len(pkg)-1], ")") {
+		if !strings.HasPrefix(string(pkg[2]), "[") || !strings.HasPrefix(string(pkg[3]), "(") || !strings.HasSuffix(string(pkg[len(pkg)-1]), ")") {
 			continue
 		}
-		ver := strings.Trim(pkg[3], "(")
-		arch := strings.Trim(pkg[len(pkg)-1], "[])")
-		pkgs = append(pkgs, PkgInfo{Name: pkg[1], Arch: osinfo.Architecture(arch), Version: ver})
+		ver := bytes.Trim(pkg[3], "(")
+		arch := bytes.Trim(pkg[len(pkg)-1], "[])")
+		pkgs = append(pkgs, PkgInfo{Name: string(pkg[1]), Arch: osinfo.Architecture(string(arch)), Version: string(ver)})
 	}
 	return pkgs
 }
