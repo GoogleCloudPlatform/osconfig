@@ -132,25 +132,18 @@ func StepFileExec(step *osconfigpb.SoftwareRecipe_Step_FileExec, artifacts map[s
 
 // StepScriptRun builds the command for a ScriptRun step
 func StepScriptRun(step *osconfigpb.SoftwareRecipe_Step_ScriptRun, artifacts map[string]string, runEnvs []string, stepDir string) error {
-	if runtime.GOOS == "windows" {
-		switch step.ScriptRun.Interpreter {
-		case osconfigpb.SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED:
-			return scriptRunDirect(step, runEnvs, stepDir)
-		case osconfigpb.SoftwareRecipe_Step_RunScript_SHELL:
-			return scriptRunCmd(step, runEnvs, stepDir)
-		case osconfigpb.SoftwareRecipe_Step_RunScript_POWERSHELL:
-			return scriptRunPowershell(step, runEnvs, stepDir)
-		default:
-			return fmt.Errorf("invalid interpreter %q", step.ScriptRun.Interpreter)
-		}
-	}
-
 	switch step.ScriptRun.Interpreter {
 	case osconfigpb.SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED:
 		return scriptRunDirect(step, runEnvs, stepDir)
 	case osconfigpb.SoftwareRecipe_Step_RunScript_SHELL:
+		if runtime.GOOS == "windows" {
+			return scriptRunCmd(step, runEnvs, stepDir)
+		}
 		return scriptRunSh(step, runEnvs, stepDir)
 	case osconfigpb.SoftwareRecipe_Step_RunScript_POWERSHELL:
+		if runtime.GOOS == "windows" {
+			return scriptRunPowershell(step, runEnvs, stepDir)
+		}
 		return fmt.Errorf("interpreter %q cannot be used on non-Windows system", step.ScriptRun.Interpreter)
 	default:
 		return fmt.Errorf("invalid interpreter %q", step.ScriptRun.Interpreter)
@@ -160,9 +153,8 @@ func StepScriptRun(step *osconfigpb.SoftwareRecipe_Step_ScriptRun, artifacts map
 func scriptRunSh(step *osconfigpb.SoftwareRecipe_Step_ScriptRun, runEnvs []string, stepDir string) error {
 	scriptPath := filepath.Join(stepDir, "script")
 
-	err := writeScript(scriptPath, step.ScriptRun.Script)
-	if err != nil {
-		return err
+	if err := writeScript(scriptPath, step.ScriptRun.Script); err != nil {
+		return nil
 	}
 
 	var qargs []string
@@ -177,8 +169,7 @@ func scriptRunSh(step *osconfigpb.SoftwareRecipe_Step_ScriptRun, runEnvs []strin
 func scriptRunDirect(step *osconfigpb.SoftwareRecipe_Step_ScriptRun, runEnvs []string, stepDir string) error {
 	scriptPath := filepath.Join(stepDir, "script")
 
-	err := writeScript(scriptPath, step.ScriptRun.Script)
-	if err != nil {
+	if err := writeScript(scriptPath, step.ScriptRun.Script); err != nil {
 		return err
 	}
 
@@ -188,8 +179,7 @@ func scriptRunDirect(step *osconfigpb.SoftwareRecipe_Step_ScriptRun, runEnvs []s
 func scriptRunPowershell(step *osconfigpb.SoftwareRecipe_Step_ScriptRun, runEnvs []string, stepDir string) error {
 	scriptPath := filepath.Join(stepDir, "script.ps1")
 
-	err := writeScript(scriptPath, step.ScriptRun.Script)
-	if err != nil {
+	if err := writeScript(scriptPath, step.ScriptRun.Script); err != nil {
 		return err
 	}
 
@@ -200,8 +190,7 @@ func scriptRunPowershell(step *osconfigpb.SoftwareRecipe_Step_ScriptRun, runEnvs
 func scriptRunCmd(step *osconfigpb.SoftwareRecipe_Step_ScriptRun, runEnvs []string, stepDir string) error {
 	scriptPath := filepath.Join(stepDir, "script.bat")
 
-	err := writeScript(scriptPath, step.ScriptRun.Script)
-	if err != nil {
+	if err := writeScript(scriptPath, step.ScriptRun.Script); err != nil {
 		return err
 	}
 
