@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -67,11 +68,11 @@ func FetchArtifacts(ctx context.Context, artifacts []*osconfigpb.SoftwareRecipe_
 }
 
 func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Artifact, directory string) (string, error) {
-	localPath := filepath.Join(directory, artifact.Id)
 	var reader io.ReadCloser
-	var checksum string
+	var checksum, extension string
 	switch v := artifact.Artifact.(type) {
 	case *osconfigpb.SoftwareRecipe_Artifact_Gcs_:
+		extension = path.Ext(v.Gcs.Object)
 		reader, err := fetchWithGCS(ctx, v.Gcs.Bucket, v.Gcs.Object, v.Gcs.Generation)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q from GCS: %v", artifact.Id, err)
@@ -82,6 +83,7 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 		if err != nil {
 			return "", fmt.Errorf("Could not parse url %q for artifact %q", v.Remote.Uri, artifact.Id)
 		}
+		extension = path.Ext(uri.Path)
 		if uri.Scheme != "http" && uri.Scheme != "https" {
 			return "", fmt.Errorf("error, artifact %q has unsupported protocol scheme %s", artifact.Id, uri.Scheme)
 		}
@@ -96,6 +98,10 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 		return "", fmt.Errorf("unknown artifact type %T", v)
 	}
 
+	localPath := filepath.Join(directory, artifact.Id)
+	if extension != "" {
+		localPath = localPath + extension
+	}
 	err := downloadStream(reader, checksum, localPath)
 	if err != nil {
 		return "", err
