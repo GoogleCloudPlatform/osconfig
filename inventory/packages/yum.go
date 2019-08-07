@@ -15,6 +15,7 @@
 package packages
 
 import (
+	"bytes"
 	"fmt"
 	"os/exec"
 	"runtime"
@@ -42,30 +43,24 @@ func init() {
 func InstallYumPackages(pkgs []string) error {
 	args := append(yumInstallArgs, pkgs...)
 	out, err := run(exec.Command(yum, args...))
-	if err != nil {
-		return err
-	}
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf(" %s\n", s)
 	}
 	DebugLogger.Printf("yum install output:\n%s", msg)
-	return nil
+	return err
 }
 
 // RemoveYumPackages removes yum packages.
 func RemoveYumPackages(pkgs []string) error {
 	args := append(yumRemoveArgs, pkgs...)
 	out, err := run(exec.Command(yum, args...))
-	if err != nil {
-		return err
-	}
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf(" %s\n", s)
 	}
 	DebugLogger.Printf("yum remove output:\n%s", msg)
-	return nil
+	return err
 }
 
 func parseYumUpdates(data []byte) []PkgInfo {
@@ -78,23 +73,22 @@ func parseYumUpdates(data []byte) []PkgInfo {
 	   ...
 	*/
 
-	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
+	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
 
 	var pkgs []PkgInfo
 	for _, ln := range lines {
-		pkg := strings.Fields(ln)
-		if len(pkg) == 2 && pkg[0] == "Obsoleting" && pkg[1] == "Packages" {
+		pkg := bytes.Fields(ln)
+		if len(pkg) == 2 && string(pkg[0]) == "Obsoleting" && string(pkg[1]) == "Packages" {
 			break
 		}
 		if len(pkg) != 3 {
 			continue
 		}
-		name := strings.Split(pkg[0], ".")
+		name := bytes.Split(pkg[0], []byte("."))
 		if len(name) != 2 {
-			DebugLogger.Printf("'%s' does not represent a yum update.", ln)
 			continue
 		}
-		pkgs = append(pkgs, PkgInfo{Name: name[0], Arch: osinfo.Architecture(name[1]), Version: pkg[1]})
+		pkgs = append(pkgs, PkgInfo{Name: string(name[0]), Arch: osinfo.Architecture(string(name[1])), Version: string(pkg[1])})
 	}
 	return pkgs
 }

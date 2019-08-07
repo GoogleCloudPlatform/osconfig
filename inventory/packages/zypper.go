@@ -15,6 +15,7 @@
 package packages
 
 import (
+	"bytes"
 	"fmt"
 	"os/exec"
 	"runtime"
@@ -43,38 +44,27 @@ func init() {
 func InstallZypperPackages(pkgs []string) error {
 	args := append(zypperInstallArgs, pkgs...)
 	out, err := run(exec.Command(zypper, args...))
-	if err != nil {
-		return err
-	}
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf(" %s\n", s)
 	}
 	DebugLogger.Printf("Zypper install output:\n%s", msg)
-	return nil
+	return err
 }
 
 // RemoveZypperPackages installed Zypper packages.
 func RemoveZypperPackages(pkgs []string) error {
 	args := append(zypperRemoveArgs, pkgs...)
 	out, err := run(exec.Command(zypper, args...))
-	if err != nil {
-		return err
-	}
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf("  %s\n", s)
 	}
 	DebugLogger.Printf("Zypper remove output:\n%s", msg)
-	return nil
+	return err
 }
 
-// ZypperUpdates queries for all available zypper updates.
-func ZypperUpdates() ([]PkgInfo, error) {
-	out, err := run(exec.Command(zypper, zypperListUpdatesArgs...))
-	if err != nil {
-		return nil, err
-	}
+func parseZypperUpdates(data []byte) []PkgInfo {
 	/*
 		      S | Repository          | Name                   | Current Version | Available Version | Arch
 		      --+---------------------+------------------------+-----------------+-------------------+-------
@@ -85,19 +75,24 @@ func ZypperUpdates() ([]PkgInfo, error) {
 
 	// We could use the XML output option, but parsing the lines is inline
 	// with other functions and pretty simple.
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
-	if len(lines) == 0 {
-		return nil, nil
-	}
+	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
 
 	var pkgs []PkgInfo
-	for _, ln := range lines[2:] {
-		pkg := strings.Fields(ln)
+	for _, ln := range lines {
+		pkg := bytes.Fields(ln)
 		if len(pkg) != 11 {
-			DebugLogger.Printf("'%s' does not represent a zypper update", ln)
 			continue
 		}
-		pkgs = append(pkgs, PkgInfo{Name: pkg[4], Arch: osinfo.Architecture(pkg[10]), Version: pkg[8]})
+		pkgs = append(pkgs, PkgInfo{Name: string(pkg[4]), Arch: osinfo.Architecture(string(pkg[10])), Version: string(pkg[8])})
 	}
-	return pkgs, nil
+	return pkgs
+}
+
+// ZypperUpdates queries for all available zypper updates.
+func ZypperUpdates() ([]PkgInfo, error) {
+	out, err := run(exec.Command(zypper, zypperListUpdatesArgs...))
+	if err != nil {
+		return nil, err
+	}
+	return parseZypperUpdates(out), nil
 }
