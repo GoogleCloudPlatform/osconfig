@@ -101,7 +101,7 @@ func lookupEffectivePolicies(ctx context.Context, client *osconfig.Client, insta
 		}
 		return nil, err
 	}
-	logger.Debugf("LookupEffectiveGuestPolicies response:\n%s", common.MarshalProto(res))
+	logger.Debugf("LookupEffectiveGuestPolicies response:\n%s", common.PrettyFmt(res))
 
 	return res, nil
 }

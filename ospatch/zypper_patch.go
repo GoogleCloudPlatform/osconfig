@@ -84,7 +84,7 @@ func RunZypperPatch(opts ...ZypperPatchOption) error {
 		opt(zOpts)
 	}
 
-	args := yumUpdateArgs
+	args := zypperPatchArgs
 	if zOpts.withOptional {
 		args = append(args, "--with-optional")
 	}
@@ -98,7 +98,7 @@ func RunZypperPatch(opts ...ZypperPatchOption) error {
 		args = append(args, "--severity="+s)
 	}
 
-	if _, err := zOpts.runner(exec.Command(zypper, zypperPatchArgs...)); err != nil {
+	if _, err := zOpts.runner(exec.Command(zypper, args...)); err != nil {
 		return err
 	}
 	return nil

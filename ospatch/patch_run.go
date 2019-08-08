@@ -432,7 +432,7 @@ func (r *patchRun) reportPatchDetails(patchState osconfigpb.Instance_PatchState,
 			AttemptCount:     attemptCount,
 			FailureReason:    failureReason,
 		}
-		r.debugf("Reporting patch details request:\n%s", common.MarshalProto(request))
+		r.debugf("Reporting patch details request:\n%s", common.PrettyFmt(request))
 
 		res, err := r.client.ReportPatchJobInstanceDetails(r.ctx, request)
 		if err != nil {
@@ -449,7 +449,7 @@ func (r *patchRun) reportPatchDetails(patchState osconfigpb.Instance_PatchState,
 			}
 			return err
 		}
-		r.debugf("Reporting patch details response:\n%s", common.MarshalProto(res))
+		r.debugf("Reporting patch details response:\n%s", common.PrettyFmt(res))
 		r.Job.ReportPatchJobInstanceDetailsResponse = res
 		return nil
 	})

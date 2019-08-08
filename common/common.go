@@ -22,8 +22,8 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-// MarshalProto uses jsonpb to marshal a proto for pretty printing.
-func MarshalProto(pb proto.Message) string {
+// PrettyFmt uses jsonpb to marshal a proto for pretty printing.
+func PrettyFmt(pb proto.Message) string {
 	m := jsonpb.Marshaler{Indent: "  "}
 	out, err := m.MarshalToString(pb)
 	if err != nil {
