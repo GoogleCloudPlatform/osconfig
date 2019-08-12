@@ -16,8 +16,9 @@
 %define debug_package %{nil}
 
 Name: google-osconfig-agent
+Epoch:   1
 Version: %{_version}
-Release: 1%{?dist}
+Release: g1%{?dist}
 Summary: Google Compute Engine guest environment.
 License: ASL 2.0
 Url: https://github.com/GoogleCloudPlatform/osconfig
