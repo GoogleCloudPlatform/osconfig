@@ -77,9 +77,9 @@ func (r *patchRun) runUpdates() error {
 		}
 	}
 	if packages.ZypperExists {
-		opts := []ZypperUpdateOption{ZypperUpdateRunner(patchRunRunner(r))}
+		opts := []ZypperPatchOption{ZypperPatchRunner(patchRunRunner(r))}
 		r.debugf("Installing Zypper package updates.")
-		if err := retry(retryPeriod, "installing Zypper package updates", r.debugf, func() error { return RunZypperUpdate(opts...) }); err != nil {
+		if err := retry(retryPeriod, "installing Zypper package updates", r.debugf, func() error { return RunZypperPatch(opts...) }); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}

@@ -25,6 +25,7 @@ import (
 	"cloud.google.com/go/compute/metadata"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	osconfig "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/cloud.google.com/go/osconfig/apiv1alpha2"
+	"github.com/GoogleCloudPlatform/osconfig/common"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
@@ -422,7 +423,7 @@ func (r *patchRun) reportPatchDetails(patchState osconfigpb.Instance_PatchState,
 			return err
 		}
 
-		request := osconfigpb.ReportPatchJobInstanceDetailsRequest{
+		request := &osconfigpb.ReportPatchJobInstanceDetailsRequest{
 			Resource:         config.Instance(),
 			InstanceSystemId: config.ID(),
 			PatchJob:         r.Job.GetPatchJob(),
@@ -431,10 +432,9 @@ func (r *patchRun) reportPatchDetails(patchState osconfigpb.Instance_PatchState,
 			AttemptCount:     attemptCount,
 			FailureReason:    failureReason,
 		}
-		r.debugf("Reporting patch details request: {Resource: %s, InstanceSystemId: %s, PatchJob: %s, State: %s, FailureReason: %q}",
-			request.GetResource(), request.GetInstanceSystemId(), request.GetPatchJob(), request.GetState(), request.GetFailureReason())
+		r.debugf("Reporting patch details request:\n%s", common.PrettyFmt(request))
 
-		res, err := r.client.ReportPatchJobInstanceDetails(r.ctx, &request)
+		res, err := r.client.ReportPatchJobInstanceDetails(r.ctx, request)
 		if err != nil {
 			if s, ok := status.FromError(err); ok {
 				err := fmt.Errorf("code: %q, message: %q, details: %q", s.Code(), s.Message(), s.Details())
@@ -449,6 +449,7 @@ func (r *patchRun) reportPatchDetails(patchState osconfigpb.Instance_PatchState,
 			}
 			return err
 		}
+		r.debugf("Reporting patch details response:\n%s", common.PrettyFmt(res))
 		r.Job.ReportPatchJobInstanceDetailsResponse = res
 		return nil
 	})

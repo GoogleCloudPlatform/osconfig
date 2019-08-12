@@ -103,7 +103,7 @@ func rpmReboot() (bool, error) {
 		// Suse packages.
 		"kernel-firmware", "libopenssl1_1", "libopenssl1_0_0", "dbus-1",
 	}
-	args := append([]string{"--queryformat", `"%{INSTALLTIME}\n"`, "--whatprovides"}, provides...)
+	args := append([]string{"--queryformat", "%{INSTALLTIME}\n", "--whatprovides"}, provides...)
 	out, err := exec.Command(rpmquery, args...).Output()
 	if err != nil {
 		// We don't care about return codes as we know some of these packages won't be installed.

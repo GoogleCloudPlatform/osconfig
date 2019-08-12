@@ -31,6 +31,8 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/policies"
 	"github.com/GoogleCloudPlatform/osconfig/service"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
+
+	_ "google.golang.org/genproto/googleapis/rpc/errdetails"
 )
 
 var version string
