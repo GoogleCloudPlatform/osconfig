@@ -316,8 +316,18 @@ func (r *patchRun) runPatch() {
 				return
 			}
 			if err := r.prePatchReboot(); err != nil {
-				r.handleErrorState(fmt.Sprintf("Error runnning prePatchReboot: %v", err), err)
+				r.handleErrorState(fmt.Sprintf("Error running prePatchReboot: %v", err), err)
 				return
+			}
+			if r.Job.GetPatchConfig().GetPreStep() != nil {
+				if err := r.reportContinuingState(osconfigpb.Instance_RUNNING_PRE_PATCH_STEP); err != nil {
+					r.handleErrorState(err.Error(), err)
+					return
+				}
+				if err := r.prePatchStep(); err != nil {
+					r.handleErrorState(fmt.Sprintf("Error running pre-patch step: %v", err), err)
+					return
+				}
 			}
 		case patching:
 			if err := r.reportContinuingState(osconfigpb.Instance_APPLYING_PATCHES); err != nil {
@@ -333,7 +343,7 @@ func (r *patchRun) runPatch() {
 				}
 			}
 			if err := r.postPatchReboot(); err != nil {
-				r.handleErrorState(fmt.Sprintf("Error runnning postPatchReboot: %v", err), err)
+				r.handleErrorState(fmt.Sprintf("Error running postPatchReboot: %v", err), err)
 				return
 			}
 			// We have not rebooted so patching is complete.
@@ -345,6 +355,16 @@ func (r *patchRun) runPatch() {
 			if err != nil {
 				r.reportFailedState(fmt.Sprintf("Error checking if system reboot is required: %v", err))
 				return
+			}
+			if r.Job.GetPatchConfig().GetPostStep() != nil {
+				if err := r.reportContinuingState(osconfigpb.Instance_RUNNING_POST_PATCH_STEP); err != nil {
+					r.handleErrorState(err.Error(), err)
+					return
+				}
+				if err := r.postPatchStep(); err != nil {
+					r.handleErrorState(fmt.Sprintf("Error running post-patch step: %v", err), err)
+					return
+				}
 			}
 
 			finalState := osconfigpb.Instance_SUCCEEDED
@@ -364,7 +384,7 @@ func (r *patchRun) runPatch() {
 
 func ackPatch(ctx context.Context, patchJobName string) {
 	// Notify the server if we haven't yet. If we've already been notified about this Job,
-	// the server may have inadvertantly notified us twice (at least once deliver) so we
+	// the server may have inadvertently notified us twice (at least once deliver) so we
 	// can ignore it.
 	if liveState.alreadyAckedJob(patchJobName) {
 		return
@@ -459,5 +479,15 @@ func (r *patchRun) reportPatchDetails(patchState osconfigpb.Instance_PatchState,
 	if retErr != nil {
 		return fmt.Errorf("error reporting patch details: %v", retErr)
 	}
+	return nil
+}
+
+func (r *patchRun) prePatchStep() error {
+	r.debugf("Running pre-patch step.")
+	return nil
+}
+
+func (r *patchRun) postPatchStep() error {
+	r.debugf("Running post-patch step.")
 	return nil
 }
