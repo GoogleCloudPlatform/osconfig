@@ -24,12 +24,14 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoogleCloudPlatform/osconfig/common"
+
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
 
 // StepFileCopy builds the command for a FileCopy step
 func StepFileCopy(step *osconfigpb.SoftwareRecipe_Step_FileCopy, artifacts map[string]string) error {
-	dest, err := normPath(step.FileCopy.Destination)
+	dest, err := common.NormPath(step.FileCopy.Destination)
 	if err != nil {
 		return err
 	}
