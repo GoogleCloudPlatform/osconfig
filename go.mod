@@ -11,6 +11,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.0.5
 	github.com/kardianos/service v1.0.0
 	github.com/kylelemons/godebug v1.1.0
+	github.com/ulikunitz/xz v0.5.6
 	go.opencensus.io v0.22.0 // indirect
 	golang.org/x/net v0.0.0-20190628185345-da137c7871d7 // indirect
 	golang.org/x/sys v0.0.0-20190626221950-04f50cda93cb

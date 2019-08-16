@@ -72,7 +72,11 @@ func InstallRecipe(ctx context.Context, recipe *osconfigpb.SoftwareRecipe) error
 				return err
 			}
 		case *osconfigpb.SoftwareRecipe_Step_ArchiveExtraction:
-			if err := StepArchiveExtraction(v, artifacts); err != nil {
+			stepDir := filepath.Join(runDir, fmt.Sprintf("step%d_ScriptRun", i))
+			if err := os.MkdirAll(stepDir, 0755); err != nil {
+				return fmt.Errorf("failed to create working dir %q: %s", stepDir, err)
+			}
+			if err := StepArchiveExtraction(v, artifacts, stepDir); err != nil {
 				return err
 			}
 		case *osconfigpb.SoftwareRecipe_Step_MsiInstallation:
