@@ -15,15 +15,22 @@
 package recipes
 
 import (
+	"archive/tar"
+	"archive/zip"
+	"compress/bzip2"
+	"compress/gzip"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
+	"golang.org/x/sys/unix"
 )
 
 // StepFileCopy builds the command for a FileCopy step
@@ -88,7 +95,290 @@ func parsePermissions(s string) (os.FileMode, error) {
 
 // StepArchiveExtraction builds the command for a ArchiveExtraction step
 func StepArchiveExtraction(step *osconfigpb.SoftwareRecipe_Step_ArchiveExtraction, artifacts map[string]string) error {
-	fmt.Println("StepArchiveExtraction")
+	filename, ok := artifacts[step.ArchiveExtraction.GetArtifactId()]
+	if !ok {
+		return fmt.Errorf("%q not found in artifact map", step.ArchiveExtraction.GetArtifactId())
+	}
+	switch step.ArchiveExtraction.GetType() {
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_ZIP:
+		return extractZip(filename, step.ArchiveExtraction.Destination)
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR:
+		fallthrough
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_GZIP:
+		fallthrough
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_BZIP:
+		fallthrough
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_LZMA:
+		fallthrough
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_XZ:
+		return extractTar(filename, step.ArchiveExtraction.Destination, step.ArchiveExtraction.GetType())
+	default:
+		return fmt.Errorf("Unrecognized archive type %q", step.ArchiveExtraction.GetType())
+	}
+}
+
+func zipIsDir(name string) bool {
+	return strings.HasSuffix(name, string(os.PathSeparator))
+}
+
+func extractZip(zipPath string, dst string) error {
+	zr, err := zip.OpenReader(zipPath)
+	if err != nil {
+		return err
+	}
+	defer zr.Close()
+
+	// Check for conflicts
+	for _, f := range zr.File {
+		filen, err := normPath(filepath.Join(dst, f.FileHeader.Name))
+		if err != nil {
+			return err
+		}
+		fmt.Printf("checking if file %s exists\n", filen)
+		stat, err := os.Stat(filen)
+		if os.IsNotExist(err) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		if zipIsDir(filen) && stat.IsDir() {
+			// it's ok if directories already exist
+			continue
+		}
+		return fmt.Errorf("file exists: %s", filen)
+	}
+
+	// Create dirs
+	for _, f := range zr.File {
+		filen, err := normPath(filepath.Join(dst, f.FileHeader.Name))
+		if err != nil {
+			return err
+		}
+
+		if !zipIsDir(filen) {
+			continue
+		}
+		_, err = os.Stat(filen)
+		if err == nil {
+			continue
+		}
+		if !os.IsNotExist(err) {
+			return err
+		}
+		err = os.MkdirAll(filen, 0755)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Create files.
+	for _, f := range zr.File {
+		filen, err := normPath(filepath.Join(dst, f.Name))
+		if err != nil {
+			return err
+		}
+		if zipIsDir(filen) {
+			continue
+		}
+		filedir := filepath.Dir(filen)
+		_, err = os.Stat(filedir)
+		if os.IsNotExist(err) {
+			err = os.MkdirAll(filedir, 0755)
+		}
+		if err != nil {
+			return err
+		}
+		fmt.Printf("os.Create %s\n", filen)
+		reader, err := f.Open()
+		if err != nil {
+			return err
+		}
+
+		dst, err := os.OpenFile(filen, os.O_RDWR|os.O_CREATE, 0755)
+		if err == nil {
+			_, err = io.Copy(dst, reader)
+		}
+		reader.Close()
+
+		if err != nil {
+			return err
+		}
+		err = os.Chtimes(filen, time.Now(), f.Modified)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func decompress(reader io.ReadCloser, compression osconfigpb.SoftwareRecipe_Step_ExtractArchive_ArchiveType) (io.ReadCloser, error) {
+	switch compression {
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR:
+		return reader, nil
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_GZIP:
+		return gzip.NewReader(reader)
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_BZIP:
+		return ioutil.NopCloser(bzip2.NewReader(reader)), nil
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_LZMA:
+		return nil, fmt.Errorf("lzma currently unsupported")
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_XZ:
+		return nil, fmt.Errorf("xz currently unsupported")
+	default:
+		return nil, fmt.Errorf("Unrecognized tar compression format %q", compression)
+	}
+}
+
+func extractTar(tarName string, dst string, compression osconfigpb.SoftwareRecipe_Step_ExtractArchive_ArchiveType) error {
+	file, err := os.Open(tarName)
+	if err != nil {
+		return err
+	}
+	reader, err := decompress(file, compression)
+	if err != nil {
+		return err
+	}
+	tr := tar.NewReader(reader)
+
+	// Check for conflicts
+	for {
+		header, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		filen, err := normPath(filepath.Join(dst, header.Name))
+		if err != nil {
+			return err
+		}
+		fmt.Printf("checking if file %s exists\n", filen)
+		stat, err := os.Stat(filen)
+		if os.IsNotExist(err) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		if header.Typeflag == tar.TypeDir && stat.IsDir() {
+			// it's ok if directories already exist
+			continue
+		}
+		return fmt.Errorf("file exists: %s", filen)
+	}
+
+	file.Seek(0, 0)
+	reader, err = decompress(file, compression)
+	if err != nil {
+		return err
+	}
+	tr = tar.NewReader(reader)
+
+	// Create dirs
+	for {
+		var err error
+		header, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		if header.Typeflag != tar.TypeDir {
+			continue
+		}
+		filen, err := normPath(filepath.Join(dst, header.Name))
+		if err != nil {
+			return err
+		}
+		_, err = os.Stat(filen)
+		if err == nil {
+			continue
+		}
+		if !os.IsNotExist(err) {
+			return err
+		}
+		err = os.MkdirAll(filen, os.FileMode(header.Mode))
+		if err != nil {
+			return err
+		}
+		err = os.Chown(filen, header.Uid, header.Gid)
+		if err != nil {
+			return err
+		}
+	}
+
+	file.Seek(0, 0)
+	reader, err = decompress(file, compression)
+	if err != nil {
+		return err
+	}
+	tr = tar.NewReader(reader)
+
+	// Create files.
+	for {
+		var err error
+		header, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		filen, err := normPath(filepath.Join(dst, header.Name))
+		if err != nil {
+			return err
+		}
+		filedir := filepath.Dir(filen)
+		_, err = os.Stat(filedir)
+		if err != nil {
+			err = os.MkdirAll(filedir, 0755)
+		}
+		if err != nil {
+			return err
+		}
+		switch header.Typeflag {
+		case tar.TypeDir:
+			continue
+		case tar.TypeReg, tar.TypeRegA:
+			fmt.Printf("os.Create %s (owner %s/%d group %s/%d)\n", filen, header.Uname, header.Uid, header.Gname, header.Gid)
+			dst, err := os.Create(filen)
+			if err == nil {
+				_, err = io.Copy(dst, tr)
+			}
+		case tar.TypeLink:
+			err = os.Link(header.Linkname, filen)
+			continue
+		case tar.TypeSymlink:
+			err = os.Symlink(header.Linkname, filen)
+			continue
+		case tar.TypeChar:
+			err = unix.Mknod(filen, uint32(unix.S_IFCHR), int(unix.Mkdev(uint32(header.Devmajor), uint32(header.Devminor))))
+		case tar.TypeBlock:
+			err = unix.Mknod(filen, uint32(unix.S_IFBLK), int(unix.Mkdev(uint32(header.Devmajor), uint32(header.Devminor))))
+		case tar.TypeFifo:
+			err = unix.Mkfifo(filen, uint32(header.Mode))
+		default:
+			fmt.Printf("unknown type for %s\n", filen)
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		err = os.Chmod(filen, os.FileMode(header.Mode))
+		if err != nil {
+			return err
+		}
+		err = os.Chown(filen, header.Uid, header.Gid)
+		if err != nil {
+			return err
+		}
+		err = os.Chtimes(filen, header.AccessTime, header.ModTime)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
