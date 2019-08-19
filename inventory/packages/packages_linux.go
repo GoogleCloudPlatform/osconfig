@@ -51,6 +51,14 @@ func GetPackageUpdates() (Packages, []string) {
 		} else {
 			pkgs.Zypper = zypper
 		}
+		zypperPatches, err := ZypperPatches()
+		if err != nil {
+			msg := fmt.Sprintf("error getting zypper available patches: %v", err)
+			DebugLogger.Println("Error:", msg)
+			errs = append(errs, msg)
+		} else {
+			pkgs.ZypperPatches = zypperPatches
+		}
 	}
 	if GemExists {
 		gem, err := GemUpdates()
@@ -88,6 +96,16 @@ func GetInstalledPackages() (Packages, []string) {
 			errs = append(errs, msg)
 		} else {
 			pkgs.Rpm = rpm
+		}
+	}
+	if exists(zypper) {
+		zypperPatches, err := ZypperInstalledPatches()
+		if err != nil {
+			msg := fmt.Sprintf("error getting zypper installed patches: %v", err)
+			DebugLogger.Println("Error:", msg)
+			errs = append(errs, msg)
+		} else {
+			pkgs.ZypperPatches = zypperPatches
 		}
 	}
 	if exists(dpkgquery) {
