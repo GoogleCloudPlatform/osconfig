@@ -15,11 +15,11 @@
 package packages
 
 import (
+	"bytes"
 	"fmt"
 	"os/exec"
 	"runtime"
 	"strings"
-	"syscall"
 
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
 )
@@ -43,63 +43,54 @@ func init() {
 func InstallYumPackages(pkgs []string) error {
 	args := append(yumInstallArgs, pkgs...)
 	out, err := run(exec.Command(yum, args...))
-	if err != nil {
-		return err
-	}
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf(" %s\n", s)
 	}
-	DebugLogger.Printf("yum install output:\n%s\n", msg)
-	return nil
+	DebugLogger.Printf("yum install output:\n%s", msg)
+	return err
 }
 
 // RemoveYumPackages removes yum packages.
 func RemoveYumPackages(pkgs []string) error {
 	args := append(yumRemoveArgs, pkgs...)
 	out, err := run(exec.Command(yum, args...))
-	if err != nil {
-		return err
-	}
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf(" %s\n", s)
 	}
-	DebugLogger.Printf("yum remove output:\n%s\n", msg)
-	return nil
+	DebugLogger.Printf("yum remove output:\n%s", msg)
+	return err
 }
 
-type yumUpdateOpts struct {
-	security bool
-	minimal  bool
-	excludes []string
-}
+func parseYumUpdates(data []byte) []PkgInfo {
+	/*
 
-// YumUpdateOption is an option for yum update.
-type YumUpdateOption func(*yumUpdateOpts)
+	   foo.noarch 2.0.0-1 repo
+	   bar.x86_64 2.0.0-1 repo
+	   ...
+	   Obsoleting Packages
+	   ...
+	*/
 
-// YumUpdateSecurity returns a YumUpdateOption that specifies the --security flag should
-// be used.
-func YumUpdateSecurity(security bool) YumUpdateOption {
-	return func(args *yumUpdateOpts) {
-		args.security = security
+	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
+
+	var pkgs []PkgInfo
+	for _, ln := range lines {
+		pkg := bytes.Fields(ln)
+		if len(pkg) == 2 && string(pkg[0]) == "Obsoleting" && string(pkg[1]) == "Packages" {
+			break
+		}
+		if len(pkg) != 3 {
+			continue
+		}
+		name := bytes.Split(pkg[0], []byte("."))
+		if len(name) != 2 {
+			continue
+		}
+		pkgs = append(pkgs, PkgInfo{Name: string(name[0]), Arch: osinfo.Architecture(string(name[1])), Version: string(pkg[1])})
 	}
-}
-
-// YumUpdateMinimal returns a YumUpdateOption that specifies the update-minimal
-// command should be used.
-func YumUpdateMinimal(minimal bool) YumUpdateOption {
-	return func(args *yumUpdateOpts) {
-		args.minimal = minimal
-	}
-}
-
-// YumUpdateExcludes returns a YumUpdateOption that specifies what packages to add to
-// the --exclude flag.
-func YumUpdateExcludes(excludes []string) YumUpdateOption {
-	return func(args *yumUpdateOpts) {
-		args.excludes = excludes
-	}
+	return pkgs
 }
 
 // YumUpdates queries for all available yum updates.
@@ -110,39 +101,12 @@ func YumUpdates() ([]PkgInfo, error) {
 		return nil, nil
 	}
 	if exitErr, ok := err.(*exec.ExitError); ok {
-		if status, ok := exitErr.Sys().(syscall.WaitStatus); ok && status.ExitStatus() == 100 {
+		if exitErr.ExitCode() == 100 {
 			err = nil
 		}
 	}
 	if err != nil {
 		return nil, fmt.Errorf("error checking yum upgradable packages: %v, stdout: %s", err, out)
 	}
-	/*
-
-	   foo.noarch 2.0.0-1 repo
-	   bar.x86_64 2.0.0-1 repo
-	   ...
-	   Obsoleting Packages
-	   ...
-	*/
-
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
-	if len(lines) == 0 {
-		return nil, nil
-	}
-
-	var pkgs []PkgInfo
-	for _, ln := range lines[1:] {
-		pkg := strings.Fields(ln)
-		if len(pkg) == 2 && pkg[0] == "Obsoleting" && pkg[1] == "Packages" {
-			break
-		}
-		if len(pkg) != 3 {
-			DebugLogger.Printf("%s does not represent a yum update\n", ln)
-			continue
-		}
-		name := strings.Split(pkg[0], ".")
-		pkgs = append(pkgs, PkgInfo{Name: name[0], Arch: osinfo.Architecture(name[1]), Version: pkg[1]})
-	}
-	return pkgs, nil
+	return parseYumUpdates(out), nil
 }

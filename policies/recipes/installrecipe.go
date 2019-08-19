@@ -24,9 +24,8 @@ import (
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
 
-const (
-	recipeBasePath = "/tmp/osconfig_software_recipes"
-	// TODO: move to constants, split linux and windows.
+var (
+	recipeBasePath = filepath.Join(os.TempDir(), "osconfig_software_recipes")
 )
 
 // InstallRecipe installs a recipe.

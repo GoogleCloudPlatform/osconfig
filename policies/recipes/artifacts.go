@@ -16,39 +16,16 @@ package recipes
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
-	"os"
+	"path"
 	"path/filepath"
-	"runtime"
-	"strings"
 
-	"cloud.google.com/go/storage"
+	"github.com/GoogleCloudPlatform/osconfig/common"
+
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
-
-var (
-	testStorageClient *storage.Client
-	testHTTPClient    *http.Client
-)
-
-func newStorageClient(ctx context.Context) (*storage.Client, error) {
-	if testStorageClient != nil {
-		return testStorageClient, nil
-	}
-	return storage.NewClient(ctx)
-}
-
-func newHTTPClient() *http.Client {
-	if testHTTPClient != nil {
-		return testHTTPClient
-	}
-	return &http.Client{}
-}
 
 // FetchArtifacts takes in a slice of artifacs and dowloads them into the specified directory,
 // Returns a map of artifact names to their new locations on the local disk.
@@ -67,12 +44,12 @@ func FetchArtifacts(ctx context.Context, artifacts []*osconfigpb.SoftwareRecipe_
 }
 
 func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Artifact, directory string) (string, error) {
-	localPath := filepath.Join(directory, artifact.Id)
 	var reader io.ReadCloser
-	var checksum string
+	var checksum, extension string
 	switch v := artifact.Artifact.(type) {
 	case *osconfigpb.SoftwareRecipe_Artifact_Gcs_:
-		reader, err := fetchWithGCS(ctx, v.Gcs.Bucket, v.Gcs.Object, v.Gcs.Generation)
+		extension = path.Ext(v.Gcs.Object)
+		reader, err := common.FetchWithGCS(ctx, v.Gcs.Bucket, v.Gcs.Object, v.Gcs.Generation)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q from GCS: %v", artifact.Id, err)
 		}
@@ -82,11 +59,12 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 		if err != nil {
 			return "", fmt.Errorf("Could not parse url %q for artifact %q", v.Remote.Uri, artifact.Id)
 		}
+		extension = path.Ext(uri.Path)
 		if uri.Scheme != "http" && uri.Scheme != "https" {
 			return "", fmt.Errorf("error, artifact %q has unsupported protocol scheme %s", artifact.Id, uri.Scheme)
 		}
 		checksum = v.Remote.Checksum
-		response, err := fetchWithHTTP(ctx, v.Remote.Uri)
+		response, err := common.FetchWithHTTP(ctx, v.Remote.Uri)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q with http or https: %v", artifact.Id, err)
 		}
@@ -96,85 +74,13 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 		return "", fmt.Errorf("unknown artifact type %T", v)
 	}
 
-	err := downloadStream(reader, checksum, localPath)
+	localPath := filepath.Join(directory, artifact.Id)
+	if extension != "" {
+		localPath = localPath + extension
+	}
+	err := common.DownloadStream(reader, checksum, localPath)
 	if err != nil {
 		return "", err
 	}
 	return localPath, nil
-}
-
-func fetchWithGCS(ctx context.Context, bucket, object string, generation int64) (*storage.Reader, error) {
-	client, err := newStorageClient(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create storage client: %v", err)
-	}
-	defer client.Close()
-
-	oh := client.Bucket(bucket).Object(object)
-	if generation != 0 {
-		oh = oh.Generation(generation)
-	}
-
-	r, err := oh.NewReader(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return r, nil
-}
-
-func fetchWithHTTP(ctx context.Context, uri string) (*http.Response, error) {
-	resp, err := newHTTPClient().Get(uri)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("got http status %d when attempting to download artifact", resp.StatusCode)
-	}
-
-	return resp, nil
-}
-
-func downloadStream(r io.Reader, checksum string, localPath string) error {
-	localPath, err := normPath(localPath)
-	if err != nil {
-		return err
-	}
-	file, err := os.Create(localPath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	hasher := sha256.New()
-	if _, err = io.Copy(io.MultiWriter(file, hasher), r); err != nil {
-		return err
-	}
-	computed := hex.EncodeToString(hasher.Sum(nil))
-	if checksum != "" && !strings.EqualFold(checksum, computed) {
-		return fmt.Errorf("got %q for checksum, expected %q", computed, checksum)
-	}
-	return nil
-}
-
-// normPath transforms a windows path into an extended-length path as described in
-// https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx#maxpath
-// when not running on windows it will just return the input path. Copied from
-// https://github.com/google/googet/blob/master/oswrap/oswrap_windows.go
-func normPath(path string) (string, error) {
-	if runtime.GOOS != "windows" {
-		return path, nil
-	}
-
-	if strings.HasPrefix(path, "\\\\?\\") {
-		return path, nil
-	}
-
-	path, err := filepath.Abs(path)
-	if err != nil {
-		return "", err
-	}
-	path = filepath.Clean(path)
-	return "\\\\?\\" + path, nil
 }

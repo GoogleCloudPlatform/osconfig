@@ -25,6 +25,7 @@ import (
 	"cloud.google.com/go/compute/metadata"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	osconfig "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/cloud.google.com/go/osconfig/apiv1alpha2"
+	"github.com/GoogleCloudPlatform/osconfig/common"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
@@ -315,8 +316,18 @@ func (r *patchRun) runPatch() {
 				return
 			}
 			if err := r.prePatchReboot(); err != nil {
-				r.handleErrorState(fmt.Sprintf("Error runnning prePatchReboot: %v", err), err)
+				r.handleErrorState(fmt.Sprintf("Error running prePatchReboot: %v", err), err)
 				return
+			}
+			if r.Job.GetPatchConfig().GetPreStep() != nil {
+				if err := r.reportContinuingState(osconfigpb.Instance_RUNNING_PRE_PATCH_STEP); err != nil {
+					r.handleErrorState(err.Error(), err)
+					return
+				}
+				if err := r.prePatchStep(); err != nil {
+					r.handleErrorState(fmt.Sprintf("Error running pre-patch step: %v", err), err)
+					return
+				}
 			}
 		case patching:
 			if err := r.reportContinuingState(osconfigpb.Instance_APPLYING_PATCHES); err != nil {
@@ -332,7 +343,7 @@ func (r *patchRun) runPatch() {
 				}
 			}
 			if err := r.postPatchReboot(); err != nil {
-				r.handleErrorState(fmt.Sprintf("Error runnning postPatchReboot: %v", err), err)
+				r.handleErrorState(fmt.Sprintf("Error running postPatchReboot: %v", err), err)
 				return
 			}
 			// We have not rebooted so patching is complete.
@@ -344,6 +355,16 @@ func (r *patchRun) runPatch() {
 			if err != nil {
 				r.reportFailedState(fmt.Sprintf("Error checking if system reboot is required: %v", err))
 				return
+			}
+			if r.Job.GetPatchConfig().GetPostStep() != nil {
+				if err := r.reportContinuingState(osconfigpb.Instance_RUNNING_POST_PATCH_STEP); err != nil {
+					r.handleErrorState(err.Error(), err)
+					return
+				}
+				if err := r.postPatchStep(); err != nil {
+					r.handleErrorState(fmt.Sprintf("Error running post-patch step: %v", err), err)
+					return
+				}
 			}
 
 			finalState := osconfigpb.Instance_SUCCEEDED
@@ -363,7 +384,7 @@ func (r *patchRun) runPatch() {
 
 func ackPatch(ctx context.Context, patchJobName string) {
 	// Notify the server if we haven't yet. If we've already been notified about this Job,
-	// the server may have inadvertantly notified us twice (at least once deliver) so we
+	// the server may have inadvertently notified us twice (at least once deliver) so we
 	// can ignore it.
 	if liveState.alreadyAckedJob(patchJobName) {
 		return
@@ -422,7 +443,7 @@ func (r *patchRun) reportPatchDetails(patchState osconfigpb.Instance_PatchState,
 			return err
 		}
 
-		request := osconfigpb.ReportPatchJobInstanceDetailsRequest{
+		request := &osconfigpb.ReportPatchJobInstanceDetailsRequest{
 			Resource:         config.Instance(),
 			InstanceSystemId: config.ID(),
 			PatchJob:         r.Job.GetPatchJob(),
@@ -431,10 +452,9 @@ func (r *patchRun) reportPatchDetails(patchState osconfigpb.Instance_PatchState,
 			AttemptCount:     attemptCount,
 			FailureReason:    failureReason,
 		}
-		r.debugf("Reporting patch details request: {Resource: %s, InstanceSystemId: %s, PatchJob: %s, State: %s, FailureReason: %q}",
-			request.GetResource(), request.GetInstanceSystemId(), request.GetPatchJob(), request.GetState(), request.GetFailureReason())
+		r.debugf("Reporting patch details request:\n%s", common.PrettyFmt(request))
 
-		res, err := r.client.ReportPatchJobInstanceDetails(r.ctx, &request)
+		res, err := r.client.ReportPatchJobInstanceDetails(r.ctx, request)
 		if err != nil {
 			if s, ok := status.FromError(err); ok {
 				err := fmt.Errorf("code: %q, message: %q, details: %q", s.Code(), s.Message(), s.Details())
@@ -449,6 +469,7 @@ func (r *patchRun) reportPatchDetails(patchState osconfigpb.Instance_PatchState,
 			}
 			return err
 		}
+		r.debugf("Reporting patch details response:\n%s", common.PrettyFmt(res))
 		r.Job.ReportPatchJobInstanceDetailsResponse = res
 		return nil
 	})
@@ -458,5 +479,15 @@ func (r *patchRun) reportPatchDetails(patchState osconfigpb.Instance_PatchState,
 	if retErr != nil {
 		return fmt.Errorf("error reporting patch details: %v", retErr)
 	}
+	return nil
+}
+
+func (r *patchRun) prePatchStep() error {
+	r.debugf("Running pre-patch step.")
+	return nil
+}
+
+func (r *patchRun) postPatchStep() error {
+	r.debugf("Running post-patch step.")
 	return nil
 }

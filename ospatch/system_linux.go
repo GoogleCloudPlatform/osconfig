@@ -27,11 +27,17 @@ import (
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 )
 
+const (
+	systemctl = "/bin/systemctl"
+	reboot    = "/bin/reboot"
+	shutdown  = "/bin/shutdown"
+)
+
 // disableAutoUpdates disables system auto updates.
 func disableAutoUpdates() {
 	// yum-cron on el systems
 	if _, err := os.Stat("/usr/lib/systemd/system/yum-cron.service"); err == nil {
-		out, err := exec.Command("/bin/systemctl", "is-enabled", "yum-cron.service").CombinedOutput()
+		out, err := exec.Command(systemctl, "is-enabled", "yum-cron.service").CombinedOutput()
 		if err != nil {
 			if eerr, ok := err.(*exec.ExitError); ok {
 				// Error code of 1 indicates disabled.
@@ -43,11 +49,11 @@ func disableAutoUpdates() {
 		}
 
 		logger.Debugf("Disabling yum-cron")
-		out, err = exec.Command("/bin/systemctl", "stop", "yum-cron.service").CombinedOutput()
+		out, err = exec.Command(systemctl, "stop", "yum-cron.service").CombinedOutput()
 		if err != nil {
 			logger.Errorf("Error stopping yum-cron, error: %v, out: %s", err, out)
 		}
-		out, err = exec.Command("/bin/systemctl", "disable", "yum-cron.service").CombinedOutput()
+		out, err = exec.Command(systemctl, "disable", "yum-cron.service").CombinedOutput()
 		if err != nil {
 			logger.Errorf("Error disabling yum-cron, error: %v, out: %s", err, out)
 		}
@@ -69,7 +75,7 @@ func disableAutoUpdates() {
 
 	// dnf-automatic on el8 systems
 	if _, err := os.Stat("/usr/lib/systemd/system/dnf-automatic.timer"); err == nil {
-		out, err := exec.Command("/bin/systemctl", "list-timers", "dnf-automatic.timer").CombinedOutput()
+		out, err := exec.Command(systemctl, "list-timers", "dnf-automatic.timer").CombinedOutput()
 		if err != nil {
 			logger.Errorf("Error checking status of dnf-automatic, error: %v, out: %s", err, out)
 		}
@@ -78,11 +84,11 @@ func disableAutoUpdates() {
 		}
 
 		logger.Debugf("Disabling dnf-automatic")
-		out, err = exec.Command("/bin/systemctl", "stop", "dnf-automatic.timer").CombinedOutput()
+		out, err = exec.Command(systemctl, "stop", "dnf-automatic.timer").CombinedOutput()
 		if err != nil {
 			logger.Errorf("Error stopping dnf-automatic, error: %v, out: %s", err, out)
 		}
-		out, err = exec.Command("/bin/systemctl", "disable", "dnf-automatic.timer").CombinedOutput()
+		out, err = exec.Command(systemctl, "disable", "dnf-automatic.timer").CombinedOutput()
 		if err != nil {
 			logger.Errorf("Error disabling dnf-automatic, error: %v, out: %s", err, out)
 		}

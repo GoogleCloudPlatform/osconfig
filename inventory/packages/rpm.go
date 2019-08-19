@@ -15,9 +15,9 @@
 package packages
 
 import (
+	"bytes"
 	"os/exec"
 	"runtime"
-	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
 )
@@ -25,13 +25,33 @@ import (
 var (
 	rpmquery string
 
-	rpmqueryArgs = []string{"-a", "--queryformat", `%{NAME} %{ARCH} %{VERSION}-%{RELEASE}\n`}
+	rpmqueryArgs = []string{"-a", "--queryformat", "%{NAME} %{ARCH} %{VERSION}-%{RELEASE}\n"}
 )
 
 func init() {
 	if runtime.GOOS != "windows" {
 		rpmquery = "/usr/bin/rpmquery"
 	}
+}
+
+func parseInstalledRPMPackages(data []byte) []PkgInfo {
+	/*
+	   foo x86_64 1.2.3-4
+	   bar noarch 1.2.3-4
+	   ...
+	*/
+	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
+
+	var pkgs []PkgInfo
+	for _, ln := range lines {
+		pkg := bytes.Fields(ln)
+		if len(pkg) != 3 {
+			continue
+		}
+
+		pkgs = append(pkgs, PkgInfo{Name: string(pkg[0]), Arch: osinfo.Architecture(string(pkg[1])), Version: string(pkg[2])})
+	}
+	return pkgs
 }
 
 // InstalledRPMPackages queries for all installed rpm packages.
@@ -41,27 +61,5 @@ func InstalledRPMPackages() ([]PkgInfo, error) {
 		return nil, err
 	}
 
-	/*
-	   foo x86_64 1.2.3-4
-	   bar noarch 1.2.3-4
-	   ...
-	*/
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
-
-	if len(lines) == 0 {
-		DebugLogger.Println("No rpm packages installed.")
-		return nil, nil
-	}
-
-	var pkgs []PkgInfo
-	for _, ln := range lines {
-		pkg := strings.Fields(ln)
-		if len(pkg) != 3 {
-			DebugLogger.Printf("%q does not represent a rpm\n", ln)
-			continue
-		}
-
-		pkgs = append(pkgs, PkgInfo{Name: pkg[0], Arch: osinfo.Architecture(pkg[1]), Version: pkg[2]})
-	}
-	return pkgs, nil
+	return parseInstalledRPMPackages(out), nil
 }

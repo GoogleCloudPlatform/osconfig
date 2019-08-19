@@ -30,18 +30,16 @@ import (
 	"cloud.google.com/go/compute/metadata"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	osconfig "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/cloud.google.com/go/osconfig/apiv1alpha2"
+	"github.com/GoogleCloudPlatform/osconfig/common"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
-	"github.com/kylelemons/godebug/pretty"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc/status"
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
-
-var dump = &pretty.Config{IncludeUnexported: true}
 
 func run(ctx context.Context, res string) {
 	client, err := osconfig.NewClient(ctx, option.WithEndpoint(config.SvcEndpoint()), option.WithCredentialsFile(config.OAuthPath()))
@@ -103,7 +101,7 @@ func lookupEffectivePolicies(ctx context.Context, client *osconfig.Client, insta
 		}
 		return nil, err
 	}
-	logger.Debugf("LookupEffectiveGuestPolicies response:\n%s\n\n", dump.Sprint(res))
+	logger.Debugf("LookupEffectiveGuestPolicies response:\n%s", common.PrettyFmt(res))
 
 	return res, nil
 }
@@ -138,9 +136,9 @@ func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
 	var zypperInstallPkgs, zypperRemovePkgs, zypperUpdatePkgs []*osconfigpb.Package
 	for _, pkg := range res.GetPackages() {
 		switch pkg.GetPackage().GetManager() {
-		case osconfigpb.Package_ANY:
+		case osconfigpb.Package_ANY, osconfigpb.Package_MANAGER_UNSPECIFIED:
 			switch pkg.GetPackage().GetDesiredState() {
-			case osconfigpb.DesiredState_INSTALLED:
+			case osconfigpb.DesiredState_INSTALLED, osconfigpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
 				gooInstallPkgs = append(gooInstallPkgs, pkg.GetPackage())
 				aptInstallPkgs = append(aptInstallPkgs, pkg.GetPackage())
 				yumInstallPkgs = append(yumInstallPkgs, pkg.GetPackage())
@@ -158,7 +156,7 @@ func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
 			}
 		case osconfigpb.Package_GOO:
 			switch pkg.GetPackage().GetDesiredState() {
-			case osconfigpb.DesiredState_INSTALLED:
+			case osconfigpb.DesiredState_INSTALLED, osconfigpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
 				gooInstallPkgs = append(gooInstallPkgs, pkg.GetPackage())
 			case osconfigpb.DesiredState_REMOVED:
 				gooRemovePkgs = append(gooRemovePkgs, pkg.GetPackage())
@@ -167,7 +165,7 @@ func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
 			}
 		case osconfigpb.Package_APT:
 			switch pkg.GetPackage().GetDesiredState() {
-			case osconfigpb.DesiredState_INSTALLED:
+			case osconfigpb.DesiredState_INSTALLED, osconfigpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
 				aptInstallPkgs = append(aptInstallPkgs, pkg.GetPackage())
 			case osconfigpb.DesiredState_REMOVED:
 				aptRemovePkgs = append(aptRemovePkgs, pkg.GetPackage())
@@ -176,7 +174,7 @@ func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
 			}
 		case osconfigpb.Package_YUM:
 			switch pkg.GetPackage().GetDesiredState() {
-			case osconfigpb.DesiredState_INSTALLED:
+			case osconfigpb.DesiredState_INSTALLED, osconfigpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
 				yumInstallPkgs = append(yumInstallPkgs, pkg.GetPackage())
 			case osconfigpb.DesiredState_REMOVED:
 				yumRemovePkgs = append(yumRemovePkgs, pkg.GetPackage())
@@ -185,7 +183,7 @@ func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
 			}
 		case osconfigpb.Package_ZYPPER:
 			switch pkg.GetPackage().GetDesiredState() {
-			case osconfigpb.DesiredState_INSTALLED:
+			case osconfigpb.DesiredState_INSTALLED, osconfigpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
 				zypperInstallPkgs = append(zypperInstallPkgs, pkg.GetPackage())
 			case osconfigpb.DesiredState_REMOVED:
 				zypperRemovePkgs = append(zypperRemovePkgs, pkg.GetPackage())
@@ -279,7 +277,7 @@ func checksum(r io.Reader) hash.Hash {
 }
 
 func writeIfChanged(content []byte, path string) error {
-	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0600)
+	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		return err
 	}
@@ -293,6 +291,10 @@ func writeIfChanged(content []byte, path string) error {
 	}
 
 	logger.Infof("Writing repo file %s with updated contents", path)
+	if err := file.Truncate(0); err != nil {
+		file.Close()
+		return err
+	}
 	if _, err := file.WriteAt(content, 0); err != nil {
 		file.Close()
 		return err
