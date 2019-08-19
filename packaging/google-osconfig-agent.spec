@@ -16,15 +16,16 @@
 %define debug_package %{nil}
 
 Name: google-osconfig-agent
+Epoch:   1
 Version: %{_version}
-Release: 1%{?dist}
+Release: g1%{?dist}
 Summary: Google Compute Engine guest environment.
 License: ASL 2.0
 Url: https://github.com/GoogleCloudPlatform/osconfig
 Source0: %{name}_%{version}.orig.tar.gz
 
 BuildArch: %{_arch}
-%if 0%{?el7}
+%if ! 0%{?el6}
 BuildRequires: systemd
 %endif
 
@@ -40,24 +41,24 @@ GOPATH=%{_gopath} CGO_ENABLED=0 %{_go} build -ldflags="-s -w -X main.version=%{_
 %install
 install -d %{buildroot}%{_bindir}
 install -p -m 0755 google_osconfig_agent %{buildroot}%{_bindir}/google_osconfig_agent
-%if 0%{?el7}
+%if 0%{?el6}
+install -d %{buildroot}/etc/init
+install -p -m 0644 %{name}.conf %{buildroot}/etc/init
+%else
 install -d %{buildroot}%{_unitdir}
 install -d %{buildroot}%{_presetdir}
 install -p -m 0644 %{name}.service %{buildroot}%{_unitdir}
 install -p -m 0644 90-%{name}.preset %{buildroot}%{_presetdir}/90-%{name}.preset
-%else
-install -d %{buildroot}/etc/init
-install -p -m 0644 %{name}.conf %{buildroot}/etc/init
 %endif
 
 %files
 %defattr(-,root,root,-)
 %{_bindir}/google_osconfig_agent
-%if 0%{?el7}
+%if 0%{?el6}
+/etc/init/%{name}.conf
+%else
 %{_unitdir}/%{name}.service
 %{_presetdir}/90-%{name}.preset
-%else
-/etc/init/%{name}.conf
 %endif
 
 %post
@@ -66,9 +67,7 @@ if [ $1 -eq 1 ]; then
   # Start the service on first install
   start -q -n google-osconfig-agent
 fi
-%endif
-
-%if 0%{?el7}
+%else
 %systemd_post google-osconfig-agent.service
 if [ $1 -eq 1 ]; then
   # Start the service on first install

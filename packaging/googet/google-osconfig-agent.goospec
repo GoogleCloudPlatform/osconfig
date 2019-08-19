@@ -10,6 +10,7 @@
     "LICENSE": "<ProgramFiles>/Google/OSConfig/LICENSE.txt"
   },
   "releaseNotes": [
+    "1.1.0 -  Move Patch (ALPHA) to using the v1alpha1 api",
     "1.0.0 - Beta release of inventory functionality",
     "0.6.1 - Add agent restart on upgrade",
     "0.6.0 - Rework ospatch, fix a number of bugs",

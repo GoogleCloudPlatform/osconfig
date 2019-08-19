@@ -27,6 +27,7 @@ For more information on Daisy and how workflows work, refer to the
 
 All variables are optional.
 
-* `base_repo` Specify a different base for github repo (for example a fork of this repo). Default: `GoogleCloudPlatform`.
-* `repo` Specify a different github repo. Default: `osconfig`.
-* `pull_ref` Specify a git reference to check out. Default: `master`.
+*   `base_repo` Specify a different base for github repo (for example a fork of
+    this repo). Default: `GoogleCloudPlatform`.
+*   `repo` Specify a different github repo. Default: `osconfig`.
+*   `pull_ref` Specify a git reference to check out. Default: `master`.

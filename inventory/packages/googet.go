@@ -15,6 +15,7 @@
 package packages
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -39,6 +40,31 @@ func init() {
 	GooGetExists = exists(googet)
 }
 
+func parseGooGetUpdates(data []byte) []PkgInfo {
+	/*
+	   Searching for available updates...
+	   foo.noarch, 3.5.4@1 --> 3.6.7@1 from repo
+	   ...
+	   Perform update? (y/N):
+	*/
+	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
+
+	var pkgs []PkgInfo
+	for _, ln := range lines {
+		pkg := strings.Fields(ln)
+		if len(pkg) < 4 {
+			continue
+		}
+
+		p := strings.Split(pkg[0], ".")
+		if len(p) != 2 {
+			continue
+		}
+		pkgs = append(pkgs, PkgInfo{Name: p[0], Arch: strings.Trim(p[1], ","), Version: pkg[3]})
+	}
+	return pkgs
+}
+
 // GooGetUpdates queries for all available googet updates.
 func GooGetUpdates() ([]PkgInfo, error) {
 	out, err := run(exec.Command(googet, googetUpdateQueryArgs...))
@@ -46,59 +72,57 @@ func GooGetUpdates() ([]PkgInfo, error) {
 		return nil, err
 	}
 
-	/*
-	   Searching for available updates...
-	   foo.noarch, 3.5.4@1 --> 3.6.7@1 from repo
-	   ...
-	   Perform update? (y/N):
-	*/
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
-
-	var pkgs []PkgInfo
-	for _, ln := range lines[1:] {
-		pkg := strings.Fields(ln)
-		if len(pkg) != 6 {
-			continue
-		}
-
-		p := strings.Split(pkg[0], ".")
-		if len(p) != 2 {
-			DebugLogger.Printf("%s does not represent a package", ln)
-			continue
-		}
-		pkgs = append(pkgs, PkgInfo{Name: p[0], Arch: strings.Trim(p[1], ","), Version: pkg[3]})
-	}
-	return pkgs, nil
+	return parseGooGetUpdates(out), nil
 }
 
 // InstallGooGetPackages installs GooGet packages.
 func InstallGooGetPackages(pkgs []string) error {
 	args := append(googetInstallArgs, pkgs...)
 	out, err := run(exec.Command(googet, args...))
-	if err != nil {
-		return err
-	}
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf("  %s\n", s)
 	}
 	DebugLogger.Printf("GooGet install output:\n%s", msg)
-	return nil
+	return err
 }
 
 // RemoveGooGetPackages installs GooGet packages.
 func RemoveGooGetPackages(pkgs []string) error {
 	args := append(googetRemoveArgs, pkgs...)
 	out, err := run(exec.Command(googet, args...))
-	if err != nil {
-		return err
-	}
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf("  %s\n", s)
 	}
 	DebugLogger.Printf("GooGet remove output:\n%s", msg)
-	return nil
+	return err
+}
+
+func parseInstalledGooGetPackages(data []byte) []PkgInfo {
+	/*
+	   Installed Packages:
+	   foo.x86_64 1.2.3@4
+	   bar.noarch 1.2.3@4
+	   ...
+	*/
+	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
+
+	var pkgs []PkgInfo
+	for _, ln := range lines {
+		pkg := bytes.Fields(ln)
+		if len(pkg) != 2 {
+			continue
+		}
+
+		p := bytes.Split(pkg[0], []byte("."))
+		if len(p) != 2 {
+			continue
+		}
+
+		pkgs = append(pkgs, PkgInfo{Name: string(p[0]), Arch: string(p[1]), Version: string(pkg[1])})
+	}
+	return pkgs
 }
 
 // InstalledGooGetPackages queries for all installed googet packages.
@@ -108,34 +132,5 @@ func InstalledGooGetPackages() ([]PkgInfo, error) {
 		return nil, err
 	}
 
-	/*
-	   Installed Packages:
-	   foo.x86_64 1.2.3@4
-	   bar.noarch 1.2.3@4
-	   ...
-	*/
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
-
-	if len(lines) <= 1 {
-		DebugLogger.Println("No packages GooGet installed.")
-		return nil, nil
-	}
-
-	var pkgs []PkgInfo
-	for _, ln := range lines[1:] {
-		pkg := strings.Fields(ln)
-		if len(pkg) != 2 {
-			DebugLogger.Printf("%s does not represent a GooGet package", ln)
-			continue
-		}
-
-		p := strings.Split(pkg[0], ".")
-		if len(p) != 2 {
-			DebugLogger.Printf("%s does not represent a GooGet package", ln)
-			continue
-		}
-
-		pkgs = append(pkgs, PkgInfo{Name: p[0], Arch: p[1], Version: pkg[1]})
-	}
-	return pkgs, nil
+	return parseInstalledGooGetPackages(out), nil
 }
