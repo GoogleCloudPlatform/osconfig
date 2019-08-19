@@ -140,7 +140,7 @@ func StepArchiveExtraction(step *osconfigpb.SoftwareRecipe_Step_ArchiveExtractio
 		if err != nil {
 			return err
 		}
-		decompressed, err := ioutil.TempFile(stepDir, "archive-*.tar")
+		decompressed, err := os.Create(filepath.Join(stepDir, "archive.tar"))
 		if err != nil {
 			return err
 		}
@@ -160,7 +160,7 @@ func StepArchiveExtraction(step *osconfigpb.SoftwareRecipe_Step_ArchiveExtractio
 		if err != nil {
 			return err
 		}
-		decompressed, err := ioutil.TempFile(stepDir, "archive-*.tar")
+		decompressed, err := os.Create(filepath.Join(stepDir, "archive.tar"))
 		if err != nil {
 			return err
 		}
@@ -180,7 +180,7 @@ func StepArchiveExtraction(step *osconfigpb.SoftwareRecipe_Step_ArchiveExtractio
 		if err != nil {
 			return err
 		}
-		decompressed, err := ioutil.TempFile(stepDir, "archive-*.tar")
+		decompressed, err := os.Create(filepath.Join(stepDir, "archive.tar"))
 		if err != nil {
 			return err
 		}
@@ -196,7 +196,7 @@ func StepArchiveExtraction(step *osconfigpb.SoftwareRecipe_Step_ArchiveExtractio
 }
 
 func zipIsDir(name string) bool {
-	return strings.HasSuffix(name, string(os.PathSeparator))
+	return strings.HasSuffix(name, "\\")
 }
 
 func extractZip(zipPath string, dst string) error {
