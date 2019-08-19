@@ -36,7 +36,6 @@ import (
 
 	"github.com/ulikunitz/xz"
 	"github.com/ulikunitz/xz/lzma"
-	"golang.org/x/sys/unix"
 )
 
 // StepFileCopy builds the command for a FileCopy step
@@ -404,11 +403,11 @@ func extractTar(tarName string, dst string) error {
 			err = os.Symlink(header.Linkname, filen)
 			continue
 		case tar.TypeChar:
-			err = unix.Mknod(filen, uint32(unix.S_IFCHR), int(unix.Mkdev(uint32(header.Devmajor), uint32(header.Devminor))))
+			err = mkCharDevice(filen, uint32(header.Devmajor), uint32(header.Devminor))
 		case tar.TypeBlock:
-			err = unix.Mknod(filen, uint32(unix.S_IFBLK), int(unix.Mkdev(uint32(header.Devmajor), uint32(header.Devminor))))
+			err = mkBlockDevice(filen, uint32(header.Devmajor), uint32(header.Devminor))
 		case tar.TypeFifo:
-			err = unix.Mkfifo(filen, uint32(header.Mode))
+			err = mkFifo(filen, uint32(header.Mode))
 		default:
 			fmt.Printf("unknown type for %s\n", filen)
 			continue
