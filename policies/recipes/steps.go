@@ -196,7 +196,7 @@ func StepArchiveExtraction(step *osconfigpb.SoftwareRecipe_Step_ArchiveExtractio
 }
 
 func zipIsDir(name string) bool {
-	return strings.HasSuffix(name, "\\")
+	return strings.HasSuffix(name, "/")
 }
 
 func extractZip(zipPath string, dst string) error {
@@ -220,7 +220,7 @@ func extractZip(zipPath string, dst string) error {
 		if err != nil {
 			return err
 		}
-		if zipIsDir(filen) && stat.IsDir() {
+		if zipIsDir(f.Name) && stat.IsDir() {
 			// it's ok if directories already exist
 			continue
 		}
@@ -229,12 +229,12 @@ func extractZip(zipPath string, dst string) error {
 
 	// Create dirs
 	for _, f := range zr.File {
-		filen, err := common.NormPath(filepath.Join(dst, f.FileHeader.Name))
+		filen, err := common.NormPath(filepath.Join(dst, f.Name))
 		if err != nil {
 			return err
 		}
 
-		if !zipIsDir(filen) {
+		if !zipIsDir(f.Name) {
 			continue
 		}
 		_, err = os.Stat(filen)
@@ -244,7 +244,11 @@ func extractZip(zipPath string, dst string) error {
 		if !os.IsNotExist(err) {
 			return err
 		}
-		err = os.MkdirAll(filen, 0755)
+		mode := f.Mode()
+		if mode == 0 {
+			mode = 0755
+		}
+		err = os.MkdirAll(filen, mode)
 		if err != nil {
 			return err
 		}
@@ -256,7 +260,7 @@ func extractZip(zipPath string, dst string) error {
 		if err != nil {
 			return err
 		}
-		if zipIsDir(filen) {
+		if zipIsDir(f.Name) {
 			continue
 		}
 		filedir := filepath.Dir(filen)
@@ -273,7 +277,12 @@ func extractZip(zipPath string, dst string) error {
 			return err
 		}
 
-		dst, err := os.OpenFile(filen, os.O_RDWR|os.O_CREATE, 0755)
+		mode := f.Mode()
+		if mode == 0 {
+			mode = 0755
+		}
+
+		dst, err := os.OpenFile(filen, os.O_RDWR|os.O_CREATE, mode)
 		if err == nil {
 			_, err = io.Copy(dst, reader)
 		}
@@ -282,7 +291,7 @@ func extractZip(zipPath string, dst string) error {
 		if err != nil {
 			return err
 		}
-		err = os.Chtimes(filen, time.Now(), f.Modified)
+		err = os.Chtimes(filen, time.Now(), f.ModTime())
 		if err != nil {
 			return err
 		}
