@@ -30,15 +30,15 @@ func yumRepositories(repos []*osconfigpb.YumRepository, repoFile string) error {
 	/*
 		# Repo file managed by Google OSConfig agent
 		[repo1]
-		name: repo1-name
-		baseurl: https://repo1-url
+		name=repo1-name
+		baseurl=https://repo1-url
 		enabled=1
 		gpgcheck=1
 		repo_gpgcheck=1
 		gpgkey=http://repo1-url/gpg
 		[repo2]
-		display_name: repo2-name
-		baseurl: https://repo2-url
+		display_name=repo2-name
+		baseurl=https://repo2-url
 		enabled=1
 		gpgcheck=1
 		repo_gpgcheck=1
@@ -48,11 +48,11 @@ func yumRepositories(repos []*osconfigpb.YumRepository, repoFile string) error {
 	for _, repo := range repos {
 		buf.WriteString(fmt.Sprintf("\n[%s]\n", repo.Id))
 		if repo.DisplayName == "" {
-			buf.WriteString(fmt.Sprintf("name: %s\n", repo.Id))
+			buf.WriteString(fmt.Sprintf("name=%s\n", repo.Id))
 		} else {
-			buf.WriteString(fmt.Sprintf("name: %s\n", repo.DisplayName))
+			buf.WriteString(fmt.Sprintf("name=%s\n", repo.DisplayName))
 		}
-		buf.WriteString(fmt.Sprintf("baseurl: %s\n", repo.BaseUrl))
+		buf.WriteString(fmt.Sprintf("baseurl=%s\n", repo.BaseUrl))
 		buf.WriteString("enabled=1\ngpgcheck=1\nrepo_gpgcheck=1\n")
 		if len(repo.GpgKeys) > 0 {
 			buf.WriteString(fmt.Sprintf("gpgkey=%s\n", repo.GpgKeys[0]))
