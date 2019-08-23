@@ -196,7 +196,14 @@ func StepArchiveExtraction(step *osconfigpb.SoftwareRecipe_Step_ArchiveExtractio
 }
 
 func zipIsDir(name string) bool {
-	return strings.HasSuffix(name, "/")
+	return strings.HasSuffix(name, "/") || strings.HasSuffix(name, "\\")
+}
+
+func normalizeSlashes(s string) string {
+	if runtime.GOOS == "windows" {
+		return strings.Replace(s, "/", "\\", -1)
+	}
+	return strings.Replace(s, "\\", "/", -1)
 }
 
 func extractZip(zipPath string, dst string) error {
@@ -208,7 +215,7 @@ func extractZip(zipPath string, dst string) error {
 
 	// Check for conflicts
 	for _, f := range zr.File {
-		filen, err := common.NormPath(filepath.Join(dst, f.FileHeader.Name))
+		filen, err := common.NormPath(filepath.Join(dst, normalizeSlashes(f.Name)))
 		if err != nil {
 			return err
 		}
@@ -227,47 +234,25 @@ func extractZip(zipPath string, dst string) error {
 		return fmt.Errorf("file exists: %s", filen)
 	}
 
-	// Create dirs
-	for _, f := range zr.File {
-		filen, err := common.NormPath(filepath.Join(dst, f.Name))
-		if err != nil {
-			return err
-		}
-
-		if !zipIsDir(f.Name) {
-			continue
-		}
-		_, err = os.Stat(filen)
-		if err == nil {
-			continue
-		}
-		if !os.IsNotExist(err) {
-			return err
-		}
-		mode := f.Mode()
-		if mode == 0 {
-			mode = 0755
-		}
-		err = os.MkdirAll(filen, mode)
-		if err != nil {
-			return err
-		}
-	}
-
 	// Create files.
 	for _, f := range zr.File {
-		filen, err := common.NormPath(filepath.Join(dst, f.Name))
+		filen, err := common.NormPath(filepath.Join(dst, normalizeSlashes(f.Name)))
 		if err != nil {
 			return err
 		}
 		if zipIsDir(f.Name) {
+			mode := f.Mode()
+			if mode == 0 {
+				mode = 0755
+			}
+			err = os.MkdirAll(filen, mode)
+			if err != nil {
+				return err
+			}
 			continue
 		}
 		filedir := filepath.Dir(filen)
-		_, err = os.Stat(filedir)
-		if os.IsNotExist(err) {
-			err = os.MkdirAll(filedir, 0755)
-		}
+		err = os.MkdirAll(filedir, 0755)
 		if err != nil {
 			return err
 		}
@@ -337,43 +322,6 @@ func extractTar(tarName string, dst string) error {
 	file.Seek(0, 0)
 	tr = tar.NewReader(file)
 
-	// Create dirs
-	for {
-		var err error
-		header, err := tr.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return err
-		}
-		if header.Typeflag != tar.TypeDir {
-			continue
-		}
-		filen, err := common.NormPath(filepath.Join(dst, header.Name))
-		if err != nil {
-			return err
-		}
-		_, err = os.Stat(filen)
-		if err == nil {
-			continue
-		}
-		if !os.IsNotExist(err) {
-			return err
-		}
-		err = os.MkdirAll(filen, os.FileMode(header.Mode))
-		if err != nil {
-			return err
-		}
-		err = os.Chown(filen, header.Uid, header.Gid)
-		if err != nil {
-			return err
-		}
-	}
-
-	file.Seek(0, 0)
-	tr = tar.NewReader(file)
-
 	// Create files.
 	for {
 		var err error
@@ -389,44 +337,70 @@ func extractTar(tarName string, dst string) error {
 			return err
 		}
 		filedir := filepath.Dir(filen)
-		_, err = os.Stat(filedir)
-		if err != nil {
-			err = os.MkdirAll(filedir, 0755)
-		}
+		err = os.MkdirAll(filedir, 0755)
 		if err != nil {
 			return err
 		}
 		switch header.Typeflag {
 		case tar.TypeDir:
-			continue
+			err = os.MkdirAll(filen, os.FileMode(header.Mode))
+			if err != nil {
+				return err
+			}
+			err = os.Chown(filen, header.Uid, header.Gid)
+			if err != nil {
+				return err
+			}
 		case tar.TypeReg, tar.TypeRegA:
 			fmt.Printf("os.Create %s (owner %s/%d group %s/%d)\n", filen, header.Uname, header.Uid, header.Gname, header.Gid)
-			dst, err := os.Create(filen)
-			if err == nil {
-				_, err = io.Copy(dst, tr)
+			dst, err := os.OpenFile(filen, os.O_RDWR|os.O_CREATE, os.FileMode(header.Mode))
+			if err != nil {
+				return err
+			}
+			_, err = io.Copy(dst, tr)
+			dst.Close()
+			if err != nil {
+				return err
 			}
 		case tar.TypeLink:
 			err = os.Link(header.Linkname, filen)
+			if err != nil {
+				return err
+			}
 			continue
 		case tar.TypeSymlink:
 			err = os.Symlink(header.Linkname, filen)
 			continue
 		case tar.TypeChar:
 			err = mkCharDevice(filen, uint32(header.Devmajor), uint32(header.Devminor))
+			if err != nil {
+				return err
+			}
+			if runtime.GOOS != "windows" {
+				err = os.Chmod(filen, os.FileMode(header.Mode))
+				if err != nil {
+					return err
+				}
+			}
 		case tar.TypeBlock:
 			err = mkBlockDevice(filen, uint32(header.Devmajor), uint32(header.Devminor))
+			if err != nil {
+				return err
+			}
+			if runtime.GOOS != "windows" {
+				err = os.Chmod(filen, os.FileMode(header.Mode))
+				if err != nil {
+					return err
+				}
+			}
 		case tar.TypeFifo:
 			err = mkFifo(filen, uint32(header.Mode))
+			if err != nil {
+				return err
+			}
 		default:
 			fmt.Printf("unknown type for %s\n", filen)
 			continue
-		}
-		if err != nil {
-			return err
-		}
-		err = os.Chmod(filen, os.FileMode(header.Mode))
-		if err != nil {
-			return err
 		}
 		err = os.Chown(filen, header.Uid, header.Gid)
 		if err != nil {
