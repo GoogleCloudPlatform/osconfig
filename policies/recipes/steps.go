@@ -245,15 +245,13 @@ func extractZip(zipPath string, dst string) error {
 			if mode == 0 {
 				mode = 0755
 			}
-			err = os.MkdirAll(filen, mode)
-			if err != nil {
+			if err = os.MkdirAll(filen, mode); err != nil {
 				return err
 			}
 			continue
 		}
 		filedir := filepath.Dir(filen)
-		err = os.MkdirAll(filedir, 0755)
-		if err != nil {
+		if err = os.MkdirAll(filedir, 0755); err != nil {
 			return err
 		}
 		fmt.Printf("os.Create %s\n", filen)
@@ -268,11 +266,12 @@ func extractZip(zipPath string, dst string) error {
 		}
 
 		dst, err := os.OpenFile(filen, os.O_RDWR|os.O_CREATE, mode)
-		if err == nil {
-			_, err = io.Copy(dst, reader)
+		if err != nil {
+			return err
 		}
+		_, err = io.Copy(dst, reader)
+		dst.Close()
 		reader.Close()
-
 		if err != nil {
 			return err
 		}
@@ -343,12 +342,10 @@ func extractTar(tarName string, dst string) error {
 		}
 		switch header.Typeflag {
 		case tar.TypeDir:
-			err = os.MkdirAll(filen, os.FileMode(header.Mode))
-			if err != nil {
+			if err = os.MkdirAll(filen, os.FileMode(header.Mode)); err != nil {
 				return err
 			}
-			err = os.Chown(filen, header.Uid, header.Gid)
-			if err != nil {
+			if err = os.Chown(filen, header.Uid, header.Gid); err != nil {
 				return err
 			}
 		case tar.TypeReg, tar.TypeRegA:
@@ -363,51 +360,45 @@ func extractTar(tarName string, dst string) error {
 				return err
 			}
 		case tar.TypeLink:
-			err = os.Link(header.Linkname, filen)
-			if err != nil {
+			if err = os.Link(header.Linkname, filen); err != nil {
 				return err
 			}
 			continue
 		case tar.TypeSymlink:
-			err = os.Symlink(header.Linkname, filen)
+			if err = os.Symlink(header.Linkname, filen); err != nil {
+				return err
+			}
 			continue
 		case tar.TypeChar:
-			err = mkCharDevice(filen, uint32(header.Devmajor), uint32(header.Devminor))
-			if err != nil {
+			if err = mkCharDevice(filen, uint32(header.Devmajor), uint32(header.Devminor)); err != nil {
 				return err
 			}
 			if runtime.GOOS != "windows" {
-				err = os.Chmod(filen, os.FileMode(header.Mode))
-				if err != nil {
+				if err = os.Chmod(filen, os.FileMode(header.Mode)); err != nil {
 					return err
 				}
 			}
 		case tar.TypeBlock:
-			err = mkBlockDevice(filen, uint32(header.Devmajor), uint32(header.Devminor))
-			if err != nil {
+			if err = mkBlockDevice(filen, uint32(header.Devmajor), uint32(header.Devminor)); err != nil {
 				return err
 			}
 			if runtime.GOOS != "windows" {
-				err = os.Chmod(filen, os.FileMode(header.Mode))
-				if err != nil {
+				if err = os.Chmod(filen, os.FileMode(header.Mode)); err != nil {
 					return err
 				}
 			}
 		case tar.TypeFifo:
-			err = mkFifo(filen, uint32(header.Mode))
-			if err != nil {
+			if err = mkFifo(filen, uint32(header.Mode)); err != nil {
 				return err
 			}
 		default:
 			fmt.Printf("unknown type for %s\n", filen)
 			continue
 		}
-		err = os.Chown(filen, header.Uid, header.Gid)
-		if err != nil {
+		if err = os.Chown(filen, header.Uid, header.Gid); err != nil {
 			return err
 		}
-		err = os.Chtimes(filen, header.AccessTime, header.ModTime)
-		if err != nil {
+		if err = os.Chtimes(filen, header.AccessTime, header.ModTime); err != nil {
 			return err
 		}
 	}
