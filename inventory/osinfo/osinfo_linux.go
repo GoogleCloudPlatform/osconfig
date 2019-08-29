@@ -19,11 +19,12 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"os/exec"
 	"regexp"
 	"runtime"
 	"strings"
+
+	"github.com/GoogleCloudPlatform/osconfig/common"
 )
 
 var (
@@ -35,13 +36,6 @@ const (
 	oRelease  = "/etc/oracle-release"
 	rhRelease = "/etc/redhat-release"
 )
-
-func exists(name string) bool {
-	if _, err := os.Stat(name); os.IsNotExist(err) {
-		return false
-	}
-	return true
-}
 
 func parseOsRelease(path string) (*DistributionInfo, error) {
 	di := &DistributionInfo{}
@@ -105,11 +99,11 @@ func GetDistributionInfo() (*DistributionInfo, error) {
 	var err error
 	switch {
 	// Check for /etc/os-release first.
-	case exists(osRelease):
+	case common.Exists(osRelease):
 		di, err = parseOsRelease(osRelease)
-	case exists(oRelease):
+	case common.Exists(oRelease):
 		di, err = parseEnterpriseRelease(oRelease)
-	case exists(rhRelease):
+	case common.Exists(rhRelease):
 		di, err = parseEnterpriseRelease(rhRelease)
 	default:
 		err = errors.New("unable to obtain release info, no known /etc/*-release exists")
