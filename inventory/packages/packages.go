@@ -18,7 +18,6 @@ package packages
 import (
 	"io/ioutil"
 	"log"
-	"os"
 	"os/exec"
 	"time"
 
@@ -91,11 +90,4 @@ type QFEPackage struct {
 var run = func(cmd *exec.Cmd) ([]byte, error) {
 	DebugLogger.Printf("Running %q with args %q\n", cmd.Path, cmd.Args[1:])
 	return cmd.CombinedOutput()
-}
-
-func exists(name string) bool {
-	if _, err := os.Stat(name); os.IsNotExist(err) {
-		return false
-	}
-	return true
 }
