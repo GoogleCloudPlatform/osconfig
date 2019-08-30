@@ -32,6 +32,9 @@ var (
 	getUname     = func() ([]byte, error) {
 		return exec.Command("/bin/uname", "-r").CombinedOutput()
 	}
+	readFile = func(file string) ([]byte, error) {
+		return ioutil.ReadFile(file)
+	}
 )
 
 const (
