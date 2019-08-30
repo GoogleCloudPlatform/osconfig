@@ -15,6 +15,8 @@ package packages
 
 import (
 	"fmt"
+
+	"github.com/GoogleCloudPlatform/osconfig/common"
 )
 
 // GetPackageUpdates gets available package updates GooGet as well as any
@@ -49,7 +51,7 @@ func GetInstalledPackages() (Packages, []string) {
 	var pkgs Packages
 	var errs []string
 
-	if exists(googet) {
+	if common.Exists(googet) {
 		if googet, err := InstalledGooGetPackages(); err != nil {
 			msg := fmt.Sprintf("error listing installed googet packages: %v", err)
 			DebugLogger.Println("Error:", msg)
