@@ -28,7 +28,13 @@ import (
 )
 
 var (
-	entRelVerRgx = regexp.MustCompile(`/d+(\./d+)?(\./d+)?`)
+	entRelVerRgx = regexp.MustCompile(`\d+(\.\d+)?(\.\d+)?`)
+	getUname = func() ([]byte, error){
+		return exec.Command("/bin/uname", "-r").CombinedOutput()
+	}
+	readFile = func(file string) ([]byte, error){
+		return ioutil.ReadFile(file)
+	}
 )
 
 const (
@@ -39,7 +45,7 @@ const (
 
 func parseOsRelease(path string) (*DistributionInfo, error) {
 	di := &DistributionInfo{}
-	b, err := ioutil.ReadFile(path)
+	b, err := readFile(path)
 	if err != nil {
 		return di, fmt.Errorf("unable to obtain release info: %v", err)
 	}
@@ -70,7 +76,7 @@ func parseOsRelease(path string) (*DistributionInfo, error) {
 }
 
 func parseEnterpriseRelease(path string) (*DistributionInfo, error) {
-	b, err := ioutil.ReadFile(path)
+	b, err := readFile(path)
 	if err != nil {
 		return &DistributionInfo{ShortName: Linux}, fmt.Errorf("unable to obtain release info: %v", err)
 	}
@@ -112,7 +118,7 @@ func GetDistributionInfo() (*DistributionInfo, error) {
 		return nil, err
 	}
 
-	out, err := exec.Command("/bin/uname", "-r").CombinedOutput()
+	out, err := getUname()
 	if err != nil {
 		return nil, err
 	}
