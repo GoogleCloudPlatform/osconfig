@@ -29,10 +29,10 @@ import (
 
 var (
 	entRelVerRgx = regexp.MustCompile(`\d+(\.\d+)?(\.\d+)?`)
-	getUname = func() ([]byte, error){
+	getUname     = func() ([]byte, error) {
 		return exec.Command("/bin/uname", "-r").CombinedOutput()
 	}
-	readFile = func(file string) ([]byte, error){
+	readFile = func(file string) ([]byte, error) {
 		return ioutil.ReadFile(file)
 	}
 )

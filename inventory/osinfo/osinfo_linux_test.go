@@ -44,8 +44,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 `
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-
-	stubs := gostub.Stub(&getUname, func() ([]byte, error){
+	stubs := gostub.Stub(&getUname, func() ([]byte, error) {
 		return []byte("Linux"), nil
 	})
 
@@ -57,7 +56,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
-			return true
+		return true
 	})
 
 	defer stubs.Reset()
@@ -65,8 +64,8 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 	di, _ := GetDistributionInfo()
 
 	assertion.Equal("Debian buster", di.LongName, "unexpected long name")
-	assertion.Equal( "debian", di.ShortName, "unexpected short name")
-	assertion.Equal( "Linux", di.Kernel,"unexpected kernel name")
+	assertion.Equal("debian", di.ShortName, "unexpected short name")
+	assertion.Equal("Linux", di.Kernel, "unexpected kernel name")
 }
 
 // Error while reading the release file
@@ -88,8 +87,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 `
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-
-	stubs := gostub.Stub(&getUname, func() ([]byte, error){
+	stubs := gostub.Stub(&getUname, func() ([]byte, error) {
 		return []byte("Linux"), nil
 	})
 
@@ -123,8 +121,7 @@ func TestGetDistributionInfoEmptyOSRelease(t *testing.T) {
 `
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-
-	stubs := gostub.Stub(&getUname, func() ([]byte, error){
+	stubs := gostub.Stub(&getUname, func() ([]byte, error) {
 		return []byte("Linux"), nil
 	})
 
@@ -144,8 +141,8 @@ func TestGetDistributionInfoEmptyOSRelease(t *testing.T) {
 	di, _ := GetDistributionInfo()
 	fmt.Printf("+%v", di)
 	assertion.Equal("", di.LongName, "unexpected long name")
-	assertion.Equal( "linux", di.ShortName, "unexpected short name")
-	assertion.Equal( "Linux", di.Kernel,"unexpected kernel name")
+	assertion.Equal("linux", di.ShortName, "unexpected short name")
+	assertion.Equal("Linux", di.Kernel, "unexpected kernel name")
 }
 
 // os-release
@@ -173,8 +170,7 @@ REDHAT_SUPPORT_PRODUCT_VERSION="7"
 `
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-
-	stubs := gostub.Stub(&getUname, func() ([]byte, error){
+	stubs := gostub.Stub(&getUname, func() ([]byte, error) {
 		return []byte("Linux"), nil
 	})
 
@@ -192,9 +188,9 @@ REDHAT_SUPPORT_PRODUCT_VERSION="7"
 	defer stubs.Reset()
 
 	di, _ := GetDistributionInfo()
-	assertion.Equal( "centos", di.ShortName, "unexpected short name")
-	assertion.Equal( "Linux", di.Kernel,"unexpected kernel name")
-	assertion.Equal( "7", di.Version,"unexpected version")
+	assertion.Equal("centos", di.ShortName, "unexpected short name")
+	assertion.Equal("Linux", di.Kernel, "unexpected kernel name")
+	assertion.Equal("7", di.Version, "unexpected version")
 }
 
 // redhat-release
@@ -208,8 +204,7 @@ func TestGetDistributionInfoRedHatRelease(t *testing.T) {
 `
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-
-	stubs := gostub.Stub(&getUname, func() ([]byte, error){
+	stubs := gostub.Stub(&getUname, func() ([]byte, error) {
 		return []byte("Linux"), nil
 	})
 
@@ -227,10 +222,10 @@ func TestGetDistributionInfoRedHatRelease(t *testing.T) {
 	defer stubs.Reset()
 
 	di, _ := GetDistributionInfo()
-	fmt.Printf("sdafASDF: +%v\n ",di)
-	assertion.Equal( "rhel", di.ShortName, "unexpected short name")
-	assertion.Equal( "Linux", di.Kernel,"unexpected kernel name")
-	assertion.Equal( "8.0", di.Version,"unexpected version")
+	fmt.Printf("sdafASDF: +%v\n ", di)
+	assertion.Equal("rhel", di.ShortName, "unexpected short name")
+	assertion.Equal("Linux", di.Kernel, "unexpected kernel name")
+	assertion.Equal("8.0", di.Version, "unexpected version")
 }
 
 // redhat-release
@@ -244,8 +239,7 @@ func TestGetDistributionInfoRedHatReleaseUnameError(t *testing.T) {
 `
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-
-	stubs := gostub.Stub(&getUname, func() ([]byte, error){
+	stubs := gostub.Stub(&getUname, func() ([]byte, error) {
 		return nil, errors.New("error running uname")
 	})
 
@@ -262,7 +256,7 @@ func TestGetDistributionInfoRedHatReleaseUnameError(t *testing.T) {
 
 	defer stubs.Reset()
 
-	di, err:= GetDistributionInfo()
+	di, err := GetDistributionInfo()
 	assertion.Nil(di)
 	assertion.Error(err, "error running uname")
 }
@@ -281,7 +275,7 @@ func TestGetDistributionInfoNoReleaseFile(t *testing.T) {
 
 	defer stubs.Reset()
 
-	_,err := GetDistributionInfo()
+	_, err := GetDistributionInfo()
 
 	assertion.EqualError(err, "unable to obtain release info, no known /etc/*-release exists")
 }

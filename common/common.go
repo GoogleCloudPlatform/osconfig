@@ -141,6 +141,7 @@ func newHTTPClient() *http.Client {
 	return &http.Client{}
 }
 
+// Exists Checks if a file exists on the filesystem
 var Exists = func(name string) bool {
 	if _, err := os.Stat(name); os.IsNotExist(err) {
 		return false
