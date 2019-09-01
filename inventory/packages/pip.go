@@ -39,7 +39,7 @@ func init() {
 
 // PipUpdates queries for all available pip updates.
 func PipUpdates() ([]PkgInfo, error) {
-	out, err := run(exec.Command(pip, pipOutdatedArgs...))
+	out, err := common.Run(exec.Command(pip, pipOutdatedArgs...), DebugLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func PipUpdates() ([]PkgInfo, error) {
 
 // InstalledPipPackages queries for all installed pip packages.
 func InstalledPipPackages() ([]PkgInfo, error) {
-	out, err := run(exec.Command(pip, pipListArgs...))
+	out, err := common.Run(exec.Command(pip, pipListArgs...), DebugLogger)
 	if err != nil {
 		return nil, err
 	}

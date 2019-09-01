@@ -44,7 +44,7 @@ func init() {
 // InstallZypperPackages Installs zypper packages
 func InstallZypperPackages(pkgs []string) error {
 	args := append(zypperInstallArgs, pkgs...)
-	out, err := run(exec.Command(zypper, args...))
+	out, err := common.Run(exec.Command(zypper, args...), DebugLogger)
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf(" %s\n", s)
@@ -56,7 +56,7 @@ func InstallZypperPackages(pkgs []string) error {
 // RemoveZypperPackages installed Zypper packages.
 func RemoveZypperPackages(pkgs []string) error {
 	args := append(zypperRemoveArgs, pkgs...)
-	out, err := run(exec.Command(zypper, args...))
+	out, err := common.Run(exec.Command(zypper, args...), DebugLogger)
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf("  %s\n", s)
@@ -92,7 +92,7 @@ func parseZypperUpdates(data []byte) []PkgInfo {
 
 // ZypperUpdates queries for all available zypper updates.
 func ZypperUpdates() ([]PkgInfo, error) {
-	out, err := run(exec.Command(zypper, zypperListUpdatesArgs...))
+	out, err := common.Run(exec.Command(zypper, zypperListUpdatesArgs...), DebugLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func parseZypperPatches(data []byte) ([]ZypperPatch, []ZypperPatch) {
 }
 
 func zypperPatches() ([]byte, error) {
-	return run(exec.Command(zypper, zypperListPatchesArgs...))
+	return common.Run(exec.Command(zypper, zypperListPatchesArgs...), DebugLogger)
 }
 
 // ZypperPatches queries for all available zypper patches.

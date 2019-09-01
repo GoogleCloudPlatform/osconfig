@@ -16,14 +16,15 @@ package packages
 
 import (
 	"io/ioutil"
+	"log"
 	"os/exec"
 	"path/filepath"
 )
 
 var pkgs = []string{"pkg1", "pkg2"}
 
-func getMockRun(content []byte, err error) func(cmd *exec.Cmd) ([]byte, error) {
-	return func(cmd *exec.Cmd) ([]byte, error) {
+func getMockRun(content []byte, err error) func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	return func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
 		return content, err
 	}
 }

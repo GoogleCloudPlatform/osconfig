@@ -38,7 +38,7 @@ func init() {
 
 // GemUpdates queries for all available gem updates.
 func GemUpdates() ([]PkgInfo, error) {
-	out, err := run(exec.Command(gem, gemOutdatedArgs...))
+	out, err := common.Run(exec.Command(gem, gemOutdatedArgs...), DebugLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func GemUpdates() ([]PkgInfo, error) {
 
 // InstalledGemPackages queries for all installed gem packages.
 func InstalledGemPackages() ([]PkgInfo, error) {
-	out, err := run(exec.Command(gem, gemListArgs...))
+	out, err := common.Run(exec.Command(gem, gemListArgs...), DebugLogger)
 	if err != nil {
 		return nil, err
 	}

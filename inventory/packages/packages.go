@@ -18,7 +18,6 @@ package packages
 import (
 	"io/ioutil"
 	"log"
-	"os/exec"
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
@@ -87,7 +86,3 @@ type QFEPackage struct {
 	Caption, Description, HotFixID, InstalledOn string
 }
 
-var run = func(cmd *exec.Cmd) ([]byte, error) {
-	DebugLogger.Printf("Running %q with args %q\n", cmd.Path, cmd.Args[1:])
-	return cmd.CombinedOutput()
-}

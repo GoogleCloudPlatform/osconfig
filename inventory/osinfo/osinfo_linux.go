@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os/exec"
 	"regexp"
 	"runtime"
@@ -32,9 +31,6 @@ var (
 	getUname     = func() ([]byte, error) {
 		return exec.Command("/bin/uname", "-r").CombinedOutput()
 	}
-	readFile = func(file string) ([]byte, error) {
-		return ioutil.ReadFile(file)
-	}
 )
 
 const (
@@ -45,7 +41,7 @@ const (
 
 func parseOsRelease(path string) (*DistributionInfo, error) {
 	di := &DistributionInfo{}
-	b, err := readFile(path)
+	b, err := common.ReadFile(path)
 	if err != nil {
 		return di, fmt.Errorf("unable to obtain release info: %v", err)
 	}
@@ -76,7 +72,7 @@ func parseOsRelease(path string) (*DistributionInfo, error) {
 }
 
 func parseEnterpriseRelease(path string) (*DistributionInfo, error) {
-	b, err := readFile(path)
+	b, err := common.ReadFile(path)
 	if err != nil {
 		return &DistributionInfo{ShortName: Linux}, fmt.Errorf("unable to obtain release info: %v", err)
 	}

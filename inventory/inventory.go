@@ -18,13 +18,13 @@ package inventory
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 	"strings"
 	"time"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/attributes"
+	"github.com/GoogleCloudPlatform/osconfig/common"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
@@ -78,7 +78,7 @@ func Get() *InstanceInventory {
 
 	hs := &InstanceInventory{}
 
-	hn, err := os.Hostname()
+	hn, err := common.OsHostname()
 	if err != nil {
 		logger.Errorf("os.Hostname() error: %v", err)
 	}

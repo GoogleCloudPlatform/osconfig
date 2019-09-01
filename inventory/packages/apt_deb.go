@@ -53,7 +53,7 @@ func InstallAptPackages(pkgs []string) error {
 	install.Env = append(os.Environ(),
 		"DEBIAN_FRONTEND=noninteractive",
 	)
-	out, err := run(install)
+	out, err := common.Run(install, DebugLogger)
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf(" %s\n", s)
@@ -69,7 +69,7 @@ func RemoveAptPackages(pkgs []string) error {
 	remove.Env = append(os.Environ(),
 		"DEBIAN_FRONTEND=noninteractive",
 	)
-	out, err := run(remove)
+	out, err := common.Run(remove, DebugLogger)
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf(" %s\n", s)
@@ -127,11 +127,11 @@ func parseAptUpdates(data []byte) []PkgInfo {
 
 // AptUpdates queries for all available apt updates.
 func AptUpdates() ([]PkgInfo, error) {
-	if _, err := run(exec.Command(aptGet, aptGetUpdateArgs...)); err != nil {
+	if _, err := common.Run(exec.Command(aptGet, aptGetUpdateArgs...), DebugLogger); err != nil {
 		return nil, err
 	}
 
-	out, err := run(exec.Command(aptGet, aptGetUpgradableArgs...))
+	out, err := common.Run(exec.Command(aptGet, aptGetUpgradableArgs...), DebugLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +161,7 @@ func parseInstalledDebpackages(data []byte) []PkgInfo {
 
 // InstalledDebPackages queries for all installed deb packages.
 func InstalledDebPackages() ([]PkgInfo, error) {
-	out, err := run(exec.Command(dpkgquery, dpkgQueryArgs...))
+	out, err := common.Run(exec.Command(dpkgquery, dpkgQueryArgs...), DebugLogger)
 	if err != nil {
 		return nil, err
 	}

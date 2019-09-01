@@ -69,7 +69,7 @@ func parseGooGetUpdates(data []byte) []PkgInfo {
 
 // GooGetUpdates queries for all available googet updates.
 func GooGetUpdates() ([]PkgInfo, error) {
-	out, err := run(exec.Command(googet, googetUpdateQueryArgs...))
+	out, err := common.Run(exec.Command(googet, googetUpdateQueryArgs...), DebugLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func GooGetUpdates() ([]PkgInfo, error) {
 // InstallGooGetPackages installs GooGet packages.
 func InstallGooGetPackages(pkgs []string) error {
 	args := append(googetInstallArgs, pkgs...)
-	out, err := run(exec.Command(googet, args...))
+	out, err := common.Run(exec.Command(googet, args...), DebugLogger)
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf("  %s\n", s)
@@ -92,7 +92,7 @@ func InstallGooGetPackages(pkgs []string) error {
 // RemoveGooGetPackages installs GooGet packages.
 func RemoveGooGetPackages(pkgs []string) error {
 	args := append(googetRemoveArgs, pkgs...)
-	out, err := run(exec.Command(googet, args...))
+	out, err := common.Run(exec.Command(googet, args...), DebugLogger)
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf("  %s\n", s)
@@ -129,7 +129,7 @@ func parseInstalledGooGetPackages(data []byte) []PkgInfo {
 
 // InstalledGooGetPackages queries for all installed googet packages.
 func InstalledGooGetPackages() ([]PkgInfo, error) {
-	out, err := run(exec.Command(googet, googetInstalledQueryArgs...))
+	out, err := common.Run(exec.Command(googet, googetInstalledQueryArgs...), DebugLogger)
 	if err != nil {
 		return nil, err
 	}

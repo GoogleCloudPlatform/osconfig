@@ -19,6 +19,7 @@ import (
 	"os/exec"
 	"runtime"
 
+	"github.com/GoogleCloudPlatform/osconfig/common"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
 )
 
@@ -56,7 +57,7 @@ func parseInstalledRPMPackages(data []byte) []PkgInfo {
 
 // InstalledRPMPackages queries for all installed rpm packages.
 func InstalledRPMPackages() ([]PkgInfo, error) {
-	out, err := run(exec.Command(rpmquery, rpmqueryArgs...))
+	out, err := common.Run(exec.Command(rpmquery, rpmqueryArgs...), DebugLogger)
 	if err != nil {
 		return nil, err
 	}

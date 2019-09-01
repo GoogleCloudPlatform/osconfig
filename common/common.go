@@ -21,14 +21,16 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 
 	"cloud.google.com/go/storage"
-
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 )
@@ -150,10 +152,30 @@ func newHTTPClient() *http.Client {
 	return &http.Client{}
 }
 
+// Stubbed methods below
+// this is done so that this function can be stubbed
+// for unit testing
+
 // Exists Checks if a file exists on the filesystem
 var Exists = func(name string) bool {
 	if _, err := os.Stat(name); os.IsNotExist(err) {
 		return false
 	}
 	return true
+}
+
+// OsHostname is a wrapper to get os hostname
+var OsHostname = func() (name string, err error) {
+	return os.Hostname()
+}
+
+// Readfile is a wrapper to read file
+var ReadFile = func(file string) ([]byte, error) {
+	return ioutil.ReadFile(file)
+}
+
+// Run is a wrapper to execute terminal commands
+var Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	logger.Printf("Running %q with args %q\n", cmd.Path, cmd.Args[1:])
+	return cmd.CombinedOutput()
 }

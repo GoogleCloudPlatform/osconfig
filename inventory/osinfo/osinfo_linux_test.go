@@ -48,7 +48,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 		return []byte("Linux"), nil
 	})
 
-	stubs.Stub(&readFile, func(file string) ([]byte, error) {
+	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
 	})
 
@@ -91,7 +91,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 		return []byte("Linux"), nil
 	})
 
-	stubs.Stub(&readFile, func(file string) ([]byte, error) {
+	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
 		return []byte(fcontent), errors.New("file read error")
 	})
 
@@ -125,7 +125,7 @@ func TestGetDistributionInfoEmptyOSRelease(t *testing.T) {
 		return []byte("Linux"), nil
 	})
 
-	stubs.Stub(&readFile, func(file string) ([]byte, error) {
+	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
 	})
 
@@ -174,7 +174,7 @@ REDHAT_SUPPORT_PRODUCT_VERSION="7"
 		return []byte("Linux"), nil
 	})
 
-	stubs.Stub(&readFile, func(file string) ([]byte, error) {
+	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
 	})
 
@@ -208,7 +208,7 @@ func TestGetDistributionInfoRedHatRelease(t *testing.T) {
 		return []byte("Linux"), nil
 	})
 
-	stubs.Stub(&readFile, func(file string) ([]byte, error) {
+	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
 	})
 
@@ -243,7 +243,7 @@ func TestGetDistributionInfoRedHatReleaseUnameError(t *testing.T) {
 		return nil, errors.New("error running uname")
 	})
 
-	stubs.Stub(&readFile, func(file string) ([]byte, error) {
+	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
 	})
 

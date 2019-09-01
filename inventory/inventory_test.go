@@ -137,3 +137,48 @@ func TestWrite(t *testing.T) {
 		t.Errorf("writeInventory call did not write %q", k)
 	}
 }
+
+//func TestGetDistributionInfoOSRelease(t *testing.T) {
+//	var AppFs = afero.NewMemMapFs()
+//	assertion := assert.New(t)
+//	releaseFile := "/etc/os-release"
+//	AppFs.Create(releaseFile)
+//	fcontent := `PRETTY_NAME="Debian buster"
+//NAME="Debian GNU/Linux"
+//VERSION_ID="10"
+//VERSION="10 (buster)"
+//VERSION_CODENAME=buster
+//ID=debian
+//HOME_URL="https://www.debian.org/"
+//SUPPORT_URL="https://www.debian.org/support"
+//BUG_REPORT_URL="https://bugs.debian.org/"
+//`
+//	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
+//
+//	stubs := gostub.Stub(&common.OsHostname, func() ([]byte, error) {
+//		return []byte("test-hostname"), nil
+//	})
+//
+//	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
+//		return []byte(fcontent), nil
+//	})
+//
+//	stubs.Stub(&common.Exists, func(name string) bool {
+//		if _, err := AppFs.Stat(name); err != nil {
+//			return false
+//		}
+//		return true
+//	})
+//
+//	stubs.Stub(&osinfo.Architecture, func(arch string) string {
+//		return "x86_64"
+//	})
+//
+//	stubs.Stub()
+//
+//	defer stubs.Reset()
+//
+//	config.SetVersion("1")
+//
+//
+//}
