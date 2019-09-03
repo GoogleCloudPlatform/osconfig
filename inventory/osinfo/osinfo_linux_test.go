@@ -44,7 +44,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 `
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-	stubs := gostub.Stub(&getUname, func() ([]byte, error) {
+	stubs := gostub.Stub(&GetUname, func() ([]byte, error) {
 		return []byte("Linux"), nil
 	})
 
@@ -87,7 +87,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 `
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-	stubs := gostub.Stub(&getUname, func() ([]byte, error) {
+	stubs := gostub.Stub(&GetUname, func() ([]byte, error) {
 		return []byte("Linux"), nil
 	})
 
@@ -121,7 +121,7 @@ func TestGetDistributionInfoEmptyOSRelease(t *testing.T) {
 `
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-	stubs := gostub.Stub(&getUname, func() ([]byte, error) {
+	stubs := gostub.Stub(&GetUname, func() ([]byte, error) {
 		return []byte("Linux"), nil
 	})
 
@@ -170,7 +170,7 @@ REDHAT_SUPPORT_PRODUCT_VERSION="7"
 `
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-	stubs := gostub.Stub(&getUname, func() ([]byte, error) {
+	stubs := gostub.Stub(&GetUname, func() ([]byte, error) {
 		return []byte("Linux"), nil
 	})
 
@@ -204,7 +204,7 @@ func TestGetDistributionInfoRedHatRelease(t *testing.T) {
 `
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-	stubs := gostub.Stub(&getUname, func() ([]byte, error) {
+	stubs := gostub.Stub(&GetUname, func() ([]byte, error) {
 		return []byte("Linux"), nil
 	})
 
@@ -239,7 +239,7 @@ func TestGetDistributionInfoRedHatReleaseUnameError(t *testing.T) {
 `
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-	stubs := gostub.Stub(&getUname, func() ([]byte, error) {
+	stubs := gostub.Stub(&GetUname, func() ([]byte, error) {
 		return nil, errors.New("error running uname")
 	})
 

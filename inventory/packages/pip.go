@@ -86,7 +86,7 @@ func InstalledPipPackages() ([]PkgInfo, error) {
 	}
 
 	var pkgs []PkgInfo
-	for _, ln := range lines[2:] {
+	for _, ln := range lines {
 		pkg := strings.Fields(ln)
 		if len(pkg) != 2 {
 			DebugLogger.Printf("'%s' does not represent a python packages\n", ln)

@@ -19,14 +19,23 @@ import (
 	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"os/exec"
 	"reflect"
 	"testing"
 
+	"github.com/GoogleCloudPlatform/osconfig/common"
+	"github.com/GoogleCloudPlatform/osconfig/config"
+	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
+	"github.com/prashantv/gostub"
+	"github.com/spf13/afero"
+	"github.com/stretchr/testify/assert"
 )
 
 func decodePackages(str string) packages.Packages {
@@ -138,47 +147,704 @@ func TestWrite(t *testing.T) {
 	}
 }
 
-//func TestGetDistributionInfoOSRelease(t *testing.T) {
-//	var AppFs = afero.NewMemMapFs()
-//	assertion := assert.New(t)
-//	releaseFile := "/etc/os-release"
-//	AppFs.Create(releaseFile)
-//	fcontent := `PRETTY_NAME="Debian buster"
-//NAME="Debian GNU/Linux"
-//VERSION_ID="10"
-//VERSION="10 (buster)"
-//VERSION_CODENAME=buster
-//ID=debian
-//HOME_URL="https://www.debian.org/"
-//SUPPORT_URL="https://www.debian.org/support"
-//BUG_REPORT_URL="https://bugs.debian.org/"
-//`
-//	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
-//
-//	stubs := gostub.Stub(&common.OsHostname, func() ([]byte, error) {
-//		return []byte("test-hostname"), nil
-//	})
-//
-//	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
-//		return []byte(fcontent), nil
-//	})
-//
-//	stubs.Stub(&common.Exists, func(name string) bool {
-//		if _, err := AppFs.Stat(name); err != nil {
-//			return false
-//		}
-//		return true
-//	})
-//
-//	stubs.Stub(&osinfo.Architecture, func(arch string) string {
-//		return "x86_64"
-//	})
-//
-//	stubs.Stub()
-//
-//	defer stubs.Reset()
-//
-//	config.SetVersion("1")
-//
-//
-//}
+func TestInventoryInfoRpm(t *testing.T) {
+	var AppFs= afero.NewMemMapFs()
+	assertion := assert.New(t)
+	releaseFile := "/etc/os-release"
+	AppFs.Create(releaseFile)
+	fcontent := `PRETTY_NAME="Debian buster"
+NAME="Debian GNU/Linux"
+VERSION_ID="10"
+VERSION="10 (buster)"
+VERSION_CODENAME=buster
+ID=debian
+HOME_URL="https://www.debian.org/"
+SUPPORT_URL="https://www.debian.org/support"
+BUG_REPORT_URL="https://bugs.debian.org/"
+`
+
+	rpmQueryResult := `foo x86_64 1.2.3-4
+`
+	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
+	AppFs.Create("/usr/bin/rpmquery")
+
+	stubs := gostub.Stub(&common.OsHostname, func() (string, error) {
+		return "test-hostname", nil
+	})
+
+	stubs.Stub(&osinfo.GetUname, func() ([]byte, error) {
+		return []byte("test-kernel"), nil
+	})
+
+	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
+		return []byte(fcontent), nil
+	})
+
+	stubs.Stub(&common.Exists, func(name string) bool {
+		if _, err := AppFs.Stat(name); err != nil {
+			return false
+		}
+		return true
+	})
+
+	stubs.Stub(&packages.ZypperExists, false)
+	stubs.Stub(&packages.AptExists, false)
+	stubs.Stub(&packages.GemExists, false)
+	stubs.Stub(&packages.PipExists, false)
+	stubs.Stub(&packages.YumExists, false)
+
+	stubs.Stub(&osinfo.Architecture, func(arch string) string {
+		return "x86_64"
+	})
+
+	stubs.Stub(&common.Run, func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+		return []byte(rpmQueryResult), nil
+	})
+	defer stubs.Reset()
+
+	config.SetVersion("1")
+
+	ii := Get()
+
+	assertion.Equal("test-hostname", ii.Hostname, "hostname does not match")
+	assertion.Equal("Debian buster", ii.LongName, "long name does not match")
+	assertion.Equal("test-kernel", ii.KernelVersion, "kernel version does not match")
+	assertion.Equal("foo", ii.InstalledPackages.Rpm[0].Name, "package name does not match")
+	assertion.Equal("1.2.3-4", ii.InstalledPackages.Rpm[0].Version, "package version does not match")
+}
+
+func TestInventoryInfoDeb(t *testing.T) {
+	var AppFs= afero.NewMemMapFs()
+	assertion := assert.New(t)
+	releaseFile := "/etc/os-release"
+	AppFs.Create(releaseFile)
+	fcontent := `PRETTY_NAME="Debian buster"
+NAME="Debian GNU/Linux"
+VERSION_ID="10"
+VERSION="10 (buster)"
+VERSION_CODENAME=buster
+ID=debian
+HOME_URL="https://www.debian.org/"
+SUPPORT_URL="https://www.debian.org/support"
+BUG_REPORT_URL="https://bugs.debian.org/"
+`
+
+	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
+	AppFs.Create("/usr/bin/dpkg-query")
+
+	debQueryResult := `foo amd64 1.2.3-4
+`
+
+	stubs := gostub.Stub(&common.OsHostname, func() (string, error) {
+		return "test-hostname", nil
+	})
+
+	stubs.Stub(&osinfo.GetUname, func() ([]byte, error) {
+		return []byte("test-kernel"), nil
+	})
+
+	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
+		return []byte(fcontent), nil
+	})
+
+	stubs.Stub(&common.Exists, func(name string) bool {
+		if _, err := AppFs.Stat(name); err != nil {
+			return false
+		}
+		return true
+	})
+
+	stubs.Stub(&packages.ZypperExists, false)
+	stubs.Stub(&packages.AptExists, false)
+	stubs.Stub(&packages.GemExists, false)
+	stubs.Stub(&packages.PipExists, false)
+	stubs.Stub(&packages.YumExists, false)
+
+	stubs.Stub(&osinfo.Architecture, func(arch string) string {
+		return "x86_64"
+	})
+
+	stubs.Stub(&common.Run, func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+		return []byte(debQueryResult), nil
+	})
+	defer stubs.Reset()
+
+	config.SetVersion("1")
+
+	ii := Get()
+
+	assertion.Equal("test-hostname", ii.Hostname, "hostname does not match")
+	assertion.Equal("Debian buster", ii.LongName, "long name does not match")
+	assertion.Equal("test-kernel", ii.KernelVersion, "kernel version does not match")
+	assertion.Equal("foo", ii.InstalledPackages.Deb[0].Name, "package name does not match")
+	assertion.Equal("1.2.3-4", ii.InstalledPackages.Deb[0].Version, "package version does not match")
+
+}
+
+func TestInventoryInfoGem(t *testing.T) {
+	var AppFs= afero.NewMemMapFs()
+	assertion := assert.New(t)
+	releaseFile := "/etc/os-release"
+	AppFs.Create(releaseFile)
+	fcontent := `PRETTY_NAME="Debian buster"
+NAME="Debian GNU/Linux"
+VERSION_ID="10"
+VERSION="10 (buster)"
+VERSION_CODENAME=buster
+ID=debian
+HOME_URL="https://www.debian.org/"
+SUPPORT_URL="https://www.debian.org/support"
+BUG_REPORT_URL="https://bugs.debian.org/"
+`
+
+	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
+	AppFs.Create("/usr/bin/gem")
+
+	gemQueryResult := `
+	   *** LOCAL GEMS ***
+
+	   bar (1.2.3)
+`
+
+	stubs := gostub.Stub(&common.OsHostname, func() (string, error) {
+		return "test-hostname", nil
+	})
+
+	stubs.Stub(&osinfo.GetUname, func() ([]byte, error) {
+		return []byte("test-kernel"), nil
+	})
+
+	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
+		return []byte(fcontent), nil
+	})
+
+	stubs.Stub(&common.Exists, func(name string) bool {
+		if _, err := AppFs.Stat(name); err != nil {
+			return false
+		}
+		return true
+	})
+
+	stubs.Stub(&packages.ZypperExists, false)
+	stubs.Stub(&packages.AptExists, false)
+	stubs.Stub(&packages.GemExists, false)
+	stubs.Stub(&packages.PipExists, false)
+	stubs.Stub(&packages.YumExists, false)
+
+	stubs.Stub(&osinfo.Architecture, func(arch string) string {
+		return "x86_64"
+	})
+
+	stubs.Stub(&common.Run, func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+		return []byte(gemQueryResult), nil
+	})
+	defer stubs.Reset()
+
+	config.SetVersion("1")
+
+	ii := Get()
+
+	assertion.Equal("test-hostname", ii.Hostname, "hostname does not match")
+	assertion.Equal("Debian buster", ii.LongName, "long name does not match")
+	assertion.Equal("test-kernel", ii.KernelVersion, "kernel version does not match")
+	assertion.Equal("bar", ii.InstalledPackages.Gem[0].Name, "package name does not match")
+	assertion.Equal("1.2.3", ii.InstalledPackages.Gem[0].Version, "package version does not match")
+
+}
+
+func TestInventoryInfoPip(t *testing.T) {
+	var AppFs= afero.NewMemMapFs()
+	assertion := assert.New(t)
+	releaseFile := "/etc/os-release"
+	AppFs.Create(releaseFile)
+	fcontent := `PRETTY_NAME="Debian buster"
+NAME="Debian GNU/Linux"
+VERSION_ID="10"
+VERSION="10 (buster)"
+VERSION_CODENAME=buster
+ID=debian
+HOME_URL="https://www.debian.org/"
+SUPPORT_URL="https://www.debian.org/support"
+BUG_REPORT_URL="https://bugs.debian.org/"
+`
+
+	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
+	AppFs.Create("/usr/bin/pip")
+
+	pipQueryResult := `foo (1.2.3)
+bar (1.2.3)
+`
+
+	stubs := gostub.Stub(&common.OsHostname, func() (string, error) {
+		return "test-hostname", nil
+	})
+
+	stubs.Stub(&osinfo.GetUname, func() ([]byte, error) {
+		return []byte("test-kernel"), nil
+	})
+
+	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
+		return []byte(fcontent), nil
+	})
+
+	stubs.Stub(&common.Exists, func(name string) bool {
+		if _, err := AppFs.Stat(name); err != nil {
+			return false
+		}
+		return true
+	})
+
+	stubs.Stub(&packages.ZypperExists, false)
+	stubs.Stub(&packages.AptExists, false)
+	stubs.Stub(&packages.GemExists, false)
+	stubs.Stub(&packages.PipExists, false)
+	stubs.Stub(&packages.YumExists, false)
+
+	stubs.Stub(&osinfo.Architecture, func(arch string) string {
+		return "x86_64"
+	})
+
+	stubs.Stub(&common.Run, func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+		return []byte(pipQueryResult), nil
+	})
+	defer stubs.Reset()
+
+	config.SetVersion("1")
+
+	ii := Get()
+
+	assertion.Equal("test-hostname", ii.Hostname, "hostname does not match")
+	assertion.Equal("Debian buster", ii.LongName, "long name does not match")
+	assertion.Equal("test-kernel", ii.KernelVersion, "kernel version does not match")
+	assertion.Equal("foo", ii.InstalledPackages.Pip[0].Name, "package name does not match")
+	assertion.Equal("1.2.3", ii.InstalledPackages.Pip[0].Version, "package version does not match")
+
+}
+
+func TestInventoryInfoZypper(t *testing.T) {
+	var AppFs= afero.NewMemMapFs()
+	assertion := assert.New(t)
+	releaseFile := "/etc/os-release"
+	AppFs.Create(releaseFile)
+	fcontent := `NAME="openSUSE Leap"
+VERSION="15.0"
+ID="opensuse-leap"
+ID_LIKE="suse opensuse"
+VERSION_ID="15.0"
+PRETTY_NAME="openSUSE Leap 15.0"
+ANSI_COLOR="0;32"
+CPE_NAME="cpe:/o:opensuse:leap:15.0"
+BUG_REPORT_URL="https://bugs.opensuse.org"
+HOME_URL="https://www.opensuse.org/"
+`
+
+	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
+	AppFs.Create("/usr/bin/zypper")
+
+	zypperQueryResult := `
+		Repository                          | Name                                        | Category    | Severity  | Interactive | Status     | Summary
+		------------------------------------+---------------------------------------------+-------------+-----------+-------------+------------+------------------------------------------------------------
+		SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1206 | security    | low       | ---         | applied    | Security update for bzip2
+		SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1221 | security    | moderate  | ---         | applied    | Security update for libxslt
+		SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1229 | recommended | moderate  | ---         | not needed | Recommended update for sensors
+		SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1258 | recommended | moderate  | ---         | needed     | Recommended update for postfix
+`
+
+	stubs := gostub.Stub(&common.OsHostname, func() (string, error) {
+		return "test-hostname", nil
+	})
+
+	stubs.Stub(&osinfo.GetUname, func() ([]byte, error) {
+		return []byte("test-kernel"), nil
+	})
+
+	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
+		return []byte(fcontent), nil
+	})
+
+	stubs.Stub(&common.Exists, func(name string) bool {
+		if _, err := AppFs.Stat(name); err != nil {
+			return false
+		}
+		return true
+	})
+
+	// this is to test package updates
+	stubs.Stub(&packages.ZypperExists, false)
+	stubs.Stub(&packages.AptExists, false)
+	stubs.Stub(&packages.GemExists, false)
+	stubs.Stub(&packages.PipExists, false)
+	stubs.Stub(&packages.YumExists, false)
+
+	stubs.Stub(&osinfo.Architecture, func(arch string) string {
+		return "x86_64"
+	})
+
+	stubs.Stub(&common.Run, func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+		return []byte(zypperQueryResult), nil
+	})
+	defer stubs.Reset()
+
+	config.SetVersion("1")
+
+	ii := Get()
+
+	assertion.Equal("test-hostname", ii.Hostname, "hostname does not match")
+	assertion.Equal("openSUSE Leap 15.0", ii.LongName, "long name does not match")
+	assertion.Equal("15.0", ii.Version, "version does not match")
+	assertion.Equal("test-kernel", ii.KernelVersion, "kernel version does not match")
+	assertion.Equal(2, len(ii.InstalledPackages.ZypperPatches), "unexpected number of patches")
+	assertion.Equal("SUSE-SLE-Module-Basesystem-15-SP1-2019-1206", ii.InstalledPackages.ZypperPatches[0].Name, "package name does not match")
+	assertion.Equal("security", ii.InstalledPackages.ZypperPatches[0].Category, "package category does not match")
+	assertion.Equal("low", ii.InstalledPackages.ZypperPatches[0].Severity, "package severity does not match")
+
+}
+
+func TestInventoryInfoInstalledPackageQueryError(t *testing.T) {
+	var AppFs= afero.NewMemMapFs()
+	assertion := assert.New(t)
+	releaseFile := "/etc/os-release"
+	AppFs.Create(releaseFile)
+	fcontent := `PRETTY_NAME="Debian buster"
+NAME="Debian GNU/Linux"
+VERSION_ID="10"
+VERSION="10 (buster)"
+VERSION_CODENAME=buster
+ID=debian
+HOME_URL="https://www.debian.org/"
+SUPPORT_URL="https://www.debian.org/support"
+BUG_REPORT_URL="https://bugs.debian.org/"
+`
+
+	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
+
+	pkgManagerBinaries := []string{"/usr/bin/pip", "/usr/bin/gem", "/usr/bin/dpkg-query", "/usr/bin/rpmquery", "/usr/bin/zypper"}
+
+	stubs := gostub.Stub(&common.OsHostname, func() (string, error) {
+		return "test-hostname", nil
+	})
+
+	stubs.Stub(&osinfo.GetUname, func() ([]byte, error) {
+		return []byte("test-kernel"), nil
+	})
+
+	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
+		return []byte(fcontent), nil
+	})
+
+	stubs.Stub(&common.Exists, func(name string) bool {
+		if _, err := AppFs.Stat(name); err != nil {
+			return false
+		}
+		return true
+	})
+
+	stubs.Stub(&packages.ZypperExists, false)
+	stubs.Stub(&packages.AptExists, false)
+	stubs.Stub(&packages.GemExists, false)
+	stubs.Stub(&packages.PipExists, false)
+	stubs.Stub(&packages.YumExists, false)
+
+	stubs.Stub(&osinfo.Architecture, func(arch string) string {
+		return "x86_64"
+	})
+
+	stubs.Stub(&common.Run, func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+		return nil, errors.New("error listing installed packages")
+	})
+	defer stubs.Reset()
+
+	config.SetVersion("1")
+
+	for _, bin := range pkgManagerBinaries {
+		AppFs.Create(bin)
+		ii := Get()
+		s := reflect.ValueOf(&ii.InstalledPackages).Elem()
+		for i := 0; i < s.NumField(); i++ {
+			// assert that the there is no installed packages
+			assertion.Nil(s.Field(i).Interface(), fmt.Sprintf("%s must fail", bin))
+		}
+
+		AppFs.Remove(bin)
+	}
+}
+
+func TestInventoryInfoGetAptUpdates(t *testing.T) {
+	var AppFs= afero.NewMemMapFs()
+	assertion := assert.New(t)
+	releaseFile := "/etc/os-release"
+	AppFs.Create(releaseFile)
+	fcontent := `PRETTY_NAME="Debian buster"
+NAME="Debian GNU/Linux"
+VERSION_ID="10"
+VERSION="10 (buster)"
+VERSION_CODENAME=buster
+ID=debian
+HOME_URL="https://www.debian.org/"
+SUPPORT_URL="https://www.debian.org/support"
+BUG_REPORT_URL="https://bugs.debian.org/"
+`
+
+	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
+
+	stubs := gostub.Stub(&common.OsHostname, func() (string, error) {
+		return "test-hostname", nil
+	})
+
+	stubs.Stub(&osinfo.GetUname, func() ([]byte, error) {
+		return []byte("test-kernel"), nil
+	})
+
+	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
+		return []byte(fcontent), nil
+	})
+
+	aptupdates := `
+		Reading package lists... Done
+		Building dependency tree
+		Reading state information... Done
+		Calculating upgrade... Done
+		The following NEW packages will be installed:
+		  firmware-linux-free linux-image-4.9.0-9-amd64
+		The following packages will be upgraded:
+		  google-cloud-sdk linux-image-amd64
+		2 upgraded, 2 newly installed, 0 to remove and 0 not upgraded.
+		Inst libldap-common [2.4.45+dfsg-1ubuntu1.2] (2.4.45+dfsg-1ubuntu1.3 Ubuntu:18.04/bionic-updates, Ubuntu:18.04/bionic-security [all])
+		Inst firmware-linux-free (3.4 Debian:9.9/stable [all])
+		Inst google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [all])
+		Inst linux-image-4.9.0-9-amd64 (4.9.168-1+deb9u2 Debian-Security:9/stable [amd64])
+		Inst linux-image-amd64 [4.9+80+deb9u6] (4.9+80+deb9u7 Debian:9.9/stable [amd64])
+		Conf firmware-linux-free (3.4 Debian:9.9/stable [all])
+		Conf google-cloud-sdk (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [all])
+		Conf linux-image-4.9.0-9-amd64 (4.9.168-1+deb9u2 Debian-Security:9/stable [amd64])
+		Conf linux-image-amd64 (4.9+80+deb9u7 Debian:9.9/stable [amd64])
+`
+	stubs.Stub(&common.Exists, func(name string) bool {
+		if _, err := AppFs.Stat(name); err != nil {
+			return false
+		}
+		return true
+	})
+
+	stubs.Stub(&packages.ZypperExists, false)
+	stubs.Stub(&packages.AptExists, true)
+	stubs.Stub(&packages.GemExists, false)
+	stubs.Stub(&packages.PipExists, false)
+	stubs.Stub(&packages.YumExists, false)
+
+	stubs.Stub(&osinfo.Architecture, func(arch string) string {
+		return "x86_64"
+	})
+
+	stubs.Stub(&common.Run, func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+		return []byte(aptupdates), nil
+	})
+	defer stubs.Reset()
+
+	config.SetVersion("1")
+
+	ii := Get()
+	assertion.Equal(3, len(ii.PackageUpdates.Apt), "number of package updates does not match")
+	assertion.Equal("libldap-common", ii.PackageUpdates.Apt[0].Name, "update package name does not match")
+	assertion.Equal("2.4.45+dfsg-1ubuntu1.3", ii.PackageUpdates.Apt[0].Version, "update package version does not match")
+
+}
+
+func TestInventoryInfoGetGemUpdates(t *testing.T) {
+	var AppFs= afero.NewMemMapFs()
+	assertion := assert.New(t)
+	releaseFile := "/etc/os-release"
+	AppFs.Create(releaseFile)
+	fcontent := `PRETTY_NAME="Debian buster"
+NAME="Debian GNU/Linux"
+VERSION_ID="10"
+VERSION="10 (buster)"
+VERSION_CODENAME=buster
+ID=debian
+HOME_URL="https://www.debian.org/"
+SUPPORT_URL="https://www.debian.org/support"
+BUG_REPORT_URL="https://bugs.debian.org/"
+`
+
+	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
+
+	stubs := gostub.Stub(&common.OsHostname, func() (string, error) {
+		return "test-hostname", nil
+	})
+
+	stubs.Stub(&osinfo.GetUname, func() ([]byte, error) {
+		return []byte("test-kernel"), nil
+	})
+
+	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
+		return []byte(fcontent), nil
+	})
+
+	gemupdates := `
+	   foo (1.2.8 < 1.3.2)
+	   bar (1.0.0 < 1.1.2)
+`
+	stubs.Stub(&common.Exists, func(name string) bool {
+		if _, err := AppFs.Stat(name); err != nil {
+			return false
+		}
+		return true
+	})
+
+	stubs.Stub(&packages.ZypperExists, false)
+	stubs.Stub(&packages.AptExists, false)
+	stubs.Stub(&packages.GemExists, true)
+	stubs.Stub(&packages.PipExists, false)
+	stubs.Stub(&packages.YumExists, false)
+
+	stubs.Stub(&osinfo.Architecture, func(arch string) string {
+		return "x86_64"
+	})
+
+	stubs.Stub(&common.Run, func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+		return []byte(gemupdates), nil
+	})
+	defer stubs.Reset()
+
+	config.SetVersion("1")
+
+	ii := Get()
+	assertion.Equal(2, len(ii.PackageUpdates.Gem), "number of updates does not match")
+	assertion.Equal("foo", ii.PackageUpdates.Gem[0].Name, "update package name does not match")
+	assertion.Equal("1.3.2", ii.PackageUpdates.Gem[0].Version, "update package version does not match")
+
+}
+
+func TestInventoryInfoGetPipUpdates(t *testing.T) {
+	var AppFs= afero.NewMemMapFs()
+	assertion := assert.New(t)
+	releaseFile := "/etc/os-release"
+	AppFs.Create(releaseFile)
+	fcontent := `PRETTY_NAME="Debian buster"
+NAME="Debian GNU/Linux"
+VERSION_ID="10"
+VERSION="10 (buster)"
+VERSION_CODENAME=buster
+ID=debian
+HOME_URL="https://www.debian.org/"
+SUPPORT_URL="https://www.debian.org/support"
+BUG_REPORT_URL="https://bugs.debian.org/"
+`
+
+	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
+
+	stubs := gostub.Stub(&common.OsHostname, func() (string, error) {
+		return "test-hostname", nil
+	})
+
+	stubs.Stub(&osinfo.GetUname, func() ([]byte, error) {
+		return []byte("test-kernel"), nil
+	})
+
+	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
+		return []byte(fcontent), nil
+	})
+
+	pipupdates := `
+	   foo (4.5.3) - Latest: 4.6.0 [repo]
+	   bar (1.3) - Latest: 1.4 [repo]
+`
+	stubs.Stub(&common.Exists, func(name string) bool {
+		if _, err := AppFs.Stat(name); err != nil {
+			return false
+		}
+		return true
+	})
+
+	stubs.Stub(&packages.ZypperExists, false)
+	stubs.Stub(&packages.AptExists, false)
+	stubs.Stub(&packages.GemExists, false)
+	stubs.Stub(&packages.PipExists, true)
+	stubs.Stub(&packages.YumExists, false)
+
+	stubs.Stub(&osinfo.Architecture, func(arch string) string {
+		return "x86_64"
+	})
+
+	stubs.Stub(&common.Run, func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+		return []byte(pipupdates), nil
+	})
+	defer stubs.Reset()
+
+	config.SetVersion("1")
+
+	ii := Get()
+	assertion.Equal(2, len(ii.PackageUpdates.Pip), "number of updates does not match")
+	assertion.Equal("foo", ii.PackageUpdates.Pip[0].Name, "update package name does not match")
+	assertion.Equal("4.6.0", ii.PackageUpdates.Pip[0].Version, "update package version does not match")
+
+}
+
+func TestInventoryInfoGetZypperUpdates(t *testing.T) {
+	var AppFs= afero.NewMemMapFs()
+	assertion := assert.New(t)
+	releaseFile := "/etc/os-release"
+	AppFs.Create(releaseFile)
+	fcontent := `PRETTY_NAME="Debian buster"
+NAME="Debian GNU/Linux"
+VERSION_ID="10"
+VERSION="10 (buster)"
+VERSION_CODENAME=buster
+ID=debian
+HOME_URL="https://www.debian.org/"
+SUPPORT_URL="https://www.debian.org/support"
+BUG_REPORT_URL="https://bugs.debian.org/"
+`
+
+	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
+
+	stubs := gostub.Stub(&common.OsHostname, func() (string, error) {
+		return "test-hostname", nil
+	})
+
+	stubs.Stub(&osinfo.GetUname, func() ([]byte, error) {
+		return []byte("test-kernel"), nil
+	})
+
+	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
+		return []byte(fcontent), nil
+	})
+
+	zypperupdates := `
+		      S | Repository          | Name                   | Current Version | Available Version | Arch
+		      --+---------------------+------------------------+-----------------+-------------------+-------
+		      v | SLES12-SP3-Updates  | at                     | 3.1.14-7.3      | 3.1.14-8.3.1      | x86_64
+		      v | SLES12-SP3-Updates  | autoyast2-installation | 3.2.17-1.3      | 3.2.22-2.9.2      | noarch
+`
+	stubs.Stub(&common.Exists, func(name string) bool {
+		if _, err := AppFs.Stat(name); err != nil {
+			return false
+		}
+		return true
+	})
+
+	stubs.Stub(&packages.ZypperExists, true)
+	stubs.Stub(&packages.AptExists, false)
+	stubs.Stub(&packages.GemExists, false)
+	stubs.Stub(&packages.PipExists, false)
+	stubs.Stub(&packages.YumExists, false)
+
+	stubs.Stub(&osinfo.Architecture, func(arch string) string {
+		return "x86_64"
+	})
+
+	stubs.Stub(&common.Run, func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+		return []byte(zypperupdates), nil
+	})
+	defer stubs.Reset()
+
+	config.SetVersion("1")
+
+	ii := Get()
+
+	assertion.Equal(2, len(ii.PackageUpdates.Zypper), "number of updates does not match")
+	assertion.Equal("at", ii.PackageUpdates.Zypper[0].Name, "update package name does not match")
+	assertion.Equal("3.1.14-8.3.1", ii.PackageUpdates.Zypper[0].Version, "update package version does not match")
+
+}
+
