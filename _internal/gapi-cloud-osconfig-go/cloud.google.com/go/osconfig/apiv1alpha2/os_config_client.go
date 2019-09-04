@@ -237,7 +237,10 @@ func (c *Client) ListPatchJobs(ctx context.Context, req *osconfigpb.ListPatchJob
 	return it
 }
 
-// ReportPatchJobInstanceDetails endpoint used by the agent to report back its state during a patch
+// ReportPatchJobInstanceDetails deprecated:  Should use AgentEndpoint API going forward.  Will be removed
+// in v1beta1.
+//
+// Endpoint used by the agent to report back its state during a patch
 // job. This endpoint will also return the patch job's state and
 // configurations that the agent needs to know in order to run or stop
 // patching.

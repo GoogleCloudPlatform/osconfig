@@ -78,7 +78,13 @@ func (r *patchRun) runUpdates() error {
 		}
 	}
 	if packages.ZypperExists {
-		opts := []ZypperPatchOption{ZypperPatchRunner(patchRunRunner(r))}
+		opts := []ZypperPatchOption{
+			ZypperPatchRunner(patchRunRunner(r)),
+			ZypperPatchCategories(r.Job.GetPatchConfig().GetZypper().GetCategories()),
+			ZypperPatchSeverities(r.Job.GetPatchConfig().GetZypper().GetSeverities()),
+			ZypperUpdateWithUpdate(r.Job.GetPatchConfig().GetZypper().GetWithUpdate()),
+			ZypperUpdateWithOptional(r.Job.GetPatchConfig().GetZypper().GetWithOptional()),
+		}
 		r.debugf("Installing Zypper package updates.")
 		if err := retry(retryPeriod, "installing Zypper package updates", r.debugf, func() error { return RunZypperPatch(opts...) }); err != nil {
 			errs = append(errs, err.Error())
