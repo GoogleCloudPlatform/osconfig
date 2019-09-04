@@ -38,10 +38,10 @@ const (
 	// ReportURL is the guest attributes endpoint.
 	ReportURL = InstanceMetadata + "/guest-attributes"
 
-	googetRepoFilePath = "C:/ProgramData/GooGet/repos/google_osconfig.repo"
-	zypperRepoFilePath = "/etc/zypp/repos.d/google_osconfig.repo"
-	yumRepoFilePath    = "/etc/yum/repos.d/google_osconfig.repo"
-	aptRepoFilePath    = "/etc/apt/sources.list.d/google_osconfig.list"
+	googetRepoFilePath = "C:/ProgramData/GooGet/repos/google_osconfig_managed.repo"
+	zypperRepoFilePath = "/etc/zypp/repos.d/google_osconfig_managed.repo"
+	yumRepoFilePath    = "/etc/yum.repos.d/google_osconfig_managed.repo"
+	aptRepoFilePath    = "/etc/apt/sources.list.d/google_osconfig_managed.list"
 
 	prodEndpoint = "osconfig.googleapis.com:443"
 
