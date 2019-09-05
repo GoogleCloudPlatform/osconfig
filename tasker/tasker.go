@@ -16,6 +16,7 @@
 package tasker
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
@@ -40,22 +41,26 @@ type task struct {
 // Enqueue adds a task to the task queue.
 func Enqueue(name string, f func()) {
 	mx.Lock()
+	fmt.Printf("added task: %s to tasker\n", name)
 	tc <- &task{name: name, run: f}
 	mx.Unlock()
 }
 
 // Close prevents any further tasks from being enqueued and waits for the queue to empty.
 func Close() {
+	fmt.Printf("close called\n")
 	mx.Lock()
+	close(tc)
 	wg.Wait()
+	fmt.Printf("close end\n")
 }
 
 func tasker() {
-	logger.Debugf("Tasker start.")
 	wg.Add(1)
 	defer wg.Done()
 	for {
 		logger.Debugf("Waiting for tasks to run.")
+		fmt.Printf("waiting for tasks to run\n")
 		select {
 		case t, ok := <-tc:
 			// Indicates an empty and closed channel.
@@ -63,7 +68,9 @@ func tasker() {
 				return
 			}
 			logger.Debugf("Tasker running %q.", t.name)
+			fmt.Printf("Tasker running %q\n", t.name)
 			t.run()
+			fmt.Printf("finished task %q\n", t.name)
 			logger.Debugf("Finished task %q.", t.name)
 		}
 	}
