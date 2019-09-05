@@ -25,6 +25,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestSetConfig(t *testing.T) {
@@ -81,6 +82,10 @@ func TestSetConfig(t *testing.T) {
 	if NumericProjectID() != 12345 {
 		t.Errorf("NumericProjectID: got(%v) != want(%d)", NumericProjectID(), 12345)
 	}
+
+	if Instance() != "zone/instances/name" {
+		t.Errorf("zone: got(%s) != want(%s)", Instance(), "zone/instances/name")
+	}
 }
 
 func TestSetConfigDefaultValues(t *testing.T) {
@@ -136,6 +141,14 @@ func TestSetConfigDefaultValues(t *testing.T) {
 	if SvcEndpoint() != prodEndpoint {
 		t.Errorf("Default endpoint: got(%s) != want(%s)", SvcEndpoint(), prodEndpoint)
 	}
+
+	if MaxMetadataRetryDelay() != 30 * time.Second {
+		t.Errorf("MaxMetadataretry: got(%s) != want(%s)", MaxMetadataRetryDelay(), 30 * time.Second)
+	}
+
+	if MaxMetadataRetries() != 3 {
+		t.Errorf("MaxMetadataretry: got(%d) != want(%d)", MaxMetadataRetries(), 3)
+	}
 }
 
 func TestVersion(t *testing.T) {
@@ -147,4 +160,20 @@ func TestVersion(t *testing.T) {
 	if Version() != v {
 		t.Errorf("Unexpected version %q, want %q", Version(), v)
 	}
+}
+
+func TestSetConfig_Error(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, `{}`)
+	}))
+	defer ts.Close()
+
+	if err := os.Setenv("GCE_METADATA_HOST", strings.Trim(ts.URL, "randomurl.com")); err != nil {
+		t.Fatalf("Error running os.Setenv: %v", err)
+	}
+
+	if err := SetConfig(); err == nil || !strings.Contains(err.Error(), "unexpected end of JSON input"){
+		t.Errorf("Unexpected output %s", err.Error())
+	}
+
 }

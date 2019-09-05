@@ -269,9 +269,9 @@ func MaxMetadataRetryDelay() time.Duration {
 	return 30 * time.Second
 }
 
-// MaxMetadataRetries is the maximum retry delay when getting data from the metadata server.
+// MaxMetadataRetries is the maximum number of retry when getting data from the metadata server.
 func MaxMetadataRetries() int {
-	return 30
+	return 3
 }
 
 // SerialLogPort is the serial port to log to.
