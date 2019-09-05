@@ -104,15 +104,11 @@ func StepArchiveExtraction(step *osconfigpb.SoftwareRecipe_Step_ArchiveExtractio
 	switch step.ArchiveExtraction.GetType() {
 	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_ZIP:
 		return extractZip(filename, step.ArchiveExtraction.Destination)
-	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_GZIP:
-		fallthrough
-	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_BZIP:
-		fallthrough
-	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_LZMA:
-		fallthrough
-	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_XZ:
-		fallthrough
-	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR:
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_GZIP,
+		osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_BZIP,
+		osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_LZMA,
+		osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_XZ,
+		osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR:
 		return extractTar(filename, step.ArchiveExtraction.Destination, step.ArchiveExtraction.GetType())
 	default:
 		return fmt.Errorf("Unrecognized archive type %q", step.ArchiveExtraction.GetType())
