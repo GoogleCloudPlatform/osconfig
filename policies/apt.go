@@ -145,7 +145,13 @@ func aptChanges(aptInstalled, aptRemoved, aptUpdated []*osconfigpb.Package) erro
 		logger.Infof("Installing packages %s", changes.packagesToInstall)
 		if err := packages.InstallAptPackages(changes.packagesToInstall); err != nil {
 			logger.Errorf("Error installing apt packages: %v", err)
-			errs = append(errs, fmt.Sprintf("error installing apt packages: %v", err))
+
+			// Try fallback logic to install the packages individually.
+			logger.Infof("Trying to install packages individually")
+			if err = packages.InstallAptPackagesIndividually(changes.packagesToInstall); err != nil {
+				logger.Errorf("Error installing apt packages individually: %v", err)
+				errs = append(errs, fmt.Sprintf("error installing apt packages: %v", err))
+			}
 		}
 	}
 
@@ -161,7 +167,13 @@ func aptChanges(aptInstalled, aptRemoved, aptUpdated []*osconfigpb.Package) erro
 		logger.Infof("Removing packages %s", changes.packagesToRemove)
 		if err := packages.RemoveAptPackages(changes.packagesToRemove); err != nil {
 			logger.Errorf("Error removing apt packages: %v", err)
-			errs = append(errs, fmt.Sprintf("error removing apt packages: %v", err))
+
+			// Try fallback logic to remove the packages individually.
+			logger.Infof("Trying to remove packages individually")
+			if err = packages.RemoveAptPackagesIndividually(changes.packagesToRemove); err != nil {
+				logger.Errorf("Error removing apt packages individually: %v", err)
+				errs = append(errs, fmt.Sprintf("error removing apt packages: %v", err))
+			}
 		}
 	}
 
