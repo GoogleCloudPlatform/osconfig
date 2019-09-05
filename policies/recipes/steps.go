@@ -210,7 +210,7 @@ func extractZip(zipPath string, dst string) error {
 func decompress(reader io.Reader, archiveType osconfigpb.SoftwareRecipe_Step_ExtractArchive_ArchiveType) (io.Reader, error) {
 	switch archiveType {
 	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_GZIP:
-		// *gzip.Reader is a io.ReadCloser but the Close() method isn't necessary to call
+		// *gzip.Reader is a io.ReadCloser but it isn't necesary to call Close() on it.
 		return gzip.NewReader(reader)
 	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_BZIP:
 		return bzip2.NewReader(reader), nil
