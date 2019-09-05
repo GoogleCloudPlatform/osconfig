@@ -27,17 +27,6 @@ const (
 	rpmquery = "/usr/bin/rpmquery"
 )
 
-func exists(path string) (bool, error) {
-	if _, err := os.Stat(path); err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
-		return false, err
-	}
-
-	return true, nil
-}
-
 func getBtime(stat string) (int, error) {
 	f, err := os.Open(stat)
 	if err != nil {

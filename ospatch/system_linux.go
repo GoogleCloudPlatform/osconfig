@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/common"
 )
 
 const (
@@ -115,13 +116,13 @@ func disableAutoUpdates() {
 
 func rebootSystem() error {
 	// Start with systemctl and work down a list of reboot methods.
-	if e, _ := exists(systemctl); e {
+	if e := common.Exists(systemctl); e {
 		return exec.Command(systemctl, "reboot").Start()
 	}
-	if e, _ := exists(reboot); e {
+	if e := common.Exists(reboot); e {
 		return exec.Command(reboot).Run()
 	}
-	if e, _ := exists(shutdown); e {
+	if e := common.Exists(shutdown); e {
 		return exec.Command(shutdown, "-r", "-t", "0").Run()
 	}
 

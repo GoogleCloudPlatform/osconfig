@@ -16,7 +16,7 @@ $ErrorActionPreference = 'Stop'
 
 function Set-FailureMode {
   # Restart service after 1s, then 2s. Reset error counter after 60s.
-  sc.exe failure google_osconfig_agent reset=60 actions=restart/1000/restart/2000
+  sc.exe failure google_osconfig_agent reset= 60 actions= restart/1000/restart/2000
 }
 
 try {

@@ -21,6 +21,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/GoogleCloudPlatform/osconfig/common"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
 )
 
@@ -29,15 +30,15 @@ var (
 
 	zypperInstallArgs     = []string{"install", "--no-confirm"}
 	zypperRemoveArgs      = []string{"remove", "--no-confirm"}
-	zypperListArgs        = []string{"packages", "--installed-only"}
 	zypperListUpdatesArgs = []string{"-q", "list-updates"}
+	zypperListPatchesArgs = []string{"-q", "list-patches", "--all", "--with-optional"}
 )
 
 func init() {
 	if runtime.GOOS != "windows" {
 		zypper = "/usr/bin/zypper"
 	}
-	ZypperExists = exists(zypper)
+	ZypperExists = common.Exists(zypper)
 }
 
 // InstallZypperPackages Installs zypper packages
@@ -73,17 +74,18 @@ func parseZypperUpdates(data []byte) []PkgInfo {
 			   ...
 	*/
 
-	// We could use the XML output option, but parsing the lines is inline
-	// with other functions and pretty simple.
 	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
 
 	var pkgs []PkgInfo
 	for _, ln := range lines {
-		pkg := bytes.Fields(ln)
-		if len(pkg) != 11 {
+		pkg := bytes.Split(ln, []byte("|"))
+		if len(pkg) != 6 || string(bytes.TrimSpace(pkg[0])) != "v" {
 			continue
 		}
-		pkgs = append(pkgs, PkgInfo{Name: string(pkg[4]), Arch: osinfo.Architecture(string(pkg[10])), Version: string(pkg[8])})
+		name := string(bytes.TrimSpace(pkg[2]))
+		arch := string(bytes.TrimSpace(pkg[5]))
+		ver := string(bytes.TrimSpace(pkg[4]))
+		pkgs = append(pkgs, PkgInfo{Name: name, Arch: osinfo.Architecture(arch), Version: ver})
 	}
 	return pkgs
 }
@@ -95,4 +97,65 @@ func ZypperUpdates() ([]PkgInfo, error) {
 		return nil, err
 	}
 	return parseZypperUpdates(out), nil
+}
+
+func parseZypperPatches(data []byte) ([]ZypperPatch, []ZypperPatch) {
+	/*
+		Repository                          | Name                                        | Category    | Severity  | Interactive | Status     | Summary
+		------------------------------------+---------------------------------------------+-------------+-----------+-------------+------------+------------------------------------------------------------
+		SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1206 | security    | low       | ---         | applied    | Security update for bzip2
+		SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1221 | security    | moderate  | ---         | applied    | Security update for libxslt
+		SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1229 | recommended | moderate  | ---         | not needed | Recommended update for sensors
+		SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1258 | recommended | moderate  | ---         | needed     | Recommended update for postfix
+	*/
+
+	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
+
+	var ins []ZypperPatch
+	var avail []ZypperPatch
+	for _, ln := range lines {
+		patch := bytes.Split(ln, []byte("|"))
+		if len(patch) != 7 {
+			continue
+		}
+
+		name := string(bytes.TrimSpace(patch[1]))
+		cat := string(bytes.TrimSpace(patch[2]))
+		sev := string(bytes.TrimSpace(patch[3]))
+		status := string(bytes.TrimSpace(patch[5]))
+		sum := string(bytes.TrimSpace(patch[6]))
+		switch status {
+		case "needed":
+			avail = append(avail, ZypperPatch{Name: name, Category: cat, Severity: sev, Summary: sum})
+		case "applied":
+			ins = append(ins, ZypperPatch{Name: name, Category: cat, Severity: sev, Summary: sum})
+		default:
+			continue
+		}
+	}
+	return ins, avail
+}
+
+func zypperPatches() ([]byte, error) {
+	return run(exec.Command(zypper, zypperListPatchesArgs...))
+}
+
+// ZypperPatches queries for all available zypper patches.
+func ZypperPatches() ([]ZypperPatch, error) {
+	out, err := zypperPatches()
+	if err != nil {
+		return nil, err
+	}
+	_, patches := parseZypperPatches(out)
+	return patches, nil
+}
+
+// ZypperInstalledPatches queries for all installed zypper patches.
+func ZypperInstalledPatches() ([]ZypperPatch, error) {
+	out, err := zypperPatches()
+	if err != nil {
+		return nil, err
+	}
+	patches, _ := parseZypperPatches(out)
+	return patches, nil
 }
