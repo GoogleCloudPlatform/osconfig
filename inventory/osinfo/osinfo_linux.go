@@ -29,8 +29,8 @@ import (
 var (
 	entRelVerRgx = regexp.MustCompile(`\d+(\.\d+)?(\.\d+)?`)
 
-	// Getuname returns the kernel details
-	GetUname     = func() ([]byte, error) {
+	// GetUname returns the kernel details
+	GetUname = func() ([]byte, error) {
 		return exec.Command("/bin/uname", "-r").CombinedOutput()
 	}
 )

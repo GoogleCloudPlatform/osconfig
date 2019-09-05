@@ -85,4 +85,3 @@ type WUAPackage struct {
 type QFEPackage struct {
 	Caption, Description, HotFixID, InstalledOn string
 }
-

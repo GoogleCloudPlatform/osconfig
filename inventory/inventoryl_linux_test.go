@@ -12,6 +12,8 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
+// +build !windows
+
 package inventory
 
 import (
@@ -33,7 +35,6 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
-	"github.com/prashantv/gostub"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 )
@@ -148,7 +149,7 @@ func TestWrite(t *testing.T) {
 }
 
 func TestInventoryInfoRpm(t *testing.T) {
-	var AppFs= afero.NewMemMapFs()
+	var AppFs = afero.NewMemMapFs()
 	assertion := assert.New(t)
 	releaseFile := "/etc/os-release"
 	AppFs.Create(releaseFile)
@@ -168,39 +169,38 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 	AppFs.Create("/usr/bin/rpmquery")
 
-	stubs := gostub.Stub(&common.OsHostname, func() (string, error) {
+	common.OsHostname = func() (string, error) {
 		return "test-hostname", nil
-	})
+	}
 
-	stubs.Stub(&osinfo.GetUname, func() ([]byte, error) {
+	osinfo.GetUname = func() ([]byte, error) {
 		return []byte("test-kernel"), nil
-	})
+	}
 
-	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
+	common.ReadFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
-	})
+	}
 
-	stubs.Stub(&common.Exists, func(name string) bool {
+	common.Exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
 		return true
-	})
+	}
 
-	stubs.Stub(&packages.ZypperExists, false)
-	stubs.Stub(&packages.AptExists, false)
-	stubs.Stub(&packages.GemExists, false)
-	stubs.Stub(&packages.PipExists, false)
-	stubs.Stub(&packages.YumExists, false)
+	packages.ZypperExists = false
+	packages.AptExists = false
+	packages.GemExists = false
+	packages.PipExists = false
+	packages.YumExists = false
 
-	stubs.Stub(&osinfo.Architecture, func(arch string) string {
+	osinfo.Architecture = func(arch string) string {
 		return "x86_64"
-	})
+	}
 
-	stubs.Stub(&common.Run, func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	common.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
 		return []byte(rpmQueryResult), nil
-	})
-	defer stubs.Reset()
+	}
 
 	config.SetVersion("1")
 
@@ -214,7 +214,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 }
 
 func TestInventoryInfoDeb(t *testing.T) {
-	var AppFs= afero.NewMemMapFs()
+	var AppFs = afero.NewMemMapFs()
 	assertion := assert.New(t)
 	releaseFile := "/etc/os-release"
 	AppFs.Create(releaseFile)
@@ -235,39 +235,38 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 	debQueryResult := `foo amd64 1.2.3-4
 `
 
-	stubs := gostub.Stub(&common.OsHostname, func() (string, error) {
+	common.OsHostname = func() (string, error) {
 		return "test-hostname", nil
-	})
+	}
 
-	stubs.Stub(&osinfo.GetUname, func() ([]byte, error) {
+	osinfo.GetUname = func() ([]byte, error) {
 		return []byte("test-kernel"), nil
-	})
+	}
 
-	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
+	common.ReadFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
-	})
+	}
 
-	stubs.Stub(&common.Exists, func(name string) bool {
+	common.Exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
 		return true
-	})
+	}
 
-	stubs.Stub(&packages.ZypperExists, false)
-	stubs.Stub(&packages.AptExists, false)
-	stubs.Stub(&packages.GemExists, false)
-	stubs.Stub(&packages.PipExists, false)
-	stubs.Stub(&packages.YumExists, false)
+	packages.ZypperExists = false
+	packages.AptExists = false
+	packages.GemExists = false
+	packages.PipExists = false
+	packages.YumExists = false
 
-	stubs.Stub(&osinfo.Architecture, func(arch string) string {
+	osinfo.Architecture = func(arch string) string {
 		return "x86_64"
-	})
+	}
 
-	stubs.Stub(&common.Run, func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	common.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
 		return []byte(debQueryResult), nil
-	})
-	defer stubs.Reset()
+	}
 
 	config.SetVersion("1")
 
@@ -282,7 +281,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 }
 
 func TestInventoryInfoGem(t *testing.T) {
-	var AppFs= afero.NewMemMapFs()
+	var AppFs = afero.NewMemMapFs()
 	assertion := assert.New(t)
 	releaseFile := "/etc/os-release"
 	AppFs.Create(releaseFile)
@@ -306,39 +305,38 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 	   bar (1.2.3)
 `
 
-	stubs := gostub.Stub(&common.OsHostname, func() (string, error) {
+	common.OsHostname = func() (string, error) {
 		return "test-hostname", nil
-	})
+	}
 
-	stubs.Stub(&osinfo.GetUname, func() ([]byte, error) {
+	osinfo.GetUname = func() ([]byte, error) {
 		return []byte("test-kernel"), nil
-	})
+	}
 
-	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
+	common.ReadFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
-	})
+	}
 
-	stubs.Stub(&common.Exists, func(name string) bool {
+	common.Exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
 		return true
-	})
+	}
 
-	stubs.Stub(&packages.ZypperExists, false)
-	stubs.Stub(&packages.AptExists, false)
-	stubs.Stub(&packages.GemExists, false)
-	stubs.Stub(&packages.PipExists, false)
-	stubs.Stub(&packages.YumExists, false)
+	packages.ZypperExists = false
+	packages.AptExists = false
+	packages.GemExists = false
+	packages.PipExists = false
+	packages.YumExists = false
 
-	stubs.Stub(&osinfo.Architecture, func(arch string) string {
+	osinfo.Architecture = func(arch string) string {
 		return "x86_64"
-	})
+	}
 
-	stubs.Stub(&common.Run, func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	common.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
 		return []byte(gemQueryResult), nil
-	})
-	defer stubs.Reset()
+	}
 
 	config.SetVersion("1")
 
@@ -353,7 +351,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 }
 
 func TestInventoryInfoPip(t *testing.T) {
-	var AppFs= afero.NewMemMapFs()
+	var AppFs = afero.NewMemMapFs()
 	assertion := assert.New(t)
 	releaseFile := "/etc/os-release"
 	AppFs.Create(releaseFile)
@@ -375,39 +373,38 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 bar (1.2.3)
 `
 
-	stubs := gostub.Stub(&common.OsHostname, func() (string, error) {
+	common.OsHostname = func() (string, error) {
 		return "test-hostname", nil
-	})
+	}
 
-	stubs.Stub(&osinfo.GetUname, func() ([]byte, error) {
+	osinfo.GetUname = func() ([]byte, error) {
 		return []byte("test-kernel"), nil
-	})
+	}
 
-	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
+	common.ReadFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
-	})
+	}
 
-	stubs.Stub(&common.Exists, func(name string) bool {
+	common.Exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
 		return true
-	})
+	}
 
-	stubs.Stub(&packages.ZypperExists, false)
-	stubs.Stub(&packages.AptExists, false)
-	stubs.Stub(&packages.GemExists, false)
-	stubs.Stub(&packages.PipExists, false)
-	stubs.Stub(&packages.YumExists, false)
+	packages.ZypperExists = false
+	packages.AptExists = false
+	packages.GemExists = false
+	packages.PipExists = false
+	packages.YumExists = false
 
-	stubs.Stub(&osinfo.Architecture, func(arch string) string {
+	osinfo.Architecture = func(arch string) string {
 		return "x86_64"
-	})
+	}
 
-	stubs.Stub(&common.Run, func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	common.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
 		return []byte(pipQueryResult), nil
-	})
-	defer stubs.Reset()
+	}
 
 	config.SetVersion("1")
 
@@ -422,7 +419,7 @@ bar (1.2.3)
 }
 
 func TestInventoryInfoZypper(t *testing.T) {
-	var AppFs= afero.NewMemMapFs()
+	var AppFs = afero.NewMemMapFs()
 	assertion := assert.New(t)
 	releaseFile := "/etc/os-release"
 	AppFs.Create(releaseFile)
@@ -450,40 +447,39 @@ HOME_URL="https://www.opensuse.org/"
 		SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1258 | recommended | moderate  | ---         | needed     | Recommended update for postfix
 `
 
-	stubs := gostub.Stub(&common.OsHostname, func() (string, error) {
+	common.OsHostname = func() (string, error) {
 		return "test-hostname", nil
-	})
+	}
 
-	stubs.Stub(&osinfo.GetUname, func() ([]byte, error) {
+	osinfo.GetUname = func() ([]byte, error) {
 		return []byte("test-kernel"), nil
-	})
+	}
 
-	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
+	common.ReadFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
-	})
+	}
 
-	stubs.Stub(&common.Exists, func(name string) bool {
+	common.Exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
 		return true
-	})
+	}
 
 	// this is to test package updates
-	stubs.Stub(&packages.ZypperExists, false)
-	stubs.Stub(&packages.AptExists, false)
-	stubs.Stub(&packages.GemExists, false)
-	stubs.Stub(&packages.PipExists, false)
-	stubs.Stub(&packages.YumExists, false)
+	packages.ZypperExists = false
+	packages.AptExists = false
+	packages.GemExists = false
+	packages.PipExists = false
+	packages.YumExists = false
 
-	stubs.Stub(&osinfo.Architecture, func(arch string) string {
+	osinfo.Architecture = func(arch string) string {
 		return "x86_64"
-	})
+	}
 
-	stubs.Stub(&common.Run, func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	common.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
 		return []byte(zypperQueryResult), nil
-	})
-	defer stubs.Reset()
+	}
 
 	config.SetVersion("1")
 
@@ -501,7 +497,7 @@ HOME_URL="https://www.opensuse.org/"
 }
 
 func TestInventoryInfoInstalledPackageQueryError(t *testing.T) {
-	var AppFs= afero.NewMemMapFs()
+	var AppFs = afero.NewMemMapFs()
 	assertion := assert.New(t)
 	releaseFile := "/etc/os-release"
 	AppFs.Create(releaseFile)
@@ -520,39 +516,38 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 
 	pkgManagerBinaries := []string{"/usr/bin/pip", "/usr/bin/gem", "/usr/bin/dpkg-query", "/usr/bin/rpmquery", "/usr/bin/zypper"}
 
-	stubs := gostub.Stub(&common.OsHostname, func() (string, error) {
+	common.OsHostname = func() (string, error) {
 		return "test-hostname", nil
-	})
+	}
 
-	stubs.Stub(&osinfo.GetUname, func() ([]byte, error) {
+	osinfo.GetUname = func() ([]byte, error) {
 		return []byte("test-kernel"), nil
-	})
+	}
 
-	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
+	common.ReadFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
-	})
+	}
 
-	stubs.Stub(&common.Exists, func(name string) bool {
+	common.Exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
 		return true
-	})
+	}
 
-	stubs.Stub(&packages.ZypperExists, false)
-	stubs.Stub(&packages.AptExists, false)
-	stubs.Stub(&packages.GemExists, false)
-	stubs.Stub(&packages.PipExists, false)
-	stubs.Stub(&packages.YumExists, false)
+	packages.ZypperExists = false
+	packages.AptExists = false
+	packages.GemExists = false
+	packages.PipExists = false
+	packages.YumExists = false
 
-	stubs.Stub(&osinfo.Architecture, func(arch string) string {
+	osinfo.Architecture = func(arch string) string {
 		return "x86_64"
-	})
+	}
 
-	stubs.Stub(&common.Run, func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	common.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
 		return nil, errors.New("error listing installed packages")
-	})
-	defer stubs.Reset()
+	}
 
 	config.SetVersion("1")
 
@@ -570,7 +565,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 }
 
 func TestInventoryInfoGetAptUpdates(t *testing.T) {
-	var AppFs= afero.NewMemMapFs()
+	var AppFs = afero.NewMemMapFs()
 	assertion := assert.New(t)
 	releaseFile := "/etc/os-release"
 	AppFs.Create(releaseFile)
@@ -587,17 +582,17 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-	stubs := gostub.Stub(&common.OsHostname, func() (string, error) {
+	common.OsHostname = func() (string, error) {
 		return "test-hostname", nil
-	})
+	}
 
-	stubs.Stub(&osinfo.GetUname, func() ([]byte, error) {
+	osinfo.GetUname = func() ([]byte, error) {
 		return []byte("test-kernel"), nil
-	})
+	}
 
-	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
+	common.ReadFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
-	})
+	}
 
 	aptupdates := `
 		Reading package lists... Done
@@ -619,27 +614,26 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 		Conf linux-image-4.9.0-9-amd64 (4.9.168-1+deb9u2 Debian-Security:9/stable [amd64])
 		Conf linux-image-amd64 (4.9+80+deb9u7 Debian:9.9/stable [amd64])
 `
-	stubs.Stub(&common.Exists, func(name string) bool {
+	common.Exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
 		return true
-	})
+	}
 
-	stubs.Stub(&packages.ZypperExists, false)
-	stubs.Stub(&packages.AptExists, true)
-	stubs.Stub(&packages.GemExists, false)
-	stubs.Stub(&packages.PipExists, false)
-	stubs.Stub(&packages.YumExists, false)
+	packages.ZypperExists = false
+	packages.AptExists = true
+	packages.GemExists = false
+	packages.PipExists = false
+	packages.YumExists = false
 
-	stubs.Stub(&osinfo.Architecture, func(arch string) string {
+	osinfo.Architecture = func(arch string) string {
 		return "x86_64"
-	})
+	}
 
-	stubs.Stub(&common.Run, func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	common.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
 		return []byte(aptupdates), nil
-	})
-	defer stubs.Reset()
+	}
 
 	config.SetVersion("1")
 
@@ -651,7 +645,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 }
 
 func TestInventoryInfoGetGemUpdates(t *testing.T) {
-	var AppFs= afero.NewMemMapFs()
+	var AppFs = afero.NewMemMapFs()
 	assertion := assert.New(t)
 	releaseFile := "/etc/os-release"
 	AppFs.Create(releaseFile)
@@ -668,43 +662,42 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-	stubs := gostub.Stub(&common.OsHostname, func() (string, error) {
+	common.OsHostname = func() (string, error) {
 		return "test-hostname", nil
-	})
+	}
 
-	stubs.Stub(&osinfo.GetUname, func() ([]byte, error) {
+	osinfo.GetUname = func() ([]byte, error) {
 		return []byte("test-kernel"), nil
-	})
+	}
 
-	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
+	common.ReadFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
-	})
+	}
 
 	gemupdates := `
 	   foo (1.2.8 < 1.3.2)
 	   bar (1.0.0 < 1.1.2)
 `
-	stubs.Stub(&common.Exists, func(name string) bool {
+	common.Exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
 		return true
-	})
+	}
 
-	stubs.Stub(&packages.ZypperExists, false)
-	stubs.Stub(&packages.AptExists, false)
-	stubs.Stub(&packages.GemExists, true)
-	stubs.Stub(&packages.PipExists, false)
-	stubs.Stub(&packages.YumExists, false)
+	packages.ZypperExists = false
+	packages.AptExists = false
+	packages.GemExists = true
+	packages.PipExists = false
+	packages.YumExists = false
 
-	stubs.Stub(&osinfo.Architecture, func(arch string) string {
+	osinfo.Architecture = func(arch string) string {
 		return "x86_64"
-	})
+	}
 
-	stubs.Stub(&common.Run, func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	common.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
 		return []byte(gemupdates), nil
-	})
-	defer stubs.Reset()
+	}
 
 	config.SetVersion("1")
 
@@ -716,7 +709,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 }
 
 func TestInventoryInfoGetPipUpdates(t *testing.T) {
-	var AppFs= afero.NewMemMapFs()
+	var AppFs = afero.NewMemMapFs()
 	assertion := assert.New(t)
 	releaseFile := "/etc/os-release"
 	AppFs.Create(releaseFile)
@@ -733,43 +726,42 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-	stubs := gostub.Stub(&common.OsHostname, func() (string, error) {
+	common.OsHostname = func() (string, error) {
 		return "test-hostname", nil
-	})
+	}
 
-	stubs.Stub(&osinfo.GetUname, func() ([]byte, error) {
+	osinfo.GetUname = func() ([]byte, error) {
 		return []byte("test-kernel"), nil
-	})
+	}
 
-	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
+	common.ReadFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
-	})
+	}
 
 	pipupdates := `
 	   foo (4.5.3) - Latest: 4.6.0 [repo]
 	   bar (1.3) - Latest: 1.4 [repo]
 `
-	stubs.Stub(&common.Exists, func(name string) bool {
+	common.Exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
 		return true
-	})
+	}
 
-	stubs.Stub(&packages.ZypperExists, false)
-	stubs.Stub(&packages.AptExists, false)
-	stubs.Stub(&packages.GemExists, false)
-	stubs.Stub(&packages.PipExists, true)
-	stubs.Stub(&packages.YumExists, false)
+	packages.ZypperExists = false
+	packages.AptExists = false
+	packages.GemExists = false
+	packages.PipExists = true
+	packages.YumExists = false
 
-	stubs.Stub(&osinfo.Architecture, func(arch string) string {
+	osinfo.Architecture = func(arch string) string {
 		return "x86_64"
-	})
+	}
 
-	stubs.Stub(&common.Run, func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	common.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
 		return []byte(pipupdates), nil
-	})
-	defer stubs.Reset()
+	}
 
 	config.SetVersion("1")
 
@@ -781,7 +773,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 }
 
 func TestInventoryInfoGetZypperUpdates(t *testing.T) {
-	var AppFs= afero.NewMemMapFs()
+	var AppFs = afero.NewMemMapFs()
 	assertion := assert.New(t)
 	releaseFile := "/etc/os-release"
 	AppFs.Create(releaseFile)
@@ -798,17 +790,17 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-	stubs := gostub.Stub(&common.OsHostname, func() (string, error) {
+	common.OsHostname = func() (string, error) {
 		return "test-hostname", nil
-	})
+	}
 
-	stubs.Stub(&osinfo.GetUname, func() ([]byte, error) {
+	osinfo.GetUname = func() ([]byte, error) {
 		return []byte("test-kernel"), nil
-	})
+	}
 
-	stubs.Stub(&common.ReadFile, func(file string) ([]byte, error) {
+	common.ReadFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
-	})
+	}
 
 	zypperupdates := `
 		      S | Repository          | Name                   | Current Version | Available Version | Arch
@@ -816,27 +808,26 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 		      v | SLES12-SP3-Updates  | at                     | 3.1.14-7.3      | 3.1.14-8.3.1      | x86_64
 		      v | SLES12-SP3-Updates  | autoyast2-installation | 3.2.17-1.3      | 3.2.22-2.9.2      | noarch
 `
-	stubs.Stub(&common.Exists, func(name string) bool {
+	common.Exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
 		return true
-	})
+	}
 
-	stubs.Stub(&packages.ZypperExists, true)
-	stubs.Stub(&packages.AptExists, false)
-	stubs.Stub(&packages.GemExists, false)
-	stubs.Stub(&packages.PipExists, false)
-	stubs.Stub(&packages.YumExists, false)
+	packages.ZypperExists = true
+	packages.AptExists = false
+	packages.GemExists = false
+	packages.PipExists = false
+	packages.YumExists = false
 
-	stubs.Stub(&osinfo.Architecture, func(arch string) string {
+	osinfo.Architecture = func(arch string) string {
 		return "x86_64"
-	})
+	}
 
-	stubs.Stub(&common.Run, func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	common.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
 		return []byte(zypperupdates), nil
-	})
-	defer stubs.Reset()
+	}
 
 	config.SetVersion("1")
 
@@ -847,4 +838,3 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 	assertion.Equal("3.1.14-8.3.1", ii.PackageUpdates.Zypper[0].Version, "update package version does not match")
 
 }
-

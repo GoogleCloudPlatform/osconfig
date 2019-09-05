@@ -169,7 +169,7 @@ var OsHostname = func() (name string, err error) {
 	return os.Hostname()
 }
 
-// Readfile is a wrapper to read file
+// ReadFile is a wrapper to read file
 var ReadFile = func(file string) ([]byte, error) {
 	return ioutil.ReadFile(file)
 }
