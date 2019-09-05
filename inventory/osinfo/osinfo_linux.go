@@ -19,15 +19,22 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"os/exec"
 	"regexp"
 	"runtime"
 	"strings"
+
+	"github.com/GoogleCloudPlatform/osconfig/common"
 )
 
 var (
-	entRelVerRgx = regexp.MustCompile(`/d+(\./d+)?(\./d+)?`)
+	entRelVerRgx = regexp.MustCompile(`\d+(\.\d+)?(\.\d+)?`)
+	getUname     = func() ([]byte, error) {
+		return exec.Command("/bin/uname", "-r").CombinedOutput()
+	}
+	readFile = func(file string) ([]byte, error) {
+		return ioutil.ReadFile(file)
+	}
 )
 
 const (
@@ -36,16 +43,9 @@ const (
 	rhRelease = "/etc/redhat-release"
 )
 
-func exists(name string) bool {
-	if _, err := os.Stat(name); os.IsNotExist(err) {
-		return false
-	}
-	return true
-}
-
 func parseOsRelease(path string) (*DistributionInfo, error) {
 	di := &DistributionInfo{}
-	b, err := ioutil.ReadFile(path)
+	b, err := readFile(path)
 	if err != nil {
 		return di, fmt.Errorf("unable to obtain release info: %v", err)
 	}
@@ -76,7 +76,7 @@ func parseOsRelease(path string) (*DistributionInfo, error) {
 }
 
 func parseEnterpriseRelease(path string) (*DistributionInfo, error) {
-	b, err := ioutil.ReadFile(path)
+	b, err := readFile(path)
 	if err != nil {
 		return &DistributionInfo{ShortName: Linux}, fmt.Errorf("unable to obtain release info: %v", err)
 	}
@@ -105,11 +105,11 @@ func GetDistributionInfo() (*DistributionInfo, error) {
 	var err error
 	switch {
 	// Check for /etc/os-release first.
-	case exists(osRelease):
+	case common.Exists(osRelease):
 		di, err = parseOsRelease(osRelease)
-	case exists(oRelease):
+	case common.Exists(oRelease):
 		di, err = parseEnterpriseRelease(oRelease)
-	case exists(rhRelease):
+	case common.Exists(rhRelease):
 		di, err = parseEnterpriseRelease(rhRelease)
 	default:
 		err = errors.New("unable to obtain release info, no known /etc/*-release exists")
@@ -118,7 +118,7 @@ func GetDistributionInfo() (*DistributionInfo, error) {
 		return nil, err
 	}
 
-	out, err := exec.Command("/bin/uname", "-r").CombinedOutput()
+	out, err := getUname()
 	if err != nil {
 		return nil, err
 	}

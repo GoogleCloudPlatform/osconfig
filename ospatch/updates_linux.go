@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GoogleCloudPlatform/osconfig/common"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
@@ -42,7 +43,7 @@ func (r *patchRun) systemRebootRequired() (bool, error) {
 		r.debugf("/var/run/reboot-required exists indicating a reboot is required, content:\n%s", string(data))
 		return true, nil
 	}
-	if ok, _ := exists(rpmquery); ok {
+	if ok := common.Exists(rpmquery); ok {
 		r.debugf("Checking if reboot required by querying rpm database.")
 		return rpmReboot()
 	}
@@ -77,7 +78,13 @@ func (r *patchRun) runUpdates() error {
 		}
 	}
 	if packages.ZypperExists {
-		opts := []ZypperPatchOption{ZypperPatchRunner(patchRunRunner(r))}
+		opts := []ZypperPatchOption{
+			ZypperPatchRunner(patchRunRunner(r)),
+			ZypperPatchCategories(r.Job.GetPatchConfig().GetZypper().GetCategories()),
+			ZypperPatchSeverities(r.Job.GetPatchConfig().GetZypper().GetSeverities()),
+			ZypperUpdateWithUpdate(r.Job.GetPatchConfig().GetZypper().GetWithUpdate()),
+			ZypperUpdateWithOptional(r.Job.GetPatchConfig().GetZypper().GetWithOptional()),
+		}
 		r.debugf("Installing Zypper package updates.")
 		if err := retry(retryPeriod, "installing Zypper package updates", r.debugf, func() error { return RunZypperPatch(opts...) }); err != nil {
 			errs = append(errs, err.Error())
