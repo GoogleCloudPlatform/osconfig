@@ -142,8 +142,8 @@ func TestSetConfigDefaultValues(t *testing.T) {
 		t.Errorf("Default endpoint: got(%s) != want(%s)", SvcEndpoint(), prodEndpoint)
 	}
 
-	if MaxMetadataRetryDelay() != 30 * time.Second {
-		t.Errorf("MaxMetadataretry: got(%s) != want(%s)", MaxMetadataRetryDelay(), 30 * time.Second)
+	if MaxMetadataRetryDelay() != 30*time.Second {
+		t.Errorf("MaxMetadataretry: got(%s) != want(%s)", MaxMetadataRetryDelay(), 30*time.Second)
 	}
 
 	if MaxMetadataRetries() != 3 {
@@ -172,7 +172,7 @@ func TestSetConfig_Error(t *testing.T) {
 		t.Fatalf("Error running os.Setenv: %v", err)
 	}
 
-	if err := SetConfig(); err == nil || !strings.Contains(err.Error(), "unexpected end of JSON input"){
+	if err := SetConfig(); err == nil || !strings.Contains(err.Error(), "unexpected end of JSON input") {
 		t.Errorf("Unexpected output %s", err.Error())
 	}
 

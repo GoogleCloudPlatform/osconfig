@@ -51,7 +51,7 @@ func TestPostAttribute_StatusNotOk(t *testing.T) {
 	}))
 	defer ts.Close()
 	err := PostAttribute(ts.URL, strings.NewReader("test bytes"))
-	if err == nil || !strings.Contains(err.Error(), "400 Bad Request"){
+	if err == nil || !strings.Contains(err.Error(), "400 Bad Request") {
 		t.Errorf("test failed, Should be an error")
 	}
 }

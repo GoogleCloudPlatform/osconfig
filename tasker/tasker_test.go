@@ -23,7 +23,7 @@ import (
 )
 
 type timeNote struct {
-	id int
+	id        int
 	timestamp time.Time
 }
 
@@ -31,13 +31,12 @@ var notes = []*timeNote{}
 var lock sync.Mutex
 var counter int
 
-
 // TestEnqueue_taskRunSequentially creates task that writes
 // to a common file
 func TestEnqueue_taskRunSequentially(t *testing.T) {
 	times := 100
 	for i := 0; i < times; i++ {
-		 AddToQueue()
+		AddToQueue()
 	}
 	Close()
 
@@ -54,6 +53,6 @@ func AddToQueue() {
 	i := counter
 	lock.Unlock()
 	Enqueue(strconv.Itoa(i), func() {
-		notes = append(notes, &timeNote{id:i, timestamp:time.Now()})
+		notes = append(notes, &timeNote{id: i, timestamp: time.Now()})
 	})
 }
