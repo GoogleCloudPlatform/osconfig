@@ -99,7 +99,7 @@ func parsePermissions(s string) (os.FileMode, error) {
 }
 
 // StepArchiveExtraction builds the command for a ArchiveExtraction step
-func StepArchiveExtraction(step *osconfigpb.SoftwareRecipe_Step_ArchiveExtraction, artifacts map[string]string, stepDir string) error {
+func StepArchiveExtraction(step *osconfigpb.SoftwareRecipe_Step_ArchiveExtraction, artifacts map[string]string) error {
 	filename, ok := artifacts[step.ArchiveExtraction.GetArtifactId()]
 	if !ok {
 		return fmt.Errorf("%q not found in artifact map", step.ArchiveExtraction.GetArtifactId())
@@ -107,103 +107,30 @@ func StepArchiveExtraction(step *osconfigpb.SoftwareRecipe_Step_ArchiveExtractio
 	switch step.ArchiveExtraction.GetType() {
 	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_ZIP:
 		return extractZip(filename, step.ArchiveExtraction.Destination)
-	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR:
-		return extractTar(filename, step.ArchiveExtraction.Destination)
 	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_GZIP:
-		compressed, err := os.Open(filename)
-		if err != nil {
-			return err
-		}
-		defer compressed.Close()
-		reader, err := gzip.NewReader(compressed)
-		if err != nil {
-			return err
-		}
-		defer reader.Close()
-		decompressed, err := ioutil.TempFile(stepDir, "archive-*.tar")
-		if err != nil {
-			return err
-		}
-		_, err = io.Copy(decompressed, reader)
-		decompressed.Close()
-		if err != nil {
-			return err
-		}
-		return extractTar(decompressed.Name(), step.ArchiveExtraction.Destination)
+		fallthrough
 	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_BZIP:
-		compressed, err := os.Open(filename)
-		if err != nil {
-			return err
-		}
-		defer compressed.Close()
-		reader := bzip2.NewReader(compressed)
-		if err != nil {
-			return err
-		}
-		decompressed, err := os.Create(filepath.Join(stepDir, "archive.tar"))
-		if err != nil {
-			return err
-		}
-		_, err = io.Copy(decompressed, reader)
-		decompressed.Close()
-		if err != nil {
-			return err
-		}
-		return extractTar(decompressed.Name(), step.ArchiveExtraction.Destination)
+		fallthrough
 	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_LZMA:
-		compressed, err := os.Open(filename)
-		if err != nil {
-			return err
-		}
-		defer compressed.Close()
-		reader, err := lzma.NewReader2(compressed)
-		if err != nil {
-			return err
-		}
-		decompressed, err := os.Create(filepath.Join(stepDir, "archive.tar"))
-		if err != nil {
-			return err
-		}
-		_, err = io.Copy(decompressed, reader)
-		decompressed.Close()
-		if err != nil {
-			return err
-		}
-		return extractTar(decompressed.Name(), step.ArchiveExtraction.Destination)
+		fallthrough
 	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_XZ:
-		compressed, err := os.Open(filename)
-		if err != nil {
-			return err
-		}
-		defer compressed.Close()
-		reader, err := xz.NewReader(compressed)
-		if err != nil {
-			return err
-		}
-		decompressed, err := os.Create(filepath.Join(stepDir, "archive.tar"))
-		if err != nil {
-			return err
-		}
-		_, err = io.Copy(decompressed, reader)
-		decompressed.Close()
-		if err != nil {
-			return err
-		}
-		return extractTar(decompressed.Name(), step.ArchiveExtraction.Destination)
+		fallthrough
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR:
+		return extractTar(filename, step.ArchiveExtraction.Destination, step.ArchiveExtraction.GetType())
 	default:
 		return fmt.Errorf("Unrecognized archive type %q", step.ArchiveExtraction.GetType())
 	}
 }
 
 func zipIsDir(name string) bool {
-	return strings.HasSuffix(name, "/") || strings.HasSuffix(name, "\\")
+	return strings.HasSuffix(name, string(os.PathSeparator))
 }
 
 func normalizeSlashes(s string) string {
-	if runtime.GOOS == "windows" {
-		return strings.Replace(s, "/", "\\", -1)
+	if os.PathSeparator != '/' {
+		return strings.Replace(s, "/", string(os.PathSeparator), -1)
 	}
-	return strings.Replace(s, "\\", "/", -1)
+	return s
 }
 
 func extractZip(zipPath string, dst string) error {
@@ -283,14 +210,26 @@ func extractZip(zipPath string, dst string) error {
 	return nil
 }
 
-func extractTar(tarName string, dst string) error {
-	file, err := os.Open(tarName)
-	if err != nil {
-		return err
+func decompress(reader io.Reader, archiveType osconfigpb.SoftwareRecipe_Step_ExtractArchive_ArchiveType) (io.ReadCloser, error) {
+	switch archiveType {
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_GZIP:
+		return gzip.NewReader(reader)
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_BZIP:
+		return ioutil.NopCloser(bzip2.NewReader(reader)), nil
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_LZMA:
+		decompressed, err := lzma.NewReader2(reader)
+		return ioutil.NopCloser(decompressed), err
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_XZ:
+		decompressed, err := xz.NewReader(reader)
+		return ioutil.NopCloser(decompressed), err
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR:
+		return ioutil.NopCloser(reader), nil
+	default:
+		return nil, fmt.Errorf("Unrecognized archive type %q when trying to decompress tar", archiveType)
 	}
-	tr := tar.NewReader(file)
+}
 
-	// Check for conflicts
+func checkForConflicts(tr *tar.Reader, dst string) error {
 	for {
 		header, err := tr.Next()
 		if err == io.EOF {
@@ -317,11 +256,10 @@ func extractTar(tarName string, dst string) error {
 		}
 		return fmt.Errorf("file exists: %s", filen)
 	}
+	return nil
+}
 
-	file.Seek(0, 0)
-	tr = tar.NewReader(file)
-
-	// Create files.
+func createFiles(tr *tar.Reader, dst string) error {
 	for {
 		var err error
 		header, err := tr.Next()
@@ -403,6 +341,35 @@ func extractTar(tarName string, dst string) error {
 		}
 	}
 	return nil
+}
+
+func extractTar(tarName string, dst string, archiveType osconfigpb.SoftwareRecipe_Step_ExtractArchive_ArchiveType) error {
+	file, err := os.Open(tarName)
+	if err != nil {
+		return err
+	}
+	decompressed, err := decompress(file, archiveType)
+	if err != nil {
+		return err
+	}
+	tr := tar.NewReader(decompressed)
+
+	err = checkForConflicts(tr, dst)
+	decompressed.Close()
+	if err != nil {
+		return err
+	}
+
+	file.Seek(0, 0)
+	decompressed, err = decompress(file, archiveType)
+	if err != nil {
+		return err
+	}
+	tr = tar.NewReader(decompressed)
+
+	err = createFiles(tr, dst)
+	decompressed.Close()
+	return err
 }
 
 // StepMsiInstallation builds the command for a MsiInstallation step
