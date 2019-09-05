@@ -21,7 +21,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -30,10 +29,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GoogleCloudPlatform/osconfig/common"
-
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
-
+	"github.com/GoogleCloudPlatform/osconfig/common"
 	"github.com/ulikunitz/xz"
 	"github.com/ulikunitz/xz/lzma"
 )
@@ -210,20 +207,19 @@ func extractZip(zipPath string, dst string) error {
 	return nil
 }
 
-func decompress(reader io.Reader, archiveType osconfigpb.SoftwareRecipe_Step_ExtractArchive_ArchiveType) (io.ReadCloser, error) {
+func decompress(reader io.Reader, archiveType osconfigpb.SoftwareRecipe_Step_ExtractArchive_ArchiveType) (io.Reader, error) {
 	switch archiveType {
 	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_GZIP:
+		// *gzip.Reader is a io.ReadCloser but the Close() method isn't necessary to call
 		return gzip.NewReader(reader)
 	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_BZIP:
-		return ioutil.NopCloser(bzip2.NewReader(reader)), nil
+		return bzip2.NewReader(reader), nil
 	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_LZMA:
-		decompressed, err := lzma.NewReader2(reader)
-		return ioutil.NopCloser(decompressed), err
+		return lzma.NewReader2(reader)
 	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_XZ:
-		decompressed, err := xz.NewReader(reader)
-		return ioutil.NopCloser(decompressed), err
+		return xz.NewReader(reader)
 	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR:
-		return ioutil.NopCloser(reader), nil
+		return reader, nil
 	default:
 		return nil, fmt.Errorf("Unrecognized archive type %q when trying to decompress tar", archiveType)
 	}
@@ -355,7 +351,6 @@ func extractTar(tarName string, dst string, archiveType osconfigpb.SoftwareRecip
 	tr := tar.NewReader(decompressed)
 
 	err = checkForConflicts(tr, dst)
-	decompressed.Close()
 	if err != nil {
 		return err
 	}
@@ -367,9 +362,7 @@ func extractTar(tarName string, dst string, archiveType osconfigpb.SoftwareRecip
 	}
 	tr = tar.NewReader(decompressed)
 
-	err = createFiles(tr, dst)
-	decompressed.Close()
-	return err
+	return createFiles(tr, dst)
 }
 
 // StepMsiInstallation builds the command for a MsiInstallation step
