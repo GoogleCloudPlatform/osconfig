@@ -266,13 +266,17 @@ func createFiles(tr *tar.Reader, dst string) error {
 			return err
 		}
 		filedir := filepath.Dir(filen)
-		err = os.MkdirAll(filedir, 0755)
+		err = os.MkdirAll(filedir, 0700)
 		if err != nil {
 			return err
 		}
 		switch header.Typeflag {
 		case tar.TypeDir:
 			if err = os.MkdirAll(filen, os.FileMode(header.Mode)); err != nil {
+				return err
+			}
+			// Setting to correct permissions in case the directory has already been created
+			if err = os.Chmod(filen, os.FileMode(header.Mode)); err != nil {
 				return err
 			}
 			if err = os.Chown(filen, header.Uid, header.Gid); err != nil {
