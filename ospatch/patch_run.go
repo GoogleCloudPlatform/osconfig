@@ -484,10 +484,10 @@ func (r *patchRun) reportPatchDetails(patchState osconfigpb.Instance_PatchState,
 
 func (r *patchRun) prePatchStep() error {
 	r.debugf("Running pre-patch step.")
-	return nil
+	return r.execPreStep()
 }
 
 func (r *patchRun) postPatchStep() error {
 	r.debugf("Running post-patch step.")
-	return nil
+	return r.execPostStep()
 }
