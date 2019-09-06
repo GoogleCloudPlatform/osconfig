@@ -168,6 +168,10 @@ func extractZip(zipPath string, dst string) error {
 			if err = os.MkdirAll(filen, mode); err != nil {
 				return err
 			}
+			// Setting to correct permissions in case the directory has already been created
+			if err = os.Chmod(filen, mode); err != nil {
+				return err
+			}
 			continue
 		}
 		filedir := filepath.Dir(filen)
