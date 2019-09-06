@@ -15,6 +15,10 @@
 package recipes
 
 import (
+	"archive/tar"
+	"archive/zip"
+	"compress/bzip2"
+	"compress/gzip"
 	"fmt"
 	"io"
 	"os"
@@ -22,10 +26,13 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
-
-	"github.com/GoogleCloudPlatform/osconfig/common"
+	"strings"
+	"time"
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
+	"github.com/GoogleCloudPlatform/osconfig/common"
+	"github.com/ulikunitz/xz"
+	"github.com/ulikunitz/xz/lzma"
 )
 
 // StepFileCopy builds the command for a FileCopy step
@@ -90,8 +97,276 @@ func parsePermissions(s string) (os.FileMode, error) {
 
 // StepArchiveExtraction builds the command for a ArchiveExtraction step
 func StepArchiveExtraction(step *osconfigpb.SoftwareRecipe_Step_ArchiveExtraction, artifacts map[string]string) error {
-	fmt.Println("StepArchiveExtraction")
+	filename, ok := artifacts[step.ArchiveExtraction.GetArtifactId()]
+	if !ok {
+		return fmt.Errorf("%q not found in artifact map", step.ArchiveExtraction.GetArtifactId())
+	}
+	switch step.ArchiveExtraction.GetType() {
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_ZIP:
+		return extractZip(filename, step.ArchiveExtraction.Destination)
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_GZIP,
+		osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_BZIP,
+		osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_LZMA,
+		osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_XZ,
+		osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR:
+		return extractTar(filename, step.ArchiveExtraction.Destination, step.ArchiveExtraction.GetType())
+	default:
+		return fmt.Errorf("Unrecognized archive type %q", step.ArchiveExtraction.GetType())
+	}
+}
+
+func zipIsDir(name string) bool {
+	return strings.HasSuffix(name, string(os.PathSeparator))
+}
+
+func normalizeSlashes(s string) string {
+	if os.PathSeparator != '/' {
+		return strings.Replace(s, "/", string(os.PathSeparator), -1)
+	}
+	return s
+}
+
+func extractZip(zipPath string, dst string) error {
+	zr, err := zip.OpenReader(zipPath)
+	if err != nil {
+		return err
+	}
+	defer zr.Close()
+
+	// Check for conflicts
+	for _, f := range zr.File {
+		filen, err := common.NormPath(filepath.Join(dst, normalizeSlashes(f.Name)))
+		if err != nil {
+			return err
+		}
+		fmt.Printf("checking if file %s exists\n", filen)
+		stat, err := os.Stat(filen)
+		if os.IsNotExist(err) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		if zipIsDir(f.Name) && stat.IsDir() {
+			// it's ok if directories already exist
+			continue
+		}
+		return fmt.Errorf("file exists: %s", filen)
+	}
+
+	// Create files.
+	for _, f := range zr.File {
+		filen, err := common.NormPath(filepath.Join(dst, normalizeSlashes(f.Name)))
+		if err != nil {
+			return err
+		}
+		if zipIsDir(f.Name) {
+			mode := f.Mode()
+			if mode == 0 {
+				mode = 0755
+			}
+			if err = os.MkdirAll(filen, mode); err != nil {
+				return err
+			}
+			// Setting to correct permissions in case the directory has already been created
+			if err = os.Chmod(filen, mode); err != nil {
+				return err
+			}
+			continue
+		}
+		filedir := filepath.Dir(filen)
+		if err = os.MkdirAll(filedir, 0755); err != nil {
+			return err
+		}
+		fmt.Printf("os.Create %s\n", filen)
+		reader, err := f.Open()
+		if err != nil {
+			return err
+		}
+
+		mode := f.Mode()
+		if mode == 0 {
+			mode = 0755
+		}
+
+		dst, err := os.OpenFile(filen, os.O_RDWR|os.O_CREATE, mode)
+		if err != nil {
+			return err
+		}
+		_, err = io.Copy(dst, reader)
+		dst.Close()
+		reader.Close()
+		if err != nil {
+			return err
+		}
+		err = os.Chtimes(filen, time.Now(), f.ModTime())
+		if err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func decompress(reader io.Reader, archiveType osconfigpb.SoftwareRecipe_Step_ExtractArchive_ArchiveType) (io.Reader, error) {
+	switch archiveType {
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_GZIP:
+		// *gzip.Reader is a io.ReadCloser but it isn't necesary to call Close() on it.
+		return gzip.NewReader(reader)
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_BZIP:
+		return bzip2.NewReader(reader), nil
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_LZMA:
+		return lzma.NewReader2(reader)
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_XZ:
+		return xz.NewReader(reader)
+	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR:
+		return reader, nil
+	default:
+		return nil, fmt.Errorf("Unrecognized archive type %q when trying to decompress tar", archiveType)
+	}
+}
+
+func checkForConflicts(tr *tar.Reader, dst string) error {
+	for {
+		header, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		filen, err := common.NormPath(filepath.Join(dst, header.Name))
+		if err != nil {
+			return err
+		}
+		fmt.Printf("checking if file %s exists\n", filen)
+		stat, err := os.Stat(filen)
+		if os.IsNotExist(err) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		if header.Typeflag == tar.TypeDir && stat.IsDir() {
+			// it's ok if directories already exist
+			continue
+		}
+		return fmt.Errorf("file exists: %s", filen)
+	}
+	return nil
+}
+
+func createFiles(tr *tar.Reader, dst string) error {
+	for {
+		var err error
+		header, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		filen, err := common.NormPath(filepath.Join(dst, header.Name))
+		if err != nil {
+			return err
+		}
+		filedir := filepath.Dir(filen)
+		err = os.MkdirAll(filedir, 0700)
+		if err != nil {
+			return err
+		}
+		switch header.Typeflag {
+		case tar.TypeDir:
+			if err = os.MkdirAll(filen, os.FileMode(header.Mode)); err != nil {
+				return err
+			}
+			// Setting to correct permissions in case the directory has already been created
+			if err = os.Chmod(filen, os.FileMode(header.Mode)); err != nil {
+				return err
+			}
+			if err = os.Chown(filen, header.Uid, header.Gid); err != nil {
+				return err
+			}
+		case tar.TypeReg, tar.TypeRegA:
+			fmt.Printf("os.Create %s (owner %s/%d group %s/%d)\n", filen, header.Uname, header.Uid, header.Gname, header.Gid)
+			dst, err := os.OpenFile(filen, os.O_RDWR|os.O_CREATE, os.FileMode(header.Mode))
+			if err != nil {
+				return err
+			}
+			_, err = io.Copy(dst, tr)
+			dst.Close()
+			if err != nil {
+				return err
+			}
+		case tar.TypeLink:
+			if err = os.Link(header.Linkname, filen); err != nil {
+				return err
+			}
+			continue
+		case tar.TypeSymlink:
+			if err = os.Symlink(header.Linkname, filen); err != nil {
+				return err
+			}
+			continue
+		case tar.TypeChar:
+			if err = mkCharDevice(filen, uint32(header.Devmajor), uint32(header.Devminor)); err != nil {
+				return err
+			}
+			if runtime.GOOS != "windows" {
+				if err = os.Chmod(filen, os.FileMode(header.Mode)); err != nil {
+					return err
+				}
+			}
+		case tar.TypeBlock:
+			if err = mkBlockDevice(filen, uint32(header.Devmajor), uint32(header.Devminor)); err != nil {
+				return err
+			}
+			if runtime.GOOS != "windows" {
+				if err = os.Chmod(filen, os.FileMode(header.Mode)); err != nil {
+					return err
+				}
+			}
+		case tar.TypeFifo:
+			if err = mkFifo(filen, uint32(header.Mode)); err != nil {
+				return err
+			}
+		default:
+			fmt.Printf("unknown type for %s\n", filen)
+			continue
+		}
+		if err = os.Chown(filen, header.Uid, header.Gid); err != nil {
+			return err
+		}
+		if err = os.Chtimes(filen, header.AccessTime, header.ModTime); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func extractTar(tarName string, dst string, archiveType osconfigpb.SoftwareRecipe_Step_ExtractArchive_ArchiveType) error {
+	file, err := os.Open(tarName)
+	if err != nil {
+		return err
+	}
+	decompressed, err := decompress(file, archiveType)
+	if err != nil {
+		return err
+	}
+	tr := tar.NewReader(decompressed)
+
+	err = checkForConflicts(tr, dst)
+	if err != nil {
+		return err
+	}
+
+	file.Seek(0, 0)
+	decompressed, err = decompress(file, archiveType)
+	if err != nil {
+		return err
+	}
+	tr = tar.NewReader(decompressed)
+
+	return createFiles(tr, dst)
 }
 
 // StepMsiInstallation builds the command for a MsiInstallation step
