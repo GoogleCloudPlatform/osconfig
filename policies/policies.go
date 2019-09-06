@@ -34,6 +34,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
+	"github.com/GoogleCloudPlatform/osconfig/policies/recipes"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc/status"
@@ -57,6 +58,8 @@ func run(ctx context.Context, res string) {
 
 	// We don't check the error from ospackage.SetConfig as all errors are already logged.
 	setConfig(resp)
+
+	installRecipes(ctx, resp)
 }
 
 // Run looks up osconfigs and applies them using tasker.Enqueue.
@@ -104,6 +107,17 @@ func lookupEffectivePolicies(ctx context.Context, client *osconfig.Client, insta
 	logger.Debugf("LookupEffectiveGuestPolicies response:\n%s", common.PrettyFmt(res))
 
 	return res, nil
+}
+
+func installRecipes(ctx context.Context, res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
+	for _, recipe := range res.GetSoftwareRecipes() {
+		if r := recipe.GetSoftwareRecipe(); r != nil {
+			if err := recipes.InstallRecipe(ctx, r); err != nil {
+				logger.Errorf("Error installing recipe: %v", err)
+			}
+		}
+	}
+	return nil
 }
 
 func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
