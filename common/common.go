@@ -16,36 +16,18 @@
 package common
 
 import (
-	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
-	"io"
-	"net/http"
+	"io/ioutil"
+	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 
-	"cloud.google.com/go/storage"
-
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 )
-
-var (
-	testStorageClient *storage.Client
-	testHTTPClient    *http.Client
-)
-
-// Logger holds log functions.
-type Logger struct {
-	Debugf   func(string, ...interface{})
-	Infof    func(string, ...interface{})
-	Warningf func(string, ...interface{})
-	Errorf   func(string, ...interface{})
-	Fatalf   func(string, ...interface{})
-}
 
 // PrettyFmt uses jsonpb to marshal a proto for pretty printing.
 func PrettyFmt(pb proto.Message) string {
@@ -55,64 +37,6 @@ func PrettyFmt(pb proto.Message) string {
 		out = fmt.Sprintf("Error marshaling proto message: %v\n%s", err, out)
 	}
 	return out
-}
-
-// FetchWithGCS produces a GCS reader for a GCS object.
-func FetchWithGCS(ctx context.Context, bucket, object string, generation int64) (*storage.Reader, error) {
-	client, err := newStorageClient(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create storage client: %v", err)
-	}
-	defer client.Close()
-
-	oh := client.Bucket(bucket).Object(object)
-	if generation != 0 {
-		oh = oh.Generation(generation)
-	}
-
-	r, err := oh.NewReader(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return r, nil
-}
-
-// FetchWithHTTP retrieves a HTTP response from a Get URI.
-func FetchWithHTTP(ctx context.Context, uri string) (*http.Response, error) {
-	resp, err := newHTTPClient().Get(uri)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("got http status %d when attempting to download artifact", resp.StatusCode)
-	}
-
-	return resp, nil
-}
-
-// DownloadStream writes the artifact to a local path.
-func DownloadStream(r io.Reader, checksum string, localPath string) error {
-	localPath, err := NormPath(localPath)
-	if err != nil {
-		return err
-	}
-	file, err := os.Create(localPath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	hasher := sha256.New()
-	if _, err = io.Copy(io.MultiWriter(file, hasher), r); err != nil {
-		return err
-	}
-	computed := hex.EncodeToString(hasher.Sum(nil))
-	if checksum != "" && !strings.EqualFold(checksum, computed) {
-		return fmt.Errorf("got %q for checksum, expected %q", computed, checksum)
-	}
-	return nil
 }
 
 // NormPath transforms a windows path into an extended-length path as described in
@@ -136,19 +60,9 @@ func NormPath(path string) (string, error) {
 	return "\\\\?\\" + path, nil
 }
 
-func newStorageClient(ctx context.Context) (*storage.Client, error) {
-	if testStorageClient != nil {
-		return testStorageClient, nil
-	}
-	return storage.NewClient(ctx)
-}
-
-func newHTTPClient() *http.Client {
-	if testHTTPClient != nil {
-		return testHTTPClient
-	}
-	return &http.Client{}
-}
+// Stubbed methods below
+// this is done so that this function can be stubbed
+// for unit testing
 
 // Exists Checks if a file exists on the filesystem
 var Exists = func(name string) bool {
@@ -156,4 +70,20 @@ var Exists = func(name string) bool {
 		return false
 	}
 	return true
+}
+
+// OsHostname is a wrapper to get os hostname
+var OsHostname = func() (name string, err error) {
+	return os.Hostname()
+}
+
+// Readfile is a wrapper to read file
+var ReadFile = func(file string) ([]byte, error) {
+	return ioutil.ReadFile(file)
+}
+
+// Run is a wrapper to execute terminal commands
+var Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	logger.Printf("Running %q with args %q\n", cmd.Path, cmd.Args[1:])
+	return cmd.CombinedOutput()
 }

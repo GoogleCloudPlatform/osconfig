@@ -18,16 +18,24 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"path"
 	"path/filepath"
 
-	"github.com/GoogleCloudPlatform/osconfig/common"
-
+	"cloud.google.com/go/storage"
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
 
-// FetchArtifacts takes in a slice of artifacs and dowloads them into the specified directory,
+var getGCSClient = func(ctx context.Context) (*storage.Client, error) {
+	return storage.NewClient(ctx)
+}
+
+var getHTTPClient = func() (*http.Client, error) {
+	return &http.Client{}, nil
+}
+
+// FetchArtifacts takes in a slice of artifacts and downloads them into the specified directory,
 // Returns a map of artifact names to their new locations on the local disk.
 func FetchArtifacts(ctx context.Context, artifacts []*osconfigpb.SoftwareRecipe_Artifact, directory string) (map[string]string, error) {
 	localNames := make(map[string]string)
@@ -44,15 +52,22 @@ func FetchArtifacts(ctx context.Context, artifacts []*osconfigpb.SoftwareRecipe_
 }
 
 func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Artifact, directory string) (string, error) {
-	var reader io.ReadCloser
 	var checksum, extension string
+	var reader io.ReadCloser
+
 	switch v := artifact.Artifact.(type) {
 	case *osconfigpb.SoftwareRecipe_Artifact_Gcs_:
 		extension = path.Ext(v.Gcs.Object)
-		reader, err := common.FetchWithGCS(ctx, v.Gcs.Bucket, v.Gcs.Object, v.Gcs.Generation)
+		cl, err := getGCSClient(ctx)
+		if err != nil {
+			return "", fmt.Errorf("error creating gcs client: %v", err)
+		}
+		gf := &GCS_fetcher{client: cl, Bucket: v.Gcs.Bucket, Object: v.Gcs.Object, generation: v.Gcs.Generation}
+		reader, err = gf.fetch(ctx)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q from GCS: %v", artifact.Id, err)
 		}
+
 		defer reader.Close()
 	case *osconfigpb.SoftwareRecipe_Artifact_Remote_:
 		uri, err := url.Parse(v.Remote.Uri)
@@ -64,12 +79,13 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 			return "", fmt.Errorf("error, artifact %q has unsupported protocol scheme %s", artifact.Id, uri.Scheme)
 		}
 		checksum = v.Remote.Checksum
-		response, err := common.FetchWithHTTP(ctx, v.Remote.Uri)
+		cl, err := getHTTPClient()
+		hf := HTTP_fetcher{client: cl, uri: uri.String()}
+		reader, err = hf.fetch(ctx)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q with http or https: %v", artifact.Id, err)
 		}
-		defer response.Body.Close()
-		reader = response.Body
+		defer reader.Close()
 	default:
 		return "", fmt.Errorf("unknown artifact type %T", v)
 	}
@@ -78,9 +94,6 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 	if extension != "" {
 		localPath = localPath + extension
 	}
-	err := common.DownloadStream(reader, checksum, localPath)
-	if err != nil {
-		return "", err
-	}
+	DownloadStream(ctx, reader, checksum, localPath)
 	return localPath, nil
 }
