@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-// Package common contains common functions for use in the osconfig agent.
+// Package util contains common functions for use in the osconfig agent.
 package util
 
 import (
