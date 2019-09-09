@@ -16,7 +16,6 @@ package recipes
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -51,7 +50,7 @@ func newRecipeDB() (*RecipeDB, error) {
 	}
 	db := &RecipeDB{Recipes: make(map[string]Recipe)}
 	if err := json.Unmarshal(bytes, &db); err != nil {
-		return nil, errors.New(fmt.Sprintf("Json Unmarshalling error: %s", err.Error()))
+		return nil, fmt.Errorf("Json Unmarshalling error: %s", err.Error())
 	}
 	return db, nil
 }

@@ -40,7 +40,7 @@ func getExecutablePath(ctx context.Context, logger *common.Logger, stepConfig *o
 		if err != nil {
 			return "", fmt.Errorf("error creating gcs client: %v", err)
 		}
-		gf := &external.GCS_fetcher{Client: cl, Bucket: gcsObject.Bucket, Object: gcsObject.Object, Generation: gcsObject.GenerationNumber}
+		gf := &external.GCSFetcher{Client: cl, Bucket: gcsObject.Bucket, Object: gcsObject.Object, Generation: gcsObject.GenerationNumber}
 		if err != nil {
 			return "", fmt.Errorf("error reading GCS object: %s", err)
 		}

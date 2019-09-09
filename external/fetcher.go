@@ -14,22 +14,22 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/common"
 )
 
-type Fetcher interface {
-	Fetch(ctx context.Context) (io.ReadCloser, error)
-}
-
-type GCS_fetcher struct {
+// GCSFetcher fetches data from GCS bucket
+type GCSFetcher struct {
 	Client         *storage.Client
 	Bucket, Object string
 	Generation     int64
 }
 
-type HTTP_fetcher struct {
+// HTTPFetcher fetches data from remote location
+// using http client
+type HTTPFetcher struct {
 	Client *http.Client
-	Uri    string
+	URI    string
 }
 
-func (fetcher *GCS_fetcher) Fetch(ctx context.Context) (io.ReadCloser, error) {
+// Fetch fetches data from GCS bucket
+func (fetcher *GCSFetcher) Fetch(ctx context.Context) (io.ReadCloser, error) {
 	oh := fetcher.Client.Bucket(fetcher.Bucket).Object(fetcher.Object)
 	if fetcher.Generation != 0 {
 		oh = oh.Generation(fetcher.Generation)
@@ -43,8 +43,9 @@ func (fetcher *GCS_fetcher) Fetch(ctx context.Context) (io.ReadCloser, error) {
 	return r, nil
 }
 
-func (fetcher *HTTP_fetcher) Fetch(ctx context.Context) (io.ReadCloser, error) {
-	resp, err := fetcher.Client.Get(fetcher.Uri)
+// Fetch fetches data from remote location
+func (fetcher *HTTPFetcher) Fetch(ctx context.Context) (io.ReadCloser, error) {
+	resp, err := fetcher.Client.Get(fetcher.URI)
 	if err != nil {
 		return nil, err
 	}
@@ -56,6 +57,7 @@ func (fetcher *HTTP_fetcher) Fetch(ctx context.Context) (io.ReadCloser, error) {
 	return resp.Body, nil
 }
 
+// DownloadStream fetches data from an input stream
 func DownloadStream(r io.ReadCloser, checksum, localPath string) error {
 	localPath, err := common.NormPath(localPath)
 	if err != nil {

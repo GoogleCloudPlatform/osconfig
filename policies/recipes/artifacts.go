@@ -63,7 +63,7 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 		if err != nil {
 			return "", fmt.Errorf("error creating gcs client: %v", err)
 		}
-		gf := &external.GCS_fetcher{Client: cl, Bucket: v.Gcs.Bucket, Object: v.Gcs.Object, Generation: v.Gcs.Generation}
+		gf := &external.GCSFetcher{Client: cl, Bucket: v.Gcs.Bucket, Object: v.Gcs.Object, Generation: v.Gcs.Generation}
 		reader, err = gf.Fetch(ctx)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q from GCS: %v", artifact.Id, err)
@@ -81,7 +81,7 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 		}
 		checksum = v.Remote.Checksum
 		cl, err := getHTTPClient()
-		hf := external.HTTP_fetcher{Client: cl, Uri: uri.String()}
+		hf := external.HTTPFetcher{Client: cl, URI: uri.String()}
 		reader, err = hf.Fetch(ctx)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q with http or https: %v", artifact.Id, err)

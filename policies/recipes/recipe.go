@@ -84,6 +84,7 @@ func convertVersion(version string) ([]int, error) {
 	return ret, nil
 }
 
+// GetVersionString return the version string of recipe
 func (r *Recipe) GetVersionString() string {
 	var sb strings.Builder
 	sb.WriteString(strconv.Itoa(r.Version[0]))
