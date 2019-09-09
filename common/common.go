@@ -29,6 +29,15 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+// Logger holds log functions.
+type Logger struct {
+	Debugf   func(string, ...interface{})
+	Infof    func(string, ...interface{})
+	Warningf func(string, ...interface{})
+	Errorf   func(string, ...interface{})
+	Fatalf   func(string, ...interface{})
+}
+
 // PrettyFmt uses jsonpb to marshal a proto for pretty printing.
 func PrettyFmt(pb proto.Message) string {
 	m := jsonpb.Marshaler{Indent: "  "}

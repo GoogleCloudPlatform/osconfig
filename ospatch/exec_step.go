@@ -23,17 +23,28 @@ import (
 	"path"
 	"path/filepath"
 
+	"cloud.google.com/go/storage"
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 	"github.com/GoogleCloudPlatform/osconfig/common"
+	"github.com/GoogleCloudPlatform/osconfig/external"
 )
+
+var getGCSClient = func(ctx context.Context) (*storage.Client, error) {
+	return storage.NewClient(ctx)
+}
 
 func getExecutablePath(ctx context.Context, logger *common.Logger, stepConfig *osconfigpb.ExecStepConfig) (string, error) {
 	if gcsObject := stepConfig.GetGcsObject(); gcsObject != nil {
 		var reader io.ReadCloser
-		reader, err := common.FetchWithGCS(ctx, gcsObject.GetBucket(), gcsObject.GetObject(), gcsObject.GetGenerationNumber())
+		cl, err := getGCSClient(ctx)
+		if err != nil {
+			return "", fmt.Errorf("error creating gcs client: %v", err)
+		}
+		gf := &external.GCS_fetcher{Client: cl, Bucket: gcsObject.Bucket, Object: gcsObject.Object, Generation: gcsObject.GenerationNumber}
 		if err != nil {
 			return "", fmt.Errorf("error reading GCS object: %s", err)
 		}
+		reader, err = gf.Fetch(ctx)
 		defer reader.Close()
 		logger.Debugf("Fetched GCS object bucket %s object %s generation number %d", gcsObject.GetBucket(), gcsObject.GetObject(), gcsObject.GetGenerationNumber())
 
@@ -68,7 +79,7 @@ func executeCommand(logger *common.Logger, path string, exitCodes []int32, args 
 }
 
 func downloadFile(logger *common.Logger, reader io.ReadCloser, localPath string) error {
-	if err := common.DownloadStream(reader, "", localPath); err != nil {
+	if err := external.DownloadStream(reader, "", localPath); err != nil {
 		return fmt.Errorf("error downloading GCS object: %s", err)
 	}
 	if err := os.Chmod(localPath, 0755); err != nil {

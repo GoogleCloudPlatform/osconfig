@@ -1,4 +1,4 @@
-package recipes
+package external
 
 import (
 	"context"
@@ -15,24 +15,24 @@ import (
 )
 
 type Fetcher interface {
-	fetch(ctx context.Context) (io.ReadCloser, error)
+	Fetch(ctx context.Context) (io.ReadCloser, error)
 }
 
 type GCS_fetcher struct {
-	client         *storage.Client
+	Client         *storage.Client
 	Bucket, Object string
-	generation     int64
+	Generation     int64
 }
 
 type HTTP_fetcher struct {
-	client *http.Client
-	uri    string
+	Client *http.Client
+	Uri    string
 }
 
-func (fetcher *GCS_fetcher) fetch(ctx context.Context) (io.ReadCloser, error) {
-	oh := fetcher.client.Bucket(fetcher.Bucket).Object(fetcher.Object)
-	if fetcher.generation != 0 {
-		oh = oh.Generation(fetcher.generation)
+func (fetcher *GCS_fetcher) Fetch(ctx context.Context) (io.ReadCloser, error) {
+	oh := fetcher.Client.Bucket(fetcher.Bucket).Object(fetcher.Object)
+	if fetcher.Generation != 0 {
+		oh = oh.Generation(fetcher.Generation)
 	}
 
 	r, err := oh.NewReader(ctx)
@@ -43,8 +43,8 @@ func (fetcher *GCS_fetcher) fetch(ctx context.Context) (io.ReadCloser, error) {
 	return r, nil
 }
 
-func (fetcher *HTTP_fetcher) fetch(ctx context.Context) (io.ReadCloser, error) {
-	resp, err := fetcher.client.Get(fetcher.uri)
+func (fetcher *HTTP_fetcher) Fetch(ctx context.Context) (io.ReadCloser, error) {
+	resp, err := fetcher.Client.Get(fetcher.Uri)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (fetcher *HTTP_fetcher) fetch(ctx context.Context) (io.ReadCloser, error) {
 	return resp.Body, nil
 }
 
-func DownloadStream(ctx context.Context, r io.ReadCloser, checksum, localPath string) error {
+func DownloadStream(r io.ReadCloser, checksum, localPath string) error {
 	localPath, err := common.NormPath(localPath)
 	if err != nil {
 		return err

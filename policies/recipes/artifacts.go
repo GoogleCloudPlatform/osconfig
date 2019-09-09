@@ -25,6 +25,7 @@ import (
 
 	"cloud.google.com/go/storage"
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
+	"github.com/GoogleCloudPlatform/osconfig/external"
 )
 
 var getGCSClient = func(ctx context.Context) (*storage.Client, error) {
@@ -62,8 +63,8 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 		if err != nil {
 			return "", fmt.Errorf("error creating gcs client: %v", err)
 		}
-		gf := &GCS_fetcher{client: cl, Bucket: v.Gcs.Bucket, Object: v.Gcs.Object, generation: v.Gcs.Generation}
-		reader, err = gf.fetch(ctx)
+		gf := &external.GCS_fetcher{Client: cl, Bucket: v.Gcs.Bucket, Object: v.Gcs.Object, Generation: v.Gcs.Generation}
+		reader, err = gf.Fetch(ctx)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q from GCS: %v", artifact.Id, err)
 		}
@@ -80,8 +81,8 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 		}
 		checksum = v.Remote.Checksum
 		cl, err := getHTTPClient()
-		hf := HTTP_fetcher{client: cl, uri: uri.String()}
-		reader, err = hf.fetch(ctx)
+		hf := external.HTTP_fetcher{Client: cl, Uri: uri.String()}
+		reader, err = hf.Fetch(ctx)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q with http or https: %v", artifact.Id, err)
 		}
@@ -94,6 +95,6 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 	if extension != "" {
 		localPath = localPath + extension
 	}
-	DownloadStream(ctx, reader, checksum, localPath)
+	external.DownloadStream(reader, checksum, localPath)
 	return localPath, nil
 }
