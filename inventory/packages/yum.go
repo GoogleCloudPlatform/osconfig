@@ -21,8 +21,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/GoogleCloudPlatform/osconfig/common"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -37,13 +37,13 @@ func init() {
 	if runtime.GOOS != "windows" {
 		yum = "/usr/bin/yum"
 	}
-	YumExists = common.Exists(yum)
+	YumExists = util.Exists(yum)
 }
 
 // InstallYumPackages installs yum packages.
 func InstallYumPackages(pkgs []string) error {
 	args := append(yumInstallArgs, pkgs...)
-	out, err := common.Run(exec.Command(yum, args...), DebugLogger)
+	out, err := util.Run(exec.Command(yum, args...), DebugLogger)
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf(" %s\n", s)
@@ -55,7 +55,7 @@ func InstallYumPackages(pkgs []string) error {
 // RemoveYumPackages removes yum packages.
 func RemoveYumPackages(pkgs []string) error {
 	args := append(yumRemoveArgs, pkgs...)
-	out, err := common.Run(exec.Command(yum, args...), DebugLogger)
+	out, err := util.Run(exec.Command(yum, args...), DebugLogger)
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf(" %s\n", s)
@@ -96,7 +96,7 @@ func parseYumUpdates(data []byte) []PkgInfo {
 
 // YumUpdates queries for all available yum updates.
 func YumUpdates() ([]PkgInfo, error) {
-	out, err := common.Run(exec.Command(yum, yumCheckUpdateArgs...), DebugLogger)
+	out, err := util.Run(exec.Command(yum, yumCheckUpdateArgs...), DebugLogger)
 	// Exit code 0 means no updates, 100 means there are updates.
 	if err == nil {
 		return nil, nil

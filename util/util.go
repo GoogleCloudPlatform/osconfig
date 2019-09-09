@@ -13,7 +13,7 @@
 //  limitations under the License.
 
 // Package common contains common functions for use in the osconfig agent.
-package common
+package util
 
 import (
 	"context"

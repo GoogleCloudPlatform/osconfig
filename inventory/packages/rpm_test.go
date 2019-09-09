@@ -19,7 +19,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/GoogleCloudPlatform/osconfig/common"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 func TestParseInstalledRPMPackages(t *testing.T) {
@@ -44,7 +44,7 @@ func TestParseInstalledRPMPackages(t *testing.T) {
 }
 
 func TestInstalledRPMPackages(t *testing.T) {
-	common.Run = getMockRun([]byte("foo x86_64 1.2.3-4"), nil)
+	util.Run = getMockRun([]byte("foo x86_64 1.2.3-4"), nil)
 	ret, err := InstalledRPMPackages()
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -55,7 +55,7 @@ func TestInstalledRPMPackages(t *testing.T) {
 		t.Errorf("InstalledRPMPackages() = %v, want %v", ret, want)
 	}
 
-	common.Run = getMockRun(nil, errors.New("bad error"))
+	util.Run = getMockRun(nil, errors.New("bad error"))
 	if _, err := InstalledRPMPackages(); err == nil {
 		t.Errorf("did not get expected error")
 	}

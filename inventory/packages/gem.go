@@ -19,7 +19,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/GoogleCloudPlatform/osconfig/common"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -33,12 +33,12 @@ func init() {
 	if runtime.GOOS != "windows" {
 		gem = "/usr/bin/gem"
 	}
-	GemExists = common.Exists(gem)
+	GemExists = util.Exists(gem)
 }
 
 // GemUpdates queries for all available gem updates.
 func GemUpdates() ([]PkgInfo, error) {
-	out, err := common.Run(exec.Command(gem, gemOutdatedArgs...), DebugLogger)
+	out, err := util.Run(exec.Command(gem, gemOutdatedArgs...), DebugLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func GemUpdates() ([]PkgInfo, error) {
 
 // InstalledGemPackages queries for all installed gem packages.
 func InstalledGemPackages() ([]PkgInfo, error) {
-	out, err := common.Run(exec.Command(gem, gemListArgs...), DebugLogger)
+	out, err := util.Run(exec.Command(gem, gemListArgs...), DebugLogger)
 	if err != nil {
 		return nil, err
 	}

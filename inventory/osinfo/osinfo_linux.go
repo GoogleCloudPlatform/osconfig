@@ -23,7 +23,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/GoogleCloudPlatform/osconfig/common"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -43,7 +43,7 @@ const (
 
 func parseOsRelease(path string) (*DistributionInfo, error) {
 	di := &DistributionInfo{}
-	b, err := common.ReadFile(path)
+	b, err := util.ReadFile(path)
 	if err != nil {
 		return di, fmt.Errorf("unable to obtain release info: %v", err)
 	}
@@ -74,7 +74,7 @@ func parseOsRelease(path string) (*DistributionInfo, error) {
 }
 
 func parseEnterpriseRelease(path string) (*DistributionInfo, error) {
-	b, err := common.ReadFile(path)
+	b, err := util.ReadFile(path)
 	if err != nil {
 		return &DistributionInfo{ShortName: Linux}, fmt.Errorf("unable to obtain release info: %v", err)
 	}
@@ -103,11 +103,11 @@ func GetDistributionInfo() (*DistributionInfo, error) {
 	var err error
 	switch {
 	// Check for /etc/os-release first.
-	case common.Exists(osRelease):
+	case util.Exists(osRelease):
 		di, err = parseOsRelease(osRelease)
-	case common.Exists(oRelease):
+	case util.Exists(oRelease):
 		di, err = parseEnterpriseRelease(oRelease)
-	case common.Exists(rhRelease):
+	case util.Exists(rhRelease):
 		di, err = parseEnterpriseRelease(rhRelease)
 	default:
 		err = errors.New("unable to obtain release info, no known /etc/*-release exists")

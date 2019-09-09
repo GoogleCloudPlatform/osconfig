@@ -19,32 +19,32 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/GoogleCloudPlatform/osconfig/common"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 func TestInstallGooGetPackages(t *testing.T) {
-	common.Run = getMockRun([]byte("TestInstallGooGetPackages"), nil)
+	util.Run = getMockRun([]byte("TestInstallGooGetPackages"), nil)
 	if err := InstallGooGetPackages(pkgs); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
 
 func TestInstallGooGetPackagesReturnsError(t *testing.T) {
-	common.Run = getMockRun([]byte("TestInstallGooGetPackagesReturnsError"), errors.New("Could not install package"))
+	util.Run = getMockRun([]byte("TestInstallGooGetPackagesReturnsError"), errors.New("Could not install package"))
 	if err := InstallGooGetPackages(pkgs); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }
 
 func TestRemoveGooGet(t *testing.T) {
-	common.Run = getMockRun([]byte("TestRemoveGooGet"), nil)
+	util.Run = getMockRun([]byte("TestRemoveGooGet"), nil)
 	if err := RemoveGooGetPackages(pkgs); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
 
 func TestRemoveGooGetReturnError(t *testing.T) {
-	common.Run = getMockRun([]byte("TestRemoveGooGetReturnError"), errors.New("Could not find package"))
+	util.Run = getMockRun([]byte("TestRemoveGooGetReturnError"), errors.New("Could not find package"))
 	if err := RemoveGooGetPackages(pkgs); err == nil {
 		t.Errorf("did not get expected error")
 	}
@@ -71,7 +71,7 @@ func TestParseInstalledGooGetPackages(t *testing.T) {
 }
 
 func TestInstalledGooGetPackages(t *testing.T) {
-	common.Run = getMockRun([]byte("foo.x86_64 1.2.3@4"), nil)
+	util.Run = getMockRun([]byte("foo.x86_64 1.2.3@4"), nil)
 	ret, err := InstalledGooGetPackages()
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -82,7 +82,7 @@ func TestInstalledGooGetPackages(t *testing.T) {
 		t.Errorf("InstalledGooGetPackages() = %v, want %v", ret, want)
 	}
 
-	common.Run = getMockRun(nil, errors.New("bad error"))
+	util.Run = getMockRun(nil, errors.New("bad error"))
 	if _, err := InstalledGooGetPackages(); err == nil {
 		t.Errorf("did not get expected error")
 	}
@@ -109,7 +109,7 @@ func TestParseGooGetUpdates(t *testing.T) {
 }
 
 func TestGooGetUpdates(t *testing.T) {
-	common.Run = getMockRun([]byte("foo.noarch, 3.5.4@1 --> 3.6.7@1 from repo"), nil)
+	util.Run = getMockRun([]byte("foo.noarch, 3.5.4@1 --> 3.6.7@1 from repo"), nil)
 	ret, err := GooGetUpdates()
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -120,7 +120,7 @@ func TestGooGetUpdates(t *testing.T) {
 		t.Errorf("GooGetUpdates() = %v, want %v", ret, want)
 	}
 
-	common.Run = getMockRun(nil, errors.New("bad error"))
+	util.Run = getMockRun(nil, errors.New("bad error"))
 	if _, err := GooGetUpdates(); err == nil {
 		t.Errorf("did not get expected error")
 	}

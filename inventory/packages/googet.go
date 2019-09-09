@@ -23,7 +23,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/GoogleCloudPlatform/osconfig/common"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -39,7 +39,7 @@ func init() {
 	if runtime.GOOS == "windows" {
 		googet = filepath.Join(os.Getenv("GooGetRoot"), "googet.exe")
 	}
-	GooGetExists = common.Exists(googet)
+	GooGetExists = util.Exists(googet)
 }
 
 func parseGooGetUpdates(data []byte) []PkgInfo {
@@ -69,7 +69,7 @@ func parseGooGetUpdates(data []byte) []PkgInfo {
 
 // GooGetUpdates queries for all available googet updates.
 func GooGetUpdates() ([]PkgInfo, error) {
-	out, err := common.Run(exec.Command(googet, googetUpdateQueryArgs...), DebugLogger)
+	out, err := util.Run(exec.Command(googet, googetUpdateQueryArgs...), DebugLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func GooGetUpdates() ([]PkgInfo, error) {
 // InstallGooGetPackages installs GooGet packages.
 func InstallGooGetPackages(pkgs []string) error {
 	args := append(googetInstallArgs, pkgs...)
-	out, err := common.Run(exec.Command(googet, args...), DebugLogger)
+	out, err := util.Run(exec.Command(googet, args...), DebugLogger)
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf("  %s\n", s)
@@ -92,7 +92,7 @@ func InstallGooGetPackages(pkgs []string) error {
 // RemoveGooGetPackages installs GooGet packages.
 func RemoveGooGetPackages(pkgs []string) error {
 	args := append(googetRemoveArgs, pkgs...)
-	out, err := common.Run(exec.Command(googet, args...), DebugLogger)
+	out, err := util.Run(exec.Command(googet, args...), DebugLogger)
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf("  %s\n", s)
@@ -129,7 +129,7 @@ func parseInstalledGooGetPackages(data []byte) []PkgInfo {
 
 // InstalledGooGetPackages queries for all installed googet packages.
 func InstalledGooGetPackages() ([]PkgInfo, error) {
-	out, err := common.Run(exec.Command(googet, googetInstalledQueryArgs...), DebugLogger)
+	out, err := util.Run(exec.Command(googet, googetInstalledQueryArgs...), DebugLogger)
 	if err != nil {
 		return nil, err
 	}

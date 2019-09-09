@@ -22,8 +22,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/GoogleCloudPlatform/osconfig/common"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -43,7 +43,7 @@ func init() {
 		dpkgquery = "/usr/bin/dpkg-query"
 		aptGet = "/usr/bin/apt-get"
 	}
-	AptExists = common.Exists(aptGet)
+	AptExists = util.Exists(aptGet)
 }
 
 // InstallAptPackages installs apt packages.
@@ -53,7 +53,7 @@ func InstallAptPackages(pkgs []string) error {
 	install.Env = append(os.Environ(),
 		"DEBIAN_FRONTEND=noninteractive",
 	)
-	out, err := common.Run(install, DebugLogger)
+	out, err := util.Run(install, DebugLogger)
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf(" %s\n", s)
@@ -69,7 +69,7 @@ func RemoveAptPackages(pkgs []string) error {
 	remove.Env = append(os.Environ(),
 		"DEBIAN_FRONTEND=noninteractive",
 	)
-	out, err := common.Run(remove, DebugLogger)
+	out, err := util.Run(remove, DebugLogger)
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf(" %s\n", s)
@@ -127,11 +127,11 @@ func parseAptUpdates(data []byte) []PkgInfo {
 
 // AptUpdates queries for all available apt updates.
 func AptUpdates() ([]PkgInfo, error) {
-	if _, err := common.Run(exec.Command(aptGet, aptGetUpdateArgs...), DebugLogger); err != nil {
+	if _, err := util.Run(exec.Command(aptGet, aptGetUpdateArgs...), DebugLogger); err != nil {
 		return nil, err
 	}
 
-	out, err := common.Run(exec.Command(aptGet, aptGetUpgradableArgs...), DebugLogger)
+	out, err := util.Run(exec.Command(aptGet, aptGetUpgradableArgs...), DebugLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +161,7 @@ func parseInstalledDebpackages(data []byte) []PkgInfo {
 
 // InstalledDebPackages queries for all installed deb packages.
 func InstalledDebPackages() ([]PkgInfo, error) {
-	out, err := common.Run(exec.Command(dpkgquery, dpkgQueryArgs...), DebugLogger)
+	out, err := util.Run(exec.Command(dpkgquery, dpkgQueryArgs...), DebugLogger)
 	if err != nil {
 		return nil, err
 	}

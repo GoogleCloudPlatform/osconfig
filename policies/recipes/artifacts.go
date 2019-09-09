@@ -22,7 +22,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/GoogleCloudPlatform/osconfig/common"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
@@ -49,7 +49,7 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 	switch v := artifact.Artifact.(type) {
 	case *osconfigpb.SoftwareRecipe_Artifact_Gcs_:
 		extension = path.Ext(v.Gcs.Object)
-		reader, err := common.FetchWithGCS(ctx, v.Gcs.Bucket, v.Gcs.Object, v.Gcs.Generation)
+		reader, err := util.FetchWithGCS(ctx, v.Gcs.Bucket, v.Gcs.Object, v.Gcs.Generation)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q from GCS: %v", artifact.Id, err)
 		}
@@ -64,7 +64,7 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 			return "", fmt.Errorf("error, artifact %q has unsupported protocol scheme %s", artifact.Id, uri.Scheme)
 		}
 		checksum = v.Remote.Checksum
-		response, err := common.FetchWithHTTP(ctx, v.Remote.Uri)
+		response, err := util.FetchWithHTTP(ctx, v.Remote.Uri)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q with http or https: %v", artifact.Id, err)
 		}
@@ -78,7 +78,7 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 	if extension != "" {
 		localPath = localPath + extension
 	}
-	err := common.DownloadStream(reader, checksum, localPath)
+	err := util.DownloadStream(reader, checksum, localPath)
 	if err != nil {
 		return "", err
 	}

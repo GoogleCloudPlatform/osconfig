@@ -21,8 +21,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/GoogleCloudPlatform/osconfig/common"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -38,13 +38,13 @@ func init() {
 	if runtime.GOOS != "windows" {
 		zypper = "/usr/bin/zypper"
 	}
-	ZypperExists = common.Exists(zypper)
+	ZypperExists = util.Exists(zypper)
 }
 
 // InstallZypperPackages Installs zypper packages
 func InstallZypperPackages(pkgs []string) error {
 	args := append(zypperInstallArgs, pkgs...)
-	out, err := common.Run(exec.Command(zypper, args...), DebugLogger)
+	out, err := util.Run(exec.Command(zypper, args...), DebugLogger)
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf(" %s\n", s)
@@ -56,7 +56,7 @@ func InstallZypperPackages(pkgs []string) error {
 // RemoveZypperPackages installed Zypper packages.
 func RemoveZypperPackages(pkgs []string) error {
 	args := append(zypperRemoveArgs, pkgs...)
-	out, err := common.Run(exec.Command(zypper, args...), DebugLogger)
+	out, err := util.Run(exec.Command(zypper, args...), DebugLogger)
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf("  %s\n", s)
@@ -92,7 +92,7 @@ func parseZypperUpdates(data []byte) []PkgInfo {
 
 // ZypperUpdates queries for all available zypper updates.
 func ZypperUpdates() ([]PkgInfo, error) {
-	out, err := common.Run(exec.Command(zypper, zypperListUpdatesArgs...), DebugLogger)
+	out, err := util.Run(exec.Command(zypper, zypperListUpdatesArgs...), DebugLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func parseZypperPatches(data []byte) ([]ZypperPatch, []ZypperPatch) {
 }
 
 func zypperPatches() ([]byte, error) {
-	return common.Run(exec.Command(zypper, zypperListPatchesArgs...), DebugLogger)
+	return util.Run(exec.Command(zypper, zypperListPatchesArgs...), DebugLogger)
 }
 
 // ZypperPatches queries for all available zypper patches.

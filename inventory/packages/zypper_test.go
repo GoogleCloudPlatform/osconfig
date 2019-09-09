@@ -19,32 +19,32 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/GoogleCloudPlatform/osconfig/common"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 func TestZypperInstalls(t *testing.T) {
-	common.Run = getMockRun([]byte("TestZypperInstalls"), nil)
+	util.Run = getMockRun([]byte("TestZypperInstalls"), nil)
 	if err := InstallZypperPackages(pkgs); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
 
 func TestZypperInstallsReturnError(t *testing.T) {
-	common.Run = getMockRun([]byte("TestZypperInstallsReturnError"), errors.New("Could not find package"))
+	util.Run = getMockRun([]byte("TestZypperInstallsReturnError"), errors.New("Could not find package"))
 	if err := InstallZypperPackages(pkgs); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }
 
 func TestRemoveZypper(t *testing.T) {
-	common.Run = getMockRun([]byte("TestRemoveZypper"), nil)
+	util.Run = getMockRun([]byte("TestRemoveZypper"), nil)
 	if err := RemoveZypperPackages(pkgs); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
 
 func TestRemoveZypperReturnError(t *testing.T) {
-	common.Run = getMockRun([]byte("TestRemoveZypperReturnError"), errors.New("Could not find package"))
+	util.Run = getMockRun([]byte("TestRemoveZypperReturnError"), errors.New("Could not find package"))
 	if err := RemoveZypperPackages(pkgs); err == nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -76,7 +76,7 @@ this is junk data`
 }
 
 func TestZypperUpdates(t *testing.T) {
-	common.Run = getMockRun([]byte("v | SLES12-SP3-Updates  | at                     | 3.1.14-7.3      | 3.1.14-8.3.1      | x86_64"), nil)
+	util.Run = getMockRun([]byte("v | SLES12-SP3-Updates  | at                     | 3.1.14-7.3      | 3.1.14-8.3.1      | x86_64"), nil)
 	ret, err := ZypperUpdates()
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -87,7 +87,7 @@ func TestZypperUpdates(t *testing.T) {
 		t.Errorf("ZypperUpdates() = %v, want %v", ret, want)
 	}
 
-	common.Run = getMockRun(nil, errors.New("bad error"))
+	util.Run = getMockRun(nil, errors.New("bad error"))
 	if _, err := ZypperUpdates(); err == nil {
 		t.Errorf("did not get expected error")
 	}
@@ -131,7 +131,7 @@ some junk data`
 }
 
 func TestZypperPatches(t *testing.T) {
-	common.Run = getMockRun([]byte("SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1258 | recommended | moderate  | ---         | needed     | Recommended update for postfix"), nil)
+	util.Run = getMockRun([]byte("SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1258 | recommended | moderate  | ---         | needed     | Recommended update for postfix"), nil)
 	ret, err := ZypperPatches()
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -142,14 +142,14 @@ func TestZypperPatches(t *testing.T) {
 		t.Errorf("ZypperPatches() = %v, want %v", ret, want)
 	}
 
-	common.Run = getMockRun(nil, errors.New("bad error"))
+	util.Run = getMockRun(nil, errors.New("bad error"))
 	if _, err := ZypperPatches(); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }
 
 func TestZypperInstalledPatches(t *testing.T) {
-	common.Run = getMockRun([]byte("SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1258 | recommended | moderate  | ---         | applied     | Recommended update for postfix"), nil)
+	util.Run = getMockRun([]byte("SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1258 | recommended | moderate  | ---         | applied     | Recommended update for postfix"), nil)
 	ret, err := ZypperInstalledPatches()
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -160,7 +160,7 @@ func TestZypperInstalledPatches(t *testing.T) {
 		t.Errorf("ZypperInstalledPatches() = %v, want %v", ret, want)
 	}
 
-	common.Run = getMockRun(nil, errors.New("bad error"))
+	util.Run = getMockRun(nil, errors.New("bad error"))
 	if _, err := ZypperInstalledPatches(); err == nil {
 		t.Errorf("did not get expected error")
 	}

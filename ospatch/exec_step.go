@@ -24,13 +24,13 @@ import (
 	"path/filepath"
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
-	"github.com/GoogleCloudPlatform/osconfig/common"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
-func getExecutablePath(ctx context.Context, logger *common.Logger, stepConfig *osconfigpb.ExecStepConfig) (string, error) {
+func getExecutablePath(ctx context.Context, logger *util.Logger, stepConfig *osconfigpb.ExecStepConfig) (string, error) {
 	if gcsObject := stepConfig.GetGcsObject(); gcsObject != nil {
 		var reader io.ReadCloser
-		reader, err := common.FetchWithGCS(ctx, gcsObject.GetBucket(), gcsObject.GetObject(), gcsObject.GetGenerationNumber())
+		reader, err := util.FetchWithGCS(ctx, gcsObject.GetBucket(), gcsObject.GetObject(), gcsObject.GetGenerationNumber())
 		if err != nil {
 			return "", fmt.Errorf("error reading GCS object: %s", err)
 		}
@@ -47,7 +47,7 @@ func getExecutablePath(ctx context.Context, logger *common.Logger, stepConfig *o
 	return stepConfig.GetLocalPath(), nil
 }
 
-func executeCommand(logger *common.Logger, path string, exitCodes []int32, args ...string) error {
+func executeCommand(logger *util.Logger, path string, exitCodes []int32, args ...string) error {
 	logger.Debugf("Running command %s with args %s", path, args)
 	cmdObj := exec.Command(path, args...)
 
@@ -67,8 +67,8 @@ func executeCommand(logger *common.Logger, path string, exitCodes []int32, args 
 	return nil
 }
 
-func downloadFile(logger *common.Logger, reader io.ReadCloser, localPath string) error {
-	if err := common.DownloadStream(reader, "", localPath); err != nil {
+func downloadFile(logger *util.Logger, reader io.ReadCloser, localPath string) error {
+	if err := util.DownloadStream(reader, "", localPath); err != nil {
 		return fmt.Errorf("error downloading GCS object: %s", err)
 	}
 	if err := os.Chmod(localPath, 0755); err != nil {

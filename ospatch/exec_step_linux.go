@@ -20,20 +20,20 @@ import (
 	"os"
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
-	"github.com/GoogleCloudPlatform/osconfig/common"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 func (r *patchRun) execPreStep() error {
-	logger := &common.Logger{Debugf: r.debugf, Infof: r.infof, Warningf: r.warningf, Errorf: r.errorf, Fatalf: nil}
+	logger := &util.Logger{Debugf: r.debugf, Infof: r.infof, Warningf: r.warningf, Errorf: r.errorf, Fatalf: nil}
 	return execStep(r.ctx, logger, r.Job.GetPatchConfig().GetPreStep().GetLinuxExecStepConfig())
 }
 
 func (r *patchRun) execPostStep() error {
-	logger := &common.Logger{Debugf: r.debugf, Infof: r.infof, Warningf: r.warningf, Errorf: r.errorf, Fatalf: nil}
+	logger := &util.Logger{Debugf: r.debugf, Infof: r.infof, Warningf: r.warningf, Errorf: r.errorf, Fatalf: nil}
 	return execStep(r.ctx, logger, r.Job.GetPatchConfig().GetPostStep().GetLinuxExecStepConfig())
 }
 
-func execStep(ctx context.Context, logger *common.Logger, stepConfig *osconfigpb.ExecStepConfig) error {
+func execStep(ctx context.Context, logger *util.Logger, stepConfig *osconfigpb.ExecStepConfig) error {
 	if stepConfig != nil {
 		localPath, err := getExecutablePath(ctx, logger, stepConfig)
 		if err != nil {

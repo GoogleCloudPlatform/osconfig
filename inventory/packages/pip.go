@@ -20,7 +20,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/GoogleCloudPlatform/osconfig/common"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -34,12 +34,12 @@ func init() {
 	if runtime.GOOS != "windows" {
 		pip = "/usr/bin/pip"
 	}
-	PipExists = common.Exists(pip)
+	PipExists = util.Exists(pip)
 }
 
 // PipUpdates queries for all available pip updates.
 func PipUpdates() ([]PkgInfo, error) {
-	out, err := common.Run(exec.Command(pip, pipOutdatedArgs...), DebugLogger)
+	out, err := util.Run(exec.Command(pip, pipOutdatedArgs...), DebugLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func PipUpdates() ([]PkgInfo, error) {
 
 // InstalledPipPackages queries for all installed pip packages.
 func InstalledPipPackages() ([]PkgInfo, error) {
-	out, err := common.Run(exec.Command(pip, pipListArgs...), DebugLogger)
+	out, err := util.Run(exec.Command(pip, pipListArgs...), DebugLogger)
 	if err != nil {
 		return nil, err
 	}

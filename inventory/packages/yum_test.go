@@ -21,46 +21,46 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/GoogleCloudPlatform/osconfig/common"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 func TestInstallYumPackages(t *testing.T) {
-	common.Run = getMockRun([]byte("TestInstallYumPackages"), nil)
+	util.Run = getMockRun([]byte("TestInstallYumPackages"), nil)
 	if err := InstallYumPackages(pkgs); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
 
 func TestInstallYumPackagesReturnsError(t *testing.T) {
-	common.Run = getMockRun([]byte("TestInstallYumPackagesReturnsError"), errors.New("Could not install package"))
+	util.Run = getMockRun([]byte("TestInstallYumPackagesReturnsError"), errors.New("Could not install package"))
 	if err := InstallYumPackages(pkgs); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }
 
 func TestRemoveYum(t *testing.T) {
-	common.Run = getMockRun([]byte("TestRemoveYum"), nil)
+	util.Run = getMockRun([]byte("TestRemoveYum"), nil)
 	if err := RemoveYumPackages(pkgs); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
 
 func TestRemoveYumReturnError(t *testing.T) {
-	common.Run = getMockRun([]byte("TestRemoveYumReturnError"), errors.New("Could not find package"))
+	util.Run = getMockRun([]byte("TestRemoveYumReturnError"), errors.New("Could not find package"))
 	if err := RemoveYumPackages(pkgs); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }
 
 func TestYumUpdates(t *testing.T) {
-	common.Run = getMockRun([]byte("TestYumUpdatesError"), errors.New("Bad error"))
+	util.Run = getMockRun([]byte("TestYumUpdatesError"), errors.New("Bad error"))
 	if _, err := YumUpdates(); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }
 
 func TestYumUpdatesExitCode0(t *testing.T) {
-	common.Run = getMockRun([]byte("TestYumUpdatesError"), nil)
+	util.Run = getMockRun([]byte("TestYumUpdatesError"), nil)
 	ret, err := YumUpdates()
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -78,7 +78,7 @@ func TestYumUpdatesExitCode100(t *testing.T) {
 	cmd := exec.Command(os.Args[0], "-test.run=TestYumUpdatesExitCode100")
 	cmd.Env = append(os.Environ(), "EXIT100=1")
 
-	common.Run = getMockRun([]byte("foo.noarch 2.0.0-1 repo"), cmd.Run())
+	util.Run = getMockRun([]byte("foo.noarch 2.0.0-1 repo"), cmd.Run())
 	ret, err := YumUpdates()
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)

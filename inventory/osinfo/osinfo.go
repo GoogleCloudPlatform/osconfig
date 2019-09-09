@@ -28,7 +28,7 @@ type DistributionInfo struct {
 }
 
 // Architecture attempts to standardize architecture naming.
-var Architecture = func(arch string) string {
+func Architecture(arch string) string {
 	switch arch {
 	case "amd64", "64-bit":
 		arch = "x86_64"

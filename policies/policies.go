@@ -30,12 +30,12 @@ import (
 	"cloud.google.com/go/compute/metadata"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	osconfig "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/cloud.google.com/go/osconfig/apiv1alpha2"
-	"github.com/GoogleCloudPlatform/osconfig/common"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 	"github.com/GoogleCloudPlatform/osconfig/policies/recipes"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc/status"
 
@@ -104,7 +104,7 @@ func lookupEffectivePolicies(ctx context.Context, client *osconfig.Client, insta
 		}
 		return nil, err
 	}
-	logger.Debugf("LookupEffectiveGuestPolicies response:\n%s", common.PrettyFmt(res))
+	logger.Debugf("LookupEffectiveGuestPolicies response:\n%s", util.PrettyFmt(res))
 
 	return res, nil
 }

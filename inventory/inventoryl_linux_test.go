@@ -31,10 +31,10 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/GoogleCloudPlatform/osconfig/common"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 )
@@ -169,7 +169,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 	AppFs.Create("/usr/bin/rpmquery")
 
-	common.OsHostname = func() (string, error) {
+	util.OsHostname = func() (string, error) {
 		return "test-hostname", nil
 	}
 
@@ -177,11 +177,11 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 		return []byte("test-kernel"), nil
 	}
 
-	common.ReadFile = func(file string) ([]byte, error) {
+	util.ReadFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
 	}
 
-	common.Exists = func(name string) bool {
+	util.Exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
@@ -194,11 +194,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 	packages.PipExists = false
 	packages.YumExists = false
 
-	osinfo.Architecture = func(arch string) string {
-		return "x86_64"
-	}
-
-	common.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	util.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
 		return []byte(rpmQueryResult), nil
 	}
 
@@ -235,7 +231,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 	debQueryResult := `foo amd64 1.2.3-4
 `
 
-	common.OsHostname = func() (string, error) {
+	util.OsHostname = func() (string, error) {
 		return "test-hostname", nil
 	}
 
@@ -243,11 +239,11 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 		return []byte("test-kernel"), nil
 	}
 
-	common.ReadFile = func(file string) ([]byte, error) {
+	util.ReadFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
 	}
 
-	common.Exists = func(name string) bool {
+	util.Exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
@@ -260,11 +256,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 	packages.PipExists = false
 	packages.YumExists = false
 
-	osinfo.Architecture = func(arch string) string {
-		return "x86_64"
-	}
-
-	common.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	util.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
 		return []byte(debQueryResult), nil
 	}
 
@@ -305,7 +297,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 	   bar (1.2.3)
 `
 
-	common.OsHostname = func() (string, error) {
+	util.OsHostname = func() (string, error) {
 		return "test-hostname", nil
 	}
 
@@ -313,11 +305,11 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 		return []byte("test-kernel"), nil
 	}
 
-	common.ReadFile = func(file string) ([]byte, error) {
+	util.ReadFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
 	}
 
-	common.Exists = func(name string) bool {
+	util.Exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
@@ -330,11 +322,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 	packages.PipExists = false
 	packages.YumExists = false
 
-	osinfo.Architecture = func(arch string) string {
-		return "x86_64"
-	}
-
-	common.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	util.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
 		return []byte(gemQueryResult), nil
 	}
 
@@ -373,7 +361,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 bar (1.2.3)
 `
 
-	common.OsHostname = func() (string, error) {
+	util.OsHostname = func() (string, error) {
 		return "test-hostname", nil
 	}
 
@@ -381,11 +369,11 @@ bar (1.2.3)
 		return []byte("test-kernel"), nil
 	}
 
-	common.ReadFile = func(file string) ([]byte, error) {
+	util.ReadFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
 	}
 
-	common.Exists = func(name string) bool {
+	util.Exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
@@ -398,11 +386,7 @@ bar (1.2.3)
 	packages.PipExists = false
 	packages.YumExists = false
 
-	osinfo.Architecture = func(arch string) string {
-		return "x86_64"
-	}
-
-	common.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	util.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
 		return []byte(pipQueryResult), nil
 	}
 
@@ -447,7 +431,7 @@ HOME_URL="https://www.opensuse.org/"
 		SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1258 | recommended | moderate  | ---         | needed     | Recommended update for postfix
 `
 
-	common.OsHostname = func() (string, error) {
+	util.OsHostname = func() (string, error) {
 		return "test-hostname", nil
 	}
 
@@ -455,11 +439,11 @@ HOME_URL="https://www.opensuse.org/"
 		return []byte("test-kernel"), nil
 	}
 
-	common.ReadFile = func(file string) ([]byte, error) {
+	util.ReadFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
 	}
 
-	common.Exists = func(name string) bool {
+	util.Exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
@@ -473,11 +457,7 @@ HOME_URL="https://www.opensuse.org/"
 	packages.PipExists = false
 	packages.YumExists = false
 
-	osinfo.Architecture = func(arch string) string {
-		return "x86_64"
-	}
-
-	common.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	util.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
 		return []byte(zypperQueryResult), nil
 	}
 
@@ -516,7 +496,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 
 	pkgManagerBinaries := []string{"/usr/bin/pip", "/usr/bin/gem", "/usr/bin/dpkg-query", "/usr/bin/rpmquery", "/usr/bin/zypper"}
 
-	common.OsHostname = func() (string, error) {
+	util.OsHostname = func() (string, error) {
 		return "test-hostname", nil
 	}
 
@@ -524,11 +504,11 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 		return []byte("test-kernel"), nil
 	}
 
-	common.ReadFile = func(file string) ([]byte, error) {
+	util.ReadFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
 	}
 
-	common.Exists = func(name string) bool {
+	util.Exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
@@ -541,11 +521,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 	packages.PipExists = false
 	packages.YumExists = false
 
-	osinfo.Architecture = func(arch string) string {
-		return "x86_64"
-	}
-
-	common.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	util.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
 		return nil, errors.New("error listing installed packages")
 	}
 
@@ -582,7 +558,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-	common.OsHostname = func() (string, error) {
+	util.OsHostname = func() (string, error) {
 		return "test-hostname", nil
 	}
 
@@ -590,7 +566,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 		return []byte("test-kernel"), nil
 	}
 
-	common.ReadFile = func(file string) ([]byte, error) {
+	util.ReadFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
 	}
 
@@ -614,7 +590,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 		Conf linux-image-4.9.0-9-amd64 (4.9.168-1+deb9u2 Debian-Security:9/stable [amd64])
 		Conf linux-image-amd64 (4.9+80+deb9u7 Debian:9.9/stable [amd64])
 `
-	common.Exists = func(name string) bool {
+	util.Exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
@@ -627,11 +603,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 	packages.PipExists = false
 	packages.YumExists = false
 
-	osinfo.Architecture = func(arch string) string {
-		return "x86_64"
-	}
-
-	common.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	util.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
 		return []byte(aptupdates), nil
 	}
 
@@ -662,7 +634,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-	common.OsHostname = func() (string, error) {
+	util.OsHostname = func() (string, error) {
 		return "test-hostname", nil
 	}
 
@@ -670,7 +642,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 		return []byte("test-kernel"), nil
 	}
 
-	common.ReadFile = func(file string) ([]byte, error) {
+	util.ReadFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
 	}
 
@@ -678,7 +650,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 	   foo (1.2.8 < 1.3.2)
 	   bar (1.0.0 < 1.1.2)
 `
-	common.Exists = func(name string) bool {
+	util.Exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
@@ -691,11 +663,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 	packages.PipExists = false
 	packages.YumExists = false
 
-	osinfo.Architecture = func(arch string) string {
-		return "x86_64"
-	}
-
-	common.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	util.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
 		return []byte(gemupdates), nil
 	}
 
@@ -726,7 +694,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-	common.OsHostname = func() (string, error) {
+	util.OsHostname = func() (string, error) {
 		return "test-hostname", nil
 	}
 
@@ -734,7 +702,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 		return []byte("test-kernel"), nil
 	}
 
-	common.ReadFile = func(file string) ([]byte, error) {
+	util.ReadFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
 	}
 
@@ -742,7 +710,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 	   foo (4.5.3) - Latest: 4.6.0 [repo]
 	   bar (1.3) - Latest: 1.4 [repo]
 `
-	common.Exists = func(name string) bool {
+	util.Exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
@@ -755,11 +723,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 	packages.PipExists = true
 	packages.YumExists = false
 
-	osinfo.Architecture = func(arch string) string {
-		return "x86_64"
-	}
-
-	common.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	util.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
 		return []byte(pipupdates), nil
 	}
 
@@ -790,7 +754,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-	common.OsHostname = func() (string, error) {
+	util.OsHostname = func() (string, error) {
 		return "test-hostname", nil
 	}
 
@@ -798,7 +762,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 		return []byte("test-kernel"), nil
 	}
 
-	common.ReadFile = func(file string) ([]byte, error) {
+	util.ReadFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
 	}
 
@@ -808,7 +772,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 		      v | SLES12-SP3-Updates  | at                     | 3.1.14-7.3      | 3.1.14-8.3.1      | x86_64
 		      v | SLES12-SP3-Updates  | autoyast2-installation | 3.2.17-1.3      | 3.2.22-2.9.2      | noarch
 `
-	common.Exists = func(name string) bool {
+	util.Exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
@@ -821,11 +785,7 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 	packages.PipExists = false
 	packages.YumExists = false
 
-	osinfo.Architecture = func(arch string) string {
-		return "x86_64"
-	}
-
-	common.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
+	util.Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
 		return []byte(zypperupdates), nil
 	}
 

@@ -30,14 +30,14 @@ import (
 	"time"
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
-	"github.com/GoogleCloudPlatform/osconfig/common"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 	"github.com/ulikunitz/xz"
 	"github.com/ulikunitz/xz/lzma"
 )
 
 // StepFileCopy builds the command for a FileCopy step
 func StepFileCopy(step *osconfigpb.SoftwareRecipe_Step_FileCopy, artifacts map[string]string) error {
-	dest, err := common.NormPath(step.FileCopy.Destination)
+	dest, err := util.NormPath(step.FileCopy.Destination)
 	if err != nil {
 		return err
 	}
@@ -135,7 +135,7 @@ func extractZip(zipPath string, dst string) error {
 
 	// Check for conflicts
 	for _, f := range zr.File {
-		filen, err := common.NormPath(filepath.Join(dst, normalizeSlashes(f.Name)))
+		filen, err := util.NormPath(filepath.Join(dst, normalizeSlashes(f.Name)))
 		if err != nil {
 			return err
 		}
@@ -156,7 +156,7 @@ func extractZip(zipPath string, dst string) error {
 
 	// Create files.
 	for _, f := range zr.File {
-		filen, err := common.NormPath(filepath.Join(dst, normalizeSlashes(f.Name)))
+		filen, err := util.NormPath(filepath.Join(dst, normalizeSlashes(f.Name)))
 		if err != nil {
 			return err
 		}
@@ -234,7 +234,7 @@ func checkForConflicts(tr *tar.Reader, dst string) error {
 		if err != nil {
 			return err
 		}
-		filen, err := common.NormPath(filepath.Join(dst, header.Name))
+		filen, err := util.NormPath(filepath.Join(dst, header.Name))
 		if err != nil {
 			return err
 		}
@@ -265,7 +265,7 @@ func createFiles(tr *tar.Reader, dst string) error {
 		if err != nil {
 			return err
 		}
-		filen, err := common.NormPath(filepath.Join(dst, header.Name))
+		filen, err := util.NormPath(filepath.Join(dst, header.Name))
 		if err != nil {
 			return err
 		}
