@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/prashantv/gostub"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 )
@@ -45,15 +44,13 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 `
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-	stubs := gostub.Stub(&GetUname, func() ([]byte, error) {
+	getUname = func() ([]byte, error) {
 		return []byte("Linux"), nil
-	})
+	}
 
 	readFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
 	}
-
-	defer stubs.Reset()
 
 	di, _ := GetDistributionInfo()
 
@@ -81,9 +78,9 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 `
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-	stubs := gostub.Stub(&GetUname, func() ([]byte, error) {
+	getUname = func() ([]byte, error) {
 		return []byte("Linux"), nil
-	})
+	}
 
 	readFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), errors.New("file read error")
@@ -95,8 +92,6 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 		}
 		return true
 	}
-
-	defer stubs.Reset()
 
 	di, err := GetDistributionInfo()
 
@@ -115,9 +110,9 @@ func TestGetDistributionInfoEmptyOSRelease(t *testing.T) {
 `
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-	stubs := gostub.Stub(&GetUname, func() ([]byte, error) {
+	getUname = func() ([]byte, error) {
 		return []byte("Linux"), nil
-	})
+	}
 
 	readFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
@@ -129,8 +124,6 @@ func TestGetDistributionInfoEmptyOSRelease(t *testing.T) {
 		}
 		return true
 	}
-
-	defer stubs.Reset()
 
 	di, _ := GetDistributionInfo()
 	fmt.Printf("+%v", di)
@@ -164,9 +157,9 @@ REDHAT_SUPPORT_PRODUCT_VERSION="7"
 `
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-	stubs := gostub.Stub(&GetUname, func() ([]byte, error) {
+	getUname = func() ([]byte, error) {
 		return []byte("Linux"), nil
-	})
+	}
 
 	readFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
@@ -178,8 +171,6 @@ REDHAT_SUPPORT_PRODUCT_VERSION="7"
 		}
 		return true
 	}
-
-	defer stubs.Reset()
 
 	di, _ := GetDistributionInfo()
 	assertion.Equal("centos", di.ShortName, "unexpected short name")
@@ -198,9 +189,9 @@ func TestGetDistributionInfoRedHatRelease(t *testing.T) {
 `
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-	stubs := gostub.Stub(&GetUname, func() ([]byte, error) {
+	getUname = func() ([]byte, error) {
 		return []byte("Linux"), nil
-	})
+	}
 
 	readFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
@@ -212,8 +203,6 @@ func TestGetDistributionInfoRedHatRelease(t *testing.T) {
 		}
 		return true
 	}
-
-	defer stubs.Reset()
 
 	di, _ := GetDistributionInfo()
 	fmt.Printf("sdafASDF: +%v\n ", di)
@@ -233,9 +222,9 @@ func TestGetDistributionInfoRedHatReleaseUnameError(t *testing.T) {
 `
 	afero.WriteFile(AppFs, releaseFile, []byte(fcontent), 644)
 
-	stubs := gostub.Stub(&GetUname, func() ([]byte, error) {
+	getUname = func() ([]byte, error) {
 		return nil, errors.New("error running uname")
-	})
+	}
 
 	readFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
@@ -247,8 +236,6 @@ func TestGetDistributionInfoRedHatReleaseUnameError(t *testing.T) {
 		}
 		return true
 	}
-
-	defer stubs.Reset()
 
 	di, err := GetDistributionInfo()
 	assertion.Nil(di)
