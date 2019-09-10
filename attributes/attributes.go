@@ -45,20 +45,27 @@ func PostAttribute(url string, value io.Reader) error {
 
 // PostAttributeCompressed compresses and posts data to Guest Attributes
 func PostAttributeCompressed(url string, body interface{}) error {
+	buf, err := getCompressData(body)
+	if err != nil {
+		return err
+	}
+	return PostAttribute(url, buf)
+}
+
+func getCompressData(body interface{}) (*bytes.Buffer, error) {
 	buf := &bytes.Buffer{}
 	b := base64.NewEncoder(base64.StdEncoding, buf)
 	zw := gzip.NewWriter(b)
 	w := json.NewEncoder(zw)
 	if err := w.Encode(body); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := zw.Close(); err != nil {
-		return err
+		return nil, err
 	}
 	if err := b.Close(); err != nil {
-		return err
+		return nil, err
 	}
-
-	return PostAttribute(url, buf)
+	return buf, nil
 }

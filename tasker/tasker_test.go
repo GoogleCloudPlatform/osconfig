@@ -12,47 +12,36 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-// Package tasker is a task queue for the osconfig_agent.
 package tasker
 
 import (
 	"strconv"
-	"sync"
 	"testing"
-	"time"
 )
 
-type timeNote struct {
-	id        int
-	timestamp time.Time
-}
+var notes []int
 
-var notes = []*timeNote{}
-var lock sync.Mutex
-var counter int
-
-// TestEnqueue_taskRunSequentially creates task that writes
-// to a common file
-func TestEnqueue_taskRunSequentially(t *testing.T) {
-	times := 100
+// TestEnqueueTaskRunSequentially to set sequential
+// execution of tasks in tasker
+func TestEnqueueTaskRunSequentially(t *testing.T) {
+	times := 10000
 	for i := 0; i < times; i++ {
-		AddToQueue()
+		addToQueue(i)
 	}
 	Close()
 
+	if len(notes) != times {
+		t.Fatalf("len(notes) != times, %d != %d", len(notes), times)
+	}
 	for i := 1; i < times; i++ {
-		if notes[i].timestamp.Sub(notes[i-1].timestamp) < 0 {
-			t.Errorf("task(%d) expected to run earlier\n", i)
+		if notes[i] < notes[i-1] {
+			t.Errorf("task(%d) expected to run earlier", i)
 		}
 	}
 }
 
-func AddToQueue() {
-	lock.Lock()
-	counter++
-	i := counter
-	lock.Unlock()
+func addToQueue(i int) {
 	Enqueue(strconv.Itoa(i), func() {
-		notes = append(notes, &timeNote{id: i, timestamp: time.Now()})
+		notes = append(notes, i)
 	})
 }
