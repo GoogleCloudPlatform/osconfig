@@ -34,7 +34,7 @@ func init() {
 	if runtime.GOOS != "windows" {
 		pip = "/usr/bin/pip"
 	}
-	PipExists = util.Exists(pip)
+	PipExists = exists(pip)
 }
 
 // PipUpdates queries for all available pip updates.

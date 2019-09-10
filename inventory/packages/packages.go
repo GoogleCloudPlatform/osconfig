@@ -18,6 +18,7 @@ package packages
 import (
 	"io/ioutil"
 	"log"
+	"os"
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
@@ -84,4 +85,11 @@ type WUAPackage struct {
 // QFEPackage describes a Windows Quick Fix Engineering package.
 type QFEPackage struct {
 	Caption, Description, HotFixID, InstalledOn string
+}
+
+var exists = func(name string) bool {
+	if _, err := os.Stat(name); os.IsNotExist(err) {
+		return false
+	}
+	return true
 }

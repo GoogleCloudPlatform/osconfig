@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/GoogleCloudPlatform/osconfig/util"
 	"github.com/prashantv/gostub"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
@@ -50,16 +49,9 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 		return []byte("Linux"), nil
 	})
 
-	stubs.Stub(&util.ReadFile, func(file string) ([]byte, error) {
+	readFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
-	})
-
-	stubs.Stub(&util.Exists, func(name string) bool {
-		if _, err := AppFs.Stat(name); err != nil {
-			return false
-		}
-		return true
-	})
+	}
 
 	defer stubs.Reset()
 
@@ -93,16 +85,16 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 		return []byte("Linux"), nil
 	})
 
-	stubs.Stub(&util.ReadFile, func(file string) ([]byte, error) {
+	readFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), errors.New("file read error")
-	})
+	}
 
-	stubs.Stub(&util.Exists, func(name string) bool {
+	exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
 		return true
-	})
+	}
 
 	defer stubs.Reset()
 
@@ -127,16 +119,16 @@ func TestGetDistributionInfoEmptyOSRelease(t *testing.T) {
 		return []byte("Linux"), nil
 	})
 
-	stubs.Stub(&util.ReadFile, func(file string) ([]byte, error) {
+	readFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
-	})
+	}
 
-	stubs.Stub(&util.Exists, func(name string) bool {
+	exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
 		return true
-	})
+	}
 
 	defer stubs.Reset()
 
@@ -176,16 +168,16 @@ REDHAT_SUPPORT_PRODUCT_VERSION="7"
 		return []byte("Linux"), nil
 	})
 
-	stubs.Stub(&util.ReadFile, func(file string) ([]byte, error) {
+	readFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
-	})
+	}
 
-	stubs.Stub(&util.Exists, func(name string) bool {
+	exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
 		return true
-	})
+	}
 
 	defer stubs.Reset()
 
@@ -210,16 +202,16 @@ func TestGetDistributionInfoRedHatRelease(t *testing.T) {
 		return []byte("Linux"), nil
 	})
 
-	stubs.Stub(&util.ReadFile, func(file string) ([]byte, error) {
+	readFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
-	})
+	}
 
-	stubs.Stub(&util.Exists, func(name string) bool {
+	exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
 		return true
-	})
+	}
 
 	defer stubs.Reset()
 
@@ -245,16 +237,16 @@ func TestGetDistributionInfoRedHatReleaseUnameError(t *testing.T) {
 		return nil, errors.New("error running uname")
 	})
 
-	stubs.Stub(&util.ReadFile, func(file string) ([]byte, error) {
+	readFile = func(file string) ([]byte, error) {
 		return []byte(fcontent), nil
-	})
+	}
 
-	stubs.Stub(&util.Exists, func(name string) bool {
+	exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
 		return true
-	})
+	}
 
 	defer stubs.Reset()
 
@@ -268,14 +260,12 @@ func TestGetDistributionInfoNoReleaseFile(t *testing.T) {
 	var AppFs = afero.NewMemMapFs()
 	assertion := assert.New(t)
 
-	stubs := gostub.Stub(&util.Exists, func(name string) bool {
+	exists = func(name string) bool {
 		if _, err := AppFs.Stat(name); err != nil {
 			return false
 		}
 		return true
-	})
-
-	defer stubs.Reset()
+	}
 
 	_, err := GetDistributionInfo()
 

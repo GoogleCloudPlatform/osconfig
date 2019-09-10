@@ -38,7 +38,7 @@ func init() {
 	if runtime.GOOS != "windows" {
 		zypper = "/usr/bin/zypper"
 	}
-	ZypperExists = util.Exists(zypper)
+	ZypperExists = exists(zypper)
 }
 
 // InstallZypperPackages Installs zypper packages

@@ -33,7 +33,7 @@ func init() {
 	if runtime.GOOS != "windows" {
 		gem = "/usr/bin/gem"
 	}
-	GemExists = util.Exists(gem)
+	GemExists = exists(gem)
 }
 
 // GemUpdates queries for all available gem updates.

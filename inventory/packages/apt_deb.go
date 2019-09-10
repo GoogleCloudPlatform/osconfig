@@ -43,7 +43,7 @@ func init() {
 		dpkgquery = "/usr/bin/dpkg-query"
 		aptGet = "/usr/bin/apt-get"
 	}
-	AptExists = util.Exists(aptGet)
+	AptExists = exists(aptGet)
 }
 
 // InstallAptPackages installs apt packages.

@@ -18,6 +18,7 @@ package inventory
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"strings"
 	"time"
@@ -28,7 +29,6 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
-	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 const (
@@ -78,7 +78,7 @@ func Get() *InstanceInventory {
 
 	hs := &InstanceInventory{}
 
-	hn, err := util.OsHostname()
+	hn, err := os.Hostname()
 	if err != nil {
 		logger.Errorf("os.Hostname() error: %v", err)
 	}
@@ -116,4 +116,15 @@ func Get() *InstanceInventory {
 // Run gathers and records inventory information using tasker.Enqueue.
 func Run() {
 	tasker.Enqueue("Run OSInventory", func() { write(Get(), inventoryURL) })
+}
+
+var exists = func(path string) bool {
+	if _, err := os.Stat(path); err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+		return false
+	}
+
+	return true
 }

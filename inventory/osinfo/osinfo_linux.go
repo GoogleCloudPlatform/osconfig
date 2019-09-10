@@ -18,12 +18,12 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"os/exec"
 	"regexp"
 	"runtime"
 	"strings"
-
-	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -33,6 +33,15 @@ var (
 	GetUname = func() ([]byte, error) {
 		return exec.Command("/bin/uname", "-r").CombinedOutput()
 	}
+
+	exists = func(name string) bool {
+		if _, err := os.Stat(name); os.IsNotExist(err) {
+			return false
+		}
+		return true
+	}
+
+	readFile = ioutil.ReadFile
 )
 
 const (
@@ -43,7 +52,7 @@ const (
 
 func parseOsRelease(path string) (*DistributionInfo, error) {
 	di := &DistributionInfo{}
-	b, err := util.ReadFile(path)
+	b, err := readFile(path)
 	if err != nil {
 		return di, fmt.Errorf("unable to obtain release info: %v", err)
 	}
@@ -74,7 +83,7 @@ func parseOsRelease(path string) (*DistributionInfo, error) {
 }
 
 func parseEnterpriseRelease(path string) (*DistributionInfo, error) {
-	b, err := util.ReadFile(path)
+	b, err := readFile(path)
 	if err != nil {
 		return &DistributionInfo{ShortName: Linux}, fmt.Errorf("unable to obtain release info: %v", err)
 	}
@@ -103,11 +112,11 @@ func GetDistributionInfo() (*DistributionInfo, error) {
 	var err error
 	switch {
 	// Check for /etc/os-release first.
-	case util.Exists(osRelease):
+	case exists(osRelease):
 		di, err = parseOsRelease(osRelease)
-	case util.Exists(oRelease):
+	case exists(oRelease):
 		di, err = parseEnterpriseRelease(oRelease)
-	case util.Exists(rhRelease):
+	case exists(rhRelease):
 		di, err = parseEnterpriseRelease(rhRelease)
 	default:
 		err = errors.New("unable to obtain release info, no known /etc/*-release exists")
