@@ -16,7 +16,6 @@ package packages
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -62,20 +61,6 @@ func InstallAptPackages(pkgs []string) error {
 	return err
 }
 
-// InstallAptPackagesIndividually installs apt packages individually.
-func InstallAptPackagesIndividually(pkgs []string) error {
-	var errs []string
-	for _, pkg := range pkgs {
-		if err := InstallAptPackages([]string{pkg}); err != nil {
-			errs = append(errs, fmt.Sprintf("Error installing package: %v. Error details: %v", pkg, err))
-		}
-	}
-	if len(errs) > 0 {
-		return errors.New(strings.Join(errs, ",\n"))
-	}
-	return nil
-}
-
 // RemoveAptPackages removes apt packages.
 func RemoveAptPackages(pkgs []string) error {
 	args := append(aptGetRemoveArgs, pkgs...)
@@ -90,20 +75,6 @@ func RemoveAptPackages(pkgs []string) error {
 	}
 	DebugLogger.Printf("apt remove output:\n%s", msg)
 	return err
-}
-
-// RemoveAptPackagesIndividually removes apt packages individually.
-func RemoveAptPackagesIndividually(pkgs []string) error {
-	var errs []string
-	for _, pkg := range pkgs {
-		if err := RemoveAptPackages([]string{pkg}); err != nil {
-			errs = append(errs, fmt.Sprintf("Error removing package: %v. Error details: %v", pkg, err))
-		}
-	}
-	if len(errs) > 0 {
-		return errors.New(strings.Join(errs, ",\n"))
-	}
-	return nil
 }
 
 func parseAptUpdates(data []byte) []PkgInfo {
