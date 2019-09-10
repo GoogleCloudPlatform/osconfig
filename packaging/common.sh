@@ -16,7 +16,7 @@
 set -e
 
 export PKGNAME="google-osconfig-agent"
-export VERSION="20190819.00"
+export VERSION="20190910.00"
 
 function exit_error() {
   echo "build failed: $0:$1 \"$BASH_COMMAND\" returned $?"
