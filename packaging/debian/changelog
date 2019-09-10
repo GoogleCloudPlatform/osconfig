@@ -1,3 +1,9 @@
+google-osconfig-agent (1:20190910.00-g1) stable; urgency=medium
+
+  * Enable software recipe support.
+
+ -- Google Cloud Team <gc-team@google.com>  Mon, 12 Aug 2019 10:05:16 +0000
+
 google-osconfig-agent (1:20190819.00-g1) stable; urgency=medium
 
   * Version bump for release.

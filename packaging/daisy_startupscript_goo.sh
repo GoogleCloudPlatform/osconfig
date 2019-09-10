@@ -26,7 +26,7 @@ gsutil cp "${SRC_PATH}/common.sh" ./
 
 . common.sh
 
-apt-get -y update && apt-get -y upgrade
+apt-get -y update
 apt-get install -y git-core
 
 git_checkout "$BASE_REPO" "$REPO" "$PULL_REF"
