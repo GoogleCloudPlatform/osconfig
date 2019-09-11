@@ -17,9 +17,6 @@ package common
 
 import (
 	"fmt"
-	"log"
-	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -66,18 +63,4 @@ func NormPath(path string) (string, error) {
 	}
 	path = filepath.Clean(path)
 	return "\\\\?\\" + path, nil
-}
-
-// Exists Checks if a file exists on the filesystem
-func Exists(name string) bool {
-	if _, err := os.Stat(name); os.IsNotExist(err) {
-		return false
-	}
-	return true
-}
-
-// Run is a wrapper to execute terminal commands
-var Run = func(cmd *exec.Cmd, logger *log.Logger) ([]byte, error) {
-	logger.Printf("Running %q with args %q\n", cmd.Path, cmd.Args[1:])
-	return cmd.CombinedOutput()
 }

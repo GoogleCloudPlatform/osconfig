@@ -26,7 +26,6 @@ import (
 
 	"cloud.google.com/go/storage"
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
-	"github.com/GoogleCloudPlatform/osconfig/common"
 	"github.com/fsouza/fake-gcs-server/fakestorage"
 )
 
@@ -60,7 +59,7 @@ func TestFetchArtifacts_GCS_happyCase(t *testing.T) {
 
 	art, err := FetchArtifacts(context.Background(), artifacts, "/tmp/")
 
-	if !common.Exists("/tmp/id1.txt") {
+	if !exists("/tmp/id1.txt") {
 		t.Errorf("expected fetched artifacts")
 	}
 
@@ -175,7 +174,7 @@ func TestFetchArtifacts_http_happycase(t *testing.T) {
 
 	art, err := FetchArtifacts(context.Background(), artifacts, "/tmp/")
 
-	if !common.Exists("/tmp/id1.deb") {
+	if !exists("/tmp/id1.deb") {
 		t.Errorf("expected fetched artifacts")
 	}
 

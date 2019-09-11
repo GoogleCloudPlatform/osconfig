@@ -17,23 +17,18 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
-	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"regexp"
 	"runtime"
 	"strings"
-
-	"github.com/GoogleCloudPlatform/osconfig/common"
 )
 
 var (
 	entRelVerRgx = regexp.MustCompile(`\d+(\.\d+)?(\.\d+)?`)
 	getUname     = func() ([]byte, error) {
 		return exec.Command("/bin/uname", "-r").CombinedOutput()
-	}
-	readFile = func(file string) ([]byte, error) {
-		return ioutil.ReadFile(file)
 	}
 )
 
@@ -43,14 +38,10 @@ const (
 	rhRelease = "/etc/redhat-release"
 )
 
-func parseOsRelease(path string) (*DistributionInfo, error) {
+func parseOsRelease(releaseDetails string) (*DistributionInfo, error) {
 	di := &DistributionInfo{}
-	b, err := readFile(path)
-	if err != nil {
-		return di, fmt.Errorf("unable to obtain release info: %v", err)
-	}
 
-	scanner := bufio.NewScanner(bytes.NewReader(b))
+	scanner := bufio.NewScanner(bytes.NewReader([]byte(releaseDetails)))
 	for scanner.Scan() {
 		entry := strings.Split(scanner.Text(), "=")
 		switch entry[0] {
@@ -75,12 +66,8 @@ func parseOsRelease(path string) (*DistributionInfo, error) {
 	return di, nil
 }
 
-func parseEnterpriseRelease(path string) (*DistributionInfo, error) {
-	b, err := readFile(path)
-	if err != nil {
-		return &DistributionInfo{ShortName: Linux}, fmt.Errorf("unable to obtain release info: %v", err)
-	}
-	rel := string(b)
+func parseEnterpriseRelease(releaseDetails string) (*DistributionInfo, error) {
+	rel := releaseDetails
 
 	var sn string
 	switch {
@@ -103,14 +90,30 @@ func parseEnterpriseRelease(path string) (*DistributionInfo, error) {
 func GetDistributionInfo() (*DistributionInfo, error) {
 	var di *DistributionInfo
 	var err error
+	var b []byte
 	switch {
 	// Check for /etc/os-release first.
-	case common.Exists(osRelease):
-		di, err = parseOsRelease(osRelease)
-	case common.Exists(oRelease):
-		di, err = parseEnterpriseRelease(oRelease)
-	case common.Exists(rhRelease):
-		di, err = parseEnterpriseRelease(rhRelease)
+	case exists(osRelease):
+		b, err = ioutil.ReadFile(osRelease)
+		if err != nil {
+			di = &DistributionInfo{ShortName: Linux}
+		} else {
+			di, err = parseOsRelease(string(b))
+		}
+	case exists(oRelease):
+		b, err = ioutil.ReadFile(oRelease)
+		if err != nil {
+			di = &DistributionInfo{ShortName: Linux}
+		} else {
+			di, err = parseEnterpriseRelease(string(b))
+		}
+	case exists(rhRelease):
+		b, err = ioutil.ReadFile(rhRelease)
+		if err != nil {
+			di = &DistributionInfo{ShortName: Linux}
+		} else {
+			di, err = parseEnterpriseRelease(string(b))
+		}
 	default:
 		err = errors.New("unable to obtain release info, no known /etc/*-release exists")
 	}
@@ -127,4 +130,11 @@ func GetDistributionInfo() (*DistributionInfo, error) {
 	// is the same as the system.
 	di.Architecture = Architecture(runtime.GOARCH)
 	return di, nil
+}
+
+func exists(name string) bool {
+	if _, err := os.Stat(name); os.IsNotExist(err) {
+		return false
+	}
+	return true
 }
