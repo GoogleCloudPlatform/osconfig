@@ -38,9 +38,9 @@ func InstallRecipe(ctx context.Context, recipe *osconfigpb.SoftwareRecipe) error
 	}
 	installedRecipe, ok := recipeDB.getRecipe(recipe.Name)
 	if ok {
-		logger.Debugf("Currently installed version of software recipe %s with version %s.", recipe.Name, installedRecipe.version)
+		logger.Debugf("Currently installed version of software recipe %s with version %s.", recipe.Name, installedRecipe.Version)
 		if (installedRecipe.compare(recipe.Version)) && (recipe.DesiredState == osconfigpb.DesiredState_UPDATED) {
-			logger.Infof("Upgrading software recipe %s from version %s to %s.", recipe.Name, installedRecipe.version, recipe.Version)
+			logger.Infof("Upgrading software recipe %s from version %s to %s.", recipe.Name, installedRecipe.Version, recipe.Version)
 			steps = recipe.UpdateSteps
 		} else {
 			logger.Debugf("Skipping software recipe %s.", recipe.Name)
