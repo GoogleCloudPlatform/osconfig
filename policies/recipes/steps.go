@@ -85,7 +85,7 @@ func StepFileCopy(step *osconfigpb.SoftwareRecipe_Step_FileCopy, artifacts map[s
 
 func parsePermissions(s string) (os.FileMode, error) {
 	if s == "" {
-		return 755, nil
+		return 0755, nil
 	}
 
 	i, err := strconv.ParseUint(s, 8, 32)
