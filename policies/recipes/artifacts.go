@@ -46,32 +46,34 @@ func FetchArtifacts(ctx context.Context, artifacts []*osconfigpb.SoftwareRecipe_
 func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Artifact, directory string) (string, error) {
 	var reader io.ReadCloser
 	var checksum, extension string
-	switch v := artifact.Artifact.(type) {
-	case *osconfigpb.SoftwareRecipe_Artifact_Gcs_:
-		extension = path.Ext(v.Gcs.Object)
-		reader, err := common.FetchWithGCS(ctx, v.Gcs.Bucket, v.Gcs.Object, v.Gcs.Generation)
+	switch {
+	case artifact.GetGcs() != nil:
+		gcs := artifact.GetGcs()
+		extension = path.Ext(gcs.Object)
+		reader, err := common.FetchWithGCS(ctx, gcs.Bucket, gcs.Object, gcs.Generation)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q from GCS: %v", artifact.Id, err)
 		}
 		defer reader.Close()
-	case *osconfigpb.SoftwareRecipe_Artifact_Remote_:
-		uri, err := url.Parse(v.Remote.Uri)
+	case artifact.GetRemote() != nil:
+		remote := artifact.GetRemote()
+		uri, err := url.Parse(remote.Uri)
 		if err != nil {
-			return "", fmt.Errorf("Could not parse url %q for artifact %q", v.Remote.Uri, artifact.Id)
+			return "", fmt.Errorf("Could not parse url %q for artifact %q", remote.Uri, artifact.Id)
 		}
 		extension = path.Ext(uri.Path)
 		if uri.Scheme != "http" && uri.Scheme != "https" {
 			return "", fmt.Errorf("error, artifact %q has unsupported protocol scheme %s", artifact.Id, uri.Scheme)
 		}
-		checksum = v.Remote.Checksum
-		response, err := common.FetchWithHTTP(ctx, v.Remote.Uri)
+		checksum = remote.Checksum
+		response, err := common.FetchWithHTTP(ctx, remote.Uri)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q with http or https: %v", artifact.Id, err)
 		}
 		defer response.Body.Close()
 		reader = response.Body
 	default:
-		return "", fmt.Errorf("unknown artifact type %T", v)
+		return "", fmt.Errorf("unknown artifact type for artifact %v", artifact.Id)
 	}
 
 	localPath := filepath.Join(directory, artifact.Id)

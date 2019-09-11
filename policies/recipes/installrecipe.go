@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
 
@@ -37,23 +38,27 @@ func InstallRecipe(ctx context.Context, recipe *osconfigpb.SoftwareRecipe) error
 	}
 	installedRecipe, ok := recipeDB.GetRecipe(recipe.Name)
 	if ok {
-		if (!installedRecipe.Greater(recipe.Version)) &&
-			(recipe.DesiredState == osconfigpb.DesiredState_UPDATED) {
+		logger.Debugf("currently installed version of software recipe %s with version %s", recipe.Name, installedRecipe.version)
+		if (installedRecipe.Compare(recipe.Version)) && (recipe.DesiredState == osconfigpb.DesiredState_UPDATED) {
+			logger.Infof("Upgrading software recipe %s from version %s to %s", recipe.Name, installedRecipe.version, recipe.Version)
 			steps = recipe.UpdateSteps
 		} else {
+			logger.Debugf("Skipping software recipe %s", recipe.Name)
 			return nil
 		}
 	}
 
+	logger.Debugf("creating working dir for recipe %s", recipe.Name)
 	runID := fmt.Sprintf("run_%d", time.Now().UnixNano())
 	runDir, err := createBaseDir(recipe, runID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create base directory: %v", err)
 	}
 	artifacts, err := FetchArtifacts(ctx, recipe.Artifacts, runDir)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to obtain artifacts: %v", err)
 	}
+	logger.Infof("Finished downloading artifacts")
 
 	runEnvs := []string{
 		fmt.Sprintf("RECIPE_NAME=%s", recipe.Name),
@@ -65,49 +70,35 @@ func InstallRecipe(ctx context.Context, recipe *osconfigpb.SoftwareRecipe) error
 	}
 
 	for i, step := range steps {
-		switch v := step.Step.(type) {
-		case *osconfigpb.SoftwareRecipe_Step_FileCopy:
-			if err := StepFileCopy(v, artifacts); err != nil {
-				return err
-			}
-		case *osconfigpb.SoftwareRecipe_Step_ArchiveExtraction:
-			if err := StepArchiveExtraction(v, artifacts); err != nil {
-				return err
-			}
-		case *osconfigpb.SoftwareRecipe_Step_MsiInstallation:
-			if err := StepMsiInstallation(v, artifacts); err != nil {
-				return err
-			}
-		case *osconfigpb.SoftwareRecipe_Step_DpkgInstallation:
-			if err := StepDpkgInstallation(v, artifacts); err != nil {
-				return err
-			}
-		case *osconfigpb.SoftwareRecipe_Step_RpmInstallation:
-			if err := StepRpmInstallation(v, artifacts); err != nil {
-				return err
-			}
-		case *osconfigpb.SoftwareRecipe_Step_FileExec:
-			stepDir := filepath.Join(runDir, fmt.Sprintf("step%d_FileExec", i))
-			if err := os.MkdirAll(stepDir, 0755); err != nil {
-				return fmt.Errorf("failed to create working dir %q: %s", stepDir, err)
-			}
-			if err := StepFileExec(v, artifacts, runEnvs, stepDir); err != nil {
-				return err
-			}
-		case *osconfigpb.SoftwareRecipe_Step_ScriptRun:
-			stepDir := filepath.Join(runDir, fmt.Sprintf("step%d_ScriptRun", i))
-			if err := os.MkdirAll(stepDir, 0755); err != nil {
-				return fmt.Errorf("failed to create working dir %q: %s", stepDir, err)
-			}
-			if err := StepScriptRun(v, artifacts, runEnvs, stepDir); err != nil {
-				return err
-			}
+		logger.Debugf("Running step %d", i)
+		stepDir := filepath.Join(runDir, fmt.Sprintf("step%02d", i))
+		if err := os.MkdirAll(stepDir, 0755); err != nil {
+			return fmt.Errorf("failed to create recipe step dir %q: %s", stepDir, err)
+		}
+
+		var err error
+		switch {
+		case step.GetFileCopy() != nil:
+			err = StepFileCopy(step.GetFileCopy(), artifacts, runEnvs, stepDir)
+		case step.GetArchiveExtraction() != nil:
+			err = StepArchiveExtraction(step.GetArchiveExtraction(), artifacts, runEnvs, stepDir)
+		case step.GetMsiInstallation() != nil:
+			err = StepMsiInstallation(step.GetMsiInstallation(), artifacts, runEnvs, stepDir)
+		case step.GetFileExec() != nil:
+			err = StepFileExec(step.GetFileExec(), artifacts, runEnvs, stepDir)
+		case step.GetScriptRun() != nil:
+			err = StepScriptRun(step.GetScriptRun(), artifacts, runEnvs, stepDir)
 		default:
-			return fmt.Errorf("unknown step type %T", v)
+			err = fmt.Errorf("unknown step type for step %d", i)
+		}
+		if err != nil {
+			recipeDB.AddRecipe(recipe.Name, recipe.Version, false)
+			return err
 		}
 	}
 
-	return recipeDB.AddRecipe(recipe.Name, recipe.Version)
+	logger.Infof("All steps completed successfully, marking recipe installed")
+	return recipeDB.AddRecipe(recipe.Name, recipe.Version, true)
 }
 
 func createBaseDir(recipe *osconfigpb.SoftwareRecipe, runID string) (string, error) {

@@ -35,14 +35,14 @@ import (
 	"github.com/ulikunitz/xz/lzma"
 )
 
-// StepFileCopy builds the command for a FileCopy step
-func StepFileCopy(step *osconfigpb.SoftwareRecipe_Step_FileCopy, artifacts map[string]string) error {
-	dest, err := common.NormPath(step.FileCopy.Destination)
+// StepFileCopy runs a FileCopy step
+func StepFileCopy(step *osconfigpb.SoftwareRecipe_Step_CopyFile, artifacts map[string]string, runEnvs []string, stepDir string) error {
+	dest, err := common.NormPath(step.Destination)
 	if err != nil {
 		return err
 	}
 
-	permissions, err := parsePermissions(step.FileCopy.Permissions)
+	permissions, err := parsePermissions(step.Permissions)
 	if err != nil {
 		return err
 	}
@@ -53,15 +53,16 @@ func StepFileCopy(step *osconfigpb.SoftwareRecipe_Step_FileCopy, artifacts map[s
 		}
 	} else {
 		// file exists
-		if !step.FileCopy.Overwrite {
-			return fmt.Errorf("file already exists at path %q and Overwrite = false", step.FileCopy.Destination)
+		if !step.Overwrite {
+			return fmt.Errorf("file already exists at path %q and Overwrite = false", step.Destination)
 		}
 		os.Chmod(dest, permissions)
 	}
 
-	src, ok := artifacts[step.FileCopy.ArtifactId]
+	artifact := step.GetArtifactId()
+	src, ok := artifacts[artifact]
 	if !ok {
-		return fmt.Errorf("could not find location for artifact %q", step.FileCopy.ArtifactId)
+		return fmt.Errorf("could not find location for artifact %q", artifact)
 	}
 
 	reader, err := os.Open(src)
@@ -95,23 +96,24 @@ func parsePermissions(s string) (os.FileMode, error) {
 	return os.FileMode(i), nil
 }
 
-// StepArchiveExtraction builds the command for a ArchiveExtraction step
-func StepArchiveExtraction(step *osconfigpb.SoftwareRecipe_Step_ArchiveExtraction, artifacts map[string]string) error {
-	filename, ok := artifacts[step.ArchiveExtraction.GetArtifactId()]
+// StepArchiveExtraction runs an ArchiveExtraction step
+func StepArchiveExtraction(step *osconfigpb.SoftwareRecipe_Step_ExtractArchive, artifacts map[string]string, runEnvs []string, stepDir string) error {
+	artifact := step.GetArtifactId()
+	filename, ok := artifacts[artifact]
 	if !ok {
-		return fmt.Errorf("%q not found in artifact map", step.ArchiveExtraction.GetArtifactId())
+		return fmt.Errorf("%q not found in artifact map", artifact)
 	}
-	switch step.ArchiveExtraction.GetType() {
+	switch typ := step.GetType(); typ {
 	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_ZIP:
-		return extractZip(filename, step.ArchiveExtraction.Destination)
+		return extractZip(filename, step.Destination)
 	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_GZIP,
 		osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_BZIP,
 		osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_LZMA,
 		osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_XZ,
 		osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR:
-		return extractTar(filename, step.ArchiveExtraction.Destination, step.ArchiveExtraction.GetType())
+		return extractTar(filename, step.Destination, typ)
 	default:
-		return fmt.Errorf("Unrecognized archive type %q", step.ArchiveExtraction.GetType())
+		return fmt.Errorf("Unrecognized archive type %q", typ)
 	}
 }
 
@@ -370,51 +372,60 @@ func extractTar(tarName string, dst string, archiveType osconfigpb.SoftwareRecip
 }
 
 // StepMsiInstallation builds the command for a MsiInstallation step
-func StepMsiInstallation(step *osconfigpb.SoftwareRecipe_Step_MsiInstallation, artifacts map[string]string) error {
-	fmt.Println("StepMsiInstallation")
-	return nil
+func StepMsiInstallation(step *osconfigpb.SoftwareRecipe_Step_InstallMsi, artifacts map[string]string, runEnvs []string, stepDir string) error {
+	artifact := step.GetArtifactId()
+	path, ok := artifacts[artifact]
+	if !ok {
+		return fmt.Errorf("%q not found in artifact map", artifact)
+	}
+	args := step.Flags
+	if len(args) == 0 {
+		args = []string{"/i"}
+	}
+	args = append(args, path)
+	return executeCommand("C:\\Windows\\System32\\msiexec.exe", args, stepDir, runEnvs, step.AllowedExitCodes)
 }
 
 // StepDpkgInstallation builds the command for a DpkgInstallation step
-func StepDpkgInstallation(step *osconfigpb.SoftwareRecipe_Step_DpkgInstallation, artifacts map[string]string) error {
-	fmt.Println("StepDpkgInstallation")
-	return nil
+func StepDpkgInstallation(step *osconfigpb.SoftwareRecipe_Step_InstallDpkg, artifacts map[string]string, runEnvs []string, stepDir string) error {
+	return fmt.Errorf("InstallDpkg not yet supported")
 }
 
 // StepRpmInstallation builds the command for a FileCopy step
-func StepRpmInstallation(step *osconfigpb.SoftwareRecipe_Step_RpmInstallation, artifacts map[string]string) error {
-	fmt.Println("StepRpmInstallation")
-	return nil
+func StepRpmInstallation(step *osconfigpb.SoftwareRecipe_Step_InstallRpm, artifacts map[string]string, runEnvs []string, stepDir string) error {
+	return fmt.Errorf("InstallRpm not yet supported")
 }
 
 // StepFileExec builds the command for a FileExec step
-func StepFileExec(step *osconfigpb.SoftwareRecipe_Step_FileExec, artifacts map[string]string, runEnvs []string, stepDir string) error {
+func StepFileExec(step *osconfigpb.SoftwareRecipe_Step_ExecFile, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	var path string
-	switch v := step.FileExec.LocationType.(type) {
-	case *osconfigpb.SoftwareRecipe_Step_ExecFile_LocalPath:
-		path = v.LocalPath
-	case *osconfigpb.SoftwareRecipe_Step_ExecFile_ArtifactId:
+	switch {
+	case step.GetArtifactId() != "":
 		var ok bool
-		path, ok = artifacts[v.ArtifactId]
+		artifact := step.GetArtifactId()
+		path, ok = artifacts[artifact]
 		if !ok {
-			return fmt.Errorf("%q not found in artifact map", v.ArtifactId)
+			return fmt.Errorf("%q not found in artifact map", artifact)
 		}
+	case step.GetLocalPath() != "":
+		path = step.GetLocalPath()
 	default:
 		return fmt.Errorf("can't determine location type")
+
 	}
 
-	return executeCommand(path, step.FileExec.Args, stepDir, runEnvs, []int32{0})
+	return executeCommand(path, step.Args, stepDir, runEnvs, []int32{0})
 }
 
 // StepScriptRun runs a ScriptRun step.
-func StepScriptRun(step *osconfigpb.SoftwareRecipe_Step_ScriptRun, artifacts map[string]string, runEnvs []string, stepDir string) error {
+func StepScriptRun(step *osconfigpb.SoftwareRecipe_Step_RunScript, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	cmd := filepath.Join(stepDir, "recipe_script_source")
-	if err := writeScript(cmd, step.ScriptRun.Script); err != nil {
+	if err := writeScript(cmd, step.Script); err != nil {
 		return err
 	}
 
 	var args []string
-	switch step.ScriptRun.Interpreter {
+	switch step.Interpreter {
 	case osconfigpb.SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED:
 		if runtime.GOOS == "windows" {
 			args = []string{"/c", cmd}
@@ -429,14 +440,14 @@ func StepScriptRun(step *osconfigpb.SoftwareRecipe_Step_ScriptRun, artifacts map
 		cmd = "/bin/sh"
 	case osconfigpb.SoftwareRecipe_Step_RunScript_POWERSHELL:
 		if runtime.GOOS != "windows" {
-			return fmt.Errorf("interpreter %q can only used on Windows systems", step.ScriptRun.Interpreter)
+			return fmt.Errorf("interpreter %q can only used on Windows systems", step.Interpreter)
 		}
 		args = []string{"-File", cmd}
 		cmd = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\PowerShell.exe"
 	default:
-		return fmt.Errorf("unsupported interpreter %q", step.ScriptRun.Interpreter)
+		return fmt.Errorf("unsupported interpreter %q", step.Interpreter)
 	}
-	return executeCommand(cmd, args, stepDir, runEnvs, step.ScriptRun.AllowedExitCodes)
+	return executeCommand(cmd, args, stepDir, runEnvs, step.AllowedExitCodes)
 }
 
 func writeScript(path, contents string) error {

@@ -64,12 +64,12 @@ func (db *RecipeDB) GetRecipe(name string) (Recipe, bool) {
 }
 
 // AddRecipe marks a recipe as installed.
-func (db *RecipeDB) AddRecipe(name, version string) error {
+func (db *RecipeDB) AddRecipe(name, version string, success bool) error {
 	versionNum, err := convertVersion(version)
 	if err != nil {
 		return err
 	}
-	db.recipes[name] = Recipe{name: name, version: versionNum, installTime: time.Now().Unix()}
+	db.recipes[name] = Recipe{name: name, version: versionNum, installTime: time.Now().Unix(), success: success}
 	dbBytes, err := json.Marshal(db)
 	if err != nil {
 		return err
@@ -99,11 +99,22 @@ func getDbDir() string {
 	return dbDirUnix
 }
 
+type rver []int
+
+func (v rver) String() string {
+	res := fmt.Sprintf("%d", v[0])
+	for _, val := range v[1:] {
+		res = fmt.Sprintf("%s.%d", res, val)
+	}
+	return res
+}
+
 // A Recipe represents one recipe installed on the system.
 type Recipe struct {
 	name        string
-	version     []int
+	version     rver
 	installTime int64
+	success     bool
 }
 
 // SetVersion sets the version on a Recipe.
@@ -113,9 +124,9 @@ func (r *Recipe) SetVersion(version string) error {
 	return err
 }
 
-// Greater returns true if the provided version is greater than the recipe's
+// Compare returns true if the provided version is greater than the recipe's
 // version, false otherwise.
-func (r *Recipe) Greater(version string) bool {
+func (r *Recipe) Compare(version string) bool {
 	if version == "" {
 		return false
 	}
