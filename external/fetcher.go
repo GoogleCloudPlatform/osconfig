@@ -1,3 +1,18 @@
+//  Copyright 2018 Google Inc. All Rights Reserved.
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
+// Package external is responsible for all the external interactions
 package external
 
 import (
@@ -14,25 +29,11 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/common"
 )
 
-// GCSFetcher fetches data from GCS bucket
-type GCSFetcher struct {
-	Client         *storage.Client
-	Bucket, Object string
-	Generation     int64
-}
-
-// HTTPFetcher fetches data from remote location
-// using http client
-type HTTPFetcher struct {
-	Client *http.Client
-	URI    string
-}
-
 // Fetch fetches data from GCS bucket
-func (fetcher *GCSFetcher) Fetch(ctx context.Context) (io.ReadCloser, error) {
-	oh := fetcher.Client.Bucket(fetcher.Bucket).Object(fetcher.Object)
-	if fetcher.Generation != 0 {
-		oh = oh.Generation(fetcher.Generation)
+func FetchGCSObject(ctx context.Context, client *storage.Client, object, bucket string, generation int64) (io.ReadCloser, error) {
+	oh := client.Bucket(bucket).Object(object)
+	if generation != 0 {
+		oh = oh.Generation(generation)
 	}
 
 	r, err := oh.NewReader(ctx)
@@ -44,8 +45,8 @@ func (fetcher *GCSFetcher) Fetch(ctx context.Context) (io.ReadCloser, error) {
 }
 
 // Fetch fetches data from remote location
-func (fetcher *HTTPFetcher) Fetch(ctx context.Context) (io.ReadCloser, error) {
-	resp, err := fetcher.Client.Get(fetcher.URI)
+func FetchRemoteObjectHTTP(client *http.Client, url string) (io.ReadCloser, error) {
+	resp, err := client.Get(url)
 	if err != nil {
 		return nil, err
 	}

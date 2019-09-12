@@ -31,20 +31,20 @@ HOME_URL="https://www.debian.org/"
 SUPPORT_URL="https://www.debian.org/support"
 BUG_REPORT_URL="https://bugs.debian.org/"
 `
-	di, _ := parseOsRelease(fcontent)
+	di := parseOsRelease(fcontent)
 	tests := []struct {
-		expectation string
+		expect string
 		actual      string
 		errMsg      string
 	}{
 		{"Debian buster", di.LongName, "unexpected long name"},
-		{"debian", di.ShortName, "unexpected shortname name"},
-		{"10", di.Version, "enexpted version id"},
+		{"debian", di.ShortName, "unexpected short name"},
+		{"10", di.Version, "unexpected version id"},
 	}
 
 	for _, v := range tests {
-		if v.actual != v.expectation {
-			t.Errorf("%s! expected(%s); got(%s)", v.errMsg, v.expectation, v.actual)
+		if v.actual != v.expect {
+			t.Errorf("%s! expected(%s); got(%s)", v.errMsg, v.expect, v.actual)
 		}
 	}
 }
@@ -54,14 +54,14 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 func TestGetDistributionInfoEmptyOSRelease(t *testing.T) {
 	fcontent := `
 `
-	di, _ := parseOsRelease(fcontent)
+	di := parseOsRelease(fcontent)
 	tests := []struct {
 		expectation string
 		actual      string
 		errMsg      string
 	}{
 		{"", di.LongName, "unexpected long name"},
-		{"linux", di.ShortName, "unexpected shortname name"},
+		{"linux", di.ShortName, "unexpected short name"},
 	}
 
 	for _, v := range tests {
@@ -76,15 +76,15 @@ func TestGetDistributionInfoEmptyOSRelease(t *testing.T) {
 func TestGetDistributionInfoOracleReleaseCentos(t *testing.T) {
 
 	fcontent := `CentOS Linux release 7.6.1810 (Core)`
-	di, _ := parseEnterpriseRelease(fcontent)
+	di := parseEnterpriseRelease(fcontent)
 	tests := []struct {
 		expect string
 		actual string
 		errMsg string
 	}{
 		{"CentOS Linux 7.6.1810 (Core)", di.LongName, "unexpected long name"},
-		{"centos", di.ShortName, "unexpected shortname name"},
-		{"7.6.1810", di.Version, "enexpected version id"},
+		{"centos", di.ShortName, "unexpected short name"},
+		{"7.6.1810", di.Version, "unexpected version id"},
 	}
 
 	for _, v := range tests {
@@ -98,15 +98,15 @@ func TestGetDistributionInfoOracleReleaseCentos(t *testing.T) {
 //// normal details of redhat system
 func TestGetDistributionInfoRedHatRelease(t *testing.T) {
 	fcontent := `Red Hat Enterprise Linux release 8.0 (Ootpa)`
-	di, _ := parseEnterpriseRelease(fcontent)
+	di := parseEnterpriseRelease(fcontent)
 	tests := []struct {
 		expectation string
 		actual      string
 		errMsg      string
 	}{
 		{"Red Hat Enterprise Linux 8.0 (Ootpa)", di.LongName, "unexpected long name"},
-		{"rhel", di.ShortName, "unexpected shortname name"},
-		{"8.0", di.Version, "enexpted version id"},
+		{"rhel", di.ShortName, "unexpected short name"},
+		{"8.0", di.Version, "unexpected version id"},
 	}
 
 	for _, v := range tests {

@@ -28,14 +28,6 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/external"
 )
 
-var getGCSClient = func(ctx context.Context) (*storage.Client, error) {
-	return storage.NewClient(ctx)
-}
-
-var getHTTPClient = func() (*http.Client, error) {
-	return &http.Client{}, nil
-}
-
 // FetchArtifacts takes in a slice of artifacts and downloads them into the specified directory,
 // Returns a map of artifact names to their new locations on the local disk.
 func FetchArtifacts(ctx context.Context, artifacts []*osconfigpb.SoftwareRecipe_Artifact, directory string) (map[string]string, error) {
@@ -59,12 +51,11 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 	switch v := artifact.Artifact.(type) {
 	case *osconfigpb.SoftwareRecipe_Artifact_Gcs_:
 		extension = path.Ext(v.Gcs.Object)
-		cl, err := getGCSClient(ctx)
+		cl, err := storage.NewClient(ctx)
 		if err != nil {
 			return "", fmt.Errorf("error creating gcs client: %v", err)
 		}
-		gf := &external.GCSFetcher{Client: cl, Bucket: v.Gcs.Bucket, Object: v.Gcs.Object, Generation: v.Gcs.Generation}
-		reader, err = gf.Fetch(ctx)
+		reader, err = getGCSArtifact(ctx, cl, v.Gcs.Object, v.Gcs.Bucket, v.Gcs.Generation)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q from GCS: %v", artifact.Id, err)
 		}
@@ -72,29 +63,55 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 		defer reader.Close()
 	case *osconfigpb.SoftwareRecipe_Artifact_Remote_:
 		uri, err := url.Parse(v.Remote.Uri)
-		if err != nil {
-			return "", fmt.Errorf("Could not parse url %q for artifact %q", v.Remote.Uri, artifact.Id)
-		}
 		extension = path.Ext(uri.Path)
-		if uri.Scheme != "http" && uri.Scheme != "https" {
-			return "", fmt.Errorf("error, artifact %q has unsupported protocol scheme %s", artifact.Id, uri.Scheme)
-		}
-		checksum = v.Remote.Checksum
-		cl, err := getHTTPClient()
-		hf := external.HTTPFetcher{Client: cl, URI: uri.String()}
-		reader, err = hf.Fetch(ctx)
 		if err != nil {
-			return "", fmt.Errorf("error fetching artifact %q with http or https: %v", artifact.Id, err)
+			return "", fmt.Errorf("Could not parse url: %q; got error: %v", uri, err)
+		}
+		cl := &http.Client{}
+		reader, err := getHTTPArtifact(cl, *uri)
+		if err != nil {
+			return "", fmt.Errorf("error fetching artifact %q: %v", artifact.Id, err)
 		}
 		defer reader.Close()
 	default:
 		return "", fmt.Errorf("unknown artifact type %T", v)
 	}
 
-	localPath := filepath.Join(directory, artifact.Id)
-	if extension != "" {
-		localPath = localPath + extension
+	localPath := getStoragePath(directory, artifact.Id, extension)
+	if err := external.DownloadStream(reader, checksum, localPath); err != nil {
+		return "", fmt.Errorf("Error downloading stream: %v", err)
 	}
-	external.DownloadStream(reader, checksum, localPath)
+
 	return localPath, nil
+}
+
+func getGCSArtifact(ctx context.Context, cl *storage.Client, object, bucket string, generation int64) (io.ReadCloser, error) {
+	reader, err := external.FetchGCSObject(ctx, cl, object, bucket, generation)
+	if err != nil {
+		return nil, err
+	}
+	return reader, nil
+}
+
+func getHTTPArtifact(client *http.Client, uri url.URL) (io.ReadCloser, error) {
+	if !isSupportedURL(uri) {
+		return nil, fmt.Errorf("error, unsupported protocol scheme %s", uri.Scheme)
+	}
+	reader, err := external.FetchRemoteObjectHTTP(client, uri.String())
+	if err != nil {
+		return nil, err
+	}
+	return reader, nil
+}
+
+func isSupportedURL(uri url.URL) bool {
+	return (uri.Scheme == "http") || (uri.Scheme == "https")
+}
+
+func getStoragePath(directory, fname, extension string) string {
+	localpath := filepath.Join(directory, fname)
+	if extension != "" {
+		localpath = localpath + extension
+	}
+	return localpath
 }

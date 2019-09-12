@@ -38,7 +38,7 @@ const (
 	rhRelease = "/etc/redhat-release"
 )
 
-func parseOsRelease(releaseDetails string) (*DistributionInfo, error) {
+func parseOsRelease(releaseDetails string) *DistributionInfo {
 	di := &DistributionInfo{}
 
 	scanner := bufio.NewScanner(bytes.NewReader([]byte(releaseDetails)))
@@ -63,10 +63,10 @@ func parseOsRelease(releaseDetails string) (*DistributionInfo, error) {
 		di.ShortName = Linux
 	}
 
-	return di, nil
+	return di
 }
 
-func parseEnterpriseRelease(releaseDetails string) (*DistributionInfo, error) {
+func parseEnterpriseRelease(releaseDetails string) *DistributionInfo {
 	rel := releaseDetails
 
 	var sn string
@@ -83,42 +83,35 @@ func parseEnterpriseRelease(releaseDetails string) (*DistributionInfo, error) {
 		ShortName: sn,
 		LongName:  strings.Replace(rel, " release ", " ", 1),
 		Version:   entRelVerRgx.FindString(rel),
-	}, nil
+	}
 }
 
 // GetDistributionInfo reports DistributionInfo.
 func GetDistributionInfo() (*DistributionInfo, error) {
 	var di *DistributionInfo
 	var err error
-	var b []byte
+	var parseReleaseFunc func (string) *DistributionInfo
+	var releaseFile string
 	switch {
 	// Check for /etc/os-release first.
 	case exists(osRelease):
-		b, err = ioutil.ReadFile(osRelease)
-		if err != nil {
-			di = &DistributionInfo{ShortName: Linux}
-		} else {
-			di, err = parseOsRelease(string(b))
-		}
+		releaseFile = osRelease
+		parseReleaseFunc = parseOsRelease
 	case exists(oRelease):
-		b, err = ioutil.ReadFile(oRelease)
-		if err != nil {
-			di = &DistributionInfo{ShortName: Linux}
-		} else {
-			di, err = parseEnterpriseRelease(string(b))
-		}
+		releaseFile = oRelease
+		parseReleaseFunc = parseEnterpriseRelease
 	case exists(rhRelease):
-		b, err = ioutil.ReadFile(rhRelease)
-		if err != nil {
-			di = &DistributionInfo{ShortName: Linux}
-		} else {
-			di, err = parseEnterpriseRelease(string(b))
-		}
+		releaseFile = rhRelease
+		parseReleaseFunc = parseEnterpriseRelease
 	default:
 		err = errors.New("unable to obtain release info, no known /etc/*-release exists")
 	}
+
+	b, err := ioutil.ReadFile(releaseFile)
 	if err != nil {
-		return nil, err
+		di = &DistributionInfo{ShortName: Linux}
+	} else {
+		di = parseReleaseFunc(string(b))
 	}
 
 	out, err := getUname()

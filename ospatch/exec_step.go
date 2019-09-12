@@ -29,22 +29,14 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/external"
 )
 
-var getGCSClient = func(ctx context.Context) (*storage.Client, error) {
-	return storage.NewClient(ctx)
-}
-
 func getExecutablePath(ctx context.Context, logger *common.Logger, stepConfig *osconfigpb.ExecStepConfig) (string, error) {
 	if gcsObject := stepConfig.GetGcsObject(); gcsObject != nil {
 		var reader io.ReadCloser
-		cl, err := getGCSClient(ctx)
+		cl, err := storage.NewClient(ctx)
 		if err != nil {
 			return "", fmt.Errorf("error creating gcs client: %v", err)
 		}
-		gf := &external.GCSFetcher{Client: cl, Bucket: gcsObject.Bucket, Object: gcsObject.Object, Generation: gcsObject.GenerationNumber}
-		if err != nil {
-			return "", fmt.Errorf("error reading GCS object: %s", err)
-		}
-		reader, err = gf.Fetch(ctx)
+		external.FetchGCSObject(ctx, cl, gcsObject.Object, gcsObject.Bucket, gcsObject.GenerationNumber)
 		defer reader.Close()
 		logger.Debugf("Fetched GCS object bucket %s object %s generation number %d", gcsObject.GetBucket(), gcsObject.GetObject(), gcsObject.GetGenerationNumber())
 
