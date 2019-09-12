@@ -15,65 +15,10 @@
 package recipes
 
 import (
-	"context"
-	"io/ioutil"
 	"net/url"
 	"strings"
 	"testing"
-
-	"github.com/fsouza/fake-gcs-server/fakestorage"
 )
-
-func TestRecipesgetGCSArtifactValidObject(t *testing.T) {
-	content := "sample content"
-	bname := "some-bucket"
-	oname := "some-object.txt"
-
-	server := fakestorage.NewServer([]fakestorage.Object{
-		{
-			BucketName: bname,
-			Name:       oname,
-			Content:    []byte(content),
-		},
-	})
-	defer server.Stop()
-
-	reader, err := getGCSArtifact(context.Background(), server.Client(), oname, bname, 0)
-	if err != nil {
-		t.Errorf("Expected gcs object; got error(%v)", err)
-	}
-	if reader == nil {
-		t.Errorf("Expected gcs object; got error(%v)", err)
-	}
-
-	fcontent, err := ioutil.ReadAll(reader)
-	if strings.Compare(string(fcontent), content) != 0 {
-		t.Errorf("Expected file content(%s); got(%s)", content, fcontent)
-	}
-}
-
-func TestRecipesgetGCSArtifactInValidObject(t *testing.T) {
-	content := "sample content"
-	bname := "some-bucket"
-	oname := "some-other-object.txt"
-
-	server := fakestorage.NewServer([]fakestorage.Object{
-		{
-			BucketName: bname,
-			Name:       oname,
-			Content:    []byte(content),
-		},
-	})
-	defer server.Stop()
-
-	reader, err := getGCSArtifact(context.Background(), server.Client(), "some-other-object", bname, 0)
-	if reader != nil {
-		t.Errorf("Expected gcs object; got error(%v)", err)
-	}
-	if err == nil || !strings.Contains(err.Error(), "object doesn't exist") {
-		t.Errorf("Expected (Object does not exists); got error(%v)", err)
-	}
-}
 
 func TestFetchArtifacts_http_InvalidURL(t *testing.T) {
 	uri := "ftp://google.com/agent.deb"
