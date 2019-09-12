@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -37,7 +38,7 @@ func init() {
 	if runtime.GOOS != "windows" {
 		zypper = "/usr/bin/zypper"
 	}
-	ZypperExists = exists(zypper)
+	ZypperExists = util.Exists(zypper)
 }
 
 // InstallZypperPackages Installs zypper packages

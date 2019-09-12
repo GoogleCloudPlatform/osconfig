@@ -22,6 +22,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -37,7 +39,7 @@ func init() {
 	if runtime.GOOS == "windows" {
 		googet = filepath.Join(os.Getenv("GooGetRoot"), "googet.exe")
 	}
-	GooGetExists = exists(googet)
+	GooGetExists = util.Exists(googet)
 }
 
 func parseGooGetUpdates(data []byte) []PkgInfo {

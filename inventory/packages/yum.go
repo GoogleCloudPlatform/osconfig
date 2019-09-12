@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -36,7 +37,7 @@ func init() {
 	if runtime.GOOS != "windows" {
 		yum = "/usr/bin/yum"
 	}
-	YumExists = exists(yum)
+	YumExists = util.Exists(yum)
 }
 
 // InstallYumPackages installs yum packages.

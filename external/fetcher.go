@@ -26,10 +26,10 @@ import (
 	"strings"
 
 	"cloud.google.com/go/storage"
-	"github.com/GoogleCloudPlatform/osconfig/common"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
-// Fetch fetches data from GCS bucket
+// FetchGCSObject fetches data from GCS bucket
 func FetchGCSObject(ctx context.Context, client *storage.Client, object, bucket string, generation int64) (io.ReadCloser, error) {
 	oh := client.Bucket(bucket).Object(object)
 	if generation != 0 {
@@ -44,7 +44,7 @@ func FetchGCSObject(ctx context.Context, client *storage.Client, object, bucket 
 	return r, nil
 }
 
-// Fetch fetches data from remote location
+// FetchRemoteObjectHTTP fetches data from remote location
 func FetchRemoteObjectHTTP(client *http.Client, url string) (io.ReadCloser, error) {
 	resp, err := client.Get(url)
 	if err != nil {
@@ -60,7 +60,7 @@ func FetchRemoteObjectHTTP(client *http.Client, url string) (io.ReadCloser, erro
 
 // DownloadStream fetches data from an input stream
 func DownloadStream(r io.ReadCloser, checksum, localPath string) error {
-	localPath, err := common.NormPath(localPath)
+	localPath, err := util.NormPath(localPath)
 	if err != nil {
 		return err
 	}

@@ -18,6 +18,8 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -31,7 +33,7 @@ func init() {
 	if runtime.GOOS != "windows" {
 		gem = "/usr/bin/gem"
 	}
-	GemExists = exists(gem)
+	GemExists = util.Exists(gem)
 }
 
 // GemUpdates queries for all available gem updates.

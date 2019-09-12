@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -42,7 +43,7 @@ func init() {
 		dpkgquery = "/usr/bin/dpkg-query"
 		aptGet = "/usr/bin/apt-get"
 	}
-	AptExists = exists(aptGet)
+	AptExists = util.Exists(aptGet)
 }
 
 // InstallAptPackages installs apt packages.

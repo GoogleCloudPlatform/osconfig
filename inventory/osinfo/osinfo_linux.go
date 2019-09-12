@@ -18,11 +18,12 @@ import (
 	"bytes"
 	"errors"
 	"io/ioutil"
-	"os"
 	"os/exec"
 	"regexp"
 	"runtime"
 	"strings"
+
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -90,17 +91,17 @@ func parseEnterpriseRelease(releaseDetails string) *DistributionInfo {
 func GetDistributionInfo() (*DistributionInfo, error) {
 	var di *DistributionInfo
 	var err error
-	var parseReleaseFunc func (string) *DistributionInfo
+	var parseReleaseFunc func(string) *DistributionInfo
 	var releaseFile string
 	switch {
 	// Check for /etc/os-release first.
-	case exists(osRelease):
+	case util.Exists(osRelease):
 		releaseFile = osRelease
 		parseReleaseFunc = parseOsRelease
-	case exists(oRelease):
+	case util.Exists(oRelease):
 		releaseFile = oRelease
 		parseReleaseFunc = parseEnterpriseRelease
-	case exists(rhRelease):
+	case util.Exists(rhRelease):
 		releaseFile = rhRelease
 		parseReleaseFunc = parseEnterpriseRelease
 	default:
@@ -123,11 +124,4 @@ func GetDistributionInfo() (*DistributionInfo, error) {
 	// is the same as the system.
 	di.Architecture = Architecture(runtime.GOARCH)
 	return di, nil
-}
-
-func exists(name string) bool {
-	if _, err := os.Stat(name); os.IsNotExist(err) {
-		return false
-	}
-	return true
 }

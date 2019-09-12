@@ -34,8 +34,8 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 	di := parseOsRelease(fcontent)
 	tests := []struct {
 		expect string
-		actual      string
-		errMsg      string
+		actual string
+		errMsg string
 	}{
 		{"Debian buster", di.LongName, "unexpected long name"},
 		{"debian", di.ShortName, "unexpected short name"},

@@ -25,10 +25,10 @@ import (
 	"cloud.google.com/go/compute/metadata"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	osconfig "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/cloud.google.com/go/osconfig/apiv1alpha2"
-	"github.com/GoogleCloudPlatform/osconfig/common"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 	"github.com/golang/protobuf/jsonpb"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc/codes"
@@ -452,7 +452,7 @@ func (r *patchRun) reportPatchDetails(patchState osconfigpb.Instance_PatchState,
 			AttemptCount:     attemptCount,
 			FailureReason:    failureReason,
 		}
-		r.debugf("Reporting patch details request:\n%s", common.PrettyFmt(request))
+		r.debugf("Reporting patch details request:\n%s", util.PrettyFmt(request))
 
 		res, err := r.client.ReportPatchJobInstanceDetails(r.ctx, request)
 		if err != nil {
@@ -469,7 +469,7 @@ func (r *patchRun) reportPatchDetails(patchState osconfigpb.Instance_PatchState,
 			}
 			return err
 		}
-		r.debugf("Reporting patch details response:\n%s", common.PrettyFmt(res))
+		r.debugf("Reporting patch details response:\n%s", util.PrettyFmt(res))
 		r.Job.ReportPatchJobInstanceDetailsResponse = res
 		return nil
 	})

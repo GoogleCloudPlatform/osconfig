@@ -13,10 +13,11 @@
 //  limitations under the License.
 
 // Package common contains common functions for use in the osconfig agent.
-package common
+package util
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -63,4 +64,12 @@ func NormPath(path string) (string, error) {
 	}
 	path = filepath.Clean(path)
 	return "\\\\?\\" + path, nil
+}
+
+// Exists check for the existence of a file
+func Exists(name string) bool {
+	if _, err := os.Stat(name); os.IsNotExist(err) {
+		return false
+	}
+	return true
 }

@@ -15,6 +15,8 @@ package packages
 
 import (
 	"fmt"
+
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 // GetPackageUpdates gets all available package updates from any known
@@ -88,7 +90,7 @@ func GetPackageUpdates() (Packages, []string) {
 func GetInstalledPackages() (Packages, []string) {
 	pkgs := Packages{}
 	var errs []string
-	if exists(rpmquery) {
+	if util.Exists(rpmquery) {
 		rpm, err := InstalledRPMPackages()
 		if err != nil {
 			msg := fmt.Sprintf("error listing installed rpm packages: %v", err)
@@ -98,7 +100,7 @@ func GetInstalledPackages() (Packages, []string) {
 			pkgs.Rpm = rpm
 		}
 	}
-	if exists(zypper) {
+	if util.Exists(zypper) {
 		zypperPatches, err := ZypperInstalledPatches()
 		if err != nil {
 			msg := fmt.Sprintf("error getting zypper installed patches: %v", err)
@@ -108,7 +110,7 @@ func GetInstalledPackages() (Packages, []string) {
 			pkgs.ZypperPatches = zypperPatches
 		}
 	}
-	if exists(dpkgquery) {
+	if util.Exists(dpkgquery) {
 		deb, err := InstalledDebPackages()
 		if err != nil {
 			msg := fmt.Sprintf("error listing installed deb packages: %v", err)
@@ -118,7 +120,7 @@ func GetInstalledPackages() (Packages, []string) {
 			pkgs.Deb = deb
 		}
 	}
-	if exists(gem) {
+	if util.Exists(gem) {
 		gem, err := InstalledGemPackages()
 		if err != nil {
 			msg := fmt.Sprintf("error listing installed gem packages: %v", err)
@@ -128,7 +130,7 @@ func GetInstalledPackages() (Packages, []string) {
 			pkgs.Gem = gem
 		}
 	}
-	if exists(pip) {
+	if util.Exists(pip) {
 		pip, err := InstalledPipPackages()
 		if err != nil {
 			msg := fmt.Sprintf("error listing installed pip packages: %v", err)
