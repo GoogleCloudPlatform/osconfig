@@ -38,17 +38,17 @@ func InstallRecipe(ctx context.Context, recipe *osconfigpb.SoftwareRecipe) error
 	}
 	installedRecipe, ok := recipeDB.GetRecipe(recipe.Name)
 	if ok {
-		logger.Debugf("currently installed version of software recipe %s with version %s", recipe.Name, installedRecipe.version)
+		logger.Debugf("Currently installed version of software recipe %s with version %s.", recipe.Name, installedRecipe.version)
 		if (installedRecipe.Compare(recipe.Version)) && (recipe.DesiredState == osconfigpb.DesiredState_UPDATED) {
-			logger.Infof("Upgrading software recipe %s from version %s to %s", recipe.Name, installedRecipe.version, recipe.Version)
+			logger.Infof("Upgrading software recipe %s from version %s to %s.", recipe.Name, installedRecipe.version, recipe.Version)
 			steps = recipe.UpdateSteps
 		} else {
-			logger.Debugf("Skipping software recipe %s", recipe.Name)
+			logger.Debugf("Skipping software recipe %s.", recipe.Name)
 			return nil
 		}
 	}
 
-	logger.Debugf("creating working dir for recipe %s", recipe.Name)
+	logger.Debugf("Creating working dir for recipe %s.", recipe.Name)
 	runID := fmt.Sprintf("run_%d", time.Now().UnixNano())
 	runDir, err := createBaseDir(recipe, runID)
 	if err != nil {
@@ -58,7 +58,7 @@ func InstallRecipe(ctx context.Context, recipe *osconfigpb.SoftwareRecipe) error
 	if err != nil {
 		return fmt.Errorf("failed to obtain artifacts: %v", err)
 	}
-	logger.Infof("Finished downloading artifacts")
+	logger.Infof("Finished downloading artifacts.")
 
 	runEnvs := []string{
 		fmt.Sprintf("RECIPE_NAME=%s", recipe.Name),
@@ -70,7 +70,7 @@ func InstallRecipe(ctx context.Context, recipe *osconfigpb.SoftwareRecipe) error
 	}
 
 	for i, step := range steps {
-		logger.Debugf("Running step %d", i)
+		logger.Debugf("Running step %d.", i)
 		stepDir := filepath.Join(runDir, fmt.Sprintf("step%02d", i))
 		if err := os.MkdirAll(stepDir, 0755); err != nil {
 			return fmt.Errorf("failed to create recipe step dir %q: %s", stepDir, err)
@@ -79,15 +79,15 @@ func InstallRecipe(ctx context.Context, recipe *osconfigpb.SoftwareRecipe) error
 		var err error
 		switch {
 		case step.GetFileCopy() != nil:
-			err = StepFileCopy(step.GetFileCopy(), artifacts, runEnvs, stepDir)
+			err = StepCopyFile(step.GetFileCopy(), artifacts, runEnvs, stepDir)
 		case step.GetArchiveExtraction() != nil:
-			err = StepArchiveExtraction(step.GetArchiveExtraction(), artifacts, runEnvs, stepDir)
+			err = StepExtractArchive(step.GetArchiveExtraction(), artifacts, runEnvs, stepDir)
 		case step.GetMsiInstallation() != nil:
-			err = StepMsiInstallation(step.GetMsiInstallation(), artifacts, runEnvs, stepDir)
+			err = StepInstallMsi(step.GetMsiInstallation(), artifacts, runEnvs, stepDir)
 		case step.GetFileExec() != nil:
-			err = StepFileExec(step.GetFileExec(), artifacts, runEnvs, stepDir)
+			err = StepExecFile(step.GetFileExec(), artifacts, runEnvs, stepDir)
 		case step.GetScriptRun() != nil:
-			err = StepScriptRun(step.GetScriptRun(), artifacts, runEnvs, stepDir)
+			err = StepRunScript(step.GetScriptRun(), artifacts, runEnvs, stepDir)
 		default:
 			err = fmt.Errorf("unknown step type for step %d", i)
 		}
@@ -97,7 +97,7 @@ func InstallRecipe(ctx context.Context, recipe *osconfigpb.SoftwareRecipe) error
 		}
 	}
 
-	logger.Infof("All steps completed successfully, marking recipe installed")
+	logger.Infof("All steps completed successfully, marking recipe installed.")
 	return recipeDB.AddRecipe(recipe.Name, recipe.Version, true)
 }
 

@@ -35,8 +35,8 @@ import (
 	"github.com/ulikunitz/xz/lzma"
 )
 
-// StepFileCopy runs a FileCopy step
-func StepFileCopy(step *osconfigpb.SoftwareRecipe_Step_CopyFile, artifacts map[string]string, runEnvs []string, stepDir string) error {
+// StepCopyFile runs a CopyFile step
+func StepCopyFile(step *osconfigpb.SoftwareRecipe_Step_CopyFile, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	dest, err := common.NormPath(step.Destination)
 	if err != nil {
 		return err
@@ -96,8 +96,8 @@ func parsePermissions(s string) (os.FileMode, error) {
 	return os.FileMode(i), nil
 }
 
-// StepArchiveExtraction runs an ArchiveExtraction step
-func StepArchiveExtraction(step *osconfigpb.SoftwareRecipe_Step_ExtractArchive, artifacts map[string]string, runEnvs []string, stepDir string) error {
+// StepExtractArchive runs an ExtractArchive step
+func StepExtractArchive(step *osconfigpb.SoftwareRecipe_Step_ExtractArchive, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	artifact := step.GetArtifactId()
 	filename, ok := artifacts[artifact]
 	if !ok {
@@ -371,8 +371,8 @@ func extractTar(tarName string, dst string, archiveType osconfigpb.SoftwareRecip
 	return createFiles(tr, dst)
 }
 
-// StepMsiInstallation builds the command for a MsiInstallation step
-func StepMsiInstallation(step *osconfigpb.SoftwareRecipe_Step_InstallMsi, artifacts map[string]string, runEnvs []string, stepDir string) error {
+// StepInstallMsi builds the command for a InstallMsi step
+func StepInstallMsi(step *osconfigpb.SoftwareRecipe_Step_InstallMsi, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	artifact := step.GetArtifactId()
 	path, ok := artifacts[artifact]
 	if !ok {
@@ -380,24 +380,29 @@ func StepMsiInstallation(step *osconfigpb.SoftwareRecipe_Step_InstallMsi, artifa
 	}
 	args := step.Flags
 	if len(args) == 0 {
-		args = []string{"/i"}
+		args = []string{"/i", "/qn", "/norestart"}
 	}
 	args = append(args, path)
-	return executeCommand("C:\\Windows\\System32\\msiexec.exe", args, stepDir, runEnvs, step.AllowedExitCodes)
+
+	exitCodes := step.AllowedExitCodes
+	if len(exitCodes) == 0 {
+		exitCodes = []int32{0, 1641, 3010}
+	}
+	return executeCommand("C:\\Windows\\System32\\msiexec.exe", args, stepDir, runEnvs, exitCodes)
 }
 
-// StepDpkgInstallation builds the command for a DpkgInstallation step
-func StepDpkgInstallation(step *osconfigpb.SoftwareRecipe_Step_InstallDpkg, artifacts map[string]string, runEnvs []string, stepDir string) error {
+// StepInstallDpkg builds the command for a InstallDpkg step
+func StepInstallDpkg(step *osconfigpb.SoftwareRecipe_Step_InstallDpkg, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	return fmt.Errorf("InstallDpkg not yet supported")
 }
 
-// StepRpmInstallation builds the command for a FileCopy step
-func StepRpmInstallation(step *osconfigpb.SoftwareRecipe_Step_InstallRpm, artifacts map[string]string, runEnvs []string, stepDir string) error {
+// StepInstallRpm builds the command for a FileCopy step
+func StepInstallRpm(step *osconfigpb.SoftwareRecipe_Step_InstallRpm, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	return fmt.Errorf("InstallRpm not yet supported")
 }
 
-// StepFileExec builds the command for a FileExec step
-func StepFileExec(step *osconfigpb.SoftwareRecipe_Step_ExecFile, artifacts map[string]string, runEnvs []string, stepDir string) error {
+// StepExecFile builds the command for a ExecFile step
+func StepExecFile(step *osconfigpb.SoftwareRecipe_Step_ExecFile, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	var path string
 	switch {
 	case step.GetArtifactId() != "":
@@ -417,8 +422,8 @@ func StepFileExec(step *osconfigpb.SoftwareRecipe_Step_ExecFile, artifacts map[s
 	return executeCommand(path, step.Args, stepDir, runEnvs, []int32{0})
 }
 
-// StepScriptRun runs a ScriptRun step.
-func StepScriptRun(step *osconfigpb.SoftwareRecipe_Step_RunScript, artifacts map[string]string, runEnvs []string, stepDir string) error {
+// StepRunScript runs a RunScript step.
+func StepRunScript(step *osconfigpb.SoftwareRecipe_Step_RunScript, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	cmd := filepath.Join(stepDir, "recipe_script_source")
 	if err := writeScript(cmd, step.Script); err != nil {
 		return err
