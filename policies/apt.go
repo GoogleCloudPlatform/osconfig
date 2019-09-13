@@ -145,7 +145,21 @@ func aptChanges(aptInstalled, aptRemoved, aptUpdated []*osconfigpb.Package) erro
 		logger.Infof("Installing packages %s", changes.packagesToInstall)
 		if err := packages.InstallAptPackages(changes.packagesToInstall); err != nil {
 			logger.Errorf("Error installing apt packages: %v", err)
-			errs = append(errs, fmt.Sprintf("error installing apt packages: %v", err))
+
+			// Try fallback logic to install the packages individually.
+			logger.Infof("Trying to install packages individually")
+			var installPkgErrs []string
+			for _, pkg := range changes.packagesToInstall {
+				if err = packages.InstallAptPackages([]string{pkg}); err != nil {
+					installPkgErrs = append(installPkgErrs, fmt.Sprintf("Error installing apt package: %v. Error details: %v", pkg, err))
+				}
+			}
+
+			if len(installPkgErrs) > 0 {
+				errorString := strings.Join(installPkgErrs, "\n")
+				logger.Errorf("Error installing apt packages individually: %v", errorString)
+				errs = append(errs, fmt.Sprintf("error installing apt packages: %v", errorString))
+			}
 		}
 	}
 
@@ -161,7 +175,21 @@ func aptChanges(aptInstalled, aptRemoved, aptUpdated []*osconfigpb.Package) erro
 		logger.Infof("Removing packages %s", changes.packagesToRemove)
 		if err := packages.RemoveAptPackages(changes.packagesToRemove); err != nil {
 			logger.Errorf("Error removing apt packages: %v", err)
-			errs = append(errs, fmt.Sprintf("error removing apt packages: %v", err))
+
+			// Try fallback logic to remove the packages individually.
+			logger.Infof("Trying to remove packages individually")
+			var removePkgErrs []string
+			for _, pkg := range changes.packagesToRemove {
+				if err = packages.RemoveAptPackages([]string{pkg}); err != nil {
+					removePkgErrs = append(removePkgErrs, fmt.Sprintf("Error removing apt package: %v. Error details: %v", pkg, err))
+				}
+			}
+
+			if len(removePkgErrs) > 0 {
+				errorString := strings.Join(removePkgErrs, "\n")
+				logger.Errorf("Error removing apt packages individually: %v", errorString)
+				errs = append(errs, fmt.Sprintf("error removing apt packages: %v", errorString))
+			}
 		}
 	}
 
