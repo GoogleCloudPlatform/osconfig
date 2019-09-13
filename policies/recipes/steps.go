@@ -434,7 +434,7 @@ func StepScriptRun(step *osconfigpb.SoftwareRecipe_Step_ScriptRun, artifacts map
 			cmd = scriptPath
 			args = step.ScriptRun.Args
 		} else {
-			args = append([]string{"-c", scriptPath}, step.ScriptRun.Args...)
+			args = append([]string{scriptPath}, step.ScriptRun.Args...)
 			cmd = "/bin/sh"
 		}
 	case osconfigpb.SoftwareRecipe_Step_RunScript_POWERSHELL:
