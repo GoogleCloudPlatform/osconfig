@@ -47,11 +47,11 @@ func Enqueue(name string, f func()) {
 // Close prevents any further tasks from being enqueued and waits for the queue to empty.
 func Close() {
 	mx.Lock()
+	close(tc)
 	wg.Wait()
 }
 
 func tasker() {
-	logger.Debugf("Tasker start.")
 	wg.Add(1)
 	defer wg.Done()
 	for {

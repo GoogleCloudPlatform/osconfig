@@ -81,6 +81,10 @@ func TestSetConfig(t *testing.T) {
 	if NumericProjectID() != 12345 {
 		t.Errorf("NumericProjectID: got(%v) != want(%d)", NumericProjectID(), 12345)
 	}
+
+	if Instance() != "zone/instances/name" {
+		t.Errorf("zone: got(%s) != want(%s)", Instance(), "zone/instances/name")
+	}
 }
 
 func TestSetConfigDefaultValues(t *testing.T) {
@@ -146,5 +150,19 @@ func TestVersion(t *testing.T) {
 	SetVersion(v)
 	if Version() != v {
 		t.Errorf("Unexpected version %q, want %q", Version(), v)
+	}
+}
+
+func TestSetConfigError(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	}))
+	defer ts.Close()
+
+	if err := os.Setenv("GCE_METADATA_HOST", strings.Trim(ts.URL, "http://")); err != nil {
+		t.Fatalf("Error running os.Setenv: %v", err)
+	}
+
+	if err := SetConfig(); err == nil || !strings.Contains(err.Error(), "unexpected end of JSON input") {
+		t.Errorf("Unexpected output %+v", err)
 	}
 }

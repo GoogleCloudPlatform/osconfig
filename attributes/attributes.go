@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -38,7 +39,12 @@ func PostAttribute(url string, value io.Reader) error {
 		return err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf(`received status code %q for request "%s %s"`, resp.Status, req.Method, req.URL.String())
+		b, err := ioutil.ReadAll(resp.Body)
+		responseErr := fmt.Sprintf(`received status code %q for request "%s %s"`, resp.Status, req.Method, req.URL.String())
+		if err == nil {
+			responseErr = fmt.Sprintf("%s\n Error response: %s", responseErr, string(b))
+		}
+		return fmt.Errorf("%s", responseErr)
 	}
 	return nil
 }
