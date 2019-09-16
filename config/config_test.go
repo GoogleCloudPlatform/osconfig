@@ -153,7 +153,7 @@ func TestVersion(t *testing.T) {
 	}
 }
 
-func TestSetConfig_Error(t *testing.T) {
+func TestSetConfigError(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	}))
 	defer ts.Close()

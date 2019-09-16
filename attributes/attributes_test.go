@@ -16,12 +16,18 @@ package attributes
 
 import (
 	"bytes"
+	"compress/gzip"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 )
 
 func TestPostAttributeHappyCase(t *testing.T) {
@@ -65,27 +71,65 @@ func TestPostAttributeStatusNotOk(t *testing.T) {
 }
 
 func TestPostAttributeCompressedhappyCase(t *testing.T) {
-	td := "testing-compression"
+	td := packages.Packages{
+		Apt: []packages.PkgInfo{
+			packages.PkgInfo{
+				Version: "1.2.3",
+				Name:    "test-package",
+				Arch:    "amd64",
+			},
+		},
+	}
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			w.WriteHeader(http.StatusExpectationFailed)
 			w.Write([]byte("error reading body"))
-
 			return
 		}
-		buf, err := getCompressData(strings.NewReader(td))
-		if strings.Compare(string(body), buf.String()) != 0 {
+
+		pkg, err := getDecompressPackageInfo(string(body))
+		if td.Apt[0].Name != pkg.Apt[0].Name {
 			w.WriteHeader(http.StatusExpectationFailed)
-			w.Write([]byte(fmt.Sprintf("expected(%s); got(%s)", buf.String(), string(body))))
-			return
+			w.Write([]byte(fmt.Sprintf("assert failed! expected(%s)! got(%s)!", td.Apt[0].Name, pkg.Apt[0].Name)))
 		}
-		w.WriteHeader(http.StatusOK)
+		if td.Apt[0].Version != pkg.Apt[0].Version {
+			w.WriteHeader(http.StatusExpectationFailed)
+			w.Write([]byte(fmt.Sprintf("assert failed! expected(%s)! got(%s)!", td.Apt[0].Version, pkg.Apt[0].Version)))
+		}
+		if td.Apt[0].Arch != pkg.Apt[0].Arch {
+			w.WriteHeader(http.StatusExpectationFailed)
+			w.Write([]byte(fmt.Sprintf("assert failed! expected(%s)! got(%s)!", td.Apt[0].Arch, pkg.Apt[0].Arch)))
+		}
 	}))
-	defer ts.Close()
 
-	err := PostAttributeCompressed(ts.URL, strings.NewReader(td))
+	err := PostAttributeCompressed(ts.URL, td)
 	if err != nil {
-		t.Errorf("test failed, should not be an error; got(%s)", err.Error())
+		t.Errorf("test failed, should not be an error; got(%v)", err)
 	}
+}
+
+func getDecompressPackageInfo(encoded string) (*packages.Packages, error) {
+	decoded, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		return nil, fmt.Errorf("Error decoding base64: %+v", err)
+	}
+
+	gzipReader, err := gzip.NewReader(bytes.NewReader(decoded))
+	if err != nil {
+		return nil, fmt.Errorf("Error creating gzip reader: %+v", err)
+	}
+	defer gzipReader.Close()
+
+	var buf bytes.Buffer
+	if _, err := io.Copy(&buf, gzipReader); err != nil {
+		return nil, fmt.Errorf("Error reading gzip data: %+v", err)
+	}
+
+	var pkgs packages.Packages
+	if err := json.Unmarshal(buf.Bytes(), &pkgs); err != nil {
+		return nil, fmt.Errorf("Error unmarshalling json data: %+v", err)
+	}
+
+	return &pkgs, nil
 }
