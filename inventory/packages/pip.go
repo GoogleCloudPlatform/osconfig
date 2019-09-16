@@ -20,7 +20,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/GoogleCloudPlatform/osconfig/common"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -34,7 +34,7 @@ func init() {
 	if runtime.GOOS != "windows" {
 		pip = "/usr/bin/pip"
 	}
-	PipExists = common.Exists(pip)
+	PipExists = util.Exists(pip)
 }
 
 // PipUpdates queries for all available pip updates.

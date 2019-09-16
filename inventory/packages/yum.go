@@ -21,8 +21,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/GoogleCloudPlatform/osconfig/common"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -37,7 +37,7 @@ func init() {
 	if runtime.GOOS != "windows" {
 		yum = "/usr/bin/yum"
 	}
-	YumExists = common.Exists(yum)
+	YumExists = util.Exists(yum)
 }
 
 // InstallYumPackages installs yum packages.
