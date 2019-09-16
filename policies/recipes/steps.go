@@ -35,6 +35,12 @@ import (
 	"github.com/ulikunitz/xz/lzma"
 )
 
+var extensionMap = map[osconfigpb.SoftwareRecipe_Step_RunScript_Interpreter]string{
+	osconfigpb.SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED: ".bat",
+	osconfigpb.SoftwareRecipe_Step_RunScript_SHELL:                   ".bat",
+	osconfigpb.SoftwareRecipe_Step_RunScript_POWERSHELL:              ".ps1",
+}
+
 // StepFileCopy builds the command for a FileCopy step
 func StepFileCopy(step *osconfigpb.SoftwareRecipe_Step_FileCopy, artifacts map[string]string) error {
 	dest, err := common.NormPath(step.FileCopy.Destination)
@@ -408,30 +414,34 @@ func StepFileExec(step *osconfigpb.SoftwareRecipe_Step_FileExec, artifacts map[s
 
 // StepScriptRun runs a ScriptRun step.
 func StepScriptRun(step *osconfigpb.SoftwareRecipe_Step_ScriptRun, artifacts map[string]string, runEnvs []string, stepDir string) error {
-	cmd := filepath.Join(stepDir, "recipe_script_source")
-	if err := writeScript(cmd, step.ScriptRun.Script); err != nil {
+	var extension string
+	if runtime.GOOS == "windows" {
+		extension = extensionMap[step.ScriptRun.Interpreter]
+	}
+	scriptPath := filepath.Join(stepDir, "recipe_script_source"+extension)
+	if err := writeScript(scriptPath, step.ScriptRun.Script); err != nil {
 		return err
 	}
 
+	var cmd string
 	var args []string
 	switch step.ScriptRun.Interpreter {
 	case osconfigpb.SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED:
-		if runtime.GOOS == "windows" {
-			args = []string{"/c", cmd}
-			cmd = "C:\\Windows\\System32\\cmd.exe"
-		}
+		cmd = scriptPath
+		args = step.ScriptRun.Args
 	case osconfigpb.SoftwareRecipe_Step_RunScript_SHELL:
 		if runtime.GOOS == "windows" {
-			args = []string{"/c", cmd}
-			cmd = "C:\\Windows\\System32\\cmd.exe"
+			cmd = scriptPath
+			args = step.ScriptRun.Args
+		} else {
+			args = append([]string{scriptPath}, step.ScriptRun.Args...)
+			cmd = "/bin/sh"
 		}
-		args = []string{"-c", cmd}
-		cmd = "/bin/sh"
 	case osconfigpb.SoftwareRecipe_Step_RunScript_POWERSHELL:
 		if runtime.GOOS != "windows" {
 			return fmt.Errorf("interpreter %q can only used on Windows systems", step.ScriptRun.Interpreter)
 		}
-		args = []string{"-File", cmd}
+		args = append([]string{"-File", scriptPath}, step.ScriptRun.Args...)
 		cmd = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\PowerShell.exe"
 	default:
 		return fmt.Errorf("unsupported interpreter %q", step.ScriptRun.Interpreter)
