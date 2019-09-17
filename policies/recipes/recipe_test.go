@@ -20,24 +20,24 @@ import (
 )
 
 func TestRecipe_SetVersion_ValidVersion(t *testing.T) {
-	rec := &Recipe{}
-	rec.SetVersion("1.2.3.23")
-	if rec.Version[0] != 1 || rec.Version[1] != 2 || rec.Version[2] != 3 || rec.Version[3] != 23 {
+	rec := &recipe{}
+	rec.setVersion("1.2.3.23")
+	if rec.version[0] != 1 || rec.version[1] != 2 || rec.version[2] != 3 || rec.version[3] != 23 {
 		t.Errorf("invalid Version set for the recipe")
 	}
 }
 
 func TestRecipe_SetVersion_EmptyVersion(t *testing.T) {
-	rec := &Recipe{}
-	rec.SetVersion("")
-	if len(rec.Version) != 1 || rec.Version[0] != 0 {
+	rec := &recipe{}
+	rec.setVersion("")
+	if len(rec.version) != 1 || rec.version[0] != 0 {
 		t.Errorf("invalid Version set for the recipe")
 	}
 }
 
 func TestRecipe_SetVersion_InvalidVersion(t *testing.T) {
-	rec := &Recipe{}
-	err := rec.SetVersion("12.32.23.23.23.23")
+	rec := &recipe{}
+	err := rec.setVersion("12.32.23.23.23.23")
 	if !strings.Contains(err.Error(), "invalid") {
 		t.Errorf("setVersion should return error")
 	}
@@ -45,58 +45,58 @@ func TestRecipe_SetVersion_InvalidVersion(t *testing.T) {
 }
 
 func TestRecipe_SetVersion_InvalidCharacter(t *testing.T) {
-	rec := &Recipe{}
-	err := rec.SetVersion("12.32.dsf.23")
+	rec := &recipe{}
+	err := rec.setVersion("12.32.dsf.23")
 	if !strings.Contains(err.Error(), "invalid") {
 		t.Errorf("setVersion should return error")
 	}
 }
 
-func TestRecipe_Greater_EmptyVersion(t *testing.T) {
-	rec := &Recipe{Version: []int{1, 2, 3, 4}}
-	if rec.Greater("") {
+func TestRecipe_Compare_EmptyVersion(t *testing.T) {
+	rec := &recipe{version: []int{1, 2, 3, 4}}
+	if rec.compare("") {
 		t.Errorf("should return false")
 	}
 }
 
-func TestRecipe_Greater_InvalidInput(t *testing.T) {
-	rec := &Recipe{Version: []int{1, 2, 3, 4}}
-	if rec.Greater("1.2.3.4.56.7") {
+func TestRecipe_Compare_InvalidInput(t *testing.T) {
+	rec := &recipe{version: []int{1, 2, 3, 4}}
+	if rec.compare("1.2.3.4.56.7") {
 		t.Errorf("should return false")
 	}
 }
 
-func TestRecipe_Greater_PaddingNeededAndGreater(t *testing.T) {
-	rec := &Recipe{Version: []int{1, 2, 3, 4}}
-	if !rec.Greater("1.3") {
+func TestRecipe_Compare_PaddingNeededAndCompare(t *testing.T) {
+	rec := &recipe{version: []int{1, 2, 3, 4}}
+	if !rec.compare("1.3") {
 		t.Errorf("should return true")
 	}
 }
 
-func TestRecipe_Greater_PaddingNeededToRecipe(t *testing.T) {
-	rec := &Recipe{Version: []int{1, 3}}
-	if rec.Greater("1.2.3.4") {
+func TestRecipe_Compare_PaddingNeededToRecipe(t *testing.T) {
+	rec := &recipe{version: []int{1, 3}}
+	if rec.compare("1.2.3.4") {
 		t.Errorf("should return false")
 	}
 }
 
-func TestRecipe_Greater_IsGreater(t *testing.T) {
-	rec := &Recipe{Version: []int{1, 2, 3, 4}}
-	if !rec.Greater("1.3.4.2") {
+func TestRecipe_Compare_IsGreater(t *testing.T) {
+	rec := &recipe{version: []int{1, 2, 3, 4}}
+	if !rec.compare("1.3.4.2") {
 		t.Errorf("should return true")
 	}
 }
 
-func TestRecipe_Greater_IsNotGreater(t *testing.T) {
-	rec := &Recipe{Version: []int{1, 6, 3, 4}}
-	if rec.Greater("1.3.4.2") {
+func TestRecipe_Compare_IsNotGreater(t *testing.T) {
+	rec := &recipe{version: []int{1, 6, 3, 4}}
+	if rec.compare("1.3.4.2") {
 		t.Errorf("should return false")
 	}
 }
 
-func TestRecipe_Greater_IsEqualVersion(t *testing.T) {
-	rec := &Recipe{Version: []int{1, 6, 3, 4}}
-	if rec.Greater("1.6.3.4") {
+func TestRecipe_Compare_IsEqualVersion(t *testing.T) {
+	rec := &recipe{version: []int{1, 6, 3, 4}}
+	if rec.compare("1.6.3.4") {
 		t.Errorf("should return false")
 	}
 }

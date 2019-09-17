@@ -28,9 +28,9 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/external"
 )
 
-// FetchArtifacts takes in a slice of artifacts and downloads them into the specified directory,
+// fetchArtifacts takes in a slice of artifacts and downloads them into the specified directory,
 // Returns a map of artifact names to their new locations on the local disk.
-func FetchArtifacts(ctx context.Context, artifacts []*osconfigpb.SoftwareRecipe_Artifact, directory string) (map[string]string, error) {
+func fetchArtifacts(ctx context.Context, artifacts []*osconfigpb.SoftwareRecipe_Artifact, directory string) (map[string]string, error) {
 	localNames := make(map[string]string)
 
 	for _, a := range artifacts {
@@ -47,26 +47,28 @@ func FetchArtifacts(ctx context.Context, artifacts []*osconfigpb.SoftwareRecipe_
 func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Artifact, directory string) (string, error) {
 	var checksum, extension string
 	var reader io.ReadCloser
+	switch {
+	case artifact.GetGcs() != nil:
+		gcs := artifact.GetGcs()
+		extension = path.Ext(gcs.Object)
 
-	switch v := artifact.Artifact.(type) {
-	case *osconfigpb.SoftwareRecipe_Artifact_Gcs_:
-		extension = path.Ext(v.Gcs.Object)
 		cl, err := storage.NewClient(ctx)
 		if err != nil {
 			return "", fmt.Errorf("error creating gcs client: %v", err)
 		}
-		reader, err = getGCSArtifact(ctx, cl, v.Gcs.Object, v.Gcs.Bucket, v.Gcs.Generation)
+		reader, err = getGCSArtifact(ctx, cl, gcs.Object, gcs.Bucket, gcs.Generation)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q from GCS: %v", artifact.Id, err)
 		}
-
 		defer reader.Close()
-	case *osconfigpb.SoftwareRecipe_Artifact_Remote_:
-		uri, err := url.Parse(v.Remote.Uri)
-		extension = path.Ext(uri.Path)
+	case artifact.GetRemote() != nil:
+		remote := artifact.GetRemote()
+		uri, err := url.Parse(remote.Uri)
 		if err != nil {
-			return "", fmt.Errorf("Could not parse url: %q; got error: %v", uri, err)
+			return "", fmt.Errorf("Could not parse url %q for artifact %q", remote.Uri, artifact.Id)
 		}
+		extension = path.Ext(uri.Path)
+		checksum = remote.Checksum
 		cl := &http.Client{}
 		reader, err := getHTTPArtifact(cl, *uri)
 		if err != nil {
@@ -74,7 +76,7 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 		}
 		defer reader.Close()
 	default:
-		return "", fmt.Errorf("unknown artifact type %T", v)
+		return "", fmt.Errorf("unknown artifact type for artifact %v", artifact.Id)
 	}
 
 	localPath := getStoragePath(directory, artifact.Id, extension)
