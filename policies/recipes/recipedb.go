@@ -21,8 +21,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strconv"
-	"strings"
 	"time"
 )
 
@@ -34,14 +32,14 @@ var (
 
 // recipeDB represents local state of installed recipes.
 type recipeDB struct {
-	recipes map[string]Recipe
+	recipes map[string]recipe
 }
 
 func newRecipeDB() (*recipeDB, error) {
 	f, err := os.Open(filepath.Join(getDbDir(), dbFileName))
 	if err != nil {
 		if os.IsNotExist(err) {
-			return &recipeDB{recipes: make(map[string]Recipe)}, nil
+			return &recipeDB{recipes: make(map[string]recipe)}, nil
 		}
 		return nil, err
 	}
@@ -52,13 +50,13 @@ func newRecipeDB() (*recipeDB, error) {
 	}
 	db := &recipeDB{}
 	if err := json.Unmarshal(bytes, &db); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Json Unmarshalling error: %s", err.Error())
 	}
 	return db, nil
 }
 
 // getRecipe returns the Recipe object for the given recipe name.
-func (db *recipeDB) getRecipe(name string) (Recipe, bool) {
+func (db *recipeDB) getRecipe(name string) (recipe, bool) {
 	r, ok := db.recipes[name]
 	return r, ok
 }
@@ -69,7 +67,7 @@ func (db *recipeDB) addRecipe(name, version string, success bool) error {
 	if err != nil {
 		return err
 	}
-	db.recipes[name] = Recipe{name: name, version: versionNum, installTime: time.Now().Unix(), success: success}
+	db.recipes[name] = recipe{name: name, version: versionNum, installTime: time.Now().Unix(), success: success}
 	dbBytes, err := json.Marshal(db)
 	if err != nil {
 		return err
@@ -93,83 +91,8 @@ func (db *recipeDB) addRecipe(name, version string, success bool) error {
 }
 
 func getDbDir() string {
-	if runtime.GOOS != "windows" {
+	if runtime.GOOS == "windows" {
 		return dbDirWindows
 	}
 	return dbDirUnix
-}
-
-type rver []int
-
-func (v rver) String() string {
-	res := fmt.Sprintf("%d", v[0])
-	for _, val := range v[1:] {
-		res = fmt.Sprintf("%s.%d", res, val)
-	}
-	return res
-}
-
-// A Recipe represents one recipe installed on the system.
-type Recipe struct {
-	name        string
-	version     rver
-	installTime int64
-	success     bool
-}
-
-// setVersion sets the version on a Recipe.
-func (r *Recipe) setVersion(version string) error {
-	var err error
-	r.version, err = convertVersion(version)
-	return err
-}
-
-// compare returns true if the provided version is greater than the recipe's
-// version, false otherwise.
-func (r *Recipe) compare(version string) bool {
-	if version == "" {
-		return false
-	}
-	cVersion, err := convertVersion(version)
-	if err != nil {
-		return false
-	}
-	if len(r.version) > len(cVersion) {
-		topad := len(r.version) - len(cVersion)
-		for i := 0; i < topad; i++ {
-			cVersion = append(cVersion, 0)
-		}
-	} else {
-		topad := len(cVersion) - len(r.version)
-		for i := 0; i < topad; i++ {
-			r.version = append(r.version, 0)
-		}
-	}
-	for i := 0; i < len(r.version); i++ {
-		if r.version[i] != cVersion[i] {
-			return cVersion[i] > r.version[i]
-		}
-	}
-	return false
-}
-
-func convertVersion(version string) ([]int, error) {
-	// ${ROOT}/recipe[_ver]/runId/recipe.yaml  // recipe at time of application
-	// ${ROOT}/recipe[_ver]/runId/artifacts/*
-	// ${ROOT}/recipe[_ver]/runId/stepN_type/
-	if version == "" {
-		return []int{0}, nil
-	}
-	var ret []int
-	for idx, element := range strings.Split(version, ".") {
-		if idx > 3 {
-			return nil, fmt.Errorf("invalid version string")
-		}
-		val, err := strconv.ParseUint(element, 10, 0)
-		if err != nil {
-			return nil, fmt.Errorf("invalid version string")
-		}
-		ret = append(ret, int(val))
-	}
-	return ret, nil
 }

@@ -30,13 +30,19 @@ import (
 	"time"
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
-	"github.com/GoogleCloudPlatform/osconfig/common"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 	"github.com/ulikunitz/xz"
 	"github.com/ulikunitz/xz/lzma"
 )
 
+var extensionMap = map[osconfigpb.SoftwareRecipe_Step_RunScript_Interpreter]string{
+	osconfigpb.SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED: ".bat",
+	osconfigpb.SoftwareRecipe_Step_RunScript_SHELL:                   ".bat",
+	osconfigpb.SoftwareRecipe_Step_RunScript_POWERSHELL:              ".ps1",
+}
+
 func stepCopyFile(step *osconfigpb.SoftwareRecipe_Step_CopyFile, artifacts map[string]string, runEnvs []string, stepDir string) error {
-	dest, err := common.NormPath(step.Destination)
+	dest, err := util.NormPath(step.Destination)
 	if err != nil {
 		return err
 	}
@@ -85,7 +91,7 @@ func stepCopyFile(step *osconfigpb.SoftwareRecipe_Step_CopyFile, artifacts map[s
 
 func parsePermissions(s string) (os.FileMode, error) {
 	if s == "" {
-		return 755, nil
+		return 0755, nil
 	}
 
 	i, err := strconv.ParseUint(s, 8, 32)
@@ -135,7 +141,7 @@ func extractZip(zipPath string, dst string) error {
 
 	// Check for conflicts
 	for _, f := range zr.File {
-		filen, err := common.NormPath(filepath.Join(dst, normalizeSlashes(f.Name)))
+		filen, err := util.NormPath(filepath.Join(dst, normalizeSlashes(f.Name)))
 		if err != nil {
 			return err
 		}
@@ -156,7 +162,7 @@ func extractZip(zipPath string, dst string) error {
 
 	// Create files.
 	for _, f := range zr.File {
-		filen, err := common.NormPath(filepath.Join(dst, normalizeSlashes(f.Name)))
+		filen, err := util.NormPath(filepath.Join(dst, normalizeSlashes(f.Name)))
 		if err != nil {
 			return err
 		}
@@ -234,7 +240,7 @@ func checkForConflicts(tr *tar.Reader, dst string) error {
 		if err != nil {
 			return err
 		}
-		filen, err := common.NormPath(filepath.Join(dst, header.Name))
+		filen, err := util.NormPath(filepath.Join(dst, header.Name))
 		if err != nil {
 			return err
 		}
@@ -265,7 +271,7 @@ func createFiles(tr *tar.Reader, dst string) error {
 		if err != nil {
 			return err
 		}
-		filen, err := common.NormPath(filepath.Join(dst, header.Name))
+		filen, err := util.NormPath(filepath.Join(dst, header.Name))
 		if err != nil {
 			return err
 		}
@@ -417,30 +423,34 @@ func stepExecFile(step *osconfigpb.SoftwareRecipe_Step_ExecFile, artifacts map[s
 }
 
 func stepRunScript(step *osconfigpb.SoftwareRecipe_Step_RunScript, artifacts map[string]string, runEnvs []string, stepDir string) error {
-	cmd := filepath.Join(stepDir, "recipe_script_source")
-	if err := writeScript(cmd, step.Script); err != nil {
+	var extension string
+	if runtime.GOOS == "windows" {
+		extension = extensionMap[step.Interpreter]
+	}
+	scriptPath := filepath.Join(stepDir, "recipe_script_source"+extension)
+	if err := writeScript(scriptPath, step.Script); err != nil {
 		return err
 	}
 
+	var cmd string
 	var args []string
 	switch step.Interpreter {
 	case osconfigpb.SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED:
-		if runtime.GOOS == "windows" {
-			args = []string{"/c", cmd}
-			cmd = "C:\\Windows\\System32\\cmd.exe"
-		}
+		cmd = scriptPath
+		args = step.Args
 	case osconfigpb.SoftwareRecipe_Step_RunScript_SHELL:
 		if runtime.GOOS == "windows" {
-			args = []string{"/c", cmd}
-			cmd = "C:\\Windows\\System32\\cmd.exe"
+			cmd = scriptPath
+			args = step.Args
+		} else {
+			args = append([]string{scriptPath}, step.Args...)
+			cmd = "/bin/sh"
 		}
-		args = []string{"-c", cmd}
-		cmd = "/bin/sh"
 	case osconfigpb.SoftwareRecipe_Step_RunScript_POWERSHELL:
 		if runtime.GOOS != "windows" {
 			return fmt.Errorf("interpreter %q can only used on Windows systems", step.Interpreter)
 		}
-		args = []string{"-File", cmd}
+		args = append([]string{"-File", scriptPath}, step.Args...)
 		cmd = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\PowerShell.exe"
 	default:
 		return fmt.Errorf("unsupported interpreter %q", step.Interpreter)

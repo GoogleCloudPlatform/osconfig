@@ -35,15 +35,15 @@ func TestInstallAptPackagesReturnsError(t *testing.T) {
 	}
 }
 
-func TestRemoveApt(t *testing.T) {
-	run = getMockRun([]byte("TestRemoveApt"), nil)
+func TestRemoveAptPackages(t *testing.T) {
+	run = getMockRun([]byte("TestRemoveAptPackages"), nil)
 	if err := RemoveAptPackages(pkgs); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
 
-func TestRemoveAptReturnError(t *testing.T) {
-	run = getMockRun([]byte("TestRemoveAptReturnError"), errors.New("Could not find package"))
+func TestRemoveAptPackagesReturnError(t *testing.T) {
+	run = getMockRun([]byte("TestRemoveAptPackagesReturnError"), errors.New("Could not find package"))
 	if err := RemoveAptPackages(pkgs); err == nil {
 		t.Errorf("did not get expected error")
 	}

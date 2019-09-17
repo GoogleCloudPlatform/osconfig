@@ -22,8 +22,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/GoogleCloudPlatform/osconfig/common"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -43,7 +43,7 @@ func init() {
 		dpkgquery = "/usr/bin/dpkg-query"
 		aptGet = "/usr/bin/apt-get"
 	}
-	AptExists = common.Exists(aptGet)
+	AptExists = util.Exists(aptGet)
 }
 
 // InstallAptPackages installs apt packages.
