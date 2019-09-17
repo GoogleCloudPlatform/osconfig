@@ -14,14 +14,16 @@ limitations under the License.
 package packages
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 // GetPackageUpdates gets available package updates GooGet as well as any
 // available updates from Windows Update Agent.
-func GetPackageUpdates() (Packages, []string) {
+func GetPackageUpdates() (Packages, error) {
 	var pkgs Packages
 	var errs []string
 
@@ -42,12 +44,17 @@ func GetPackageUpdates() (Packages, []string) {
 	} else {
 		pkgs.WUA = wua
 	}
-	return pkgs, errs
+
+	var err error
+	if len(errs) != 0 {
+		err = errors.New(strings.Join(errs, "\n"))
+	}
+	return pkgs, err
 }
 
 // GetInstalledPackages gets all installed GooGet packages and Windows updates.
 // Windows updates are read from Windows Update Agent and Win32_QuickFixEngineering.
-func GetInstalledPackages() (Packages, []string) {
+func GetInstalledPackages() (Packages, error) {
 	var pkgs Packages
 	var errs []string
 
@@ -78,5 +85,9 @@ func GetInstalledPackages() (Packages, []string) {
 		pkgs.QFE = qfe
 	}
 
-	return pkgs, errs
+	var err error
+	if len(errs) != 0 {
+		err = errors.New(strings.Join(errs, "\n"))
+	}
+	return pkgs, err
 }

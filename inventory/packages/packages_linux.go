@@ -14,14 +14,16 @@ limitations under the License.
 package packages
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 // GetPackageUpdates gets all available package updates from any known
 // installed package manager.
-func GetPackageUpdates() (Packages, []string) {
+func GetPackageUpdates() (Packages, error) {
 	pkgs := Packages{}
 	var errs []string
 	if AptExists {
@@ -82,12 +84,17 @@ func GetPackageUpdates() (Packages, []string) {
 			pkgs.Pip = pip
 		}
 	}
-	return pkgs, errs
+
+	var err error
+	if len(errs) != 0 {
+		err = errors.New(strings.Join(errs, "\n"))
+	}
+	return pkgs, err
 }
 
 // GetInstalledPackages gets all installed packages from any known installed
 // package manager.
-func GetInstalledPackages() (Packages, []string) {
+func GetInstalledPackages() (Packages, error) {
 	pkgs := Packages{}
 	var errs []string
 	if util.Exists(rpmquery) {
@@ -140,5 +147,10 @@ func GetInstalledPackages() (Packages, []string) {
 			pkgs.Pip = pip
 		}
 	}
-	return pkgs, errs
+
+	var err error
+	if len(errs) != 0 {
+		err = errors.New(strings.Join(errs, "\n"))
+	}
+	return pkgs, err
 }
