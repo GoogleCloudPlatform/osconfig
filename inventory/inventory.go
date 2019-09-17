@@ -97,14 +97,13 @@ func Get() *InstanceInventory {
 	hs.Architecture = di.Architecture
 	hs.OSConfigAgentVersion = config.Version()
 
-	var errs []string
-	hs.InstalledPackages, errs = packages.GetInstalledPackages()
-	if len(errs) != 0 {
+	hs.InstalledPackages, err = packages.GetInstalledPackages()
+	if err != nil {
 		logger.Errorf("packages.GetInstalledPackages() error: %v", err)
 	}
 
-	hs.PackageUpdates, errs = packages.GetPackageUpdates()
-	if len(errs) != 0 {
+	hs.PackageUpdates, err = packages.GetPackageUpdates()
+	if err != nil {
 		logger.Errorf("packages.GetPackageUpdates() error: %v", err)
 	}
 
