@@ -16,7 +16,6 @@ package recipes
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -26,20 +25,20 @@ import (
 
 var (
 	dbDirWindows = "C:\\ProgramData\\Google"
-	dbDirUnix    = "/var/lib/google"
+	dbDirUnix    = "/tmp/var/lib/google"
 	dbFileName   = "osconfig_recipedb"
 )
 
-// recipeDB represents local state of installed recipes.
-type recipeDB struct {
-	recipes map[string]recipe
-}
+// RecipeDB represents local state of installed recipes.
+type RecipeDB map[string]Recipe
 
-func newRecipeDB() (*recipeDB, error) {
+// newRecipeDB instantiates a recipeDB.
+func newRecipeDB() (RecipeDB, error) {
+	db := make(RecipeDB)
 	f, err := os.Open(filepath.Join(getDbDir(), dbFileName))
 	if err != nil {
 		if os.IsNotExist(err) {
-			return &recipeDB{recipes: make(map[string]recipe)}, nil
+			return db, nil
 		}
 		return nil, err
 	}
@@ -48,27 +47,35 @@ func newRecipeDB() (*recipeDB, error) {
 	if err != nil {
 		return nil, err
 	}
-	db := &recipeDB{}
-	if err := json.Unmarshal(bytes, &db); err != nil {
-		return nil, fmt.Errorf("Json Unmarshalling error: %s", err.Error())
+	var recipelist []Recipe
+	if err := json.Unmarshal(bytes, &recipelist); err != nil {
+		return nil, err
+	}
+	for _, recipe := range recipelist {
+		db[recipe.Name] = recipe
 	}
 	return db, nil
 }
 
 // getRecipe returns the Recipe object for the given recipe name.
-func (db *recipeDB) getRecipe(name string) (recipe, bool) {
-	r, ok := db.recipes[name]
+func (db RecipeDB) getRecipe(name string) (Recipe, bool) {
+	r, ok := db[name]
 	return r, ok
 }
 
 // addRecipe marks a recipe as installed.
-func (db *recipeDB) addRecipe(name, version string, success bool) error {
+func (db RecipeDB) addRecipe(name, version string, success bool) error {
 	versionNum, err := convertVersion(version)
 	if err != nil {
 		return err
 	}
-	db.recipes[name] = recipe{name: name, version: versionNum, installTime: time.Now().Unix(), success: success}
-	dbBytes, err := json.Marshal(db)
+	db[name] = Recipe{Name: name, Version: versionNum, InstallTime: time.Now().Unix(), Success: success}
+
+	var recipelist []Recipe
+	for _, recipe := range db {
+		recipelist = append(recipelist, recipe)
+	}
+	dbBytes, err := json.Marshal(recipelist)
 	if err != nil {
 		return err
 	}
