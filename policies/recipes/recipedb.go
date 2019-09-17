@@ -32,16 +32,16 @@ var (
 	dbFileName   = "osconfig_recipedb"
 )
 
-// RecipeDB represents local state of installed recipes.
-type RecipeDB struct {
+// recipeDB represents local state of installed recipes.
+type recipeDB struct {
 	recipes map[string]Recipe
 }
 
-func newRecipeDB() (*RecipeDB, error) {
+func newRecipeDB() (*recipeDB, error) {
 	f, err := os.Open(filepath.Join(getDbDir(), dbFileName))
 	if err != nil {
 		if os.IsNotExist(err) {
-			return &RecipeDB{recipes: make(map[string]Recipe)}, nil
+			return &recipeDB{recipes: make(map[string]Recipe)}, nil
 		}
 		return nil, err
 	}
@@ -50,21 +50,21 @@ func newRecipeDB() (*RecipeDB, error) {
 	if err != nil {
 		return nil, err
 	}
-	db := &RecipeDB{}
+	db := &recipeDB{}
 	if err := json.Unmarshal(bytes, &db); err != nil {
 		return nil, err
 	}
 	return db, nil
 }
 
-// GetRecipe returns the Recipe object for the given recipe name.
-func (db *RecipeDB) GetRecipe(name string) (Recipe, bool) {
+// getRecipe returns the Recipe object for the given recipe name.
+func (db *recipeDB) getRecipe(name string) (Recipe, bool) {
 	r, ok := db.recipes[name]
 	return r, ok
 }
 
-// AddRecipe marks a recipe as installed.
-func (db *RecipeDB) AddRecipe(name, version string, success bool) error {
+// addRecipe marks a recipe as installed.
+func (db *recipeDB) addRecipe(name, version string, success bool) error {
 	versionNum, err := convertVersion(version)
 	if err != nil {
 		return err
@@ -117,16 +117,16 @@ type Recipe struct {
 	success     bool
 }
 
-// SetVersion sets the version on a Recipe.
-func (r *Recipe) SetVersion(version string) error {
+// setVersion sets the version on a Recipe.
+func (r *Recipe) setVersion(version string) error {
 	var err error
 	r.version, err = convertVersion(version)
 	return err
 }
 
-// Compare returns true if the provided version is greater than the recipe's
+// compare returns true if the provided version is greater than the recipe's
 // version, false otherwise.
-func (r *Recipe) Compare(version string) bool {
+func (r *Recipe) compare(version string) bool {
 	if version == "" {
 		return false
 	}

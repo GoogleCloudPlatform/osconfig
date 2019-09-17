@@ -27,9 +27,9 @@ import (
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 )
 
-// FetchArtifacts takes in a slice of artifacs and dowloads them into the specified directory,
+// fetchArtifacts takes in a slice of artifacs and dowloads them into the specified directory,
 // Returns a map of artifact names to their new locations on the local disk.
-func FetchArtifacts(ctx context.Context, artifacts []*osconfigpb.SoftwareRecipe_Artifact, directory string) (map[string]string, error) {
+func fetchArtifacts(ctx context.Context, artifacts []*osconfigpb.SoftwareRecipe_Artifact, directory string) (map[string]string, error) {
 	localNames := make(map[string]string)
 
 	for _, a := range artifacts {

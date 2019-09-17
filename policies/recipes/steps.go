@@ -35,8 +35,7 @@ import (
 	"github.com/ulikunitz/xz/lzma"
 )
 
-// StepCopyFile runs a CopyFile step
-func StepCopyFile(step *osconfigpb.SoftwareRecipe_Step_CopyFile, artifacts map[string]string, runEnvs []string, stepDir string) error {
+func stepCopyFile(step *osconfigpb.SoftwareRecipe_Step_CopyFile, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	dest, err := common.NormPath(step.Destination)
 	if err != nil {
 		return err
@@ -96,8 +95,7 @@ func parsePermissions(s string) (os.FileMode, error) {
 	return os.FileMode(i), nil
 }
 
-// StepExtractArchive runs an ExtractArchive step
-func StepExtractArchive(step *osconfigpb.SoftwareRecipe_Step_ExtractArchive, artifacts map[string]string, runEnvs []string, stepDir string) error {
+func stepExtractArchive(step *osconfigpb.SoftwareRecipe_Step_ExtractArchive, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	artifact := step.GetArtifactId()
 	filename, ok := artifacts[artifact]
 	if !ok {
@@ -371,8 +369,7 @@ func extractTar(tarName string, dst string, archiveType osconfigpb.SoftwareRecip
 	return createFiles(tr, dst)
 }
 
-// StepInstallMsi builds the command for a InstallMsi step
-func StepInstallMsi(step *osconfigpb.SoftwareRecipe_Step_InstallMsi, artifacts map[string]string, runEnvs []string, stepDir string) error {
+func stepInstallMsi(step *osconfigpb.SoftwareRecipe_Step_InstallMsi, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	artifact := step.GetArtifactId()
 	path, ok := artifacts[artifact]
 	if !ok {
@@ -391,18 +388,15 @@ func StepInstallMsi(step *osconfigpb.SoftwareRecipe_Step_InstallMsi, artifacts m
 	return executeCommand("C:\\Windows\\System32\\msiexec.exe", args, stepDir, runEnvs, exitCodes)
 }
 
-// StepInstallDpkg builds the command for a InstallDpkg step
-func StepInstallDpkg(step *osconfigpb.SoftwareRecipe_Step_InstallDpkg, artifacts map[string]string, runEnvs []string, stepDir string) error {
+func stepInstallDpkg(step *osconfigpb.SoftwareRecipe_Step_InstallDpkg, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	return fmt.Errorf("InstallDpkg not yet supported")
 }
 
-// StepInstallRpm builds the command for a FileCopy step
-func StepInstallRpm(step *osconfigpb.SoftwareRecipe_Step_InstallRpm, artifacts map[string]string, runEnvs []string, stepDir string) error {
+func stepInstallRpm(step *osconfigpb.SoftwareRecipe_Step_InstallRpm, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	return fmt.Errorf("InstallRpm not yet supported")
 }
 
-// StepExecFile builds the command for a ExecFile step
-func StepExecFile(step *osconfigpb.SoftwareRecipe_Step_ExecFile, artifacts map[string]string, runEnvs []string, stepDir string) error {
+func stepExecFile(step *osconfigpb.SoftwareRecipe_Step_ExecFile, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	var path string
 	switch {
 	case step.GetArtifactId() != "":
@@ -422,8 +416,7 @@ func StepExecFile(step *osconfigpb.SoftwareRecipe_Step_ExecFile, artifacts map[s
 	return executeCommand(path, step.Args, stepDir, runEnvs, []int32{0})
 }
 
-// StepRunScript runs a RunScript step.
-func StepRunScript(step *osconfigpb.SoftwareRecipe_Step_RunScript, artifacts map[string]string, runEnvs []string, stepDir string) error {
+func stepRunScript(step *osconfigpb.SoftwareRecipe_Step_RunScript, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	cmd := filepath.Join(stepDir, "recipe_script_source")
 	if err := writeScript(cmd, step.Script); err != nil {
 		return err
