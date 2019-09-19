@@ -29,6 +29,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 	"github.com/ulikunitz/xz"
@@ -336,7 +337,7 @@ func createFiles(tr *tar.Reader, dst string) error {
 				return err
 			}
 		default:
-			fmt.Printf("unknown type for %s\n", filen)
+			logger.Infof("unknown file type for tar entry %s\n", filen)
 			continue
 		}
 		if err = os.Chown(filen, header.Uid, header.Gid); err != nil {
