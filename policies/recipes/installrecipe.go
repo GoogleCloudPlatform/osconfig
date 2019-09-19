@@ -54,6 +54,12 @@ func InstallRecipe(ctx context.Context, recipe *osconfigpb.SoftwareRecipe) error
 	if err != nil {
 		return fmt.Errorf("failed to create base directory: %v", err)
 	}
+	defer func() {
+		err := os.RemoveAll(runDir)
+		if err != nil {
+			logger.Warningf("failed to remove recipe working dir at %q\n", runDir)
+		}
+	}()
 	artifacts, err := fetchArtifacts(ctx, recipe.Artifacts, runDir)
 	if err != nil {
 		return fmt.Errorf("failed to obtain artifacts: %v", err)
