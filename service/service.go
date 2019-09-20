@@ -36,7 +36,7 @@ type program struct {
 func (p *program) Start(s service.Service) error {
 	go func() {
 		p.run(p.ctx)
-		close(p.done)
+		os.Exit(0)
 	}()
 	return nil
 }
