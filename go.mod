@@ -11,6 +11,7 @@ require (
 	github.com/fsouza/fake-gcs-server v1.11.6
 	github.com/go-ole/go-ole v1.2.4
 	github.com/golang/protobuf v1.3.2
+	github.com/google/logger v1.0.1
 	github.com/googleapis/gax-go/v2 v2.0.5
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/kardianos/service v1.0.0

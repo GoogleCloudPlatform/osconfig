@@ -18,7 +18,6 @@ package inventory
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 	"strings"
 	"time"
@@ -78,34 +77,30 @@ func Get() *InstanceInventory {
 
 	hs := &InstanceInventory{}
 
-	hn, err := os.Hostname()
-	if err != nil {
-		logger.Errorf("os.Hostname() error: %v", err)
-	}
-
-	hs.Hostname = hn
-
-	di, err := osinfo.GetDistributionInfo()
-	if err != nil {
-		logger.Errorf("osinfo.GetDistributionInfo() error: %v", err)
-	}
-
-	hs.LongName = di.LongName
-	hs.ShortName = di.ShortName
-	hs.Version = di.Version
-	hs.KernelVersion = di.Kernel
-	hs.Architecture = di.Architecture
-	hs.OSConfigAgentVersion = config.Version()
-
-	hs.InstalledPackages, err = packages.GetInstalledPackages()
+	installedPackages, err := packages.GetInstalledPackages()
 	if err != nil {
 		logger.Errorf("packages.GetInstalledPackages() error: %v", err)
 	}
 
-	hs.PackageUpdates, err = packages.GetPackageUpdates()
+	packageUpdates, err := packages.GetPackageUpdates()
 	if err != nil {
 		logger.Errorf("packages.GetPackageUpdates() error: %v", err)
 	}
+
+	oi, err := osinfo.Get()
+	if err != nil {
+		logger.Errorf("osinfo.Get() error: %v", err)
+	}
+
+	hs.Hostname = oi.Hostname
+	hs.LongName = oi.LongName
+	hs.ShortName = oi.ShortName
+	hs.Version = oi.Version
+	hs.KernelVersion = oi.KernelVersion
+	hs.Architecture = oi.Architecture
+	hs.OSConfigAgentVersion = config.Version()
+	hs.InstalledPackages = installedPackages
+	hs.PackageUpdates = packageUpdates
 
 	hs.LastUpdated = time.Now().UTC().Format(time.RFC3339)
 

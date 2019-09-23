@@ -22,9 +22,9 @@ const (
 	Windows = "windows"
 )
 
-// DistributionInfo describes an OS distribution.
-type DistributionInfo struct {
-	LongName, ShortName, Version, Kernel, Architecture string
+// OSInfo describes an operating system.
+type OSInfo struct {
+	Hostname, LongName, ShortName, Version, KernelVersion, Architecture string
 }
 
 // Architecture attempts to standardize architecture naming.

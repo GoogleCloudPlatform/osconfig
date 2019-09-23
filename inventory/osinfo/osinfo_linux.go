@@ -16,14 +16,14 @@ package osinfo
 import (
 	"bufio"
 	"bytes"
-	"errors"
+	"fmt"
 	"io/ioutil"
 	"os/exec"
 	"regexp"
-	"runtime"
 	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/util"
+	"golang.org/x/sys/unix"
 )
 
 var (
@@ -39,8 +39,8 @@ const (
 	rhRelease = "/etc/redhat-release"
 )
 
-func parseOsRelease(releaseDetails string) *DistributionInfo {
-	di := &DistributionInfo{}
+func parseOsRelease(releaseDetails string) *OSInfo {
+	oi := &OSInfo{}
 
 	scanner := bufio.NewScanner(bytes.NewReader([]byte(releaseDetails)))
 	for scanner.Scan() {
@@ -49,25 +49,25 @@ func parseOsRelease(releaseDetails string) *DistributionInfo {
 		case "":
 			continue
 		case "PRETTY_NAME":
-			di.LongName = strings.Trim(entry[1], `"`)
+			oi.LongName = strings.Trim(entry[1], `"`)
 		case "VERSION_ID":
-			di.Version = strings.Trim(entry[1], `"`)
+			oi.Version = strings.Trim(entry[1], `"`)
 		case "ID":
-			di.ShortName = strings.Trim(entry[1], `"`)
+			oi.ShortName = strings.Trim(entry[1], `"`)
 		}
-		if di.LongName != "" && di.Version != "" && di.ShortName != "" {
+		if oi.LongName != "" && oi.Version != "" && oi.ShortName != "" {
 			break
 		}
 	}
 
-	if di.ShortName == "" {
-		di.ShortName = Linux
+	if oi.ShortName == "" {
+		oi.ShortName = Linux
 	}
 
-	return di
+	return oi
 }
 
-func parseEnterpriseRelease(releaseDetails string) *DistributionInfo {
+func parseEnterpriseRelease(releaseDetails string) *OSInfo {
 	rel := releaseDetails
 
 	var sn string
@@ -80,18 +80,17 @@ func parseEnterpriseRelease(releaseDetails string) *DistributionInfo {
 		sn = "ol"
 	}
 
-	return &DistributionInfo{
+	return &OSInfo{
 		ShortName: sn,
 		LongName:  strings.Replace(rel, " release ", " ", 1),
 		Version:   entRelVerRgx.FindString(rel),
 	}
 }
 
-// GetDistributionInfo reports DistributionInfo.
-func GetDistributionInfo() (*DistributionInfo, error) {
-	var di *DistributionInfo
-	var err error
-	var parseReleaseFunc func(string) *DistributionInfo
+// Get reports OSInfo.
+func Get() (*OSInfo, error) {
+	var oi *OSInfo
+	var parseReleaseFunc func(string) *OSInfo
 	var releaseFile string
 	switch {
 	// Check for /etc/os-release first.
@@ -104,24 +103,22 @@ func GetDistributionInfo() (*DistributionInfo, error) {
 	case util.Exists(rhRelease):
 		releaseFile = rhRelease
 		parseReleaseFunc = parseEnterpriseRelease
-	default:
-		err = errors.New("unable to obtain release info, no known /etc/*-release exists")
 	}
 
 	b, err := ioutil.ReadFile(releaseFile)
 	if err != nil {
-		di = &DistributionInfo{ShortName: Linux}
+		oi = &OSInfo{ShortName: Linux}
 	} else {
-		di = parseReleaseFunc(string(b))
+		oi = parseReleaseFunc(string(b))
 	}
 
-	out, err := getUname()
-	if err != nil {
-		return nil, err
+	var uts unix.Utsname
+	if err := unix.Uname(&uts); err != nil {
+		return nil, fmt.Errorf("unix.Uname error: %v", err)
 	}
-	di.Kernel = strings.TrimSpace(string(out))
-	// No need to get fancy here, assume the binary architecture
-	// is the same as the system.
-	di.Architecture = Architecture(runtime.GOARCH)
-	return di, nil
+	oi.Hostname = string(uts.Nodename[:])
+	oi.Architecture = Architecture(string(uts.Machine[:]))
+	oi.KernelVersion = string(uts.Version[:])
+
+	return oi, nil
 }
