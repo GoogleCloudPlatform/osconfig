@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"os/exec"
 	"regexp"
 	"strings"
 
@@ -28,9 +27,6 @@ import (
 
 var (
 	entRelVerRgx = regexp.MustCompile(`\d+(\.\d+)?(\.\d+)?`)
-	getUname     = func() ([]byte, error) {
-		return exec.Command("/bin/uname", "-r").CombinedOutput()
-	}
 )
 
 const (
