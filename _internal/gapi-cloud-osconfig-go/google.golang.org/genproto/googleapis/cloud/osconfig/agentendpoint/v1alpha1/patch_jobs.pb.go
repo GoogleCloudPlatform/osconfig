@@ -530,7 +530,7 @@ type WindowsUpdateSettings struct {
 	// Only apply updates of these windows update classifications. If empty, all
 	// updates will be applied.
 	Classifications []WindowsUpdateSettings_Classification `protobuf:"varint,1,rep,packed,name=classifications,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.WindowsUpdateSettings_Classification" json:"classifications,omitempty"`
-	// Optional list of KBs to exclude from update.
+	// List of KBs to exclude from update.
 	Excludes             []string `protobuf:"bytes,2,rep,name=excludes,proto3" json:"excludes,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`

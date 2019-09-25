@@ -6,6 +6,7 @@ package agentendpoint
 import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	math "math"
 )
 
@@ -132,6 +133,87 @@ func (x AptRepository_ArchiveType) String() string {
 
 func (AptRepository_ArchiveType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_2fa0294f7da3c92b, []int{1, 0}
+}
+
+// Specifying the type of archive.
+type SoftwareRecipe_Step_ExtractArchive_ArchiveType int32
+
+const (
+	// Indicates that the archive type isn't specified.
+	SoftwareRecipe_Step_ExtractArchive_ARCHIVE_TYPE_UNSPECIFIED SoftwareRecipe_Step_ExtractArchive_ArchiveType = 0
+	// Indicates that the archive is a tar archive with no encryption.
+	SoftwareRecipe_Step_ExtractArchive_TAR SoftwareRecipe_Step_ExtractArchive_ArchiveType = 1
+	// Indicates that the archive is a tar archive with gzip encryption.
+	SoftwareRecipe_Step_ExtractArchive_TAR_GZIP SoftwareRecipe_Step_ExtractArchive_ArchiveType = 2
+	// Indicates that the archive is a tar archive with bzip encryption.
+	SoftwareRecipe_Step_ExtractArchive_TAR_BZIP SoftwareRecipe_Step_ExtractArchive_ArchiveType = 3
+	// Indicates that the archive is a tar archive with lzma encryption.
+	SoftwareRecipe_Step_ExtractArchive_TAR_LZMA SoftwareRecipe_Step_ExtractArchive_ArchiveType = 4
+	// Indicates that the archive is a tar archive with xz encryption.
+	SoftwareRecipe_Step_ExtractArchive_TAR_XZ SoftwareRecipe_Step_ExtractArchive_ArchiveType = 5
+	// Indicates that the archive is a zip archive.
+	SoftwareRecipe_Step_ExtractArchive_ZIP SoftwareRecipe_Step_ExtractArchive_ArchiveType = 11
+)
+
+var SoftwareRecipe_Step_ExtractArchive_ArchiveType_name = map[int32]string{
+	0:  "ARCHIVE_TYPE_UNSPECIFIED",
+	1:  "TAR",
+	2:  "TAR_GZIP",
+	3:  "TAR_BZIP",
+	4:  "TAR_LZMA",
+	5:  "TAR_XZ",
+	11: "ZIP",
+}
+
+var SoftwareRecipe_Step_ExtractArchive_ArchiveType_value = map[string]int32{
+	"ARCHIVE_TYPE_UNSPECIFIED": 0,
+	"TAR":                      1,
+	"TAR_GZIP":                 2,
+	"TAR_BZIP":                 3,
+	"TAR_LZMA":                 4,
+	"TAR_XZ":                   5,
+	"ZIP":                      11,
+}
+
+func (x SoftwareRecipe_Step_ExtractArchive_ArchiveType) String() string {
+	return proto.EnumName(SoftwareRecipe_Step_ExtractArchive_ArchiveType_name, int32(x))
+}
+
+func (SoftwareRecipe_Step_ExtractArchive_ArchiveType) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_2fa0294f7da3c92b, []int{6, 1, 1, 0}
+}
+
+// The interpreter used to execute a script.
+type SoftwareRecipe_Step_RunScript_Interpreter int32
+
+const (
+	// Default value for ScriptType.
+	SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED SoftwareRecipe_Step_RunScript_Interpreter = 0
+	// Indicates that the script will be run with /bin/sh on Linux and cmd
+	// on windows.
+	SoftwareRecipe_Step_RunScript_SHELL SoftwareRecipe_Step_RunScript_Interpreter = 1
+	// Indicates that the script will be run with powershell.
+	SoftwareRecipe_Step_RunScript_POWERSHELL SoftwareRecipe_Step_RunScript_Interpreter = 3
+)
+
+var SoftwareRecipe_Step_RunScript_Interpreter_name = map[int32]string{
+	0: "INTERPRETER_UNSPECIFIED",
+	1: "SHELL",
+	3: "POWERSHELL",
+}
+
+var SoftwareRecipe_Step_RunScript_Interpreter_value = map[string]int32{
+	"INTERPRETER_UNSPECIFIED": 0,
+	"SHELL":                   1,
+	"POWERSHELL":              3,
+}
+
+func (x SoftwareRecipe_Step_RunScript_Interpreter) String() string {
+	return proto.EnumName(SoftwareRecipe_Step_RunScript_Interpreter_name, int32(x))
+}
+
+func (SoftwareRecipe_Step_RunScript_Interpreter) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_2fa0294f7da3c92b, []int{6, 1, 6, 0}
 }
 
 // Package is a reference to the software package to be installed or removed.
@@ -612,26 +694,991 @@ func (*PackageRepository) XXX_OneofWrappers() []interface{} {
 	}
 }
 
+// A software recipe is a set of instructions for installing and configuring a
+// piece of software. It consists of a set of artifacts that will be
+// downloaded and a set of steps that install, configure, and/or update th
+// software.
+//
+// Recipes supports installing and updating software from artifacts in the
+// following formats:
+// Zip archive, Tar archive, Windows MSI, Debian package, and RPM package.
+//
+// Additionally it supports executing a script (either defined in a file or
+// directly in this api) in bash, sh, cmd, and powershell.
+//
+// Updating a Software Recipe
+//
+// If a recipe is assigned to an instance and there is a recipe with the same
+// name but a lower version already installed on the instance and the state
+// of the recipe is INSTALLED_KEEP_UPDATED then the recipe will be updated to
+// the new version.
+//
+// Script Working Directories
+//
+// Each script or exec step will be run in its own temporary directory which
+// is deleted after completing the step.
+type SoftwareRecipe struct {
+	// Unique identifier for the recipe. Only one recipe with a given name will
+	// be installed on an instance.
+	//
+	// Names are also used to identify resource to determine whether guest
+	// policies conflict. This means that requests to create multiple recipes
+	// with the same name and version that could possibly have conflicting
+	// assignments will be rejected.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The version of this software recipe. Version can be up to 4 period
+	// separated numbers (e.g. 12.34.56.78).
+	Version string `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
+	// Resources available to be used in the steps in the recipe.
+	Artifacts []*SoftwareRecipe_Artifact `protobuf:"bytes,3,rep,name=artifacts,proto3" json:"artifacts,omitempty"`
+	// Actions to be taken for installing this recipe. On failure it will stop
+	// executing steps and not attempt another installation. Any steps taken
+	// (including partially completed steps) will not be rolled back.
+	InstallSteps []*SoftwareRecipe_Step `protobuf:"bytes,4,rep,name=install_steps,json=installSteps,proto3" json:"install_steps,omitempty"`
+	// Actions to be taken for updating this recipe. On failure it will stop
+	// executing steps and not attempt another update for this recipe. Any steps
+	// taken (including partially completed steps) will not be rolled back.
+	UpdateSteps []*SoftwareRecipe_Step `protobuf:"bytes,5,rep,name=update_steps,json=updateSteps,proto3" json:"update_steps,omitempty"`
+	// Default is INSTALLED. The desired state the agent should maintain for this
+	// recipe.
+	//
+	// INSTALLED: The software recipe will be installed on the instance but
+	//            won't be updated to new versions.
+	// INSTALLED_KEEP_UPDATED: The software recipe will be installed on the
+	//                         instance. It will also be updated to a higher
+	//                         version of the recipe if a higher version is
+	//                         assigned to this instance.
+	// REMOVE: Remove is unsupported for software recipes and attempts to
+	//         create or update a recipe to the REMOVE state will be rejected.
+	DesiredState         DesiredState `protobuf:"varint,6,opt,name=desired_state,json=desiredState,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.DesiredState" json:"desired_state,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_unrecognized     []byte       `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
+}
+
+func (m *SoftwareRecipe) Reset()         { *m = SoftwareRecipe{} }
+func (m *SoftwareRecipe) String() string { return proto.CompactTextString(m) }
+func (*SoftwareRecipe) ProtoMessage()    {}
+func (*SoftwareRecipe) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2fa0294f7da3c92b, []int{6}
+}
+
+func (m *SoftwareRecipe) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SoftwareRecipe.Unmarshal(m, b)
+}
+func (m *SoftwareRecipe) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SoftwareRecipe.Marshal(b, m, deterministic)
+}
+func (m *SoftwareRecipe) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SoftwareRecipe.Merge(m, src)
+}
+func (m *SoftwareRecipe) XXX_Size() int {
+	return xxx_messageInfo_SoftwareRecipe.Size(m)
+}
+func (m *SoftwareRecipe) XXX_DiscardUnknown() {
+	xxx_messageInfo_SoftwareRecipe.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SoftwareRecipe proto.InternalMessageInfo
+
+func (m *SoftwareRecipe) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *SoftwareRecipe) GetVersion() string {
+	if m != nil {
+		return m.Version
+	}
+	return ""
+}
+
+func (m *SoftwareRecipe) GetArtifacts() []*SoftwareRecipe_Artifact {
+	if m != nil {
+		return m.Artifacts
+	}
+	return nil
+}
+
+func (m *SoftwareRecipe) GetInstallSteps() []*SoftwareRecipe_Step {
+	if m != nil {
+		return m.InstallSteps
+	}
+	return nil
+}
+
+func (m *SoftwareRecipe) GetUpdateSteps() []*SoftwareRecipe_Step {
+	if m != nil {
+		return m.UpdateSteps
+	}
+	return nil
+}
+
+func (m *SoftwareRecipe) GetDesiredState() DesiredState {
+	if m != nil {
+		return m.DesiredState
+	}
+	return DesiredState_DESIRED_STATE_UNSPECIFIED
+}
+
+// Specifies a resource to be used in the recipe.
+type SoftwareRecipe_Artifact struct {
+	// Id of the artifact, which the installation and update steps of this
+	// recipe can reference. Artifacts in a recipe cannot have the same id.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// A specific type of artifact.
+	//
+	// Types that are valid to be assigned to Artifact:
+	//	*SoftwareRecipe_Artifact_Remote_
+	//	*SoftwareRecipe_Artifact_Gcs_
+	Artifact isSoftwareRecipe_Artifact_Artifact `protobuf_oneof:"artifact"`
+	// Defaults to false. When false, recipes will be subject to validations
+	// based on the artifact type:
+	//
+	// Remote: A checksum must be specified, and only protocols with
+	//         transport-layer security will be permitted.
+	// GCS:    An object generation number must be specified.
+	AllowInsecure        bool     `protobuf:"varint,4,opt,name=allow_insecure,json=allowInsecure,proto3" json:"allow_insecure,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SoftwareRecipe_Artifact) Reset()         { *m = SoftwareRecipe_Artifact{} }
+func (m *SoftwareRecipe_Artifact) String() string { return proto.CompactTextString(m) }
+func (*SoftwareRecipe_Artifact) ProtoMessage()    {}
+func (*SoftwareRecipe_Artifact) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2fa0294f7da3c92b, []int{6, 0}
+}
+
+func (m *SoftwareRecipe_Artifact) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SoftwareRecipe_Artifact.Unmarshal(m, b)
+}
+func (m *SoftwareRecipe_Artifact) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SoftwareRecipe_Artifact.Marshal(b, m, deterministic)
+}
+func (m *SoftwareRecipe_Artifact) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SoftwareRecipe_Artifact.Merge(m, src)
+}
+func (m *SoftwareRecipe_Artifact) XXX_Size() int {
+	return xxx_messageInfo_SoftwareRecipe_Artifact.Size(m)
+}
+func (m *SoftwareRecipe_Artifact) XXX_DiscardUnknown() {
+	xxx_messageInfo_SoftwareRecipe_Artifact.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SoftwareRecipe_Artifact proto.InternalMessageInfo
+
+func (m *SoftwareRecipe_Artifact) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+type isSoftwareRecipe_Artifact_Artifact interface {
+	isSoftwareRecipe_Artifact_Artifact()
+}
+
+type SoftwareRecipe_Artifact_Remote_ struct {
+	Remote *SoftwareRecipe_Artifact_Remote `protobuf:"bytes,2,opt,name=remote,proto3,oneof"`
+}
+
+type SoftwareRecipe_Artifact_Gcs_ struct {
+	Gcs *SoftwareRecipe_Artifact_Gcs `protobuf:"bytes,3,opt,name=gcs,proto3,oneof"`
+}
+
+func (*SoftwareRecipe_Artifact_Remote_) isSoftwareRecipe_Artifact_Artifact() {}
+
+func (*SoftwareRecipe_Artifact_Gcs_) isSoftwareRecipe_Artifact_Artifact() {}
+
+func (m *SoftwareRecipe_Artifact) GetArtifact() isSoftwareRecipe_Artifact_Artifact {
+	if m != nil {
+		return m.Artifact
+	}
+	return nil
+}
+
+func (m *SoftwareRecipe_Artifact) GetRemote() *SoftwareRecipe_Artifact_Remote {
+	if x, ok := m.GetArtifact().(*SoftwareRecipe_Artifact_Remote_); ok {
+		return x.Remote
+	}
+	return nil
+}
+
+func (m *SoftwareRecipe_Artifact) GetGcs() *SoftwareRecipe_Artifact_Gcs {
+	if x, ok := m.GetArtifact().(*SoftwareRecipe_Artifact_Gcs_); ok {
+		return x.Gcs
+	}
+	return nil
+}
+
+func (m *SoftwareRecipe_Artifact) GetAllowInsecure() bool {
+	if m != nil {
+		return m.AllowInsecure
+	}
+	return false
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*SoftwareRecipe_Artifact) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*SoftwareRecipe_Artifact_Remote_)(nil),
+		(*SoftwareRecipe_Artifact_Gcs_)(nil),
+	}
+}
+
+// Specifies an artifact available via some URI.
+type SoftwareRecipe_Artifact_Remote struct {
+	// URI from which to fetch the object. It should contain both the protocol
+	// and path following the format {protocol}://{location}.
+	Uri string `protobuf:"bytes,1,opt,name=uri,proto3" json:"uri,omitempty"`
+	// Only needed if allow_insecure is false.
+	// SHA256 checksum to compare to the checksum of the artifact. If the
+	// checksum is not empty and it doesn't match the artifact then the recipe
+	// installation will fail before running any of the steps.
+	Checksum             string   `protobuf:"bytes,2,opt,name=checksum,proto3" json:"checksum,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SoftwareRecipe_Artifact_Remote) Reset()         { *m = SoftwareRecipe_Artifact_Remote{} }
+func (m *SoftwareRecipe_Artifact_Remote) String() string { return proto.CompactTextString(m) }
+func (*SoftwareRecipe_Artifact_Remote) ProtoMessage()    {}
+func (*SoftwareRecipe_Artifact_Remote) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2fa0294f7da3c92b, []int{6, 0, 0}
+}
+
+func (m *SoftwareRecipe_Artifact_Remote) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SoftwareRecipe_Artifact_Remote.Unmarshal(m, b)
+}
+func (m *SoftwareRecipe_Artifact_Remote) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SoftwareRecipe_Artifact_Remote.Marshal(b, m, deterministic)
+}
+func (m *SoftwareRecipe_Artifact_Remote) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SoftwareRecipe_Artifact_Remote.Merge(m, src)
+}
+func (m *SoftwareRecipe_Artifact_Remote) XXX_Size() int {
+	return xxx_messageInfo_SoftwareRecipe_Artifact_Remote.Size(m)
+}
+func (m *SoftwareRecipe_Artifact_Remote) XXX_DiscardUnknown() {
+	xxx_messageInfo_SoftwareRecipe_Artifact_Remote.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SoftwareRecipe_Artifact_Remote proto.InternalMessageInfo
+
+func (m *SoftwareRecipe_Artifact_Remote) GetUri() string {
+	if m != nil {
+		return m.Uri
+	}
+	return ""
+}
+
+func (m *SoftwareRecipe_Artifact_Remote) GetChecksum() string {
+	if m != nil {
+		return m.Checksum
+	}
+	return ""
+}
+
+// Specifies an artifact available as a GCS Object.
+type SoftwareRecipe_Artifact_Gcs struct {
+	// Bucket of the GCS object.
+	Bucket string `protobuf:"bytes,1,opt,name=bucket,proto3" json:"bucket,omitempty"`
+	// Name of the GCS object.
+	Object string `protobuf:"bytes,2,opt,name=object,proto3" json:"object,omitempty"`
+	// Only needed if allow_insecure is false.
+	// Generation number of the GCS object.
+	Generation           int64    `protobuf:"varint,3,opt,name=generation,proto3" json:"generation,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SoftwareRecipe_Artifact_Gcs) Reset()         { *m = SoftwareRecipe_Artifact_Gcs{} }
+func (m *SoftwareRecipe_Artifact_Gcs) String() string { return proto.CompactTextString(m) }
+func (*SoftwareRecipe_Artifact_Gcs) ProtoMessage()    {}
+func (*SoftwareRecipe_Artifact_Gcs) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2fa0294f7da3c92b, []int{6, 0, 1}
+}
+
+func (m *SoftwareRecipe_Artifact_Gcs) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SoftwareRecipe_Artifact_Gcs.Unmarshal(m, b)
+}
+func (m *SoftwareRecipe_Artifact_Gcs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SoftwareRecipe_Artifact_Gcs.Marshal(b, m, deterministic)
+}
+func (m *SoftwareRecipe_Artifact_Gcs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SoftwareRecipe_Artifact_Gcs.Merge(m, src)
+}
+func (m *SoftwareRecipe_Artifact_Gcs) XXX_Size() int {
+	return xxx_messageInfo_SoftwareRecipe_Artifact_Gcs.Size(m)
+}
+func (m *SoftwareRecipe_Artifact_Gcs) XXX_DiscardUnknown() {
+	xxx_messageInfo_SoftwareRecipe_Artifact_Gcs.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SoftwareRecipe_Artifact_Gcs proto.InternalMessageInfo
+
+func (m *SoftwareRecipe_Artifact_Gcs) GetBucket() string {
+	if m != nil {
+		return m.Bucket
+	}
+	return ""
+}
+
+func (m *SoftwareRecipe_Artifact_Gcs) GetObject() string {
+	if m != nil {
+		return m.Object
+	}
+	return ""
+}
+
+func (m *SoftwareRecipe_Artifact_Gcs) GetGeneration() int64 {
+	if m != nil {
+		return m.Generation
+	}
+	return 0
+}
+
+// An action that can be taken as part of installing or updating a recipe.
+type SoftwareRecipe_Step struct {
+	// A specific type of step.
+	//
+	// Types that are valid to be assigned to Step:
+	//	*SoftwareRecipe_Step_FileCopy
+	//	*SoftwareRecipe_Step_ArchiveExtraction
+	//	*SoftwareRecipe_Step_MsiInstallation
+	//	*SoftwareRecipe_Step_DpkgInstallation
+	//	*SoftwareRecipe_Step_RpmInstallation
+	//	*SoftwareRecipe_Step_FileExec
+	//	*SoftwareRecipe_Step_ScriptRun
+	Step                 isSoftwareRecipe_Step_Step `protobuf_oneof:"step"`
+	XXX_NoUnkeyedLiteral struct{}                   `json:"-"`
+	XXX_unrecognized     []byte                     `json:"-"`
+	XXX_sizecache        int32                      `json:"-"`
+}
+
+func (m *SoftwareRecipe_Step) Reset()         { *m = SoftwareRecipe_Step{} }
+func (m *SoftwareRecipe_Step) String() string { return proto.CompactTextString(m) }
+func (*SoftwareRecipe_Step) ProtoMessage()    {}
+func (*SoftwareRecipe_Step) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2fa0294f7da3c92b, []int{6, 1}
+}
+
+func (m *SoftwareRecipe_Step) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SoftwareRecipe_Step.Unmarshal(m, b)
+}
+func (m *SoftwareRecipe_Step) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SoftwareRecipe_Step.Marshal(b, m, deterministic)
+}
+func (m *SoftwareRecipe_Step) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SoftwareRecipe_Step.Merge(m, src)
+}
+func (m *SoftwareRecipe_Step) XXX_Size() int {
+	return xxx_messageInfo_SoftwareRecipe_Step.Size(m)
+}
+func (m *SoftwareRecipe_Step) XXX_DiscardUnknown() {
+	xxx_messageInfo_SoftwareRecipe_Step.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SoftwareRecipe_Step proto.InternalMessageInfo
+
+type isSoftwareRecipe_Step_Step interface {
+	isSoftwareRecipe_Step_Step()
+}
+
+type SoftwareRecipe_Step_FileCopy struct {
+	FileCopy *SoftwareRecipe_Step_CopyFile `protobuf:"bytes,1,opt,name=file_copy,json=fileCopy,proto3,oneof"`
+}
+
+type SoftwareRecipe_Step_ArchiveExtraction struct {
+	ArchiveExtraction *SoftwareRecipe_Step_ExtractArchive `protobuf:"bytes,2,opt,name=archive_extraction,json=archiveExtraction,proto3,oneof"`
+}
+
+type SoftwareRecipe_Step_MsiInstallation struct {
+	MsiInstallation *SoftwareRecipe_Step_InstallMsi `protobuf:"bytes,3,opt,name=msi_installation,json=msiInstallation,proto3,oneof"`
+}
+
+type SoftwareRecipe_Step_DpkgInstallation struct {
+	DpkgInstallation *SoftwareRecipe_Step_InstallDpkg `protobuf:"bytes,4,opt,name=dpkg_installation,json=dpkgInstallation,proto3,oneof"`
+}
+
+type SoftwareRecipe_Step_RpmInstallation struct {
+	RpmInstallation *SoftwareRecipe_Step_InstallRpm `protobuf:"bytes,5,opt,name=rpm_installation,json=rpmInstallation,proto3,oneof"`
+}
+
+type SoftwareRecipe_Step_FileExec struct {
+	FileExec *SoftwareRecipe_Step_ExecFile `protobuf:"bytes,6,opt,name=file_exec,json=fileExec,proto3,oneof"`
+}
+
+type SoftwareRecipe_Step_ScriptRun struct {
+	ScriptRun *SoftwareRecipe_Step_RunScript `protobuf:"bytes,7,opt,name=script_run,json=scriptRun,proto3,oneof"`
+}
+
+func (*SoftwareRecipe_Step_FileCopy) isSoftwareRecipe_Step_Step() {}
+
+func (*SoftwareRecipe_Step_ArchiveExtraction) isSoftwareRecipe_Step_Step() {}
+
+func (*SoftwareRecipe_Step_MsiInstallation) isSoftwareRecipe_Step_Step() {}
+
+func (*SoftwareRecipe_Step_DpkgInstallation) isSoftwareRecipe_Step_Step() {}
+
+func (*SoftwareRecipe_Step_RpmInstallation) isSoftwareRecipe_Step_Step() {}
+
+func (*SoftwareRecipe_Step_FileExec) isSoftwareRecipe_Step_Step() {}
+
+func (*SoftwareRecipe_Step_ScriptRun) isSoftwareRecipe_Step_Step() {}
+
+func (m *SoftwareRecipe_Step) GetStep() isSoftwareRecipe_Step_Step {
+	if m != nil {
+		return m.Step
+	}
+	return nil
+}
+
+func (m *SoftwareRecipe_Step) GetFileCopy() *SoftwareRecipe_Step_CopyFile {
+	if x, ok := m.GetStep().(*SoftwareRecipe_Step_FileCopy); ok {
+		return x.FileCopy
+	}
+	return nil
+}
+
+func (m *SoftwareRecipe_Step) GetArchiveExtraction() *SoftwareRecipe_Step_ExtractArchive {
+	if x, ok := m.GetStep().(*SoftwareRecipe_Step_ArchiveExtraction); ok {
+		return x.ArchiveExtraction
+	}
+	return nil
+}
+
+func (m *SoftwareRecipe_Step) GetMsiInstallation() *SoftwareRecipe_Step_InstallMsi {
+	if x, ok := m.GetStep().(*SoftwareRecipe_Step_MsiInstallation); ok {
+		return x.MsiInstallation
+	}
+	return nil
+}
+
+func (m *SoftwareRecipe_Step) GetDpkgInstallation() *SoftwareRecipe_Step_InstallDpkg {
+	if x, ok := m.GetStep().(*SoftwareRecipe_Step_DpkgInstallation); ok {
+		return x.DpkgInstallation
+	}
+	return nil
+}
+
+func (m *SoftwareRecipe_Step) GetRpmInstallation() *SoftwareRecipe_Step_InstallRpm {
+	if x, ok := m.GetStep().(*SoftwareRecipe_Step_RpmInstallation); ok {
+		return x.RpmInstallation
+	}
+	return nil
+}
+
+func (m *SoftwareRecipe_Step) GetFileExec() *SoftwareRecipe_Step_ExecFile {
+	if x, ok := m.GetStep().(*SoftwareRecipe_Step_FileExec); ok {
+		return x.FileExec
+	}
+	return nil
+}
+
+func (m *SoftwareRecipe_Step) GetScriptRun() *SoftwareRecipe_Step_RunScript {
+	if x, ok := m.GetStep().(*SoftwareRecipe_Step_ScriptRun); ok {
+		return x.ScriptRun
+	}
+	return nil
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*SoftwareRecipe_Step) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*SoftwareRecipe_Step_FileCopy)(nil),
+		(*SoftwareRecipe_Step_ArchiveExtraction)(nil),
+		(*SoftwareRecipe_Step_MsiInstallation)(nil),
+		(*SoftwareRecipe_Step_DpkgInstallation)(nil),
+		(*SoftwareRecipe_Step_RpmInstallation)(nil),
+		(*SoftwareRecipe_Step_FileExec)(nil),
+		(*SoftwareRecipe_Step_ScriptRun)(nil),
+	}
+}
+
+// Copies the artifact to the specified path on the instance.
+type SoftwareRecipe_Step_CopyFile struct {
+	// The id of the relevant artifact in the recipe.
+	ArtifactId string `protobuf:"bytes,1,opt,name=artifact_id,json=artifactId,proto3" json:"artifact_id,omitempty"`
+	// The absolute path on the instance to put the file.
+	Destination string `protobuf:"bytes,2,opt,name=destination,proto3" json:"destination,omitempty"`
+	// Whether to allow this step to overwrite existing files. If this is
+	// false and the file already exists the file will not be overwritten
+	// and the step will be considered a success. Defaults to false.
+	Overwrite bool `protobuf:"varint,3,opt,name=overwrite,proto3" json:"overwrite,omitempty"`
+	// Consists of three octal digits which represent, in
+	// order, the permissions of the owner, group, and other users for the
+	// file (similarly to the numeric mode used in the linux chmod utility).
+	// Each digit represents a three bit number with the 4 bit
+	// corresponding to the read permissions, the 2 bit corresponds to the
+	// write bit, and the one bit corresponds to the execute permission.
+	// Default behavior is 755.
+	//
+	// Below are some examples of permissions and their associated values:
+	// read, write, and execute: 7
+	// read and execute: 5
+	// read and write: 6
+	// read only: 4
+	Permissions          string   `protobuf:"bytes,4,opt,name=permissions,proto3" json:"permissions,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SoftwareRecipe_Step_CopyFile) Reset()         { *m = SoftwareRecipe_Step_CopyFile{} }
+func (m *SoftwareRecipe_Step_CopyFile) String() string { return proto.CompactTextString(m) }
+func (*SoftwareRecipe_Step_CopyFile) ProtoMessage()    {}
+func (*SoftwareRecipe_Step_CopyFile) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2fa0294f7da3c92b, []int{6, 1, 0}
+}
+
+func (m *SoftwareRecipe_Step_CopyFile) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SoftwareRecipe_Step_CopyFile.Unmarshal(m, b)
+}
+func (m *SoftwareRecipe_Step_CopyFile) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SoftwareRecipe_Step_CopyFile.Marshal(b, m, deterministic)
+}
+func (m *SoftwareRecipe_Step_CopyFile) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SoftwareRecipe_Step_CopyFile.Merge(m, src)
+}
+func (m *SoftwareRecipe_Step_CopyFile) XXX_Size() int {
+	return xxx_messageInfo_SoftwareRecipe_Step_CopyFile.Size(m)
+}
+func (m *SoftwareRecipe_Step_CopyFile) XXX_DiscardUnknown() {
+	xxx_messageInfo_SoftwareRecipe_Step_CopyFile.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SoftwareRecipe_Step_CopyFile proto.InternalMessageInfo
+
+func (m *SoftwareRecipe_Step_CopyFile) GetArtifactId() string {
+	if m != nil {
+		return m.ArtifactId
+	}
+	return ""
+}
+
+func (m *SoftwareRecipe_Step_CopyFile) GetDestination() string {
+	if m != nil {
+		return m.Destination
+	}
+	return ""
+}
+
+func (m *SoftwareRecipe_Step_CopyFile) GetOverwrite() bool {
+	if m != nil {
+		return m.Overwrite
+	}
+	return false
+}
+
+func (m *SoftwareRecipe_Step_CopyFile) GetPermissions() string {
+	if m != nil {
+		return m.Permissions
+	}
+	return ""
+}
+
+// Extracts an archive of the type specified in the specified directory.
+type SoftwareRecipe_Step_ExtractArchive struct {
+	// The id of the relevant artifact in the recipe.
+	ArtifactId string `protobuf:"bytes,1,opt,name=artifact_id,json=artifactId,proto3" json:"artifact_id,omitempty"`
+	// Directory to extract archive to.
+	// Defaults to / on Linux or C:\ on Windows.
+	Destination string `protobuf:"bytes,2,opt,name=destination,proto3" json:"destination,omitempty"`
+	// The type of the archive to extract.
+	Type                 SoftwareRecipe_Step_ExtractArchive_ArchiveType `protobuf:"varint,3,opt,name=type,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.SoftwareRecipe_Step_ExtractArchive_ArchiveType" json:"type,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                                       `json:"-"`
+	XXX_unrecognized     []byte                                         `json:"-"`
+	XXX_sizecache        int32                                          `json:"-"`
+}
+
+func (m *SoftwareRecipe_Step_ExtractArchive) Reset()         { *m = SoftwareRecipe_Step_ExtractArchive{} }
+func (m *SoftwareRecipe_Step_ExtractArchive) String() string { return proto.CompactTextString(m) }
+func (*SoftwareRecipe_Step_ExtractArchive) ProtoMessage()    {}
+func (*SoftwareRecipe_Step_ExtractArchive) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2fa0294f7da3c92b, []int{6, 1, 1}
+}
+
+func (m *SoftwareRecipe_Step_ExtractArchive) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SoftwareRecipe_Step_ExtractArchive.Unmarshal(m, b)
+}
+func (m *SoftwareRecipe_Step_ExtractArchive) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SoftwareRecipe_Step_ExtractArchive.Marshal(b, m, deterministic)
+}
+func (m *SoftwareRecipe_Step_ExtractArchive) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SoftwareRecipe_Step_ExtractArchive.Merge(m, src)
+}
+func (m *SoftwareRecipe_Step_ExtractArchive) XXX_Size() int {
+	return xxx_messageInfo_SoftwareRecipe_Step_ExtractArchive.Size(m)
+}
+func (m *SoftwareRecipe_Step_ExtractArchive) XXX_DiscardUnknown() {
+	xxx_messageInfo_SoftwareRecipe_Step_ExtractArchive.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SoftwareRecipe_Step_ExtractArchive proto.InternalMessageInfo
+
+func (m *SoftwareRecipe_Step_ExtractArchive) GetArtifactId() string {
+	if m != nil {
+		return m.ArtifactId
+	}
+	return ""
+}
+
+func (m *SoftwareRecipe_Step_ExtractArchive) GetDestination() string {
+	if m != nil {
+		return m.Destination
+	}
+	return ""
+}
+
+func (m *SoftwareRecipe_Step_ExtractArchive) GetType() SoftwareRecipe_Step_ExtractArchive_ArchiveType {
+	if m != nil {
+		return m.Type
+	}
+	return SoftwareRecipe_Step_ExtractArchive_ARCHIVE_TYPE_UNSPECIFIED
+}
+
+// Installs an MSI file.
+type SoftwareRecipe_Step_InstallMsi struct {
+	// The id of the relevant artifact in the recipe.
+	ArtifactId string `protobuf:"bytes,1,opt,name=artifact_id,json=artifactId,proto3" json:"artifact_id,omitempty"`
+	// The flags to use when installing the MSI
+	// defaults to ["/i"] (i.e. the install flag).
+	Flags []string `protobuf:"bytes,2,rep,name=flags,proto3" json:"flags,omitempty"`
+	// Return codes that indicate that the software installed or updated
+	// successfully. Behaviour defaults to [0]
+	AllowedExitCodes     []int32  `protobuf:"varint,3,rep,packed,name=allowed_exit_codes,json=allowedExitCodes,proto3" json:"allowed_exit_codes,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SoftwareRecipe_Step_InstallMsi) Reset()         { *m = SoftwareRecipe_Step_InstallMsi{} }
+func (m *SoftwareRecipe_Step_InstallMsi) String() string { return proto.CompactTextString(m) }
+func (*SoftwareRecipe_Step_InstallMsi) ProtoMessage()    {}
+func (*SoftwareRecipe_Step_InstallMsi) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2fa0294f7da3c92b, []int{6, 1, 2}
+}
+
+func (m *SoftwareRecipe_Step_InstallMsi) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SoftwareRecipe_Step_InstallMsi.Unmarshal(m, b)
+}
+func (m *SoftwareRecipe_Step_InstallMsi) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SoftwareRecipe_Step_InstallMsi.Marshal(b, m, deterministic)
+}
+func (m *SoftwareRecipe_Step_InstallMsi) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SoftwareRecipe_Step_InstallMsi.Merge(m, src)
+}
+func (m *SoftwareRecipe_Step_InstallMsi) XXX_Size() int {
+	return xxx_messageInfo_SoftwareRecipe_Step_InstallMsi.Size(m)
+}
+func (m *SoftwareRecipe_Step_InstallMsi) XXX_DiscardUnknown() {
+	xxx_messageInfo_SoftwareRecipe_Step_InstallMsi.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SoftwareRecipe_Step_InstallMsi proto.InternalMessageInfo
+
+func (m *SoftwareRecipe_Step_InstallMsi) GetArtifactId() string {
+	if m != nil {
+		return m.ArtifactId
+	}
+	return ""
+}
+
+func (m *SoftwareRecipe_Step_InstallMsi) GetFlags() []string {
+	if m != nil {
+		return m.Flags
+	}
+	return nil
+}
+
+func (m *SoftwareRecipe_Step_InstallMsi) GetAllowedExitCodes() []int32 {
+	if m != nil {
+		return m.AllowedExitCodes
+	}
+	return nil
+}
+
+// Installs a deb via dpkg.
+type SoftwareRecipe_Step_InstallDpkg struct {
+	// The id of the relevant artifact in the recipe.
+	ArtifactId           string   `protobuf:"bytes,1,opt,name=artifact_id,json=artifactId,proto3" json:"artifact_id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SoftwareRecipe_Step_InstallDpkg) Reset()         { *m = SoftwareRecipe_Step_InstallDpkg{} }
+func (m *SoftwareRecipe_Step_InstallDpkg) String() string { return proto.CompactTextString(m) }
+func (*SoftwareRecipe_Step_InstallDpkg) ProtoMessage()    {}
+func (*SoftwareRecipe_Step_InstallDpkg) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2fa0294f7da3c92b, []int{6, 1, 3}
+}
+
+func (m *SoftwareRecipe_Step_InstallDpkg) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SoftwareRecipe_Step_InstallDpkg.Unmarshal(m, b)
+}
+func (m *SoftwareRecipe_Step_InstallDpkg) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SoftwareRecipe_Step_InstallDpkg.Marshal(b, m, deterministic)
+}
+func (m *SoftwareRecipe_Step_InstallDpkg) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SoftwareRecipe_Step_InstallDpkg.Merge(m, src)
+}
+func (m *SoftwareRecipe_Step_InstallDpkg) XXX_Size() int {
+	return xxx_messageInfo_SoftwareRecipe_Step_InstallDpkg.Size(m)
+}
+func (m *SoftwareRecipe_Step_InstallDpkg) XXX_DiscardUnknown() {
+	xxx_messageInfo_SoftwareRecipe_Step_InstallDpkg.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SoftwareRecipe_Step_InstallDpkg proto.InternalMessageInfo
+
+func (m *SoftwareRecipe_Step_InstallDpkg) GetArtifactId() string {
+	if m != nil {
+		return m.ArtifactId
+	}
+	return ""
+}
+
+// Installs an rpm file via the rpm utility.
+type SoftwareRecipe_Step_InstallRpm struct {
+	// The id of the relevant artifact in the recipe.
+	ArtifactId           string   `protobuf:"bytes,1,opt,name=artifact_id,json=artifactId,proto3" json:"artifact_id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SoftwareRecipe_Step_InstallRpm) Reset()         { *m = SoftwareRecipe_Step_InstallRpm{} }
+func (m *SoftwareRecipe_Step_InstallRpm) String() string { return proto.CompactTextString(m) }
+func (*SoftwareRecipe_Step_InstallRpm) ProtoMessage()    {}
+func (*SoftwareRecipe_Step_InstallRpm) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2fa0294f7da3c92b, []int{6, 1, 4}
+}
+
+func (m *SoftwareRecipe_Step_InstallRpm) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SoftwareRecipe_Step_InstallRpm.Unmarshal(m, b)
+}
+func (m *SoftwareRecipe_Step_InstallRpm) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SoftwareRecipe_Step_InstallRpm.Marshal(b, m, deterministic)
+}
+func (m *SoftwareRecipe_Step_InstallRpm) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SoftwareRecipe_Step_InstallRpm.Merge(m, src)
+}
+func (m *SoftwareRecipe_Step_InstallRpm) XXX_Size() int {
+	return xxx_messageInfo_SoftwareRecipe_Step_InstallRpm.Size(m)
+}
+func (m *SoftwareRecipe_Step_InstallRpm) XXX_DiscardUnknown() {
+	xxx_messageInfo_SoftwareRecipe_Step_InstallRpm.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SoftwareRecipe_Step_InstallRpm proto.InternalMessageInfo
+
+func (m *SoftwareRecipe_Step_InstallRpm) GetArtifactId() string {
+	if m != nil {
+		return m.ArtifactId
+	}
+	return ""
+}
+
+// Executes an artifact or local file.
+type SoftwareRecipe_Step_ExecFile struct {
+	// Location of the file to execute.
+	//
+	// Types that are valid to be assigned to LocationType:
+	//	*SoftwareRecipe_Step_ExecFile_ArtifactId
+	//	*SoftwareRecipe_Step_ExecFile_LocalPath
+	LocationType isSoftwareRecipe_Step_ExecFile_LocationType `protobuf_oneof:"location_type"`
+	// Arguments to be passed to the provided executable.
+	Args []string `protobuf:"bytes,3,rep,name=args,proto3" json:"args,omitempty"`
+	// Defaults to [0]. A list of possible return values that the program
+	// can return to indicate a success.
+	AllowedExitCodes     []int32  `protobuf:"varint,4,rep,packed,name=allowed_exit_codes,json=allowedExitCodes,proto3" json:"allowed_exit_codes,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SoftwareRecipe_Step_ExecFile) Reset()         { *m = SoftwareRecipe_Step_ExecFile{} }
+func (m *SoftwareRecipe_Step_ExecFile) String() string { return proto.CompactTextString(m) }
+func (*SoftwareRecipe_Step_ExecFile) ProtoMessage()    {}
+func (*SoftwareRecipe_Step_ExecFile) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2fa0294f7da3c92b, []int{6, 1, 5}
+}
+
+func (m *SoftwareRecipe_Step_ExecFile) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SoftwareRecipe_Step_ExecFile.Unmarshal(m, b)
+}
+func (m *SoftwareRecipe_Step_ExecFile) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SoftwareRecipe_Step_ExecFile.Marshal(b, m, deterministic)
+}
+func (m *SoftwareRecipe_Step_ExecFile) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SoftwareRecipe_Step_ExecFile.Merge(m, src)
+}
+func (m *SoftwareRecipe_Step_ExecFile) XXX_Size() int {
+	return xxx_messageInfo_SoftwareRecipe_Step_ExecFile.Size(m)
+}
+func (m *SoftwareRecipe_Step_ExecFile) XXX_DiscardUnknown() {
+	xxx_messageInfo_SoftwareRecipe_Step_ExecFile.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SoftwareRecipe_Step_ExecFile proto.InternalMessageInfo
+
+type isSoftwareRecipe_Step_ExecFile_LocationType interface {
+	isSoftwareRecipe_Step_ExecFile_LocationType()
+}
+
+type SoftwareRecipe_Step_ExecFile_ArtifactId struct {
+	ArtifactId string `protobuf:"bytes,1,opt,name=artifact_id,json=artifactId,proto3,oneof"`
+}
+
+type SoftwareRecipe_Step_ExecFile_LocalPath struct {
+	LocalPath string `protobuf:"bytes,2,opt,name=local_path,json=localPath,proto3,oneof"`
+}
+
+func (*SoftwareRecipe_Step_ExecFile_ArtifactId) isSoftwareRecipe_Step_ExecFile_LocationType() {}
+
+func (*SoftwareRecipe_Step_ExecFile_LocalPath) isSoftwareRecipe_Step_ExecFile_LocationType() {}
+
+func (m *SoftwareRecipe_Step_ExecFile) GetLocationType() isSoftwareRecipe_Step_ExecFile_LocationType {
+	if m != nil {
+		return m.LocationType
+	}
+	return nil
+}
+
+func (m *SoftwareRecipe_Step_ExecFile) GetArtifactId() string {
+	if x, ok := m.GetLocationType().(*SoftwareRecipe_Step_ExecFile_ArtifactId); ok {
+		return x.ArtifactId
+	}
+	return ""
+}
+
+func (m *SoftwareRecipe_Step_ExecFile) GetLocalPath() string {
+	if x, ok := m.GetLocationType().(*SoftwareRecipe_Step_ExecFile_LocalPath); ok {
+		return x.LocalPath
+	}
+	return ""
+}
+
+func (m *SoftwareRecipe_Step_ExecFile) GetArgs() []string {
+	if m != nil {
+		return m.Args
+	}
+	return nil
+}
+
+func (m *SoftwareRecipe_Step_ExecFile) GetAllowedExitCodes() []int32 {
+	if m != nil {
+		return m.AllowedExitCodes
+	}
+	return nil
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*SoftwareRecipe_Step_ExecFile) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*SoftwareRecipe_Step_ExecFile_ArtifactId)(nil),
+		(*SoftwareRecipe_Step_ExecFile_LocalPath)(nil),
+	}
+}
+
+// Runs a script through an interpreter.
+type SoftwareRecipe_Step_RunScript struct {
+	// The shell script to be executed.
+	Script string `protobuf:"bytes,1,opt,name=script,proto3" json:"script,omitempty"`
+	// Arguments to be passed to the provided script.
+	Args []string `protobuf:"bytes,2,rep,name=args,proto3" json:"args,omitempty"`
+	// Return codes that indicate that the software installed or updated
+	// successfully. Behaviour defaults to [0]
+	AllowedExitCodes []int32 `protobuf:"varint,3,rep,packed,name=allowed_exit_codes,json=allowedExitCodes,proto3" json:"allowed_exit_codes,omitempty"`
+	// The script interpreter to use to run the script. If no interpreter is
+	// specified the script will be executed directly, which will likely
+	// only succeed for scripts with shebang lines.
+	// [Wikipedia shebang](https://en.wikipedia.org/wiki/Shebang_(Unix)).
+	Interpreter          SoftwareRecipe_Step_RunScript_Interpreter `protobuf:"varint,4,opt,name=interpreter,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.SoftwareRecipe_Step_RunScript_Interpreter" json:"interpreter,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                                  `json:"-"`
+	XXX_unrecognized     []byte                                    `json:"-"`
+	XXX_sizecache        int32                                     `json:"-"`
+}
+
+func (m *SoftwareRecipe_Step_RunScript) Reset()         { *m = SoftwareRecipe_Step_RunScript{} }
+func (m *SoftwareRecipe_Step_RunScript) String() string { return proto.CompactTextString(m) }
+func (*SoftwareRecipe_Step_RunScript) ProtoMessage()    {}
+func (*SoftwareRecipe_Step_RunScript) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2fa0294f7da3c92b, []int{6, 1, 6}
+}
+
+func (m *SoftwareRecipe_Step_RunScript) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SoftwareRecipe_Step_RunScript.Unmarshal(m, b)
+}
+func (m *SoftwareRecipe_Step_RunScript) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SoftwareRecipe_Step_RunScript.Marshal(b, m, deterministic)
+}
+func (m *SoftwareRecipe_Step_RunScript) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SoftwareRecipe_Step_RunScript.Merge(m, src)
+}
+func (m *SoftwareRecipe_Step_RunScript) XXX_Size() int {
+	return xxx_messageInfo_SoftwareRecipe_Step_RunScript.Size(m)
+}
+func (m *SoftwareRecipe_Step_RunScript) XXX_DiscardUnknown() {
+	xxx_messageInfo_SoftwareRecipe_Step_RunScript.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SoftwareRecipe_Step_RunScript proto.InternalMessageInfo
+
+func (m *SoftwareRecipe_Step_RunScript) GetScript() string {
+	if m != nil {
+		return m.Script
+	}
+	return ""
+}
+
+func (m *SoftwareRecipe_Step_RunScript) GetArgs() []string {
+	if m != nil {
+		return m.Args
+	}
+	return nil
+}
+
+func (m *SoftwareRecipe_Step_RunScript) GetAllowedExitCodes() []int32 {
+	if m != nil {
+		return m.AllowedExitCodes
+	}
+	return nil
+}
+
+func (m *SoftwareRecipe_Step_RunScript) GetInterpreter() SoftwareRecipe_Step_RunScript_Interpreter {
+	if m != nil {
+		return m.Interpreter
+	}
+	return SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED
+}
+
 // A request message for getting the policies assigned to the instance.
 type LookupEffectiveGuestPoliciesRequest struct {
+	// Required. This is the GCE instance identity token described in
+	// https://cloud.google.com/compute/docs/instances/verifying-instance-identity
+	// where the audience is 'osconfig.googleapis.com' and the format is 'full'.
+	InstanceIdToken string `protobuf:"bytes,1,opt,name=instance_id_token,json=instanceIdToken,proto3" json:"instance_id_token,omitempty"`
 	// Short name of the OS running on the instance. The OS Config agent will only
 	// provide this field for targeting if OS Inventory is enabled for that
 	// instance.
-	OsShortName string `protobuf:"bytes,1,opt,name=os_short_name,json=osShortName,proto3" json:"os_short_name,omitempty"`
+	OsShortName string `protobuf:"bytes,2,opt,name=os_short_name,json=osShortName,proto3" json:"os_short_name,omitempty"`
 	// Version of the OS running on the instance. The OS Config agent will only
 	// provide this field for targeting if OS Inventory is enabled for that
 	// instance.
-	OsVersion string `protobuf:"bytes,2,opt,name=os_version,json=osVersion,proto3" json:"os_version,omitempty"`
+	OsVersion string `protobuf:"bytes,3,opt,name=os_version,json=osVersion,proto3" json:"os_version,omitempty"`
 	// Architecture of OS running on the instance. The OS Config agent will only
 	// provide this field for targeting if OS Inventory is enabled for that
 	// instance.
-	OsArchitecture string `protobuf:"bytes,3,opt,name=os_architecture,json=osArchitecture,proto3" json:"os_architecture,omitempty"`
-	// the project resource path of the instance.  i.e. projects/my-project
-	Project string `protobuf:"bytes,4,opt,name=project,proto3" json:"project,omitempty"`
-	// the zone of the instance.
-	Zone string `protobuf:"bytes,5,opt,name=zone,proto3" json:"zone,omitempty"`
-	// the instance name of the instance.
-	InstanceName         string   `protobuf:"bytes,6,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
+	OsArchitecture       string   `protobuf:"bytes,4,opt,name=os_architecture,json=osArchitecture,proto3" json:"os_architecture,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -641,7 +1688,7 @@ func (m *LookupEffectiveGuestPoliciesRequest) Reset()         { *m = LookupEffec
 func (m *LookupEffectiveGuestPoliciesRequest) String() string { return proto.CompactTextString(m) }
 func (*LookupEffectiveGuestPoliciesRequest) ProtoMessage()    {}
 func (*LookupEffectiveGuestPoliciesRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2fa0294f7da3c92b, []int{6}
+	return fileDescriptor_2fa0294f7da3c92b, []int{7}
 }
 
 func (m *LookupEffectiveGuestPoliciesRequest) XXX_Unmarshal(b []byte) error {
@@ -661,6 +1708,13 @@ func (m *LookupEffectiveGuestPoliciesRequest) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_LookupEffectiveGuestPoliciesRequest proto.InternalMessageInfo
+
+func (m *LookupEffectiveGuestPoliciesRequest) GetInstanceIdToken() string {
+	if m != nil {
+		return m.InstanceIdToken
+	}
+	return ""
+}
 
 func (m *LookupEffectiveGuestPoliciesRequest) GetOsShortName() string {
 	if m != nil {
@@ -683,43 +1737,24 @@ func (m *LookupEffectiveGuestPoliciesRequest) GetOsArchitecture() string {
 	return ""
 }
 
-func (m *LookupEffectiveGuestPoliciesRequest) GetProject() string {
-	if m != nil {
-		return m.Project
-	}
-	return ""
-}
-
-func (m *LookupEffectiveGuestPoliciesRequest) GetZone() string {
-	if m != nil {
-		return m.Zone
-	}
-	return ""
-}
-
-func (m *LookupEffectiveGuestPoliciesRequest) GetInstanceName() string {
-	if m != nil {
-		return m.InstanceName
-	}
-	return ""
-}
-
 // Response with policy configs assigned to the instance.
 type LookupEffectiveGuestPoliciesResponse struct {
 	// List of package configurations assigned to the VM
 	Packages []*LookupEffectiveGuestPoliciesResponse_SourcedPackage `protobuf:"bytes,1,rep,name=packages,proto3" json:"packages,omitempty"`
 	// List of package repository configurations assigned to the VM.
-	PackageRepositories  []*LookupEffectiveGuestPoliciesResponse_SourcedPackageRepository `protobuf:"bytes,2,rep,name=package_repositories,json=packageRepositories,proto3" json:"package_repositories,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                                                         `json:"-"`
-	XXX_unrecognized     []byte                                                           `json:"-"`
-	XXX_sizecache        int32                                                            `json:"-"`
+	PackageRepositories []*LookupEffectiveGuestPoliciesResponse_SourcedPackageRepository `protobuf:"bytes,2,rep,name=package_repositories,json=packageRepositories,proto3" json:"package_repositories,omitempty"`
+	// List of recipes assigned to the VM
+	SoftwareRecipes      []*LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe `protobuf:"bytes,3,rep,name=software_recipes,json=softwareRecipes,proto3" json:"software_recipes,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                                                      `json:"-"`
+	XXX_unrecognized     []byte                                                        `json:"-"`
+	XXX_sizecache        int32                                                         `json:"-"`
 }
 
 func (m *LookupEffectiveGuestPoliciesResponse) Reset()         { *m = LookupEffectiveGuestPoliciesResponse{} }
 func (m *LookupEffectiveGuestPoliciesResponse) String() string { return proto.CompactTextString(m) }
 func (*LookupEffectiveGuestPoliciesResponse) ProtoMessage()    {}
 func (*LookupEffectiveGuestPoliciesResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2fa0294f7da3c92b, []int{7}
+	return fileDescriptor_2fa0294f7da3c92b, []int{8}
 }
 
 func (m *LookupEffectiveGuestPoliciesResponse) XXX_Unmarshal(b []byte) error {
@@ -754,6 +1789,13 @@ func (m *LookupEffectiveGuestPoliciesResponse) GetPackageRepositories() []*Looku
 	return nil
 }
 
+func (m *LookupEffectiveGuestPoliciesResponse) GetSoftwareRecipes() []*LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe {
+	if m != nil {
+		return m.SoftwareRecipes
+	}
+	return nil
+}
+
 // A GuestPolicy package including its source.
 type LookupEffectiveGuestPoliciesResponse_SourcedPackage struct {
 	// Name of the GuestPolicy providing this config.
@@ -773,7 +1815,7 @@ func (m *LookupEffectiveGuestPoliciesResponse_SourcedPackage) String() string {
 }
 func (*LookupEffectiveGuestPoliciesResponse_SourcedPackage) ProtoMessage() {}
 func (*LookupEffectiveGuestPoliciesResponse_SourcedPackage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2fa0294f7da3c92b, []int{7, 0}
+	return fileDescriptor_2fa0294f7da3c92b, []int{8, 0}
 }
 
 func (m *LookupEffectiveGuestPoliciesResponse_SourcedPackage) XXX_Unmarshal(b []byte) error {
@@ -827,7 +1869,7 @@ func (m *LookupEffectiveGuestPoliciesResponse_SourcedPackageRepository) String()
 }
 func (*LookupEffectiveGuestPoliciesResponse_SourcedPackageRepository) ProtoMessage() {}
 func (*LookupEffectiveGuestPoliciesResponse_SourcedPackageRepository) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2fa0294f7da3c92b, []int{7, 1}
+	return fileDescriptor_2fa0294f7da3c92b, []int{8, 1}
 }
 
 func (m *LookupEffectiveGuestPoliciesResponse_SourcedPackageRepository) XXX_Unmarshal(b []byte) error {
@@ -862,20 +1904,89 @@ func (m *LookupEffectiveGuestPoliciesResponse_SourcedPackageRepository) GetPacka
 	return nil
 }
 
+// A GuestPolicy recipe including its source.
+type LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe struct {
+	// Name of the GuestPolicy providing this config.
+	Source string `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
+	// A software recipe to configure on the VM.
+	SoftwareRecipe       *SoftwareRecipe `protobuf:"bytes,2,opt,name=software_recipe,json=softwareRecipe,proto3" json:"software_recipe,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
+}
+
+func (m *LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe) Reset() {
+	*m = LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe{}
+}
+func (m *LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe) String() string {
+	return proto.CompactTextString(m)
+}
+func (*LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe) ProtoMessage() {}
+func (*LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2fa0294f7da3c92b, []int{8, 2}
+}
+
+func (m *LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe.Unmarshal(m, b)
+}
+func (m *LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe.Marshal(b, m, deterministic)
+}
+func (m *LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe.Merge(m, src)
+}
+func (m *LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe) XXX_Size() int {
+	return xxx_messageInfo_LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe.Size(m)
+}
+func (m *LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe) XXX_DiscardUnknown() {
+	xxx_messageInfo_LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe proto.InternalMessageInfo
+
+func (m *LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe) GetSource() string {
+	if m != nil {
+		return m.Source
+	}
+	return ""
+}
+
+func (m *LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe) GetSoftwareRecipe() *SoftwareRecipe {
+	if m != nil {
+		return m.SoftwareRecipe
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterEnum("google.cloud.osconfig.agentendpoint.v1alpha1.DesiredState", DesiredState_name, DesiredState_value)
 	proto.RegisterEnum("google.cloud.osconfig.agentendpoint.v1alpha1.Package_Manager", Package_Manager_name, Package_Manager_value)
 	proto.RegisterEnum("google.cloud.osconfig.agentendpoint.v1alpha1.AptRepository_ArchiveType", AptRepository_ArchiveType_name, AptRepository_ArchiveType_value)
+	proto.RegisterEnum("google.cloud.osconfig.agentendpoint.v1alpha1.SoftwareRecipe_Step_ExtractArchive_ArchiveType", SoftwareRecipe_Step_ExtractArchive_ArchiveType_name, SoftwareRecipe_Step_ExtractArchive_ArchiveType_value)
+	proto.RegisterEnum("google.cloud.osconfig.agentendpoint.v1alpha1.SoftwareRecipe_Step_RunScript_Interpreter", SoftwareRecipe_Step_RunScript_Interpreter_name, SoftwareRecipe_Step_RunScript_Interpreter_value)
 	proto.RegisterType((*Package)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.Package")
 	proto.RegisterType((*AptRepository)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.AptRepository")
 	proto.RegisterType((*YumRepository)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.YumRepository")
 	proto.RegisterType((*ZypperRepository)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.ZypperRepository")
 	proto.RegisterType((*GooRepository)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.GooRepository")
 	proto.RegisterType((*PackageRepository)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.PackageRepository")
+	proto.RegisterType((*SoftwareRecipe)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.SoftwareRecipe")
+	proto.RegisterType((*SoftwareRecipe_Artifact)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.SoftwareRecipe.Artifact")
+	proto.RegisterType((*SoftwareRecipe_Artifact_Remote)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.SoftwareRecipe.Artifact.Remote")
+	proto.RegisterType((*SoftwareRecipe_Artifact_Gcs)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.SoftwareRecipe.Artifact.Gcs")
+	proto.RegisterType((*SoftwareRecipe_Step)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.SoftwareRecipe.Step")
+	proto.RegisterType((*SoftwareRecipe_Step_CopyFile)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.SoftwareRecipe.Step.CopyFile")
+	proto.RegisterType((*SoftwareRecipe_Step_ExtractArchive)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.SoftwareRecipe.Step.ExtractArchive")
+	proto.RegisterType((*SoftwareRecipe_Step_InstallMsi)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.SoftwareRecipe.Step.InstallMsi")
+	proto.RegisterType((*SoftwareRecipe_Step_InstallDpkg)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.SoftwareRecipe.Step.InstallDpkg")
+	proto.RegisterType((*SoftwareRecipe_Step_InstallRpm)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.SoftwareRecipe.Step.InstallRpm")
+	proto.RegisterType((*SoftwareRecipe_Step_ExecFile)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.SoftwareRecipe.Step.ExecFile")
+	proto.RegisterType((*SoftwareRecipe_Step_RunScript)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.SoftwareRecipe.Step.RunScript")
 	proto.RegisterType((*LookupEffectiveGuestPoliciesRequest)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.LookupEffectiveGuestPoliciesRequest")
 	proto.RegisterType((*LookupEffectiveGuestPoliciesResponse)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.LookupEffectiveGuestPoliciesResponse")
 	proto.RegisterType((*LookupEffectiveGuestPoliciesResponse_SourcedPackage)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.LookupEffectiveGuestPoliciesResponse.SourcedPackage")
 	proto.RegisterType((*LookupEffectiveGuestPoliciesResponse_SourcedPackageRepository)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.LookupEffectiveGuestPoliciesResponse.SourcedPackageRepository")
+	proto.RegisterType((*LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe)(nil), "google.cloud.osconfig.agentendpoint.v1alpha1.LookupEffectiveGuestPoliciesResponse.SourcedSoftwareRecipe")
 }
 
 func init() {
@@ -883,65 +1994,119 @@ func init() {
 }
 
 var fileDescriptor_2fa0294f7da3c92b = []byte{
-	// 952 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x56, 0xd1, 0x6e, 0xe3, 0x44,
-	0x14, 0xad, 0x9d, 0x6e, 0xbc, 0xb9, 0x69, 0x8a, 0x77, 0x16, 0xb1, 0xde, 0x15, 0x8b, 0x8a, 0x17,
-	0x89, 0x0a, 0x21, 0x87, 0x0d, 0xda, 0x17, 0x56, 0x80, 0x9c, 0xda, 0xa4, 0x11, 0x6d, 0x12, 0x4d,
-	0xd2, 0x42, 0xfa, 0x62, 0xb9, 0xce, 0xd4, 0xf5, 0xd6, 0xf1, 0x0c, 0x1e, 0xbb, 0xc2, 0x8b, 0xf8,
-	0x13, 0xc4, 0x03, 0xaf, 0x88, 0xbf, 0x42, 0x3c, 0xf2, 0x0d, 0x68, 0xc6, 0x4e, 0x9b, 0x74, 0x59,
-	0xb4, 0x29, 0x42, 0xbc, 0xcd, 0x3d, 0xd6, 0x9c, 0x7b, 0xee, 0xbd, 0x67, 0x66, 0x0c, 0x76, 0x48,
-	0x69, 0x18, 0x93, 0x76, 0x10, 0xd3, 0x7c, 0xd6, 0xa6, 0x3c, 0xa0, 0xc9, 0x59, 0x14, 0xb6, 0xfd,
-	0x90, 0x24, 0x19, 0x49, 0x66, 0x8c, 0x46, 0x49, 0xd6, 0xbe, 0x7c, 0xea, 0xc7, 0xec, 0xdc, 0x7f,
-	0xda, 0x0e, 0x73, 0xc2, 0x33, 0x8f, 0xd1, 0x38, 0x0a, 0x22, 0xc2, 0x2d, 0x96, 0xd2, 0x8c, 0xa2,
-	0x8f, 0x4b, 0x0a, 0x4b, 0x52, 0x58, 0x0b, 0x0a, 0x6b, 0x85, 0xc2, 0x5a, 0x50, 0x98, 0xbf, 0xaa,
-	0xa0, 0x8d, 0xfc, 0xe0, 0xc2, 0x0f, 0x09, 0x42, 0xb0, 0x99, 0xf8, 0x73, 0x62, 0x28, 0x3b, 0xca,
-	0x6e, 0x03, 0xcb, 0x35, 0xf2, 0xa0, 0x35, 0x23, 0x3c, 0x4a, 0xc9, 0xcc, 0xe3, 0x99, 0x9f, 0x11,
-	0x43, 0xdd, 0x51, 0x76, 0xb7, 0x3b, 0x9f, 0x59, 0xeb, 0x64, 0xb1, 0x9c, 0x92, 0x62, 0x2c, 0x18,
-	0xf0, 0xd6, 0x6c, 0x29, 0x42, 0xdf, 0x80, 0x36, 0xf7, 0x13, 0x3f, 0x24, 0xa9, 0x51, 0x93, 0xd4,
-	0x9f, 0xaf, 0x47, 0x5d, 0x89, 0xb7, 0x0e, 0x4b, 0x12, 0xbc, 0x60, 0x33, 0x31, 0x68, 0x15, 0x86,
-	0x1e, 0xc0, 0xfd, 0x43, 0x7b, 0x60, 0xf7, 0x5c, 0xec, 0x1d, 0x0d, 0xc6, 0x23, 0x77, 0xaf, 0xff,
-	0x55, 0xdf, 0x75, 0xf4, 0x0d, 0xa4, 0x41, 0xcd, 0x1e, 0x4c, 0x75, 0x45, 0x2e, 0x46, 0x13, 0x5d,
-	0x15, 0x8b, 0xe9, 0xd1, 0xa1, 0x5e, 0x43, 0x00, 0xf5, 0x93, 0xe9, 0x68, 0xe4, 0x62, 0x7d, 0x53,
-	0x80, 0xbd, 0xe1, 0x50, 0xbf, 0x63, 0xfe, 0xa6, 0x42, 0xcb, 0x66, 0x19, 0x26, 0x8c, 0xf2, 0x28,
-	0xa3, 0x69, 0x81, 0x5e, 0xc0, 0x96, 0x9f, 0x06, 0xe7, 0xd1, 0x25, 0xf1, 0xb2, 0x82, 0x95, 0xbd,
-	0xdb, 0xee, 0xf4, 0xd6, 0xab, 0x61, 0x85, 0xd2, 0xb2, 0x4b, 0xbe, 0x49, 0xc1, 0x08, 0x6e, 0xfa,
-	0xd7, 0x01, 0xd2, 0xa1, 0x96, 0xa7, 0x91, 0x9c, 0x40, 0x03, 0x8b, 0x25, 0x32, 0x61, 0x6b, 0x16,
-	0xf1, 0x2c, 0x8d, 0x4e, 0xf3, 0x2c, 0xa2, 0x89, 0xec, 0x60, 0x03, 0xaf, 0x60, 0xe8, 0x3d, 0x80,
-	0x80, 0xce, 0x19, 0x4d, 0x48, 0x92, 0x71, 0x63, 0x73, 0xa7, 0xb6, 0xdb, 0xc0, 0x4b, 0x08, 0x7a,
-	0x00, 0x5a, 0xc8, 0x42, 0xef, 0x82, 0x14, 0xc6, 0x1d, 0xb9, 0xbd, 0x1e, 0xb2, 0xf0, 0x6b, 0x52,
-	0x98, 0x36, 0x34, 0x97, 0xa4, 0xa0, 0x77, 0xc1, 0xb0, 0xf1, 0xde, 0x7e, 0xff, 0xd8, 0xf5, 0x26,
-	0xd3, 0x91, 0xfb, 0x6a, 0x27, 0x1d, 0xb7, 0xab, 0x2b, 0xa8, 0x09, 0x9a, 0xe3, 0x76, 0xbd, 0x31,
-	0xde, 0xd3, 0x55, 0xf3, 0x7b, 0x68, 0x4d, 0xf3, 0xf9, 0x52, 0xbb, 0xb6, 0x41, 0x8d, 0x66, 0x95,
-	0xc1, 0xd4, 0x68, 0x86, 0xde, 0x97, 0x05, 0xb0, 0xd8, 0x2f, 0x3c, 0x69, 0xbd, 0xb2, 0xb6, 0x66,
-	0x85, 0x0d, 0x84, 0x03, 0x1f, 0xc2, 0xdd, 0x53, 0x9f, 0x13, 0x2f, 0x4f, 0xe3, 0xaa, 0x3e, 0x4d,
-	0xc4, 0x47, 0x69, 0x2c, 0x3e, 0x55, 0xd2, 0x17, 0x85, 0x69, 0xa5, 0x76, 0x6e, 0xfe, 0x00, 0xfa,
-	0x49, 0xc1, 0x18, 0x49, 0xff, 0x8f, 0xe4, 0xcf, 0xa0, 0xd5, 0xa3, 0x74, 0x29, 0xf3, 0xdf, 0x9d,
-	0x2c, 0x39, 0xcd, 0xf8, 0x7a, 0x9a, 0xb1, 0xf9, 0xa7, 0x0a, 0xf7, 0x2a, 0x3b, 0x2f, 0xed, 0x1d,
-	0x42, 0xcd, 0x67, 0x99, 0xdc, 0xda, 0xec, 0x3c, 0xff, 0x17, 0xc6, 0xda, 0xdf, 0xc0, 0x82, 0x49,
-	0x10, 0x16, 0xf9, 0x5c, 0x26, 0x5e, 0x9b, 0x70, 0x65, 0x9a, 0x82, 0xb0, 0xc8, 0xe7, 0xe8, 0x5b,
-	0xa8, 0xbf, 0x94, 0xbd, 0x96, 0x2d, 0x6a, 0x76, 0xbe, 0x58, 0x8f, 0xf3, 0xe6, 0x9c, 0xf6, 0x37,
-	0x70, 0xc5, 0x27, 0xa4, 0x86, 0x94, 0x1a, 0x9b, 0xb7, 0x91, 0xba, 0x32, 0x01, 0x21, 0x35, 0xa4,
-	0xb4, 0xbb, 0x05, 0x90, 0x5e, 0x81, 0xe6, 0xef, 0x0a, 0x3c, 0x39, 0xa0, 0xf4, 0x22, 0x67, 0xee,
-	0xd9, 0x19, 0x09, 0xb2, 0xe8, 0x92, 0xf4, 0xc4, 0x95, 0x3a, 0xaa, 0x6e, 0x54, 0x4c, 0xbe, 0x13,
-	0x21, 0x32, 0xa1, 0x45, 0xb9, 0xc7, 0xcf, 0x69, 0x9a, 0x79, 0x4b, 0x73, 0x6c, 0x52, 0x3e, 0x16,
-	0x98, 0x74, 0xca, 0x63, 0x00, 0xca, 0xbd, 0x4b, 0x92, 0x72, 0x71, 0x10, 0xcb, 0xa9, 0x36, 0x28,
-	0x3f, 0x2e, 0x01, 0xf4, 0x21, 0xbc, 0x45, 0xb9, 0x27, 0x4f, 0x73, 0x46, 0x82, 0x2c, 0x4f, 0x49,
-	0xe5, 0xa7, 0x6d, 0xca, 0xed, 0x25, 0x14, 0x19, 0xa0, 0xb1, 0x94, 0xbe, 0x20, 0x41, 0x26, 0xcb,
-	0x6e, 0xe0, 0x45, 0x28, 0x4c, 0xf4, 0x92, 0x26, 0xa4, 0x3a, 0xa5, 0x72, 0x8d, 0x9e, 0x40, 0x2b,
-	0x4a, 0x78, 0xe6, 0x27, 0x01, 0x29, 0x95, 0xd5, 0xcb, 0x1b, 0x60, 0x01, 0x0a, 0x69, 0xe6, 0x1f,
-	0x9b, 0xf0, 0xc1, 0x3f, 0x97, 0xc9, 0x19, 0x4d, 0x38, 0x41, 0x3f, 0xc2, 0x5d, 0x56, 0xfa, 0x8f,
-	0x1b, 0xca, 0x4e, 0x6d, 0xb7, 0xd9, 0xf1, 0xd7, 0xeb, 0xf9, 0x9b, 0x64, 0xb1, 0xc6, 0x34, 0x4f,
-	0x03, 0x32, 0x5b, 0x38, 0xfd, 0x2a, 0x25, 0xfa, 0x59, 0x81, 0xb7, 0xab, 0xc0, 0xbb, 0x9a, 0x52,
-	0x44, 0xb8, 0xa1, 0x4a, 0x2d, 0x17, 0xff, 0xbd, 0x96, 0x2b, 0x6b, 0xe0, 0xfb, 0xec, 0x06, 0x14,
-	0x11, 0xfe, 0xa8, 0x80, 0xed, 0xd5, 0x0d, 0xe8, 0x1d, 0xa8, 0x73, 0x89, 0x54, 0x96, 0xa8, 0x22,
-	0x34, 0x04, 0xad, 0x22, 0xa8, 0xce, 0xd9, 0xb3, 0x5b, 0xbd, 0x6a, 0x78, 0xc1, 0xf2, 0xe8, 0x17,
-	0x05, 0x8c, 0xd7, 0x89, 0x7d, 0xad, 0x8a, 0x04, 0xd0, 0x2b, 0xfd, 0x2c, 0x2a, 0x41, 0x5f, 0xde,
-	0x4e, 0xd0, 0x75, 0x87, 0xee, 0xdd, 0xec, 0x50, 0xf1, 0xd1, 0x31, 0x6c, 0x2d, 0xbf, 0xf4, 0xe8,
-	0x31, 0x3c, 0x74, 0xdc, 0x71, 0x1f, 0xbb, 0x8e, 0x37, 0x9e, 0xd8, 0x93, 0x9b, 0x6f, 0x46, 0x0b,
-	0x1a, 0xfd, 0xc1, 0x78, 0x62, 0x1f, 0x1c, 0xb8, 0x4e, 0xf9, 0x72, 0x1c, 0x8d, 0x1c, 0x7b, 0xe2,
-	0x3a, 0xba, 0x2a, 0x02, 0xec, 0x1e, 0x0e, 0x8f, 0x5d, 0x47, 0xaf, 0x75, 0x7f, 0x52, 0xe0, 0x93,
-	0x80, 0xce, 0xd7, 0x52, 0xdc, 0x6d, 0xad, 0x4c, 0xfc, 0x64, 0x5a, 0x6d, 0x0e, 0x69, 0xec, 0x27,
-	0xa1, 0x45, 0xd3, 0xb0, 0x1d, 0x92, 0x44, 0xfe, 0x32, 0xb5, 0xcb, 0x4f, 0x3e, 0x8b, 0xf8, 0x9b,
-	0xfd, 0x78, 0x3d, 0x5f, 0x81, 0x4f, 0xeb, 0x92, 0xe5, 0xd3, 0xbf, 0x02, 0x00, 0x00, 0xff, 0xff,
-	0x48, 0x28, 0xe5, 0x64, 0xbd, 0x09, 0x00, 0x00,
+	// 1810 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x58, 0x4f, 0x73, 0x2b, 0x47,
+	0x11, 0xb7, 0x24, 0xdb, 0x92, 0x5a, 0x96, 0xbc, 0x9e, 0x84, 0x44, 0x11, 0x09, 0xcf, 0x11, 0x50,
+	0xbc, 0xa2, 0x82, 0x4c, 0x44, 0x85, 0x03, 0xe1, 0x4f, 0xad, 0xac, 0x8d, 0x2d, 0xe2, 0x3f, 0xaa,
+	0x91, 0xfc, 0x5e, 0xec, 0x82, 0xda, 0x5a, 0xef, 0x8e, 0xd6, 0x13, 0xaf, 0x76, 0x26, 0x3b, 0x23,
+	0x3f, 0x8b, 0x3f, 0x07, 0x3e, 0x00, 0x27, 0x0a, 0x4e, 0x14, 0x55, 0xc0, 0x81, 0x03, 0xc5, 0x85,
+	0x0b, 0x55, 0x1c, 0xf9, 0x24, 0x7c, 0x02, 0x3e, 0x03, 0x35, 0xb3, 0xbb, 0x92, 0xd6, 0x7f, 0x78,
+	0xf1, 0xb3, 0x52, 0xdc, 0xb6, 0x7b, 0x77, 0x7e, 0xbf, 0xee, 0xe9, 0xee, 0xe9, 0xe9, 0x05, 0xd3,
+	0x67, 0xcc, 0x0f, 0xc8, 0x8e, 0x1b, 0xb0, 0x89, 0xb7, 0xc3, 0x84, 0xcb, 0xc2, 0x11, 0xf5, 0x77,
+	0x1c, 0x9f, 0x84, 0x92, 0x84, 0x1e, 0x67, 0x34, 0x94, 0x3b, 0x57, 0xef, 0x3b, 0x01, 0xbf, 0x70,
+	0xde, 0xdf, 0xf1, 0x27, 0x44, 0x48, 0x9b, 0xb3, 0x80, 0xba, 0x94, 0x88, 0x16, 0x8f, 0x98, 0x64,
+	0xe8, 0xbd, 0x18, 0xa2, 0xa5, 0x21, 0x5a, 0x29, 0x44, 0x2b, 0x03, 0xd1, 0x4a, 0x21, 0x1a, 0x4f,
+	0x12, 0x42, 0x87, 0xd3, 0x9d, 0x11, 0x25, 0x81, 0x67, 0x9f, 0x93, 0x0b, 0xe7, 0x8a, 0xb2, 0x28,
+	0x86, 0x6b, 0xfe, 0x35, 0x0f, 0xc5, 0xbe, 0xe3, 0x5e, 0x3a, 0x3e, 0x41, 0x08, 0x56, 0x43, 0x67,
+	0x4c, 0xea, 0xb9, 0xed, 0xdc, 0xd3, 0x32, 0xd6, 0xcf, 0xc8, 0x86, 0xaa, 0x47, 0x04, 0x8d, 0x88,
+	0x67, 0x0b, 0xe9, 0x48, 0x52, 0xcf, 0x6f, 0xe7, 0x9e, 0xd6, 0xda, 0xdf, 0x6b, 0x3d, 0xc4, 0x8c,
+	0x56, 0x37, 0x86, 0x18, 0x28, 0x04, 0xbc, 0xe1, 0x2d, 0x48, 0xe8, 0x39, 0x14, 0xc7, 0x4e, 0xe8,
+	0xf8, 0x24, 0xaa, 0x17, 0x34, 0xf4, 0x0f, 0x1e, 0x06, 0x9d, 0x18, 0xdf, 0x3a, 0x8c, 0x41, 0x70,
+	0x8a, 0xd6, 0xc4, 0x50, 0x4c, 0x74, 0xe8, 0x4d, 0x78, 0xed, 0xd0, 0x3c, 0x32, 0xf7, 0x2c, 0x6c,
+	0x9f, 0x1c, 0x0d, 0xfa, 0xd6, 0x6e, 0xef, 0xa3, 0x9e, 0xd5, 0x35, 0x56, 0x50, 0x11, 0x0a, 0xe6,
+	0xd1, 0xa9, 0x91, 0xd3, 0x0f, 0xfd, 0xa1, 0x91, 0x57, 0x0f, 0xa7, 0x27, 0x87, 0x46, 0x01, 0x01,
+	0xac, 0x9f, 0x9d, 0xf6, 0xfb, 0x16, 0x36, 0x56, 0x95, 0x72, 0xef, 0xf8, 0xd8, 0x58, 0x6b, 0xfe,
+	0x2d, 0x0f, 0x55, 0x93, 0x4b, 0x4c, 0x38, 0x13, 0x54, 0xb2, 0x68, 0x8a, 0x3e, 0x85, 0x0d, 0x27,
+	0x72, 0x2f, 0xe8, 0x15, 0xb1, 0xe5, 0x94, 0xc7, 0x7b, 0x57, 0x6b, 0xef, 0x3d, 0xcc, 0x87, 0x0c,
+	0x64, 0xcb, 0x8c, 0xf1, 0x86, 0x53, 0x4e, 0x70, 0xc5, 0x99, 0x0b, 0xc8, 0x80, 0xc2, 0x24, 0xa2,
+	0x3a, 0x02, 0x65, 0xac, 0x1e, 0x51, 0x13, 0x36, 0x3c, 0x2a, 0x64, 0x44, 0xcf, 0x27, 0x92, 0xb2,
+	0x50, 0xef, 0x60, 0x19, 0x67, 0x74, 0xe8, 0x2b, 0x00, 0x2e, 0x1b, 0x73, 0x16, 0x92, 0x50, 0x8a,
+	0xfa, 0xea, 0x76, 0xe1, 0x69, 0x19, 0x2f, 0x68, 0xd0, 0x9b, 0x50, 0xf4, 0xb9, 0x6f, 0x5f, 0x92,
+	0x69, 0x7d, 0x4d, 0x2f, 0x5f, 0xf7, 0xb9, 0xff, 0x31, 0x99, 0x36, 0x4d, 0xa8, 0x2c, 0x98, 0x82,
+	0xde, 0x86, 0xba, 0x89, 0x77, 0xf7, 0x7b, 0xcf, 0x2c, 0x7b, 0x78, 0xda, 0xb7, 0x6e, 0xef, 0x64,
+	0xd7, 0xea, 0x18, 0x39, 0x54, 0x81, 0x62, 0xd7, 0xea, 0xd8, 0x03, 0xbc, 0x6b, 0xe4, 0x9b, 0xd7,
+	0x50, 0x3d, 0x9d, 0x8c, 0x17, 0xb6, 0xab, 0x06, 0x79, 0xea, 0x25, 0x09, 0x96, 0xa7, 0x1e, 0x7a,
+	0x57, 0x3b, 0xc0, 0x03, 0x67, 0x6a, 0xeb, 0xd4, 0x8b, 0x7d, 0xab, 0x24, 0xba, 0x23, 0x95, 0x81,
+	0x6f, 0x41, 0xe9, 0xdc, 0x11, 0xc4, 0x9e, 0x44, 0x41, 0xe2, 0x5f, 0x51, 0xc9, 0x27, 0x51, 0xa0,
+	0x5e, 0x25, 0xa6, 0xa7, 0x8e, 0x15, 0x63, 0xdb, 0x45, 0xf3, 0xe7, 0x60, 0x9c, 0x4d, 0x39, 0x27,
+	0xd1, 0xff, 0x83, 0xfc, 0x03, 0xa8, 0xee, 0x31, 0xb6, 0xc0, 0x7c, 0x57, 0x65, 0xe9, 0x68, 0x06,
+	0xf3, 0x68, 0x06, 0xcd, 0xff, 0xe4, 0x61, 0x2b, 0x49, 0xe7, 0x85, 0xb5, 0xc7, 0x50, 0x70, 0xb8,
+	0xd4, 0x4b, 0x2b, 0xed, 0x0f, 0x1f, 0x91, 0x58, 0xfb, 0x2b, 0x58, 0x21, 0x29, 0xc0, 0xe9, 0x64,
+	0xac, 0x89, 0x1f, 0x0c, 0x98, 0x89, 0xa6, 0x02, 0x9c, 0x4e, 0xc6, 0xe8, 0x13, 0x58, 0xff, 0x99,
+	0xde, 0x6b, 0xbd, 0x45, 0x95, 0xf6, 0x0f, 0x1f, 0x86, 0x79, 0x33, 0x4e, 0xfb, 0x2b, 0x38, 0xc1,
+	0x53, 0xa6, 0xfa, 0x8c, 0xd5, 0x57, 0x5f, 0xc5, 0xd4, 0x4c, 0x04, 0x94, 0xa9, 0x3e, 0x63, 0x9d,
+	0x0d, 0x80, 0x68, 0xa6, 0x6c, 0xfe, 0xfd, 0x0d, 0xa8, 0x0d, 0xd8, 0x48, 0xbe, 0x70, 0x22, 0x82,
+	0x89, 0x4b, 0xf9, 0xdd, 0x67, 0x60, 0x1d, 0x8a, 0x57, 0x24, 0x12, 0xaa, 0xc0, 0xe2, 0x68, 0xa5,
+	0x22, 0x72, 0xa1, 0xec, 0x44, 0x92, 0x8e, 0x1c, 0x57, 0x8a, 0x7a, 0x61, 0xbb, 0xf0, 0xb4, 0xd2,
+	0xb6, 0x1e, 0x66, 0x65, 0x96, 0xbe, 0x65, 0x26, 0x68, 0x78, 0x8e, 0x8b, 0x46, 0x50, 0xa5, 0xa1,
+	0x90, 0x4e, 0x10, 0xd8, 0x42, 0x12, 0x1e, 0x67, 0x5b, 0xa5, 0x6d, 0x3e, 0x8a, 0x68, 0x20, 0x09,
+	0xc7, 0x1b, 0x09, 0xae, 0x12, 0x04, 0xf2, 0x60, 0x63, 0xc2, 0x3d, 0x47, 0x92, 0x84, 0x66, 0x6d,
+	0x59, 0x34, 0x95, 0x18, 0x36, 0x66, 0xb9, 0xd5, 0x50, 0xd6, 0x97, 0xdb, 0x50, 0x1a, 0x7f, 0x2e,
+	0x40, 0x29, 0xdd, 0xc6, 0x5b, 0x25, 0x3f, 0x82, 0xf5, 0x88, 0x8c, 0x59, 0xd2, 0xc7, 0x2a, 0xed,
+	0x83, 0xa5, 0x44, 0xab, 0x85, 0x35, 0xa6, 0x4a, 0xdc, 0x18, 0x1d, 0xfd, 0x14, 0x0a, 0xbe, 0x2b,
+	0x92, 0x7a, 0xe8, 0x2d, 0x87, 0x64, 0xcf, 0x15, 0x3a, 0x8d, 0x5d, 0x81, 0xbe, 0x0e, 0x35, 0x27,
+	0x08, 0xd8, 0x0b, 0x9b, 0x86, 0x82, 0xb8, 0x93, 0x88, 0xe8, 0x12, 0x29, 0xe1, 0xaa, 0xd6, 0xf6,
+	0x12, 0x65, 0xe3, 0xbb, 0xb0, 0x1e, 0x5b, 0x96, 0xb6, 0x8e, 0xdc, 0xbc, 0x75, 0x34, 0xa0, 0xe4,
+	0x5e, 0x10, 0xf7, 0x52, 0x24, 0x47, 0x41, 0x19, 0xcf, 0xe4, 0xc6, 0x09, 0x14, 0xf6, 0x5c, 0x81,
+	0xde, 0x80, 0xf5, 0xf3, 0x89, 0x7b, 0x49, 0x64, 0xb2, 0x2e, 0x91, 0x94, 0x9e, 0x9d, 0x7f, 0x4a,
+	0x5c, 0x99, 0x2c, 0x4c, 0x24, 0xd5, 0x69, 0x7c, 0x12, 0x92, 0xc8, 0x99, 0xf5, 0xa2, 0x02, 0x5e,
+	0xd0, 0x74, 0x00, 0x4a, 0x69, 0x56, 0x37, 0xfe, 0xb1, 0x09, 0xab, 0x2a, 0x21, 0x10, 0x85, 0xf2,
+	0x88, 0x06, 0xc4, 0x76, 0x19, 0x9f, 0x26, 0x87, 0xdc, 0x8f, 0x1f, 0x9d, 0x72, 0xad, 0x5d, 0xc6,
+	0xa7, 0x1f, 0xd1, 0x40, 0x85, 0xa4, 0xa4, 0xe0, 0x95, 0x8c, 0x7e, 0x95, 0x03, 0x94, 0x36, 0x6b,
+	0x72, 0x2d, 0x23, 0xc7, 0x95, 0x69, 0x4d, 0x57, 0xda, 0xfd, 0xc7, 0x93, 0x5a, 0x31, 0x66, 0xd2,
+	0x34, 0xf7, 0x57, 0xf0, 0x56, 0xc2, 0x66, 0xcd, 0xc8, 0xd0, 0x14, 0x8c, 0xb1, 0xa0, 0x76, 0x52,
+	0x78, 0xf3, 0x9d, 0x7a, 0x6c, 0x2a, 0x6a, 0x03, 0x7a, 0x31, 0xea, 0xa1, 0xa0, 0xfb, 0x2b, 0x78,
+	0x73, 0x2c, 0x68, 0x6f, 0x81, 0x06, 0xfd, 0x02, 0xb6, 0x3c, 0x7e, 0xe9, 0x67, 0xb9, 0xe3, 0xa3,
+	0xf5, 0x70, 0x69, 0xdc, 0x5d, 0x7e, 0xe9, 0xef, 0xaf, 0x60, 0x43, 0x31, 0x65, 0xd8, 0xa7, 0x60,
+	0x44, 0x7c, 0x9c, 0x25, 0x5f, 0x5b, 0xb2, 0xe3, 0x98, 0x8f, 0x95, 0xe3, 0x11, 0x1f, 0x67, 0xa8,
+	0xd3, 0x14, 0x23, 0xd7, 0xc4, 0xd5, 0xc7, 0xcd, 0x52, 0x52, 0xcc, 0xba, 0x26, 0xee, 0x62, 0x8a,
+	0x29, 0x19, 0x05, 0x00, 0xc2, 0x8d, 0x28, 0x97, 0x76, 0x34, 0x09, 0xeb, 0x45, 0xcd, 0xf5, 0xf1,
+	0xe3, 0xb9, 0xf0, 0x24, 0x1c, 0x68, 0xd8, 0xfd, 0x15, 0x5c, 0x8e, 0x09, 0xf0, 0x24, 0x6c, 0xfc,
+	0x3a, 0x07, 0xa5, 0x34, 0xd3, 0xd1, 0x13, 0xa8, 0xa4, 0xd5, 0x65, 0xcf, 0xce, 0x3c, 0x48, 0x55,
+	0x3d, 0x0f, 0x6d, 0x43, 0xc5, 0x23, 0x42, 0xd2, 0xd0, 0x91, 0xf3, 0x56, 0xb6, 0xa8, 0x42, 0x6f,
+	0x43, 0x99, 0x5d, 0x91, 0xe8, 0x45, 0x44, 0x25, 0xd1, 0x59, 0x59, 0xc2, 0x73, 0x85, 0x5a, 0xcf,
+	0x49, 0x34, 0xa6, 0x42, 0xb5, 0x3e, 0xa1, 0x33, 0xa7, 0x8c, 0x17, 0x55, 0x8d, 0x7f, 0xe6, 0xa1,
+	0x96, 0x2d, 0x82, 0x65, 0x58, 0xc5, 0x61, 0x55, 0x5f, 0xad, 0xe3, 0xf1, 0xe0, 0x27, 0xcb, 0xae,
+	0xd3, 0xcc, 0x7d, 0x5b, 0x33, 0x35, 0xc5, 0x03, 0x6f, 0xbe, 0x43, 0x13, 0x1b, 0x39, 0xb4, 0x01,
+	0xa5, 0xa1, 0x89, 0xed, 0xbd, 0xb3, 0x5e, 0xdf, 0xc8, 0xa7, 0x52, 0x47, 0x49, 0x85, 0x54, 0x3a,
+	0x38, 0x3b, 0x34, 0x8d, 0x55, 0x35, 0x5b, 0x28, 0xe9, 0x93, 0x33, 0x63, 0x4d, 0x2d, 0x57, 0x9f,
+	0x54, 0x1a, 0x9f, 0x01, 0xcc, 0xeb, 0xf7, 0xe5, 0xfb, 0xf6, 0x3a, 0xac, 0x8d, 0x02, 0xc7, 0x17,
+	0xf5, 0xbc, 0xbe, 0x7b, 0xc6, 0x02, 0x7a, 0x0f, 0x90, 0x6e, 0x01, 0xc4, 0xb3, 0xc9, 0x35, 0x95,
+	0xb6, 0xcb, 0x3c, 0x12, 0xdf, 0x4c, 0xd6, 0xb0, 0x91, 0xbc, 0xb1, 0xae, 0xa9, 0xdc, 0x55, 0xfa,
+	0x46, 0x0b, 0x2a, 0x0b, 0x65, 0xfb, 0x52, 0xce, 0xc6, 0xb7, 0x66, 0x26, 0x62, 0x3e, 0x7e, 0xf9,
+	0xe7, 0x7f, 0xcc, 0x41, 0x29, 0xad, 0x12, 0xf4, 0xee, 0x1d, 0x5f, 0xef, 0xaf, 0x64, 0x5c, 0x7a,
+	0x02, 0x10, 0x30, 0xd7, 0x09, 0x6c, 0xee, 0xc8, 0x8b, 0x38, 0x13, 0x54, 0xbe, 0x6b, 0x5d, 0xdf,
+	0x91, 0x17, 0xea, 0x72, 0xe6, 0x44, 0x7e, 0xec, 0x4f, 0x19, 0xeb, 0xe7, 0x7b, 0x3c, 0x5e, 0xbd,
+	0xdb, 0xe3, 0xce, 0x26, 0x54, 0x15, 0x9c, 0xca, 0x2b, 0x3d, 0xaf, 0x35, 0xfe, 0x92, 0x87, 0xf2,
+	0xac, 0xba, 0x54, 0x67, 0x8b, 0xab, 0x2b, 0xed, 0x78, 0xb1, 0x34, 0x23, 0xce, 0xbf, 0x94, 0xf8,
+	0x9e, 0xad, 0x46, 0x53, 0xa8, 0xd0, 0x50, 0x92, 0x88, 0x47, 0x44, 0x92, 0x48, 0x17, 0x4f, 0xad,
+	0xfd, 0x7c, 0x89, 0x27, 0x43, 0xab, 0x37, 0x87, 0xc7, 0x8b, 0x5c, 0x4d, 0x4b, 0x45, 0x79, 0x26,
+	0xa2, 0x2f, 0xc3, 0x9b, 0xbd, 0xa3, 0xa1, 0x85, 0xfb, 0xd8, 0x1a, 0xde, 0x1a, 0x88, 0xcb, 0xb0,
+	0x36, 0xd8, 0xb7, 0x0e, 0x0e, 0x8c, 0x1c, 0xaa, 0x01, 0xf4, 0x8f, 0x9f, 0x5b, 0x38, 0x96, 0x0b,
+	0x9d, 0x75, 0x58, 0x55, 0xf7, 0xc2, 0xe6, 0xbf, 0x72, 0xf0, 0xd5, 0x03, 0xc6, 0x2e, 0x27, 0xdc,
+	0x1a, 0x8d, 0x88, 0x2b, 0xe9, 0x15, 0xd9, 0x9b, 0x10, 0x21, 0xfb, 0xc9, 0x7f, 0x0a, 0x4c, 0x3e,
+	0x53, 0x22, 0xda, 0x81, 0x2d, 0x7d, 0xd8, 0x87, 0x2e, 0xb1, 0xa9, 0x67, 0x4b, 0x76, 0x49, 0xc2,
+	0x78, 0x5b, 0x3b, 0x85, 0x7f, 0x9b, 0x79, 0xbc, 0x99, 0xbe, 0xed, 0x79, 0x43, 0xf5, 0x0e, 0x35,
+	0xa1, 0xca, 0x84, 0x2d, 0x2e, 0x58, 0x24, 0x33, 0xf3, 0x18, 0x13, 0x03, 0xa5, 0xd3, 0xf3, 0xd8,
+	0x3b, 0x00, 0x4c, 0xd8, 0xe9, 0x6d, 0x3c, 0x9e, 0xc8, 0xca, 0x4c, 0x3c, 0x4b, 0xee, 0xe3, 0xdf,
+	0x80, 0x4d, 0x26, 0x6c, 0xdd, 0x75, 0x25, 0x71, 0x65, 0x7a, 0x31, 0x2a, 0xe3, 0x1a, 0x13, 0xe6,
+	0x82, 0xb6, 0xf9, 0xdb, 0x22, 0x7c, 0xed, 0x7f, 0x3b, 0x21, 0x38, 0x0b, 0x05, 0x41, 0xbf, 0x84,
+	0x12, 0x8f, 0x47, 0x32, 0x51, 0xcf, 0xe9, 0x0b, 0xb1, 0xf3, 0xb0, 0xa0, 0x7d, 0x1e, 0x96, 0xd6,
+	0x80, 0x4d, 0x22, 0x97, 0x78, 0xe9, 0xf0, 0x37, 0xa3, 0x44, 0x7f, 0xc8, 0xc1, 0xeb, 0x89, 0x60,
+	0xcf, 0x06, 0x17, 0x4a, 0xe2, 0x4c, 0xac, 0xb4, 0x2f, 0xbf, 0x78, 0x5b, 0x66, 0xd3, 0x12, 0x7e,
+	0x8d, 0xdf, 0x50, 0x51, 0x22, 0xd0, 0x6f, 0x72, 0x60, 0x88, 0x24, 0x2f, 0xed, 0x48, 0x27, 0x66,
+	0x3a, 0x09, 0x5d, 0x7c, 0x71, 0xc6, 0x65, 0x2b, 0x01, 0x6f, 0x8a, 0x8c, 0x2c, 0x1a, 0x53, 0x35,
+	0xd7, 0x2d, 0xba, 0xa1, 0x2b, 0x5b, 0x6b, 0x66, 0x95, 0xad, 0x25, 0x74, 0x0c, 0xc5, 0xc4, 0xad,
+	0xe4, 0x1e, 0xf8, 0xc1, 0x2b, 0xfd, 0x7e, 0xc2, 0x29, 0x4a, 0xe3, 0x4f, 0x39, 0xa8, 0xdf, 0xb7,
+	0x85, 0xf7, 0x5a, 0x11, 0x02, 0xba, 0x15, 0xe5, 0x69, 0x62, 0xd0, 0x8f, 0x5e, 0xcd, 0xa0, 0x79,
+	0xdc, 0xb6, 0x6e, 0xc6, 0x6d, 0xda, 0xf8, 0x5d, 0x0e, 0xbe, 0x74, 0xe7, 0x56, 0xde, 0x6b, 0x21,
+	0x81, 0xcd, 0x1b, 0x61, 0x4e, 0xcc, 0xfb, 0xfe, 0x63, 0xce, 0x30, 0x5c, 0xcb, 0x46, 0xee, 0x9b,
+	0xcf, 0x60, 0x63, 0x71, 0xb4, 0x43, 0xef, 0xc0, 0x5b, 0x5d, 0x6b, 0xd0, 0xc3, 0x56, 0xd7, 0x1e,
+	0x0c, 0xcd, 0xe1, 0xcd, 0xde, 0x5b, 0x85, 0x72, 0xef, 0x68, 0x30, 0x34, 0x0f, 0x0e, 0xac, 0x6e,
+	0xfc, 0xef, 0xe9, 0xa4, 0xdf, 0x35, 0x87, 0x56, 0xd7, 0xc8, 0x2b, 0x01, 0x5b, 0x87, 0xc7, 0xcf,
+	0xac, 0xae, 0x51, 0xe8, 0xfc, 0x3e, 0x07, 0xdf, 0x76, 0xd9, 0xf8, 0x41, 0xb6, 0x76, 0xaa, 0x99,
+	0x1c, 0x3c, 0x3b, 0x4d, 0x16, 0xfb, 0x2c, 0x70, 0x42, 0xbf, 0xc5, 0x22, 0x7f, 0xc7, 0x27, 0xa1,
+	0xfe, 0x8d, 0xba, 0x13, 0xbf, 0x72, 0x38, 0x15, 0x9f, 0xef, 0xdf, 0xee, 0x87, 0x19, 0xf5, 0xf9,
+	0xba, 0x46, 0xf9, 0xce, 0x7f, 0x03, 0x00, 0x00, 0xff, 0xff, 0x39, 0xfa, 0x8c, 0x65, 0x20, 0x16,
+	0x00, 0x00,
 }
