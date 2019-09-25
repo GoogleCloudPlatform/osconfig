@@ -19,13 +19,11 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
-	"errors"
 	"fmt"
 	"hash"
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"cloud.google.com/go/compute/metadata"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
@@ -120,7 +118,7 @@ func installRecipes(ctx context.Context, res *osconfigpb.LookupEffectiveGuestPol
 	return nil
 }
 
-func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
+func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) {
 	var aptRepos []*osconfigpb.AptRepository
 	var yumRepos []*osconfigpb.YumRepository
 	var zypperRepos []*osconfigpb.ZypperRepository
@@ -209,21 +207,18 @@ func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
 
 	}
 
-	var errs []string
 	if packages.GooGetExists {
 		if _, err := os.Stat(config.GooGetRepoFilePath()); os.IsNotExist(err) {
 			logger.Debugf("Repo file does not exist, will create one...")
 			if err := os.MkdirAll(filepath.Dir(config.GooGetRepoFilePath()), 07550); err != nil {
 				logger.Errorf("Error creating repo file: %v", err)
-				errs = append(errs, fmt.Sprintf("error creating googet repo file: %v", err))
 			}
 		}
 		if err := googetRepositories(gooRepos, config.GooGetRepoFilePath()); err != nil {
 			logger.Errorf("Error writing googet repo file: %v", err)
-			errs = append(errs, fmt.Sprintf("error writing googet repo file: %v", err))
 		}
 		if err := googetChanges(gooInstallPkgs, gooRemovePkgs, gooUpdatePkgs); err != nil {
-			errs = append(errs, fmt.Sprintf("error performing googet changes: %v", err))
+			logger.Errorf("Error performing googet changes: %v", err)
 		}
 	}
 
@@ -232,15 +227,13 @@ func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
 			logger.Debugf("Repo file does not exist, will create one...")
 			if err := os.MkdirAll(filepath.Dir(config.AptRepoFilePath()), 07550); err != nil {
 				logger.Errorf("Error creating repo file: %v", err)
-				errs = append(errs, fmt.Sprintf("error creating apt repo file: %v", err))
 			}
 		}
 		if err := aptRepositories(aptRepos, config.AptRepoFilePath()); err != nil {
 			logger.Errorf("Error writing apt repo file: %v", err)
-			errs = append(errs, fmt.Sprintf("error writing apt repo file: %v", err))
 		}
 		if err := aptChanges(aptInstallPkgs, aptRemovePkgs, aptUpdatePkgs); err != nil {
-			errs = append(errs, fmt.Sprintf("error performing apt changes: %v", err))
+			logger.Errorf("Error performing apt changes: %v", err)
 		}
 	}
 
@@ -249,15 +242,13 @@ func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
 			logger.Debugf("Repo file does not exist, will create one...")
 			if err := os.MkdirAll(filepath.Dir(config.YumRepoFilePath()), 07550); err != nil {
 				logger.Errorf("Error creating repo file: %v", err)
-				errs = append(errs, fmt.Sprintf("error creating yum repo file: %v", err))
 			}
 		}
 		if err := yumRepositories(yumRepos, config.YumRepoFilePath()); err != nil {
 			logger.Errorf("Error writing yum repo file: %v", err)
-			errs = append(errs, fmt.Sprintf("error writing yum repo file: %v", err))
 		}
 		if err := yumChanges(yumInstallPkgs, yumRemovePkgs, yumUpdatePkgs); err != nil {
-			errs = append(errs, fmt.Sprintf("error performing yum changes: %v", err))
+			logger.Errorf("Error performing yum changes: %v", err)
 		}
 	}
 
@@ -266,22 +257,15 @@ func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
 			logger.Debugf("Repo file does not exist, will create one...")
 			if err := os.MkdirAll(filepath.Dir(config.ZypperRepoFilePath()), 07550); err != nil {
 				logger.Errorf("Error creating repo file: %v", err)
-				errs = append(errs, fmt.Sprintf("error creating zypper repo file: %v", err))
 			}
 		}
 		if err := zypperRepositories(zypperRepos, config.ZypperRepoFilePath()); err != nil {
 			logger.Errorf("Error writing zypper repo file: %v", err)
-			errs = append(errs, fmt.Sprintf("error writing zypper repo file: %v", err))
 		}
 		if err := zypperChanges(zypperInstallPkgs, zypperRemovePkgs, zypperUpdatePkgs); err != nil {
-			errs = append(errs, fmt.Sprintf("error performing zypper changes: %v", err))
+			logger.Errorf("Error performing zypper changes: %v", err)
 		}
 	}
-
-	if errs == nil {
-		return nil
-	}
-	return errors.New(strings.Join(errs, ",\n"))
 }
 
 func checksum(r io.Reader) hash.Hash {
