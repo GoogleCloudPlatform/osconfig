@@ -34,10 +34,13 @@ func getExecutablePath(ctx context.Context, logger *util.Logger, stepConfig *osc
 		var reader io.ReadCloser
 		cl, err := storage.NewClient(ctx)
 		if err != nil {
-			return "", fmt.Errorf("error creating gcs client: %v", err)
+			return "", fmt.Errorf("error creating GCS client: %v", err)
 		}
-		external.FetchGCSObject(ctx, cl, gcsObject.Object, gcsObject.Bucket, gcsObject.GenerationNumber)
+		if reader, err = external.FetchGCSObject(ctx, cl, gcsObject.Object, gcsObject.Bucket, gcsObject.GenerationNumber); err != nil {
+			return "", fmt.Errorf("error fetching GCS object: %v", err)
+		}
 		defer reader.Close()
+
 		logger.Debugf("Fetched GCS object bucket %s object %s generation number %d", gcsObject.GetBucket(), gcsObject.GetObject(), gcsObject.GetGenerationNumber())
 
 		localPath := filepath.Join(os.TempDir(), path.Base(gcsObject.GetObject()))
@@ -47,6 +50,7 @@ func getExecutablePath(ctx context.Context, logger *util.Logger, stepConfig *osc
 		return localPath, nil
 	}
 
+	logger.Debugf("Using local path %s", stepConfig.GetLocalPath())
 	return stepConfig.GetLocalPath(), nil
 }
 
