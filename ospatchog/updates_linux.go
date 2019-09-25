@@ -14,7 +14,7 @@
 
 //+build !test
 
-package ospatch
+package ospatchog
 
 import (
 	"errors"

@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-package ospatch
+package ospatchog
 
 import (
 	"context"
@@ -25,12 +25,12 @@ import (
 
 func (r *patchRun) execPreStep() error {
 	logger := &util.Logger{Debugf: r.debugf, Infof: r.infof, Warningf: r.warningf, Errorf: r.errorf, Fatalf: nil}
-	return execStep(r.ctx, logger, r.Job.GetPatchConfig().GetPreStep().GetWindowsExecStepConfig())
+	return execStep(r.ctx, logger, r.Job.GetPatchConfig().GetPreStep().GetLinuxExecStepConfig())
 }
 
 func (r *patchRun) execPostStep() error {
 	logger := &util.Logger{Debugf: r.debugf, Infof: r.infof, Warningf: r.warningf, Errorf: r.errorf, Fatalf: nil}
-	return execStep(r.ctx, logger, r.Job.GetPatchConfig().GetPostStep().GetWindowsExecStepConfig())
+	return execStep(r.ctx, logger, r.Job.GetPatchConfig().GetPostStep().GetLinuxExecStepConfig())
 }
 
 func execStep(ctx context.Context, logger *util.Logger, stepConfig *osconfigpb.ExecStepConfig) error {
@@ -44,11 +44,11 @@ func execStep(ctx context.Context, logger *util.Logger, stepConfig *osconfigpb.E
 
 		switch stepConfig.GetInterpreter() {
 		case osconfigpb.ExecStepConfig_INTERPRETER_UNSPECIFIED:
-			err = fmt.Errorf("interpreter must be specified for a Windows system")
+			err = executeCommand(logger, localPath, codes)
 		case osconfigpb.ExecStepConfig_SHELL:
-			err = executeCommand(logger, "C:\\Windows\\System32\\cmd.exe", codes, "/c", localPath)
+			err = executeCommand(logger, "/bin/sh", codes, localPath)
 		case osconfigpb.ExecStepConfig_POWERSHELL:
-			err = executeCommand(logger, "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\PowerShell.exe", codes, "-File", localPath)
+			err = fmt.Errorf("interpreter POWERSHELL cannot be used on non-Windows system")
 		default:
 			err = fmt.Errorf("invalid interpreter %q", stepConfig.GetInterpreter())
 		}
@@ -62,6 +62,6 @@ func execStep(ctx context.Context, logger *util.Logger, stepConfig *osconfigpb.E
 		return err
 	}
 
-	logger.Debugf("No ExecStepConfig for Windows")
+	logger.Debugf("No ExecStepConfig for Linux")
 	return nil
 }

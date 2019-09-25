@@ -14,8 +14,20 @@
 
 //+build test
 
-package ospatch
+package ospatchog
 
-func disableAutoUpdates() {}
+import (
+	"context"
+)
 
-func rebootSystem() error { return nil }
+func systemRebootRequired() (bool, error) {
+	return false, nil
+}
+
+func runUpdates(ctx context.Context, r *patchRun) error {
+	return nil
+}
+
+func rebootSystem() error {
+	return nil
+}
