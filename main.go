@@ -60,9 +60,6 @@ func run(ctx context.Context) {
 			logger.Infof("Restart required marker file exists, beginning agent shutdown, waiting for tasks to complete.")
 			tasker.Close()
 			logger.Infof("All tasks completed, stopping agent.")
-			if err := os.Remove(config.RestartFile()); err != nil && !os.IsNotExist(err) {
-				logger.Errorf("Error removing restart signal file: %v", err)
-			}
 			return
 		}
 
@@ -92,6 +89,9 @@ var deferredFuncs []func()
 func main() {
 	flag.Parse()
 	ctx := context.Background()
+	if err := os.Remove(config.RestartFile()); err != nil && !os.IsNotExist(err) {
+		logger.Errorf("Error removing restart signal file: %v", err)
+	}
 
 	// If this call to SetConfig fails (like a metadata error) we can't continue.
 	if err := config.SetConfig(); err != nil {
