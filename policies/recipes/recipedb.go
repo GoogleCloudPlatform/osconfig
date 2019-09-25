@@ -25,7 +25,7 @@ import (
 
 var (
 	dbDirWindows = "C:\\ProgramData\\Google"
-	dbDirUnix    = "/tmp/var/lib/google"
+	dbDirUnix    = "/var/lib/google"
 	dbFileName   = "osconfig_recipedb"
 )
 

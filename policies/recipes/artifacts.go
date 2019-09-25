@@ -70,7 +70,7 @@ func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Arti
 		extension = path.Ext(uri.Path)
 		checksum = remote.Checksum
 		cl := &http.Client{}
-		reader, err := getHTTPArtifact(cl, *uri)
+		reader, err = getHTTPArtifact(cl, *uri)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q: %v", artifact.Id, err)
 		}
