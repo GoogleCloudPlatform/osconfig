@@ -124,21 +124,28 @@ func getKernelVersion() (string, error) {
 	return getFileVersion(info, langCodePage)
 }
 
-// GetDistributionInfo reports DistributionInfo.
-func GetDistributionInfo() (*DistributionInfo, error) {
-	oi, err := osInfo()
+// Get reports OSInfo.
+func Get() (*OSInfo, error) {
+	i, err := osInfo()
 	if err != nil {
 		return nil, err
 	}
 
-	di := &DistributionInfo{ShortName: Windows, LongName: oi.Caption, Version: oi.Version, Kernel: oi.Version, Architecture: Architecture(runtime.GOARCH)}
+	oi := &OSInfo{ShortName: Windows, LongName: i.Caption, Version: i.Version, Architecture: Architecture(runtime.GOARCH)}
 
 	kVersion, err := getKernelVersion()
 	if err != nil {
-		return di, err
+		return oi, err
 	}
-	di.Kernel = kVersion
-	return di, nil
+	oi.KernelVersion = kVersion
+
+	hn, err := os.Hostname()
+	if err != nil {
+		return oi, fmt.Errorf("os.Hostname() error: %v", err)
+	}
+	oi.Hostname = hn
+
+	return oi, nil
 }
 
 type win32_OperatingSystem struct {

@@ -71,7 +71,7 @@ func lookupEffectivePolicies(ctx context.Context, client *osconfig.Client, insta
 	var shortName, version, arch string
 	if config.OSInventoryEnabled() {
 		logger.Debugf("OS Inventory enabled for instance, gathering DistributionInfo for LookupEffectiveGuestPoliciesRequest")
-		info, err := osinfo.GetDistributionInfo()
+		info, err := osinfo.Get()
 		if err != nil {
 			return nil, err
 		}
