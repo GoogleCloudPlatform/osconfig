@@ -112,7 +112,7 @@ func Get() (*OSInfo, error) {
 	if err := unix.Uname(&uts); err != nil {
 		return nil, fmt.Errorf("unix.Uname error: %v", err)
 	}
-	oi.Hostname = string(uts.Nodename[:])
+	oi.Hostname = strings.TrimSpace(string(uts.Nodename[:]))
 	oi.Architecture = Architecture(string(uts.Machine[:]))
 	oi.KernelVersion = string(uts.Version[:])
 
