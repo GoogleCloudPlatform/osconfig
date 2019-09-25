@@ -54,8 +54,8 @@ const (
 	configDirLinux          = "/etc/osconfig"
 	osPatchStateFileWindows = configDirWindows + `\osconfig_patch.state`
 	osPatchStateFileLinux   = configDirLinux + "/osconfig_patch.state"
-	restartFileWindows      = `C:\Windows\Temp\osconfig_agent_restart_required`
-	restartFileLinux        = "/tmp/osconfig_agent_restart_required"
+	restartFileWindows      = configDirWindows + `\osconfig_agent_restart_required`
+	restartFileLinux        = configDirLinux + "/osconfig_agent_restart_required"
 
 	osConfigPollIntervalDefault = 10
 )

@@ -28,10 +28,10 @@ import (
 var (
 	zypper string
 
-	zypperInstallArgs     = []string{"install", "--no-confirm"}
+	zypperInstallArgs     = []string{"--gpg-auto-import-keys", "install", "--no-confirm"}
 	zypperRemoveArgs      = []string{"remove", "--no-confirm"}
-	zypperListUpdatesArgs = []string{"-q", "list-updates"}
-	zypperListPatchesArgs = []string{"-q", "list-patches", "--all", "--with-optional"}
+	zypperListUpdatesArgs = []string{"--gpg-auto-import-keys", "-q", "list-updates"}
+	zypperListPatchesArgs = []string{"--gpg-auto-import-keys", "-q", "list-patches", "--all", "--with-optional"}
 )
 
 func init() {

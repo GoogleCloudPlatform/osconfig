@@ -75,7 +75,7 @@ if [ $1 -eq 1 ]; then
 fi
 
 if [ $1 -eq 2 ]; then
-  touch /tmp/osconfig_agent_restart_required
+  touch /etc/osconfig/osconfig_agent_restart_required
 fi
 
 %preun
