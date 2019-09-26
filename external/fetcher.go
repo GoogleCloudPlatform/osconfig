@@ -64,7 +64,7 @@ func DownloadStream(r io.ReadCloser, checksum, localPath string) error {
 	if err != nil {
 		return err
 	}
-	file, err := os.OpenFile(localPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0700)
+	file, err := os.Create(localPath)
 	if err != nil {
 		return err
 	}
