@@ -112,9 +112,10 @@ func Get() (*OSInfo, error) {
 	if err := unix.Uname(&uts); err != nil {
 		return nil, fmt.Errorf("unix.Uname error: %v", err)
 	}
-	oi.Hostname = strings.TrimSpace(string(uts.Nodename[:]))
-	oi.Architecture = Architecture(string(uts.Machine[:]))
-	oi.KernelVersion = string(uts.Version[:])
+	// unix.Utsname Fields are [65]byte so we need to trim any trailing null characters.
+	oi.Hostname = string(bytes.TrimRight(uts.Nodename[:], "\x00"))
+	oi.Architecture = Architecture(string(bytes.TrimRight(uts.Machine[:], "\x00")))
+	oi.KernelVersion = string(bytes.TrimRight(uts.Version[:], "\x00"))
 
 	return oi, nil
 }
