@@ -71,11 +71,8 @@ func executeCommand(logger *util.Logger, path string, exitCodes []int32, args ..
 }
 
 func downloadFile(logger *util.Logger, reader io.ReadCloser, localPath string) error {
-	if err := external.DownloadStream(reader, "", localPath); err != nil {
+	if err := external.DownloadStream(reader, "", localPath, 0755); err != nil {
 		return fmt.Errorf("error downloading GCS object: %s", err)
-	}
-	if err := os.Chmod(localPath, 0755); err != nil {
-		return fmt.Errorf("error making file executable: %s", err)
 	}
 	logger.Debugf("Downloaded to local path %s", localPath)
 	return nil

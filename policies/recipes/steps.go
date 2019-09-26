@@ -413,14 +413,8 @@ func stepExecFile(step *osconfigpb.SoftwareRecipe_Step_ExecFile, artifacts map[s
 		if !ok {
 			return fmt.Errorf("%q not found in artifact map", artifact)
 		}
-		info, err := os.Stat(path)
-		if err != nil {
-			return err
-		}
-		newMode := info.Mode() | 0100
-		if newMode != info.Mode() {
-			os.Chmod(path, newMode)
-		}
+
+		os.Chmod(path, 700)
 	case step.GetLocalPath() != "":
 		path = step.GetLocalPath()
 	default:

@@ -59,12 +59,12 @@ func FetchRemoteObjectHTTP(client *http.Client, url string) (io.ReadCloser, erro
 }
 
 // DownloadStream fetches data from an input stream
-func DownloadStream(r io.ReadCloser, checksum, localPath string) error {
+func DownloadStream(r io.ReadCloser, checksum, localPath string, mode os.FileMode) error {
 	localPath, err := util.NormPath(localPath)
 	if err != nil {
 		return err
 	}
-	file, err := os.Create(localPath)
+	file, err := os.OpenFile(localPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, mode)
 	if err != nil {
 		return err
 	}
