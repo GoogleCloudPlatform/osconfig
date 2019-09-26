@@ -414,7 +414,10 @@ func stepExecFile(step *osconfigpb.SoftwareRecipe_Step_ExecFile, artifacts map[s
 			return fmt.Errorf("%q not found in artifact map", artifact)
 		}
 
-		os.Chmod(path, 700)
+		err := os.Chmod(path, 700)
+		if err != nil {
+			return fmt.Errorf("error setting execute permissions on artifact %s: %v", step.GetArtifactId(), err)
+		}
 	case step.GetLocalPath() != "":
 		path = step.GetLocalPath()
 	default:
