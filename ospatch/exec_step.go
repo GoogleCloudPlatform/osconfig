@@ -70,7 +70,11 @@ func executeCommand(logger *util.Logger, path string, exitCodes []int32, args ..
 		}
 		return err
 	}
-	logger.Infof("%s\n", stdoutStderr)
+
+	if len(stdoutStderr) > 0 {
+		logger.Infof("%s\n", stdoutStderr)
+	}
+
 	return nil
 }
 
