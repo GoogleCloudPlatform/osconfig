@@ -61,5 +61,7 @@ func execStep(ctx context.Context, logger *util.Logger, stepConfig *osconfigpb.E
 
 		return err
 	}
+
+	logger.Debugf("No ExecStepConfig for Linux")
 	return nil
 }

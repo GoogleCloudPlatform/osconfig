@@ -81,7 +81,6 @@ func zypperChanges(zypperInstalled, zypperRemoved, zypperUpdated []*osconfigpb.P
 	if changes.packagesToInstall != nil {
 		logger.Infof("Installing packages %s", changes.packagesToInstall)
 		if err := packages.InstallZypperPackages(changes.packagesToInstall); err != nil {
-			logger.Errorf("Error installing zypper packages: %v", err)
 			errs = append(errs, fmt.Sprintf("error installing zypper packages: %v", err))
 		}
 	}
@@ -89,7 +88,6 @@ func zypperChanges(zypperInstalled, zypperRemoved, zypperUpdated []*osconfigpb.P
 	if changes.packagesToUpgrade != nil {
 		logger.Infof("Upgrading packages %s", changes.packagesToUpgrade)
 		if err := packages.InstallZypperPackages(changes.packagesToUpgrade); err != nil {
-			logger.Errorf("Error upgrading zypper packages: %v", err)
 			errs = append(errs, fmt.Sprintf("error upgrading zypper packages: %v", err))
 		}
 	}
@@ -97,7 +95,6 @@ func zypperChanges(zypperInstalled, zypperRemoved, zypperUpdated []*osconfigpb.P
 	if changes.packagesToRemove != nil {
 		logger.Infof("Removing packages %s", changes.packagesToRemove)
 		if err := packages.RemoveZypperPackages(changes.packagesToRemove); err != nil {
-			logger.Errorf("Error removing zypper packages: %v", err)
 			errs = append(errs, fmt.Sprintf("error removing zypper packages: %v", err))
 		}
 	}

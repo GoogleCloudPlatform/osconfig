@@ -81,7 +81,6 @@ func yumChanges(yumInstalled, yumRemoved, yumUpdated []*osconfigpb.Package) erro
 	if changes.packagesToInstall != nil {
 		logger.Infof("Installing packages %s", changes.packagesToInstall)
 		if err := packages.InstallYumPackages(changes.packagesToInstall); err != nil {
-			logger.Errorf("Error installing yum packages: %v", err)
 			errs = append(errs, fmt.Sprintf("error installing yum packages: %v", err))
 		}
 	}
@@ -89,7 +88,6 @@ func yumChanges(yumInstalled, yumRemoved, yumUpdated []*osconfigpb.Package) erro
 	if changes.packagesToUpgrade != nil {
 		logger.Infof("Upgrading packages %s", changes.packagesToUpgrade)
 		if err := packages.InstallYumPackages(changes.packagesToUpgrade); err != nil {
-			logger.Errorf("Error upgrading yum packages: %v", err)
 			errs = append(errs, fmt.Sprintf("error upgrading yum packages: %v", err))
 		}
 	}
@@ -97,7 +95,6 @@ func yumChanges(yumInstalled, yumRemoved, yumUpdated []*osconfigpb.Package) erro
 	if changes.packagesToRemove != nil {
 		logger.Infof("Removing packages %s", changes.packagesToRemove)
 		if err := packages.RemoveYumPackages(changes.packagesToRemove); err != nil {
-			logger.Errorf("Error removing yum packages: %v", err)
 			errs = append(errs, fmt.Sprintf("error removing yum packages: %v", err))
 		}
 	}

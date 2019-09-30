@@ -60,7 +60,6 @@ func googetChanges(gooInstalled, gooRemoved, gooUpdated []*osconfigpb.Package) e
 	if changes.packagesToInstall != nil {
 		logger.Infof("Installing packages %s", changes.packagesToInstall)
 		if err := packages.InstallGooGetPackages(changes.packagesToInstall); err != nil {
-			logger.Errorf("Error installing googet packages: %v", err)
 			errs = append(errs, fmt.Sprintf("error installing googet packages: %v", err))
 		}
 	}
@@ -68,7 +67,6 @@ func googetChanges(gooInstalled, gooRemoved, gooUpdated []*osconfigpb.Package) e
 	if changes.packagesToUpgrade != nil {
 		logger.Infof("Upgrading packages %s", changes.packagesToUpgrade)
 		if err := packages.InstallGooGetPackages(changes.packagesToUpgrade); err != nil {
-			logger.Errorf("Error upgrading googet packages: %v", err)
 			errs = append(errs, fmt.Sprintf("error upgrading googet packages: %v", err))
 		}
 	}
@@ -76,7 +74,6 @@ func googetChanges(gooInstalled, gooRemoved, gooUpdated []*osconfigpb.Package) e
 	if changes.packagesToRemove != nil {
 		logger.Infof("Removing packages %s", changes.packagesToRemove)
 		if err := packages.RemoveGooGetPackages(changes.packagesToRemove); err != nil {
-			logger.Errorf("Error removing googet packages: %v", err)
 			errs = append(errs, fmt.Sprintf("error removing googet packages: %v", err))
 		}
 	}
