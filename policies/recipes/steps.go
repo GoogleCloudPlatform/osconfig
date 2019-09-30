@@ -290,7 +290,7 @@ func createFiles(tr *tar.Reader, dst string) error {
 			if err = os.Chmod(filen, os.FileMode(header.Mode)); err != nil {
 				return err
 			}
-			if err = os.Chown(filen, header.Uid, header.Gid); err != nil {
+			if err = chown(filen, header.Uid, header.Gid); err != nil {
 				return err
 			}
 		case tar.TypeReg, tar.TypeRegA:
@@ -340,7 +340,7 @@ func createFiles(tr *tar.Reader, dst string) error {
 			logger.Infof("unknown file type for tar entry %s\n", filen)
 			continue
 		}
-		if err = os.Chown(filen, header.Uid, header.Gid); err != nil {
+		if err = chown(filen, header.Uid, header.Gid); err != nil {
 			return err
 		}
 		if err = os.Chtimes(filen, header.AccessTime, header.ModTime); err != nil {
@@ -486,11 +486,11 @@ func executeCommand(cmd string, args []string, workDir string, runEnvs []string,
 	cmdObj.Dir = workDir
 	cmdObj.Env = append(cmdObj.Env, runEnvs...)
 
-	// TODO: log output from command.
-	_, err := cmdObj.Output()
+	o, err := cmdObj.CombinedOutput()
 	if err == nil {
 		return nil
 	}
+	logger.Infof("Command Output for Command:\n%s", o)
 	if v, ok := err.(*exec.ExitError); ok && len(allowedExitCodes) != 0 {
 		result := int32(v.ExitCode())
 		for _, code := range allowedExitCodes {
@@ -500,4 +500,12 @@ func executeCommand(cmd string, args []string, workDir string, runEnvs []string,
 		}
 	}
 	return err
+}
+
+func chown(file string, uid, gid int) error {
+	// os.Chown unsupported on windows
+	if runtime.GOOS == "windows" {
+		return nil
+	}
+	return os.Chown(file, uid, gid)
 }
