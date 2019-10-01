@@ -484,13 +484,14 @@ func writeScript(path, contents string) error {
 func executeCommand(cmd string, args []string, workDir string, runEnvs []string, allowedExitCodes []int32) error {
 	cmdObj := exec.Command(cmd, args...)
 	cmdObj.Dir = workDir
+	cmdObj.Env = append(cmdObj.Env, os.Environ()...)
 	cmdObj.Env = append(cmdObj.Env, runEnvs...)
 
 	o, err := cmdObj.CombinedOutput()
 	if err == nil {
 		return nil
 	}
-	logger.Infof("Command Output for Command:\n%s", o)
+
 	if v, ok := err.(*exec.ExitError); ok && len(allowedExitCodes) != 0 {
 		result := int32(v.ExitCode())
 		for _, code := range allowedExitCodes {
@@ -499,6 +500,7 @@ func executeCommand(cmd string, args []string, workDir string, runEnvs []string,
 			}
 		}
 	}
+	logger.Infof("Command Output for Command:\n%s", o)
 	return err
 }
 
