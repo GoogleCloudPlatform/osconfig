@@ -54,6 +54,8 @@ const (
 	configDirLinux          = "/etc/osconfig"
 	osPatchStateFileWindows = configDirWindows + `\osconfig_patch.state`
 	osPatchStateFileLinux   = configDirLinux + "/osconfig_patch.state"
+	taskStateFileWindows    = configDirWindows + `\osconfig_task.state`
+	taskStateFileLinux      = configDirLinux + "/osconfig_task.state"
 	restartFileWindows      = configDirWindows + `\osconfig_agent_restart_required`
 	restartFileLinux        = configDirLinux + "/osconfig_agent_restart_required"
 
@@ -378,6 +380,49 @@ func ID() string {
 	return getAgentConfig().instanceID
 }
 
+type idToken struct {
+	raw string
+	exp *time.Time
+	sync.Mutex
+}
+
+func (t *idToken) get() error {
+	data, err := metadata.Get(IdentityTokenPath)
+	if err != nil {
+		return err
+	}
+
+	var id struct {
+		Exp int64 `json:"exp"`
+	}
+	if err := json.Unmarshal([]byte(data), &id); err != nil {
+		return err
+	}
+
+	t.raw = data
+	exp := time.Unix(id.Exp, 0)
+	t.exp = &exp
+
+	return nil
+}
+
+var identity idToken
+
+// IDToken is the instance id token.
+func IDToken() (string, error) {
+	identity.Lock()
+	defer identity.Unlock()
+
+	// Rerequest token if expiry is within 10 minutes.
+	if identity.exp == nil || identity.exp.After(time.Now().Add(10*time.Minute)) {
+		if err := identity.get(); err != nil {
+			return "", err
+		}
+	}
+
+	return identity.raw, nil
+}
+
 // Version is the agent version.
 func Version() string {
 	return version
@@ -395,6 +440,15 @@ func PatchStateFile() string {
 	}
 
 	return osPatchStateFileLinux
+}
+
+// TaskStateFile is the location of the task state file.
+func TaskStateFile() string {
+	if runtime.GOOS == "windows" {
+		return taskStateFileWindows
+	}
+
+	return taskStateFileLinux
 }
 
 // RestartFile is the location of the restart required file.

@@ -38,6 +38,7 @@ type task struct {
 }
 
 // Enqueue adds a task to the task queue.
+// Calls to Enqueue after a Close will block.
 func Enqueue(name string, f func()) {
 	mx.Lock()
 	tc <- &task{name: name, run: f}
@@ -45,6 +46,7 @@ func Enqueue(name string, f func()) {
 }
 
 // Close prevents any further tasks from being enqueued and waits for the queue to empty.
+// Subsequent calls to Close() will block.
 func Close() {
 	mx.Lock()
 	close(tc)
