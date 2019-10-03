@@ -500,7 +500,7 @@ func executeCommand(cmd string, args []string, workDir string, runEnvs []string,
 			}
 		}
 	}
-	logger.Infof("Command Output for Command:\n%s", o)
+	logger.Infof("Combined output for %q command:\n%s", cmd, o)
 	return err
 }
 
