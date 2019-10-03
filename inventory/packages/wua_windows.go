@@ -32,16 +32,22 @@ type IUpdateSession struct {
 func NewUpdateSession() (*IUpdateSession, error) {
 	wuaSession.Lock()
 	if err := ole.CoInitializeEx(0, ole.COINIT_MULTITHREADED); err != nil {
+		wuaSession.Unlock()
 		return nil, err
 	}
 
 	updateSessionObj, err := oleutil.CreateObject("Microsoft.Update.Session")
 	if err != nil {
+		wuaSession.Unlock()
+		ole.CoUninitialize()
+		updateSessionObj.Release()
 		return nil, fmt.Errorf(`oleutil.CreateObject("Microsoft.Update.Session"): %v`, err)
 	}
 
 	session, err := updateSessionObj.IDispatch(ole.IID_IDispatch)
 	if err != nil {
+		wuaSession.Unlock()
+		ole.CoUninitialize()
 		return nil, err
 	}
 	return &IUpdateSession{obj: updateSessionObj, ses: session}, nil
@@ -121,18 +127,11 @@ func (c *IUpdateCollection) Add(updt *IUpdate) error {
 }
 
 func (c *IUpdateCollection) RemoveAt(i int) error {
-	if c == nil {
-		return nil
-	}
 	_, err := c.CallMethod("RemoveAt", i)
 	return err
 }
 
 func (c *IUpdateCollection) Count() (int32, error) {
-	if c == nil {
-		return 0, nil
-	}
-
 	countRaw, err := c.GetProperty("Count")
 	if err != nil {
 		return 0, err
