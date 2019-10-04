@@ -91,7 +91,11 @@ func (db RecipeDB) addRecipe(name, version string, success bool) error {
 	}
 
 	_, err = f.Write(dbBytes)
-	f.Close()
+	if err != nil {
+		f.Close()
+		return err
+	}
+	err = f.Close()
 	if err != nil {
 		return err
 	}
