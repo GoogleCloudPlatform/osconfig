@@ -14,7 +14,7 @@
 
 //+build !test
 
-package ospatch
+package ospatchog
 
 import (
 	"fmt"
@@ -62,7 +62,7 @@ func getIterativeProp(src *ole.IDispatch, prop string) (*ole.IDispatch, int32, e
 	return dis, count, nil
 }
 
-func (r *patchRun) installUpdate(classFilter, excludes map[string]struct{}, session, updt *ole.IDispatch) error {
+func (r *patchRun) installUpdate(classFilter, excludes map[string]struct{}, session *packages.IUpdateSession, updt *ole.IDispatch) error {
 	title, err := updt.GetProperty("Title")
 	if err != nil {
 		return fmt.Errorf(`updt.GetProperty("Title"): %v`, err)
@@ -142,13 +142,14 @@ func (r *patchRun) installUpdate(classFilter, excludes map[string]struct{}, sess
 		return fmt.Errorf(`updateColl.CallMethod("Add", updt): %v`, err)
 	}
 
+	updts := &packages.IUpdateCollection{IDispatch: updateColl}
 	r.debugf("Downloading update %s", title.Value())
-	if err := packages.DownloadWUAUpdateCollection(session, updateColl); err != nil {
+	if err := session.DownloadWUAUpdateCollection(updts); err != nil {
 		return fmt.Errorf("DownloadWUAUpdateCollection error: %v", err)
 	}
 
 	r.debugf("Installing update %s", title.Value())
-	if err := packages.InstallWUAUpdateCollection(session, updateColl); err != nil {
+	if err := session.InstallWUAUpdateCollection(updts); err != nil {
 		return fmt.Errorf("InstallWUAUpdateCollection error: %v", err)
 	}
 
@@ -157,28 +158,17 @@ func (r *patchRun) installUpdate(classFilter, excludes map[string]struct{}, sess
 
 func (r *patchRun) installWUAUpdates() error {
 	r.debugf("Installing WUA updates.")
-	if err := ole.CoInitializeEx(0, ole.COINIT_MULTITHREADED); err != nil {
-		return err
-	}
-	defer ole.CoUninitialize()
-
-	updateSessionObj, err := oleutil.CreateObject("Microsoft.Update.Session")
-	if err != nil {
-		return fmt.Errorf(`oleutil.CreateObject("Microsoft.Update.Session"): %v`, err)
-	}
-	defer updateSessionObj.Release()
-
-	session, err := updateSessionObj.IDispatch(ole.IID_IDispatch)
+	session, err := packages.NewUpdateSession()
 	if err != nil {
 		return err
 	}
-	defer session.Release()
+	defer session.Close()
 
 	// We keep searching for and installing updates until the count == 0 or there is an error.
 	retries := 50
 	for i := 0; i < retries; i++ {
 		r.debugf("Searching for available WUA updates.")
-		updts, err := packages.GetWUAUpdateCollection(session, "IsInstalled=0")
+		updts, err := session.GetWUAUpdateCollection("IsInstalled=0")
 		if err != nil {
 			return fmt.Errorf("GetWUAUpdateCollection error: %v", err)
 		}

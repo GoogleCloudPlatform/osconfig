@@ -27,7 +27,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
-	"github.com/GoogleCloudPlatform/osconfig/ospatch"
+	"github.com/GoogleCloudPlatform/osconfig/ospatchog"
 	"github.com/GoogleCloudPlatform/osconfig/policies"
 	"github.com/GoogleCloudPlatform/osconfig/service"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
@@ -64,7 +64,7 @@ func run(ctx context.Context) {
 		}
 
 		// This sets up the patching system to run in the background.
-		ospatch.Configure(ctx)
+		ospatchog.Configure(ctx)
 
 		if config.OSPackageEnabled() {
 			policies.Run(ctx, config.Instance())
@@ -141,7 +141,7 @@ func main() {
 		tasker.Close()
 		return
 	case "ospatch":
-		ospatch.Run(ctx, make(chan struct{}))
+		ospatchog.Run(ctx, make(chan struct{}))
 		return
 	default:
 		logger.Fatalf("Unknown arg %q", action)
