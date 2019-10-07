@@ -176,7 +176,6 @@ func TestWatchStream(t *testing.T) {
 	}
 	defer tc.close()
 
-	patchEnabled = true
 	td, err := ioutil.TempDir(os.TempDir(), "")
 	if err != nil {
 		t.Fatalf("error creating temp dir: %v", err)
@@ -244,7 +243,6 @@ func TestLoadTaskFromState(t *testing.T) {
 	}
 	defer tc.close()
 
-	patchEnabled = true
 	td, err := ioutil.TempDir(os.TempDir(), "")
 	if err != nil {
 		t.Fatalf("error creating temp dir: %v", err)

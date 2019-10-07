@@ -16,28 +16,12 @@ package agentendpoint
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"os"
-	"runtime"
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/config"
 
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
-)
-
-var (
-	winRoot = os.Getenv("SystemRoot")
-	sh      = "/bin/sh"
-
-	winPowershell string
-	winCmd        string
-
-	goos = runtime.GOOS
-
-	errLinuxPowerShell = errors.New("interpreter POWERSHELL cannot be used on non-Windows system")
-	errWinNoInt        = fmt.Errorf("interpreter must be specified for a Windows system")
 )
 
 type execTask struct {

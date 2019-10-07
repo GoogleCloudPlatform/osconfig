@@ -66,10 +66,6 @@ func (r *patchTask) infof(format string, v ...interface{}) {
 	logger.Log(logger.LogEntry{Message: fmt.Sprintf(format, v...), Severity: logger.Info, Labels: r.LogLabels})
 }
 
-func (r *patchTask) warningf(format string, v ...interface{}) {
-	logger.Log(logger.LogEntry{Message: fmt.Sprintf(format, v...), Severity: logger.Warning, Labels: r.LogLabels})
-}
-
 func (r *patchTask) errorf(format string, v ...interface{}) {
 	logger.Log(logger.LogEntry{Message: fmt.Sprintf(format, v...), Severity: logger.Error, Labels: r.LogLabels})
 }

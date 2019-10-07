@@ -31,10 +31,11 @@ import (
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
+const apiRetrySec = 600
+
 var (
 	errServerCancel = errors.New("task canceled by server")
 	taskStateFile   = config.TaskStateFile()
-	patchEnabled    = config.OSPatchEnabled()
 )
 
 // Client is a an agentendpoint client.
@@ -62,7 +63,7 @@ func (c *Client) ReportTaskProgress(ctx context.Context, req *agentendpointpb.Re
 		return nil, err
 	}
 	req.InstanceIdToken = token
-	if err := retryAPICall(2100*time.Second, "ReportTaskProgress", func() error {
+	if err := retryAPICall(apiRetrySec*time.Second, "ReportTaskProgress", func() error {
 		res, err = c.raw.ReportTaskProgress(ctx, req)
 		if err != nil {
 			return err
@@ -84,7 +85,7 @@ func (c *Client) ReportTaskComplete(ctx context.Context, req *agentendpointpb.Re
 		return err
 	}
 	req.InstanceIdToken = token
-	if err := retryAPICall(2100*time.Second, "ReportTaskComplete", func() error {
+	if err := retryAPICall(apiRetrySec*time.Second, "ReportTaskComplete", func() error {
 		res, err := c.raw.ReportTaskComplete(ctx, req)
 		if err != nil {
 			return err
@@ -122,11 +123,6 @@ func (c *Client) runTask(ctx context.Context) {
 
 		switch task.GetTaskType() {
 		case agentendpointpb.TaskType_APPLY_PATCHES:
-			if !patchEnabled {
-				logger.Infof("Recieved TaskType_APPLY_PATCHES but OSPatch is not enabled")
-				continue
-			}
-
 			if err := c.RunApplyPatches(ctx, task.GetApplyPatchesTask()); err != nil {
 				logger.Errorf(err.Error())
 			}
