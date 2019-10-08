@@ -16,13 +16,90 @@ package agentendpoint
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
+	"os"
+	"os/exec"
+	"path"
+	"path/filepath"
+	"runtime"
 	"time"
 
+	"cloud.google.com/go/storage"
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/config"
+	"github.com/GoogleCloudPlatform/osconfig/external"
 
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
+
+var (
+	winRoot = os.Getenv("SystemRoot")
+	sh      = "/bin/sh"
+
+	winPowershell string
+	winCmd        string
+
+	goos = runtime.GOOS
+
+	errLinuxPowerShell = errors.New("interpreter POWERSHELL cannot be used on non-Windows system")
+	errWinNoInt        = fmt.Errorf("interpreter must be specified for a Windows system")
+)
+
+func init() {
+	if winRoot == "" {
+		winRoot = `C:\Windows`
+	}
+	winPowershell = filepath.Join(winRoot, `System32\WindowsPowerShell\v1.0\PowerShell.exe`)
+	winCmd = filepath.Join(winRoot, `System32\cmd.exe`)
+}
+
+var run = func(cmd *exec.Cmd) ([]byte, error) {
+	return cmd.CombinedOutput()
+}
+
+func getGCSObject(ctx context.Context, gcsObject *agentendpointpb.GcsObject, loggingLables map[string]string) (string, error) {
+	if gcsObject == nil {
+		return "", errors.New("gcsObject cannot be nil")
+	}
+
+	var reader io.ReadCloser
+	cl, err := storage.NewClient(ctx)
+	if err != nil {
+		return "", fmt.Errorf("error creating gcs client: %v", err)
+	}
+	external.FetchGCSObject(ctx, cl, gcsObject.Object, gcsObject.Bucket, gcsObject.GenerationNumber)
+	defer reader.Close()
+	logger.Debugf("Fetched GCS object bucket %s object %s generation number %d", gcsObject.GetBucket(), gcsObject.GetObject(), gcsObject.GetGenerationNumber())
+
+	localPath := filepath.Join(os.TempDir(), path.Base(gcsObject.GetObject()))
+	if err := external.DownloadStream(reader, "", localPath, 0755); err != nil {
+		return "", fmt.Errorf("error downloading GCS object: %s", err)
+	}
+
+	logger.Debugf("Downloaded to local path %s", localPath)
+	return localPath, nil
+}
+
+func executeCommand(path string, exitCodes []int32, args []string, loggingLables map[string]string) (int32, error) {
+	logger.Debugf("Running command %s with args %s", path, args)
+
+	cmd := exec.Command(path, args...)
+	out, err := run(cmd)
+	var exitCode int32
+	if cmd.ProcessState != nil {
+		exitCode = int32(cmd.ProcessState.ExitCode())
+		logger.Infof("Command exit code: %d, stdout:\n%s", exitCode, out)
+	}
+	if err != nil {
+		if _, ok := err.(*exec.ExitError); !ok {
+			return -1, err
+		}
+	}
+
+	return exitCode, nil
+}
 
 type execTask struct {
 	client *Client
@@ -71,9 +148,63 @@ func (e *execTask) run(ctx context.Context) error {
 		})
 	}
 
+	stepConfig := e.Task.GetExecStep().GetLinuxExecStepConfig()
+	if goos == "windows" {
+		stepConfig = e.Task.GetExecStep().GetWindowsExecStepConfig()
+	}
+
+	localPath := stepConfig.GetLocalPath()
+	if gcsObject := stepConfig.GetGcsObject(); gcsObject != nil {
+		var err error
+		localPath, err = getGCSObject(ctx, gcsObject, e.LogLabels)
+		if err != nil {
+			return fmt.Errorf("error getting executable path: %v", err)
+		}
+		defer func() {
+			if err := os.Remove(localPath); err != nil {
+				logger.Errorf("error removing downloaded file %s", err)
+			}
+		}()
+	}
+
+	codes := stepConfig.GetAllowedSuccessCodes()
+
+	exitCode := int32(-1)
+	switch stepConfig.GetInterpreter() {
+	case agentendpointpb.ExecStepConfig_INTERPRETER_UNSPECIFIED:
+		if goos == "windows" {
+			err = errWinNoInt
+		} else {
+			exitCode, err = executeCommand(localPath, codes, nil, e.LogLabels)
+		}
+	case agentendpointpb.ExecStepConfig_SHELL:
+		if goos == "windows" {
+			exitCode, err = executeCommand(winCmd, codes, []string{"/c", localPath}, e.LogLabels)
+		} else {
+			exitCode, err = executeCommand(sh, codes, []string{localPath}, e.LogLabels)
+		}
+	case agentendpointpb.ExecStepConfig_POWERSHELL:
+		if goos != "windows" {
+			err = errLinuxPowerShell
+		} else {
+			exitCode, err = executeCommand(winPowershell, codes, []string{"-File", localPath}, e.LogLabels)
+		}
+	default:
+		err = fmt.Errorf("invalid interpreter %q", stepConfig.GetInterpreter())
+	}
+	if err != nil {
+		return e.reportCompletedState(ctx, err.Error(), &agentendpointpb.ReportTaskCompleteRequest_ExecStepTaskOutput{
+			ExecStepTaskOutput: &agentendpointpb.ExecStepTaskOutput{
+				State:    agentendpointpb.ExecStepTaskOutput_COMPLETED,
+				ExitCode: exitCode,
+			},
+		})
+	}
+
 	return e.reportCompletedState(ctx, "", &agentendpointpb.ReportTaskCompleteRequest_ExecStepTaskOutput{
 		ExecStepTaskOutput: &agentendpointpb.ExecStepTaskOutput{
-			State: agentendpointpb.ExecStepTaskOutput_COMPLETED,
+			State:    agentendpointpb.ExecStepTaskOutput_COMPLETED,
+			ExitCode: exitCode,
 		},
 	})
 }
