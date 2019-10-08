@@ -484,7 +484,11 @@ func writeScript(path, contents string) error {
 func executeCommand(cmd string, args []string, workDir string, runEnvs []string, allowedExitCodes []int32) error {
 	cmdObj := exec.Command(cmd, args...)
 	cmdObj.Dir = workDir
-	cmdObj.Env = append(cmdObj.Env, os.Environ()...)
+	defaultEnv, err := createDefaultEnvironment()
+	if err != nil {
+		return fmt.Errorf("Error creating default environment: %v", err)
+	}
+	cmdObj.Env = append(cmdObj.Env, defaultEnv...)
 	cmdObj.Env = append(cmdObj.Env, runEnvs...)
 
 	o, err := cmdObj.CombinedOutput()
