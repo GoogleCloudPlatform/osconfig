@@ -299,7 +299,7 @@ func createFiles(tr *tar.Reader, dst string) error {
 			if err != nil {
 				return err
 			}
-			
+
 			if _, err := io.Copy(dst, tr); err != nil {
 				dst.Close()
 				return err
