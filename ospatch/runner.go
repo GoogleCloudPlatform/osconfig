@@ -15,10 +15,7 @@
 package ospatch
 
 import (
-	"math"
-	"math/rand"
 	"os/exec"
-	"time"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 )
@@ -31,27 +28,4 @@ var defaultRunner = func(cmd *exec.Cmd) ([]byte, error) {
 		return nil, err
 	}
 	return out, nil
-}
-
-// retry tries to retry f for no more than maxRetryTime.
-func retry2(maxRetryTime time.Duration, desc string, logF func(string, ...interface{}), f func() error) error {
-	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
-	var tot time.Duration
-	for i := 1; ; i++ {
-		err := f()
-		if err == nil {
-			return nil
-		}
-
-		// Always increasing with some jitter, longest wait will be 5min.
-		nf := math.Min(float64(i)*float64(i)+float64(rnd.Intn(i)), 300)
-		ns := time.Duration(int(nf)) * time.Second
-		tot += ns
-		if tot > maxRetryTime {
-			return err
-		}
-
-		logF("Error %s, attempt %d, retrying in %s: %v", desc, i, ns, err)
-		time.Sleep(ns)
-	}
 }

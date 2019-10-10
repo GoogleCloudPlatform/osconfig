@@ -75,7 +75,6 @@ func rpmRebootRequired(pkgs []byte, btime int) bool {
 	}
 
 	return false
-
 }
 
 // rpmReboot returns whether an rpm based system should reboot in order to
