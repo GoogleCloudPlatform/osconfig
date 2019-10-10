@@ -169,7 +169,6 @@ func (e *execTask) run(ctx context.Context) error {
 	}
 
 	exitCode := int32(-1)
-	fmt.Println(stepConfig.GetInterpreter())
 	switch stepConfig.GetInterpreter() {
 	case agentendpointpb.ExecStepConfig_INTERPRETER_UNSPECIFIED:
 		if goos == "windows" {
