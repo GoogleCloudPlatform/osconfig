@@ -489,7 +489,7 @@ func executeCommand(cmd string, args []string, workDir string, runEnvs []string,
 	cmdObj.Dir = workDir
 	defaultEnv, err := createDefaultEnvironment()
 	if err != nil {
-		return fmt.Errorf("Error creating default environment: %v", err)
+		return fmt.Errorf("error creating default environment: %v", err)
 	}
 	cmdObj.Env = append(cmdObj.Env, defaultEnv...)
 	cmdObj.Env = append(cmdObj.Env, runEnvs...)
