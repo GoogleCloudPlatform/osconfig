@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"path"
@@ -64,12 +63,14 @@ func getGCSObject(ctx context.Context, gcsObject *agentendpointpb.GcsObject, log
 		return "", errors.New("gcsObject cannot be nil")
 	}
 
-	var reader io.ReadCloser
 	cl, err := storage.NewClient(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error creating gcs client: %v", err)
 	}
-	external.FetchGCSObject(ctx, cl, gcsObject.Object, gcsObject.Bucket, gcsObject.GenerationNumber)
+	reader, err := external.FetchGCSObject(ctx, cl, gcsObject.Object, gcsObject.Bucket, gcsObject.GenerationNumber)
+	if err != nil {
+		return "", fmt.Errorf("error fetching GCS object: %v", err)
+	}
 	defer reader.Close()
 	logger.Debugf("Fetched GCS object bucket %s object %s generation number %d", gcsObject.GetBucket(), gcsObject.GetObject(), gcsObject.GetGenerationNumber())
 
@@ -82,7 +83,7 @@ func getGCSObject(ctx context.Context, gcsObject *agentendpointpb.GcsObject, log
 	return localPath, nil
 }
 
-func executeCommand(path string, exitCodes []int32, args []string, loggingLables map[string]string) (int32, error) {
+func executeCommand(path string, args []string, loggingLables map[string]string) (int32, error) {
 	logger.Debugf("Running command %s with args %s", path, args)
 
 	cmd := exec.Command(path, args...)
@@ -90,7 +91,7 @@ func executeCommand(path string, exitCodes []int32, args []string, loggingLables
 	var exitCode int32
 	if cmd.ProcessState != nil {
 		exitCode = int32(cmd.ProcessState.ExitCode())
-		logger.Infof("Command exit code: %d, stdout:\n%s", exitCode, out)
+		logger.Infof("Command exit code: %d, out:\n%s", exitCode, out)
 	}
 	if err != nil {
 		if _, ok := err.(*exec.ExitError); !ok {
@@ -167,27 +168,26 @@ func (e *execTask) run(ctx context.Context) error {
 		}()
 	}
 
-	codes := stepConfig.GetAllowedSuccessCodes()
-
 	exitCode := int32(-1)
+	fmt.Println(stepConfig.GetInterpreter())
 	switch stepConfig.GetInterpreter() {
 	case agentendpointpb.ExecStepConfig_INTERPRETER_UNSPECIFIED:
 		if goos == "windows" {
 			err = errWinNoInt
 		} else {
-			exitCode, err = executeCommand(localPath, codes, nil, e.LogLabels)
+			exitCode, err = executeCommand(localPath, nil, e.LogLabels)
 		}
 	case agentendpointpb.ExecStepConfig_SHELL:
 		if goos == "windows" {
-			exitCode, err = executeCommand(winCmd, codes, []string{"/c", localPath}, e.LogLabels)
+			exitCode, err = executeCommand(winCmd, []string{"/c", localPath}, e.LogLabels)
 		} else {
-			exitCode, err = executeCommand(sh, codes, []string{localPath}, e.LogLabels)
+			exitCode, err = executeCommand(sh, []string{localPath}, e.LogLabels)
 		}
 	case agentendpointpb.ExecStepConfig_POWERSHELL:
-		if goos != "windows" {
-			err = errLinuxPowerShell
+		if goos == "windows" {
+			exitCode, err = executeCommand(winPowershell, []string{"-File", localPath}, e.LogLabels)
 		} else {
-			exitCode, err = executeCommand(winPowershell, codes, []string{"-File", localPath}, e.LogLabels)
+			err = errLinuxPowerShell
 		}
 	default:
 		err = fmt.Errorf("invalid interpreter %q", stepConfig.GetInterpreter())
