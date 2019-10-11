@@ -17,3 +17,7 @@ func mkBlockDevice(path string, devMajor, devMinor uint32) error {
 func mkFifo(path string, mode uint32) error {
 	return unix.Mkfifo(path, mode)
 }
+
+func createDefaultEnvironment() ([]string, error) {
+	return []string{}, nil
+}

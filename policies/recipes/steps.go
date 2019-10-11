@@ -277,20 +277,20 @@ func createFiles(tr *tar.Reader, dst string) error {
 			return err
 		}
 		filedir := filepath.Dir(filen)
-		err = os.MkdirAll(filedir, 0700)
-		if err != nil {
+
+		if err := os.MkdirAll(filedir, 0700); err != nil {
 			return err
 		}
 		switch header.Typeflag {
 		case tar.TypeDir:
-			if err = os.MkdirAll(filen, os.FileMode(header.Mode)); err != nil {
+			if err := os.MkdirAll(filen, os.FileMode(header.Mode)); err != nil {
 				return err
 			}
 			// Setting to correct permissions in case the directory has already been created
-			if err = os.Chmod(filen, os.FileMode(header.Mode)); err != nil {
+			if err := os.Chmod(filen, os.FileMode(header.Mode)); err != nil {
 				return err
 			}
-			if err = os.Chown(filen, header.Uid, header.Gid); err != nil {
+			if err := chown(filen, header.Uid, header.Gid); err != nil {
 				return err
 			}
 		case tar.TypeReg, tar.TypeRegA:
@@ -299,51 +299,54 @@ func createFiles(tr *tar.Reader, dst string) error {
 			if err != nil {
 				return err
 			}
-			_, err = io.Copy(dst, tr)
-			dst.Close()
-			if err != nil {
+
+			if _, err := io.Copy(dst, tr); err != nil {
+				dst.Close()
+				return err
+			}
+			if err := dst.Close(); err != nil {
 				return err
 			}
 		case tar.TypeLink:
-			if err = os.Link(header.Linkname, filen); err != nil {
+			if err := os.Link(header.Linkname, filen); err != nil {
 				return err
 			}
 			continue
 		case tar.TypeSymlink:
-			if err = os.Symlink(header.Linkname, filen); err != nil {
+			if err := os.Symlink(header.Linkname, filen); err != nil {
 				return err
 			}
 			continue
 		case tar.TypeChar:
-			if err = mkCharDevice(filen, uint32(header.Devmajor), uint32(header.Devminor)); err != nil {
+			if err := mkCharDevice(filen, uint32(header.Devmajor), uint32(header.Devminor)); err != nil {
 				return err
 			}
 			if runtime.GOOS != "windows" {
-				if err = os.Chmod(filen, os.FileMode(header.Mode)); err != nil {
+				if err := os.Chmod(filen, os.FileMode(header.Mode)); err != nil {
 					return err
 				}
 			}
 		case tar.TypeBlock:
-			if err = mkBlockDevice(filen, uint32(header.Devmajor), uint32(header.Devminor)); err != nil {
+			if err := mkBlockDevice(filen, uint32(header.Devmajor), uint32(header.Devminor)); err != nil {
 				return err
 			}
 			if runtime.GOOS != "windows" {
-				if err = os.Chmod(filen, os.FileMode(header.Mode)); err != nil {
+				if err := os.Chmod(filen, os.FileMode(header.Mode)); err != nil {
 					return err
 				}
 			}
 		case tar.TypeFifo:
-			if err = mkFifo(filen, uint32(header.Mode)); err != nil {
+			if err := mkFifo(filen, uint32(header.Mode)); err != nil {
 				return err
 			}
 		default:
 			logger.Infof("unknown file type for tar entry %s\n", filen)
 			continue
 		}
-		if err = os.Chown(filen, header.Uid, header.Gid); err != nil {
+		if err := chown(filen, header.Uid, header.Gid); err != nil {
 			return err
 		}
-		if err = os.Chtimes(filen, header.AccessTime, header.ModTime); err != nil {
+		if err := os.Chtimes(filen, header.AccessTime, header.ModTime); err != nil {
 			return err
 		}
 	}
@@ -361,8 +364,7 @@ func extractTar(tarName string, dst string, archiveType osconfigpb.SoftwareRecip
 	}
 	tr := tar.NewReader(decompressed)
 
-	err = checkForConflicts(tr, dst)
-	if err != nil {
+	if err := checkForConflicts(tr, dst); err != nil {
 		return err
 	}
 
@@ -469,13 +471,14 @@ func writeScript(path, contents string) error {
 	if err != nil {
 		return err
 	}
-	f.WriteString(contents)
-	err = f.Close()
-	if err != nil {
+	if _, err := f.WriteString(contents); err != nil {
+		f.Close()
 		return err
 	}
-	err = os.Chmod(path, 0755)
-	if err != nil {
+	if err := f.Close(); err != nil {
+		return err
+	}
+	if err := os.Chmod(path, 0755); err != nil {
 		return err
 	}
 	return nil
@@ -484,13 +487,18 @@ func writeScript(path, contents string) error {
 func executeCommand(cmd string, args []string, workDir string, runEnvs []string, allowedExitCodes []int32) error {
 	cmdObj := exec.Command(cmd, args...)
 	cmdObj.Dir = workDir
+	defaultEnv, err := createDefaultEnvironment()
+	if err != nil {
+		return fmt.Errorf("error creating default environment: %v", err)
+	}
+	cmdObj.Env = append(cmdObj.Env, defaultEnv...)
 	cmdObj.Env = append(cmdObj.Env, runEnvs...)
 
-	// TODO: log output from command.
-	_, err := cmdObj.Output()
+	o, err := cmdObj.CombinedOutput()
 	if err == nil {
 		return nil
 	}
+
 	if v, ok := err.(*exec.ExitError); ok && len(allowedExitCodes) != 0 {
 		result := int32(v.ExitCode())
 		for _, code := range allowedExitCodes {
@@ -499,5 +507,14 @@ func executeCommand(cmd string, args []string, workDir string, runEnvs []string,
 			}
 		}
 	}
+	logger.Infof("Combined output for %q command:\n%s", cmd, o)
 	return err
+}
+
+func chown(file string, uid, gid int) error {
+	// os.Chown unsupported on windows
+	if runtime.GOOS == "windows" {
+		return nil
+	}
+	return os.Chown(file, uid, gid)
 }
