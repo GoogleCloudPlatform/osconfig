@@ -33,7 +33,7 @@ func (r *patchTask) runUpdates(ctx context.Context) error {
 		opts := []ospatch.AptGetUpgradeOption{}
 		switch r.Task.GetPatchConfig().GetApt().GetType() {
 		case agentendpointpb.AptSettings_DIST:
-			opts = append(opts, ospatch.AptGetUpgradeType(ospatch.AptGetDistUpgrade))
+			opts = append(opts, ospatch.AptGetUpgradeType(packages.AptGetDistUpgrade))
 		}
 		r.debugf("Installing APT package updates.")
 		if err := retryFunc(retryPeriod, "installing APT package updates", func() error { return ospatch.RunAptGetUpgrade(opts...) }); err != nil {

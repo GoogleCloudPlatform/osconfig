@@ -31,11 +31,15 @@ var (
 	dpkgquery string
 	aptGet    string
 
-	dpkgQueryArgs        = []string{"-W", "-f", "${Package} ${Architecture} ${Version}\n"}
-	aptGetInstallArgs    = []string{"install", "-y"}
-	aptGetRemoveArgs     = []string{"remove", "-y"}
-	aptGetUpdateArgs     = []string{"update"}
-	aptGetUpgradableArgs = []string{"full-upgrade", "--just-print", "-V"}
+	dpkgQueryArgs     = []string{"-W", "-f", "${Package} ${Architecture} ${Version}\n"}
+	aptGetInstallArgs = []string{"install", "-y"}
+	aptGetRemoveArgs  = []string{"remove", "-y"}
+	aptGetUpdateArgs  = []string{"update"}
+
+	aptGetUpgradeCmd     = "upgrade"
+	aptGetFullUpgradeCmd = "full-upgrade"
+	aptGetDistUpgradeCmd = "dist-upgrade"
+	aptGetUpgradableArgs = []string{"--just-print", "-qq"}
 )
 
 func init() {
@@ -44,6 +48,40 @@ func init() {
 		aptGet = "/usr/bin/apt-get"
 	}
 	AptExists = util.Exists(aptGet)
+}
+
+// AptUpgradeType is the apt upgrade type.
+type AptUpgradeType int
+
+const (
+	// AptGetUpgrade specifies apt-get upgrade should be run.
+	AptGetUpgrade AptUpgradeType = iota
+	// AptGetDistUpgrade specifies apt-get dist-upgrade should be run.
+	AptGetDistUpgrade
+	// AptGetFullUpgrade specifies apt-get full-upgrade should be run.
+	AptGetFullUpgrade
+)
+
+type aptGetUpgradeOpts struct {
+	upgradeType AptUpgradeType
+	showNew     bool
+}
+
+// AptGetUpgradeOption is an option for apt-get upgrade.
+type AptGetUpgradeOption func(*aptGetUpgradeOpts)
+
+// AptGetUpgradeType returns a AptGetUpgradeOption that specifies upgrade type.
+func AptGetUpgradeType(upgradeType AptUpgradeType) AptGetUpgradeOption {
+	return func(args *aptGetUpgradeOpts) {
+		args.upgradeType = upgradeType
+	}
+}
+
+// AptGetUpgradeShowNew returns a AptGetUpgradeOption that indicates whether 'new' packages should be returned.
+func AptGetUpgradeShowNew(showNew bool) AptGetUpgradeOption {
+	return func(args *aptGetUpgradeOpts) {
+		args.showNew = showNew
+	}
 }
 
 // InstallAptPackages installs apt packages.
@@ -78,17 +116,8 @@ func RemoveAptPackages(pkgs []string) error {
 	return err
 }
 
-func parseAptUpdates(data []byte) []PkgInfo {
+func parseAptUpdates(data []byte, showNew bool) []PkgInfo {
 	/*
-		Reading package lists... Done
-		Building dependency tree
-		Reading state information... Done
-		Calculating upgrade... Done
-		The following NEW packages will be installed:
-		  firmware-linux-free linux-image-4.9.0-9-amd64
-		The following packages will be upgraded:
-		  google-cloud-sdk linux-image-amd64
-		2 upgraded, 2 newly installed, 0 to remove and 0 not upgraded.
 		Inst libldap-common [2.4.45+dfsg-1ubuntu1.2] (2.4.45+dfsg-1ubuntu1.3 Ubuntu:18.04/bionic-updates, Ubuntu:18.04/bionic-security [all])
 		Inst firmware-linux-free (3.4 Debian:9.9/stable [all])
 		Inst google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [all])
@@ -105,38 +134,61 @@ func parseAptUpdates(data []byte) []PkgInfo {
 	var pkgs []PkgInfo
 	for _, ln := range lines {
 		pkg := bytes.Fields(ln)
-		if len(pkg) < 4 || string(pkg[0]) != "Inst" {
+		if len(pkg) < 5 || string(pkg[0]) != "Inst" {
 			continue
 		}
-		if strings.HasPrefix(string(pkg[2]), "(") {
-			// We don't want to record new installs.
-			// Inst firmware-linux-free (3.4 Debian:9.9/stable [all])
-			continue
-		}
-		// Make sure this line matches expectations:
 		// Inst google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [all])
-		if !strings.HasPrefix(string(pkg[2]), "[") || !strings.HasPrefix(string(pkg[3]), "(") || !strings.HasSuffix(string(pkg[len(pkg)-1]), ")") {
+		pkg = pkg[1:] // ==> google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [all])
+		if bytes.HasPrefix(pkg[1], []byte("[")) {
+			pkg = append(pkg[:1], pkg[2:]...) // ==> google-cloud-sdk (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [all])
+		} else if !showNew {
+			// This is a newly installed package and not an upgrade, ignore if showNew is false.
 			continue
 		}
-		ver := bytes.Trim(pkg[3], "(")
-		arch := bytes.Trim(pkg[len(pkg)-1], "[])")
-		pkgs = append(pkgs, PkgInfo{Name: string(pkg[1]), Arch: osinfo.Architecture(string(arch)), Version: string(ver)})
+		if !bytes.HasPrefix(pkg[1], []byte("(")) || !bytes.HasSuffix(pkg[len(pkg)-1], []byte(")")) {
+			continue
+		}
+		ver := bytes.Trim(pkg[1], "(")             // (246.0.0-0 => 246.0.0-0
+		arch := bytes.Trim(pkg[len(pkg)-1], "[])") // [all]) => all
+		pkgs = append(pkgs, PkgInfo{Name: string(pkg[0]), Arch: osinfo.Architecture(string(arch)), Version: string(ver)})
 	}
 	return pkgs
 }
 
-// AptUpdates queries for all available apt updates.
-func AptUpdates() ([]PkgInfo, error) {
+// AptUpdates returns all the packages that will be installed when running
+// apt-get [dist-|full-]upgrade.
+func AptUpdates(opts ...AptGetUpgradeOption) ([]PkgInfo, error) {
+	aptOpts := &aptGetUpgradeOpts{
+		upgradeType: AptGetUpgrade,
+		showNew:     false,
+	}
+
+	for _, opt := range opts {
+		opt(aptOpts)
+	}
+
+	args := aptGetUpgradableArgs
+	switch aptOpts.upgradeType {
+	case AptGetUpgrade:
+		args = append(aptGetUpgradableArgs, aptGetUpgradeCmd)
+	case AptGetDistUpgrade:
+		args = append(aptGetUpgradableArgs, aptGetDistUpgradeCmd)
+	case AptGetFullUpgrade:
+		args = append(aptGetUpgradableArgs, aptGetFullUpgradeCmd)
+	default:
+		return nil, fmt.Errorf("unknown upgrade type: %q", aptOpts.upgradeType)
+	}
+
 	if _, err := run(exec.Command(aptGet, aptGetUpdateArgs...)); err != nil {
 		return nil, err
 	}
 
-	out, err := run(exec.Command(aptGet, aptGetUpgradableArgs...))
+	out, err := run(exec.Command(aptGet, args...))
 	if err != nil {
 		return nil, err
 	}
 
-	return parseAptUpdates(out), nil
+	return parseAptUpdates(out, aptOpts.showNew), nil
 }
 
 func parseInstalledDebpackages(data []byte) []PkgInfo {

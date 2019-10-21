@@ -15,32 +15,15 @@
 package ospatch
 
 import (
-	"fmt"
-	"os"
 	"os/exec"
-)
 
-const aptGet = "/usr/bin/apt-get"
-
-var (
-	aptGetUpdateArgs      = []string{"update"}
-	aptGetUpgradeArgs     = []string{"upgrade", "-y"}
-	aptGetFullUpgradeArgs = []string{"full-upgrade", "-y"}
-	aptGetDistUpgradeArgs = []string{"dist-upgrade", "-y"}
-)
-
-type aptGetUpgradeType int
-
-const (
-	aptGetUpgrade aptGetUpgradeType = iota
-	// AptGetDistUpgrade specifies apt-get dist-upgrade should be run.
-	AptGetDistUpgrade
-	// AptGetFullUpgrade specifies apt-get full-upgrade should be run.
-	AptGetFullUpgrade
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 )
 
 type aptGetUpgradeOpts struct {
-	upgradeType aptGetUpgradeType
+	upgradeType packages.AptUpgradeType
+	includes    []string
 	excludes    []string
 	dryrun      bool
 
@@ -51,7 +34,7 @@ type aptGetUpgradeOpts struct {
 type AptGetUpgradeOption func(*aptGetUpgradeOpts)
 
 // AptGetUpgradeType returns a AptGetUpgradeOption that specifies upgrade type.
-func AptGetUpgradeType(upgradeType aptGetUpgradeType) AptGetUpgradeOption {
+func AptGetUpgradeType(upgradeType packages.AptUpgradeType) AptGetUpgradeOption {
 	return func(args *aptGetUpgradeOpts) {
 		args.upgradeType = upgradeType
 	}
@@ -64,6 +47,13 @@ func AptGetExcludes(excludes []string) AptGetUpgradeOption {
 	}
 }
 
+// AptGetIncludes includes only these packages in the upgrade.
+func AptGetIncludes(includes []string) AptGetUpgradeOption {
+	return func(args *aptGetUpgradeOpts) {
+		args.includes = includes
+	}
+}
+
 // AptGetDryRun performs a dry run.
 func AptGetDryRun(dryrun bool) AptGetUpgradeOption {
 	return func(args *aptGetUpgradeOpts) {
@@ -71,47 +61,42 @@ func AptGetDryRun(dryrun bool) AptGetUpgradeOption {
 	}
 }
 
-// AptGetUpgradeRunner returns a AptGetUpgradeOption that specifies the runner.
-func AptGetUpgradeRunner(runner func(cmd *exec.Cmd) ([]byte, error)) AptGetUpgradeOption {
-	return func(args *aptGetUpgradeOpts) {
-		args.runner = runner
-	}
-}
-
 // RunAptGetUpgrade runs apt-get upgrade.
 func RunAptGetUpgrade(opts ...AptGetUpgradeOption) error {
 	aptOpts := &aptGetUpgradeOpts{
-		upgradeType: aptGetUpgrade,
-		runner:      defaultRunner,
+		upgradeType: packages.AptGetUpgrade,
+		dryrun:      false,
 	}
 
 	for _, opt := range opts {
 		opt(aptOpts)
 	}
 
-	if _, err := aptOpts.runner(exec.Command(aptGet, aptGetUpdateArgs...)); err != nil {
+	pkgs, err := packages.AptUpdates(packages.AptGetUpgradeType(aptOpts.upgradeType), packages.AptGetUpgradeShowNew(true))
+	if err != nil {
 		return err
 	}
 
-	var args []string
-	switch aptOpts.upgradeType {
-	case aptGetUpgrade:
-		args = aptGetUpgradeArgs
-	case AptGetDistUpgrade:
-		args = aptGetDistUpgradeArgs
-	case AptGetFullUpgrade:
-		args = aptGetFullUpgradeArgs
-	default:
-		return fmt.Errorf("unknown upgrade type: %q", aptOpts.upgradeType)
-	}
-
-	upgrade := exec.Command(aptGet, args...)
-	upgrade.Env = append(os.Environ(),
-		"DEBIAN_FRONTEND=noninteractive",
-	)
-	if _, err := aptOpts.runner(upgrade); err != nil {
+	fPkgs, err := filterPackages(pkgs, aptOpts.includes, aptOpts.excludes)
+	if err != nil {
 		return err
 	}
+	if len(fPkgs) == 0 {
+		logger.Infof("No packages to update.")
+		return nil
+	}
 
-	return nil
+	var pkgNames []string
+	for _, pkg := range fPkgs {
+		pkgNames = append(pkgNames, pkg.Name)
+	}
+	logger.Infof("Updating %d packages.", len(pkgNames))
+	logger.Debugf("Packages to be installed: %s", fPkgs)
+
+	if aptOpts.dryrun {
+		logger.Infof("Running in dryrun mode, not updating packages.")
+		return nil
+	}
+
+	return packages.InstallAptPackages(pkgNames)
 }

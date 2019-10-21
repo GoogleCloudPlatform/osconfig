@@ -22,6 +22,7 @@ import (
 	"os/exec"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 )
 
 const (
@@ -95,9 +96,8 @@ func DisableAutoUpdates() {
 	// /etc/apt/apt.conf.d/ and setting APT::Periodic::Unattended-Upgrade to 0.
 	if _, err := os.Stat("/usr/bin/unattended-upgrades"); err == nil {
 		logger.Debugf("Removing unattended-upgrades package")
-		out, err := exec.Command(aptGet, "remove", "-y", "unattended-upgrades").CombinedOutput()
-		if err != nil {
-			logger.Errorf("%v, out: %s", err, out)
+		if err := packages.RemoveAptPackages([]string{"unattended-upgrades"}); err != nil {
+			logger.Errorf(err.Error())
 		}
 	}
 }

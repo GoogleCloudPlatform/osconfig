@@ -18,9 +18,9 @@ package ospatch
 
 import (
 	"os"
-	"os/exec"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 	"golang.org/x/sys/windows/registry"
 )
 
@@ -46,9 +46,8 @@ func DisableAutoUpdates() {
 
 	if _, err := os.Stat(`C:\Program Files\Google\Compute Engine\tools\auto_updater.ps1`); err == nil {
 		logger.Debugf("Removing google-compute-engine-auto-updater package")
-		out, err := exec.Command(googet, "-noconfirm", "remove", "google-compute-engine-auto-updater").CombinedOutput()
-		if err != nil {
-			logger.Errorf("error removing google-compute-engine-auto-updater, error: %v, out: %s", err, out)
+		if err := packages.RemoveGooGetPackages([]string{"google-compute-engine-auto-updater"}); err != nil {
+			logger.Errorf(err.Error())
 		}
 	}
 }
