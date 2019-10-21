@@ -21,10 +21,22 @@ import (
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/config"
+	"github.com/GoogleCloudPlatform/osconfig/inventory"
+	"github.com/GoogleCloudPlatform/osconfig/ospatch"
 	"github.com/golang/protobuf/jsonpb"
 
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
+
+func init() {
+	if config.OSPatchEnabled() {
+		ospatch.DisableAutoUpdates()
+	}
+}
+
+func systemRebootRequired() (bool, error) {
+	return ospatch.SystemRebootRequired()
+}
 
 type patchStep string
 
@@ -158,8 +170,75 @@ func (r *patchTask) reportContinuingState(ctx context.Context, patchState agente
 	return r.saveState()
 }
 
+// TODO: Add MaxRebootCount so we don't loop endlessly.
+
+func (r *patchTask) prePatchReboot(ctx context.Context) error {
+	return r.rebootIfNeeded(ctx, true)
+}
+
+func (r *patchTask) postPatchReboot(ctx context.Context) error {
+	return r.rebootIfNeeded(ctx, false)
+}
+
+func (r *patchTask) rebootIfNeeded(ctx context.Context, prePatch bool) error {
+	var reboot bool
+	var err error
+	if r.Task.GetPatchConfig().GetRebootConfig() == agentendpointpb.PatchConfig_ALWAYS && !prePatch && r.RebootCount == 0 {
+		reboot = true
+		r.infof("PatchConfig RebootConfig set to %s.", agentendpointpb.PatchConfig_ALWAYS)
+	} else {
+		reboot, err = systemRebootRequired()
+		if err != nil {
+			return fmt.Errorf("error checking if a system reboot is required: %v", err)
+		}
+		if reboot {
+			r.infof("System indicates a reboot is required.")
+		} else {
+			r.infof("System indicates a reboot is not required.")
+		}
+	}
+
+	if !reboot {
+		return nil
+	}
+
+	if r.Task.GetPatchConfig().GetRebootConfig() == agentendpointpb.PatchConfig_NEVER {
+		r.infof("Skipping reboot because of PatchConfig RebootConfig set to %s.", agentendpointpb.PatchConfig_NEVER)
+		return nil
+	}
+
+	if err := r.reportContinuingState(ctx, agentendpointpb.ApplyPatchesTaskProgress_REBOOTING); err != nil {
+		return err
+	}
+
+	if r.Task.GetDryRun() {
+		r.infof("Dry run - not rebooting for patch task")
+		return nil
+	}
+
+	r.RebootCount++
+	if err := r.saveState(); err != nil {
+		return fmt.Errorf("error saving state: %v", err)
+	}
+	if err := rebootSystem(); err != nil {
+		return fmt.Errorf("failed to reboot system: %v", err)
+	}
+
+	// Reboot can take a bit, pause here so other activities don't start.
+	for {
+		r.debugf("Waiting for system reboot.")
+		time.Sleep(1 * time.Minute)
+	}
+}
+
 func (r *patchTask) run(ctx context.Context) error {
 	r.infof("Beginning patch task")
+	defer func() {
+		r.complete()
+		if config.OSInventoryEnabled() {
+			go inventory.Run()
+		}
+	}()
 
 	for {
 		r.debugf("Running PatchStep %q.", r.PatchStep)
@@ -174,18 +253,42 @@ func (r *patchTask) run(ctx context.Context) error {
 			if err := r.reportContinuingState(ctx, agentendpointpb.ApplyPatchesTaskProgress_STARTED); err != nil {
 				return r.handleErrorState(ctx, err.Error(), err)
 			}
+			if err := r.prePatchReboot(ctx); err != nil {
+				return r.handleErrorState(ctx, fmt.Sprintf("Error running prePatchReboot: %v", err), err)
+			}
 		case patching:
 			if err := r.reportContinuingState(ctx, agentendpointpb.ApplyPatchesTaskProgress_APPLYING_PATCHES); err != nil {
 				return r.handleErrorState(ctx, err.Error(), err)
 			}
+			if r.Task.GetDryRun() {
+				r.infof("Dry run - No updates applied for patch")
+			} else {
+				if err := r.runUpdates(ctx); err != nil {
+					return r.handleErrorState(ctx, fmt.Sprintf("Failed to apply patches: %v", err), err)
+				}
+			}
+			if err := r.postPatchReboot(ctx); err != nil {
+				return r.handleErrorState(ctx, fmt.Sprintf("Error running postPatchReboot: %v", err), err)
+			}
+			// We have not rebooted so patching is complete.
 			if err := r.setStep(postPatch); err != nil {
 				return r.reportFailed(ctx, fmt.Sprintf("Error saving agent step: %v", err))
 			}
 		case postPatch:
+			isRebootRequired, err := systemRebootRequired()
+			if err != nil {
+				return r.reportFailed(ctx, fmt.Sprintf("Error checking if system reboot is required: %v", err))
+			}
+
+			finalState := agentendpointpb.ApplyPatchesTaskOutput_SUCCEEDED
+			if isRebootRequired {
+				finalState = agentendpointpb.ApplyPatchesTaskOutput_SUCCEEDED_REBOOT_REQUIRED
+			}
+
 			if err := r.reportCompletedState(ctx, "", &agentendpointpb.ReportTaskCompleteRequest_ApplyPatchesTaskOutput{
-				ApplyPatchesTaskOutput: &agentendpointpb.ApplyPatchesTaskOutput{},
+				ApplyPatchesTaskOutput: &agentendpointpb.ApplyPatchesTaskOutput{State: finalState},
 			}); err != nil {
-				return err
+				return fmt.Errorf("failed to report state %s: %v", finalState, err)
 			}
 			r.infof("Successfully completed patch task")
 			return nil
