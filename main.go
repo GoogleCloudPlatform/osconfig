@@ -18,12 +18,16 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
 	"time"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/agentendpoint"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
@@ -31,6 +35,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/policies"
 	"github.com/GoogleCloudPlatform/osconfig/service"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
+	"github.com/tarm/serial"
 
 	_ "google.golang.org/genproto/googleapis/rpc/errdetails"
 )
@@ -47,6 +52,21 @@ type logWriter struct{}
 func (l *logWriter) Write(b []byte) (int, error) {
 	logger.Log(logger.LogEntry{Message: string(b), Severity: logger.Debug})
 	return len(b), nil
+}
+
+type serialPort struct {
+	port string
+}
+
+func (s *serialPort) Write(b []byte) (int, error) {
+	c := &serial.Config{Name: s.port, Baud: 115200}
+	p, err := serial.OpenPort(c)
+	if err != nil {
+		return 0, err
+	}
+	defer p.Close()
+
+	return p.Write(b)
 }
 
 func run(ctx context.Context) {
@@ -93,12 +113,25 @@ func main() {
 		logger.Errorf("Error removing restart signal file: %v", err)
 	}
 
+	opts := logger.LogOpts{LoggerName: "OSConfigAgent"}
+	if runtime.GOOS == "windows" {
+		opts.Writers = []io.Writer{&serialPort{"COM1"}, os.Stdout}
+	} else {
+		opts.Writers = []io.Writer{os.Stdout}
+	}
+
 	// If this call to SetConfig fails (like a metadata error) we can't continue.
 	if err := config.SetConfig(); err != nil {
-		logger.Init(ctx, logger.LogOpts{LoggerName: "OSConfigAgent", ProjectName: config.ProjectID()})
+		logger.Init(ctx, opts)
 		logger.Fatalf(err.Error())
 	}
-	logger.Init(ctx, logger.LogOpts{LoggerName: "OSConfigAgent", ProjectName: config.ProjectID(), Debug: config.Debug(), Stdout: config.Stdout()})
+	opts.Debug = config.Debug()
+	opts.ProjectName = config.ProjectID()
+
+	if err := logger.Init(ctx, opts); err != nil {
+		fmt.Printf("Error initializing logger: %v", err)
+		os.Exit(1)
+	}
 	defer logger.Close()
 
 	obtainLock()
@@ -142,6 +175,15 @@ func main() {
 		return
 	case "ospatch":
 		ospatchog.Run(ctx, make(chan struct{}))
+		return
+	case "agentendpoint":
+		client, err := agentendpoint.NewClient(ctx)
+		if err != nil {
+			logger.Fatalf(err.Error())
+		}
+		if err := client.WaitForTaskNotification(ctx); err != nil {
+			logger.Fatalf(err.Error())
+		}
 		return
 	default:
 		logger.Fatalf("Unknown arg %q", action)
