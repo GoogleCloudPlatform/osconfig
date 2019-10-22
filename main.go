@@ -176,7 +176,7 @@ func main() {
 	case "ospatch":
 		ospatchog.Run(ctx, make(chan struct{}))
 		return
-	case "agentendpoint":
+	case "w", "waitfortasknotification":
 		client, err := agentendpoint.NewClient(ctx)
 		if err != nil {
 			logger.Fatalf(err.Error())
