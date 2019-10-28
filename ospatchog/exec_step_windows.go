@@ -48,7 +48,7 @@ func execStep(ctx context.Context, logger *util.Logger, stepConfig *osconfigpb.E
 		case osconfigpb.ExecStepConfig_SHELL:
 			err = executeCommand(logger, "C:\\Windows\\System32\\cmd.exe", codes, "/c", localPath)
 		case osconfigpb.ExecStepConfig_POWERSHELL:
-			err = executeCommand(logger, "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\PowerShell.exe", codes, "-File", localPath)
+			err = executeCommand(logger, "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\PowerShell.exe", codes, "-NonInteractive", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", localPath)
 		default:
 			err = fmt.Errorf("invalid interpreter %q", stepConfig.GetInterpreter())
 		}

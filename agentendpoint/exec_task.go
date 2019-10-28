@@ -40,6 +40,8 @@ var (
 	winPowershell string
 	winCmd        string
 
+	winPowershellArgs = []string{"-NonInteractive", "-NoProfile", "-ExecutionPolicy", "Bypass"}
+
 	goos = runtime.GOOS
 
 	errLinuxPowerShell = errors.New("interpreter POWERSHELL cannot be used on non-Windows system")
@@ -58,7 +60,7 @@ var run = func(cmd *exec.Cmd) ([]byte, error) {
 	return cmd.CombinedOutput()
 }
 
-func getGCSObject(ctx context.Context, gcsObject *agentendpointpb.GcsObject, loggingLables map[string]string) (string, error) {
+func getGCSObject(ctx context.Context, gcsObject *agentendpointpb.GcsObject, loggingLabels map[string]string) (string, error) {
 	if gcsObject == nil {
 		return "", errors.New("gcsObject cannot be nil")
 	}
@@ -83,7 +85,7 @@ func getGCSObject(ctx context.Context, gcsObject *agentendpointpb.GcsObject, log
 	return localPath, nil
 }
 
-func executeCommand(path string, args []string, loggingLables map[string]string) (int32, error) {
+func executeCommand(path string, args []string, loggingLabels map[string]string) (int32, error) {
 	logger.Debugf("Running command %s with args %s", path, args)
 
 	cmd := exec.Command(path, args...)
@@ -184,7 +186,7 @@ func (e *execTask) run(ctx context.Context) error {
 		}
 	case agentendpointpb.ExecStepConfig_POWERSHELL:
 		if goos == "windows" {
-			exitCode, err = executeCommand(winPowershell, []string{"-File", localPath}, e.LogLabels)
+			exitCode, err = executeCommand(winPowershell, append(winPowershellArgs, "-File", localPath), e.LogLabels)
 		} else {
 			err = errLinuxPowerShell
 		}
