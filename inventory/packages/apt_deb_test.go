@@ -88,33 +88,28 @@ func TestParseInstalledDebpackages(t *testing.T) {
 }
 
 func TestParseAptUpdates(t *testing.T) {
-	normalCase := `Reading package lists... Done
-Building dependency tree
-Reading state information... Done
-Calculating upgrade... Done
-The following NEW packages will be installed:
-  firmware-linux-free linux-image-4.9.0-9-amd64
-The following packages will be upgraded:
-  google-cloud-sdk linux-image-amd64
-2 upgraded, 2 newly installed, 0 to remove and 0 not upgraded.
+	normalCase := `
 Inst libldap-common [2.4.45+dfsg-1ubuntu1.2] (2.4.45+dfsg-1ubuntu1.3 Ubuntu:18.04/bionic-updates, Ubuntu:18.04/bionic-security [all])
 Inst google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [amd64])
 Inst firmware-linux-free (3.4 Debian:9.9/stable [all])
-Conf firmware-linux-free (3.4 Debian:9.9/stable [all])`
+Conf firmware-linux-free (3.4 Debian:9.9/stable [all])
+`
 
 	tests := []struct {
-		name string
-		data []byte
-		want []PkgInfo
+		name    string
+		data    []byte
+		showNew bool
+		want    []PkgInfo
 	}{
-		{"NormalCase", []byte(normalCase), []PkgInfo{{"libldap-common", "all", "2.4.45+dfsg-1ubuntu1.3"}, {"google-cloud-sdk", "x86_64", "246.0.0-0"}}},
-		{"NoPackages", []byte("nothing here"), nil},
-		{"nil", nil, nil},
-		{"UnrecognizedPackage", []byte("Inst something we dont understand\n Inst google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [amd64])"), []PkgInfo{{"google-cloud-sdk", "x86_64", "246.0.0-0"}}},
+		{"NormalCase", []byte(normalCase), false, []PkgInfo{{"libldap-common", "all", "2.4.45+dfsg-1ubuntu1.3"}, {"google-cloud-sdk", "x86_64", "246.0.0-0"}}},
+		{"NormalCaseShowNew", []byte(normalCase), true, []PkgInfo{{"libldap-common", "all", "2.4.45+dfsg-1ubuntu1.3"}, {"google-cloud-sdk", "x86_64", "246.0.0-0"}, {"firmware-linux-free", "all", "3.4"}}},
+		{"NoPackages", []byte("nothing here"), false, nil},
+		{"nil", nil, false, nil},
+		{"UnrecognizedPackage", []byte("Inst something [we dont understand\n Inst google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [amd64])"), false, []PkgInfo{{"google-cloud-sdk", "x86_64", "246.0.0-0"}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := parseAptUpdates(tt.data); !reflect.DeepEqual(got, tt.want) {
+			if got := parseAptUpdates(tt.data, tt.showNew); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("parseAptUpdates() = %v, want %v", got, tt.want)
 			}
 		})

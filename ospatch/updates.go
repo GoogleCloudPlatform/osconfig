@@ -17,10 +17,13 @@ package ospatch
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
+
+	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 )
 
 const (
@@ -106,4 +109,29 @@ func rpmReboot() (bool, error) {
 	}
 
 	return rpmRebootRequired(out, btime), nil
+}
+
+func containsString(ss []string, c string) bool {
+	for _, s := range ss {
+		if s == c {
+			return true
+		}
+	}
+	return false
+}
+
+func filterPackages(pkgs []packages.PkgInfo, includes, excludes []string) ([]packages.PkgInfo, error) {
+	if len(includes) != 0 && len(excludes) != 0 {
+		return nil, errors.New("includes and excludes can not both be non 0")
+	}
+	var fPkgs []packages.PkgInfo
+	for _, pkg := range pkgs {
+		if containsString(excludes, pkg.Name) {
+			continue
+		}
+		if includes == nil || containsString(includes, pkg.Name) {
+			fPkgs = append(fPkgs, pkg)
+		}
+	}
+	return fPkgs, nil
 }

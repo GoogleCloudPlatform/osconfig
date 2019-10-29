@@ -15,43 +15,73 @@
 package ospatch
 
 import (
-	"os"
-	"os/exec"
-	"path/filepath"
-)
-
-var (
-	googet = filepath.Join(os.Getenv("GooGetRoot"), "googet.exe")
-
-	googetUpdateArgs = []string{"-noconfirm", "update"}
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 )
 
 type googetUpdateOpts struct {
-	runner func(cmd *exec.Cmd) ([]byte, error)
+	exclusivePackages []string
+	excludes          []string
+	dryrun            bool
 }
 
 // GooGetUpdateOption is an option for apt-get update.
 type GooGetUpdateOption func(*googetUpdateOpts)
 
-// GooGetUpdateRunner returns a GooGetUpdateOption that specifies the runner.
-func GooGetUpdateRunner(runner func(cmd *exec.Cmd) ([]byte, error)) GooGetUpdateOption {
+// GooGetExcludes excludes these packages from upgrade.
+func GooGetExcludes(excludes []string) GooGetUpdateOption {
 	return func(args *googetUpdateOpts) {
-		args.runner = runner
+		args.excludes = excludes
+	}
+}
+
+// GooGetExclusivePackages includes only these packages in the upgrade.
+func GooGetExclusivePackages(exclusivePackages []string) GooGetUpdateOption {
+	return func(args *googetUpdateOpts) {
+		args.exclusivePackages = exclusivePackages
+	}
+}
+
+// GooGetDryRun performs a dry run.
+func GooGetDryRun(dryrun bool) GooGetUpdateOption {
+	return func(args *googetUpdateOpts) {
+		args.dryrun = dryrun
 	}
 }
 
 // RunGooGetUpdate runs googet update.
 func RunGooGetUpdate(opts ...GooGetUpdateOption) error {
-	googetOpts := &googetUpdateOpts{
-		runner: defaultRunner,
-	}
+	googetOpts := &googetUpdateOpts{}
 
 	for _, opt := range opts {
 		opt(googetOpts)
 	}
 
-	if _, err := googetOpts.runner(exec.Command(googet, googetUpdateArgs...)); err != nil {
+	pkgs, err := packages.GooGetUpdates()
+	if err != nil {
 		return err
 	}
-	return nil
+
+	fPkgs, err := filterPackages(pkgs, googetOpts.exclusivePackages, googetOpts.excludes)
+	if err != nil {
+		return err
+	}
+	if len(fPkgs) == 0 {
+		logger.Infof("No packages to update.")
+		return nil
+	}
+
+	var pkgNames []string
+	for _, pkg := range fPkgs {
+		pkgNames = append(pkgNames, pkg.Name)
+	}
+	logger.Infof("Updating %d packages.", len(pkgNames))
+	logger.Debugf("Packages to be installed: %s", fPkgs)
+
+	if googetOpts.dryrun {
+		logger.Infof("Running in dryrun mode, not updating packages.")
+		return nil
+	}
+
+	return packages.InstallGooGetPackages(pkgNames)
 }
