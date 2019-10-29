@@ -20,9 +20,9 @@ import (
 )
 
 type googetUpdateOpts struct {
-	includes []string
-	excludes []string
-	dryrun   bool
+	exclusivePackages []string
+	excludes          []string
+	dryrun            bool
 }
 
 // GooGetUpdateOption is an option for apt-get update.
@@ -35,10 +35,10 @@ func GooGetExcludes(excludes []string) GooGetUpdateOption {
 	}
 }
 
-// GooGetIncludes includes only these packages in the upgrade.
-func GooGetIncludes(includes []string) GooGetUpdateOption {
+// GooGetExclusivePackages includes only these packages in the upgrade.
+func GooGetExclusivePackages(exclusivePackages []string) GooGetUpdateOption {
 	return func(args *googetUpdateOpts) {
-		args.includes = includes
+		args.exclusivePackages = exclusivePackages
 	}
 }
 
@@ -62,7 +62,7 @@ func RunGooGetUpdate(opts ...GooGetUpdateOption) error {
 		return err
 	}
 
-	fPkgs, err := filterPackages(pkgs, googetOpts.includes, googetOpts.excludes)
+	fPkgs, err := filterPackages(pkgs, googetOpts.exclusivePackages, googetOpts.excludes)
 	if err != nil {
 		return err
 	}

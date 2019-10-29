@@ -22,10 +22,10 @@ import (
 )
 
 type aptGetUpgradeOpts struct {
-	upgradeType packages.AptUpgradeType
-	includes    []string
-	excludes    []string
-	dryrun      bool
+	upgradeType       packages.AptUpgradeType
+	exclusivePackages []string
+	excludes          []string
+	dryrun            bool
 
 	runner func(cmd *exec.Cmd) ([]byte, error)
 }
@@ -47,10 +47,10 @@ func AptGetExcludes(excludes []string) AptGetUpgradeOption {
 	}
 }
 
-// AptGetIncludes includes only these packages in the upgrade.
-func AptGetIncludes(includes []string) AptGetUpgradeOption {
+// AptGetExclusivePackages includes only these packages in the upgrade.
+func AptGetExclusivePackages(exclusivePackages []string) AptGetUpgradeOption {
 	return func(args *aptGetUpgradeOpts) {
-		args.includes = includes
+		args.exclusivePackages = exclusivePackages
 	}
 }
 
@@ -77,7 +77,7 @@ func RunAptGetUpgrade(opts ...AptGetUpgradeOption) error {
 		return err
 	}
 
-	fPkgs, err := filterPackages(pkgs, aptOpts.includes, aptOpts.excludes)
+	fPkgs, err := filterPackages(pkgs, aptOpts.exclusivePackages, aptOpts.excludes)
 	if err != nil {
 		return err
 	}
