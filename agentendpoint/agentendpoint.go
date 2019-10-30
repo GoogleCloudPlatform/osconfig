@@ -52,8 +52,8 @@ type Client struct {
 // NewClient a new agentendpoint Client.
 func NewClient(ctx context.Context) (*Client, error) {
 	opts := []option.ClientOption{
-		option.WithoutAuthentication(),
-		option.WithGRPCDialOption(grpc.WithTransportCredentials(credentials.NewTLS(nil))),
+		option.WithoutAuthentication(), // Do not use oauth.
+		option.WithGRPCDialOption(grpc.WithTransportCredentials(credentials.NewTLS(nil))), // Because we disabled Auth we need to specifically enable TLS.
 		option.WithEndpoint(config.SvcEndpoint()),
 	}
 	logger.Debugf("Creating new agentendpoint client.")
@@ -157,7 +157,7 @@ func (c *Client) LookupEffectiveGuestPolicies(ctx context.Context) (*agentendpoi
 		return nil, err
 	}
 
-	logger.Debugf("LookupEffectiveGuestPolicies request:\n%s", util.PrettyFmt(req))
+	logger.Debugf("Calling LookupEffectiveGuestPolicies with request:\n%s", util.PrettyFmt(req))
 	req.InstanceIdToken = token
 
 	var res *agentendpointpb.LookupEffectiveGuestPoliciesResponse
