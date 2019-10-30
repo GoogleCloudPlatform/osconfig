@@ -55,6 +55,7 @@ func retryAPICall(maxRetryTime time.Duration, name string, f func() error) error
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
 	var tot time.Duration
 	for i := 1; ; i++ {
+		extraMultiplier := 1
 		err := f()
 		if err == nil {
 			return nil
@@ -63,7 +64,10 @@ func retryAPICall(maxRetryTime time.Duration, name string, f func() error) error
 			err := fmt.Errorf("code: %q, message: %q, details: %q", s.Code(), s.Message(), s.Details())
 			switch s.Code() {
 			// Errors we should retry.
-			case codes.DeadlineExceeded, codes.Unavailable, codes.Aborted, codes.Internal, codes.ResourceExhausted:
+			case codes.DeadlineExceeded, codes.Unavailable, codes.Aborted, codes.Internal:
+			// Add additional sleep.
+			case codes.ResourceExhausted:
+				extraMultiplier = 5
 			default:
 				return err
 			}
@@ -71,7 +75,7 @@ func retryAPICall(maxRetryTime time.Duration, name string, f func() error) error
 			return err
 		}
 
-		ns := retrySleep(i, rnd)
+		ns := retrySleep(i*extraMultiplier, rnd)
 		tot += ns
 		if tot > maxRetryTime {
 			return err

@@ -37,7 +37,7 @@ type Logger struct {
 
 // PrettyFmt uses jsonpb to marshal a proto for pretty printing.
 func PrettyFmt(pb proto.Message) string {
-	m := jsonpb.Marshaler{Indent: "  "}
+	m := jsonpb.Marshaler{Indent: "  ", EmitDefaults: true, EnumsAsInts: false}
 	out, err := m.MarshalToString(pb)
 	if err != nil {
 		out = fmt.Sprintf("Error marshaling proto message: %v\n%s", err, out)

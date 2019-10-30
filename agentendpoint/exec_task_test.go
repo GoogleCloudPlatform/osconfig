@@ -98,7 +98,7 @@ func TestRunExecStep(t *testing.T) {
 			}
 			goos = tt.goos
 
-			if err := tc.client.RunExecStep(ctx, &agentendpointpb.ExecStepTask{ExecStep: tt.step}); err != nil {
+			if err := tc.client.RunExecStep(ctx, "", &agentendpointpb.ExecStepTask{ExecStep: tt.step}); err != nil {
 				t.Fatal(err)
 			}
 

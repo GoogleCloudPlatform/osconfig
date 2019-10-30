@@ -138,7 +138,7 @@ func (r *patchTask) reportCompletedState(ctx context.Context, errMsg string, out
 		ErrorMessage: errMsg,
 		Output:       output,
 	}
-	if err := r.client.ReportTaskComplete(ctx, req); err != nil {
+	if err := r.client.reportTaskComplete(ctx, req); err != nil {
 		return fmt.Errorf("error reporting completed state: %v", err)
 	}
 	return nil
@@ -158,7 +158,7 @@ func (r *patchTask) reportContinuingState(ctx context.Context, patchState agente
 			ApplyPatchesTaskProgress: &agentendpointpb.ApplyPatchesTaskProgress{State: patchState},
 		},
 	}
-	res, err := r.client.ReportTaskProgress(ctx, req)
+	res, err := r.client.reportTaskProgress(ctx, req)
 	if err != nil {
 		return fmt.Errorf("error reporting state %s: %v", patchState, err)
 	}
@@ -297,8 +297,9 @@ func (r *patchTask) run(ctx context.Context) error {
 }
 
 // RunApplyPatches runs a apply patches task.
-func (c *Client) RunApplyPatches(ctx context.Context, task *agentendpointpb.ApplyPatchesTask) error {
+func (c *Client) RunApplyPatches(ctx context.Context, taskID string, task *agentendpointpb.ApplyPatchesTask) error {
 	r := &patchTask{
+		TaskID:            taskID,
 		client:            c,
 		lastProgressState: map[agentendpointpb.ApplyPatchesTaskProgress_State]time.Time{},
 		Task:              &applyPatchesTask{task},
