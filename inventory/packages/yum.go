@@ -28,9 +28,10 @@ import (
 var (
 	yum string
 
-	yumInstallArgs     = []string{"install", "-y"}
-	yumRemoveArgs      = []string{"remove", "-y"}
-	yumCheckUpdateArgs = []string{"-y", "check-update", "--quiet"}
+	yumInstallArgs       = []string{"install", "-y"}
+	yumRemoveArgs        = []string{"remove", "-y"}
+	yumUpdateArgs        = []string{"--assumeno", "update"}
+	yumUpdateMinimalArgs = []string{"--assumeno", "update-minimal"}
 )
 
 func init() {
@@ -38,6 +39,41 @@ func init() {
 		yum = "/usr/bin/yum"
 	}
 	YumExists = util.Exists(yum)
+}
+
+type yumUpdateOpts struct {
+	security          bool
+	minimal           bool
+	exclusivePackages []string
+	excludes          []string
+	dryrun            bool
+}
+
+// YumUpdateOption is an option for yum update.
+type YumUpdateOption func(*yumUpdateOpts)
+
+// YumUpdateSecurity returns a YumUpdateOption that specifies the --security flag should
+// be used.
+func YumUpdateSecurity(security bool) YumUpdateOption {
+	return func(args *yumUpdateOpts) {
+		args.security = security
+	}
+}
+
+// YumUpdateMinimal returns a YumUpdateOption that specifies the update-minimal
+// command should be used.
+func YumUpdateMinimal(minimal bool) YumUpdateOption {
+	return func(args *yumUpdateOpts) {
+		args.minimal = minimal
+	}
+}
+
+// YumUpdateExcludes returns a YumUpdateOption that specifies what packages to add to
+// the --exclude flag.
+func YumUpdateExcludes(excludes []string) YumUpdateOption {
+	return func(args *yumUpdateOpts) {
+		args.excludes = excludes
+	}
 }
 
 // InstallYumPackages installs yum packages.
@@ -95,7 +131,31 @@ func parseYumUpdates(data []byte) []PkgInfo {
 }
 
 // YumUpdates queries for all available yum updates.
-func YumUpdates() ([]PkgInfo, error) {
+func YumUpdates(opts ...YumUpdateOption) ([]PkgInfo, error) {
+	yumOpts := &yumUpdateOpts{
+		security: false,
+		minimal:  false,
+	}
+
+	for _, opt := range opts {
+		opt(yumOpts)
+	}
+
+	args := yumUpdateArgs
+	if yumOpts.minimal {
+		args = yumUpdateMinimalArgs
+	}
+	if yumOpts.security {
+		args = append(args, "--security")
+	}
+	for _, e := range yumOpts.excludes {
+		args = append(args, "--exclude="+e)
+	}
+
+	if _, err := yumOpts.runner(exec.Command(yum, args...)); err != nil {
+		return err
+	}
+
 	out, err := run(exec.Command(yum, yumCheckUpdateArgs...))
 	// Exit code 0 means no updates, 100 means there are updates.
 	if err == nil {

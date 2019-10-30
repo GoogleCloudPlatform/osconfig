@@ -16,6 +16,8 @@ package ospatch
 
 import (
 	"os/exec"
+
+	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 )
 
 const yum = "/usr/bin/yum"
@@ -26,10 +28,11 @@ var (
 )
 
 type yumUpdateOpts struct {
-	security bool
-	minimal  bool
-	excludes []string
-	runner   func(cmd *exec.Cmd) ([]byte, error)
+	security          bool
+	minimal           bool
+	exclusivePackages []string
+	excludes          []string
+	dryrun            bool
 }
 
 // YumUpdateOption is an option for yum update.
@@ -59,10 +62,17 @@ func YumUpdateExcludes(excludes []string) YumUpdateOption {
 	}
 }
 
-// YumUpdateRunner returns a YumUpdateOption that specifies the runner.
-func YumUpdateRunner(runner func(cmd *exec.Cmd) ([]byte, error)) YumUpdateOption {
+// YumExclusivePackages includes only these packages in the upgrade.
+func YumExclusivePackages(exclusivePackages []string) YumUpdateOption {
 	return func(args *yumUpdateOpts) {
-		args.runner = runner
+		args.exclusivePackages = exclusivePackages
+	}
+}
+
+// YumDryRun performs a dry run.
+func YumDryRun(dryrun bool) YumUpdateOption {
+	return func(args *yumUpdateOpts) {
+		args.dryrun = dryrun
 	}
 }
 
@@ -71,13 +81,19 @@ func RunYumUpdate(opts ...YumUpdateOption) error {
 	yumOpts := &yumUpdateOpts{
 		security: false,
 		minimal:  false,
-		excludes: nil,
-		runner:   defaultRunner,
+		dryrun:   false,
 	}
 
 	for _, opt := range opts {
 		opt(yumOpts)
 	}
+
+	pkgs, err := packages.YumUpdates(packages.YumUpdateMinimal(yumOpts.minimal), packages.YumUpdateSecurity(yumOpts.security))
+	if err != nil {
+		return err
+	}
+
+	_ = pkgs
 
 	args := yumUpdateArgs
 	if yumOpts.minimal {
