@@ -229,7 +229,7 @@ func (c *Client) handleStream(ctx context.Context, stream agentendpointpb.AgentE
 	}
 }
 
-func (c *Client) watchStream(ctx context.Context, noti chan struct{}, token string) error {
+func (c *Client) receiveTaskNotification(ctx context.Context, noti chan struct{}, token string) error {
 	req := &agentendpointpb.ReceiveTaskNotificationRequest{
 		AgentVersion:    config.Version(),
 		InstanceIdToken: token,
@@ -284,12 +284,13 @@ func (c *Client) WaitForTaskNotification(ctx context.Context) error {
 			return fmt.Errorf("error fetching Instance IDToken: %v", err)
 		}
 
-		if err := c.watchStream(ctx, noti, token); err != nil {
+		if err := c.receiveTaskNotification(ctx, noti, token); err != nil {
 			if s, ok := status.FromError(err); ok && s.Code() == codes.PermissionDenied {
 				// Service is not enabled for this project.
 				time.Sleep(config.SvcPollInterval())
 				continue
 			}
+			// TODO: Add more error checking (handle more API erros vs non API errors) and backoff where appropriate.
 			logger.Errorf("Error watching stream: %v", err)
 			time.Sleep(5 * time.Second)
 		}
