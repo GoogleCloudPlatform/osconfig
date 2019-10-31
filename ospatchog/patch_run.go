@@ -52,11 +52,7 @@ var (
 func initPatch(ctx context.Context) {
 	cancelC = make(chan struct{})
 	disableAutoUpdates()
-	go Run(ctx, cancelC)
-	// Sleep just long enough for Run to register any pending patches.
-	// TODO: Find a cleaner way to ensure any pending patch runs start before
-	// other tasks immediately after startup.
-	time.Sleep(1 * time.Second)
+	Run(ctx, cancelC)
 }
 
 // Configure manages the background patch service.
@@ -97,7 +93,7 @@ func Run(ctx context.Context, cancel <-chan struct{}) {
 	liveState.RLock()
 	for _, pr := range liveState.PatchRuns {
 		pr.ctx = ctx
-		go tasker.Enqueue("Run patch", pr.runPatch)
+		tasker.Enqueue("Run patch", pr.runPatch)
 	}
 	liveState.RUnlock()
 
@@ -407,7 +403,7 @@ func ackPatch(ctx context.Context, patchJobName string) {
 		return
 	}
 	r.setStep(prePatch)
-	go tasker.Enqueue("Run patch", r.runPatch)
+	tasker.Enqueue("Run patch", r.runPatch)
 }
 
 // retry tries to retry f for no more than maxRetryTime.
