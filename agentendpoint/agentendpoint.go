@@ -25,8 +25,14 @@ import (
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	agentendpoint "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/cloud.google.com/go/osconfig/agentendpoint/apiv1alpha1"
 	"github.com/GoogleCloudPlatform/osconfig/config"
+	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
 	"github.com/GoogleCloudPlatform/osconfig/util"
+	"google.golang.org/api/option"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
 
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
@@ -43,26 +49,59 @@ type Client struct {
 	raw *agentendpoint.Client
 }
 
-var client *Client
-
 // NewClient a new agentendpoint Client.
 func NewClient(ctx context.Context) (*Client, error) {
-	c, err := agentendpoint.NewClient(ctx)
+	opts := []option.ClientOption{
+		option.WithoutAuthentication(), // Do not use oauth.
+		option.WithGRPCDialOption(grpc.WithTransportCredentials(credentials.NewTLS(nil))), // Because we disabled Auth we need to specifically enable TLS.
+		option.WithEndpoint(config.SvcEndpoint()),
+	}
+	logger.Debugf("Creating new agentendpoint client.")
+	c, err := agentendpoint.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
-	client = &Client{raw: c}
-	return client, nil
+	return &Client{raw: c}, nil
 }
 
-// ReportTaskProgress calls the agentendpoint service ReportTaskProgress call injecting the InstanceIdToken.
-func (c *Client) ReportTaskProgress(ctx context.Context, req *agentendpointpb.ReportTaskProgressRequest) (res *agentendpointpb.ReportTaskProgressResponse, err error) {
-	logger.Debugf("ReportTaskProgress request:\n%s", util.PrettyFmt(req))
+// Close closes the underlying ClientConn.
+func (c *Client) Close() error {
+	return c.raw.Close()
+}
+
+func (c *Client) reportTaskStart(ctx context.Context) (res *agentendpointpb.ReportTaskStartResponse, err error) {
 	token, err := config.IDToken()
 	if err != nil {
 		return nil, err
 	}
+
+	req := &agentendpointpb.ReportTaskStartRequest{}
+	logger.Debugf("Calling ReportTaskStart with request:\n%s", util.PrettyFmt(req))
 	req.InstanceIdToken = token
+
+	if err := retryAPICall(apiRetrySec*time.Second, "ReportTaskStart", func() error {
+		res, err = c.raw.ReportTaskStart(ctx, req)
+		if err != nil {
+			return err
+		}
+		logger.Debugf("ReportTaskStart response:\n%s", util.PrettyFmt(res))
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("error calling ReportTaskStart: %v", err)
+	}
+
+	return
+}
+
+func (c *Client) reportTaskProgress(ctx context.Context, req *agentendpointpb.ReportTaskProgressRequest) (res *agentendpointpb.ReportTaskProgressResponse, err error) {
+	token, err := config.IDToken()
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Debugf("Calling ReportTaskProgress with request:\n%s", util.PrettyFmt(req))
+	req.InstanceIdToken = token
+
 	if err := retryAPICall(apiRetrySec*time.Second, "ReportTaskProgress", func() error {
 		res, err = c.raw.ReportTaskProgress(ctx, req)
 		if err != nil {
@@ -77,14 +116,15 @@ func (c *Client) ReportTaskProgress(ctx context.Context, req *agentendpointpb.Re
 	return
 }
 
-// ReportTaskComplete calls the agentendpoint service ReportTaskComplete call injecting the InstanceIdToken.
-func (c *Client) ReportTaskComplete(ctx context.Context, req *agentendpointpb.ReportTaskCompleteRequest) error {
-	logger.Debugf("ReportTaskComplete request:\n%s", util.PrettyFmt(req))
+func (c *Client) reportTaskComplete(ctx context.Context, req *agentendpointpb.ReportTaskCompleteRequest) error {
 	token, err := config.IDToken()
 	if err != nil {
 		return err
 	}
+
+	logger.Debugf("Calling ReportTaskComplete with request:\n%s", util.PrettyFmt(req))
 	req.InstanceIdToken = token
+
 	if err := retryAPICall(apiRetrySec*time.Second, "ReportTaskComplete", func() error {
 		res, err := c.raw.ReportTaskComplete(ctx, req)
 		if err != nil {
@@ -99,36 +139,65 @@ func (c *Client) ReportTaskComplete(ctx context.Context, req *agentendpointpb.Re
 	return nil
 }
 
+// LookupEffectiveGuestPolicies calls the agentendpoint service LookupEffectiveGuestPolicies.
+func (c *Client) LookupEffectiveGuestPolicies(ctx context.Context) (*agentendpointpb.LookupEffectiveGuestPoliciesResponse, error) {
+	info, err := osinfo.Get()
+	if err != nil {
+		return nil, err
+	}
+
+	req := &agentendpointpb.LookupEffectiveGuestPoliciesRequest{
+		OsShortName:    info.ShortName,
+		OsVersion:      info.Version,
+		OsArchitecture: info.Architecture,
+	}
+
+	token, err := config.IDToken()
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Debugf("Calling LookupEffectiveGuestPolicies with request:\n%s", util.PrettyFmt(req))
+	req.InstanceIdToken = token
+
+	var res *agentendpointpb.LookupEffectiveGuestPoliciesResponse
+	if err := retryAPICall(apiRetrySec*time.Second, "LookupEffectiveGuestPolicies", func() error {
+		res, err := c.raw.LookupEffectiveGuestPolicies(ctx, req)
+		if err != nil {
+			return err
+		}
+		logger.Debugf("LookupEffectiveGuestPolicies response:\n%s", util.PrettyFmt(res))
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("error calling LookupEffectiveGuestPolicies: %v", err)
+	}
+	return res, nil
+}
+
 func (c *Client) runTask(ctx context.Context) {
+	logger.Debugf("Beginning run task loop.")
 	for {
-		token, err := config.IDToken()
+		res, err := c.reportTaskStart(ctx)
 		if err != nil {
-			logger.Errorf(err.Error())
+			logger.Errorf("Error running ReportTaskStart, cannot continue: %v", err)
 			return
 		}
 
-		start := &agentendpointpb.ReportTaskStartRequest{
-			InstanceIdToken: token,
-		}
-		startRes, err := c.raw.ReportTaskStart(ctx, start)
-		if err != nil {
-			logger.Errorf(err.Error())
-			return
-		}
-
-		task := startRes.GetTask()
+		task := res.GetTask()
 		if task == nil {
+			logger.Debugf("No task to run, ending run task loop.")
 			return
 		}
 
+		logger.Debugf("Received task: %s.", task.GetTaskType())
 		switch task.GetTaskType() {
 		case agentendpointpb.TaskType_APPLY_PATCHES:
-			if err := c.RunApplyPatches(ctx, task.GetApplyPatchesTask()); err != nil {
-				logger.Errorf(err.Error())
+			if err := c.RunApplyPatches(ctx, task.GetTaskId(), task.GetApplyPatchesTask()); err != nil {
+				logger.Errorf("Error running TaskType_APPLY_PATCHES: %v", err)
 			}
 		case agentendpointpb.TaskType_EXEC_STEP_TASK:
-			if err := c.RunExecStep(ctx, task.GetExecStepTask()); err != nil {
-				logger.Errorf(err.Error())
+			if err := c.RunExecStep(ctx, task.GetTaskId(), task.GetExecStepTask()); err != nil {
+				logger.Errorf("Error running TaskType_EXEC_STEP_TASK: %v", err)
 			}
 		default:
 			logger.Errorf("Unknown task type: %v", task.GetTaskType())
@@ -160,7 +229,7 @@ func (c *Client) handleStream(ctx context.Context, stream agentendpointpb.AgentE
 	}
 }
 
-func (c *Client) watchStream(ctx context.Context, noti chan struct{}, token string) error {
+func (c *Client) receiveTaskNotification(ctx context.Context, noti chan struct{}, token string) error {
 	req := &agentendpointpb.ReceiveTaskNotificationRequest{
 		AgentVersion:    config.Version(),
 		InstanceIdToken: token,
@@ -171,15 +240,18 @@ func (c *Client) watchStream(ctx context.Context, noti chan struct{}, token stri
 		return err
 	}
 
-	if err := c.handleStream(ctx, stream, noti); err != nil {
+	err = c.handleStream(ctx, stream, noti)
+	if err != nil {
 		if err == io.EOF {
+			return nil
+		}
+		if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
 			// Server closed the stream indication we should reconnect.
 			return nil
 		}
-		logger.Errorf("error recieving on stream: %v", err)
 	}
 
-	return nil
+	return err
 }
 
 func (c *Client) loadTaskFromState(ctx context.Context) error {
@@ -199,19 +271,28 @@ func (c *Client) loadTaskFromState(ctx context.Context) error {
 
 // WaitForTaskNotification waits for and acts on any task notification indefinitely.
 func (c *Client) WaitForTaskNotification(ctx context.Context) error {
+	logger.Debugf("Checking local state file for saved task.")
 	if err := c.loadTaskFromState(ctx); err != nil {
 		logger.Errorf(err.Error())
 	}
 
+	logger.Debugf("Setting up ReceiveTaskNotification stream watcher.")
 	noti := make(chan struct{}, 1)
 	for {
 		token, err := config.IDToken()
 		if err != nil {
-			return err
+			return fmt.Errorf("error fetching Instance IDToken: %v", err)
 		}
 
-		if err := c.watchStream(ctx, noti, token); err != nil {
-			return err
+		if err := c.receiveTaskNotification(ctx, noti, token); err != nil {
+			if s, ok := status.FromError(err); ok && s.Code() == codes.PermissionDenied {
+				// Service is not enabled for this project.
+				time.Sleep(config.SvcPollInterval())
+				continue
+			}
+			// TODO: Add more error checking (handle more API erros vs non API errors) and backoff where appropriate.
+			logger.Errorf("Error watching stream: %v", err)
+			time.Sleep(5 * time.Second)
 		}
 	}
 }

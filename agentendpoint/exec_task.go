@@ -124,7 +124,7 @@ func (e *execTask) reportCompletedState(ctx context.Context, errMsg string, outp
 		ErrorMessage: errMsg,
 		Output:       output,
 	}
-	if err := e.client.ReportTaskComplete(ctx, req); err != nil {
+	if err := e.client.reportTaskComplete(ctx, req); err != nil {
 		return fmt.Errorf("error reporting completed state: %v", err)
 	}
 	return nil
@@ -139,7 +139,7 @@ func (e *execTask) run(ctx context.Context) error {
 			ExecStepTaskProgress: &agentendpointpb.ExecStepTaskProgress{State: agentendpointpb.ExecStepTaskProgress_STARTED},
 		},
 	}
-	res, err := e.client.ReportTaskProgress(ctx, req)
+	res, err := e.client.reportTaskProgress(ctx, req)
 	if err != nil {
 		return fmt.Errorf("error reporting state %s: %v", agentendpointpb.ExecStepTaskProgress_STARTED, err)
 	}
@@ -211,8 +211,9 @@ func (e *execTask) run(ctx context.Context) error {
 }
 
 // RunExecStep runs an exec step task.
-func (c *Client) RunExecStep(ctx context.Context, task *agentendpointpb.ExecStepTask) error {
+func (c *Client) RunExecStep(ctx context.Context, taskID string, task *agentendpointpb.ExecStepTask) error {
 	e := &execTask{
+		TaskID:    taskID,
 		client:    c,
 		Task:      &execStepTask{task},
 		LogLabels: map[string]string{"instance_name": config.Name(), "agent_version": config.Version()},

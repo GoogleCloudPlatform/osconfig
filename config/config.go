@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/compute/metadata"
+	"golang.org/x/oauth2/jws"
 )
 
 const (
@@ -389,18 +390,16 @@ type idToken struct {
 func (t *idToken) get() error {
 	data, err := metadata.Get(IdentityTokenPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting token from metadata: %v", err)
 	}
 
-	var id struct {
-		Exp int64 `json:"exp"`
-	}
-	if err := json.Unmarshal([]byte(data), &id); err != nil {
+	cs, err := jws.Decode(data)
+	if err != nil {
 		return err
 	}
 
 	t.raw = data
-	exp := time.Unix(id.Exp, 0)
+	exp := time.Unix(cs.Exp, 0)
 	t.exp = &exp
 
 	return nil

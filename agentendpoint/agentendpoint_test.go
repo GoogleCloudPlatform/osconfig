@@ -16,7 +16,10 @@ package agentendpoint
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net"
@@ -28,7 +31,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	agentendpoint "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/cloud.google.com/go/osconfig/agentendpoint/apiv1alpha1"
+	"golang.org/x/oauth2/jws"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -38,9 +43,23 @@ import (
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
-var testIDToken = fmt.Sprintf(`{"exp": %d}`, time.Now().Add(1*time.Hour).Unix())
+var testIDToken string
 
 func TestMain(m *testing.M) {
+	cs := &jws.ClaimSet{
+		Exp: time.Now().Add(1 * time.Hour).Unix(),
+	}
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		fmt.Printf("Error creating rsa key: %v", err)
+		os.Exit(1)
+	}
+	testIDToken, err = jws.Encode(nil, cs, key)
+	if err != nil {
+		fmt.Printf("Error creating jwt token: %v", err)
+		os.Exit(1)
+	}
+
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, testIDToken)
 	}))
@@ -49,6 +68,9 @@ func TestMain(m *testing.M) {
 		fmt.Printf("Error running os.Setenv: %v", err)
 		os.Exit(1)
 	}
+
+	opts := logger.LogOpts{LoggerName: "OSConfigAgent", Debug: true, Writers: []io.Writer{os.Stdout}}
+	logger.Init(context.Background(), opts)
 
 	out := m.Run()
 	ts.Close()
@@ -63,6 +85,7 @@ type testClient struct {
 }
 
 func (c *testClient) close() {
+	c.client.Close()
 	c.s.Stop()
 }
 
@@ -125,7 +148,7 @@ func (s *agentEndpointServiceTestServer) ReceiveTaskNotification(req *agentendpo
 		case <-s.streamSend:
 			srv.Send(&agentendpointpb.ReceiveTaskNotificationResponse{})
 		case <-s.streamError:
-			return status.Errorf(codes.Unimplemented, "")
+			return status.Errorf(codes.Unavailable, "")
 		}
 	}
 }
@@ -167,7 +190,7 @@ func (*agentEndpointServiceTestServer) LookupEffectiveGuestPolicies(ctx context.
 	return nil, status.Errorf(codes.Unimplemented, "method LookupEffectiveGuestPolicies not implemented")
 }
 
-func TestWatchStream(t *testing.T) {
+func TestReceiveTaskNotification(t *testing.T) {
 	ctx := context.Background()
 	srv := newAgentEndpointServiceTestServer()
 	tc, err := newTestClient(ctx, srv)
@@ -186,7 +209,7 @@ func TestWatchStream(t *testing.T) {
 	noti := make(chan struct{}, 1)
 	// Stream recieve.
 	srv.streamSend <- struct{}{}
-	if err := tc.client.watchStream(ctx, noti, ""); err != nil {
+	if err := tc.client.receiveTaskNotification(ctx, noti, ""); err != nil {
 		t.Errorf("did not expect error from a closed stream: %v", err)
 	}
 	if !srv.taskStart {
@@ -206,7 +229,7 @@ func TestWatchStream(t *testing.T) {
 	}
 }
 
-func TestWatchStreamErrors(t *testing.T) {
+func TestReceiveTaskNotificationErrors(t *testing.T) {
 	ctx := context.Background()
 	srv := newAgentEndpointServiceTestServer()
 	tc, err := newTestClient(ctx, srv)
@@ -217,19 +240,19 @@ func TestWatchStreamErrors(t *testing.T) {
 	noti := make(chan struct{}, 1)
 	// No error from server error.
 	srv.streamError <- struct{}{}
-	if err := tc.client.watchStream(ctx, noti, ""); err != nil {
+	if err := tc.client.receiveTaskNotification(ctx, noti, ""); err != nil {
 		t.Errorf("did not expect error from a server error: %v", err)
 	}
 
 	// No error from a closed stream.
 	srv.streamClose <- struct{}{}
-	if err := tc.client.watchStream(ctx, noti, ""); err != nil {
+	if err := tc.client.receiveTaskNotification(ctx, noti, ""); err != nil {
 		t.Errorf("did not expect error from a closed stream: %v", err)
 	}
 
 	tc.close()
 	// Error from a closed server
-	if err := tc.client.watchStream(ctx, noti, ""); err == nil {
+	if err := tc.client.receiveTaskNotification(ctx, noti, ""); err == nil {
 		t.Error("expected error from a closed server")
 	}
 }
@@ -276,7 +299,7 @@ func TestLoadTaskFromState(t *testing.T) {
 	}
 
 	// Launch another, this should run AFTER the task loaded from state file, but the previous task should have closed the stream.
-	if err := tc.client.watchStream(ctx, make(chan struct{}, 1), ""); err != nil {
+	if err := tc.client.receiveTaskNotification(ctx, make(chan struct{}, 1), ""); err != nil {
 		t.Errorf("did not expect error from a closed stream: %v", err)
 	}
 
