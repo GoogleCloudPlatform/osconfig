@@ -190,7 +190,7 @@ func (*agentEndpointServiceTestServer) LookupEffectiveGuestPolicies(ctx context.
 	return nil, status.Errorf(codes.Unimplemented, "method LookupEffectiveGuestPolicies not implemented")
 }
 
-func TestWatchStream(t *testing.T) {
+func TestReceiveTaskNotification(t *testing.T) {
 	ctx := context.Background()
 	srv := newAgentEndpointServiceTestServer()
 	tc, err := newTestClient(ctx, srv)
@@ -209,7 +209,7 @@ func TestWatchStream(t *testing.T) {
 	noti := make(chan struct{}, 1)
 	// Stream recieve.
 	srv.streamSend <- struct{}{}
-	if err := tc.client.watchStream(ctx, noti, ""); err != nil {
+	if err := tc.client.receiveTaskNotification(ctx, noti, ""); err != nil {
 		t.Errorf("did not expect error from a closed stream: %v", err)
 	}
 	if !srv.taskStart {
@@ -229,7 +229,7 @@ func TestWatchStream(t *testing.T) {
 	}
 }
 
-func TestWatchStreamErrors(t *testing.T) {
+func TestReceiveTaskNotificationErrors(t *testing.T) {
 	ctx := context.Background()
 	srv := newAgentEndpointServiceTestServer()
 	tc, err := newTestClient(ctx, srv)
@@ -240,19 +240,19 @@ func TestWatchStreamErrors(t *testing.T) {
 	noti := make(chan struct{}, 1)
 	// No error from server error.
 	srv.streamError <- struct{}{}
-	if err := tc.client.watchStream(ctx, noti, ""); err != nil {
+	if err := tc.client.receiveTaskNotification(ctx, noti, ""); err != nil {
 		t.Errorf("did not expect error from a server error: %v", err)
 	}
 
 	// No error from a closed stream.
 	srv.streamClose <- struct{}{}
-	if err := tc.client.watchStream(ctx, noti, ""); err != nil {
+	if err := tc.client.receiveTaskNotification(ctx, noti, ""); err != nil {
 		t.Errorf("did not expect error from a closed stream: %v", err)
 	}
 
 	tc.close()
 	// Error from a closed server
-	if err := tc.client.watchStream(ctx, noti, ""); err == nil {
+	if err := tc.client.receiveTaskNotification(ctx, noti, ""); err == nil {
 		t.Error("expected error from a closed server")
 	}
 }
@@ -299,7 +299,7 @@ func TestLoadTaskFromState(t *testing.T) {
 	}
 
 	// Launch another, this should run AFTER the task loaded from state file, but the previous task should have closed the stream.
-	if err := tc.client.watchStream(ctx, make(chan struct{}, 1), ""); err != nil {
+	if err := tc.client.receiveTaskNotification(ctx, make(chan struct{}, 1), ""); err != nil {
 		t.Errorf("did not expect error from a closed stream: %v", err)
 	}
 
