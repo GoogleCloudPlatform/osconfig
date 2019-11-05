@@ -21,12 +21,13 @@ import (
 	"strings"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
+
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
 // TODO: Write repo_gpgcheck, pkg_gpgcheck, type
-func zypperRepositories(repos []*osconfigpb.ZypperRepository, repoFile string) error {
+func zypperRepositories(repos []*agentendpointpb.ZypperRepository, repoFile string) error {
 	/*
 		# Repo file managed by Google OSConfig agent
 		[repo1]
@@ -65,7 +66,7 @@ func zypperRepositories(repos []*osconfigpb.ZypperRepository, repoFile string) e
 	return writeIfChanged(buf.Bytes(), repoFile)
 }
 
-func zypperChanges(zypperInstalled, zypperRemoved, zypperUpdated []*osconfigpb.Package) error {
+func zypperChanges(zypperInstalled, zypperRemoved, zypperUpdated []*agentendpointpb.Package) error {
 	var errs []string
 
 	installed, err := packages.InstalledRPMPackages()

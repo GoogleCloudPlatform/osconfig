@@ -31,7 +31,6 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
-	"github.com/GoogleCloudPlatform/osconfig/ospatchog"
 	"github.com/GoogleCloudPlatform/osconfig/policies"
 	"github.com/GoogleCloudPlatform/osconfig/service"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
@@ -70,6 +69,8 @@ func (s *serialPort) Write(b []byte) (int, error) {
 }
 
 func run(ctx context.Context) {
+	var taskNotificationClient *agentendpoint.Client
+	var err error
 	ticker := time.NewTicker(config.SvcPollInterval())
 	for {
 		if err := config.SetConfig(); err != nil {
@@ -83,11 +84,24 @@ func run(ctx context.Context) {
 			return
 		}
 
-		// This sets up the patching system to run in the background.
-		ospatchog.Configure(ctx)
+		if config.TaskNotificationEnabled() && (taskNotificationClient == nil || taskNotificationClient.Closed()) {
+			// Start WaitForTaskNotification if we need to.
+			taskNotificationClient, err = agentendpoint.NewClient(ctx)
+			if err != nil {
+				logger.Errorf(err.Error())
+			} else {
+				taskNotificationClient.WaitForTaskNotification(ctx)
+			}
+		} else if !config.TaskNotificationEnabled() && taskNotificationClient != nil && !taskNotificationClient.Closed() {
+			// Cancel WaitForTaskNotification if we need to, this will block if there is
+			// an existing current task running.
+			if err := taskNotificationClient.Close(); err != nil {
+				logger.Errorf(err.Error())
+			}
+		}
 
-		if config.OSPackageEnabled() {
-			policies.Run(ctx, config.Instance())
+		if config.GuestPoliciesEnabled() {
+			policies.Run(ctx)
 		}
 
 		if config.OSInventoryEnabled() {
@@ -169,14 +183,11 @@ func main() {
 		inventory.Run()
 		tasker.Close()
 		return
-	case "policies", "guestpolicies", "ospackage":
-		policies.Run(ctx, config.Instance())
+	case "gp", "policies", "guestpolicies", "ospackage":
+		policies.Run(ctx)
 		tasker.Close()
 		return
-	case "ospatch":
-		ospatchog.Run(ctx, make(chan struct{}))
-		return
-	case "w", "waitfortasknotification":
+	case "w", "waitfortasknotification", "ospatch":
 		client, err := agentendpoint.NewClient(ctx)
 		if err != nil {
 			logger.Fatalf(err.Error())

@@ -22,7 +22,8 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
+
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
 var (
@@ -30,7 +31,7 @@ var (
 )
 
 // InstallRecipe installs a recipe.
-func InstallRecipe(ctx context.Context, recipe *osconfigpb.SoftwareRecipe) error {
+func InstallRecipe(ctx context.Context, recipe *agentendpointpb.SoftwareRecipe) error {
 	steps := recipe.InstallSteps
 	recipeDB, err := newRecipeDB()
 	if err != nil {
@@ -39,7 +40,7 @@ func InstallRecipe(ctx context.Context, recipe *osconfigpb.SoftwareRecipe) error
 	installedRecipe, ok := recipeDB.getRecipe(recipe.Name)
 	if ok {
 		logger.Debugf("Currently installed version of software recipe %s with version %s.", recipe.Name, installedRecipe.Version)
-		if (installedRecipe.compare(recipe.Version)) && (recipe.DesiredState == osconfigpb.DesiredState_UPDATED) {
+		if (installedRecipe.compare(recipe.Version)) && (recipe.DesiredState == agentendpointpb.DesiredState_UPDATED) {
 			logger.Infof("Upgrading software recipe %s from version %s to %s.", recipe.Name, installedRecipe.Version, recipe.Version)
 			steps = recipe.UpdateSteps
 		} else {
@@ -107,7 +108,7 @@ func InstallRecipe(ctx context.Context, recipe *osconfigpb.SoftwareRecipe) error
 	return recipeDB.addRecipe(recipe.Name, recipe.Version, true)
 }
 
-func createBaseDir(recipe *osconfigpb.SoftwareRecipe, runID string) (string, error) {
+func createBaseDir(recipe *agentendpointpb.SoftwareRecipe, runID string) (string, error) {
 	dirName := recipe.Name
 	if recipe.Version != "" {
 		dirName = fmt.Sprintf("%s_%s", dirName, recipe.Version)

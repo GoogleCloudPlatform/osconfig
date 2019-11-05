@@ -21,10 +21,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
-func runYumRepositories(repos []*osconfigpb.YumRepository) (string, error) {
+func runYumRepositories(repos []*agentendpointpb.YumRepository) (string, error) {
 	td, err := ioutil.TempDir(os.TempDir(), "")
 	if err != nil {
 		return "", fmt.Errorf("error creating temp dir: %v", err)
@@ -47,20 +47,20 @@ func runYumRepositories(repos []*osconfigpb.YumRepository) (string, error) {
 func TestYumRepositories(t *testing.T) {
 	tests := []struct {
 		desc  string
-		repos []*osconfigpb.YumRepository
+		repos []*agentendpointpb.YumRepository
 		want  string
 	}{
-		{"no repos", []*osconfigpb.YumRepository{}, "# Repo file managed by Google OSConfig agent\n"},
+		{"no repos", []*agentendpointpb.YumRepository{}, "# Repo file managed by Google OSConfig agent\n"},
 		{
 			"1 repo",
-			[]*osconfigpb.YumRepository{
+			[]*agentendpointpb.YumRepository{
 				{BaseUrl: "http://repo1-url/", Id: "id"},
 			},
 			"# Repo file managed by Google OSConfig agent\n\n[id]\nname=id\nbaseurl=http://repo1-url/\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=1\n",
 		},
 		{
 			"2 repos",
-			[]*osconfigpb.YumRepository{
+			[]*agentendpointpb.YumRepository{
 				{BaseUrl: "http://repo1-url/", Id: "id1", DisplayName: "displayName1", GpgKeys: []string{"https://url/key"}},
 				{BaseUrl: "http://repo1-url/", Id: "id2", DisplayName: "displayName2", GpgKeys: []string{"https://url/key1", "https://url/key2"}},
 			},

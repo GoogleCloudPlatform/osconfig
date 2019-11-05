@@ -46,19 +46,17 @@ const (
 
 	prodEndpoint = "osconfig.googleapis.com:443"
 
-	osInventoryEnabledDefault = false
-	osPackageEnabledDefault   = false
-	osPatchEnabledDefault     = false
-	debugEnabledDefault       = false
+	osInventoryEnabledDefault      = false
+	guestPoliciesEnabledDefault    = false
+	taskNotificationEnabledDefault = false
+	debugEnabledDefault            = false
 
-	configDirWindows        = `C:\Program Files\Google\OSConfig`
-	configDirLinux          = "/etc/osconfig"
-	osPatchStateFileWindows = configDirWindows + `\osconfig_patch.state`
-	osPatchStateFileLinux   = configDirLinux + "/osconfig_patch.state"
-	taskStateFileWindows    = configDirWindows + `\osconfig_task.state`
-	taskStateFileLinux      = configDirLinux + "/osconfig_task.state"
-	restartFileWindows      = configDirWindows + `\osconfig_agent_restart_required`
-	restartFileLinux        = configDirLinux + "/osconfig_agent_restart_required"
+	configDirWindows     = `C:\Program Files\Google\OSConfig`
+	configDirLinux       = "/etc/osconfig"
+	taskStateFileWindows = configDirWindows + `\osconfig_task.state`
+	taskStateFileLinux   = configDirLinux + "/osconfig_task.state"
+	restartFileWindows   = configDirWindows + `\osconfig_agent_restart_required`
+	restartFileLinux     = configDirLinux + "/osconfig_agent_restart_required"
 
 	osConfigPollIntervalDefault = 10
 )
@@ -76,7 +74,7 @@ var (
 )
 
 type config struct {
-	osInventoryEnabled, osPackageEnabled, osPatchEnabled, debugEnabled                    bool
+	osInventoryEnabled, guestPoliciesEnabled, taskNotificationEnabled, debugEnabled       bool
 	svcEndpoint, googetRepoFilePath, zypperRepoFilePath, yumRepoFilePath, aptRepoFilePath string
 	numericProjectID, osConfigPollInterval                                                int
 	projectID, instanceZone, instanceName, instanceID                                     string
@@ -84,12 +82,12 @@ type config struct {
 
 func (c *config) parsePreRelease(features string) {
 	for _, f := range strings.Split(features, ",") {
-		f = strings.TrimSpace(f)
+		f = strings.ToLower(strings.TrimSpace(f))
 		switch f {
-		case "ospatch":
-			c.osPatchEnabled = true
-		case "ospackage":
-			c.osPackageEnabled = true
+		case "tasknotification", "ospatch": // ospatch is the legacy flag
+			c.taskNotificationEnabled = true
+		case "ospackage", "guestpolicies":
+			c.guestPoliciesEnabled = true
 		}
 	}
 }
@@ -139,12 +137,12 @@ type attributesJSON struct {
 func createConfigFromMetadata(md metadataJSON) *config {
 	old := getAgentConfig()
 	c := &config{
-		osInventoryEnabled:   osInventoryEnabledDefault,
-		osPackageEnabled:     osPackageEnabledDefault,
-		osPatchEnabled:       osPatchEnabledDefault,
-		debugEnabled:         debugEnabledDefault,
-		svcEndpoint:          prodEndpoint,
-		osConfigPollInterval: osConfigPollIntervalDefault,
+		osInventoryEnabled:      osInventoryEnabledDefault,
+		guestPoliciesEnabled:    guestPoliciesEnabledDefault,
+		taskNotificationEnabled: taskNotificationEnabledDefault,
+		debugEnabled:            debugEnabledDefault,
+		svcEndpoint:             prodEndpoint,
+		osConfigPollInterval:    osConfigPollIntervalDefault,
 
 		googetRepoFilePath: googetRepoFilePath,
 		zypperRepoFilePath: zypperRepoFilePath,
@@ -336,14 +334,14 @@ func OSInventoryEnabled() bool {
 	return getAgentConfig().osInventoryEnabled
 }
 
-// OSPackageEnabled indicates whether OSPackage should be enabled.
-func OSPackageEnabled() bool {
-	return getAgentConfig().osPackageEnabled
+// GuestPoliciesEnabled indicates whether GuestPolicies should be enabled.
+func GuestPoliciesEnabled() bool {
+	return getAgentConfig().guestPoliciesEnabled
 }
 
-// OSPatchEnabled indicates whether OSPatch should be enabled.
-func OSPatchEnabled() bool {
-	return getAgentConfig().osPatchEnabled
+// TaskNotificationEnabled indicates whether TaskNotification should be enabled.
+func TaskNotificationEnabled() bool {
+	return getAgentConfig().taskNotificationEnabled
 }
 
 // Instance is the URI of the instance the agent is running on.
@@ -430,15 +428,6 @@ func Version() string {
 // SetVersion sets the agent version.
 func SetVersion(v string) {
 	version = v
-}
-
-// PatchStateFile is the location of the patch state file.
-func PatchStateFile() string {
-	if runtime.GOOS == "windows" {
-		return osPatchStateFileWindows
-	}
-
-	return osPatchStateFileLinux
 }
 
 // TaskStateFile is the location of the task state file.

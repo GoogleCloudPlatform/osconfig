@@ -30,19 +30,20 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 	"github.com/ulikunitz/xz"
 	"github.com/ulikunitz/xz/lzma"
+
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
-var extensionMap = map[osconfigpb.SoftwareRecipe_Step_RunScript_Interpreter]string{
-	osconfigpb.SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED: ".bat",
-	osconfigpb.SoftwareRecipe_Step_RunScript_SHELL:                   ".bat",
-	osconfigpb.SoftwareRecipe_Step_RunScript_POWERSHELL:              ".ps1",
+var extensionMap = map[agentendpointpb.SoftwareRecipe_Step_RunScript_Interpreter]string{
+	agentendpointpb.SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED: ".bat",
+	agentendpointpb.SoftwareRecipe_Step_RunScript_SHELL:                   ".bat",
+	agentendpointpb.SoftwareRecipe_Step_RunScript_POWERSHELL:              ".ps1",
 }
 
-func stepCopyFile(step *osconfigpb.SoftwareRecipe_Step_CopyFile, artifacts map[string]string, runEnvs []string, stepDir string) error {
+func stepCopyFile(step *agentendpointpb.SoftwareRecipe_Step_CopyFile, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	dest, err := util.NormPath(step.Destination)
 	if err != nil {
 		return err
@@ -102,20 +103,20 @@ func parsePermissions(s string) (os.FileMode, error) {
 	return os.FileMode(i), nil
 }
 
-func stepExtractArchive(step *osconfigpb.SoftwareRecipe_Step_ExtractArchive, artifacts map[string]string, runEnvs []string, stepDir string) error {
+func stepExtractArchive(step *agentendpointpb.SoftwareRecipe_Step_ExtractArchive, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	artifact := step.GetArtifactId()
 	filename, ok := artifacts[artifact]
 	if !ok {
 		return fmt.Errorf("%q not found in artifact map", artifact)
 	}
 	switch typ := step.GetType(); typ {
-	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_ZIP:
+	case agentendpointpb.SoftwareRecipe_Step_ExtractArchive_ZIP:
 		return extractZip(filename, step.Destination)
-	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_GZIP,
-		osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_BZIP,
-		osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_LZMA,
-		osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_XZ,
-		osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR:
+	case agentendpointpb.SoftwareRecipe_Step_ExtractArchive_TAR_GZIP,
+		agentendpointpb.SoftwareRecipe_Step_ExtractArchive_TAR_BZIP,
+		agentendpointpb.SoftwareRecipe_Step_ExtractArchive_TAR_LZMA,
+		agentendpointpb.SoftwareRecipe_Step_ExtractArchive_TAR_XZ,
+		agentendpointpb.SoftwareRecipe_Step_ExtractArchive_TAR:
 		return extractTar(filename, step.Destination, typ)
 	default:
 		return fmt.Errorf("Unrecognized archive type %q", typ)
@@ -214,18 +215,18 @@ func extractZip(zipPath string, dst string) error {
 	return nil
 }
 
-func decompress(reader io.Reader, archiveType osconfigpb.SoftwareRecipe_Step_ExtractArchive_ArchiveType) (io.Reader, error) {
+func decompress(reader io.Reader, archiveType agentendpointpb.SoftwareRecipe_Step_ExtractArchive_ArchiveType) (io.Reader, error) {
 	switch archiveType {
-	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_GZIP:
+	case agentendpointpb.SoftwareRecipe_Step_ExtractArchive_TAR_GZIP:
 		// *gzip.Reader is a io.ReadCloser but it isn't necesary to call Close() on it.
 		return gzip.NewReader(reader)
-	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_BZIP:
+	case agentendpointpb.SoftwareRecipe_Step_ExtractArchive_TAR_BZIP:
 		return bzip2.NewReader(reader), nil
-	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_LZMA:
+	case agentendpointpb.SoftwareRecipe_Step_ExtractArchive_TAR_LZMA:
 		return lzma.NewReader2(reader)
-	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_XZ:
+	case agentendpointpb.SoftwareRecipe_Step_ExtractArchive_TAR_XZ:
 		return xz.NewReader(reader)
-	case osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR:
+	case agentendpointpb.SoftwareRecipe_Step_ExtractArchive_TAR:
 		return reader, nil
 	default:
 		return nil, fmt.Errorf("Unrecognized archive type %q when trying to decompress tar", archiveType)
@@ -353,7 +354,7 @@ func createFiles(tr *tar.Reader, dst string) error {
 	return nil
 }
 
-func extractTar(tarName string, dst string, archiveType osconfigpb.SoftwareRecipe_Step_ExtractArchive_ArchiveType) error {
+func extractTar(tarName string, dst string, archiveType agentendpointpb.SoftwareRecipe_Step_ExtractArchive_ArchiveType) error {
 	file, err := os.Open(tarName)
 	if err != nil {
 		return err
@@ -378,7 +379,7 @@ func extractTar(tarName string, dst string, archiveType osconfigpb.SoftwareRecip
 	return createFiles(tr, dst)
 }
 
-func stepInstallMsi(step *osconfigpb.SoftwareRecipe_Step_InstallMsi, artifacts map[string]string, runEnvs []string, stepDir string) error {
+func stepInstallMsi(step *agentendpointpb.SoftwareRecipe_Step_InstallMsi, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	artifact := step.GetArtifactId()
 	path, ok := artifacts[artifact]
 	if !ok {
@@ -397,15 +398,15 @@ func stepInstallMsi(step *osconfigpb.SoftwareRecipe_Step_InstallMsi, artifacts m
 	return executeCommand("C:\\Windows\\System32\\msiexec.exe", args, stepDir, runEnvs, exitCodes)
 }
 
-func stepInstallDpkg(step *osconfigpb.SoftwareRecipe_Step_InstallDpkg, artifacts map[string]string, runEnvs []string, stepDir string) error {
+func stepInstallDpkg(step *agentendpointpb.SoftwareRecipe_Step_InstallDpkg, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	return fmt.Errorf("InstallDpkg not yet supported")
 }
 
-func stepInstallRpm(step *osconfigpb.SoftwareRecipe_Step_InstallRpm, artifacts map[string]string, runEnvs []string, stepDir string) error {
+func stepInstallRpm(step *agentendpointpb.SoftwareRecipe_Step_InstallRpm, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	return fmt.Errorf("InstallRpm not yet supported")
 }
 
-func stepExecFile(step *osconfigpb.SoftwareRecipe_Step_ExecFile, artifacts map[string]string, runEnvs []string, stepDir string) error {
+func stepExecFile(step *agentendpointpb.SoftwareRecipe_Step_ExecFile, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	var path string
 	switch {
 	case step.GetArtifactId() != "":
@@ -430,7 +431,7 @@ func stepExecFile(step *osconfigpb.SoftwareRecipe_Step_ExecFile, artifacts map[s
 	return executeCommand(path, step.Args, stepDir, runEnvs, []int32{0})
 }
 
-func stepRunScript(step *osconfigpb.SoftwareRecipe_Step_RunScript, artifacts map[string]string, runEnvs []string, stepDir string) error {
+func stepRunScript(step *agentendpointpb.SoftwareRecipe_Step_RunScript, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	var extension string
 	if runtime.GOOS == "windows" {
 		extension = extensionMap[step.Interpreter]
@@ -443,10 +444,10 @@ func stepRunScript(step *osconfigpb.SoftwareRecipe_Step_RunScript, artifacts map
 	var cmd string
 	var args []string
 	switch step.Interpreter {
-	case osconfigpb.SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED:
+	case agentendpointpb.SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED:
 		cmd = scriptPath
 		args = step.Args
-	case osconfigpb.SoftwareRecipe_Step_RunScript_SHELL:
+	case agentendpointpb.SoftwareRecipe_Step_RunScript_SHELL:
 		if runtime.GOOS == "windows" {
 			cmd = scriptPath
 			args = step.Args
@@ -454,7 +455,7 @@ func stepRunScript(step *osconfigpb.SoftwareRecipe_Step_RunScript, artifacts map
 			args = append([]string{scriptPath}, step.Args...)
 			cmd = "/bin/sh"
 		}
-	case osconfigpb.SoftwareRecipe_Step_RunScript_POWERSHELL:
+	case agentendpointpb.SoftwareRecipe_Step_RunScript_POWERSHELL:
 		if runtime.GOOS != "windows" {
 			return fmt.Errorf("interpreter %q can only used on Windows systems", step.Interpreter)
 		}

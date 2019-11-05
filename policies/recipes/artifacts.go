@@ -24,13 +24,14 @@ import (
 	"path/filepath"
 
 	"cloud.google.com/go/storage"
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 	"github.com/GoogleCloudPlatform/osconfig/external"
+
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
 // fetchArtifacts takes in a slice of artifacts and downloads them into the specified directory,
 // Returns a map of artifact names to their new locations on the local disk.
-func fetchArtifacts(ctx context.Context, artifacts []*osconfigpb.SoftwareRecipe_Artifact, directory string) (map[string]string, error) {
+func fetchArtifacts(ctx context.Context, artifacts []*agentendpointpb.SoftwareRecipe_Artifact, directory string) (map[string]string, error) {
 	localNames := make(map[string]string)
 
 	for _, a := range artifacts {
@@ -44,7 +45,7 @@ func fetchArtifacts(ctx context.Context, artifacts []*osconfigpb.SoftwareRecipe_
 	return localNames, nil
 }
 
-func fetchArtifact(ctx context.Context, artifact *osconfigpb.SoftwareRecipe_Artifact, directory string) (string, error) {
+func fetchArtifact(ctx context.Context, artifact *agentendpointpb.SoftwareRecipe_Artifact, directory string) (string, error) {
 	var checksum, extension string
 	var reader io.ReadCloser
 	switch {

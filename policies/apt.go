@@ -24,16 +24,17 @@ import (
 	"strings"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/armor"
 	"golang.org/x/crypto/openpgp/packet"
+
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
-var debArchiveTypeMap = map[osconfigpb.AptRepository_ArchiveType]string{
-	osconfigpb.AptRepository_DEB:     "deb",
-	osconfigpb.AptRepository_DEB_SRC: "deb-src",
+var debArchiveTypeMap = map[agentendpointpb.AptRepository_ArchiveType]string{
+	agentendpointpb.AptRepository_DEB:     "deb",
+	agentendpointpb.AptRepository_DEB_SRC: "deb-src",
 }
 
 const aptGPGFile = "/etc/apt/trusted.gpg.d/osconfig_agent_managed.gpg"
@@ -71,7 +72,7 @@ func containsEntity(es []*openpgp.Entity, e *openpgp.Entity) bool {
 	return false
 }
 
-func aptRepositories(repos []*osconfigpb.AptRepository, repoFile string) error {
+func aptRepositories(repos []*agentendpointpb.AptRepository, repoFile string) error {
 	var es []*openpgp.Entity
 	var keys []string
 	for _, repo := range repos {
@@ -128,7 +129,7 @@ func aptRepositories(repos []*osconfigpb.AptRepository, repoFile string) error {
 	return writeIfChanged(buf.Bytes(), repoFile)
 }
 
-func aptChanges(aptInstalled, aptRemoved, aptUpdated []*osconfigpb.Package) error {
+func aptChanges(aptInstalled, aptRemoved, aptUpdated []*agentendpointpb.Package) error {
 	var errs []string
 
 	installed, err := packages.InstalledDebPackages()
