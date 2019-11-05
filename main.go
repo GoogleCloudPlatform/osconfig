@@ -39,9 +39,12 @@ import (
 	_ "google.golang.org/genproto/googleapis/rpc/errdetails"
 )
 
-var version = "manual-" + time.Now().Format(time.RFC3339)
+var version string
 
 func init() {
+	if version == "" {
+		version = "manual-" + time.Now().Format(time.RFC3339)
+	}
 	// We do this here so the -X value doesn't need the full path.
 	config.SetVersion(version)
 }
