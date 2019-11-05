@@ -21,10 +21,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
-func runAptRepositories(repos []*osconfigpb.AptRepository) (string, error) {
+func runAptRepositories(repos []*agentendpointpb.AptRepository) (string, error) {
 	td, err := ioutil.TempDir(os.TempDir(), "")
 	if err != nil {
 		return "", fmt.Errorf("error creating temp dir: %v", err)
@@ -47,22 +47,22 @@ func runAptRepositories(repos []*osconfigpb.AptRepository) (string, error) {
 func TestAptRepositories(t *testing.T) {
 	tests := []struct {
 		desc  string
-		repos []*osconfigpb.AptRepository
+		repos []*agentendpointpb.AptRepository
 		want  string
 	}{
-		{"no repos", []*osconfigpb.AptRepository{}, "# Repo file managed by Google OSConfig agent\n"},
+		{"no repos", []*agentendpointpb.AptRepository{}, "# Repo file managed by Google OSConfig agent\n"},
 		{
 			"1 repo",
-			[]*osconfigpb.AptRepository{
+			[]*agentendpointpb.AptRepository{
 				{Uri: "http://repo1-url/", Distribution: "distribution", Components: []string{"component1"}},
 			},
 			"# Repo file managed by Google OSConfig agent\n\ndeb http://repo1-url/ distribution component1\n",
 		},
 		{
 			"2 repos",
-			[]*osconfigpb.AptRepository{
-				{Uri: "http://repo1-url/", Distribution: "distribution", Components: []string{"component1"}, ArchiveType: osconfigpb.AptRepository_DEB_SRC},
-				{Uri: "http://repo2-url/", Distribution: "distribution", Components: []string{"component1", "component2"}, ArchiveType: osconfigpb.AptRepository_DEB},
+			[]*agentendpointpb.AptRepository{
+				{Uri: "http://repo1-url/", Distribution: "distribution", Components: []string{"component1"}, ArchiveType: agentendpointpb.AptRepository_DEB_SRC},
+				{Uri: "http://repo2-url/", Distribution: "distribution", Components: []string{"component1", "component2"}, ArchiveType: agentendpointpb.AptRepository_DEB},
 			},
 			"# Repo file managed by Google OSConfig agent\n\ndeb-src http://repo1-url/ distribution component1\n\ndeb http://repo2-url/ distribution component1 component2\n",
 		},

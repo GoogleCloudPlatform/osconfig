@@ -115,7 +115,7 @@ func newTestClient(ctx context.Context, srv agentendpointpb.AgentEndpointService
 	}
 
 	return &testClient{
-		client: &Client{client},
+		client: &Client{raw: client, noti: make(chan struct{}, 1)},
 		s:      s,
 	}, nil
 }
@@ -155,10 +155,10 @@ func (s *agentEndpointServiceTestServer) ReceiveTaskNotification(req *agentendpo
 func (s *agentEndpointServiceTestServer) ReportTaskStart(ctx context.Context, req *agentendpointpb.ReportTaskStartRequest) (*agentendpointpb.ReportTaskStartResponse, error) {
 	// We first return an TaskType_EXEC_STEP_TASK, then TaskType_APPLY_PATCHES. If patchTaskRun we return nothing signalling the end to tasks.
 	switch {
-	case s.taskStart:
-		return &agentendpointpb.ReportTaskStartResponse{Task: &agentendpointpb.Task{TaskType: agentendpointpb.TaskType_APPLY_PATCHES, TaskId: "TaskType_APPLY_PATCHES"}}, nil
 	case s.patchTaskComplete:
 		return &agentendpointpb.ReportTaskStartResponse{}, nil
+	case s.taskStart:
+		return &agentendpointpb.ReportTaskStartResponse{Task: &agentendpointpb.Task{TaskType: agentendpointpb.TaskType_APPLY_PATCHES, TaskId: "TaskType_APPLY_PATCHES"}}, nil
 	default:
 		s.taskStart = true
 		return &agentendpointpb.ReportTaskStartResponse{Task: &agentendpointpb.Task{TaskType: agentendpointpb.TaskType_EXEC_STEP_TASK, TaskId: "TaskType_EXEC_STEP_TASK"}}, nil
@@ -206,10 +206,9 @@ func TestReceiveTaskNotification(t *testing.T) {
 	defer os.RemoveAll(td)
 	taskStateFile = filepath.Join(td, "testState")
 
-	noti := make(chan struct{}, 1)
 	// Stream recieve.
 	srv.streamSend <- struct{}{}
-	if err := tc.client.receiveTaskNotification(ctx, noti, ""); err != nil {
+	if err := tc.client.receiveTaskNotification(ctx, ""); err != nil {
 		t.Errorf("did not expect error from a closed stream: %v", err)
 	}
 	if !srv.taskStart {
@@ -237,22 +236,21 @@ func TestReceiveTaskNotificationErrors(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	noti := make(chan struct{}, 1)
 	// No error from server error.
 	srv.streamError <- struct{}{}
-	if err := tc.client.receiveTaskNotification(ctx, noti, ""); err != nil {
+	if err := tc.client.receiveTaskNotification(ctx, ""); err != nil {
 		t.Errorf("did not expect error from a server error: %v", err)
 	}
 
 	// No error from a closed stream.
 	srv.streamClose <- struct{}{}
-	if err := tc.client.receiveTaskNotification(ctx, noti, ""); err != nil {
+	if err := tc.client.receiveTaskNotification(ctx, ""); err != nil {
 		t.Errorf("did not expect error from a closed stream: %v", err)
 	}
 
 	tc.close()
 	// Error from a closed server
-	if err := tc.client.receiveTaskNotification(ctx, noti, ""); err == nil {
+	if err := tc.client.receiveTaskNotification(ctx, ""); err == nil {
 		t.Error("expected error from a closed server")
 	}
 }
@@ -299,7 +297,7 @@ func TestLoadTaskFromState(t *testing.T) {
 	}
 
 	// Launch another, this should run AFTER the task loaded from state file, but the previous task should have closed the stream.
-	if err := tc.client.receiveTaskNotification(ctx, make(chan struct{}, 1), ""); err != nil {
+	if err := tc.client.receiveTaskNotification(ctx, ""); err != nil {
 		t.Errorf("did not expect error from a closed stream: %v", err)
 	}
 

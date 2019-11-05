@@ -65,8 +65,8 @@ func TestSetConfig(t *testing.T) {
 		want bool
 	}{
 		{"osinventory should be enabled (proj disabled, inst enabled)", OSInventoryEnabled, true},
-		{"ospatch should be enabled (inst enabled)", OSPatchEnabled, true},
-		{"ospackage should be enabled (proj enabled)", OSPackageEnabled, true},
+		{"taskNotification should be enabled (inst enabled)", TaskNotificationEnabled, true},
+		{"guestpolicies should be enabled (proj enabled)", GuestPoliciesEnabled, true},
 		{"debugenabled should be true (proj disabled, inst enabled)", Debug, true},
 	}
 	for _, tt := range testsBool {
@@ -122,8 +122,8 @@ func TestSetConfigDefaultValues(t *testing.T) {
 		want bool
 	}{
 		{OSInventoryEnabled, osInventoryEnabledDefault},
-		{OSPatchEnabled, osPatchEnabledDefault},
-		{OSPackageEnabled, osPackageEnabledDefault},
+		{TaskNotificationEnabled, taskNotificationEnabledDefault},
+		{GuestPoliciesEnabled, guestPoliciesEnabledDefault},
 		{Debug, debugEnabledDefault},
 	}
 	for _, tt := range testsBool {

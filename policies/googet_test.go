@@ -21,10 +21,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
-func runGooGetRepositories(repos []*osconfigpb.GooRepository) (string, error) {
+func runGooGetRepositories(repos []*agentendpointpb.GooRepository) (string, error) {
 	td, err := ioutil.TempDir(os.TempDir(), "")
 	if err != nil {
 		return "", fmt.Errorf("error creating temp dir: %v", err)
@@ -47,20 +47,20 @@ func runGooGetRepositories(repos []*osconfigpb.GooRepository) (string, error) {
 func TestGooGetRepositories(t *testing.T) {
 	tests := []struct {
 		desc  string
-		repos []*osconfigpb.GooRepository
+		repos []*agentendpointpb.GooRepository
 		want  string
 	}{
-		{"no repos", []*osconfigpb.GooRepository{}, "# Repo file managed by Google OSConfig agent\n"},
+		{"no repos", []*agentendpointpb.GooRepository{}, "# Repo file managed by Google OSConfig agent\n"},
 		{
 			"1 repo",
-			[]*osconfigpb.GooRepository{
+			[]*agentendpointpb.GooRepository{
 				{Url: "http://repo1-url/", Name: "name"},
 			},
 			"# Repo file managed by Google OSConfig agent\n\n- name: name\n  url: http://repo1-url/\n",
 		},
 		{
 			"2 repos",
-			[]*osconfigpb.GooRepository{
+			[]*agentendpointpb.GooRepository{
 				{Url: "http://repo1-url/", Name: "name1"},
 				{Url: "http://repo2-url/", Name: "name2"},
 			},

@@ -17,7 +17,7 @@ package policies
 import (
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
 // changes represents the delta between the actual and the desired package installation state.
@@ -29,7 +29,7 @@ type changes struct {
 
 // getNecessaryChanges compares the current state and the desired state to determine which packages
 // need to be installed, upgraded, or removed.
-func getNecessaryChanges(installedPkgs []packages.PkgInfo, upgradablePkgs []packages.PkgInfo, installPkgs, removePkgs, updatePkgs []*osconfigpb.Package) changes {
+func getNecessaryChanges(installedPkgs []packages.PkgInfo, upgradablePkgs []packages.PkgInfo, installPkgs, removePkgs, updatePkgs []*agentendpointpb.Package) changes {
 	installedPkgMap := make(map[string]bool)
 	for _, pkg := range installedPkgs {
 		installedPkgMap[pkg.Name] = true

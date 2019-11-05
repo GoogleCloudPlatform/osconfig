@@ -21,11 +21,12 @@ import (
 	"strings"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
+
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
-func googetRepositories(repos []*osconfigpb.GooRepository, repoFile string) error {
+func googetRepositories(repos []*agentendpointpb.GooRepository, repoFile string) error {
 	/*
 		# Repo file managed by Google OSConfig agent
 
@@ -44,7 +45,7 @@ func googetRepositories(repos []*osconfigpb.GooRepository, repoFile string) erro
 	return writeIfChanged(buf.Bytes(), repoFile)
 }
 
-func googetChanges(gooInstalled, gooRemoved, gooUpdated []*osconfigpb.Package) error {
+func googetChanges(gooInstalled, gooRemoved, gooUpdated []*agentendpointpb.Package) error {
 	var errs []string
 
 	installed, err := packages.InstalledGooGetPackages()

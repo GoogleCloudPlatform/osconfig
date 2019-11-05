@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sync"
 	"time"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
@@ -46,7 +47,11 @@ var (
 
 // Client is a an agentendpoint client.
 type Client struct {
-	raw *agentendpoint.Client
+	raw    *agentendpoint.Client
+	cancel context.CancelFunc
+	noti   chan struct{}
+	closed bool
+	mx     sync.Mutex
 }
 
 // NewClient a new agentendpoint Client.
@@ -61,12 +66,24 @@ func NewClient(ctx context.Context) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Client{raw: c}, nil
+
+	return &Client{raw: c, noti: make(chan struct{}, 1)}, nil
 }
 
-// Close closes the underlying ClientConn.
+// Close cancels WaitForTaskNotification and closes the underlying ClientConn.
 func (c *Client) Close() error {
+	// Lock so nothing can use the client while we are closing.
+	c.mx.Lock()
+	if c.cancel != nil {
+		c.cancel()
+	}
+	c.closed = true
 	return c.raw.Close()
+}
+
+// Closed reports whether the Client has been closed.
+func (c *Client) Closed() bool {
+	return c.closed
 }
 
 func (c *Client) reportTaskStart(ctx context.Context) (res *agentendpointpb.ReportTaskStartResponse, err error) {
@@ -205,23 +222,36 @@ func (c *Client) runTask(ctx context.Context) {
 	}
 }
 
-func (c *Client) handleStream(ctx context.Context, stream agentendpointpb.AgentEndpointService_ReceiveTaskNotificationClient, noti chan struct{}) error {
+func (c *Client) handleStream(ctx context.Context, stream agentendpointpb.AgentEndpointService_ReceiveTaskNotificationClient) error {
 	for {
+		logger.Debugf("Waiting on ReceiveTaskNotification stream Recv().")
 		if _, err := stream.Recv(); err != nil {
 			// Return on any stream error, even a close, the caller will simply
 			// reconnect the stream as needed.
 			return err
 		}
+		logger.Debugf("Received task notification.")
 
 		// Only queue up one notifcation at a time. We should only ever
 		// have one active task being worked on and one in the queue.
 		select {
-		case noti <- struct{}{}:
+		case <-ctx.Done():
+			// We have been canceled.
+			return nil
+		case c.noti <- struct{}{}:
 			tasker.Enqueue("TaskNotification", func() {
-				// Take this task off the notification queue so another can be
-				// queued up.
-				<-noti
-				c.runTask(ctx)
+				// We lock so that this task will complete before the client can get canceled.
+				c.mx.Lock()
+				defer c.mx.Unlock()
+				select {
+				case <-ctx.Done():
+					// We have been canceled.
+				default:
+					// Take this task off the notification queue so another can be
+					// queued up.
+					<-c.noti
+					c.runTask(ctx)
+				}
 			})
 		default:
 			// Ignore the notificaction as we already have one queued.
@@ -229,29 +259,20 @@ func (c *Client) handleStream(ctx context.Context, stream agentendpointpb.AgentE
 	}
 }
 
-func (c *Client) receiveTaskNotification(ctx context.Context, noti chan struct{}, token string) error {
+func (c *Client) receiveTaskNotification(ctx context.Context) (agentendpointpb.AgentEndpointService_ReceiveTaskNotificationClient, error) {
 	req := &agentendpointpb.ReceiveTaskNotificationRequest{
-		AgentVersion:    config.Version(),
-		InstanceIdToken: token,
+		AgentVersion: config.Version(),
 	}
 
-	stream, err := c.raw.ReceiveTaskNotification(ctx, req)
+	token, err := config.IDToken()
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("error fetching Instance IDToken: %v", err)
 	}
 
-	err = c.handleStream(ctx, stream, noti)
-	if err != nil {
-		if err == io.EOF {
-			return nil
-		}
-		if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
-			// Server closed the stream indication we should reconnect.
-			return nil
-		}
-	}
+	logger.Debugf("Calling ReceiveTaskNotification with request:\n%s", util.PrettyFmt(req))
+	req.InstanceIdToken = token
 
-	return err
+	return c.raw.ReceiveTaskNotification(ctx, req)
 }
 
 func (c *Client) loadTaskFromState(ctx context.Context) error {
@@ -269,30 +290,62 @@ func (c *Client) loadTaskFromState(ctx context.Context) error {
 	return nil
 }
 
-// WaitForTaskNotification waits for and acts on any task notification indefinitely.
-func (c *Client) WaitForTaskNotification(ctx context.Context) error {
+// WaitForTaskNotification waits for and acts on any task notification until the Client is closed.
+// Multiple calls to WaitForTaskNotification will not create new watchers.
+func (c *Client) WaitForTaskNotification(ctx context.Context) {
+	c.mx.Lock()
+	defer c.mx.Unlock()
+	if c.cancel != nil {
+		// WaitForTaskNotification is already running on this client.
+		return
+	}
+	logger.Debugf("Running WaitForTaskNotification")
+	ctx, c.cancel = context.WithCancel(ctx)
+
 	logger.Debugf("Checking local state file for saved task.")
 	if err := c.loadTaskFromState(ctx); err != nil {
 		logger.Errorf(err.Error())
 	}
 
 	logger.Debugf("Setting up ReceiveTaskNotification stream watcher.")
-	noti := make(chan struct{}, 1)
-	for {
-		token, err := config.IDToken()
-		if err != nil {
-			return fmt.Errorf("error fetching Instance IDToken: %v", err)
-		}
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				// We have been canceled.
+				logger.Debugf("Disabling WaitForTaskNotification")
+				return
+			default:
+			}
 
-		if err := c.receiveTaskNotification(ctx, noti, token); err != nil {
-			if s, ok := status.FromError(err); ok && s.Code() == codes.PermissionDenied {
-				// Service is not enabled for this project.
-				time.Sleep(config.SvcPollInterval())
+			stream, err := c.receiveTaskNotification(ctx)
+			if err != nil {
+				if s, ok := status.FromError(err); ok && s.Code() == codes.PermissionDenied {
+					// Service is not enabled for this project.
+					time.Sleep(config.SvcPollInterval())
+					continue
+				}
+				// TODO: Add more error checking (handle more API erros vs non API errors) and backoff where appropriate.
+				logger.Errorf("Error calling receiveTaskNotification: %v", err)
+				time.Sleep(5 * time.Second)
 				continue
 			}
-			// TODO: Add more error checking (handle more API erros vs non API errors) and backoff where appropriate.
-			logger.Errorf("Error watching stream: %v", err)
-			time.Sleep(5 * time.Second)
+
+			err = c.handleStream(ctx, stream)
+			fmt.Println(err)
+			if err != nil {
+				if err == io.EOF {
+					// Server closed the stream indication we should reconnect.
+					continue
+				}
+				if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
+					// Something canceled the stream (could be deadline/timeout), we should reconnect.
+					continue
+				}
+				// TODO: Add more error checking (handle more API erros vs non API errors) and backoff where appropriate.
+				logger.Errorf("Error watching stream: %v", err)
+				time.Sleep(5 * time.Second)
+			}
 		}
-	}
+	}()
 }

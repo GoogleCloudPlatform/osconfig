@@ -28,10 +28,8 @@ import (
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
-func init() {
-	if config.OSPatchEnabled() {
-		ospatch.DisableAutoUpdates()
-	}
+func initPatch() {
+	ospatch.DisableAutoUpdates()
 }
 
 func systemRebootRequired() (bool, error) {
