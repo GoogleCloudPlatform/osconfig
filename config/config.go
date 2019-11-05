@@ -62,11 +62,9 @@ const (
 )
 
 var (
-	resourceOverride = flag.String("resource_override", "", "The URI of the instance this agent is running on in the form of `projects/*/zones/*/instances/*`. If omitted, the name will be determined by querying the metadata service.")
-	endpoint         = flag.String("endpoint", prodEndpoint, "osconfig endpoint override")
-	oauth            = flag.String("oauth", "", "path to oauth json file")
-	debug            = flag.Bool("debug", false, "set debug log verbosity")
-	stdout           = flag.Bool("stdout", false, "log to stdout")
+	endpoint = flag.String("endpoint", prodEndpoint, "osconfig endpoint override")
+	debug    = flag.Bool("debug", false, "set debug log verbosity")
+	stdout   = flag.Bool("stdout", false, "log to stdout")
 
 	agentConfig   = &config{}
 	agentConfigMx sync.RWMutex
@@ -284,11 +282,6 @@ func SerialLogPort() string {
 	return ""
 }
 
-// ResourceOverride is the URI of the resource.
-func ResourceOverride() string {
-	return *resourceOverride
-}
-
 // Debug sets the debug log verbosity.
 func Debug() bool {
 	return (*debug || getAgentConfig().debugEnabled)
@@ -297,11 +290,6 @@ func Debug() bool {
 // Stdout flag.
 func Stdout() bool {
 	return *stdout
-}
-
-// OAuthPath is the local location of the OAuth credentials file.
-func OAuthPath() string {
-	return *oauth
 }
 
 // SvcEndpoint is the OS Config service endpoint.
@@ -346,10 +334,6 @@ func TaskNotificationEnabled() bool {
 
 // Instance is the URI of the instance the agent is running on.
 func Instance() string {
-	if ResourceOverride() != "" {
-		return ResourceOverride()
-	}
-
 	// Zone contains 'projects/project-id/zones' as a prefix.
 	return fmt.Sprintf("%s/instances/%s", Zone(), Name())
 }

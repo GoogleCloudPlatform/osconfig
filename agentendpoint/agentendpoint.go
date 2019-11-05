@@ -290,6 +290,25 @@ func (c *Client) loadTaskFromState(ctx context.Context) error {
 	return nil
 }
 
+func (c *Client) waitForTask(ctx context.Context) error {
+	stream, err := c.receiveTaskNotification(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = c.handleStream(ctx, stream)
+	if err == io.EOF {
+		// Server closed the stream indication we should reconnect.
+		return nil
+	}
+	if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
+		// Something canceled the stream (could be deadline/timeout), we should reconnect.
+		return nil
+	}
+	// TODO: Add more error checking (handle more API erros vs non API errors) and backoff where appropriate.
+	return err
+}
+
 // WaitForTaskNotification waits for and acts on any task notification until the Client is closed.
 // Multiple calls to WaitForTaskNotification will not create new watchers.
 func (c *Client) WaitForTaskNotification(ctx context.Context) {
@@ -318,32 +337,14 @@ func (c *Client) WaitForTaskNotification(ctx context.Context) {
 			default:
 			}
 
-			stream, err := c.receiveTaskNotification(ctx)
-			if err != nil {
+			if err := c.waitForTask(ctx); err != nil {
 				if s, ok := status.FromError(err); ok && s.Code() == codes.PermissionDenied {
 					// Service is not enabled for this project.
 					time.Sleep(config.SvcPollInterval())
 					continue
 				}
 				// TODO: Add more error checking (handle more API erros vs non API errors) and backoff where appropriate.
-				logger.Errorf("Error calling receiveTaskNotification: %v", err)
-				time.Sleep(5 * time.Second)
-				continue
-			}
-
-			err = c.handleStream(ctx, stream)
-			fmt.Println(err)
-			if err != nil {
-				if err == io.EOF {
-					// Server closed the stream indication we should reconnect.
-					continue
-				}
-				if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
-					// Something canceled the stream (could be deadline/timeout), we should reconnect.
-					continue
-				}
-				// TODO: Add more error checking (handle more API erros vs non API errors) and backoff where appropriate.
-				logger.Errorf("Error watching stream: %v", err)
+				logger.Errorf("Error waiting for task: %v", err)
 				time.Sleep(5 * time.Second)
 			}
 		}
