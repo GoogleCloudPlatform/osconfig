@@ -27,7 +27,7 @@ var (
 	mx sync.Mutex
 )
 
-func init() {
+func initTasker() {
 	tc = make(chan *task)
 	go tasker()
 }
@@ -41,6 +41,9 @@ type task struct {
 // Calls to Enqueue after a Close will block.
 func Enqueue(name string, f func()) {
 	mx.Lock()
+	if tc == nil {
+		initTasker()
+	}
 	tc <- &task{name: name, run: f}
 	mx.Unlock()
 }
