@@ -69,7 +69,7 @@ func (r *patchTask) wuaUpdates(ctx context.Context) error {
 	for i := 0; i < retries; i++ {
 		r.infof("Searching for available WUA updates.")
 
-		updts, err := ospatch.GetWUAUpdates(session, cf, r.Task.GetPatchConfig().GetWindowsUpdate().GetExcludes())
+		updts, err := ospatch.GetWUAUpdates(session, cf, r.Task.GetPatchConfig().GetWindowsUpdate().GetExcludes(), r.Task.GetPatchConfig().GetWindowsUpdate().GetExclusivePatches())
 		if err != nil {
 			return err
 		}
