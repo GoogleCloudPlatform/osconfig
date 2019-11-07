@@ -61,18 +61,38 @@ func getIterativeProp(src *packages.IUpdate, prop string) (*ole.IDispatch, int32
 	return dis, count, nil
 }
 
-func checkFilters(updt *packages.IUpdate, kbExcludes, classFilter []string) (bool, error) {
+func checkFilters(updt *packages.IUpdate, kbExcludes, classFilter, exclusive_patches []string) (bool, error) {
 	title, err := updt.GetProperty("Title")
 	if err != nil {
 		return false, fmt.Errorf(`updt.GetProperty("Title"): %v`, err)
 	}
 
-	if len(kbExcludes) > 0 {
-		kbArticleIDs, kbArticleIDsCount, err := getIterativeProp(updt, "KBArticleIDs")
-		if err != nil {
-			return false, fmt.Errorf(`getIterativeProp(updt, "KBArticleIDs"): %v`, err)
-		}
+	kbArticleIDs, kbArticleIDsCount, err := getIterativeProp(updt, "KBArticleIDs")
+	if err != nil {
+		return false, fmt.Errorf(`getIterativeProp(updt, "KBArticleIDs"): %v`, err)
+	}
 
+	if len(exclusive_patches) > 0 {
+		for i := 0; i < int(kbArticleIDsCount); i++ {
+			kbRaw, err := kbArticleIDs.GetProperty("Item", i)
+			if err != nil {
+				return false, err
+			}
+			for _, e := range exclusive_patches {
+				if e == kbRaw.ToString() {
+					// until now we have only seen at most 1 kbarticles
+					// in a patch update. So, if we get a match, we just
+					// install the update
+					return true, nil
+				}
+			}
+		}
+		// since there are exclusive_patches to be installed,
+		// other fields like excludes, classfilter are void
+		return false, nil
+	}
+
+	if len(kbExcludes) > 0 {
 		for i := 0; i < int(kbArticleIDsCount); i++ {
 			kbRaw, err := kbArticleIDs.GetProperty("Item", i)
 			if err != nil {
@@ -119,7 +139,7 @@ func checkFilters(updt *packages.IUpdate, kbExcludes, classFilter []string) (boo
 }
 
 // GetWUAUpdates gets WUA updates based on optional classFilter and kbExcludes.
-func GetWUAUpdates(session *packages.IUpdateSession, classFilter, kbExcludes []string) (*packages.IUpdateCollection, error) {
+func GetWUAUpdates(session *packages.IUpdateSession, classFilter, kbExcludes, exclusive_patches []string) (*packages.IUpdateCollection, error) {
 	logger.Debugf("Searching for available WUA updates.")
 	updts, err := session.GetWUAUpdateCollection("IsInstalled=0")
 	if err != nil {
@@ -161,7 +181,7 @@ func GetWUAUpdates(session *packages.IUpdateSession, classFilter, kbExcludes []s
 			return nil, err
 		}
 
-		ok, err := checkFilters(updt, kbExcludes, classFilter)
+		ok, err := checkFilters(updt, kbExcludes, classFilter, exclusive_patches)
 		if err != nil {
 			return nil, err
 		}
