@@ -37,7 +37,7 @@ func retrySleep(i int, e int, rnd *rand.Rand) time.Duration {
 	// i=1 and e=10 => 11*1+[0,11] => 11-22s
 	// i=2 and e=10 => 12*2+[0,12] => 24-36s
 	// i=3 and e=10 => 13*3+[0,13] => 39-52s
-	nf := math.Min(float64(i+e)*float64(i)+float64(rnd.Intn(i+e)), 300)
+	nf := math.Min(float64((i+e)*i+rnd.Intn(i+e)), 300)
 	return time.Duration(int(nf)) * time.Second
 }
 
