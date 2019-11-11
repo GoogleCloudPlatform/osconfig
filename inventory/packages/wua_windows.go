@@ -38,26 +38,26 @@ func NewUpdateSession() (*IUpdateSession, error) {
 
 	updateSessionObj, err := oleutil.CreateObject("Microsoft.Update.Session")
 	if err != nil {
-		wuaSession.Unlock()
 		ole.CoUninitialize()
-		updateSessionObj.Release()
+		wuaSession.Unlock()
 		return nil, fmt.Errorf(`oleutil.CreateObject("Microsoft.Update.Session"): %v`, err)
 	}
 
 	session, err := updateSessionObj.IDispatch(ole.IID_IDispatch)
 	if err != nil {
-		wuaSession.Unlock()
+		updateSessionObj.Release()
 		ole.CoUninitialize()
+		wuaSession.Unlock()
 		return nil, err
 	}
 	return &IUpdateSession{obj: updateSessionObj, ses: session}, nil
 }
 
 func (s *IUpdateSession) Close() {
-	wuaSession.Unlock()
-	ole.CoUninitialize()
 	s.ses.Release()
 	s.obj.Release()
+	ole.CoUninitialize()
+	wuaSession.Unlock()
 }
 
 // InstallWUAUpdate install a WIndows update.
@@ -88,14 +88,14 @@ func (s *IUpdateSession) InstallWUAUpdate(updt *IUpdate) error {
 	if eula.Val == 0 {
 		DebugLogger.Printf("%s - Accepting EULA", title.Value())
 		if _, err := updt.CallMethod("AcceptEula"); err != nil {
-			return fmt.Errorf(`updateColl.CallMethod("AcceptEula"): %v`, err)
+			return fmt.Errorf(`updt.CallMethod("AcceptEula"): %v`, err)
 		}
 	} else {
 		DebugLogger.Printf("%s - EulaAccepted: %v", title.Value(), eula.Value())
 	}
 
-	if _, err := updateColl.CallMethod("Add", updt); err != nil {
-		return fmt.Errorf(`updateColl.CallMethod("Add", updt): %v`, err)
+	if err := updts.Add(updt); err != nil {
+		return err
 	}
 
 	DebugLogger.Printf("Downloading update %s", title.Value())
@@ -120,7 +120,7 @@ type IUpdate struct {
 }
 
 func (c *IUpdateCollection) Add(updt *IUpdate) error {
-	if _, err := c.CallMethod("Add", updt); err != nil {
+	if _, err := c.CallMethod("Add", updt.IDispatch); err != nil {
 		return fmt.Errorf(`updateColl.CallMethod("Add", updt): %v`, err)
 	}
 	return nil
@@ -328,7 +328,7 @@ func (s *IUpdateSession) DownloadWUAUpdateCollection(updates *IUpdateCollection)
 	downloader := downloaderRaw.ToIDispatch()
 	defer downloaderRaw.Clear()
 
-	if _, err := downloader.PutProperty("Updates", updates); err != nil {
+	if _, err := downloader.PutProperty("Updates", updates.IDispatch); err != nil {
 		return fmt.Errorf("error calling PutProperty Updates on IUpdateDownloader: %v", err)
 	}
 
@@ -349,7 +349,7 @@ func (s *IUpdateSession) InstallWUAUpdateCollection(updates *IUpdateCollection) 
 	installer := installerRaw.ToIDispatch()
 	defer installerRaw.Clear()
 
-	if _, err := installer.PutProperty("Updates", updates); err != nil {
+	if _, err := installer.PutProperty("Updates", updates.IDispatch); err != nil {
 		return fmt.Errorf("error calling PutProperty Updates on IUpdateInstaller: %v", err)
 	}
 

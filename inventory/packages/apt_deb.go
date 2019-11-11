@@ -119,7 +119,7 @@ func RemoveAptPackages(pkgs []string) error {
 func parseAptUpdates(data []byte, showNew bool) []PkgInfo {
 	/*
 		Inst libldap-common [2.4.45+dfsg-1ubuntu1.2] (2.4.45+dfsg-1ubuntu1.3 Ubuntu:18.04/bionic-updates, Ubuntu:18.04/bionic-security [all])
-		Inst firmware-linux-free (3.4 Debian:9.9/stable [all])
+		Inst firmware-linux-free (3.4 Debian:9.9/stable [all]) []
 		Inst google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [all])
 		Inst linux-image-4.9.0-9-amd64 (4.9.168-1+deb9u2 Debian-Security:9/stable [amd64])
 		Inst linux-image-amd64 [4.9+80+deb9u6] (4.9+80+deb9u7 Debian:9.9/stable [amd64])
@@ -144,6 +144,10 @@ func parseAptUpdates(data []byte, showNew bool) []PkgInfo {
 		} else if !showNew {
 			// This is a newly installed package and not an upgrade, ignore if showNew is false.
 			continue
+		}
+		// Drop trailing "[]" if they exist.
+		if bytes.Contains(pkg[len(pkg)-1], []byte("[]")) {
+			pkg = pkg[:len(pkg)-1]
 		}
 		if !bytes.HasPrefix(pkg[1], []byte("(")) || !bytes.HasSuffix(pkg[len(pkg)-1], []byte(")")) {
 			continue
