@@ -1,4 +1,4 @@
-google-osconfig-agent (1:20191005.00-g1) stable; urgency=medium
+google-osconfig-agent (1:20191112.00-g1) stable; urgency=medium
 
   * Move to agentendpoint.
 

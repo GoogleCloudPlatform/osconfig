@@ -136,7 +136,8 @@ func aptChanges(aptInstalled, aptRemoved, aptUpdated []*agentendpointpb.Package)
 	if err != nil {
 		return err
 	}
-	updates, err := packages.AptUpdates()
+
+	updates, err := packages.AptUpdates(packages.AptGetUpgradeType(packages.AptGetDistUpgrade), packages.AptGetUpgradeShowNew(false))
 	if err != nil {
 		return err
 	}
@@ -162,6 +163,8 @@ func aptChanges(aptInstalled, aptRemoved, aptUpdated []*agentendpointpb.Package)
 				errs = append(errs, fmt.Sprintf("error installing apt packages: %v", errorString))
 			}
 		}
+	} else {
+		logger.Debugf("No packages to install.")
 	}
 
 	if changes.packagesToUpgrade != nil {
@@ -170,6 +173,8 @@ func aptChanges(aptInstalled, aptRemoved, aptUpdated []*agentendpointpb.Package)
 			logger.Errorf("Error upgrading apt packages: %v", err)
 			errs = append(errs, fmt.Sprintf("error upgrading apt packages: %v", err))
 		}
+	} else {
+		logger.Debugf("No packages to upgrade.")
 	}
 
 	if changes.packagesToRemove != nil {
@@ -192,6 +197,8 @@ func aptChanges(aptInstalled, aptRemoved, aptUpdated []*agentendpointpb.Package)
 				errs = append(errs, fmt.Sprintf("error removing apt packages: %v", errorString))
 			}
 		}
+	} else {
+		logger.Debugf("No packages to remove.")
 	}
 
 	if errs == nil {
