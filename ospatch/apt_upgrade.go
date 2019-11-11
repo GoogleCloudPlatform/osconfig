@@ -64,8 +64,10 @@ func AptGetDryRun(dryrun bool) AptGetUpgradeOption {
 // RunAptGetUpgrade runs apt-get upgrade.
 func RunAptGetUpgrade(opts ...AptGetUpgradeOption) error {
 	aptOpts := &aptGetUpgradeOpts{
-		upgradeType: packages.AptGetUpgrade,
-		dryrun:      false,
+		upgradeType:       packages.AptGetUpgrade,
+		excludes:          nil,
+		exclusivePackages: nil,
+		dryrun:            false,
 	}
 
 	for _, opt := range opts {

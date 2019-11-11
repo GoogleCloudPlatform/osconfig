@@ -16,6 +16,10 @@ package ospatch
 
 import (
 	"os/exec"
+	"strings"
+
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 )
 
 const yum = "/usr/bin/yum"
@@ -26,10 +30,11 @@ var (
 )
 
 type yumUpdateOpts struct {
-	security bool
-	minimal  bool
-	excludes []string
-	runner   func(cmd *exec.Cmd) ([]byte, error)
+	security          bool
+	minimal           bool
+	excludes          []string
+	exclusivePackages []string
+	runner            func(cmd *exec.Cmd) ([]byte, error)
 }
 
 // YumUpdateOption is an option for yum update.
@@ -59,6 +64,14 @@ func YumUpdateExcludes(excludes []string) YumUpdateOption {
 	}
 }
 
+// YumUpdateExcludes returns a YumUpdateOption that specifies the list
+// of exclusive packages to be installed.
+func YumUpdateExclusivePackages(exclusivePackages []string) YumUpdateOption {
+	return func(args *yumUpdateOpts) {
+		args.exclusivePackages = exclusivePackages
+	}
+}
+
 // YumUpdateRunner returns a YumUpdateOption that specifies the runner.
 func YumUpdateRunner(runner func(cmd *exec.Cmd) ([]byte, error)) YumUpdateOption {
 	return func(args *yumUpdateOpts) {
@@ -69,10 +82,11 @@ func YumUpdateRunner(runner func(cmd *exec.Cmd) ([]byte, error)) YumUpdateOption
 // RunYumUpdate runs yum update.
 func RunYumUpdate(opts ...YumUpdateOption) error {
 	yumOpts := &yumUpdateOpts{
-		security: false,
-		minimal:  false,
-		excludes: nil,
-		runner:   defaultRunner,
+		security:          false,
+		minimal:           false,
+		excludes:          nil,
+		exclusivePackages: nil,
+		runner:            defaultRunner,
 	}
 
 	for _, opt := range opts {
@@ -80,14 +94,37 @@ func RunYumUpdate(opts ...YumUpdateOption) error {
 	}
 
 	args := yumUpdateArgs
-	if yumOpts.minimal {
-		args = yumUpdateMinimalArgs
-	}
-	if yumOpts.security {
-		args = append(args, "--security")
-	}
-	for _, e := range yumOpts.excludes {
-		args = append(args, "--exclude="+e)
+
+	if len(yumOpts.exclusivePackages) > 0 {
+		// filter packages in the list of
+		// exclusive packages to be installed
+		pkgs, err := packages.YumUpdates()
+		if err != nil {
+			logger.Debugf("Error fetching yum updates: %+v", err)
+		}
+		var filteredPkgs []packages.PkgInfo
+		for _, pkg := range pkgs {
+			for i := 0; i < len(yumOpts.exclusivePackages); i++ {
+				if (strings.Compare(yumOpts.exclusivePackages[i], pkg.Name) == 0) {
+					logger.Debugf("Package (%s) selected for update", pkg.Name)
+					filteredPkgs = append(filteredPkgs, pkg)
+				}
+			}
+		}
+		for _, e := range filteredPkgs {
+			args = append(args, e.Name)
+		}
+	} else {
+		// only apply other fields if there is no exclusive packages
+		if yumOpts.minimal {
+			args = yumUpdateMinimalArgs
+		}
+		if yumOpts.security {
+			args = append(args, "--security")
+		}
+		for _, e := range yumOpts.excludes {
+			args = append(args, "--exclude="+e)
+		}
 	}
 
 	if _, err := yumOpts.runner(exec.Command(yum, args...)); err != nil {

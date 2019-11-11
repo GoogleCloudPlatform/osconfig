@@ -16,6 +16,8 @@ package ospatch
 
 import (
 	"os/exec"
+
+	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 )
 
 const zypper = "/usr/bin/zypper"
@@ -25,11 +27,13 @@ var (
 )
 
 type zypperPatchOpts struct {
-	categories   []string
-	severities   []string
-	withOptional bool
-	withUpdate   bool
-	runner       func(cmd *exec.Cmd) ([]byte, error)
+	categories       []string
+	severities       []string
+	withOptional     bool
+	withUpdate       bool
+	excludes         []string
+	exclusivePatches []string
+	runner           func(cmd *exec.Cmd) ([]byte, error)
 }
 
 // ZypperPatchOption is an option for zypper patch.
@@ -67,6 +71,22 @@ func ZypperUpdateWithUpdate(withUpdate bool) ZypperPatchOption {
 	}
 }
 
+// ZypperUpdateWithExcludes returns a ZypperUpdateOption that specifies
+// list of packages to be excluded from update
+func ZypperUpdateWithExcludes(excludes []string) ZypperPatchOption {
+	return func(args *zypperPatchOpts) {
+		args.excludes = excludes
+	}
+}
+
+// ZypperUpdateWithExclusivePatches returns a ZypperUpdateOption that specifies
+// list of exclusive packages to be updated
+func ZypperUpdateWithExclusivePatches(exclusivePatches []string) ZypperPatchOption {
+	return func(args *zypperPatchOpts) {
+		args.exclusivePatches = exclusivePatches
+	}
+}
+
 // ZypperPatchRunner returns a ZypperUpdateOption that specifies the runner.
 func ZypperPatchRunner(runner func(cmd *exec.Cmd) ([]byte, error)) ZypperPatchOption {
 	return func(args *zypperPatchOpts) {
@@ -78,24 +98,55 @@ func ZypperPatchRunner(runner func(cmd *exec.Cmd) ([]byte, error)) ZypperPatchOp
 func RunZypperPatch(opts ...ZypperPatchOption) error {
 	zOpts := &zypperPatchOpts{
 		runner: defaultRunner,
+		excludes: nil,
+		exclusivePatches: nil,
+		categories: nil,
+		severities: nil,
+		withOptional: false,
+		withUpdate: false,
 	}
 
 	for _, opt := range opts {
 		opt(zOpts)
 	}
 
-	args := zypperPatchArgs
-	if zOpts.withOptional {
-		args = append(args, "--with-optional")
+	zListOpts := []packages.ZypperListOption{
+		packages.ZypperListPatchCategories(zOpts.categories),
+		packages.ZypperListPatchSeverities(zOpts.severities),
+		packages.ZypperListPatchWithWithOptional(zOpts.withOptional),
+		// if there is no filter on category and severity,
+		// zypper fetches all available patch updates
 	}
-	if zOpts.withUpdate {
-		args = append(args, "--with-update")
+	patches, err := packages.ZypperPatches(zListOpts...)
+	if err != nil {
+		return err
 	}
-	for _, c := range zOpts.categories {
-		args = append(args, "--category="+c)
+
+	args := packages.ZypperInstallArgs
+	var fPatches []packages.ZypperPatch
+	if len(zOpts.exclusivePatches) > 0 {
+		for _, patch := range patches {
+			if containsString(zOpts.exclusivePatches, patch.Name) {
+				fPatches = append(fPatches, patch)
+			}
+		}
+	} else {
+		if len(zOpts.excludes) > 0 {
+			// we have the list of patches which is already filtered
+			// as per the configurations provided by user;
+			// we remove the excludes from the list
+			for _, patch := range patches {
+				if !containsString(zOpts.excludes, patch.Name) {
+					fPatches = append(fPatches, patch)
+				}
+			}
+		}
 	}
-	for _, s := range zOpts.severities {
-		args = append(args, "--severity="+s)
+
+	// https://www.mankier.com/8/zypper#Concepts-Package_Types use patch install
+	// for single patch installs
+	for _, patch := range fPatches {
+		args = append(args, "patch:"+patch.Name)
 	}
 
 	if _, err := zOpts.runner(exec.Command(zypper, args...)); err != nil {

@@ -32,7 +32,7 @@
 //
 // For information about setting deadlines, reusing contexts, and more
 // please visit godoc.org/cloud.google.com/go.
-package agentendpoint
+package agentendpoint // import "cloud.google.com/go/osconfig/agentendpoint/apiv1alpha1"
 
 import (
 	"context"

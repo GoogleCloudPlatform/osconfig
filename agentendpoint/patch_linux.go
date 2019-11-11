@@ -31,6 +31,8 @@ func (r *patchTask) runUpdates(ctx context.Context) error {
 	const retryPeriod = 3 * time.Minute
 	if packages.AptExists {
 		opts := []ospatch.AptGetUpgradeOption{}
+		opts = append(opts, ospatch.AptGetExcludes(r.Task.GetPatchConfig().GetApt().GetExcludes()))
+		opts = append(opts, ospatch.AptGetExclusivePackages(r.Task.GetPatchConfig().GetApt().GetExclusivePackages()))
 		switch r.Task.GetPatchConfig().GetApt().GetType() {
 		case agentendpointpb.AptSettings_DIST:
 			opts = append(opts, ospatch.AptGetUpgradeType(packages.AptGetDistUpgrade))
@@ -45,6 +47,7 @@ func (r *patchTask) runUpdates(ctx context.Context) error {
 			ospatch.YumUpdateSecurity(r.Task.GetPatchConfig().GetYum().GetSecurity()),
 			ospatch.YumUpdateMinimal(r.Task.GetPatchConfig().GetYum().GetMinimal()),
 			ospatch.YumUpdateExcludes(r.Task.GetPatchConfig().GetYum().GetExcludes()),
+			ospatch.YumUpdateExclusivePackages(r.Task.GetPatchConfig().GetYum().GetExclusivePackages()),
 		}
 		r.debugf("Installing YUM package updates.")
 		if err := retryFunc(retryPeriod, "installing YUM package updates", func() error { return ospatch.RunYumUpdate(opts...) }); err != nil {
@@ -57,6 +60,8 @@ func (r *patchTask) runUpdates(ctx context.Context) error {
 			ospatch.ZypperPatchSeverities(r.Task.GetPatchConfig().GetZypper().GetSeverities()),
 			ospatch.ZypperUpdateWithUpdate(r.Task.GetPatchConfig().GetZypper().GetWithUpdate()),
 			ospatch.ZypperUpdateWithOptional(r.Task.GetPatchConfig().GetZypper().GetWithOptional()),
+			ospatch.ZypperUpdateWithExcludes(r.Task.GetPatchConfig().GetZypper().GetExcludes()),
+			ospatch.ZypperUpdateWithExclusivePatches(r.Task.GetPatchConfig().GetZypper().GetExclusivePatches()),
 		}
 		r.debugf("Installing Zypper package updates.")
 		if err := retryFunc(retryPeriod, "installing Zypper package updates", func() error { return ospatch.RunZypperPatch(opts...) }); err != nil {

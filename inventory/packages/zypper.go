@@ -28,10 +28,10 @@ import (
 var (
 	zypper string
 
-	zypperInstallArgs     = []string{"--gpg-auto-import-keys", "install", "--no-confirm"}
+	ZypperInstallArgs     = []string{"--gpg-auto-import-keys", "install", "--no-confirm"}
 	zypperRemoveArgs      = []string{"remove", "--no-confirm"}
 	zypperListUpdatesArgs = []string{"--gpg-auto-import-keys", "-q", "list-updates"}
-	zypperListPatchesArgs = []string{"--gpg-auto-import-keys", "-q", "list-patches", "--all", "--with-optional"}
+	zypperListPatchesArgs = []string{"--gpg-auto-import-keys", "-q", "list-patches"}
 )
 
 func init() {
@@ -41,9 +41,42 @@ func init() {
 	ZypperExists = util.Exists(zypper)
 }
 
+type zypperListPatchOpts struct {
+	categories []string
+	severities []string
+	withOptional bool
+	all        bool
+}
+
+type ZypperListOption func(opts *zypperListPatchOpts)
+
+func ZypperListPatchCategories(categories []string) ZypperListOption {
+	return func(args *zypperListPatchOpts) {
+		args.categories = categories
+	}
+}
+
+func ZypperListPatchSeverities(severities []string) ZypperListOption {
+	return func(args *zypperListPatchOpts) {
+		args.severities = severities
+	}
+}
+
+func ZypperListPatchWithWithOptional(withOptional bool) ZypperListOption {
+	return func(args *zypperListPatchOpts) {
+		args.withOptional = withOptional
+	}
+}
+
+func ZypperListPatchAll(all bool) ZypperListOption {
+	return func(args *zypperListPatchOpts) {
+		args.all = all
+	}
+}
+
 // InstallZypperPackages Installs zypper packages
 func InstallZypperPackages(pkgs []string) error {
-	args := append(zypperInstallArgs, pkgs...)
+	args := append(ZypperInstallArgs, pkgs...)
 	out, err := run(exec.Command(zypper, args...))
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
@@ -136,13 +169,39 @@ func parseZypperPatches(data []byte) ([]ZypperPatch, []ZypperPatch) {
 	return ins, avail
 }
 
-func zypperPatches() ([]byte, error) {
-	return run(exec.Command(zypper, zypperListPatchesArgs...))
+func zypperPatches(opts ...ZypperListOption) ([]byte, error) {
+	zOpts := &zypperListPatchOpts{
+		categories: nil,
+		severities: nil,
+		all:        false,
+	}
+
+	for _, opt := range opts {
+		opt(zOpts)
+	}
+
+	args := zypperListPatchesArgs
+	for _, c := range zOpts.categories {
+		args = append(args, "--category="+c)
+	}
+
+	for _, s := range zOpts.severities {
+		args = append(args, "--severity="+s)
+	}
+
+	//  As per zypper's current implementation,
+	// --all is ignored if we have any filters on any other
+	// field.
+	if (zOpts.all || (len(zOpts.severities) + len(zOpts.categories)) <= 0){
+		args = append(args, "--all")
+	}
+
+	return run(exec.Command(zypper, args...))
 }
 
 // ZypperPatches queries for all available zypper patches.
-func ZypperPatches() ([]ZypperPatch, error) {
-	out, err := zypperPatches()
+func ZypperPatches(opts ...ZypperListOption) ([]ZypperPatch, error) {
+	out, err := zypperPatches(opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -151,8 +210,8 @@ func ZypperPatches() ([]ZypperPatch, error) {
 }
 
 // ZypperInstalledPatches queries for all installed zypper patches.
-func ZypperInstalledPatches() ([]ZypperPatch, error) {
-	out, err := zypperPatches()
+func ZypperInstalledPatches(opts ...ZypperListOption) ([]ZypperPatch, error) {
+	out, err := zypperPatches(opts...)
 	if err != nil {
 		return nil, err
 	}

@@ -120,16 +120,16 @@ func containsString(ss []string, c string) bool {
 	return false
 }
 
-func filterPackages(pkgs []packages.PkgInfo, includes, excludes []string) ([]packages.PkgInfo, error) {
-	if len(includes) != 0 && len(excludes) != 0 {
-		return nil, errors.New("includes and excludes can not both be non 0")
+func filterPackages(pkgs []packages.PkgInfo, exclusivePackages, excludes []string) ([]packages.PkgInfo, error) {
+	if len(exclusivePackages) != 0 && len(excludes) != 0 {
+		return nil, errors.New("exclusivePackages and excludes can not both be non 0")
 	}
 	var fPkgs []packages.PkgInfo
 	for _, pkg := range pkgs {
 		if containsString(excludes, pkg.Name) {
 			continue
 		}
-		if includes == nil || containsString(includes, pkg.Name) {
+		if exclusivePackages == nil || containsString(exclusivePackages, pkg.Name) {
 			fPkgs = append(fPkgs, pkg)
 		}
 	}
