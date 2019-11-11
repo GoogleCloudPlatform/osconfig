@@ -181,10 +181,10 @@ func main() {
 		if err != nil {
 			logger.Fatalf(err.Error())
 		}
-		if err := client.WaitForTaskNotification(ctx); err != nil {
-			logger.Fatalf(err.Error())
+		for {
+			client.WaitForTaskNotification(ctx)
+			time.Sleep(10 * time.Minute)
 		}
-		return
 	default:
 		logger.Fatalf("Unknown arg %q", action)
 	}
