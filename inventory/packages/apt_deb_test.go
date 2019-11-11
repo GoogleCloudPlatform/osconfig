@@ -90,7 +90,7 @@ func TestParseInstalledDebpackages(t *testing.T) {
 func TestParseAptUpdates(t *testing.T) {
 	normalCase := `
 Inst libldap-common [2.4.45+dfsg-1ubuntu1.2] (2.4.45+dfsg-1ubuntu1.3 Ubuntu:18.04/bionic-updates, Ubuntu:18.04/bionic-security [all])
-Inst google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [amd64])
+Inst google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [amd64]) []
 Inst firmware-linux-free (3.4 Debian:9.9/stable [all])
 Conf firmware-linux-free (3.4 Debian:9.9/stable [all])
 `
