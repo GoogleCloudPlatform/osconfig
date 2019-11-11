@@ -25,9 +25,19 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func retrySleep(i int, rnd *rand.Rand) time.Duration {
-	// Always increasing with some jitter, longest wait will be 5min.
-	nf := math.Min(float64(i)*float64(i)+float64(rnd.Intn(i)), 300)
+func retrySleep(i int, e int, rnd *rand.Rand) time.Duration {
+	// i=1 and e=0 => 1*1+[0,1] => 1-2s
+	// i=2 and e=0 => 2*2+[0,2] => 4-6s
+	// i=3 and e=0 => 3*3+[0,3] => 9-12s
+
+	// i=1 and e=5 => 6*1+[0,6] => 6-12s
+	// i=2 and e=5 => 7*2+[0,7] => 14-21s
+	// i=3 and e=5 => 8*3+[0,8] => 24-32s
+
+	// i=1 and e=10 => 11*1+[0,11] => 11-22s
+	// i=2 and e=10 => 12*2+[0,12] => 24-36s
+	// i=3 and e=10 => 13*3+[0,13] => 39-52s
+	nf := math.Min(float64((i+e)*i+rnd.Intn(i+e)), 300)
 	return time.Duration(int(nf)) * time.Second
 }
 
@@ -40,7 +50,7 @@ func retryFunc(maxRetryTime time.Duration, desc string, f func() error) error {
 			return nil
 		}
 
-		ns := retrySleep(i, rnd)
+		ns := retrySleep(i, 0, rnd)
 		tot += ns
 		if tot > maxRetryTime {
 			return err
@@ -55,7 +65,7 @@ func retryAPICall(maxRetryTime time.Duration, name string, f func() error) error
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
 	var tot time.Duration
 	for i := 1; ; i++ {
-		extraMultiplier := 1
+		extra := 1
 		err := f()
 		if err == nil {
 			return nil
@@ -67,7 +77,7 @@ func retryAPICall(maxRetryTime time.Duration, name string, f func() error) error
 			case codes.DeadlineExceeded, codes.Unavailable, codes.Aborted, codes.Internal:
 			// Add additional sleep.
 			case codes.ResourceExhausted:
-				extraMultiplier = 5
+				extra = 10
 			default:
 				return err
 			}
@@ -75,7 +85,7 @@ func retryAPICall(maxRetryTime time.Duration, name string, f func() error) error
 			return err
 		}
 
-		ns := retrySleep(i*extraMultiplier, rnd)
+		ns := retrySleep(i, extra, rnd)
 		tot += ns
 		if tot > maxRetryTime {
 			return err
