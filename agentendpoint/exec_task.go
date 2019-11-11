@@ -27,7 +27,6 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/external"
 
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
@@ -146,8 +145,7 @@ func (e *execTask) run(ctx context.Context) error {
 
 	if res.GetTaskDirective() == agentendpointpb.TaskDirective_STOP {
 		return e.reportCompletedState(ctx, errServerCancel.Error(), &agentendpointpb.ReportTaskCompleteRequest_ExecStepTaskOutput{
-			// TODO: Maybe there should be a canceled state instead?
-			ExecStepTaskOutput: &agentendpointpb.ExecStepTaskOutput{State: agentendpointpb.ExecStepTaskOutput_COMPLETED},
+			ExecStepTaskOutput: &agentendpointpb.ExecStepTaskOutput{State: agentendpointpb.ExecStepTaskOutput_CANCELLED},
 		})
 	}
 
@@ -211,12 +209,12 @@ func (e *execTask) run(ctx context.Context) error {
 }
 
 // RunExecStep runs an exec step task.
-func (c *Client) RunExecStep(ctx context.Context, taskID string, task *agentendpointpb.ExecStepTask) error {
+func (c *Client) RunExecStep(ctx context.Context, task *agentendpointpb.Task) error {
 	e := &execTask{
-		TaskID:    taskID,
+		TaskID:    task.GetTaskId(),
 		client:    c,
-		Task:      &execStepTask{task},
-		LogLabels: map[string]string{"instance_name": config.Name(), "agent_version": config.Version()},
+		Task:      &execStepTask{task.GetExecStepTask()},
+		LogLabels: mkLabels(task),
 	}
 
 	return e.run(ctx)

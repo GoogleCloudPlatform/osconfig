@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sync"
 	"time"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
@@ -46,7 +47,11 @@ var (
 
 // Client is a an agentendpoint client.
 type Client struct {
-	raw *agentendpoint.Client
+	raw    *agentendpoint.Client
+	cancel context.CancelFunc
+	noti   chan struct{}
+	closed bool
+	mx     sync.Mutex
 }
 
 // NewClient a new agentendpoint Client.
@@ -61,36 +66,48 @@ func NewClient(ctx context.Context) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Client{raw: c}, nil
+
+	return &Client{raw: c, noti: make(chan struct{}, 1)}, nil
 }
 
-// Close closes the underlying ClientConn.
+// Close cancels WaitForTaskNotification and closes the underlying ClientConn.
 func (c *Client) Close() error {
+	// Lock so nothing can use the client while we are closing.
+	c.mx.Lock()
+	if c.cancel != nil {
+		c.cancel()
+	}
+	c.closed = true
 	return c.raw.Close()
 }
 
-func (c *Client) reportTaskStart(ctx context.Context) (res *agentendpointpb.ReportTaskStartResponse, err error) {
+// Closed reports whether the Client has been closed.
+func (c *Client) Closed() bool {
+	return c.closed
+}
+
+func (c *Client) startNextTask(ctx context.Context) (res *agentendpointpb.StartNextTaskResponse, err error) {
 	token, err := config.IDToken()
 	if err != nil {
 		return nil, err
 	}
 
-	req := &agentendpointpb.ReportTaskStartRequest{}
-	logger.Debugf("Calling ReportTaskStart with request:\n%s", util.PrettyFmt(req))
+	req := &agentendpointpb.StartNextTaskRequest{}
+	logger.Debugf("Calling StartNextTask with request:\n%s", util.PrettyFmt(req))
 	req.InstanceIdToken = token
 
-	if err := retryAPICall(apiRetrySec*time.Second, "ReportTaskStart", func() error {
-		res, err = c.raw.ReportTaskStart(ctx, req)
+	if err := retryAPICall(apiRetrySec*time.Second, "StartNextTask", func() error {
+		res, err = c.raw.StartNextTask(ctx, req)
 		if err != nil {
 			return err
 		}
-		logger.Debugf("ReportTaskStart response:\n%s", util.PrettyFmt(res))
+		logger.Debugf("StartNextTask response:\n%s", util.PrettyFmt(res))
 		return nil
 	}); err != nil {
-		return nil, fmt.Errorf("error calling ReportTaskStart: %v", err)
+		return nil, fmt.Errorf("error calling StartNextTask: %v", err)
 	}
 
-	return
+	return res, nil
 }
 
 func (c *Client) reportTaskProgress(ctx context.Context, req *agentendpointpb.ReportTaskProgressRequest) (res *agentendpointpb.ReportTaskProgressResponse, err error) {
@@ -113,7 +130,7 @@ func (c *Client) reportTaskProgress(ctx context.Context, req *agentendpointpb.Re
 		return nil, fmt.Errorf("error calling ReportTaskProgress: %v", err)
 	}
 
-	return
+	return res, nil
 }
 
 func (c *Client) reportTaskComplete(ctx context.Context, req *agentendpointpb.ReportTaskCompleteRequest) error {
@@ -140,7 +157,7 @@ func (c *Client) reportTaskComplete(ctx context.Context, req *agentendpointpb.Re
 }
 
 // LookupEffectiveGuestPolicies calls the agentendpoint service LookupEffectiveGuestPolicies.
-func (c *Client) LookupEffectiveGuestPolicies(ctx context.Context) (*agentendpointpb.LookupEffectiveGuestPoliciesResponse, error) {
+func (c *Client) LookupEffectiveGuestPolicies(ctx context.Context) (res *agentendpointpb.LookupEffectiveGuestPoliciesResponse, err error) {
 	info, err := osinfo.Get()
 	if err != nil {
 		return nil, err
@@ -160,9 +177,8 @@ func (c *Client) LookupEffectiveGuestPolicies(ctx context.Context) (*agentendpoi
 	logger.Debugf("Calling LookupEffectiveGuestPolicies with request:\n%s", util.PrettyFmt(req))
 	req.InstanceIdToken = token
 
-	var res *agentendpointpb.LookupEffectiveGuestPoliciesResponse
 	if err := retryAPICall(apiRetrySec*time.Second, "LookupEffectiveGuestPolicies", func() error {
-		res, err := c.raw.LookupEffectiveGuestPolicies(ctx, req)
+		res, err = c.raw.LookupEffectiveGuestPolicies(ctx, req)
 		if err != nil {
 			return err
 		}
@@ -177,9 +193,9 @@ func (c *Client) LookupEffectiveGuestPolicies(ctx context.Context) (*agentendpoi
 func (c *Client) runTask(ctx context.Context) {
 	logger.Debugf("Beginning run task loop.")
 	for {
-		res, err := c.reportTaskStart(ctx)
+		res, err := c.startNextTask(ctx)
 		if err != nil {
-			logger.Errorf("Error running ReportTaskStart, cannot continue: %v", err)
+			logger.Errorf("Error running StartNextTask, cannot continue: %v", err)
 			return
 		}
 
@@ -192,11 +208,11 @@ func (c *Client) runTask(ctx context.Context) {
 		logger.Debugf("Received task: %s.", task.GetTaskType())
 		switch task.GetTaskType() {
 		case agentendpointpb.TaskType_APPLY_PATCHES:
-			if err := c.RunApplyPatches(ctx, task.GetTaskId(), task.GetApplyPatchesTask()); err != nil {
+			if err := c.RunApplyPatches(ctx, task); err != nil {
 				logger.Errorf("Error running TaskType_APPLY_PATCHES: %v", err)
 			}
 		case agentendpointpb.TaskType_EXEC_STEP_TASK:
-			if err := c.RunExecStep(ctx, task.GetTaskId(), task.GetExecStepTask()); err != nil {
+			if err := c.RunExecStep(ctx, task); err != nil {
 				logger.Errorf("Error running TaskType_EXEC_STEP_TASK: %v", err)
 			}
 		default:
@@ -205,23 +221,36 @@ func (c *Client) runTask(ctx context.Context) {
 	}
 }
 
-func (c *Client) handleStream(ctx context.Context, stream agentendpointpb.AgentEndpointService_ReceiveTaskNotificationClient, noti chan struct{}) error {
+func (c *Client) handleStream(ctx context.Context, stream agentendpointpb.AgentEndpointService_ReceiveTaskNotificationClient) error {
 	for {
+		logger.Debugf("Waiting on ReceiveTaskNotification stream Recv().")
 		if _, err := stream.Recv(); err != nil {
 			// Return on any stream error, even a close, the caller will simply
 			// reconnect the stream as needed.
 			return err
 		}
+		logger.Debugf("Received task notification.")
 
 		// Only queue up one notifcation at a time. We should only ever
 		// have one active task being worked on and one in the queue.
 		select {
-		case noti <- struct{}{}:
+		case <-ctx.Done():
+			// We have been canceled.
+			return nil
+		case c.noti <- struct{}{}:
 			tasker.Enqueue("TaskNotification", func() {
-				// Take this task off the notification queue so another can be
-				// queued up.
-				<-noti
-				c.runTask(ctx)
+				// We lock so that this task will complete before the client can get canceled.
+				c.mx.Lock()
+				defer c.mx.Unlock()
+				select {
+				case <-ctx.Done():
+					// We have been canceled.
+				default:
+					// Take this task off the notification queue so another can be
+					// queued up.
+					<-c.noti
+					c.runTask(ctx)
+				}
 			})
 		default:
 			// Ignore the notificaction as we already have one queued.
@@ -229,29 +258,20 @@ func (c *Client) handleStream(ctx context.Context, stream agentendpointpb.AgentE
 	}
 }
 
-func (c *Client) receiveTaskNotification(ctx context.Context, noti chan struct{}, token string) error {
+func (c *Client) receiveTaskNotification(ctx context.Context) (agentendpointpb.AgentEndpointService_ReceiveTaskNotificationClient, error) {
 	req := &agentendpointpb.ReceiveTaskNotificationRequest{
-		AgentVersion:    config.Version(),
-		InstanceIdToken: token,
+		AgentVersion: config.Version(),
 	}
 
-	stream, err := c.raw.ReceiveTaskNotification(ctx, req)
+	token, err := config.IDToken()
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("error fetching Instance IDToken: %v", err)
 	}
 
-	err = c.handleStream(ctx, stream, noti)
-	if err != nil {
-		if err == io.EOF {
-			return nil
-		}
-		if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
-			// Server closed the stream indication we should reconnect.
-			return nil
-		}
-	}
+	logger.Debugf("Calling ReceiveTaskNotification with request:\n%s", util.PrettyFmt(req))
+	req.InstanceIdToken = token
 
-	return err
+	return c.raw.ReceiveTaskNotification(ctx, req)
 }
 
 func (c *Client) loadTaskFromState(ctx context.Context) error {
@@ -269,30 +289,73 @@ func (c *Client) loadTaskFromState(ctx context.Context) error {
 	return nil
 }
 
-// WaitForTaskNotification waits for and acts on any task notification indefinitely.
-func (c *Client) WaitForTaskNotification(ctx context.Context) error {
+func (c *Client) waitForTask(ctx context.Context) error {
+	stream, err := c.receiveTaskNotification(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = c.handleStream(ctx, stream)
+	if err == io.EOF {
+		// Server closed the stream indication we should reconnect.
+		return nil
+	}
+	if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
+		// Something canceled the stream (could be deadline/timeout), we should reconnect.
+		return nil
+	}
+	// TODO: Add more error checking (handle more API erros vs non API errors) and backoff where appropriate.
+	return err
+}
+
+// WaitForTaskNotification waits for and acts on any task notification until the Client is closed.
+// Multiple calls to WaitForTaskNotification will not create new watchers.
+func (c *Client) WaitForTaskNotification(ctx context.Context) {
+	c.mx.Lock()
+	defer c.mx.Unlock()
+	if c.cancel != nil {
+		// WaitForTaskNotification is already running on this client.
+		return
+	}
+	logger.Debugf("Running WaitForTaskNotification")
+	ctx, c.cancel = context.WithCancel(ctx)
+
 	logger.Debugf("Checking local state file for saved task.")
 	if err := c.loadTaskFromState(ctx); err != nil {
 		logger.Errorf(err.Error())
 	}
 
 	logger.Debugf("Setting up ReceiveTaskNotification stream watcher.")
-	noti := make(chan struct{}, 1)
-	for {
-		token, err := config.IDToken()
-		if err != nil {
-			return fmt.Errorf("error fetching Instance IDToken: %v", err)
-		}
-
-		if err := c.receiveTaskNotification(ctx, noti, token); err != nil {
-			if s, ok := status.FromError(err); ok && s.Code() == codes.PermissionDenied {
-				// Service is not enabled for this project.
-				time.Sleep(config.SvcPollInterval())
-				continue
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				// We have been canceled.
+				logger.Debugf("Disabling WaitForTaskNotification")
+				return
+			default:
 			}
-			// TODO: Add more error checking (handle more API erros vs non API errors) and backoff where appropriate.
-			logger.Errorf("Error watching stream: %v", err)
-			time.Sleep(5 * time.Second)
+
+			if err := c.waitForTask(ctx); err != nil {
+				if s, ok := status.FromError(err); ok && s.Code() == codes.PermissionDenied {
+					// Service is not enabled for this project.
+					time.Sleep(config.SvcPollInterval())
+					continue
+				}
+				// TODO: Add more error checking (handle more API erros vs non API errors) and backoff where appropriate.
+				logger.Errorf("Error waiting for task: %v", err)
+				time.Sleep(5 * time.Second)
+			}
 		}
+	}()
+}
+
+func mkLabels(task *agentendpointpb.Task) map[string]string {
+	labels := task.GetServiceLabels()
+	if labels == nil {
+		labels = make(map[string]string)
 	}
+	labels["instance_name"] = config.Name()
+	labels["agent_version"] = config.Version()
+	return labels
 }

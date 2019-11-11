@@ -33,8 +33,8 @@ func (*agentEndpointServiceExecTestServer) ReceiveTaskNotification(req *agentend
 	return status.Errorf(codes.Unimplemented, "method ReceiveTaskNotification not implemented")
 }
 
-func (*agentEndpointServiceExecTestServer) ReportTaskStart(ctx context.Context, req *agentendpointpb.ReportTaskStartRequest) (*agentendpointpb.ReportTaskStartResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReportTaskStart not implemented")
+func (*agentEndpointServiceExecTestServer) StartNextTask(ctx context.Context, req *agentendpointpb.StartNextTaskRequest) (*agentendpointpb.StartNextTaskResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StartNextTask not implemented")
 }
 
 func (*agentEndpointServiceExecTestServer) ReportTaskProgress(ctx context.Context, req *agentendpointpb.ReportTaskProgressRequest) (*agentendpointpb.ReportTaskProgressResponse, error) {
@@ -98,7 +98,7 @@ func TestRunExecStep(t *testing.T) {
 			}
 			goos = tt.goos
 
-			if err := tc.client.RunExecStep(ctx, "", &agentendpointpb.ExecStepTask{ExecStep: tt.step}); err != nil {
+			if err := tc.client.RunExecStep(ctx, &agentendpointpb.Task{TaskDetails: &agentendpointpb.Task_ExecStepTask{ExecStepTask: &agentendpointpb.ExecStepTask{ExecStep: tt.step}}}); err != nil {
 				t.Fatal(err)
 			}
 

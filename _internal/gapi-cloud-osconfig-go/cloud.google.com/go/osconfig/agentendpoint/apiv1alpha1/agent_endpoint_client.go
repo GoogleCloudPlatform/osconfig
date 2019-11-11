@@ -18,6 +18,7 @@ package agentendpoint
 
 import (
 	"context"
+	"math"
 
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 	gax "github.com/googleapis/gax-go/v2"
@@ -30,7 +31,7 @@ import (
 // CallOptions contains the retry settings for each method of Client.
 type CallOptions struct {
 	ReceiveTaskNotification      []gax.CallOption
-	ReportTaskStart              []gax.CallOption
+	StartNextTask                []gax.CallOption
 	ReportTaskProgress           []gax.CallOption
 	ReportTaskComplete           []gax.CallOption
 	LookupEffectiveGuestPolicies []gax.CallOption
@@ -40,6 +41,8 @@ func defaultClientOptions() []option.ClientOption {
 	return []option.ClientOption{
 		option.WithEndpoint("osconfig.googleapis.com:443"),
 		option.WithScopes(DefaultAuthScopes()...),
+		option.WithGRPCDialOption(grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(math.MaxInt32))),
 	}
 }
 
@@ -47,7 +50,7 @@ func defaultCallOptions() *CallOptions {
 	retry := map[[2]string][]gax.CallOption{}
 	return &CallOptions{
 		ReceiveTaskNotification:      retry[[2]string{"default", "non_idempotent"}],
-		ReportTaskStart:              retry[[2]string{"default", "non_idempotent"}],
+		StartNextTask:                retry[[2]string{"default", "non_idempotent"}],
 		ReportTaskProgress:           retry[[2]string{"default", "non_idempotent"}],
 		ReportTaskComplete:           retry[[2]string{"default", "non_idempotent"}],
 		LookupEffectiveGuestPolicies: retry[[2]string{"default", "non_idempotent"}],
@@ -126,15 +129,15 @@ func (c *Client) ReceiveTaskNotification(ctx context.Context, req *agentendpoint
 	return resp, nil
 }
 
-// ReportTaskStart signals the start of a task execution and returns the task info.
+// StartNextTask signals the start of a task execution and returns the task info.
 // This method is called by an agent and not an active developer method.
-func (c *Client) ReportTaskStart(ctx context.Context, req *agentendpointpb.ReportTaskStartRequest, opts ...gax.CallOption) (*agentendpointpb.ReportTaskStartResponse, error) {
+func (c *Client) StartNextTask(ctx context.Context, req *agentendpointpb.StartNextTaskRequest, opts ...gax.CallOption) (*agentendpointpb.StartNextTaskResponse, error) {
 	ctx = insertMetadata(ctx, c.xGoogMetadata)
-	opts = append(c.CallOptions.ReportTaskStart[0:len(c.CallOptions.ReportTaskStart):len(c.CallOptions.ReportTaskStart)], opts...)
-	var resp *agentendpointpb.ReportTaskStartResponse
+	opts = append(c.CallOptions.StartNextTask[0:len(c.CallOptions.StartNextTask):len(c.CallOptions.StartNextTask)], opts...)
+	var resp *agentendpointpb.StartNextTaskResponse
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
-		resp, err = c.client.ReportTaskStart(ctx, req, settings.GRPC...)
+		resp, err = c.client.StartNextTask(ctx, req, settings.GRPC...)
 		return err
 	}, opts...)
 	if err != nil {
