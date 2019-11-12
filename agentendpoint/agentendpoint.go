@@ -289,6 +289,8 @@ func (c *Client) loadTaskFromState(ctx context.Context) error {
 	return nil
 }
 
+var errServiceNotEnabled = errors.New("service is not enabled for this project")
+
 func (c *Client) waitForTask(ctx context.Context) error {
 	stream, err := c.receiveTaskNotification(ctx)
 	if err != nil {
@@ -300,9 +302,15 @@ func (c *Client) waitForTask(ctx context.Context) error {
 		// Server closed the stream indication we should reconnect.
 		return nil
 	}
-	if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
-		// Something canceled the stream (could be deadline/timeout), we should reconnect.
-		return nil
+	if s, ok := status.FromError(err); ok {
+		switch s.Code() {
+		case codes.Unavailable:
+			// Something canceled the stream (could be deadline/timeout), we should reconnect.
+			return nil
+		case codes.PermissionDenied:
+			// Service is not enabled for this project.
+			return errServiceNotEnabled
+		}
 	}
 	// TODO: Add more error checking (handle more API erros vs non API errors) and backoff where appropriate.
 	return err
@@ -337,12 +345,10 @@ func (c *Client) WaitForTaskNotification(ctx context.Context) {
 			}
 
 			if err := c.waitForTask(ctx); err != nil {
-				if s, ok := status.FromError(err); ok && s.Code() == codes.PermissionDenied {
-					// Service is not enabled for this project.
+				if err == errServiceNotEnabled {
 					time.Sleep(config.SvcPollInterval())
 					continue
 				}
-				// TODO: Add more error checking (handle more API erros vs non API errors) and backoff where appropriate.
 				logger.Errorf("Error waiting for task: %v", err)
 				time.Sleep(5 * time.Second)
 			}
