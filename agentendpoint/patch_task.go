@@ -28,10 +28,8 @@ import (
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
-func init() {
-	if config.OSPatchEnabled() {
-		ospatch.DisableAutoUpdates()
-	}
+func initPatch() {
+	ospatch.DisableAutoUpdates()
 }
 
 func systemRebootRequired() (bool, error) {
@@ -166,6 +164,9 @@ func (r *patchTask) reportContinuingState(ctx context.Context, patchState agente
 		return errServerCancel
 	}
 
+	if r.lastProgressState == nil {
+		r.lastProgressState = make(map[agentendpointpb.ApplyPatchesTaskProgress_State]time.Time)
+	}
 	r.lastProgressState[patchState] = time.Now()
 	return r.saveState()
 }
@@ -297,13 +298,12 @@ func (r *patchTask) run(ctx context.Context) error {
 }
 
 // RunApplyPatches runs a apply patches task.
-func (c *Client) RunApplyPatches(ctx context.Context, taskID string, task *agentendpointpb.ApplyPatchesTask) error {
+func (c *Client) RunApplyPatches(ctx context.Context, task *agentendpointpb.Task) error {
 	r := &patchTask{
-		TaskID:            taskID,
-		client:            c,
-		lastProgressState: map[agentendpointpb.ApplyPatchesTaskProgress_State]time.Time{},
-		Task:              &applyPatchesTask{task},
-		LogLabels:         map[string]string{"instance_name": config.Name(), "agent_version": config.Version()},
+		TaskID:    task.GetTaskId(),
+		client:    c,
+		Task:      &applyPatchesTask{task.GetApplyPatchesTask()},
+		LogLabels: mkLabels(task),
 	}
 	r.setStep(prePatch)
 

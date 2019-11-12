@@ -181,10 +181,10 @@ func main() {
 		if err != nil {
 			logger.Fatalf(err.Error())
 		}
-		if err := client.WaitForTaskNotification(ctx); err != nil {
-			logger.Fatalf(err.Error())
+		client.WaitForTaskNotification(ctx)
+		select {
+		case <-ctx.Done():
 		}
-		return
 	default:
 		logger.Fatalf("Unknown arg %q", action)
 	}
