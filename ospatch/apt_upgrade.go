@@ -15,8 +15,6 @@
 package ospatch
 
 import (
-	"os/exec"
-
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 )
@@ -26,8 +24,6 @@ type aptGetUpgradeOpts struct {
 	exclusivePackages []string
 	excludes          []string
 	dryrun            bool
-
-	runner func(cmd *exec.Cmd) ([]byte, error)
 }
 
 // AptGetUpgradeOption is an option for apt-get update.

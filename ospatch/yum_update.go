@@ -15,7 +15,8 @@
 package ospatch
 
 import (
-	"os/exec"
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 )
 
 const yum = "/usr/bin/yum"
@@ -26,10 +27,11 @@ var (
 )
 
 type yumUpdateOpts struct {
-	security bool
-	minimal  bool
-	excludes []string
-	runner   func(cmd *exec.Cmd) ([]byte, error)
+	security          bool
+	minimal           bool
+	exclusivePackages []string
+	excludes          []string
+	dryrun            bool
 }
 
 // YumUpdateOption is an option for yum update.
@@ -59,10 +61,17 @@ func YumUpdateExcludes(excludes []string) YumUpdateOption {
 	}
 }
 
-// YumUpdateRunner returns a YumUpdateOption that specifies the runner.
-func YumUpdateRunner(runner func(cmd *exec.Cmd) ([]byte, error)) YumUpdateOption {
+// YumExclusivePackages includes only these packages in the upgrade.
+func YumExclusivePackages(exclusivePackages []string) YumUpdateOption {
 	return func(args *yumUpdateOpts) {
-		args.runner = runner
+		args.exclusivePackages = exclusivePackages
+	}
+}
+
+// YumDryRun performs a dry run.
+func YumDryRun(dryrun bool) YumUpdateOption {
+	return func(args *yumUpdateOpts) {
+		args.dryrun = dryrun
 	}
 }
 
@@ -71,27 +80,38 @@ func RunYumUpdate(opts ...YumUpdateOption) error {
 	yumOpts := &yumUpdateOpts{
 		security: false,
 		minimal:  false,
-		excludes: nil,
-		runner:   defaultRunner,
+		dryrun:   false,
 	}
 
 	for _, opt := range opts {
 		opt(yumOpts)
 	}
 
-	args := yumUpdateArgs
-	if yumOpts.minimal {
-		args = yumUpdateMinimalArgs
-	}
-	if yumOpts.security {
-		args = append(args, "--security")
-	}
-	for _, e := range yumOpts.excludes {
-		args = append(args, "--exclude="+e)
-	}
-
-	if _, err := yumOpts.runner(exec.Command(yum, args...)); err != nil {
+	pkgs, err := packages.YumUpdates(packages.YumUpdateMinimal(yumOpts.minimal), packages.YumUpdateSecurity(yumOpts.security))
+	if err != nil {
 		return err
 	}
-	return nil
+
+	fPkgs, err := filterPackages(pkgs, yumOpts.exclusivePackages, yumOpts.excludes)
+	if err != nil {
+		return err
+	}
+	if len(fPkgs) == 0 {
+		logger.Infof("No packages to update.")
+		return nil
+	}
+
+	var pkgNames []string
+	for _, pkg := range fPkgs {
+		pkgNames = append(pkgNames, pkg.Name)
+	}
+	logger.Infof("Updating %d packages.", len(pkgNames))
+	logger.Debugf("Packages to be installed: %s", fPkgs)
+
+	if yumOpts.dryrun {
+		logger.Infof("Running in dryrun mode, not updating packages.")
+		return nil
+	}
+
+	return packages.InstallYumPackages(pkgNames)
 }
