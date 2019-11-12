@@ -76,7 +76,15 @@ func TestYumUpdatesExitCode100(t *testing.T) {
 	cmd := exec.Command(os.Args[0], "-test.run=TestYumUpdatesExitCode100")
 	cmd.Env = append(os.Environ(), "EXIT100=1")
 
-	run = getMockRun([]byte("foo.noarch 2.0.0-1 repo"), cmd.Run())
+	data := []byte(`
+	=================================================================================================================================================================================
+	Package                                      Arch                           Version                                              Repository                                Size
+    =================================================================================================================================================================================
+    Upgrading:
+      foo                                       noarch                         2.0.0-1                           BaseOS                                   361 k
+    blah
+`)
+	run = getMockRun(data, cmd.Run())
 	ret, err := YumUpdates()
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -89,15 +97,25 @@ func TestYumUpdatesExitCode100(t *testing.T) {
 }
 
 func TestParseYumUpdates(t *testing.T) {
+	data := []byte(`
+	=================================================================================================================================================================================
+	Package                                      Arch                           Version                                              Repository                                Size
+    =================================================================================================================================================================================
+    Upgrading:
+	  foo                                       noarch                         2.0.0-1                           BaseOS                                   361 k
+	  bar                                       x86_64                         2.0.0-1                           repo                                      10 M
+	Obsoleting:
+	  baz                                       noarch                         2.0.0-1                           repo                                      10 M
+`)
+
 	tests := []struct {
 		name string
 		data []byte
 		want []PkgInfo
 	}{
-		{"NormalCase", []byte(" \nfoo.noarch 2.0.0-1 repo\nbar.x86_64 2.0.0-1 repo\nObsoleting Packages\nbaz.noarch 2.0.0-1 repo"), []PkgInfo{{"foo", "all", "2.0.0-1"}, {"bar", "x86_64", "2.0.0-1"}}},
+		{"NormalCase", data, []PkgInfo{{"foo", "all", "2.0.0-1"}, {"bar", "x86_64", "2.0.0-1"}}},
 		{"NoPackages", []byte("nothing here"), nil},
 		{"nil", nil, nil},
-		{"UnrecognizedPackage", []byte("this.is.a bad package\nsomething we dont understand\n bar.noarch 1.2.3-4 repo"), []PkgInfo{{"bar", "all", "1.2.3-4"}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
