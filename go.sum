@@ -28,9 +28,8 @@ dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
-github.com/GoogleCloudPlatform/compute-image-tools v0.0.0-20191115175545-74bf25bce8f9/go.mod h1:fZ41ZusKqa5cT+fzLarvG09dT6eBbEpoyPnYw/1lKfA=
-github.com/GoogleCloudPlatform/compute-image-tools v0.0.0-20191119211944-b664bcf441f8 h1:bXen7JtGWWvG/Ar1LVY9bbUnogoKjtcNp/p5gTUdcR0=
-github.com/GoogleCloudPlatform/compute-image-tools v0.0.0-20191119211944-b664bcf441f8/go.mod h1:fZ41ZusKqa5cT+fzLarvG09dT6eBbEpoyPnYw/1lKfA=
+github.com/GoogleCloudPlatform/compute-image-tools v0.0.0-20191114224139-44c56e7a10fa h1:sJs+Q2dpsG81WK+OyPknX/SaOg7V8EIcHjboRkav40c=
+github.com/GoogleCloudPlatform/compute-image-tools v0.0.0-20191114224139-44c56e7a10fa/go.mod h1:fZ41ZusKqa5cT+fzLarvG09dT6eBbEpoyPnYw/1lKfA=
 github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20191018162143-d6c1e38c4e8f h1:dN/XE3Oeh5MFqHBWe6fI6gcLdwVTpvnvrwtOjkUTSUw=
 github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20191018162143-d6c1e38c4e8f/go.mod h1:YWYrZjvs/qwZhDmsDnTaMXcno5Y0MYPN7rhMarLiUmI=
 github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20191113181522-f7d3a48944cc h1:Rs3eA3azYQaOGmoWnjUvz1UaZk4EptvfTpnTIxrZKKQ=
@@ -73,6 +72,7 @@ github.com/google/martian v2.1.0+incompatible/go.mod h1:9I4somxYTbIHy5NJKHRl3wXi
 github.com/google/pprof v0.0.0-20181206194817-3ea8567a2e57/go.mod h1:zfwlbNMJ+OItoe0UupaVj+oy1omPYYDuagoSzA8v9mc=
 github.com/google/pprof v0.0.0-20190515194954-54271f7e092f/go.mod h1:zfwlbNMJ+OItoe0UupaVj+oy1omPYYDuagoSzA8v9mc=
 github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm40UhjYkI=
+github.com/google/uuid v1.1.1 h1:Gkbcsh/GbpXz7lPftLA3P6TYMwjCLYm83jiFQZF/3gY=
 github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/googleapis/gax-go/v2 v2.0.4/go.mod h1:0Wqv26UfaUD9n4G6kQubkQ+KchISgw+vpHVxEJEs9eg=
 github.com/googleapis/gax-go/v2 v2.0.5 h1:sjZBwGj9Jlw33ImPtvFviGYvseOtDM7hkSKB7+Tv3SM=
