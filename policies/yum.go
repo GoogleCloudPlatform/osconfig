@@ -21,11 +21,12 @@ import (
 	"strings"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
+
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
-func yumRepositories(repos []*osconfigpb.YumRepository, repoFile string) error {
+func yumRepositories(repos []*agentendpointpb.YumRepository, repoFile string) error {
 	// TODO: Would it be easier to just use templates?
 	/*
 		# Repo file managed by Google OSConfig agent
@@ -65,7 +66,7 @@ func yumRepositories(repos []*osconfigpb.YumRepository, repoFile string) error {
 	return writeIfChanged(buf.Bytes(), repoFile)
 }
 
-func yumChanges(yumInstalled, yumRemoved, yumUpdated []*osconfigpb.Package) error {
+func yumChanges(yumInstalled, yumRemoved, yumUpdated []*agentendpointpb.Package) error {
 	var errs []string
 
 	installed, err := packages.InstalledRPMPackages()

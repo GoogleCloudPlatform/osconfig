@@ -20,7 +20,7 @@ import (
 
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
 func TestGetNecessaryChanges(t *testing.T) {
@@ -28,9 +28,9 @@ func TestGetNecessaryChanges(t *testing.T) {
 		name           string
 		installedPkgs  []packages.PkgInfo
 		upgradablePkgs []packages.PkgInfo
-		installPkgs    []*osconfigpb.Package
-		removePkgs     []*osconfigpb.Package
-		updatePkgs     []*osconfigpb.Package
+		installPkgs    []*agentendpointpb.Package
+		removePkgs     []*agentendpointpb.Package
+		updatePkgs     []*agentendpointpb.Package
 		want           changes
 	}{
 		{
@@ -127,10 +127,10 @@ func createPkgInfos(names ...string) []packages.PkgInfo {
 	return res
 }
 
-func createPackages(names ...string) []*osconfigpb.Package {
-	var res []*osconfigpb.Package
+func createPackages(names ...string) []*agentendpointpb.Package {
+	var res []*agentendpointpb.Package
 	for _, n := range names {
-		res = append(res, &osconfigpb.Package{Name: n})
+		res = append(res, &agentendpointpb.Package{Name: n})
 	}
 	return res
 }

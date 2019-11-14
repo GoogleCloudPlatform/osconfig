@@ -46,29 +46,25 @@ const (
 
 	prodEndpoint = "osconfig.googleapis.com:443"
 
-	osInventoryEnabledDefault = false
-	osPackageEnabledDefault   = false
-	osPatchEnabledDefault     = false
-	debugEnabledDefault       = false
+	osInventoryEnabledDefault      = false
+	guestPoliciesEnabledDefault    = false
+	taskNotificationEnabledDefault = false
+	debugEnabledDefault            = false
 
-	configDirWindows        = `C:\Program Files\Google\OSConfig`
-	configDirLinux          = "/etc/osconfig"
-	osPatchStateFileWindows = configDirWindows + `\osconfig_patch.state`
-	osPatchStateFileLinux   = configDirLinux + "/osconfig_patch.state"
-	taskStateFileWindows    = configDirWindows + `\osconfig_task.state`
-	taskStateFileLinux      = configDirLinux + "/osconfig_task.state"
-	restartFileWindows      = configDirWindows + `\osconfig_agent_restart_required`
-	restartFileLinux        = configDirLinux + "/osconfig_agent_restart_required"
+	configDirWindows     = `C:\Program Files\Google\OSConfig`
+	configDirLinux       = "/etc/osconfig"
+	taskStateFileWindows = configDirWindows + `\osconfig_task.state`
+	taskStateFileLinux   = configDirLinux + "/osconfig_task.state"
+	restartFileWindows   = configDirWindows + `\osconfig_agent_restart_required`
+	restartFileLinux     = configDirLinux + "/osconfig_agent_restart_required"
 
 	osConfigPollIntervalDefault = 10
 )
 
 var (
-	resourceOverride = flag.String("resource_override", "", "The URI of the instance this agent is running on in the form of `projects/*/zones/*/instances/*`. If omitted, the name will be determined by querying the metadata service.")
-	endpoint         = flag.String("endpoint", prodEndpoint, "osconfig endpoint override")
-	oauth            = flag.String("oauth", "", "path to oauth json file")
-	debug            = flag.Bool("debug", false, "set debug log verbosity")
-	stdout           = flag.Bool("stdout", false, "log to stdout")
+	endpoint = flag.String("endpoint", prodEndpoint, "osconfig endpoint override")
+	debug    = flag.Bool("debug", false, "set debug log verbosity")
+	stdout   = flag.Bool("stdout", false, "log to stdout")
 
 	agentConfig   = &config{}
 	agentConfigMx sync.RWMutex
@@ -76,7 +72,7 @@ var (
 )
 
 type config struct {
-	osInventoryEnabled, osPackageEnabled, osPatchEnabled, debugEnabled                    bool
+	osInventoryEnabled, guestPoliciesEnabled, taskNotificationEnabled, debugEnabled       bool
 	svcEndpoint, googetRepoFilePath, zypperRepoFilePath, yumRepoFilePath, aptRepoFilePath string
 	numericProjectID, osConfigPollInterval                                                int
 	projectID, instanceZone, instanceName, instanceID                                     string
@@ -84,12 +80,12 @@ type config struct {
 
 func (c *config) parsePreRelease(features string) {
 	for _, f := range strings.Split(features, ",") {
-		f = strings.TrimSpace(f)
+		f = strings.ToLower(strings.TrimSpace(f))
 		switch f {
-		case "ospatch":
-			c.osPatchEnabled = true
-		case "ospackage":
-			c.osPackageEnabled = true
+		case "tasknotification", "ospatch": // ospatch is the legacy flag
+			c.taskNotificationEnabled = true
+		case "guestpolicies", "ospackage": // ospackage is the legacy flag
+			c.guestPoliciesEnabled = true
 		}
 	}
 }
@@ -139,12 +135,12 @@ type attributesJSON struct {
 func createConfigFromMetadata(md metadataJSON) *config {
 	old := getAgentConfig()
 	c := &config{
-		osInventoryEnabled:   osInventoryEnabledDefault,
-		osPackageEnabled:     osPackageEnabledDefault,
-		osPatchEnabled:       osPatchEnabledDefault,
-		debugEnabled:         debugEnabledDefault,
-		svcEndpoint:          prodEndpoint,
-		osConfigPollInterval: osConfigPollIntervalDefault,
+		osInventoryEnabled:      osInventoryEnabledDefault,
+		guestPoliciesEnabled:    guestPoliciesEnabledDefault,
+		taskNotificationEnabled: taskNotificationEnabledDefault,
+		debugEnabled:            debugEnabledDefault,
+		svcEndpoint:             prodEndpoint,
+		osConfigPollInterval:    osConfigPollIntervalDefault,
 
 		googetRepoFilePath: googetRepoFilePath,
 		zypperRepoFilePath: zypperRepoFilePath,
@@ -286,11 +282,6 @@ func SerialLogPort() string {
 	return ""
 }
 
-// ResourceOverride is the URI of the resource.
-func ResourceOverride() string {
-	return *resourceOverride
-}
-
 // Debug sets the debug log verbosity.
 func Debug() bool {
 	return (*debug || getAgentConfig().debugEnabled)
@@ -299,11 +290,6 @@ func Debug() bool {
 // Stdout flag.
 func Stdout() bool {
 	return *stdout
-}
-
-// OAuthPath is the local location of the OAuth credentials file.
-func OAuthPath() string {
-	return *oauth
 }
 
 // SvcEndpoint is the OS Config service endpoint.
@@ -336,22 +322,18 @@ func OSInventoryEnabled() bool {
 	return getAgentConfig().osInventoryEnabled
 }
 
-// OSPackageEnabled indicates whether OSPackage should be enabled.
-func OSPackageEnabled() bool {
-	return getAgentConfig().osPackageEnabled
+// GuestPoliciesEnabled indicates whether GuestPolicies should be enabled.
+func GuestPoliciesEnabled() bool {
+	return getAgentConfig().guestPoliciesEnabled
 }
 
-// OSPatchEnabled indicates whether OSPatch should be enabled.
-func OSPatchEnabled() bool {
-	return getAgentConfig().osPatchEnabled
+// TaskNotificationEnabled indicates whether TaskNotification should be enabled.
+func TaskNotificationEnabled() bool {
+	return getAgentConfig().taskNotificationEnabled
 }
 
 // Instance is the URI of the instance the agent is running on.
 func Instance() string {
-	if ResourceOverride() != "" {
-		return ResourceOverride()
-	}
-
 	// Zone contains 'projects/project-id/zones' as a prefix.
 	return fmt.Sprintf("%s/instances/%s", Zone(), Name())
 }
@@ -430,15 +412,6 @@ func Version() string {
 // SetVersion sets the agent version.
 func SetVersion(v string) {
 	version = v
-}
-
-// PatchStateFile is the location of the patch state file.
-func PatchStateFile() string {
-	if runtime.GOOS == "windows" {
-		return osPatchStateFileWindows
-	}
-
-	return osPatchStateFileLinux
 }
 
 // TaskStateFile is the location of the task state file.

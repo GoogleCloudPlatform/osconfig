@@ -19,38 +19,32 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
-	"fmt"
 	"hash"
 	"io"
 	"os"
 	"path/filepath"
 
-	"cloud.google.com/go/compute/metadata"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-	osconfig "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/cloud.google.com/go/osconfig/apiv1alpha2"
+	"github.com/GoogleCloudPlatform/osconfig/agentendpoint"
 	"github.com/GoogleCloudPlatform/osconfig/config"
-	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 	"github.com/GoogleCloudPlatform/osconfig/policies/recipes"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
-	"github.com/GoogleCloudPlatform/osconfig/util"
-	"google.golang.org/api/option"
-	"google.golang.org/grpc/status"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
-func run(ctx context.Context, res string) {
-	client, err := osconfig.NewClient(ctx, option.WithEndpoint(config.SvcEndpoint()), option.WithCredentialsFile(config.OAuthPath()))
+func run(ctx context.Context) {
+	client, err := agentendpoint.NewClient(ctx)
 	if err != nil {
-		logger.Errorf("osconfig.NewClient Error: %v", err)
+		logger.Errorf("agentendpoint.NewClient Error: %v", err)
 		return
 	}
 	defer client.Close()
 
-	resp, err := lookupEffectivePolicies(ctx, client, res)
+	resp, err := client.LookupEffectiveGuestPolicies(ctx)
 	if err != nil {
-		logger.Errorf("lookupEffectivePolicies error: %v", err)
+		logger.Errorf("Error running GuestPolicies: %v", err)
 		return
 	}
 
@@ -61,53 +55,11 @@ func run(ctx context.Context, res string) {
 }
 
 // Run looks up osconfigs and applies them using tasker.Enqueue.
-func Run(ctx context.Context, res string) {
-	tasker.Enqueue("Run GuestPolicies", func() { run(ctx, res) })
+func Run(ctx context.Context) {
+	tasker.Enqueue("Run GuestPolicies", func() { run(ctx) })
 }
 
-func lookupEffectivePolicies(ctx context.Context, client *osconfig.Client, instance string) (*osconfigpb.LookupEffectiveGuestPoliciesResponse, error) {
-	var shortName, version, arch string
-	if config.OSInventoryEnabled() {
-		logger.Debugf("OS Inventory enabled for instance, gathering DistributionInfo for LookupEffectiveGuestPoliciesRequest")
-		info, err := osinfo.Get()
-		if err != nil {
-			return nil, err
-		}
-		shortName = info.ShortName
-		version = info.Version
-		arch = info.Architecture
-	} else {
-		logger.Debugf("OS Inventory not enabled for instance, not gathering DistributionInfo for LookupEffectiveGuestPoliciesRequest")
-	}
-
-	identityToken, err := metadata.Get(config.IdentityTokenPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req := &osconfigpb.LookupEffectiveGuestPoliciesRequest{
-		Instance:        instance,
-		OsShortName:     shortName,
-		OsVersion:       version,
-		OsArchitecture:  arch,
-		InstanceIdToken: identityToken,
-	}
-	logger.Debugf("LookupEffectiveGuestPolicies request: {Instance: %s, OsShortName: %s, OsVersion: %s, OsArchitecture: %s}",
-		req.GetInstance(), req.GetOsShortName(), req.GetOsVersion(), req.GetOsArchitecture())
-
-	res, err := client.LookupEffectiveGuestPolicies(ctx, req)
-	if err != nil {
-		if s, ok := status.FromError(err); ok {
-			return nil, fmt.Errorf("code: %q, message: %q, details: %q", s.Code(), s.Message(), s.Details())
-		}
-		return nil, err
-	}
-	logger.Debugf("LookupEffectiveGuestPolicies response:\n%s", util.PrettyFmt(res))
-
-	return res, nil
-}
-
-func installRecipes(ctx context.Context, res *osconfigpb.LookupEffectiveGuestPoliciesResponse) error {
+func installRecipes(ctx context.Context, res *agentendpointpb.LookupEffectiveGuestPoliciesResponse) error {
 	for _, recipe := range res.GetSoftwareRecipes() {
 		if r := recipe.GetSoftwareRecipe(); r != nil {
 			if err := recipes.InstallRecipe(ctx, r); err != nil {
@@ -118,11 +70,11 @@ func installRecipes(ctx context.Context, res *osconfigpb.LookupEffectiveGuestPol
 	return nil
 }
 
-func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) {
-	var aptRepos []*osconfigpb.AptRepository
-	var yumRepos []*osconfigpb.YumRepository
-	var zypperRepos []*osconfigpb.ZypperRepository
-	var gooRepos []*osconfigpb.GooRepository
+func setConfig(res *agentendpointpb.LookupEffectiveGuestPoliciesResponse) {
+	var aptRepos []*agentendpointpb.AptRepository
+	var yumRepos []*agentendpointpb.YumRepository
+	var zypperRepos []*agentendpointpb.ZypperRepository
+	var gooRepos []*agentendpointpb.GooRepository
 	for _, repo := range res.GetPackageRepositories() {
 		if r := repo.GetPackageRepository().GetGoo(); r != nil {
 			gooRepos = append(gooRepos, r)
@@ -142,64 +94,64 @@ func setConfig(res *osconfigpb.LookupEffectiveGuestPoliciesResponse) {
 		}
 	}
 
-	var gooInstallPkgs, gooRemovePkgs, gooUpdatePkgs []*osconfigpb.Package
-	var aptInstallPkgs, aptRemovePkgs, aptUpdatePkgs []*osconfigpb.Package
-	var yumInstallPkgs, yumRemovePkgs, yumUpdatePkgs []*osconfigpb.Package
-	var zypperInstallPkgs, zypperRemovePkgs, zypperUpdatePkgs []*osconfigpb.Package
+	var gooInstallPkgs, gooRemovePkgs, gooUpdatePkgs []*agentendpointpb.Package
+	var aptInstallPkgs, aptRemovePkgs, aptUpdatePkgs []*agentendpointpb.Package
+	var yumInstallPkgs, yumRemovePkgs, yumUpdatePkgs []*agentendpointpb.Package
+	var zypperInstallPkgs, zypperRemovePkgs, zypperUpdatePkgs []*agentendpointpb.Package
 	for _, pkg := range res.GetPackages() {
 		switch pkg.GetPackage().GetManager() {
-		case osconfigpb.Package_ANY, osconfigpb.Package_MANAGER_UNSPECIFIED:
+		case agentendpointpb.Package_ANY, agentendpointpb.Package_MANAGER_UNSPECIFIED:
 			switch pkg.GetPackage().GetDesiredState() {
-			case osconfigpb.DesiredState_INSTALLED, osconfigpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
+			case agentendpointpb.DesiredState_INSTALLED, agentendpointpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
 				gooInstallPkgs = append(gooInstallPkgs, pkg.GetPackage())
 				aptInstallPkgs = append(aptInstallPkgs, pkg.GetPackage())
 				yumInstallPkgs = append(yumInstallPkgs, pkg.GetPackage())
 				zypperInstallPkgs = append(zypperInstallPkgs, pkg.GetPackage())
-			case osconfigpb.DesiredState_REMOVED:
+			case agentendpointpb.DesiredState_REMOVED:
 				gooRemovePkgs = append(gooRemovePkgs, pkg.GetPackage())
 				aptRemovePkgs = append(aptRemovePkgs, pkg.GetPackage())
 				yumRemovePkgs = append(yumRemovePkgs, pkg.GetPackage())
 				zypperRemovePkgs = append(zypperRemovePkgs, pkg.GetPackage())
-			case osconfigpb.DesiredState_UPDATED:
+			case agentendpointpb.DesiredState_UPDATED:
 				gooUpdatePkgs = append(gooUpdatePkgs, pkg.GetPackage())
 				aptUpdatePkgs = append(aptUpdatePkgs, pkg.GetPackage())
 				yumUpdatePkgs = append(yumUpdatePkgs, pkg.GetPackage())
 				zypperUpdatePkgs = append(zypperUpdatePkgs, pkg.GetPackage())
 			}
-		case osconfigpb.Package_GOO:
+		case agentendpointpb.Package_GOO:
 			switch pkg.GetPackage().GetDesiredState() {
-			case osconfigpb.DesiredState_INSTALLED, osconfigpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
+			case agentendpointpb.DesiredState_INSTALLED, agentendpointpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
 				gooInstallPkgs = append(gooInstallPkgs, pkg.GetPackage())
-			case osconfigpb.DesiredState_REMOVED:
+			case agentendpointpb.DesiredState_REMOVED:
 				gooRemovePkgs = append(gooRemovePkgs, pkg.GetPackage())
-			case osconfigpb.DesiredState_UPDATED:
+			case agentendpointpb.DesiredState_UPDATED:
 				gooUpdatePkgs = append(gooUpdatePkgs, pkg.GetPackage())
 			}
-		case osconfigpb.Package_APT:
+		case agentendpointpb.Package_APT:
 			switch pkg.GetPackage().GetDesiredState() {
-			case osconfigpb.DesiredState_INSTALLED, osconfigpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
+			case agentendpointpb.DesiredState_INSTALLED, agentendpointpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
 				aptInstallPkgs = append(aptInstallPkgs, pkg.GetPackage())
-			case osconfigpb.DesiredState_REMOVED:
+			case agentendpointpb.DesiredState_REMOVED:
 				aptRemovePkgs = append(aptRemovePkgs, pkg.GetPackage())
-			case osconfigpb.DesiredState_UPDATED:
+			case agentendpointpb.DesiredState_UPDATED:
 				aptUpdatePkgs = append(aptUpdatePkgs, pkg.GetPackage())
 			}
-		case osconfigpb.Package_YUM:
+		case agentendpointpb.Package_YUM:
 			switch pkg.GetPackage().GetDesiredState() {
-			case osconfigpb.DesiredState_INSTALLED, osconfigpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
+			case agentendpointpb.DesiredState_INSTALLED, agentendpointpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
 				yumInstallPkgs = append(yumInstallPkgs, pkg.GetPackage())
-			case osconfigpb.DesiredState_REMOVED:
+			case agentendpointpb.DesiredState_REMOVED:
 				yumRemovePkgs = append(yumRemovePkgs, pkg.GetPackage())
-			case osconfigpb.DesiredState_UPDATED:
+			case agentendpointpb.DesiredState_UPDATED:
 				yumUpdatePkgs = append(yumUpdatePkgs, pkg.GetPackage())
 			}
-		case osconfigpb.Package_ZYPPER:
+		case agentendpointpb.Package_ZYPPER:
 			switch pkg.GetPackage().GetDesiredState() {
-			case osconfigpb.DesiredState_INSTALLED, osconfigpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
+			case agentendpointpb.DesiredState_INSTALLED, agentendpointpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
 				zypperInstallPkgs = append(zypperInstallPkgs, pkg.GetPackage())
-			case osconfigpb.DesiredState_REMOVED:
+			case agentendpointpb.DesiredState_REMOVED:
 				zypperRemovePkgs = append(zypperRemovePkgs, pkg.GetPackage())
-			case osconfigpb.DesiredState_UPDATED:
+			case agentendpointpb.DesiredState_UPDATED:
 				zypperUpdatePkgs = append(zypperUpdatePkgs, pkg.GetPackage())
 			}
 
