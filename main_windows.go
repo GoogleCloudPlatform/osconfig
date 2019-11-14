@@ -15,6 +15,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
@@ -23,6 +24,7 @@ import (
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"golang.org/x/sys/windows"
+	"golang.org/x/sys/windows/svc"
 )
 
 var (
@@ -32,6 +34,8 @@ var (
 )
 
 const (
+	serviceName = "google_osconfig_agent"
+
 	// https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-lockfileex
 	LOCKFILE_EXCLUSIVE_LOCK   = 2
 	LOCKFILE_FAIL_IMMEDIATELY = 1
@@ -85,4 +89,43 @@ func obtainLock() {
 	}
 
 	deferredFuncs = append(deferredFuncs, func() { unlockFileEx(f.Fd(), 1, 0, &syscall.Overlapped{}); f.Close(); os.Remove(lockFile) })
+}
+
+type service struct {
+	ctx context.Context
+	run func(context.Context)
+}
+
+func (s *service) Execute(args []string, r <-chan svc.ChangeRequest, status chan<- svc.Status) (svcSpecificEC bool, exitCode uint32) {
+	status <- svc.Status{State: svc.StartPending}
+	ctx, cncl := context.WithCancel(s.ctx)
+	done := make(chan struct{})
+
+	go func() {
+		s.run(ctx)
+		close(done)
+	}()
+	status <- svc.Status{State: svc.Running, Accepts: svc.AcceptStop | svc.AcceptShutdown}
+
+	for {
+		select {
+		case <-done:
+			status <- svc.Status{State: svc.StopPending}
+			return
+		case c := <-r:
+			switch c.Cmd {
+			case svc.Interrogate:
+				status <- c.CurrentStatus
+			case svc.Stop, svc.Shutdown:
+				cncl()
+			default:
+			}
+		}
+	}
+}
+
+func runService(ctx context.Context, run func(context.Context)) {
+	if err := svc.Run(serviceName, &service{run: run, ctx: ctx}); err != nil {
+		logger.Fatalf("svc.Run error: %v", err)
+	}
 }

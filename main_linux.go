@@ -15,6 +15,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -22,6 +23,10 @@ import (
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 )
+
+func runService(ctx context.Context, run func(context.Context)) {
+	run(ctx)
+}
 
 func obtainLock() {
 	lockFile := "/run/lock/osconfig_agent.lock"

@@ -12,7 +12,6 @@ require (
 	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
 	github.com/golang/protobuf v1.3.2
 	github.com/googleapis/gax-go/v2 v2.0.5
-	github.com/kardianos/service v1.0.0
 	github.com/kylelemons/godebug v1.1.0
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
 	github.com/ulikunitz/xz v0.5.6

@@ -9,6 +9,8 @@ Restart=always
 RestartSec=1
 StartLimitInterval=120
 StartLimitBurst=3
+KillMode=mixed
+KillSignal=SIGTERM
 
 [Install]
 WantedBy=multi-user.target
