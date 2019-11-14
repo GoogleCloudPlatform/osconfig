@@ -99,6 +99,7 @@ type service struct {
 func (s *service) Execute(args []string, r <-chan svc.ChangeRequest, status chan<- svc.Status) (svcSpecificEC bool, exitCode uint32) {
 	status <- svc.Status{State: svc.StartPending}
 	ctx, cncl := context.WithCancel(s.ctx)
+	defer cncl()
 	done := make(chan struct{})
 
 	go func() {
