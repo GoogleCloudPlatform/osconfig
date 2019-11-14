@@ -84,7 +84,7 @@ func (c *config) parsePreRelease(features string) {
 		switch f {
 		case "tasknotification", "ospatch": // ospatch is the legacy flag
 			c.taskNotificationEnabled = true
-		case "ospackage", "guestpolicies":
+		case "guestpolicies", "ospackage": // ospackage is the legacy flag
 			c.guestPoliciesEnabled = true
 		}
 	}
