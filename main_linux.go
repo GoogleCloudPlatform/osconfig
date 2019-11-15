@@ -24,7 +24,7 @@ import (
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 )
 
-func runService(ctx context.Context, run func(context.Context)) {
+func runService(ctx context.Context) {
 	run(ctx)
 }
 

@@ -181,7 +181,7 @@ func main() {
 
 	switch action := flag.Arg(0); action {
 	case "", "run":
-		runService(ctx, run)
+		runService(ctx)
 		return
 	case "noservice":
 		run(ctx)

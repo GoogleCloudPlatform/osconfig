@@ -125,7 +125,7 @@ func (s *service) Execute(args []string, r <-chan svc.ChangeRequest, status chan
 	}
 }
 
-func runService(ctx context.Context, run func(context.Context)) {
+func runService(ctx context.Context) {
 	if err := svc.Run(serviceName, &service{run: run, ctx: ctx}); err != nil {
 		logger.Fatalf("svc.Run error: %v", err)
 	}
