@@ -1,6 +1,6 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '--tag=gcr.io/$PROJECT_ID/osconfig-tests:latest', '--tag=gcr.io/$PROJECT_ID/osconfig-tests:$COMMIT_SHA', '.']
+  args: ['build', '--tag=gcr.io/$PROJECT_ID/osconfig-tests:latest', '--tag=gcr.io/$PROJECT_ID/osconfig-tests:$COMMIT_SHA', './e2e_tests']
 
 images:
   - 'gcr.io/$PROJECT_ID/osconfig-tests:latest'
