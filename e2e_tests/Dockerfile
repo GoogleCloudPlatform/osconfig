@@ -22,8 +22,6 @@ RUN chmod +x /e2e_tests
 
 FROM gcr.io/compute-image-tools-test/wrapper:latest
 
-ENV GOOGLE_APPLICATION_CREDENTIALS /etc/compute-image-tools-test-service-account/creds.json
-
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=0 /e2e_tests e2e_tests
 ENTRYPOINT ["./wrapper", "./e2e_tests"]
