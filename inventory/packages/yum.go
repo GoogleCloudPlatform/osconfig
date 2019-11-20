@@ -28,12 +28,12 @@ import (
 var (
 	yum string
 
-	yumInstallArgs       = []string{"install", "--assumeyes"}
-	yumRemoveArgs        = []string{"remove", "--assumeyes"}
-	yumCheckUpdateArgs   = []string{"check-update", "--assumeyes"}
-	yumUpdateArgs        = []string{"update", "--assumeyes"}
-	yumUpdatesArgs       = []string{"update", "--assumeno", "--cacheonly"}
-	yumUpdateMinimalArgs = []string{"update-minimal", "--assumeno", "--cacheonly"}
+	yumInstallArgs           = []string{"install", "--assumeyes"}
+	yumRemoveArgs            = []string{"remove", "--assumeyes"}
+	yumCheckUpdateArgs       = []string{"check-update", "--assumeyes"}
+	yumUpdateArgs            = []string{"update", "--assumeyes"}
+	yumListUpdatesArgs       = []string{"update", "--assumeno", "--cacheonly"}
+	yumListUpdateMinimalArgs = []string{"update-minimal", "--assumeno", "--cacheonly"}
 )
 
 func init() {
@@ -105,24 +105,26 @@ func RemoveYumPackages(pkgs []string) error {
 
 func parseYumUpdates(data []byte) []PkgInfo {
 	/*
-		Last metadata expiration check: 0:11:22 ago on Tue 12 Nov 2019 12:13:38 AM UTC.
-		Dependencies resolved.
-		=================================================================================================================================================================================
-		 Package                                      Arch                           Version                                              Repository                                Size
-		=================================================================================================================================================================================
-		Upgrading:
-		 dracut                                       x86_64                         049-10.git20190115.el8_0.1                           BaseOS                                   361 k
-		 dracut-config-rescue                         x86_64                         049-10.git20190115.el8_0.1                           BaseOS                                    51 k
-		 dracut-network                               x86_64                         049-10.git20190115.el8_0.1                           BaseOS                                    96 k
-		 dracut-squash                                x86_64                         049-10.git20190115.el8_0.1                           BaseOS                                    52 k
-		 google-cloud-sdk                             noarch                         270.0.0-1                                            google-cloud-sdk                          36 M
+				Last metadata expiration check: 0:11:22 ago on Tue 12 Nov 2019 12:13:38 AM UTC.
+				Dependencies resolved.
+				=================================================================================================================================================================================
+				 Package                                      Arch                           Version                                              Repository                                Size
+				=================================================================================================================================================================================
+				Installing:
+		 		 kernel                                       x86_64                         2.6.32-754.24.3.el6                                  updates                                   32 M
+				Updating:
+		 		 google-compute-engine                        noarch                         1:20190916.00-g2.el6                                 google-compute-engine                     18 k
+				 kernel-firmware                              noarch                         2.6.32-754.24.3.el6                                  updates                                   29 M
+		 	 	 libudev                                      x86_64                         147-2.74.el6_10                                      updates                                   78 k
+		 		 nspr                                         x86_64                         4.21.0-1.el6_10                                      updates                                  114 k
+				 google-cloud-sdk                             noarch                         270.0.0-1                                            google-cloud-sdk                          36 M
 
-		Transaction Summary
-		=================================================================================================================================================================================
-		Upgrade  5 Packages
+				Transaction Summary
+				=================================================================================================================================================================================
+				Upgrade  5 Packages
 
-		Total download size: 36 M
-		Operation aborted.
+				Total download size: 36 M
+				Operation aborted.
 	*/
 
 	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
@@ -134,12 +136,13 @@ func parseYumUpdates(data []byte) []PkgInfo {
 		if len(pkg) == 0 {
 			continue
 		}
-		// Continue until we see the upgrading section.
+		fmt.Println(string(pkg[0]))
+		// Continue until we see the installing/upgrading section.
 		// Yum has this as Updating, dnf is Upgrading.
-		if !upgrading && (string(pkg[0]) != "Upgrading:" && string(pkg[0]) != "Updating:") {
+		if string(pkg[0]) == "Upgrading:" || string(pkg[0]) == "Updating:" || string(pkg[0]) == "Installing:" {
+			upgrading = true
 			continue
 		} else if !upgrading {
-			upgrading = true
 			continue
 		}
 		// Break as soon as we don't see a package line.
@@ -164,7 +167,7 @@ func YumUpdates(opts ...YumUpdateOption) ([]PkgInfo, error) {
 
 	args := yumUpdateArgs
 	if yumOpts.minimal {
-		args = yumUpdateMinimalArgs
+		args = yumListUpdateMinimalArgs
 	}
 	if yumOpts.security {
 		args = append(args, "--security")
@@ -187,7 +190,7 @@ func YumUpdates(opts ...YumUpdateOption) ([]PkgInfo, error) {
 		return nil, fmt.Errorf("error checking for yum updates: %v, stdout: %s", err, out)
 	}
 
-	out, err = runWithPty(exec.Command(yum, yumUpdatesArgs...))
+	out, err = runWithPty(exec.Command(yum, yumListUpdatesArgs...))
 	if err != nil {
 		return nil, err
 	}

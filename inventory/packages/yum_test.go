@@ -70,12 +70,14 @@ func TestParseYumUpdates(t *testing.T) {
 	data := []byte(`
 	=================================================================================================================================================================================
 	Package                                      Arch                           Version                                              Repository                                Size
-    =================================================================================================================================================================================
+	=================================================================================================================================================================================
+	Installing:
+      kernel                                    x86_64                         2.6.32-754.24.3.el6                                  updates                                   32 M
     Upgrading:
-	  foo                                       noarch                         2.0.0-1                           BaseOS                                   361 k
-	  bar                                       x86_64                         2.0.0-1                           repo                                      10 M
+	  foo                                       noarch                         2.0.0-1                                              BaseOS                                   361 k
+	  bar                                       x86_64                         2.0.0-1                                              repo                                      10 M
 	Obsoleting:
-	  baz                                       noarch                         2.0.0-1                           repo                                      10 M
+	  baz                                       noarch                         2.0.0-1                                              repo                                      10 M
 `)
 
 	tests := []struct {
@@ -83,7 +85,7 @@ func TestParseYumUpdates(t *testing.T) {
 		data []byte
 		want []PkgInfo
 	}{
-		{"NormalCase", data, []PkgInfo{{"foo", "all", "2.0.0-1"}, {"bar", "x86_64", "2.0.0-1"}}},
+		{"NormalCase", data, []PkgInfo{{"kernel", "x86_64", "2.6.32-754.24.3.el6"}, {"foo", "all", "2.0.0-1"}, {"bar", "x86_64", "2.0.0-1"}}},
 		{"NoPackages", []byte("nothing here"), nil},
 		{"nil", nil, nil},
 	}
