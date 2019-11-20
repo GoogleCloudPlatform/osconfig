@@ -27,6 +27,7 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/GoogleCloudPlatform/compute-image-tools v0.0.0-20191115175545-74bf25bce8f9 h1:W0R3ygRyc6wvEkyfupOFurOiYcKeVQ6uzdpz4tOmDPc=
 github.com/GoogleCloudPlatform/compute-image-tools v0.0.0-20191115175545-74bf25bce8f9/go.mod h1:fZ41ZusKqa5cT+fzLarvG09dT6eBbEpoyPnYw/1lKfA=
+github.com/GoogleCloudPlatform/compute-image-tools v0.0.0-20191120214016-799e23cafc15 h1:4PJxg5oExHyibEr/ugzRM6r20kvm+vf1tsKTDbhz16M=
 github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20191113181522-f7d3a48944cc h1:Rs3eA3azYQaOGmoWnjUvz1UaZk4EptvfTpnTIxrZKKQ=
 github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20191113181522-f7d3a48944cc/go.mod h1:YWYrZjvs/qwZhDmsDnTaMXcno5Y0MYPN7rhMarLiUmI=
 github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d h1:G0m3OIz70MZUWq3EgK3CesDbo8upS2Vm9/P3FtgI+Jk=
