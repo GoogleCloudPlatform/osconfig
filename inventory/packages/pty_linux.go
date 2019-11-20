@@ -40,6 +40,8 @@ func ioctl(fd, req, arg uintptr) (err error) {
 
 // This is used for anytime we need to parse YUM output.
 // See https://bugzilla.redhat.com/show_bug.cgi?id=584525#c21
+// TODO: We should probably look into a thin python shim we can
+// interact with that the utilizes the yum libraries.
 func runWithPty(cmd *exec.Cmd) ([]byte, error) {
 	// Much of this logic was taken from, without the CGO stuff:
 	// https://golang.org/src/os/signal/signal_cgo_test.go
