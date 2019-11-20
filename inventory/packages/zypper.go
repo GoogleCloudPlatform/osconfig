@@ -30,8 +30,8 @@ import (
 var (
 	zypper string
 
-	// ZypperInstallArgs is zypper command to install patches, packages
-	ZypperInstallArgs     = []string{"--gpg-auto-import-keys", "install", "--no-confirm"}
+	// zypperInstallArgs is zypper command to install patches, packages
+	zypperInstallArgs     = []string{"--gpg-auto-import-keys", "install", "--no-confirm"}
 	zypperRemoveArgs      = []string{"remove", "--no-confirm"}
 	zypperListUpdatesArgs = []string{"--gpg-auto-import-keys", "-q", "list-updates"}
 	zypperListPatchesArgs = []string{"--gpg-auto-import-keys", "-q", "list-patches"}
@@ -85,13 +85,31 @@ func ZypperListPatchAll(all bool) ZypperListOption {
 
 // InstallZypperPackages Installs zypper packages
 func InstallZypperPackages(pkgs []string) error {
-	args := append(ZypperInstallArgs, pkgs...)
+	args := append(zypperInstallArgs, pkgs...)
 	out, err := run(exec.Command(zypper, args...))
 	var msg string
 	for _, s := range strings.Split(string(out), "\n") {
 		msg += fmt.Sprintf(" %s\n", s)
 	}
 	DebugLogger.Printf("Zypper install output:\n%s", msg)
+	return err
+}
+
+// ZypperInstall installs zypper patches and packages
+func ZypperInstall(patches []ZypperPatch, pkgs []PkgInfo) error {
+	// does a package in pkgs belong to a patch in patchtopkgmap
+	args := zypperInstallArgs
+
+	// https://www.mankier.com/8/zypper#Concepts-Package_Types use patch install
+	// for single patch and package installs
+	for _, patch := range patches {
+		args = append(args, "patch:"+patch.Name)
+	}
+	for _, pkg := range pkgs {
+		args = append(args, "package:"+pkg.Name)
+	}
+
+	_, err := run(exec.Command(zypper, args...))
 	return err
 }
 

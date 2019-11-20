@@ -132,23 +132,7 @@ func RunZypperPatch(opts ...ZypperPatchOption) error {
 	}
 
 	fPatches, fpkgs, err := runFilter(patches, zOpts.exclusivePatches, zOpts.excludes, zOpts.withUpdate)
-
-	// does a package in pkgs belong to a patch in patchtopkgmap
-	args := packages.ZypperInstallArgs
-
-	// https://www.mankier.com/8/zypper#Concepts-Package_Types use patch install
-	// for single patch and package installs
-	for _, patch := range fPatches {
-		args = append(args, "patch:"+patch.Name)
-	}
-	for _, pkg := range fpkgs {
-		args = append(args, "package:"+pkg.Name)
-	}
-
-	if _, err := zOpts.runner(exec.Command(zypper, args...)); err != nil {
-		return err
-	}
-	return nil
+	return packages.ZypperInstall(fPatches, fpkgs)
 }
 
 func runFilter(patches []packages.ZypperPatch, exclusivePatches, excludes []string, withUpdate bool) ([]packages.ZypperPatch, []packages.PkgInfo, error) {
