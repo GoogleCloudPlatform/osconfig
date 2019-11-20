@@ -134,8 +134,11 @@ func main() {
 	}
 
 	opts := logger.LogOpts{LoggerName: "OSConfigAgent"}
+	if config.Stdout() {
+		opts.Writers = []io.Writer{os.Stdout}
+	}
 	if runtime.GOOS == "windows" {
-		opts.Writers = []io.Writer{&serialPort{"COM1"}}
+		opts.Writers = append(opts.Writers, &serialPort{"COM1"})
 	}
 
 	// If this call to SetConfig fails (like a metadata error) we can't continue.
