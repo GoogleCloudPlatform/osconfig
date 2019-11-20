@@ -23,7 +23,9 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime"
+	"syscall"
 	"time"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
@@ -32,7 +34,6 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 	"github.com/GoogleCloudPlatform/osconfig/policies"
-	"github.com/GoogleCloudPlatform/osconfig/service"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
 	"github.com/tarm/serial"
 
@@ -47,6 +48,8 @@ func init() {
 	}
 	// We do this here so the -X value doesn't need the full path.
 	config.SetVersion(version)
+
+	os.MkdirAll(filepath.Dir(config.RestartFile()), 0755)
 }
 
 type logWriter struct{}
@@ -132,9 +135,7 @@ func main() {
 
 	opts := logger.LogOpts{LoggerName: "OSConfigAgent"}
 	if runtime.GOOS == "windows" {
-		opts.Writers = []io.Writer{&serialPort{"COM1"}, os.Stdout}
-	} else {
-		opts.Writers = []io.Writer{os.Stdout}
+		opts.Writers = []io.Writer{&serialPort{"COM1"}}
 	}
 
 	// If this call to SetConfig fails (like a metadata error) we can't continue.
@@ -162,22 +163,25 @@ func main() {
 
 	packages.DebugLogger = log.New(&logWriter{}, "", 0)
 
-	logger.Infof("OSConfig Agent (version %s) Started", config.Version())
+	logger.Infof("OSConfig Agent (version %s) started.", config.Version())
 
+	ctx, cncl := context.WithCancel(ctx)
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
 		select {
 		case <-c:
-			logger.Fatalf("Ctrl-C caught, shutting down.")
+			cncl()
 		}
+	}()
+
+	defer func() {
+		logger.Infof("OSConfig Agent (version %s) shutting down.", config.Version())
 	}()
 
 	switch action := flag.Arg(0); action {
 	case "", "run":
-		if err := service.Register(ctx, "google_osconfig_agent", "Google OSConfig Agent", "", run, "run"); err != nil {
-			logger.Fatalf("service.Register error: %v", err)
-		}
+		runService(ctx)
 		return
 	case "noservice":
 		run(ctx)
