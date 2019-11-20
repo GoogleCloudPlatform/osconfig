@@ -31,7 +31,8 @@ var (
 	yumInstallArgs       = []string{"install", "--assumeyes"}
 	yumRemoveArgs        = []string{"remove", "--assumeyes"}
 	yumCheckUpdateArgs   = []string{"check-update", "--assumeyes"}
-	yumUpdateArgs        = []string{"update", "--assumeno", "--cacheonly"}
+	yumUpdateArgs        = []string{"update", "--assumeyes"}
+	yumUpdatesArgs       = []string{"update", "--assumeno", "--cacheonly"}
 	yumUpdateMinimalArgs = []string{"update-minimal", "--assumeno", "--cacheonly"}
 )
 
@@ -75,6 +76,18 @@ func InstallYumPackages(pkgs []string) error {
 		msg += fmt.Sprintf(" %s\n", s)
 	}
 	DebugLogger.Printf("yum install output:\n%s", msg)
+	return err
+}
+
+// UpdateYumPackages updates yum packages.
+func UpdateYumPackages(pkgs []string) error {
+	args := append(yumUpdateArgs, pkgs...)
+	out, err := run(exec.Command(yum, args...))
+	var msg string
+	for _, s := range strings.Split(string(out), "\n") {
+		msg += fmt.Sprintf(" %s\n", s)
+	}
+	DebugLogger.Printf("yum update output:\n%s", msg)
 	return err
 }
 
@@ -131,7 +144,6 @@ func parseYumUpdates(data []byte) []PkgInfo {
 		}
 		// Break as soon as we don't see a package line.
 		if len(pkg) < 6 {
-			fmt.Printf("%q\n", pkg)
 			break
 		}
 		pkgs = append(pkgs, PkgInfo{Name: string(pkg[0]), Arch: osinfo.Architecture(string(pkg[1])), Version: string(pkg[2])})
@@ -175,11 +187,14 @@ func YumUpdates(opts ...YumUpdateOption) ([]PkgInfo, error) {
 		return nil, fmt.Errorf("error checking for yum updates: %v, stdout: %s", err, out)
 	}
 
-	out, err = run(exec.Command(yum, yumUpdateArgs...))
-	// Exit code 0 means no updates, 1 probably means there are but we just didn't install them.
-	if err == nil {
+	out, err = runWithPty(exec.Command(yum, yumUpdatesArgs...))
+	if err != nil {
+		return nil, err
+	}
+	if out == nil {
 		return nil, nil
 	}
+
 	pkgs := parseYumUpdates(out)
 	if len(pkgs) == 0 {
 		// This means we could not parse any packages and instead got an error from yum.

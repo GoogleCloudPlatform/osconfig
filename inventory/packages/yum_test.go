@@ -16,8 +16,6 @@ package packages
 
 import (
 	"errors"
-	"os"
-	"os/exec"
 	"reflect"
 	"testing"
 )
@@ -65,34 +63,6 @@ func TestYumUpdatesExitCode0(t *testing.T) {
 	}
 	if ret != nil {
 		t.Errorf("unexpected return: %v", ret)
-	}
-}
-
-func TestYumUpdatesExitCode100(t *testing.T) {
-	if os.Getenv("EXIT100") == "1" {
-		os.Exit(100)
-	}
-
-	cmd := exec.Command(os.Args[0], "-test.run=TestYumUpdatesExitCode100")
-	cmd.Env = append(os.Environ(), "EXIT100=1")
-
-	data := []byte(`
-	=================================================================================================================================================================================
-	Package                                      Arch                           Version                                              Repository                                Size
-    =================================================================================================================================================================================
-    Upgrading:
-      foo                                       noarch                         2.0.0-1                           BaseOS                                   361 k
-    blah
-`)
-	run = getMockRun(data, cmd.Run())
-	ret, err := YumUpdates()
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-
-	want := []PkgInfo{{"foo", "all", "2.0.0-1"}}
-	if !reflect.DeepEqual(ret, want) {
-		t.Errorf("YumUpdates() = %v, want %v", ret, want)
 	}
 }
 

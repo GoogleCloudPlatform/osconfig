@@ -306,6 +306,7 @@ func (c *Client) waitForTask(ctx context.Context) error {
 		switch s.Code() {
 		case codes.Unavailable:
 			// Something canceled the stream (could be deadline/timeout), we should reconnect.
+			logger.Errorf(err.Error())
 			return nil
 		case codes.PermissionDenied:
 			// Service is not enabled for this project.
