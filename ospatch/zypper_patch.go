@@ -16,7 +16,6 @@ package ospatch
 
 import (
 	"fmt"
-	"os/exec"
 
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 )
@@ -34,7 +33,6 @@ type zypperPatchOpts struct {
 	withUpdate       bool
 	excludes         []string
 	exclusivePatches []string
-	runner           func(cmd *exec.Cmd) ([]byte, error)
 	dryrun           bool
 }
 
@@ -89,13 +87,6 @@ func ZypperUpdateWithExclusivePatches(exclusivePatches []string) ZypperPatchOpti
 	}
 }
 
-// ZypperPatchRunner returns a ZypperUpdateOption that specifies the runner.
-func ZypperPatchRunner(runner func(cmd *exec.Cmd) ([]byte, error)) ZypperPatchOption {
-	return func(args *zypperPatchOpts) {
-		args.runner = runner
-	}
-}
-
 // ZypperUpdateDryrun returns a ZypperUpdateOption that specifies the runner.
 func ZypperUpdateDryrun(dryrun bool) ZypperPatchOption {
 	return func(args *zypperPatchOpts) {
@@ -106,7 +97,6 @@ func ZypperUpdateDryrun(dryrun bool) ZypperPatchOption {
 // RunZypperPatch runs zypper patch.
 func RunZypperPatch(opts ...ZypperPatchOption) error {
 	zOpts := &zypperPatchOpts{
-		runner:           defaultRunner,
 		excludes:         nil,
 		exclusivePatches: nil,
 		categories:       nil,
