@@ -104,13 +104,11 @@ systemctl start google-osconfig-agent`+curlPost, config.AgentRepo())
 // InstallOSConfigGooGet installs the osconfig agent on Windows systems.
 func InstallOSConfigGooGet() string {
 	if config.AgentRepo() == "stable" {
-		return `Stop-Service google_osconfig_agent
-c:\programdata\googet\googet.exe -noconfirm install google-osconfig-agent
-Start-Service google_osconfig_agent` + windowsPost
+		return `c:\programdata\googet\googet.exe -noconfirm install google-osconfig-agent
+Restart-Service google_osconfig_agent -Force -Verbose` + windowsPost
 	}
-	return fmt.Sprintf(`Stop-Service google_osconfig_agent
-c:\programdata\googet\googet.exe -noconfirm install -sources https://packages.cloud.google.com/yuck/repos/google-osconfig-agent-%s google-osconfig-agent
-Start-Service google_osconfig_agent`+windowsPost, config.AgentRepo())
+	return fmt.Sprintf(`c:\programdata\googet\googet.exe -noconfirm install -sources https://packages.cloud.google.com/yuck/repos/google-osconfig-agent-%s google-osconfig-agent
+Restart-Service google_osconfig_agent -Force -Verbose`+windowsPost, config.AgentRepo())
 }
 
 // InstallOSConfigSUSE installs the osconfig agent on suse systems.
