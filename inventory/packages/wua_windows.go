@@ -225,11 +225,11 @@ func WUAUpdates(query string) ([]WUAPackage, error) {
 		return nil, err
 	}
 
-	var packages []WUAPackage
 	if updtCnt == 0 {
-		return packages, nil
+		return nil, nil
 	}
 
+	var packages []WUAPackage
 	for i := 0; i < int(updtCnt); i++ {
 		updtRaw, err := updts.GetProperty("Item", i)
 		if err != nil {
