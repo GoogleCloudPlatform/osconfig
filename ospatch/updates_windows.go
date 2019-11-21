@@ -140,21 +140,14 @@ func checkFilters(updt *packages.IUpdate, kbExcludes, classFilter, exclusive_pat
 
 // GetWUAUpdates gets WUA updates based on optional classFilter and kbExcludes.
 func GetWUAUpdates(session *packages.IUpdateSession, classFilter, kbExcludes, exclusive_patches []string) (*packages.IUpdateCollection, error) {
-	logger.Debugf("Searching for available WUA updates.")
 	updts, err := session.GetWUAUpdateCollection("IsInstalled=0")
 	if err != nil {
 		return nil, fmt.Errorf("GetWUAUpdateCollection error: %v", err)
 	}
 
-	countRaw, err := updts.GetProperty("Count")
+	count, err := updts.Count()
 	if err != nil {
 		return nil, err
-	}
-	count, _ := countRaw.Value().(int32)
-
-	if count == 0 {
-		logger.Infof("No Windows updates available to install")
-		return nil, nil
 	}
 
 	if len(classFilter) == 0 && len(kbExcludes) == 0 {
