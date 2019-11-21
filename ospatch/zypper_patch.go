@@ -15,7 +15,10 @@
 package ospatch
 
 import (
-	"os/exec"
+	"fmt"
+
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 )
 
 const zypper = "/usr/bin/zypper"
@@ -25,11 +28,13 @@ var (
 )
 
 type zypperPatchOpts struct {
-	categories   []string
-	severities   []string
-	withOptional bool
-	withUpdate   bool
-	runner       func(cmd *exec.Cmd) ([]byte, error)
+	categories       []string
+	severities       []string
+	withOptional     bool
+	withUpdate       bool
+	excludes         []string
+	exclusivePatches []string
+	dryrun           bool
 }
 
 // ZypperPatchOption is an option for zypper patch.
@@ -67,39 +72,111 @@ func ZypperUpdateWithUpdate(withUpdate bool) ZypperPatchOption {
 	}
 }
 
-// ZypperPatchRunner returns a ZypperUpdateOption that specifies the runner.
-func ZypperPatchRunner(runner func(cmd *exec.Cmd) ([]byte, error)) ZypperPatchOption {
+// ZypperUpdateWithExcludes returns a ZypperUpdateOption that specifies
+// list of packages to be excluded from update
+func ZypperUpdateWithExcludes(excludes []string) ZypperPatchOption {
 	return func(args *zypperPatchOpts) {
-		args.runner = runner
+		args.excludes = excludes
+	}
+}
+
+// ZypperUpdateWithExclusivePatches returns a ZypperUpdateOption that specifies
+// list of exclusive packages to be updated
+func ZypperUpdateWithExclusivePatches(exclusivePatches []string) ZypperPatchOption {
+	return func(args *zypperPatchOpts) {
+		args.exclusivePatches = exclusivePatches
+	}
+}
+
+// ZypperUpdateDryrun returns a ZypperUpdateOption that specifies the runner.
+func ZypperUpdateDryrun(dryrun bool) ZypperPatchOption {
+	return func(args *zypperPatchOpts) {
+		args.dryrun = dryrun
 	}
 }
 
 // RunZypperPatch runs zypper patch.
 func RunZypperPatch(opts ...ZypperPatchOption) error {
 	zOpts := &zypperPatchOpts{
-		runner: defaultRunner,
+		excludes:         nil,
+		exclusivePatches: nil,
+		categories:       nil,
+		severities:       nil,
+		withOptional:     false,
+		withUpdate:       false,
 	}
 
 	for _, opt := range opts {
 		opt(zOpts)
 	}
 
-	args := zypperPatchArgs
-	if zOpts.withOptional {
-		args = append(args, "--with-optional")
+	zListOpts := []packages.ZypperListOption{
+		packages.ZypperListPatchCategories(zOpts.categories),
+		packages.ZypperListPatchSeverities(zOpts.severities),
+		packages.ZypperListPatchWithOptional(zOpts.withOptional),
+		// if there is no filter on category and severity,
+		// zypper fetches all available patch updates
 	}
-	if zOpts.withUpdate {
-		args = append(args, "--with-update")
-	}
-	for _, c := range zOpts.categories {
-		args = append(args, "--category="+c)
-	}
-	for _, s := range zOpts.severities {
-		args = append(args, "--severity="+s)
-	}
-
-	if _, err := zOpts.runner(exec.Command(zypper, args...)); err != nil {
+	patches, err := packages.ZypperPatches(zListOpts...)
+	if err != nil {
 		return err
 	}
-	return nil
+
+	fPatches, fpkgs, err := runFilter(patches, zOpts.exclusivePatches, zOpts.excludes, zOpts.withUpdate)
+
+	logger.Infof("Updating %d patches.", len(fPatches))
+	logger.Debugf("Patches to be installed: %s", fPatches)
+	logger.Infof("Updating %d packages.", len(fpkgs))
+	logger.Debugf("Packages to be installed: %s", fpkgs)
+
+	if zOpts.dryrun {
+		logger.Infof("Running in dryrun mode, not updating packages.")
+		return nil
+	}
+
+	return packages.ZypperInstall(fPatches, fpkgs)
+}
+
+func runFilter(patches []packages.ZypperPatch, exclusivePatches, excludes []string, withUpdate bool) ([]packages.ZypperPatch, []packages.PkgInfo, error) {
+	// exclusive patches
+	var fPatches []packages.ZypperPatch
+	var fPkgs []packages.PkgInfo
+	if len(exclusivePatches) > 0 {
+		for _, patch := range patches {
+			if containsString(exclusivePatches, patch.Name) {
+				fPatches = append(fPatches, patch)
+			}
+		}
+		return fPatches, fPkgs, nil
+	}
+
+	// if --with-update is specified, individual packages also need to be updated
+	if withUpdate {
+		pkgs, err := packages.ZypperUpdates()
+		if err != nil {
+			return nil, nil, fmt.Errorf("error fetching updates: %+v", err)
+		}
+		pkgToPatchesMap, err := packages.ZypperPackagesInPatch(patches)
+		if err != nil {
+			return nil, nil, fmt.Errorf("error fetching patch info: %+v", err)
+		}
+
+		for _, pkg := range pkgs {
+			if _, ok := pkgToPatchesMap[pkg.Name]; !ok {
+				fPkgs = append(fPkgs, pkg)
+			}
+		}
+	}
+
+	if len(excludes) > 0 {
+		// we have the list of patches which is already filtered
+		// as per the configurations provided by user;
+		// we remove the excluded patches from the list
+		for _, patch := range patches {
+			if !containsString(excludes, patch.Name) {
+				fPatches = append(fPatches, patch)
+			}
+		}
+	}
+	return fPatches, fPkgs, nil
 }
