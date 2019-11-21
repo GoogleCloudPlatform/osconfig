@@ -17,6 +17,7 @@ package ospatch
 import (
 	"fmt"
 
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 )
 
@@ -122,6 +123,17 @@ func RunZypperPatch(opts ...ZypperPatchOption) error {
 	}
 
 	fPatches, fpkgs, err := runFilter(patches, zOpts.exclusivePatches, zOpts.excludes, zOpts.withUpdate)
+
+	logger.Infof("Updating %d patches.", len(fPatches))
+	logger.Debugf("Patches to be installed: %s", fPatches)
+	logger.Infof("Updating %d packages.", len(fpkgs))
+	logger.Debugf("Packages to be installed: %s", fpkgs)
+
+	if zOpts.dryrun {
+		logger.Infof("Running in dryrun mode, not updating packages.")
+		return nil
+	}
+
 	return packages.ZypperInstall(fPatches, fpkgs)
 }
 
