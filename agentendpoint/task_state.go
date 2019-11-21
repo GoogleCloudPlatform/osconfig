@@ -16,6 +16,7 @@ package agentendpoint
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -27,6 +28,7 @@ type taskState struct {
 }
 
 func saveState(st *taskState, path string) error {
+	fmt.Println("saveState")
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
