@@ -220,11 +220,10 @@ func WUAUpdates(query string) ([]WUAPackage, error) {
 		return nil, err
 	}
 
-	count, err := updts.GetProperty("Count")
+	updtCnt, err := updts.Count()
 	if err != nil {
 		return nil, err
 	}
-	updtCnt, _ := count.Value().(int32)
 
 	if updtCnt == 0 {
 		return nil, nil

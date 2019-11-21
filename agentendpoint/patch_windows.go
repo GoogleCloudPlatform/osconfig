@@ -67,8 +67,7 @@ func (r *patchTask) wuaUpdates(ctx context.Context) error {
 	// We keep searching for and installing updates until the count == 0 or there is an error.
 	retries := 50
 	for i := 0; i < retries; i++ {
-		r.infof("Searching for available WUA updates.")
-
+		r.infof("Searching for available Windows updates.")
 		updts, err := ospatch.GetWUAUpdates(session, cf, r.Task.GetPatchConfig().GetWindowsUpdate().GetExcludes(), r.Task.GetPatchConfig().GetWindowsUpdate().GetExclusivePatches())
 		if err != nil {
 			return err
@@ -80,7 +79,7 @@ func (r *patchTask) wuaUpdates(ctx context.Context) error {
 		}
 
 		if count == 0 {
-			r.infof("No Windows updates to install")
+			r.infof("No Windows updates available to install")
 			return nil
 		}
 

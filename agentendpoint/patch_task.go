@@ -232,9 +232,16 @@ func (r *patchTask) rebootIfNeeded(ctx context.Context, prePatch bool) error {
 	}
 }
 
-func (r *patchTask) run(ctx context.Context) error {
+func (r *patchTask) run(ctx context.Context) (err error) {
 	r.infof("Beginning patch task")
 	defer func() {
+		// This should not happen but the WUA libraries are complicated and
+		// recovering with an error is better than crashing.
+		if rec := recover(); rec != nil {
+			err = fmt.Errorf("Recovered from panic: %v", rec)
+			r.reportFailed(ctx, err.Error())
+			return
+		}
 		r.complete()
 		if config.OSInventoryEnabled() {
 			go inventory.Run()
@@ -251,6 +258,7 @@ func (r *patchTask) run(ctx context.Context) error {
 			if err := r.setStep(patching); err != nil {
 				return r.reportFailed(ctx, fmt.Sprintf("Error saving agent step: %v", err))
 			}
+
 			if err := r.reportContinuingState(ctx, agentendpointpb.ApplyPatchesTaskProgress_STARTED); err != nil {
 				return r.handleErrorState(ctx, err.Error(), err)
 			}
