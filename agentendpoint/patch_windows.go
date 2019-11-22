@@ -52,7 +52,7 @@ func classFilter(cs []agentendpointpb.WindowsUpdateSettings_Classification) ([]s
 	return cf, nil
 }
 
-func (r *patchTask) installWUAUpdates(cf []string) error {
+func (r *patchTask) installWUAUpdates(ctx context.Context, cf []string) (int32, error) {
 	r.infof("Searching for available Windows updates.")
 	session, err := packages.NewUpdateSession()
 	if err != nil {
@@ -103,7 +103,7 @@ func (r *patchTask) wuaUpdates(ctx context.Context) error {
 	// We keep searching for and installing updates until the count == 0 or there is an error.
 	retries := 20
 	for i := 0; i < retries; i++ {
-		count, err := r.installWUAUpdates(cf)
+		count, err := r.installWUAUpdates(ctx, cf)
 		if err != nil {
 			return err
 		}
