@@ -52,52 +52,64 @@ func classFilter(cs []agentendpointpb.WindowsUpdateSettings_Classification) ([]s
 	return cf, nil
 }
 
-func (r *patchTask) wuaUpdates(ctx context.Context) error {
+func (r *patchTask) installWUAUpdates(cf []string) error {
+	r.infof("Searching for available Windows updates.")
 	session, err := packages.NewUpdateSession()
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer session.Close()
 
+	updts, err := ospatch.GetWUAUpdates(session, cf, r.Task.GetPatchConfig().GetWindowsUpdate().GetExcludes(), r.Task.GetPatchConfig().GetWindowsUpdate().GetExclusivePatches())
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := updts.Count()
+	if err != nil {
+		return 0, err
+	}
+
+	if count == 0 {
+		return 0, nil
+	}
+
+	r.infof("%d Windows updates to install", count)
+
+	for i := 0; i < int(count); i++ {
+		if err := r.reportContinuingState(ctx, agentendpointpb.ApplyPatchesTaskProgress_APPLYING_PATCHES); err != nil {
+			return 0, err
+		}
+		updt, err := updts.Item(i)
+		if err != nil {
+			return 0, err
+		}
+		defer updt.Release()
+
+		if err := session.InstallWUAUpdate(updt); err != nil {
+			return 0, fmt.Errorf(`installUpdate(class, excludes, updt): %v`, err)
+		}
+	}
+
+	return count, nil
+}
+
+func (r *patchTask) wuaUpdates(ctx context.Context) error {
 	cf, err := classFilter(r.Task.GetPatchConfig().GetWindowsUpdate().GetClassifications())
 	if err != nil {
 		return err
 	}
 
 	// We keep searching for and installing updates until the count == 0 or there is an error.
-	retries := 50
+	retries := 20
 	for i := 0; i < retries; i++ {
-		r.infof("Searching for available Windows updates.")
-		updts, err := ospatch.GetWUAUpdates(session, cf, r.Task.GetPatchConfig().GetWindowsUpdate().GetExcludes(), r.Task.GetPatchConfig().GetWindowsUpdate().GetExclusivePatches())
+		count, err := r.installWUAUpdates(cf)
 		if err != nil {
 			return err
 		}
-
-		count, err := updts.Count()
-		if err != nil {
-			return err
-		}
-
 		if count == 0 {
 			r.infof("No Windows updates available to install")
 			return nil
-		}
-
-		r.infof("%d Windows updates to install", count)
-
-		for i := 0; i < int(count); i++ {
-			if err := r.reportContinuingState(ctx, agentendpointpb.ApplyPatchesTaskProgress_APPLYING_PATCHES); err != nil {
-				return err
-			}
-			updt, err := updts.Item(i)
-			if err != nil {
-				return err
-			}
-			defer updt.Release()
-
-			if err := session.InstallWUAUpdate(updt); err != nil {
-				return fmt.Errorf(`installUpdate(class, excludes, updt): %v`, err)
-			}
 		}
 	}
 
