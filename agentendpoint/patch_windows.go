@@ -78,16 +78,16 @@ func (r *patchTask) installWUAUpdates(ctx context.Context, cf []string) (int32, 
 
 	for i := 0; i < int(count); i++ {
 		if err := r.reportContinuingState(ctx, agentendpointpb.ApplyPatchesTaskProgress_APPLYING_PATCHES); err != nil {
-			return 0, err
+			return i, err
 		}
 		updt, err := updts.Item(i)
 		if err != nil {
-			return 0, err
+			return i, err
 		}
 		defer updt.Release()
 
 		if err := session.InstallWUAUpdate(updt); err != nil {
-			return 0, fmt.Errorf(`installUpdate(class, excludes, updt): %v`, err)
+			return i, fmt.Errorf(`installUpdate(class, excludes, updt): %v`, err)
 		}
 	}
 
