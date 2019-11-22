@@ -76,11 +76,11 @@ func (r *patchTask) installWUAUpdates(ctx context.Context, cf []string) (int32, 
 
 	r.infof("%d Windows updates to install", count)
 
-	for i := 0; i < int(count); i++ {
+	for i := int32(0); i < count; i++ {
 		if err := r.reportContinuingState(ctx, agentendpointpb.ApplyPatchesTaskProgress_APPLYING_PATCHES); err != nil {
 			return i, err
 		}
-		updt, err := updts.Item(i)
+		updt, err := updts.Item(int(i))
 		if err != nil {
 			return i, err
 		}
