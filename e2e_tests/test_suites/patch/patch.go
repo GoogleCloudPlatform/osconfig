@@ -104,9 +104,19 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 	for _, setup := range aptHeadImageTestSetup() {
 		wg.Add(1)
 		s := setup
-		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[APT dist-upgrade] [%s]", s.testName))
+		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[APT dist-upgrade, excludes] [%s]", s.testName))
 		f := func() {
-			runExecutePatchJobTest(ctx, tc, s, testProjectConfig, &osconfigpb.PatchConfig{Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST}})
+			runExecutePatchJobTest(ctx, tc, s, testProjectConfig, &osconfigpb.PatchConfig{Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST, Excludes: []string{"pkg1"}}})
+		}
+		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
+	}
+	// Test APT specific functionality, this just tests that using these settings doesn't break anything.
+	for _, setup := range aptHeadImageTestSetup() {
+		wg.Add(1)
+		s := setup
+		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[APT dist-upgrade, exclusive packages] [%s]", s.testName))
+		f := func() {
+			runExecutePatchJobTest(ctx, tc, s, testProjectConfig, &osconfigpb.PatchConfig{Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST, ExclusivePackages: []string{"pkg1"}}})
 		}
 		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
 	}
@@ -120,14 +130,37 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		}
 		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
 	}
+	// Test YUM exclusive_package updates, this just tests that using these settings doesn't break anything.
+	for _, setup := range yumHeadImageTestSetup() {
+		wg.Add(1)
+		s := setup
+		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[YUM exclusive patches] [%s]", s.testName))
+		f := func() {
+			runExecutePatchJobTest(ctx, tc, s, testProjectConfig, &osconfigpb.PatchConfig{Yum: &osconfigpb.YumSettings{ExclusivePackages: []string{"pkg1", "pk3"}}})
+		}
+		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
+	}
 	// Test Zypper specific functionality, this just tests that using these settings doesn't break anything.
 	for _, setup := range suseHeadImageTestSetup() {
 		wg.Add(1)
 		s := setup
-		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Zypper WithOptional, WithUpdate, Categories and Severities] [%s]", s.testName))
+		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Zypper excludes, WithOptional, WithUpdate, Categories and Severities] [%s]", s.testName))
 		f := func() {
 			runExecutePatchJobTest(ctx, tc, s, testProjectConfig, &osconfigpb.PatchConfig{
-				Zypper: &osconfigpb.ZypperSettings{WithOptional: true, WithUpdate: true, Categories: []string{"security", "recommended", "feature"}, Severities: []string{"critical", "important", "moderate", "low"}}})
+				Zypper: &osconfigpb.ZypperSettings{Excludes: []string{"patch-1"}, WithOptional: true, WithUpdate: true, Categories: []string{"security", "recommended", "feature"}, Severities: []string{"critical", "important", "moderate", "low"}}})
+		}
+		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
+	}
+	// Test Zypper exclusive patches. the test just makes sure that it does not break anything
+	// the actual combination tests is a part of unit test
+	for _, setup := range suseHeadImageTestSetup() {
+		wg.Add(1)
+		s := setup
+		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Zypper exclusivePatches] [%s]", s.testName))
+		f := func() {
+			runExecutePatchJobTest(ctx, tc, s, testProjectConfig, &osconfigpb.PatchConfig{
+				Zypper: &osconfigpb.ZypperSettings{ExclusivePatches: []string{"patch-1"}}}) // there should be no patch run
+
 		}
 		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
 	}
