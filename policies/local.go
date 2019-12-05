@@ -12,8 +12,8 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //
-// Package instance implements VM instance software configs.
-package instance
+
+package policies
 
 import (
 	"bytes"
@@ -24,53 +24,57 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-// LocalConfig represents the structure of the config to the JSON parser.
+// localConfig represents the structure of the config to the JSON parser.
 //
 // The types of members of the struct are wrappers for protobufs and delegate
 // the parsing to jsonpb lib via their UnmarshalJSON implementations.
-type LocalConfig struct {
-	Packages            []Package
-	PackageRepositories []PackageRepository
-	SoftwareRecipes     []SoftwareRecipe
+type localConfig struct {
+	Packages            []pkg
+	PackageRepositories []packageRepository
+	SoftwareRecipes     []softwareRecipe
 }
 
-type Package struct {
+type pkg struct {
 	i agentendpointpb.Package
 }
 
-func (r *Package) UnmarshalJSON(b []byte) error {
+func (r *pkg) UnmarshalJSON(b []byte) error {
 	rd := bytes.NewReader(b)
 	return jsonpb.Unmarshal(rd, &r.i)
 }
 
-type PackageRepository struct {
+type packageRepository struct {
 	i agentendpointpb.PackageRepository
 }
 
-func (r *PackageRepository) UnmarshalJSON(b []byte) error {
+func (r *packageRepository) UnmarshalJSON(b []byte) error {
 	rd := bytes.NewReader(b)
 	return jsonpb.Unmarshal(rd, &r.i)
 }
 
-type SoftwareRecipe struct {
+type softwareRecipe struct {
 	r agentendpointpb.SoftwareRecipe
 }
 
-func (r *SoftwareRecipe) UnmarshalJSON(b []byte) error {
+func (r *softwareRecipe) UnmarshalJSON(b []byte) error {
 	rd := bytes.NewReader(b)
 	return jsonpb.Unmarshal(rd, &r.r)
 }
 
-func ParseLocalConfig(a []byte) (rv LocalConfig, e error) {
-	e = json.Unmarshal(a, &rv)
-	return
+func parseLocalConfig(a []byte) (*localConfig, error) {
+	var lc localConfig
+	err := json.Unmarshal(a, &lc)
+	if err != nil {
+		return nil, err
+	}
+	return &lc, nil
 }
 
 // GetId returns a repository Id that is used to group repositories for
 // override by higher priotiry policy(-ies).
 // For repositories that have no such Id, GetId returns nil, in which
 // case the repository is never overridden.
-func GetId(repo agentendpointpb.PackageRepository) *string {
+func getID(repo agentendpointpb.PackageRepository) *string {
 	switch repo.Repository.(type) {
 	case *agentendpointpb.PackageRepository_Yum:
 		id := "yum-" + repo.GetYum().GetId()
@@ -86,7 +90,7 @@ func GetId(repo agentendpointpb.PackageRepository) *string {
 
 // MergeConfigs merges the local config with the lookup response, giving priority to the global
 // response.
-func MergeConfigs(local LocalConfig, global agentendpointpb.LookupEffectiveGuestPoliciesResponse) (r agentendpointpb.LookupEffectiveGuestPoliciesResponse) {
+func mergeConfigs(local *localConfig, global agentendpointpb.LookupEffectiveGuestPoliciesResponse) (r agentendpointpb.LookupEffectiveGuestPoliciesResponse) {
 	// Ids that are in the maps below
 	repos := make(map[string]bool)
 	pkgs := make(map[string]bool)
@@ -97,7 +101,7 @@ func MergeConfigs(local LocalConfig, global agentendpointpb.LookupEffectiveGuest
 		r.Packages = append(r.Packages, v)
 	}
 	for _, v := range global.GetPackageRepositories() {
-		if id := GetId(*v.PackageRepository); id != nil {
+		if id := getID(*v.PackageRepository); id != nil {
 			repos[*id] = true
 		}
 		r.PackageRepositories = append(r.PackageRepositories, v)
@@ -105,6 +109,10 @@ func MergeConfigs(local LocalConfig, global agentendpointpb.LookupEffectiveGuest
 	for _, v := range global.GetSoftwareRecipes() {
 		recipes[v.SoftwareRecipe.Name] = true
 		r.SoftwareRecipes = append(r.SoftwareRecipes, v)
+	}
+
+	if local == nil {
+		return
 	}
 
 	for _, v := range local.Packages {
@@ -115,7 +123,7 @@ func MergeConfigs(local LocalConfig, global agentendpointpb.LookupEffectiveGuest
 		}
 	}
 	for _, v := range local.PackageRepositories {
-		id := GetId(v.i)
+		id := getID(v.i)
 		if id != nil {
 			if _, ok := repos[*id]; ok {
 				continue

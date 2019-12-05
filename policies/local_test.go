@@ -12,8 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //
-// Package instance implements VM instance software configs.
-package instance
+package policies
 
 import (
 	"testing"
@@ -85,7 +84,7 @@ const (
 
 func TestJsonParsing(t *testing.T) {
 	a := []byte(sampleConfig)
-	pr, err := ParseLocalConfig(a)
+	pr, err := parseLocalConfig(a)
 	if err != nil {
 		t.Errorf("Got error: %v", err)
 		return
@@ -98,7 +97,7 @@ func TestJsonParsing(t *testing.T) {
 
 func TestMerging(t *testing.T) {
 	a := []byte(sampleConfig)
-	lc, err := ParseLocalConfig(a)
+	lc, err := parseLocalConfig(a)
 	if err != nil {
 		t.Errorf("Got error: %v", err)
 		return
@@ -110,7 +109,7 @@ func TestMerging(t *testing.T) {
 	sr.SoftwareRecipe.Name = "install-something"
 	sr.SoftwareRecipe.DesiredState = agentendpointpb.DesiredState_REMOVED
 	pr.SoftwareRecipes = append(pr.SoftwareRecipes, &sr)
-	pr2 := MergeConfigs(lc, pr)
+	pr2 := mergeConfigs(lc, pr)
 
 	var wantmap = map[string]agentendpointpb.DesiredState{
 		"install-something": agentendpointpb.DesiredState_REMOVED,
