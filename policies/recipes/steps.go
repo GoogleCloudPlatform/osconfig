@@ -34,7 +34,7 @@ import (
 	"github.com/ulikunitz/xz"
 	"github.com/ulikunitz/xz/lzma"
 
-	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
 var extensionMap = map[agentendpointpb.SoftwareRecipe_Step_RunScript_Interpreter]string{
@@ -446,20 +446,18 @@ func stepRunScript(step *agentendpointpb.SoftwareRecipe_Step_RunScript, artifact
 	switch step.Interpreter {
 	case agentendpointpb.SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED:
 		cmd = scriptPath
-		args = step.Args
 	case agentendpointpb.SoftwareRecipe_Step_RunScript_SHELL:
 		if runtime.GOOS == "windows" {
 			cmd = scriptPath
-			args = step.Args
 		} else {
-			args = append([]string{scriptPath}, step.Args...)
+			args = append([]string{scriptPath})
 			cmd = "/bin/sh"
 		}
 	case agentendpointpb.SoftwareRecipe_Step_RunScript_POWERSHELL:
 		if runtime.GOOS != "windows" {
 			return fmt.Errorf("interpreter %q can only used on Windows systems", step.Interpreter)
 		}
-		args = append([]string{"-File", scriptPath}, step.Args...)
+		args = append([]string{"-File", scriptPath})
 		cmd = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\PowerShell.exe"
 	default:
 		return fmt.Errorf("unsupported interpreter %q", step.Interpreter)

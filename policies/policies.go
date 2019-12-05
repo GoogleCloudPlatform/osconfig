@@ -31,7 +31,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/policies/recipes"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
 
-	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
 func run(ctx context.Context) {
@@ -59,8 +59,8 @@ func Run(ctx context.Context) {
 	tasker.Enqueue("Run GuestPolicies", func() { run(ctx) })
 }
 
-func installRecipes(ctx context.Context, res *agentendpointpb.LookupEffectiveGuestPoliciesResponse) error {
-	for _, recipe := range res.GetSoftwareRecipes() {
+func installRecipes(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) error {
+	for _, recipe := range egp.GetSoftwareRecipes() {
 		if r := recipe.GetSoftwareRecipe(); r != nil {
 			if err := recipes.InstallRecipe(ctx, r); err != nil {
 				logger.Errorf("Error installing recipe: %v", err)
@@ -70,12 +70,12 @@ func installRecipes(ctx context.Context, res *agentendpointpb.LookupEffectiveGue
 	return nil
 }
 
-func setConfig(res *agentendpointpb.LookupEffectiveGuestPoliciesResponse) {
+func setConfig(egp *agentendpointpb.EffectiveGuestPolicy) {
 	var aptRepos []*agentendpointpb.AptRepository
 	var yumRepos []*agentendpointpb.YumRepository
 	var zypperRepos []*agentendpointpb.ZypperRepository
 	var gooRepos []*agentendpointpb.GooRepository
-	for _, repo := range res.GetPackageRepositories() {
+	for _, repo := range egp.GetPackageRepositories() {
 		if r := repo.GetPackageRepository().GetGoo(); r != nil {
 			gooRepos = append(gooRepos, r)
 			continue
@@ -98,7 +98,7 @@ func setConfig(res *agentendpointpb.LookupEffectiveGuestPoliciesResponse) {
 	var aptInstallPkgs, aptRemovePkgs, aptUpdatePkgs []*agentendpointpb.Package
 	var yumInstallPkgs, yumRemovePkgs, yumUpdatePkgs []*agentendpointpb.Package
 	var zypperInstallPkgs, zypperRemovePkgs, zypperUpdatePkgs []*agentendpointpb.Package
-	for _, pkg := range res.GetPackages() {
+	for _, pkg := range egp.GetPackages() {
 		switch pkg.GetPackage().GetManager() {
 		case agentendpointpb.Package_ANY, agentendpointpb.Package_MANAGER_UNSPECIFIED:
 			switch pkg.GetPackage().GetDesiredState() {
