@@ -72,76 +72,67 @@ func parseLocalConfig(a []byte) (*localConfig, error) {
 
 // GetId returns a repository Id that is used to group repositories for
 // override by higher priotiry policy(-ies).
-// For repositories that have no such Id, GetId returns nil, in which
+// For repositories that have no such Id, GetId returns "", in which
 // case the repository is never overridden.
-func getID(repo agentendpointpb.PackageRepository) *string {
+func getID(repo agentendpointpb.PackageRepository) string {
 	switch repo.Repository.(type) {
 	case *agentendpointpb.PackageRepository_Yum:
-		id := "yum-" + repo.GetYum().GetId()
-		return &id
+		return "yum-" + repo.GetYum().GetId()
 	case *agentendpointpb.PackageRepository_Zypper:
-		id := "zypper-" + repo.GetZypper().GetId()
-		return &id
+		return "zypper-" + repo.GetZypper().GetId()
 	default:
-		return nil
-
+		return ""
 	}
 }
 
-// MergeConfigs merges the local config with the lookup response, giving priority to the global
-// response.
-func mergeConfigs(local *localConfig, global agentendpointpb.LookupEffectiveGuestPoliciesResponse) (r agentendpointpb.LookupEffectiveGuestPoliciesResponse) {
+// MergeConfigs merges the local config with the lookup response, giving priority to the lookup
+// result.
+func mergeConfigs(local *localConfig, resp agentendpointpb.LookupEffectiveGuestPoliciesResponse) agentendpointpb.LookupEffectiveGuestPoliciesResponse {
+	if local == nil {
+		return resp
+	}
 	// Ids that are in the maps below
 	repos := make(map[string]bool)
 	pkgs := make(map[string]bool)
 	recipes := make(map[string]bool)
 
-	for _, v := range global.GetPackages() {
+	for _, v := range resp.GetPackages() {
 		pkgs[v.Package.Name] = true
-		r.Packages = append(r.Packages, v)
 	}
-	for _, v := range global.GetPackageRepositories() {
-		if id := getID(*v.PackageRepository); id != nil {
-			repos[*id] = true
+	for _, v := range resp.GetPackageRepositories() {
+		if id := getID(*v.PackageRepository); id != "" {
+			repos[id] = true
 		}
-		r.PackageRepositories = append(r.PackageRepositories, v)
 	}
-	for _, v := range global.GetSoftwareRecipes() {
+	for _, v := range resp.GetSoftwareRecipes() {
 		recipes[v.SoftwareRecipe.Name] = true
-		r.SoftwareRecipes = append(r.SoftwareRecipes, v)
 	}
-
-	if local == nil {
-		return
-	}
-
 	for _, v := range local.Packages {
 		if _, ok := pkgs[v.i.Name]; !ok {
 			sp := new(agentendpointpb.LookupEffectiveGuestPoliciesResponse_SourcedPackage)
 			sp.Package = &v.i
-			r.Packages = append(r.Packages, sp)
+			resp.Packages = append(resp.Packages, sp)
 		}
 	}
 	for _, v := range local.PackageRepositories {
 		id := getID(v.i)
-		if id != nil {
-			if _, ok := repos[*id]; ok {
+		if id != "" {
+			if _, ok := repos[id]; ok {
 				continue
 			}
 		}
 		sr := new(agentendpointpb.LookupEffectiveGuestPoliciesResponse_SourcedPackageRepository)
 		sr.PackageRepository = &v.i
-		r.PackageRepositories = append(r.PackageRepositories, sr)
+		resp.PackageRepositories = append(resp.PackageRepositories, sr)
 
 	}
 	for _, v := range local.SoftwareRecipes {
 		if _, ok := recipes[v.r.Name]; !ok {
 			sp := new(agentendpointpb.LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe)
 			sp.SoftwareRecipe = proto.Clone(&v.r).(*agentendpointpb.SoftwareRecipe)
-			r.SoftwareRecipes = append(r.SoftwareRecipes, sp)
+			resp.SoftwareRecipes = append(resp.SoftwareRecipes, sp)
 		}
 
 	}
-
-	return
+	return resp
 }
