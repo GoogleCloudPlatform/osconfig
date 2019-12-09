@@ -19,9 +19,10 @@ import (
 	"bytes"
 	"encoding/json"
 
-	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
+
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
 // localConfig represents the structure of the config to the JSON parser.
@@ -35,30 +36,30 @@ type localConfig struct {
 }
 
 type pkg struct {
-	i agentendpointpb.Package
+	agentendpointpb.Package
 }
 
 func (r *pkg) UnmarshalJSON(b []byte) error {
 	rd := bytes.NewReader(b)
-	return jsonpb.Unmarshal(rd, &r.i)
+	return jsonpb.Unmarshal(rd, &r.Package)
 }
 
 type packageRepository struct {
-	i agentendpointpb.PackageRepository
+	agentendpointpb.PackageRepository
 }
 
 func (r *packageRepository) UnmarshalJSON(b []byte) error {
 	rd := bytes.NewReader(b)
-	return jsonpb.Unmarshal(rd, &r.i)
+	return jsonpb.Unmarshal(rd, &r.PackageRepository)
 }
 
 type softwareRecipe struct {
-	r agentendpointpb.SoftwareRecipe
+	agentendpointpb.SoftwareRecipe
 }
 
 func (r *softwareRecipe) UnmarshalJSON(b []byte) error {
 	rd := bytes.NewReader(b)
-	return jsonpb.Unmarshal(rd, &r.r)
+	return jsonpb.Unmarshal(rd, &r.SoftwareRecipe)
 }
 
 func parseLocalConfig(a []byte) (*localConfig, error) {
@@ -87,52 +88,52 @@ func getID(repo agentendpointpb.PackageRepository) string {
 
 // MergeConfigs merges the local config with the lookup response, giving priority to the lookup
 // result.
-func mergeConfigs(local *localConfig, resp agentendpointpb.LookupEffectiveGuestPoliciesResponse) agentendpointpb.LookupEffectiveGuestPoliciesResponse {
+func mergeConfigs(local *localConfig, egp agentendpointpb.EffectiveGuestPolicy) agentendpointpb.EffectiveGuestPolicy {
 	if local == nil {
-		return resp
+		return egp
 	}
 	// Ids that are in the maps below
 	repos := make(map[string]bool)
 	pkgs := make(map[string]bool)
 	recipes := make(map[string]bool)
 
-	for _, v := range resp.GetPackages() {
+	for _, v := range egp.GetPackages() {
 		pkgs[v.Package.Name] = true
 	}
-	for _, v := range resp.GetPackageRepositories() {
+	for _, v := range egp.GetPackageRepositories() {
 		if id := getID(*v.PackageRepository); id != "" {
 			repos[id] = true
 		}
 	}
-	for _, v := range resp.GetSoftwareRecipes() {
+	for _, v := range egp.GetSoftwareRecipes() {
 		recipes[v.SoftwareRecipe.Name] = true
 	}
 	for _, v := range local.Packages {
-		if _, ok := pkgs[v.i.Name]; !ok {
-			sp := new(agentendpointpb.LookupEffectiveGuestPoliciesResponse_SourcedPackage)
-			sp.Package = &v.i
-			resp.Packages = append(resp.Packages, sp)
+		if _, ok := pkgs[v.Name]; !ok {
+			sp := new(agentendpointpb.EffectiveGuestPolicy_SourcedPackage)
+			sp.Package = &v.Package
+			egp.Packages = append(egp.Packages, sp)
 		}
 	}
 	for _, v := range local.PackageRepositories {
-		id := getID(v.i)
+		id := getID(v.PackageRepository)
 		if id != "" {
 			if _, ok := repos[id]; ok {
 				continue
 			}
 		}
-		sr := new(agentendpointpb.LookupEffectiveGuestPoliciesResponse_SourcedPackageRepository)
-		sr.PackageRepository = &v.i
-		resp.PackageRepositories = append(resp.PackageRepositories, sr)
+		sr := new(agentendpointpb.EffectiveGuestPolicy_SourcedPackageRepository)
+		sr.PackageRepository = &v.PackageRepository
+		egp.PackageRepositories = append(egp.PackageRepositories, sr)
 
 	}
 	for _, v := range local.SoftwareRecipes {
-		if _, ok := recipes[v.r.Name]; !ok {
-			sp := new(agentendpointpb.LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe)
-			sp.SoftwareRecipe = proto.Clone(&v.r).(*agentendpointpb.SoftwareRecipe)
-			resp.SoftwareRecipes = append(resp.SoftwareRecipes, sp)
+		if _, ok := recipes[v.Name]; !ok {
+			sp := new(agentendpointpb.EffectiveGuestPolicy_SourcedSoftwareRecipe)
+			sp.SoftwareRecipe = proto.Clone(&v.SoftwareRecipe).(*agentendpointpb.SoftwareRecipe)
+			egp.SoftwareRecipes = append(egp.SoftwareRecipes, sp)
 		}
 
 	}
-	return resp
+	return egp
 }
