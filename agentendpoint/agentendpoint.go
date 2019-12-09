@@ -24,7 +24,7 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-	agentendpoint "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/cloud.google.com/go/osconfig/agentendpoint/apiv1alpha1"
+	agentendpoint "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/cloud.google.com/go/osconfig/agentendpoint/apiv1beta"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
@@ -35,7 +35,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 
-	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
 const apiRetrySec = 600
@@ -157,13 +157,13 @@ func (c *Client) reportTaskComplete(ctx context.Context, req *agentendpointpb.Re
 }
 
 // LookupEffectiveGuestPolicies calls the agentendpoint service LookupEffectiveGuestPolicies.
-func (c *Client) LookupEffectiveGuestPolicies(ctx context.Context) (res *agentendpointpb.LookupEffectiveGuestPoliciesResponse, err error) {
+func (c *Client) LookupEffectiveGuestPolicies(ctx context.Context) (res *agentendpointpb.EffectiveGuestPolicy, err error) {
 	info, err := osinfo.Get()
 	if err != nil {
 		return nil, err
 	}
 
-	req := &agentendpointpb.LookupEffectiveGuestPoliciesRequest{
+	req := &agentendpointpb.LookupEffectiveGuestPolicyRequest{
 		OsShortName:    info.ShortName,
 		OsVersion:      info.Version,
 		OsArchitecture: info.Architecture,
@@ -178,7 +178,7 @@ func (c *Client) LookupEffectiveGuestPolicies(ctx context.Context) (res *agenten
 	req.InstanceIdToken = token
 
 	if err := retryAPICall(apiRetrySec*time.Second, "LookupEffectiveGuestPolicies", func() error {
-		res, err = c.raw.LookupEffectiveGuestPolicies(ctx, req)
+		res, err = c.raw.LookupEffectiveGuestPolicy(ctx, req)
 		if err != nil {
 			return err
 		}

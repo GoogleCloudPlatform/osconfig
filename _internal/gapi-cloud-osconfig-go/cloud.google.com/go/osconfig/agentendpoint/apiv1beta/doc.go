@@ -17,7 +17,7 @@
 // Package agentendpoint is an auto-generated package for the
 // Cloud OS Config API.
 //
-//   NOTE: This package is in alpha. It is not stable, and is likely to change.
+//   NOTE: This package is in beta. It is not stable, and may be subject to changes.
 //
 // OS management tools that can be used for patch management, patch
 // compliance, and configuration management on VM instances.

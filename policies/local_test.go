@@ -17,8 +17,9 @@ package policies
 import (
 	"testing"
 
-	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 	"github.com/golang/protobuf/proto"
+
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
 const (
@@ -90,7 +91,7 @@ func TestJsonParsing(t *testing.T) {
 		return
 	}
 
-	if got, want := pr.SoftwareRecipes[0].r.DesiredState, agentendpointpb.DesiredState_INSTALLED; got != want {
+	if got, want := pr.SoftwareRecipes[0].DesiredState, agentendpointpb.DesiredState_INSTALLED; got != want {
 		t.Errorf("Software recipe desired state incorrectly parsed, got: %d(%s), want: %d(%s).", got, got.String(), want, want.String())
 	}
 }
@@ -102,8 +103,8 @@ func TestMerging(t *testing.T) {
 		t.Errorf("Got error: %v", err)
 		return
 	}
-	var pr agentendpointpb.LookupEffectiveGuestPoliciesResponse
-	var sr agentendpointpb.LookupEffectiveGuestPoliciesResponse_SourcedSoftwareRecipe
+	var pr agentendpointpb.EffectiveGuestPolicy
+	var sr agentendpointpb.EffectiveGuestPolicy_SourcedSoftwareRecipe
 	sr.Source = "policy1"
 	sr.SoftwareRecipe = new(agentendpointpb.SoftwareRecipe)
 	sr.SoftwareRecipe.Name = "install-something"
