@@ -95,33 +95,38 @@ func getID(repo agentendpointpb.PackageRepository) string {
 	}
 }
 
-// MergeConfigs merges the local config with the lookup response, giving priority to the lookup
-// result.
-func mergeConfigs(local *localConfig, egp agentendpointpb.EffectiveGuestPolicy) agentendpointpb.EffectiveGuestPolicy {
-	if local == nil {
-		return egp
+// mergeConfigs merges the local config with the lookup response, giving priority to the lookup
+// result. If both arguments are nil, returns an empty policy.
+func mergeConfigs(local *localConfig, egp *agentendpointpb.EffectiveGuestPolicy) agentendpointpb.EffectiveGuestPolicy {
+	var merged agentendpointpb.EffectiveGuestPolicy
+	if egp != nil {
+		merged = *egp
 	}
+	if local == nil {
+		return merged
+	}
+
 	// Ids that are in the maps below
 	repos := make(map[string]bool)
 	pkgs := make(map[string]bool)
 	recipes := make(map[string]bool)
 
-	for _, v := range egp.GetPackages() {
+	for _, v := range merged.GetPackages() {
 		pkgs[v.Package.Name] = true
 	}
-	for _, v := range egp.GetPackageRepositories() {
+	for _, v := range merged.GetPackageRepositories() {
 		if id := getID(*v.PackageRepository); id != "" {
 			repos[id] = true
 		}
 	}
-	for _, v := range egp.GetSoftwareRecipes() {
+	for _, v := range merged.GetSoftwareRecipes() {
 		recipes[v.SoftwareRecipe.Name] = true
 	}
 	for _, v := range local.Packages {
 		if _, ok := pkgs[v.Name]; !ok {
 			sp := new(agentendpointpb.EffectiveGuestPolicy_SourcedPackage)
 			sp.Package = &v.Package
-			egp.Packages = append(egp.Packages, sp)
+			merged.Packages = append(merged.Packages, sp)
 		}
 	}
 	for _, v := range local.PackageRepositories {
@@ -133,16 +138,16 @@ func mergeConfigs(local *localConfig, egp agentendpointpb.EffectiveGuestPolicy) 
 		}
 		sr := new(agentendpointpb.EffectiveGuestPolicy_SourcedPackageRepository)
 		sr.PackageRepository = &v.PackageRepository
-		egp.PackageRepositories = append(egp.PackageRepositories, sr)
+		merged.PackageRepositories = append(merged.PackageRepositories, sr)
 
 	}
 	for _, v := range local.SoftwareRecipes {
 		if _, ok := recipes[v.Name]; !ok {
 			sp := new(agentendpointpb.EffectiveGuestPolicy_SourcedSoftwareRecipe)
 			sp.SoftwareRecipe = proto.Clone(&v.SoftwareRecipe).(*agentendpointpb.SoftwareRecipe)
-			egp.SoftwareRecipes = append(egp.SoftwareRecipes, sp)
+			merged.SoftwareRecipes = append(merged.SoftwareRecipes, sp)
 		}
 
 	}
-	return egp
+	return merged
 }

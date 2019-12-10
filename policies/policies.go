@@ -44,19 +44,18 @@ func run(ctx context.Context) {
 		defer client.Close()
 		resp, err = client.LookupEffectiveGuestPolicies(ctx)
 		if err != nil {
-			logger.Errorf("Error running GuestPolicies: %v", err)
-			resp = &agentendpointpb.EffectiveGuestPolicy{}
+			logger.Errorf("Error running LookupEffectiveGuestPolicies: %v", err)
+			resp = nil
 		}
 	}
 
 	local, err := readLocalConfig()
 	if err != nil {
 		logger.Errorf("Error reading local software config: %v", err)
-		empty := localConfig{}
-		local = &empty
+		local = nil
 	}
 
-	effectiveResp := mergeConfigs(local, *resp)
+	effectiveResp := mergeConfigs(local, resp)
 
 	// We don't check the error from ospackage.SetConfig as all errors are already logged.
 	setConfig(&effectiveResp)
