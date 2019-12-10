@@ -1,3 +1,9 @@
+google-osconfig-agent (1:20191210.00-g1) stable; urgency=medium
+
+  * Move to Beta API.
+
+ -- Google Cloud Team <gc-team@google.com>  Tue, 10 Dev 2019 12:00:00 +0000
+
 google-osconfig-agent (1:20191112.00-g1) stable; urgency=medium
 
   * Move to agentendpoint.

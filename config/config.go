@@ -78,14 +78,28 @@ type config struct {
 	projectID, instanceZone, instanceName, instanceID                                     string
 }
 
-func (c *config) parsePreRelease(features string) {
+func (c *config) parseFeatures(features string, enabled bool) {
 	for _, f := range strings.Split(features, ",") {
 		f = strings.ToLower(strings.TrimSpace(f))
 		switch f {
 		case "tasknotification", "ospatch": // ospatch is the legacy flag
-			c.taskNotificationEnabled = true
+			if enabled {
+				c.taskNotificationEnabled = true
+			} else {
+				c.taskNotificationEnabled = false
+			}
 		case "guestpolicies", "ospackage": // ospackage is the legacy flag
-			c.guestPoliciesEnabled = true
+			if enabled {
+				c.guestPoliciesEnabled = true
+			} else {
+				c.guestPoliciesEnabled = false
+			}
+		case "osinventory":
+			if enabled {
+				c.osInventoryEnabled = true
+			} else {
+				c.osInventoryEnabled = false
+			}
 		}
 	}
 }
@@ -127,6 +141,8 @@ type attributesJSON struct {
 	InventoryEnabledOld string       `json:"os-inventory-enabled"`
 	InventoryEnabled    string       `json:"enable-os-inventory"`
 	PreReleaseFeatures  string       `json:"os-config-enabled-prerelease-features"`
+	EnabledFeatures     string       `json:"os-config-enabled-features"`
+	DisabledFeatures    string       `json:"os-config-disabled-features"`
 	DebugEnabled        string       `json:"enable-os-config-debug"`
 	OSConfigEndpoint    string       `json:"os-config-endpoint"`
 	PollInterval        *json.Number `json:"os-config-poll-interval"`
@@ -177,7 +193,9 @@ func createConfigFromMetadata(md metadataJSON) *config {
 	if md.Project.Attributes.InventoryEnabled != "" {
 		c.osInventoryEnabled = parseBool(md.Project.Attributes.InventoryEnabled)
 	}
-	c.parsePreRelease(md.Project.Attributes.PreReleaseFeatures)
+	c.parseFeatures(md.Project.Attributes.PreReleaseFeatures, true)
+	c.parseFeatures(md.Project.Attributes.EnabledFeatures, true)
+	c.parseFeatures(md.Project.Attributes.DisabledFeatures, false)
 
 	if md.Instance.Attributes.InventoryEnabledOld != "" {
 		c.osInventoryEnabled = parseBool(md.Instance.Attributes.InventoryEnabledOld)
@@ -185,7 +203,9 @@ func createConfigFromMetadata(md metadataJSON) *config {
 	if md.Instance.Attributes.InventoryEnabled != "" {
 		c.osInventoryEnabled = parseBool(md.Instance.Attributes.InventoryEnabled)
 	}
-	c.parsePreRelease(md.Instance.Attributes.PreReleaseFeatures)
+	c.parseFeatures(md.Instance.Attributes.PreReleaseFeatures, true)
+	c.parseFeatures(md.Instance.Attributes.EnabledFeatures, true)
+	c.parseFeatures(md.Instance.Attributes.DisabledFeatures, false)
 
 	if md.Instance.Attributes.PollInterval != nil {
 		if val, err := md.Instance.Attributes.PollInterval.Int64(); err == nil {
