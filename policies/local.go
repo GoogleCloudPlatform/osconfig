@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"encoding/json"
 
+	"cloud.google.com/go/compute/metadata"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 
@@ -69,6 +70,14 @@ func parseLocalConfig(a []byte) (*localConfig, error) {
 		return nil, err
 	}
 	return &lc, nil
+}
+
+func readLocalConfig() (*localConfig, error) {
+	s, err := metadata.Get("/instance/attributes/gce-software-declaration")
+	if err != nil {
+		return nil, err
+	}
+	return parseLocalConfig([]byte(s))
 }
 
 // GetId returns a repository Id that is used to group repositories for

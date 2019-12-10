@@ -35,23 +35,33 @@ import (
 )
 
 func run(ctx context.Context) {
+	var resp *agentendpointpb.EffectiveGuestPolicy
+
 	client, err := agentendpoint.NewClient(ctx)
 	if err != nil {
 		logger.Errorf("agentendpoint.NewClient Error: %v", err)
-		return
+	} else {
+		defer client.Close()
+		resp, err = client.LookupEffectiveGuestPolicies(ctx)
+		if err != nil {
+			logger.Errorf("Error running GuestPolicies: %v", err)
+			resp = &agentendpointpb.EffectiveGuestPolicy{}
+		}
 	}
-	defer client.Close()
 
-	resp, err := client.LookupEffectiveGuestPolicies(ctx)
+	local, err := readLocalConfig()
 	if err != nil {
-		logger.Errorf("Error running GuestPolicies: %v", err)
-		return
+		logger.Errorf("Error reading local software config: %v", err)
+		empty := localConfig{}
+		local = &empty
 	}
+
+	effectiveResp := mergeConfigs(local, *resp)
 
 	// We don't check the error from ospackage.SetConfig as all errors are already logged.
-	setConfig(resp)
+	setConfig(&effectiveResp)
 
-	installRecipes(ctx, resp)
+	installRecipes(ctx, &effectiveResp)
 }
 
 // Run looks up osconfigs and applies them using tasker.Enqueue.
