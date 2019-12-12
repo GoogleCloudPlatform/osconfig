@@ -21,7 +21,6 @@ import (
 	"time"
 
 	osconfigserver "github.com/GoogleCloudPlatform/osconfig/e2e_tests/osconfig_server"
-	testconfig "github.com/GoogleCloudPlatform/osconfig/e2e_tests/test_config"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/_internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
@@ -353,7 +352,7 @@ func buildRecipeStepsTestSetup(name, image, pkgManager, key string) *guestPolicy
 	return newGuestPolicyTestSetup(image, instanceName, testName, packageInstalled, machineType, gp, ss, assertTimeout)
 }
 
-func generateAllTestSetup(testProjectConfig *testconfig.Project) []*guestPolicyTestSetup {
+func generateAllTestSetup() []*guestPolicyTestSetup {
 	key := utils.RandString(3)
 
 	pkgTestSetup := []*guestPolicyTestSetup{}

@@ -83,7 +83,7 @@ func newGuestPolicyTestSetup(image, instanceName, testName, queryPath, machineTy
 }
 
 // TestSuite is a OSPackage test suite.
-func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junitxml.TestSuite, logger *log.Logger, testSuiteRegex, testCaseRegex *regexp.Regexp, testProjectConfig *testconfig.Project) {
+func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junitxml.TestSuite, logger *log.Logger, testSuiteRegex, testCaseRegex *regexp.Regexp) {
 	defer tswg.Done()
 
 	if testSuiteRegex != nil && !testSuiteRegex.MatchString(testSuiteName) {
@@ -94,12 +94,12 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 	defer testSuite.Finish(testSuites)
 
 	logger.Printf("Running TestSuite %q", testSuite.Name)
-	testSetup := generateAllTestSetup(testProjectConfig)
+	testSetup := generateAllTestSetup()
 	var wg sync.WaitGroup
 	tests := make(chan *junitxml.TestCase)
 	for _, setup := range testSetup {
 		wg.Add(1)
-		go packageManagementTestCase(ctx, setup, tests, &wg, logger, testCaseRegex, testProjectConfig)
+		go packageManagementTestCase(ctx, setup, tests, &wg, logger, testCaseRegex)
 	}
 
 	go func() {
@@ -123,7 +123,7 @@ func createGuestPolicy(ctx context.Context, client *osconfigV1alpha2.Client, req
 	return client.CreateGuestPolicy(ctx, req)
 }
 
-func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *guestPolicyTestSetup, logger *log.Logger, logwg *sync.WaitGroup, testProjectConfig *testconfig.Project) {
+func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *guestPolicyTestSetup, logger *log.Logger, logwg *sync.WaitGroup) {
 	computeClient, err := gcpclients.GetComputeClient()
 	if err != nil {
 		testCase.WriteFailure("Error getting compute client: %v", err)
@@ -134,6 +134,7 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *guestP
 	var metadataItems []*computeApi.MetadataItems
 	metadataItems = append(metadataItems, testSetup.startup)
 	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("os-config-enabled-prerelease-features", "ospackage"))
+	testProjectConfig := testconfig.GetProject()
 	zone := testProjectConfig.AcquireZone()
 	defer testProjectConfig.ReleaseZone(zone)
 	inst, err := utils.CreateComputeInstance(metadataItems, computeClient, testSetup.machineType, testSetup.image, testSetup.instanceName, testProjectConfig.TestProjectID, zone, testProjectConfig.ServiceAccountEmail, testProjectConfig.ServiceAccountScopes)
@@ -187,7 +188,7 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *guestP
 	}
 }
 
-func packageManagementTestCase(ctx context.Context, testSetup *guestPolicyTestSetup, tests chan *junitxml.TestCase, wg *sync.WaitGroup, logger *log.Logger, regex *regexp.Regexp, testProjectConfig *testconfig.Project) {
+func packageManagementTestCase(ctx context.Context, testSetup *guestPolicyTestSetup, tests chan *junitxml.TestCase, wg *sync.WaitGroup, logger *log.Logger, regex *regexp.Regexp) {
 	defer wg.Done()
 
 	var logwg sync.WaitGroup
@@ -201,7 +202,7 @@ func packageManagementTestCase(ctx context.Context, testSetup *guestPolicyTestSe
 		tc.Finish(tests)
 	} else {
 		logger.Printf("Running TestCase %q", tc.Name)
-		runTest(ctx, tc, testSetup, logger, &logwg, testProjectConfig)
+		runTest(ctx, tc, testSetup, logger, &logwg)
 		tc.Finish(tests)
 		logger.Printf("TestCase %q finished in %fs", tc.Name, tc.Time)
 	}

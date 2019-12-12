@@ -18,6 +18,8 @@ import (
 	"math/rand"
 	"sync"
 	"time"
+
+	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/config"
 )
 
 // Project is details of test Project.
@@ -30,15 +32,28 @@ type Project struct {
 	mux                  sync.Mutex
 }
 
+var mx sync.Mutex
+var projects = make(map[string]*Project)
+
 // GetProject creates a test Project to be used.
-func GetProject(projectID string, testZones map[string]int) *Project {
+func GetProject() *Project {
+	projectIDs := config.Projects()
+	projectID := projectIDs[rand.Intn(len(projectIDs))]
+	mx.Lock()
+	p, ok := projects[projectID]
+	mx.Unlock()
+	if ok {
+		return p
+	}
+
+	testZones := config.Zones()
 	var zoneIndices []string
 
 	for z := range testZones {
 		zoneIndices = append(zoneIndices, z)
 	}
 
-	return &Project{
+	p = &Project{
 		TestProjectID:       projectID,
 		testZones:           testZones,
 		zoneIndices:         zoneIndices,
@@ -48,6 +63,11 @@ func GetProject(projectID string, testZones map[string]int) *Project {
 			"https://www.googleapis.com/auth/devstorage.full_control",
 		},
 	}
+
+	mx.Lock()
+	projects[projectID] = p
+	mx.Unlock()
+	return p
 }
 
 // AcquireZone returns a random zone that still has capacity, or waits until there is one.
