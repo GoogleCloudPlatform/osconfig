@@ -5,6 +5,7 @@ export SHELL := env PATH=$(PATH) /bin/bash
 
 export DH_OPTIONS
 export DH_GOPKG := github.com/GoogleCloudPlatform/osconfig
+export DH_GOLANG_EXCLUDES := e2e_tests/
 export CGO_ENABLED := 0
 export GOCACHE := /tmp/.cache
 
@@ -19,14 +20,11 @@ override_dh_auto_install:
 override_dh_golang:
 	# We don't use any packaged dependencies, so skip dh_golang step.
 
-override_dh_autotest:
+override_dh_auto_test:
 	# Skip tests as they are already setup as part of the commit process.
 
 override_dh_auto_build:
-	# Skip build and jump straight to install.
-
-override_dh_auto_install:
-	dh_auto_install -O--buildsystem=golang -- -ldflags="-s -w -X main.version=$(VERSION)" -mod=readonly
+	dh_auto_build -O--buildsystem=golang -- -ldflags="-s -w -X main.version=$(VERSION)" -mod=readonly
 
 override_dh_installinit:
 	dh_installinit --noscripts
