@@ -48,7 +48,7 @@ while ($true) {
 }
 `
 	windowsSetWsus = `
-$wu_server = 'wsus-server.c.compute-image-osconfig-agent.internal'
+$wu_server = '192.168.0.2'
 $windows_update_path = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate'
 $windows_update_au_path = "$windows_update_path\AU"
 

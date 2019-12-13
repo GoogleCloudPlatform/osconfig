@@ -16,7 +16,7 @@
 set -e
 
 export PKGNAME="google-osconfig-agent"
-export VERSION="20191112.00"
+export VERSION="20191210.00"
 
 function exit_error() {
   echo "build failed: $0:$1 \"$BASH_COMMAND\" returned $?"
@@ -29,7 +29,7 @@ function install_go() {
   # Installs a specific version of go for compilation, since availability varies
   # across linux distributions. Needs curl and tar to be installed.
 
-  local GOLANG="go1.12.5.linux-amd64.tar.gz"
+  local GOLANG="go1.12.14.linux-amd64.tar.gz"
   export GO=/tmp/go/bin/go
   export GOPATH=/usr/share/gocode
   export GOCACHE=/tmp/.cache

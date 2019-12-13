@@ -29,7 +29,6 @@ import (
 	"github.com/GoogleCloudPlatform/compute-image-tools/go/e2e_test_utils/junitxml"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/config"
 	gcpclients "github.com/GoogleCloudPlatform/osconfig/e2e_tests/gcp_clients"
-	testconfig "github.com/GoogleCloudPlatform/osconfig/e2e_tests/test_config"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/test_suites/guestpolicies"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/test_suites/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/test_suites/patch"
@@ -37,7 +36,7 @@ import (
 	_ "google.golang.org/genproto/googleapis/rpc/errdetails"
 )
 
-var testFunctions = []func(context.Context, *sync.WaitGroup, chan *junitxml.TestSuite, *log.Logger, *regexp.Regexp, *regexp.Regexp, *testconfig.Project){
+var testFunctions = []func(context.Context, *sync.WaitGroup, chan *junitxml.TestSuite, *log.Logger, *regexp.Regexp, *regexp.Regexp){
 	guestpolicies.TestSuite,
 	inventory.TestSuite,
 	patch.TestSuite,
@@ -45,8 +44,6 @@ var testFunctions = []func(context.Context, *sync.WaitGroup, chan *junitxml.Test
 
 func main() {
 	ctx := context.Background()
-
-	pr := testconfig.GetProject(*config.TestProjectID, config.Zones())
 
 	if err := gcpclients.PopulateClients(ctx); err != nil {
 		log.Fatal(err)
@@ -59,7 +56,7 @@ func main() {
 	var wg sync.WaitGroup
 	for _, tf := range testFunctions {
 		wg.Add(1)
-		go tf(ctx, &wg, tests, logger, config.TestSuiteFilter(), config.TestCaseFilter(), pr)
+		go tf(ctx, &wg, tests, logger, config.TestSuiteFilter(), config.TestCaseFilter())
 	}
 	go func() {
 		wg.Wait()

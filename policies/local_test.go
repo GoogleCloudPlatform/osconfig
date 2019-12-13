@@ -130,7 +130,7 @@ func TestMerging(t *testing.T) {
 	rs := pr2.SoftwareRecipes[0].SoftwareRecipe.DesiredState
 	want := agentendpointpb.DesiredState_REMOVED
 	if rs != want {
-		t.Logf("Merged: %s", proto.MarshalTextString(&pr2))
+		t.Logf("Merged: %s", proto.MarshalTextString(pr2))
 		t.Errorf("Wrong recipe state. Got: %d(%s), want: %d(%s).", rs, rs.String(), want, want.String())
 	}
 

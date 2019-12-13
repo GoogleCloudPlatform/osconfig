@@ -140,7 +140,8 @@ func checkFilters(updt *packages.IUpdate, kbExcludes, classFilter, exclusive_pat
 
 // GetWUAUpdates gets WUA updates based on optional classFilter and kbExcludes.
 func GetWUAUpdates(session *packages.IUpdateSession, classFilter, kbExcludes, exclusive_patches []string) (*packages.IUpdateCollection, error) {
-	updts, err := session.GetWUAUpdateCollection("IsInstalled=0")
+	// Search for all not installed updates but filter out ones that will be installed after a reboot.
+	updts, err := session.GetWUAUpdateCollection("IsInstalled=0 AND RebootRequired=0")
 	if err != nil {
 		return nil, fmt.Errorf("GetWUAUpdateCollection error: %v", err)
 	}

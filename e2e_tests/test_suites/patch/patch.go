@@ -49,7 +49,7 @@ var (
 )
 
 // TestSuite is a OSPatch test suite.
-func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junitxml.TestSuite, logger *log.Logger, testSuiteRegex, testCaseRegex *regexp.Regexp, testProjectConfig *testconfig.Project) {
+func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junitxml.TestSuite, logger *log.Logger, testSuiteRegex, testCaseRegex *regexp.Regexp) {
 	defer tswg.Done()
 
 	if testSuiteRegex != nil && !testSuiteRegex.MatchString(testSuiteName) {
@@ -68,7 +68,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		wg.Add(1)
 		s := setup
 		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Execute PatchJob] [%s]", s.testName))
-		f := func() { runExecutePatchJobTest(ctx, tc, s, testProjectConfig, nil, &logwg) }
+		f := func() { runExecutePatchJobTest(ctx, tc, s, nil, &logwg) }
 		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
 	}
 	// Test that updates trigger reboot as expected.
@@ -78,7 +78,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[PatchJob triggers reboot] [%s]", s.testName))
 		shouldReboot := true
 		f := func() {
-			runRebootPatchTest(ctx, tc, s, testProjectConfig, &osconfigpb.PatchConfig{Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST}}, shouldReboot, &logwg)
+			runRebootPatchTest(ctx, tc, s, &osconfigpb.PatchConfig{Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST}}, shouldReboot, &logwg)
 		}
 		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
 	}
@@ -89,7 +89,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[PatchJob does not reboot] [%s]", s.testName))
 		pc := &osconfigpb.PatchConfig{RebootConfig: osconfigpb.PatchConfig_NEVER, Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST}}
 		shouldReboot := false
-		f := func() { runRebootPatchTest(ctx, tc, s, testProjectConfig, pc, shouldReboot, &logwg) }
+		f := func() { runRebootPatchTest(ctx, tc, s, pc, shouldReboot, &logwg) }
 		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
 	}
 	// Test that pre- and post-patch steps run as expected.
@@ -98,7 +98,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		s := setup
 		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[PatchJob runs pre-step and post-step] [%s]", s.testName))
 		pc := patchConfigWithPrePostSteps()
-		f := func() { runExecutePatchJobTest(ctx, tc, s, testProjectConfig, pc, &logwg) }
+		f := func() { runExecutePatchJobTest(ctx, tc, s, pc, &logwg) }
 		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
 	}
 	// Test APT specific functionality, this just tests that using these settings doesn't break anything.
@@ -107,7 +107,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		s := setup
 		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[APT dist-upgrade, excludes] [%s]", s.testName))
 		f := func() {
-			runExecutePatchJobTest(ctx, tc, s, testProjectConfig, &osconfigpb.PatchConfig{Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST, Excludes: []string{"pkg1"}}}, &logwg)
+			runExecutePatchJobTest(ctx, tc, s, &osconfigpb.PatchConfig{Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST, Excludes: []string{"pkg1"}}}, &logwg)
 		}
 		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
 	}
@@ -117,7 +117,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		s := setup
 		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[APT dist-upgrade, exclusive packages] [%s]", s.testName))
 		f := func() {
-			runExecutePatchJobTest(ctx, tc, s, testProjectConfig, &osconfigpb.PatchConfig{Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST, ExclusivePackages: []string{"pkg1"}}}, &logwg)
+			runExecutePatchJobTest(ctx, tc, s, &osconfigpb.PatchConfig{Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST, ExclusivePackages: []string{"pkg1"}}}, &logwg)
 		}
 		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
 	}
@@ -127,7 +127,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		s := setup
 		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[YUM security, minimal and excludes] [%s]", s.testName))
 		f := func() {
-			runExecutePatchJobTest(ctx, tc, s, testProjectConfig, &osconfigpb.PatchConfig{Yum: &osconfigpb.YumSettings{Security: true, Minimal: true, Excludes: []string{"pkg1", "pkg2"}}}, &logwg)
+			runExecutePatchJobTest(ctx, tc, s, &osconfigpb.PatchConfig{Yum: &osconfigpb.YumSettings{Security: true, Minimal: true, Excludes: []string{"pkg1", "pkg2"}}}, &logwg)
 		}
 		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
 	}
@@ -137,7 +137,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		s := setup
 		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[YUM exclusive patches] [%s]", s.testName))
 		f := func() {
-			runExecutePatchJobTest(ctx, tc, s, testProjectConfig, &osconfigpb.PatchConfig{Yum: &osconfigpb.YumSettings{ExclusivePackages: []string{"pkg1", "pk3"}}}, &logwg)
+			runExecutePatchJobTest(ctx, tc, s, &osconfigpb.PatchConfig{Yum: &osconfigpb.YumSettings{ExclusivePackages: []string{"pkg1", "pk3"}}}, &logwg)
 		}
 		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
 	}
@@ -147,7 +147,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		s := setup
 		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Zypper excludes, WithOptional, WithUpdate, Categories and Severities] [%s]", s.testName))
 		f := func() {
-			runExecutePatchJobTest(ctx, tc, s, testProjectConfig, &osconfigpb.PatchConfig{
+			runExecutePatchJobTest(ctx, tc, s, &osconfigpb.PatchConfig{
 				Zypper: &osconfigpb.ZypperSettings{Excludes: []string{"patch-1"}, WithOptional: true, WithUpdate: true, Categories: []string{"security", "recommended", "feature"}, Severities: []string{"critical", "important", "moderate", "low"}}}, &logwg)
 		}
 		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
@@ -159,7 +159,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		s := setup
 		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Zypper exclusivePatches] [%s]", s.testName))
 		f := func() {
-			runExecutePatchJobTest(ctx, tc, s, testProjectConfig, &osconfigpb.PatchConfig{
+			runExecutePatchJobTest(ctx, tc, s, &osconfigpb.PatchConfig{
 				Zypper: &osconfigpb.ZypperSettings{ExclusivePatches: []string{"patch-1"}}}, &logwg) // there should be no patch run
 
 		}
@@ -233,7 +233,7 @@ func awaitPatchJob(ctx context.Context, job *osconfigpb.PatchJob, timeout time.D
 	}
 }
 
-func runExecutePatchJobTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *patchTestSetup, testProjectConfig *testconfig.Project, pc *osconfigpb.PatchConfig, logwg *sync.WaitGroup) {
+func runExecutePatchJobTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *patchTestSetup, pc *osconfigpb.PatchConfig, logwg *sync.WaitGroup) {
 	computeClient, err := gcpclients.GetComputeClient()
 	if err != nil {
 		testCase.WriteFailure("Error getting compute client: %v", err)
@@ -242,6 +242,7 @@ func runExecutePatchJobTest(ctx context.Context, testCase *junitxml.TestCase, te
 
 	testCase.Logf("Creating instance with image %q", testSetup.image)
 	name := fmt.Sprintf("patch-test-%s-%s-%s", path.Base(testSetup.testName), testSuffix, utils.RandString(5))
+	testProjectConfig := testconfig.GetProject()
 	zone := testProjectConfig.AcquireZone()
 	defer testProjectConfig.ReleaseZone(zone)
 	inst, err := utils.CreateComputeInstance(testSetup.metadata, computeClient, testSetup.machineType, testSetup.image, name, testProjectConfig.TestProjectID, zone, testProjectConfig.ServiceAccountEmail, testProjectConfig.ServiceAccountScopes)
@@ -302,7 +303,7 @@ func runExecutePatchJobTest(ctx context.Context, testCase *junitxml.TestCase, te
 	}
 }
 
-func runRebootPatchTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *patchTestSetup, testProjectConfig *testconfig.Project, pc *osconfigpb.PatchConfig, shouldReboot bool, logwg *sync.WaitGroup) {
+func runRebootPatchTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *patchTestSetup, pc *osconfigpb.PatchConfig, shouldReboot bool, logwg *sync.WaitGroup) {
 	computeClient, err := gcpclients.GetComputeClient()
 	if err != nil {
 		testCase.WriteFailure("Error getting compute client: %v", err)
@@ -311,6 +312,7 @@ func runRebootPatchTest(ctx context.Context, testCase *junitxml.TestCase, testSe
 
 	testCase.Logf("Creating instance with image %q", testSetup.image)
 	name := fmt.Sprintf("patch-reboot-%s-%s-%s", path.Base(testSetup.testName), testSuffix, utils.RandString(5))
+	testProjectConfig := testconfig.GetProject()
 	zone := testProjectConfig.AcquireZone()
 	defer testProjectConfig.ReleaseZone(zone)
 	inst, err := utils.CreateComputeInstance(testSetup.metadata, computeClient, testSetup.machineType, testSetup.image, name, testProjectConfig.TestProjectID, zone, testProjectConfig.ServiceAccountEmail, testProjectConfig.ServiceAccountScopes)

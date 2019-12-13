@@ -307,7 +307,7 @@ func CreateComputeInstance(metadataitems []*api.MetadataItems, client daisyCompu
 		MachineType: fmt.Sprintf("projects/%s/zones/%s/machineTypes/%s", projectID, zone, machineType),
 		NetworkInterfaces: []*api.NetworkInterface{
 			&api.NetworkInterface{
-				Network: "global/networks/default",
+				Subnetwork: fmt.Sprintf("projects/%s/regions/%s/subnetworks/default", projectID, zone[:len(zone)-2]),
 				AccessConfigs: []*api.AccessConfig{
 					&api.AccessConfig{
 						Type: "ONE_TO_ONE_NAT",

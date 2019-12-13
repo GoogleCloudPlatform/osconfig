@@ -55,12 +55,12 @@ func run(ctx context.Context) {
 		local = nil
 	}
 
-	effectiveResp := mergeConfigs(local, resp)
+	effective := mergeConfigs(local, resp)
 
 	// We don't check the error from ospackage.SetConfig as all errors are already logged.
-	setConfig(&effectiveResp)
+	setConfig(effective)
 
-	installRecipes(ctx, &effectiveResp)
+	installRecipes(ctx, effective)
 }
 
 // Run looks up osconfigs and applies them using tasker.Enqueue.

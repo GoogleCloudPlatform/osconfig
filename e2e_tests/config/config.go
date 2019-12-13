@@ -41,11 +41,11 @@ var (
 	zones                  map[string]int
 	testZone               = flag.String("test_zone", "", "test zone")
 	testZones              = flag.String("test_zones", "{}", "test zones")
+	projects               []string
+	testProjectIDs         = flag.String("test_project_ids", "", "test project ids")
 
 	// OutDir is the out directory to use.
 	OutDir = flag.String("out_dir", "/tmp", "junit xml directory")
-	// TestProjectID is the test project to use.
-	TestProjectID = flag.String("test_project_id", "", "test project id")
 )
 
 func init() {
@@ -69,10 +69,12 @@ func init() {
 		}
 	}
 
-	if len(strings.TrimSpace(*TestProjectID)) == 0 {
-		fmt.Println("-test_project_id must be specified")
+	if len(strings.TrimSpace(*testProjectIDs)) == 0 {
+		fmt.Println("-test_project_ids must be specified")
 		os.Exit(1)
 	}
+
+	projects = strings.Split(*testProjectIDs, ",")
 
 	zones = make(map[string]int)
 	if len(strings.TrimSpace(*testZone)) != 0 {
@@ -89,6 +91,11 @@ func init() {
 		fmt.Println("Error, no zones specified")
 		os.Exit(1)
 	}
+}
+
+// Projects are the projects to use.
+func Projects() []string {
+	return projects
 }
 
 // Zones are the zones and associated quota to use.
