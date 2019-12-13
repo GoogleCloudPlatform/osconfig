@@ -97,12 +97,12 @@ func getID(repo agentendpointpb.PackageRepository) string {
 
 // mergeConfigs merges the local config with the lookup response, giving priority to the lookup
 // result. If both arguments are nil, returns an empty policy.
-func mergeConfigs(local *localConfig, egp *agentendpointpb.EffectiveGuestPolicy) agentendpointpb.EffectiveGuestPolicy {
+func mergeConfigs(local *localConfig, egp *agentendpointpb.EffectiveGuestPolicy) *agentendpointpb.EffectiveGuestPolicy {
 	if egp == nil {
 		egp = &agentendpointpb.EffectiveGuestPolicy{}
 	}
 	if local == nil {
-		return *egp
+		return egp
 	}
 
 	// Ids that are in the maps below
@@ -148,5 +148,5 @@ func mergeConfigs(local *localConfig, egp *agentendpointpb.EffectiveGuestPolicy)
 		}
 
 	}
-	return *egp
+	return egp
 }
