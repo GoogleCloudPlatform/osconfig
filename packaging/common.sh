@@ -59,7 +59,7 @@ function git_checkout() {
   echo "Running ${git_command}"
   $git_command
 
-  git checkout packaging
+  git checkout packaging 
 }
 
 function try_command() {
