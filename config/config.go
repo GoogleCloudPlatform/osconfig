@@ -83,23 +83,11 @@ func (c *config) parseFeatures(features string, enabled bool) {
 		f = strings.ToLower(strings.TrimSpace(f))
 		switch f {
 		case "tasknotification", "ospatch": // ospatch is the legacy flag
-			if enabled {
-				c.taskNotificationEnabled = true
-			} else {
-				c.taskNotificationEnabled = false
-			}
+			c.taskNotificationEnabled = enabled
 		case "guestpolicies", "ospackage": // ospackage is the legacy flag
-			if enabled {
-				c.guestPoliciesEnabled = true
-			} else {
-				c.guestPoliciesEnabled = false
-			}
+			c.guestPoliciesEnabled = enabled
 		case "osinventory":
-			if enabled {
-				c.osInventoryEnabled = true
-			} else {
-				c.osInventoryEnabled = false
-			}
+			c.osInventoryEnabled = enabled
 		}
 	}
 }
