@@ -110,7 +110,7 @@ func TestMerging(t *testing.T) {
 	sr.SoftwareRecipe.Name = "install-something"
 	sr.SoftwareRecipe.DesiredState = agentendpointpb.DesiredState_REMOVED
 	pr.SoftwareRecipes = append(pr.SoftwareRecipes, &sr)
-	pr2 := mergeConfigs(lc, pr)
+	pr2 := mergeConfigs(lc, &pr)
 
 	var wantmap = map[string]agentendpointpb.DesiredState{
 		"install-something": agentendpointpb.DesiredState_REMOVED,

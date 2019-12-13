@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"encoding/json"
 
+	"cloud.google.com/go/compute/metadata"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 
@@ -71,6 +72,14 @@ func parseLocalConfig(a []byte) (*localConfig, error) {
 	return &lc, nil
 }
 
+func readLocalConfig() (*localConfig, error) {
+	s, err := metadata.Get("/instance/attributes/gce-software-declaration")
+	if err != nil {
+		return nil, err
+	}
+	return parseLocalConfig([]byte(s))
+}
+
 // GetId returns a repository Id that is used to group repositories for
 // override by higher priotiry policy(-ies).
 // For repositories that have no such Id, GetId returns "", in which
@@ -86,12 +95,16 @@ func getID(repo agentendpointpb.PackageRepository) string {
 	}
 }
 
-// MergeConfigs merges the local config with the lookup response, giving priority to the lookup
-// result.
-func mergeConfigs(local *localConfig, egp agentendpointpb.EffectiveGuestPolicy) agentendpointpb.EffectiveGuestPolicy {
-	if local == nil {
-		return egp
+// mergeConfigs merges the local config with the lookup response, giving priority to the lookup
+// result. If both arguments are nil, returns an empty policy.
+func mergeConfigs(local *localConfig, egp *agentendpointpb.EffectiveGuestPolicy) agentendpointpb.EffectiveGuestPolicy {
+	if egp == nil {
+		egp = &agentendpointpb.EffectiveGuestPolicy{}
 	}
+	if local == nil {
+		return *egp
+	}
+
 	// Ids that are in the maps below
 	repos := make(map[string]bool)
 	pkgs := make(map[string]bool)
@@ -135,5 +148,5 @@ func mergeConfigs(local *localConfig, egp agentendpointpb.EffectiveGuestPolicy) 
 		}
 
 	}
-	return egp
+	return *egp
 }
