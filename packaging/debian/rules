@@ -24,8 +24,10 @@ override_dh_auto_test:
 	# Skip tests as they are already setup as part of the commit process.
 
 override_dh_auto_build:
-	rm -rf e2e_tests
-	dh_auto_build -O--buildsystem=golang -- -ldflags="-s -w -X main.version=$(VERSION)" -mod=readonly
+	# Skip build and jump straight to install.
+
+override_dh_auto_install:
+	dh_auto_install -O--buildsystem=golang -- -ldflags="-s -w -X main.version=$(VERSION)" -mod=readonly
 
 override_dh_installinit:
 	dh_installinit --noscripts
