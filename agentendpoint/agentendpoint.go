@@ -290,6 +290,7 @@ func (c *Client) loadTaskFromState(ctx context.Context) error {
 }
 
 var errServiceNotEnabled = errors.New("service is not enabled for this project")
+var errResourceExhausted = errors.New("ResourceExhausted")
 
 func (c *Client) waitForTask(ctx context.Context) error {
 	stream, err := c.receiveTaskNotification(ctx)
@@ -311,6 +312,8 @@ func (c *Client) waitForTask(ctx context.Context) error {
 		case codes.PermissionDenied:
 			// Service is not enabled for this project.
 			return errServiceNotEnabled
+		case codes.ResourceExhausted:
+			return errResourceExhausted
 		}
 	}
 	// TODO: Add more error checking (handle more API erros vs non API errors) and backoff where appropriate.
@@ -336,6 +339,7 @@ func (c *Client) WaitForTaskNotification(ctx context.Context) {
 
 	logger.Debugf("Setting up ReceiveTaskNotification stream watcher.")
 	go func() {
+		resourceExhausted := 1
 		for {
 			select {
 			case <-ctx.Done():
@@ -347,11 +351,19 @@ func (c *Client) WaitForTaskNotification(ctx context.Context) {
 
 			if err := c.waitForTask(ctx); err != nil {
 				if err == errServiceNotEnabled {
-					time.Sleep(config.SvcPollInterval())
-					continue
+					// Service is disabled, close this client and return.
+					c.Close()
+					return
 				}
 				logger.Errorf("Error waiting for task: %v", err)
-				time.Sleep(5 * time.Second)
+				sleep := 5 * time.Second
+				if err == errResourceExhausted {
+					sleep = retrySleep(resourceExhausted, 5)
+					resourceExhausted++
+				} else {
+					resourceExhausted = 1
+				}
+				time.Sleep(sleep)
 			}
 		}
 	}()
