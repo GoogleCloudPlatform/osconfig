@@ -123,7 +123,7 @@ func createGuestPolicy(ctx context.Context, client *osconfigV1alpha2.Client, req
 	return client.CreateGuestPolicy(ctx, req)
 }
 
-func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *guestPolicyTestSetup, logger *log.Logger, logwg *sync.WaitGroup) {
+func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *guestPolicyTestSetup, logger *log.Logger) {
 	computeClient, err := gcpclients.GetComputeClient()
 	if err != nil {
 		testCase.WriteFailure("Error getting compute client: %v", err)
@@ -148,8 +148,7 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *guestP
 	if err != nil {
 		testCase.WriteFailure("Error getting storage client: %v", err)
 	}
-	logwg.Add(1)
-	go inst.StreamSerialOutput(ctx, storageClient, path.Join(testSuiteName, config.LogsPath()), config.LogBucket(), logwg, 1, config.LogPushInterval())
+	defer inst.RecordSerialOutput(ctx, storageClient, path.Join(testSuiteName, config.LogsPath()), config.LogBucket(), 1)
 
 	testCase.Logf("Waiting for agent install to complete")
 	if _, err := inst.WaitForGuestAttributes("osconfig_tests/install_done", 5*time.Second, 10*time.Minute); err != nil {
@@ -191,8 +190,6 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *guestP
 func packageManagementTestCase(ctx context.Context, testSetup *guestPolicyTestSetup, tests chan *junitxml.TestCase, wg *sync.WaitGroup, logger *log.Logger, regex *regexp.Regexp) {
 	defer wg.Done()
 
-	var logwg sync.WaitGroup
-
 	tc, err := getTestCaseFromTestSetUp(testSetup)
 	if err != nil {
 		logger.Fatalf("invalid testcase: %+v", err)
@@ -202,12 +199,10 @@ func packageManagementTestCase(ctx context.Context, testSetup *guestPolicyTestSe
 		tc.Finish(tests)
 	} else {
 		logger.Printf("Running TestCase %q", tc.Name)
-		runTest(ctx, tc, testSetup, logger, &logwg)
+		runTest(ctx, tc, testSetup, logger)
 		tc.Finish(tests)
 		logger.Printf("TestCase %q finished in %fs", tc.Name, tc.Time)
 	}
-
-	logwg.Wait()
 }
 
 // factory method to get testcase from the testsetup
@@ -239,10 +234,10 @@ func getTestCaseFromTestSetUp(testSetup *guestPolicyTestSetup) (*junitxml.TestCa
 func cleanupGuestPolicy(ctx context.Context, testCase *junitxml.TestCase, gp *osconfigpb.GuestPolicy) {
 	client, err := gcpclients.GetOsConfigClientV1alpha2()
 	if err != nil {
-		testCase.WriteFailure(fmt.Sprintf("Error while deleting osconfig: %s", utils.GetStatusFromError(err)))
+		testCase.WriteFailure(fmt.Sprintf("Error while deleting guest policy: %s", utils.GetStatusFromError(err)))
 	}
 
 	if err := client.DeleteGuestPolicy(ctx, &osconfigpb.DeleteGuestPolicyRequest{Name: gp.GetName()}); err != nil {
-		testCase.WriteFailure(fmt.Sprintf("Error while deleting osconfig: %s", utils.GetStatusFromError(err)))
+		testCase.WriteFailure(fmt.Sprintf("Error calling DeleteGuestPolicy: %s", utils.GetStatusFromError(err)))
 	}
 }
