@@ -25,24 +25,25 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func retrySleep(i int, e int, rnd *rand.Rand) time.Duration {
-	// i=1 and e=0 => 1*1+[0,1] => 1-2s
-	// i=2 and e=0 => 2*2+[0,2] => 4-6s
-	// i=3 and e=0 => 3*3+[0,3] => 9-12s
+// retrySleep returns a pseudo-random sleep duration.
+func retrySleep(base int, extra int) time.Duration {
+	// base=1 and extra=0 => 1*1+[0,1] => 1-2s
+	// base=2 and extra=0 => 2*2+[0,2] => 4-6s
+	// base=3 and extra=0 => 3*3+[0,3] => 9-12s
 
-	// i=1 and e=5 => 6*1+[0,6] => 6-12s
-	// i=2 and e=5 => 7*2+[0,7] => 14-21s
-	// i=3 and e=5 => 8*3+[0,8] => 24-32s
+	// base=1 and extra=5 => 6*1+[0,6] => 6-12s
+	// base=2 and extra=5 => 7*2+[0,7] => 14-21s
+	// base=3 and extra=5 => 8*3+[0,8] => 24-32s
 
-	// i=1 and e=10 => 11*1+[0,11] => 11-22s
-	// i=2 and e=10 => 12*2+[0,12] => 24-36s
-	// i=3 and e=10 => 13*3+[0,13] => 39-52s
-	nf := math.Min(float64((i+e)*i+rnd.Intn(i+e)), 300)
+	// base=1 and extra=10 => 11*1+[0,11] => 11-22s
+	// base=2 and extra=10 => 12*2+[0,12] => 24-36s
+	// base=3 and extra=10 => 13*3+[0,13] => 39-52s
+	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
+	nf := math.Min(float64((base+extra)*base+rnd.Intn(base+extra)), 300)
 	return time.Duration(int(nf)) * time.Second
 }
 
 func retryFunc(maxRetryTime time.Duration, desc string, f func() error) error {
-	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
 	var tot time.Duration
 	for i := 1; ; i++ {
 		err := f()
@@ -50,7 +51,7 @@ func retryFunc(maxRetryTime time.Duration, desc string, f func() error) error {
 			return nil
 		}
 
-		ns := retrySleep(i, 0, rnd)
+		ns := retrySleep(i, 0)
 		tot += ns
 		if tot > maxRetryTime {
 			return err
@@ -62,7 +63,6 @@ func retryFunc(maxRetryTime time.Duration, desc string, f func() error) error {
 }
 
 func retryAPICall(maxRetryTime time.Duration, name string, f func() error) error {
-	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
 	var tot time.Duration
 	for i := 1; ; i++ {
 		extra := 1
@@ -85,7 +85,7 @@ func retryAPICall(maxRetryTime time.Duration, name string, f func() error) error
 			return err
 		}
 
-		ns := retrySleep(i, extra, rnd)
+		ns := retrySleep(i, extra)
 		tot += ns
 		if tot > maxRetryTime {
 			return err

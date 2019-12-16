@@ -47,6 +47,8 @@ func InstallRecipe(ctx context.Context, recipe *agentendpointpb.SoftwareRecipe) 
 			logger.Debugf("Skipping software recipe %s.", recipe.Name)
 			return nil
 		}
+	} else {
+		logger.Infof("Installing software recipe %s.", recipe.Name)
 	}
 
 	logger.Debugf("Creating working dir for recipe %s.", recipe.Name)
@@ -58,14 +60,14 @@ func InstallRecipe(ctx context.Context, recipe *agentendpointpb.SoftwareRecipe) 
 	defer func() {
 		err := os.RemoveAll(runDir)
 		if err != nil {
-			logger.Warningf("failed to remove recipe working dir at %q\n", runDir)
+			logger.Warningf("Failed to remove recipe working dir at %q.", runDir)
 		}
 	}()
+	logger.Debugf("Downloading artifacts for recipe %s.", recipe.Name)
 	artifacts, err := fetchArtifacts(ctx, recipe.Artifacts, runDir)
 	if err != nil {
 		return fmt.Errorf("failed to obtain artifacts: %v", err)
 	}
-	logger.Infof("Finished downloading artifacts.")
 
 	runEnvs := []string{
 		fmt.Sprintf("RECIPE_NAME=%s", recipe.Name),
@@ -104,7 +106,7 @@ func InstallRecipe(ctx context.Context, recipe *agentendpointpb.SoftwareRecipe) 
 		}
 	}
 
-	logger.Infof("All steps completed successfully, marking recipe installed.")
+	logger.Infof("All steps completed successfully, marking recipe %s as installed.", recipe.Name)
 	return recipeDB.addRecipe(recipe.Name, recipe.Version, true)
 }
 

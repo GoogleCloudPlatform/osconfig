@@ -15,6 +15,7 @@
 package policies
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/golang/protobuf/proto"
@@ -83,26 +84,14 @@ const (
 		     }`
 )
 
-func TestJsonParsing(t *testing.T) {
-	a := []byte(sampleConfig)
-	pr, err := parseLocalConfig(a)
-	if err != nil {
-		t.Errorf("Got error: %v", err)
-		return
-	}
-
-	if got, want := pr.SoftwareRecipes[0].DesiredState, agentendpointpb.DesiredState_INSTALLED; got != want {
-		t.Errorf("Software recipe desired state incorrectly parsed, got: %d(%s), want: %d(%s).", got, got.String(), want, want.String())
-	}
-}
-
 func TestMerging(t *testing.T) {
-	a := []byte(sampleConfig)
-	lc, err := parseLocalConfig(a)
-	if err != nil {
+	s := []byte(sampleConfig)
+	var lc localConfig
+	if err := json.Unmarshal([]byte(s), &lc); err != nil {
 		t.Errorf("Got error: %v", err)
 		return
 	}
+
 	var pr agentendpointpb.EffectiveGuestPolicy
 	var sr agentendpointpb.EffectiveGuestPolicy_SourcedSoftwareRecipe
 	sr.Source = "policy1"
@@ -110,7 +99,7 @@ func TestMerging(t *testing.T) {
 	sr.SoftwareRecipe.Name = "install-something"
 	sr.SoftwareRecipe.DesiredState = agentendpointpb.DesiredState_REMOVED
 	pr.SoftwareRecipes = append(pr.SoftwareRecipes, &sr)
-	pr2 := mergeConfigs(lc, &pr)
+	pr2 := mergeConfigs(&lc, &pr)
 
 	var wantmap = map[string]agentendpointpb.DesiredState{
 		"install-something": agentendpointpb.DesiredState_REMOVED,

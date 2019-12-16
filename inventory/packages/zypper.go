@@ -97,7 +97,6 @@ func InstallZypperPackages(pkgs []string) error {
 
 // ZypperInstall installs zypper patches and packages
 func ZypperInstall(patches []ZypperPatch, pkgs []PkgInfo) error {
-	// does a package in pkgs belong to a patch in patchtopkgmap
 	args := zypperInstallArgs
 
 	// https://www.mankier.com/8/zypper#Concepts-Package_Types use patch install
@@ -109,7 +108,24 @@ func ZypperInstall(patches []ZypperPatch, pkgs []PkgInfo) error {
 		args = append(args, "package:"+pkg.Name)
 	}
 
-	_, err := run(exec.Command(zypper, args...))
+	out, err := run(exec.Command(zypper, args...))
+	var msg string
+	for _, s := range strings.Split(string(out), "\n") {
+		msg += fmt.Sprintf(" %s\n", s)
+	}
+	DebugLogger.Printf("zypper install output:\n%s", msg)
+	if err == nil {
+		return nil
+	}
+
+	// https://en.opensuse.org/SDB:Zypper_manual#EXIT_CODES
+	if exitErr, ok := err.(*exec.ExitError); ok {
+		// ZYPPER_EXIT_INF_REBOOT_NEEDED
+		if exitErr.ExitCode() == 102 {
+			err = nil
+		}
+	}
+
 	return err
 }
 
