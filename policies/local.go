@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 
 	"cloud.google.com/go/compute/metadata"
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 
@@ -63,21 +64,15 @@ func (r *softwareRecipe) UnmarshalJSON(b []byte) error {
 	return jsonpb.Unmarshal(rd, &r.SoftwareRecipe)
 }
 
-func parseLocalConfig(a []byte) (*localConfig, error) {
-	var lc localConfig
-	err := json.Unmarshal(a, &lc)
-	if err != nil {
-		return nil, err
-	}
-	return &lc, nil
-}
-
 func readLocalConfig() (*localConfig, error) {
 	s, err := metadata.Get("/instance/attributes/gce-software-declaration")
 	if err != nil {
-		return nil, err
+		logger.Debugf("Error getting gce-software-declaration from metadata: %v", err)
+		return nil, nil
 	}
-	return parseLocalConfig([]byte(s))
+
+	var lc localConfig
+	return &lc, json.Unmarshal([]byte(s), &lc)
 }
 
 // GetId returns a repository Id that is used to group repositories for

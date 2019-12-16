@@ -45,21 +45,18 @@ func run(ctx context.Context) {
 		resp, err = client.LookupEffectiveGuestPolicies(ctx)
 		if err != nil {
 			logger.Errorf("Error running LookupEffectiveGuestPolicies: %v", err)
-			resp = nil
 		}
 	}
 
 	local, err := readLocalConfig()
 	if err != nil {
 		logger.Errorf("Error reading local software config: %v", err)
-		local = nil
 	}
 
 	effective := mergeConfigs(local, resp)
 
-	// We don't check the error from ospackage.SetConfig as all errors are already logged.
+	// We don't check the error from setConfig or installRecipes as all errors are already logged.
 	setConfig(effective)
-
 	installRecipes(ctx, effective)
 }
 
