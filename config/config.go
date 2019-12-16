@@ -403,7 +403,7 @@ func IDToken() (string, error) {
 	defer identity.Unlock()
 
 	// Rerequest token if expiry is within 10 minutes.
-	if identity.exp == nil || identity.exp.After(time.Now().Add(10*time.Minute)) {
+	if identity.exp == nil || time.Now().After(identity.exp.Add(-10*time.Minute)) {
 		if err := identity.get(); err != nil {
 			return "", err
 		}

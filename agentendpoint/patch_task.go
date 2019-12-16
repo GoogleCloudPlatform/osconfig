@@ -269,12 +269,8 @@ func (r *patchTask) run(ctx context.Context) (err error) {
 			if err := r.reportContinuingState(ctx, agentendpointpb.ApplyPatchesTaskProgress_APPLYING_PATCHES); err != nil {
 				return r.handleErrorState(ctx, err.Error(), err)
 			}
-			if r.Task.GetDryRun() {
-				r.infof("Dry run - No updates applied for patch")
-			} else {
-				if err := r.runUpdates(ctx); err != nil {
-					return r.handleErrorState(ctx, fmt.Sprintf("Failed to apply patches: %v", err), err)
-				}
+			if err := r.runUpdates(ctx); err != nil {
+				return r.handleErrorState(ctx, fmt.Sprintf("Failed to apply patches: %v", err), err)
 			}
 			if err := r.postPatchReboot(ctx); err != nil {
 				return r.handleErrorState(ctx, fmt.Sprintf("Error running postPatchReboot: %v", err), err)

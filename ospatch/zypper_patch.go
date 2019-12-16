@@ -137,13 +137,27 @@ func RunZypperPatch(opts ...ZypperPatchOption) error {
 
 	fPatches, fpkgs, err := runFilter(patches, zOpts.exclusivePatches, zOpts.excludes, pkgUpdates, pkgToPatchesMap, zOpts.withUpdate)
 
-	logger.Infof("Updating %d patches.", len(fPatches))
-	logger.Debugf("Patches to be installed: %s", fPatches)
-	logger.Infof("Updating %d packages.", len(fpkgs))
-	logger.Debugf("Packages to be installed: %s", fpkgs)
+	if len(fPatches) == 0 && len(fpkgs) == 0 {
+		logger.Infof("No updates required.")
+		return nil
+	}
+
+	if len(fPatches) == 0 {
+		logger.Infof("No patches to install.")
+	} else {
+		logger.Infof("Installing %d patches.", len(fPatches))
+		logger.Debugf("Patches to be installed: %s", fPatches)
+	}
+
+	if len(fpkgs) == 0 {
+		logger.Infof("No non-patch packages to update.")
+	} else {
+		logger.Infof("Updating %d packages.", len(fpkgs))
+		logger.Debugf("Packages to be installed: %s", fpkgs)
+	}
 
 	if zOpts.dryrun {
-		logger.Infof("Running in dryrun mode, not updating packages.")
+		logger.Infof("Running in dryrun mode, not updating.")
 		return nil
 	}
 

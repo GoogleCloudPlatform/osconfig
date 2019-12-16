@@ -71,10 +71,16 @@ func (r *patchTask) installWUAUpdates(ctx context.Context, cf []string) (int32, 
 	}
 
 	if count == 0 {
+		r.infof("No Windows updates available to install")
 		return 0, nil
 	}
 
 	r.infof("%d Windows updates to install", count)
+
+	if r.Task.GetDryRun() {
+		r.infof("Running in dryrun mode, not updating.")
+		return 0, nil
+	}
 
 	for i := int32(0); i < count; i++ {
 		if err := r.reportContinuingState(ctx, agentendpointpb.ApplyPatchesTaskProgress_APPLYING_PATCHES); err != nil {
@@ -108,7 +114,6 @@ func (r *patchTask) wuaUpdates(ctx context.Context) error {
 			return err
 		}
 		if count == 0 {
-			r.infof("No Windows updates available to install")
 			return nil
 		}
 	}
@@ -127,7 +132,9 @@ func (r *patchTask) runUpdates(ctx context.Context) error {
 		}
 
 		r.debugf("Installing GooGet package updates.")
-		opts := []ospatch.GooGetUpdateOption{}
+		opts := []ospatch.GooGetUpdateOption{
+			ospatch.GooGetDryRun(r.Task.GetDryRun()),
+		}
 		if err := retryFunc(3*time.Minute, "installing GooGet package updates", func() error { return ospatch.RunGooGetUpdate(opts...) }); err != nil {
 			return err
 		}
