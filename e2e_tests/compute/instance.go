@@ -22,7 +22,6 @@ import (
 	"net/http"
 	"path"
 	"strings"
-	"sync"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -151,42 +150,31 @@ func (i *Instance) AddMetadata(mdi ...*computeApi.MetadataItems) error {
 	return i.client.SetInstanceMetadata(i.Project, i.Zone, i.Name, resp.Metadata)
 }
 
-// StreamSerialOutput stores the serial output of an instance to GCS bucket
-func (i *Instance) StreamSerialOutput(ctx context.Context, storageClient *storage.Client, logsPath, bucket string, logwg *sync.WaitGroup, port int64, interval time.Duration) {
-	defer logwg.Done()
-
+// RecordSerialOutput stores the serial output of an instance to GCS bucket
+func (i *Instance) RecordSerialOutput(ctx context.Context, storageClient *storage.Client, logsPath, bucket string, port int64) {
 	logsObj := path.Join(logsPath, fmt.Sprintf("%s-serial-port%d.log", i.Name, port))
-	logger.Infof("Streaming instance %q serial port %d output to https://storage.cloud.google.com/%s/%s", i.Name, port, bucket, logsObj)
-	var start int64
 	var buf bytes.Buffer
-	tick := time.Tick(interval)
-
-	for {
-		select {
-		case <-tick:
-			resp, err := i.client.GetSerialPortOutput(path.Base(i.Project), path.Base(i.Zone), i.Name, port, start)
-			if err != nil {
-				// Instance is stopped or stopping.
-				status, _ := i.client.InstanceStatus(path.Base(i.Project), path.Base(i.Zone), i.Name)
-				if !isTerminal(status) {
-					logger.Errorf("Instance %q: error getting serial port: %s", i.Name, err)
-				}
-				return
-			}
-			start = resp.Next
-			wc := storageClient.Bucket(bucket).Object(logsObj).NewWriter(ctx)
-			buf.WriteString(resp.Contents)
-			wc.ContentType = "text/plain"
-			if _, err := wc.Write(buf.Bytes()); err != nil {
-				logger.Errorf("Instance %q: error writing log to GCS: %v", i.Name, err)
-				continue
-			}
-			if err := wc.Close(); err != nil {
-				logger.Errorf("Instance %q: error saving log to GCS: %v", i.Name, err)
-				continue
-			}
+	resp, err := i.client.GetSerialPortOutput(path.Base(i.Project), path.Base(i.Zone), i.Name, port, 0)
+	if err != nil {
+		// Instance is stopped or stopping.
+		status, _ := i.client.InstanceStatus(path.Base(i.Project), path.Base(i.Zone), i.Name)
+		if !isTerminal(status) {
+			logger.Errorf("Instance %q: error getting serial port: %s", i.Name, err)
 		}
+		return
 	}
+	wc := storageClient.Bucket(bucket).Object(logsObj).NewWriter(ctx)
+	buf.WriteString(resp.Contents)
+	wc.ContentType = "text/plain"
+	if _, err := wc.Write(buf.Bytes()); err != nil {
+		logger.Errorf("Instance %q: error writing log to GCS: %v", i.Name, err)
+		return
+	}
+	if err := wc.Close(); err != nil {
+		logger.Errorf("Instance %q: error saving log to GCS: %v", i.Name, err)
+		return
+	}
+
 }
 
 func isTerminal(status string) bool {
