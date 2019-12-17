@@ -48,6 +48,7 @@ func init() {
 		aptGet = "/usr/bin/apt-get"
 	}
 	AptExists = util.Exists(aptGet)
+	DpkgQueryExists = util.Exists(dpkgquery)
 }
 
 // AptUpgradeType is the apt upgrade type.

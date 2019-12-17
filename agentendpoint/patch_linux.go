@@ -29,7 +29,8 @@ import (
 func (r *patchTask) runUpdates(ctx context.Context) error {
 	var errs []string
 	const retryPeriod = 3 * time.Minute
-	if packages.AptExists {
+	// Check for both apt-get and dpkg-query to give us a clean signal.
+	if packages.AptExists && packages.DpkgQueryExists {
 		opts := []ospatch.AptGetUpgradeOption{
 			ospatch.AptGetDryRun(r.Task.GetDryRun()),
 		}
@@ -42,7 +43,7 @@ func (r *patchTask) runUpdates(ctx context.Context) error {
 			errs = append(errs, err.Error())
 		}
 	}
-	if packages.YumExists {
+	if packages.YumExists && packages.RPMQueryExists {
 		opts := []ospatch.YumUpdateOption{
 			ospatch.YumUpdateSecurity(r.Task.GetPatchConfig().GetYum().GetSecurity()),
 			ospatch.YumUpdateMinimal(r.Task.GetPatchConfig().GetYum().GetMinimal()),
@@ -54,7 +55,7 @@ func (r *patchTask) runUpdates(ctx context.Context) error {
 			errs = append(errs, err.Error())
 		}
 	}
-	if packages.ZypperExists {
+	if packages.ZypperExists && packages.RPMQueryExists {
 		opts := []ospatch.ZypperPatchOption{
 			ospatch.ZypperPatchCategories(r.Task.GetPatchConfig().GetZypper().GetCategories()),
 			ospatch.ZypperPatchSeverities(r.Task.GetPatchConfig().GetZypper().GetSeverities()),

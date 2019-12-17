@@ -20,6 +20,7 @@ import (
 	"runtime"
 
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -32,6 +33,7 @@ func init() {
 	if runtime.GOOS != "windows" {
 		rpmquery = "/usr/bin/rpmquery"
 	}
+	RPMQueryExists = util.Exists(rpmquery)
 }
 
 func parseInstalledRPMPackages(data []byte) []PkgInfo {
