@@ -298,7 +298,7 @@ func CreateComputeInstance(metadataitems []*api.MetadataItems, client daisyCompu
 	defer func() {
 		<-pool
 	}()
-	
+
 	var items []*api.MetadataItems
 
 	// enable debug logging and guest-attributes for all test instances
