@@ -21,13 +21,11 @@ import (
 	"fmt"
 	"net/http"
 	"path"
-	"strings"
 	"time"
 
 	"cloud.google.com/go/storage"
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-
 	daisyCompute "github.com/GoogleCloudPlatform/compute-image-tools/daisy/compute"
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	computeApiBeta "google.golang.org/api/compute/v0.beta"
 	computeApi "google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
@@ -44,50 +42,6 @@ type Instance struct {
 func (i *Instance) Cleanup() {
 	if err := i.client.DeleteInstance(i.Project, i.Zone, i.Name); err != nil {
 		fmt.Printf("Error deleting instance: %v\n", err)
-	}
-}
-
-// WaitForSerialOutput waits to a string match on a serial port.
-func (i *Instance) WaitForSerialOutput(match string, port int64, interval, timeout time.Duration) error {
-	var start int64
-	var errs int
-	tick := time.Tick(interval)
-	timedout := time.Tick(timeout)
-	for {
-		select {
-		case <-timedout:
-			return fmt.Errorf("timed out waiting for %q", match)
-		case <-tick:
-			resp, err := i.client.GetSerialPortOutput(i.Project, i.Zone, i.Name, port, start)
-			if err != nil {
-				status, sErr := i.client.InstanceStatus(i.Project, i.Zone, i.Name)
-				if sErr != nil {
-					err = fmt.Errorf("%v, error getting InstanceStatus: %v", err, sErr)
-				} else {
-					err = fmt.Errorf("%v, InstanceStatus: %q", err, status)
-				}
-
-				// Wait until machine restarts to evaluate SerialOutput.
-				if isTerminal(status) {
-					continue
-				}
-
-				// Retry up to 3 times in a row on any error if we successfully got InstanceStatus.
-				if errs < 3 {
-					errs++
-					continue
-				}
-
-				return err
-			}
-			start = resp.Next
-			for _, ln := range strings.Split(resp.Contents, "\n") {
-				if i := strings.Index(ln, match); i != -1 {
-					return nil
-				}
-			}
-			errs = 0
-		}
 	}
 }
 

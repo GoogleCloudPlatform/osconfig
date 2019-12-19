@@ -289,8 +289,16 @@ func GetStatusFromError(err error) string {
 	return fmt.Sprintf("%v", err)
 }
 
+// This pool is just used for CreateComputeInstance so that we limit our calls to the API during the heavy create process.
+var pool = make(chan struct{}, 10)
+
 // CreateComputeInstance is an utility function to create gce instance
 func CreateComputeInstance(metadataitems []*api.MetadataItems, client daisyCompute.Client, machineType, image, name, projectID, zone, serviceAccountEmail string, serviceAccountScopes []string) (*compute.Instance, error) {
+	pool <- struct{}{}
+	defer func() {
+		<-pool
+	}()
+
 	var items []*api.MetadataItems
 
 	// enable debug logging and guest-attributes for all test instances
