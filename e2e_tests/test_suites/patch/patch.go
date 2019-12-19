@@ -364,6 +364,7 @@ func runRebootPatchTest(ctx context.Context, testCase *junitxml.TestCase, testSe
 	pj, err := awaitPatchJob(ctx, job, testSetup.assertTimeout)
 	if err != nil {
 		testCase.WriteFailure("Patch job '%s' error: %v", job.GetName(), err)
+		return
 	}
 
 	// If shouldReboot is true that instance should not report a pending reboot.

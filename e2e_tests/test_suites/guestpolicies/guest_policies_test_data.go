@@ -41,7 +41,7 @@ var (
 )
 
 func buildPkgInstallTestSetup(name, image, pkgManager, key string) *guestPolicyTestSetup {
-	assertTimeout := 60 * time.Second
+	assertTimeout := 120 * time.Second
 	testName := packageInstallFunction
 	packageName := "cowsay"
 	machineType := "n1-standard-2"
@@ -187,7 +187,7 @@ func addPackageRemovalTest(key string) []*guestPolicyTestSetup {
 }
 
 func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *guestPolicyTestSetup {
-	assertTimeout := 60 * time.Second
+	assertTimeout := 120 * time.Second
 	packageName := "osconfig-agent-test"
 	testName := packageInstallFromNewRepoFunction
 	machineType := "n1-standard-2"
@@ -239,7 +239,29 @@ func addRecipeInstallTest(key string) []*guestPolicyTestSetup {
 	for name, image := range utils.HeadSUSEImages {
 		recipeTestSetup = append(recipeTestSetup, buildRecipeInstallTestSetup(name, image, "zypper", key))
 	}
+	for name, image := range utils.HeadWindowsImages {
+		recipeTestSetup = append(recipeTestSetup, buildRecipeInstallTestSetup(name, image, "googet", key))
+	}
 	return recipeTestSetup
+}
+func buildRecipeInstallTestSetup(name, image, pkgManager, key string) *guestPolicyTestSetup {
+	assertTimeout := 120 * time.Second
+	testName := recipeInstallFunction
+	recipeName := "testrecipe"
+	machineType := "n1-standard-2"
+	if strings.HasPrefix(image, "windows") {
+		machineType = "n1-standard-4"
+	}
+
+	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
+	gp := &osconfigpb.GuestPolicy{
+		Assignment: &osconfigpb.Assignment{InstanceNamePrefixes: []string{instanceName}},
+		Recipes: []*osconfigpb.SoftwareRecipe{
+			osconfigserver.BuildSoftwareRecipe(recipeName, "", nil, nil),
+		},
+	}
+	ss := getRecipeInstallStartupScript(name, recipeName, pkgManager)
+	return newGuestPolicyTestSetup(image, instanceName, testName, packageInstalled, machineType, gp, ss, assertTimeout)
 }
 
 func addRecipeStepsTest(key string) []*guestPolicyTestSetup {
@@ -253,86 +275,90 @@ func addRecipeStepsTest(key string) []*guestPolicyTestSetup {
 	for name, image := range utils.HeadSUSEImages {
 		recipeTestSetup = append(recipeTestSetup, buildRecipeStepsTestSetup(name, image, "zypper", key))
 	}
+	for name, image := range utils.HeadWindowsImages {
+		recipeTestSetup = append(recipeTestSetup, buildRecipeStepsTestSetup(name, image, "googet", key))
+	}
 	return recipeTestSetup
 }
 
-func buildRecipeInstallTestSetup(name, image, pkgManager, key string) *guestPolicyTestSetup {
-	assertTimeout := 60 * time.Second
-	testName := recipeInstallFunction
-	recipeName := "testrecipe"
-	machineType := "n1-standard-2"
-	if strings.HasPrefix(image, "windows") {
-		machineType = "n1-standard-4"
-	}
-
-	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
-	gp := &osconfigpb.GuestPolicy{
-		Recipes: []*osconfigpb.SoftwareRecipe{
-			osconfigserver.BuildSoftwareRecipe(recipeName, "", nil, nil),
-		},
-		Assignment: &osconfigpb.Assignment{GroupLabels: []*osconfigpb.Assignment_GroupLabel{{Labels: map[string]string{"name": instanceName}}}},
-	}
-	ss := getRecipeInstallStartupScript(name, recipeName, pkgManager)
-	return newGuestPolicyTestSetup(image, instanceName, testName, packageInstalled, machineType, gp, ss, assertTimeout)
-}
-
 func buildRecipeStepsTestSetup(name, image, pkgManager, key string) *guestPolicyTestSetup {
-	assertTimeout := 60 * time.Second
+	assertTimeout := 120 * time.Second
 	testName := recipeStepsFunction
 	recipeName := "testrecipe"
 	machineType := "n1-standard-2"
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
-	gp := &osconfigpb.GuestPolicy{
-		Recipes: []*osconfigpb.SoftwareRecipe{
-			osconfigserver.BuildSoftwareRecipe(recipeName, "",
-				[]*osconfigpb.SoftwareRecipe_Artifact{
-					&osconfigpb.SoftwareRecipe_Artifact{
-						AllowInsecure: true,
-						Id:            "copy-test",
-						Artifact: &osconfigpb.SoftwareRecipe_Artifact_Remote_{
-							Remote: &osconfigpb.SoftwareRecipe_Artifact_Remote{
-								Uri: "https://example.com",
-							},
-						},
-					},
-					&osconfigpb.SoftwareRecipe_Artifact{
-						AllowInsecure: true,
-						Id:            "exec-test",
-						Artifact: &osconfigpb.SoftwareRecipe_Artifact_Gcs_{
-							Gcs: &osconfigpb.SoftwareRecipe_Artifact_Gcs{
-								Bucket: testResourceBucket,
-								Object: "software_recipes/exec_test.sh",
-							},
-						},
-					},
-					&osconfigpb.SoftwareRecipe_Artifact{
-						AllowInsecure: true,
-						Id:            "tar-test",
-						Artifact: &osconfigpb.SoftwareRecipe_Artifact_Gcs_{
-							Gcs: &osconfigpb.SoftwareRecipe_Artifact_Gcs{
-								Bucket: testResourceBucket,
-								Object: "software_recipes/tar_test.tar.gz",
-							},
-						},
-					},
-					&osconfigpb.SoftwareRecipe_Artifact{
-						AllowInsecure: true,
-						Id:            "zip-test",
-						Artifact: &osconfigpb.SoftwareRecipe_Artifact_Gcs_{
-							Gcs: &osconfigpb.SoftwareRecipe_Artifact_Gcs{
-								Bucket: testResourceBucket,
-								Object: "software_recipes/zip_test.zip",
-							},
-						},
-					},
+	artifacts := []*osconfigpb.SoftwareRecipe_Artifact{
+		&osconfigpb.SoftwareRecipe_Artifact{
+			AllowInsecure: true,
+			Id:            "copy-test",
+			Artifact: &osconfigpb.SoftwareRecipe_Artifact_Remote_{
+				Remote: &osconfigpb.SoftwareRecipe_Artifact_Remote{
+					Uri: "https://example.com",
 				},
+			},
+		},
+		&osconfigpb.SoftwareRecipe_Artifact{
+			AllowInsecure: true,
+			Id:            "exec-test-sh",
+			Artifact: &osconfigpb.SoftwareRecipe_Artifact_Gcs_{
+				Gcs: &osconfigpb.SoftwareRecipe_Artifact_Gcs{
+					Bucket: testResourceBucket,
+					Object: "software_recipes/exec_test.sh",
+				},
+			},
+		},
+		&osconfigpb.SoftwareRecipe_Artifact{
+			AllowInsecure: true,
+			Id:            "exec-test-cmd",
+			Artifact: &osconfigpb.SoftwareRecipe_Artifact_Gcs_{
+				Gcs: &osconfigpb.SoftwareRecipe_Artifact_Gcs{
+					Bucket: testResourceBucket,
+					Object: "software_recipes/exec_test.cmd",
+				},
+			},
+		},
+		&osconfigpb.SoftwareRecipe_Artifact{
+			AllowInsecure: true,
+			Id:            "tar-test",
+			Artifact: &osconfigpb.SoftwareRecipe_Artifact_Gcs_{
+				Gcs: &osconfigpb.SoftwareRecipe_Artifact_Gcs{
+					Bucket: testResourceBucket,
+					Object: "software_recipes/tar_test.tar.gz",
+				},
+			},
+		},
+		&osconfigpb.SoftwareRecipe_Artifact{
+			AllowInsecure: true,
+			Id:            "zip-test",
+			Artifact: &osconfigpb.SoftwareRecipe_Artifact_Gcs_{
+				Gcs: &osconfigpb.SoftwareRecipe_Artifact_Gcs{
+					Bucket: testResourceBucket,
+					Object: "software_recipes/zip_test.zip",
+				},
+			},
+		},
+	}
+
+	gp := &osconfigpb.GuestPolicy{
+		Assignment: &osconfigpb.Assignment{InstanceNamePrefixes: []string{instanceName}},
+		Recipes: []*osconfigpb.SoftwareRecipe{
+			osconfigserver.BuildSoftwareRecipe(recipeName, "", artifacts,
 				[]*osconfigpb.SoftwareRecipe_Step{
 					&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_ScriptRun{
-						ScriptRun: &osconfigpb.SoftwareRecipe_Step_RunScript{Script: "#!/bin/bash\necho 'hello world' > /tmp/osconfig-script-test"},
+						ScriptRun: &osconfigpb.SoftwareRecipe_Step_RunScript{
+							Script:      "#!/bin/sh\necho 'hello world' > /tmp/osconfig-SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED",
+							Interpreter: osconfigpb.SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED,
+						},
+					}},
+					&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_ScriptRun{
+						ScriptRun: &osconfigpb.SoftwareRecipe_Step_RunScript{
+							Script:      "echo 'hello world' > /tmp/osconfig-SoftwareRecipe_Step_RunScript_SHELL",
+							Interpreter: osconfigpb.SoftwareRecipe_Step_RunScript_SHELL,
+						},
 					}},
 					&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_FileExec{
-						FileExec: &osconfigpb.SoftwareRecipe_Step_ExecFile{LocationType: &osconfigpb.SoftwareRecipe_Step_ExecFile_ArtifactId{ArtifactId: "exec-test"}},
+						FileExec: &osconfigpb.SoftwareRecipe_Step_ExecFile{LocationType: &osconfigpb.SoftwareRecipe_Step_ExecFile_ArtifactId{ArtifactId: "exec-test-sh"}},
 					}},
 					&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_FileCopy{
 						FileCopy: &osconfigpb.SoftwareRecipe_Step_CopyFile{ArtifactId: "copy-test", Destination: "/tmp/osconfig-copy-test"},
@@ -346,8 +372,45 @@ func buildRecipeStepsTestSetup(name, image, pkgManager, key string) *guestPolicy
 				},
 			),
 		},
-		Assignment: &osconfigpb.Assignment{GroupLabels: []*osconfigpb.Assignment_GroupLabel{{Labels: map[string]string{"name": instanceName}}}},
 	}
+
+	if pkgManager == "googet" {
+		gp = &osconfigpb.GuestPolicy{
+			Assignment: &osconfigpb.Assignment{InstanceNamePrefixes: []string{instanceName}},
+			Recipes: []*osconfigpb.SoftwareRecipe{
+				osconfigserver.BuildSoftwareRecipe(recipeName, "", artifacts,
+					[]*osconfigpb.SoftwareRecipe_Step{
+						&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_ScriptRun{
+							ScriptRun: &osconfigpb.SoftwareRecipe_Step_RunScript{
+								Script:      "echo 'hello world' > c:\\osconfig-SoftwareRecipe_Step_RunScript_POWERSHELL",
+								Interpreter: osconfigpb.SoftwareRecipe_Step_RunScript_POWERSHELL,
+							},
+						}},
+						&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_ScriptRun{
+							ScriptRun: &osconfigpb.SoftwareRecipe_Step_RunScript{
+								Script:      "echo 'hello world' > c:\\osconfig-SoftwareRecipe_Step_RunScript_SHELL",
+								Interpreter: osconfigpb.SoftwareRecipe_Step_RunScript_SHELL,
+							},
+						}},
+						&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_FileExec{
+							FileExec: &osconfigpb.SoftwareRecipe_Step_ExecFile{LocationType: &osconfigpb.SoftwareRecipe_Step_ExecFile_ArtifactId{ArtifactId: "exec-test-cmd"}},
+						}},
+						&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_FileCopy{
+							FileCopy: &osconfigpb.SoftwareRecipe_Step_CopyFile{ArtifactId: "copy-test", Destination: "c:\\osconfig-copy-test"},
+						}},
+						&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_ArchiveExtraction{
+							ArchiveExtraction: &osconfigpb.SoftwareRecipe_Step_ExtractArchive{ArtifactId: "tar-test", Destination: "c:\\tar-test", Type: osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_GZIP},
+						}},
+						// Current bug preventing zip extraction on Windows.
+						//&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_ArchiveExtraction{
+						//	ArchiveExtraction: &osconfigpb.SoftwareRecipe_Step_ExtractArchive{ArtifactId: "zip-test", Destination: "c:\\zip-test", Type: osconfigpb.SoftwareRecipe_Step_ExtractArchive_ZIP},
+						//}},
+					},
+				),
+			},
+		}
+	}
+
 	ss := getRecipeStepsStartupScript(name, recipeName, pkgManager)
 	return newGuestPolicyTestSetup(image, instanceName, testName, packageInstalled, machineType, gp, ss, assertTimeout)
 }

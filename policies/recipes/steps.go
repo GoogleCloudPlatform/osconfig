@@ -147,7 +147,6 @@ func extractZip(zipPath string, dst string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("checking if file %s exists\n", filen)
 		stat, err := os.Stat(filen)
 		if os.IsNotExist(err) {
 			continue
@@ -173,11 +172,11 @@ func extractZip(zipPath string, dst string) error {
 			if mode == 0 {
 				mode = 0755
 			}
-			if err = os.MkdirAll(filen, mode); err != nil {
+			if err := os.MkdirAll(filen, mode); err != nil {
 				return err
 			}
 			// Setting to correct permissions in case the directory has already been created
-			if err = os.Chmod(filen, mode); err != nil {
+			if err := os.Chmod(filen, mode); err != nil {
 				return err
 			}
 			continue
@@ -186,7 +185,6 @@ func extractZip(zipPath string, dst string) error {
 		if err = os.MkdirAll(filedir, 0755); err != nil {
 			return err
 		}
-		fmt.Printf("os.Create %s\n", filen)
 		reader, err := f.Open()
 		if err != nil {
 			return err
@@ -201,14 +199,17 @@ func extractZip(zipPath string, dst string) error {
 		if err != nil {
 			return err
 		}
-		_, err = io.Copy(dst, reader)
-		dst.Close()
-		reader.Close()
-		if err != nil {
+		if _, err = io.Copy(dst, reader); err != nil {
+			dst.Close()
 			return err
 		}
-		err = os.Chtimes(filen, time.Now(), f.ModTime())
-		if err != nil {
+
+		reader.Close()
+		if err := dst.Close(); err != nil {
+			return err
+		}
+
+		if err := os.Chtimes(filen, time.Now(), f.ModTime()); err != nil {
 			return err
 		}
 	}
@@ -246,7 +247,6 @@ func checkForConflicts(tr *tar.Reader, dst string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("checking if file %s exists\n", filen)
 		stat, err := os.Stat(filen)
 		if os.IsNotExist(err) {
 			continue
@@ -263,7 +263,30 @@ func checkForConflicts(tr *tar.Reader, dst string) error {
 	return nil
 }
 
-func createFiles(tr *tar.Reader, dst string) error {
+func extractTar(tarName string, dst string, archiveType agentendpointpb.SoftwareRecipe_Step_ExtractArchive_ArchiveType) error {
+	file, err := os.Open(tarName)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	decompressed, err := decompress(file, archiveType)
+	if err != nil {
+		return err
+	}
+	tr := tar.NewReader(decompressed)
+
+	if err := checkForConflicts(tr, dst); err != nil {
+		return err
+	}
+
+	file.Seek(0, 0)
+	decompressed, err = decompress(file, archiveType)
+	if err != nil {
+		return err
+	}
+	tr = tar.NewReader(decompressed)
+
 	for {
 		var err error
 		header, err := tr.Next()
@@ -295,7 +318,6 @@ func createFiles(tr *tar.Reader, dst string) error {
 				return err
 			}
 		case tar.TypeReg, tar.TypeRegA:
-			fmt.Printf("os.Create %s (owner %s/%d group %s/%d)\n", filen, header.Uname, header.Uid, header.Gname, header.Gid)
 			dst, err := os.OpenFile(filen, os.O_RDWR|os.O_CREATE, os.FileMode(header.Mode))
 			if err != nil {
 				return err
@@ -351,32 +373,8 @@ func createFiles(tr *tar.Reader, dst string) error {
 			return err
 		}
 	}
+
 	return nil
-}
-
-func extractTar(tarName string, dst string, archiveType agentendpointpb.SoftwareRecipe_Step_ExtractArchive_ArchiveType) error {
-	file, err := os.Open(tarName)
-	if err != nil {
-		return err
-	}
-	decompressed, err := decompress(file, archiveType)
-	if err != nil {
-		return err
-	}
-	tr := tar.NewReader(decompressed)
-
-	if err := checkForConflicts(tr, dst); err != nil {
-		return err
-	}
-
-	file.Seek(0, 0)
-	decompressed, err = decompress(file, archiveType)
-	if err != nil {
-		return err
-	}
-	tr = tar.NewReader(decompressed)
-
-	return createFiles(tr, dst)
 }
 
 func stepInstallMsi(step *agentendpointpb.SoftwareRecipe_Step_InstallMsi, artifacts map[string]string, runEnvs []string, stepDir string) error {
