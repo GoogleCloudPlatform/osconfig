@@ -285,7 +285,7 @@ is_installed=$(grep '{"Name":"%[1]s","Version":\[0],"InstallTime":[0-9]*,"Succes
 done
 `, recipeName, packageInstalled, packageNotInstalled)
 
-  scriptWin := fmt.Sprintf(`
+	scriptWin := fmt.Sprintf(`
 # loop and check for recipedb entry
 while ($true) {
   $is_installed=$(cat 'C:\ProgramData\Google\osconfig_recipedb' | select-string '{"Name":"%[1]s","Version":\[0],"InstallTime":[0-9]+,"Success":true}' )
@@ -307,10 +307,10 @@ while ($true) {
 	case "yum":
 		script = fmt.Sprintf("%s\n%s\n%s", yumStartupScripts[path.Base(image)], waitForRestartLinux, scriptLinux)
 	case "zypper":
-    script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigSUSE(), waitForRestartLinux, scriptLinux)
-  case "googet":
-    script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigGooGet(), waitForRestartWin, scriptWin)
-    key = "windows-startup-script-ps1"
+		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigSUSE(), waitForRestartLinux, scriptLinux)
+	case "googet":
+		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigGooGet(), waitForRestartWin, scriptWin)
+		key = "windows-startup-script-ps1"
 	default:
 		logger.Errorf(fmt.Sprintf("invalid package manager: %s", pkgManager))
 	}
@@ -322,7 +322,7 @@ while ($true) {
 }
 
 func getRecipeStepsStartupScript(image, recipeName, pkgManager string) *computeApi.MetadataItems {
-  scriptLinux := fmt.Sprintf(`
+	scriptLinux := fmt.Sprintf(`
 while [[ ! -f /tmp/osconfig-SoftwareRecipe_Step_RunScript_SHELL ]]; do
   sleep 1
 done
@@ -353,7 +353,7 @@ while true; do
 done
 `, recipeName, packageInstalled, packageNotInstalled)
 
-    scriptWin := fmt.Sprintf(`
+	scriptWin := fmt.Sprintf(`
 while ( ! (Test-Path c:\osconfig-SoftwareRecipe_Step_RunScript_SHELL) ) {
   sleep 1
 }
@@ -392,10 +392,10 @@ while ($true) {
 	case "yum":
 		script = fmt.Sprintf("%s\n%s\n%s", yumStartupScripts[path.Base(image)], waitForRestartLinux, scriptLinux)
 	case "zypper":
-    script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigSUSE(), waitForRestartLinux, scriptLinux)
-  case "googet":
-    script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigGooGet(), waitForRestartWin, scriptWin)
-    key = "windows-startup-script-ps1"
+		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigSUSE(), waitForRestartLinux, scriptLinux)
+	case "googet":
+		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigGooGet(), waitForRestartWin, scriptWin)
+		key = "windows-startup-script-ps1"
 
 	default:
 		logger.Errorf(fmt.Sprintf("invalid package manager: %s", pkgManager))
