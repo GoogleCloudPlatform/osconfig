@@ -51,16 +51,15 @@ func InstallRecipe(ctx context.Context, recipe *agentendpointpb.SoftwareRecipe) 
 		logger.Infof("Installing software recipe %s.", recipe.Name)
 	}
 
-	logger.Debugf("Creating working dir for recipe %s.", recipe.Name)
+	logger.Debugf("Creating working directory for recipe %s.", recipe.Name)
 	runID := fmt.Sprintf("run_%d", time.Now().UnixNano())
 	runDir, err := createBaseDir(recipe, runID)
 	if err != nil {
 		return fmt.Errorf("failed to create base directory: %v", err)
 	}
 	defer func() {
-		err := os.RemoveAll(runDir)
-		if err != nil {
-			logger.Warningf("Failed to remove recipe working dir at %q.", runDir)
+		if err := os.RemoveAll(runDir); err != nil {
+			logger.Warningf("Failed to remove recipe working directory at %q: %v", runDir, err)
 		}
 	}()
 	logger.Debugf("Downloading artifacts for recipe %s.", recipe.Name)
@@ -79,7 +78,7 @@ func InstallRecipe(ctx context.Context, recipe *agentendpointpb.SoftwareRecipe) 
 	}
 
 	for i, step := range steps {
-		logger.Debugf("Running step %d.", i)
+		logger.Debugf("Running step %d: %q", i, step)
 		stepDir := filepath.Join(runDir, fmt.Sprintf("step%02d", i))
 		if err := os.MkdirAll(stepDir, 0755); err != nil {
 			return fmt.Errorf("failed to create recipe step dir %q: %s", stepDir, err)

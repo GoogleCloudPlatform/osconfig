@@ -73,11 +73,10 @@ while true; do
   isinstalled=$(/usr/bin/dpkg-query -s %s)
   if [[ $isinstalled =~ "Status: install ok installed" ]]; then
     uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s
-    curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
   else
     uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s
-    curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
   fi
+  curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
   sleep 5
 done`
 
@@ -93,11 +92,10 @@ while true; do
   isinstalled=$(/usr/bin/rpmquery -a %[3]s)
   if [[ $isinstalled =~ ^%[3]s-* ]]; then
     uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s
-    curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
   else
     uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s
-    curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
   fi
+  curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
   sleep 5
 done`
 		ss = fmt.Sprintf(ss, yumStartupScripts[path.Base(image)], waitForRestartLinux, packageName, packageInstalled, packageNotInstalled)
@@ -111,12 +109,11 @@ googet addrepo test https://packages.cloud.google.com/yuck/repos/osconfig-agent-
 while(1) {
   $installed_packages = googet installed
   if ($installed_packages -like "*%s*") {
-	$uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s'
-    Invoke-RestMethod -Method PUT -Uri $uri -Headers @{"Metadata-Flavor" = "Google"} -Body 1
+	  $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s'
   } else {
-	$uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s'
-    Invoke-RestMethod -Method PUT -Uri $uri -Headers @{"Metadata-Flavor" = "Google"} -Body 1
+	  $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s'
   }
+  Invoke-RestMethod -Method PUT -Uri $uri -Headers @{"Metadata-Flavor" = "Google"} -Body 1
   sleep 5
 }`
 		ss = fmt.Sprintf(ss, utils.InstallOSConfigGooGet(), waitForRestartWin, packageName, packageInstalled, packageNotInstalled)
@@ -129,12 +126,11 @@ while(1) {
 while true; do
   isinstalled=$(/usr/bin/rpmquery -a %[3]s)
   if [[ $isinstalled =~ ^%[3]s-* ]]; then
-	uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s
-	curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
+	  uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s
   else
-	uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s
-	curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
+  	uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s
   fi
+  curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
   sleep 5
 done`
 		ss = fmt.Sprintf(ss, utils.InstallOSConfigSUSE(), waitForRestartLinux, packageName, packageInstalled, packageNotInstalled)
@@ -171,11 +167,10 @@ while true; do
   isinstalled=$(/usr/bin/dpkg-query -s %[2]s)
   if [[ $isinstalled =~ "Version: 3.03+dfsg1-10" ]]; then
     uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[4]s
-    curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
   else
     uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[5]s
-    curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
   fi
+  curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
   sleep 5;
 done`
 
@@ -207,11 +202,10 @@ while true; do
   isinstalled=$(/usr/bin/rpmquery -a %[2]s)
   if [[ $isinstalled =~ 3.03-2.fc7 ]]; then
     uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[4]s
-    curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
   else
     uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[5]s
-    curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
   fi
+  curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
   sleep 5
 done`
 		ss = fmt.Sprintf(ss, yumStartupScripts[path.Base(image)], packageName, waitForRestartLinux, packageInstalled, packageNotInstalled)
@@ -230,11 +224,10 @@ while(1) {
   Write-Host $installed_packages
   if ($installed_packages -like "*0.1.0@1*") {
     $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[4]s'
-    Invoke-RestMethod -Method PUT -Uri $uri -Headers @{"Metadata-Flavor" = "Google"} -Body 1
   } else {
     $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[5]s'
-    Invoke-RestMethod -Method PUT -Uri $uri -Headers @{"Metadata-Flavor" = "Google"} -Body 1
   }
+  Invoke-RestMethod -Method PUT -Uri $uri -Headers @{"Metadata-Flavor" = "Google"} -Body 1
   sleep 5
 }`
 		ss = fmt.Sprintf(ss, utils.InstallOSConfigGooGet(), packageName, waitForRestartWin, packageInstalled, packageNotInstalled)
@@ -258,11 +251,10 @@ while true; do
   isinstalled=$(/usr/bin/rpmquery -a %[2]s)
   if [[ $isinstalled =~ 3.03-2.fc7 ]]; then
     uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[4]s
-    curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
   else
     uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[5]s
-    curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
   fi
+  curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
   sleep 5
 done`
 		ss = fmt.Sprintf(ss, utils.InstallOSConfigSUSE(), packageName, waitForRestartLinux, packageInstalled, packageNotInstalled)
@@ -280,19 +272,32 @@ done`
 
 func getRecipeInstallStartupScript(image, recipeName, pkgManager string) *computeApi.MetadataItems {
 	scriptLinux := fmt.Sprintf(`
-    # loop and check for recipedb entry
-    while true; do
-    isInstalled=$(grep '{"Name":"%[1]s","Version":\[0],"InstallTime":[0-9]*,"Success":true}' /var/lib/google/osconfig_recipedb)
-    if [[ -n $isInstalled ]]; then
-      uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[2]s
-      curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
-    else
-      uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[3]s
-      curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
-    fi
-    sleep 5
-  done
-    `, recipeName, packageInstalled, packageNotInstalled)
+# loop and check for recipedb entry
+while true; do
+is_installed=$(grep '{"Name":"%[1]s","Version":\[0],"InstallTime":[0-9]*,"Success":true}' /var/lib/google/osconfig_recipedb)
+  if [[ -n $is_installed ]]; then
+    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[2]s
+   else
+    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[3]s
+  fi
+  curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
+  sleep 5
+done
+`, recipeName, packageInstalled, packageNotInstalled)
+
+	scriptWin := fmt.Sprintf(`
+# loop and check for recipedb entry
+while ($true) {
+  $is_installed=$(cat 'C:\ProgramData\Google\osconfig_recipedb' | select-string '{"Name":"%[1]s","Version":\[0],"InstallTime":[0-9]+,"Success":true}' )
+  if ($is_installed) {
+    $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[2]s'
+  } else {
+    $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[3]s'
+  }
+  Invoke-RestMethod -Method PUT -Uri $uri -Headers @{"Metadata-Flavor" = "Google"} -Body 1
+  sleep 5
+}
+`, recipeName, packageInstalled, packageNotInstalled)
 
 	var script string
 	key := "startup-script"
@@ -303,7 +308,9 @@ func getRecipeInstallStartupScript(image, recipeName, pkgManager string) *comput
 		script = fmt.Sprintf("%s\n%s\n%s", yumStartupScripts[path.Base(image)], waitForRestartLinux, scriptLinux)
 	case "zypper":
 		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigSUSE(), waitForRestartLinux, scriptLinux)
-
+	case "googet":
+		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigGooGet(), waitForRestartWin, scriptWin)
+		key = "windows-startup-script-ps1"
 	default:
 		logger.Errorf(fmt.Sprintf("invalid package manager: %s", pkgManager))
 	}
@@ -316,45 +323,66 @@ func getRecipeInstallStartupScript(image, recipeName, pkgManager string) *comput
 
 func getRecipeStepsStartupScript(image, recipeName, pkgManager string) *computeApi.MetadataItems {
 	scriptLinux := fmt.Sprintf(`
-  function set_metadata {
-    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/$1
-    curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
+while [[ ! -f /tmp/osconfig-SoftwareRecipe_Step_RunScript_SHELL ]]; do
+  sleep 1
+done
+while [[ ! -f /tmp/osconfig-SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED ]]; do
+  sleep 1
+done
+while [[ ! -f /tmp/osconfig-exec-test ]]; do
+  sleep 1
+done
+while [[ ! -f /tmp/osconfig-copy-test ]]; do
+  sleep 1
+done
+while [[ ! -f /tmp/tar-test/tar/test.txt ]]; do
+  sleep 1
+done
+while [[ ! -f /tmp/zip-test/zip/test.txt ]]; do
+  sleep 1
+done
+while true; do
+  isinstalled=$(grep '{"Name":"%[1]s","Version":\[0],"InstallTime":[0-9]*,"Success":true}' /var/lib/google/osconfig_recipedb)
+  if [[ -n $isinstalled ]]; then
+    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[2]s
+  else
+    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[3]s
+  fi
+  curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
+  sleep 1
+done
+`, recipeName, packageInstalled, packageNotInstalled)
+
+	scriptWin := fmt.Sprintf(`
+while ( ! (Test-Path c:\osconfig-SoftwareRecipe_Step_RunScript_SHELL) ) {
+  sleep 1
+}
+while ( ! (Test-Path c:\osconfig-SoftwareRecipe_Step_RunScript_POWERSHELL) ) {
+  sleep 1
+}
+while ( ! (Test-Path c:\osconfig-exec-test) ) {
+  sleep 1
+}
+while ( ! (Test-Path c:\osconfig-copy-test) ) {
+  sleep 1
+}
+while ( ! (Test-Path c:\tar-test\tar\test.txt) ) {
+  sleep 1
+}
+#while ( ! (Test-Path c:\zip-test\zip\test.txt) ) {
+#  sleep 1
+#}
+while ($true) {
+  $is_installed=$(cat 'C:\ProgramData\Google\osconfig_recipedb' | select-string '{"Name":"%[1]s","Version":\[0],"InstallTime":[0-9]+,"Success":true}' )
+  if ($is_installed) {
+    $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[2]s'
+  } else {
+    $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[3]s'
   }
-  while [[ ! -f /tmp/osconfig-script-test ]]; do
-    set_metadata %[3]s
-    sleep 5
-  done
-  echo "script step verified"
-  while [[ ! -f /tmp/osconfig-exec-test ]]; do
-    set_metadata %[3]s
-    sleep 5
-  done
-  echo "exec step verified"
-  while [[ ! -f /tmp/osconfig-copy-test ]]; do
-    set_metadata %[3]s
-    sleep 5
-  done
-  echo "copy step verified"
-  while [[ ! -f /tmp/tar-test/tar/test.txt ]]; do
-    set_metadata %[3]s
-    sleep 5
-  done
-  echo "tar step verified"
-  while [[ ! -f /tmp/zip-test/zip/test.txt ]]; do
-    set_metadata %[3]s
-    sleep 5
-  done
-  echo "zip step verified"
-  while true; do
-    isinstalled=$(grep '{"Name":"%[1]s","Version":\[0],"InstallTime":[0-9]*,"Success":true}' /var/lib/google/osconfig_recipedb)
-    if [[ -n $isinstalled ]]; then
-      set_metadata %[2]s
-    else
-      set_metadata %[3]s
-    fi
-    sleep 5
-  done
-    `, recipeName, packageInstalled, packageNotInstalled)
+  Invoke-RestMethod -Method PUT -Uri $uri -Headers @{"Metadata-Flavor" = "Google"} -Body 1
+  sleep 1
+}
+`, recipeName, packageInstalled, packageNotInstalled)
 
 	var script string
 	key := "startup-script"
@@ -365,6 +393,9 @@ func getRecipeStepsStartupScript(image, recipeName, pkgManager string) *computeA
 		script = fmt.Sprintf("%s\n%s\n%s", yumStartupScripts[path.Base(image)], waitForRestartLinux, scriptLinux)
 	case "zypper":
 		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigSUSE(), waitForRestartLinux, scriptLinux)
+	case "googet":
+		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigGooGet(), waitForRestartWin, scriptWin)
+		key = "windows-startup-script-ps1"
 
 	default:
 		logger.Errorf(fmt.Sprintf("invalid package manager: %s", pkgManager))

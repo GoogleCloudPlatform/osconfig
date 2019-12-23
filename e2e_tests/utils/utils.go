@@ -104,11 +104,13 @@ systemctl start google-osconfig-agent`+curlPost, config.AgentRepo())
 // InstallOSConfigGooGet installs the osconfig agent on Windows systems.
 func InstallOSConfigGooGet() string {
 	if config.AgentRepo() == "stable" {
-		return `c:\programdata\googet\googet.exe -noconfirm install google-osconfig-agent
-Restart-Service google_osconfig_agent -Force -Verbose` + windowsPost
+		return `Stop-Service google_osconfig_agent -Force -Verbose
+c:\programdata\googet\googet.exe -noconfirm install google-osconfig-agent
+Start-Service google_osconfig_agent -Verbose` + windowsPost
 	}
-	return fmt.Sprintf(`c:\programdata\googet\googet.exe -noconfirm install -sources https://packages.cloud.google.com/yuck/repos/google-osconfig-agent-%s google-osconfig-agent
-Restart-Service google_osconfig_agent -Force -Verbose`+windowsPost, config.AgentRepo())
+	return fmt.Sprintf(`Stop-Service google_osconfig_agent -Force -Verbose
+c:\programdata\googet\googet.exe -noconfirm install -sources https://packages.cloud.google.com/yuck/repos/google-osconfig-agent-%s google-osconfig-agent
+Start-Service google_osconfig_agent -Verbose`+windowsPost, config.AgentRepo())
 }
 
 // InstallOSConfigSUSE installs the osconfig agent on suse systems.
@@ -298,7 +300,6 @@ func CreateComputeInstance(metadataitems []*api.MetadataItems, client daisyCompu
 	defer func() {
 		<-pool
 	}()
-
 	var items []*api.MetadataItems
 
 	// enable debug logging and guest-attributes for all test instances
