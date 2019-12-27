@@ -31,8 +31,8 @@ import (
 	"testing"
 	"time"
 
+	agentendpoint "cloud.google.com/go/osconfig/agentendpoint/apiv1beta"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-	agentendpoint "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/cloud.google.com/go/osconfig/agentendpoint/apiv1beta"
 	"golang.org/x/oauth2/jws"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
@@ -40,7 +40,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 
-	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
+	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
 var testIDToken string

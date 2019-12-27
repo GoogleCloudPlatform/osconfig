@@ -21,7 +21,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
+	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
 func runGooGetRepositories(repos []*agentendpointpb.GooRepository) (string, error) {
