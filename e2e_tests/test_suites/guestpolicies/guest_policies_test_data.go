@@ -23,7 +23,7 @@ import (
 	osconfigserver "github.com/GoogleCloudPlatform/osconfig/e2e_tests/osconfig_server"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/_internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
+	osconfigpb "google.golang.org/genproto/googleapis/cloud/osconfig/v1beta"
 )
 
 const (

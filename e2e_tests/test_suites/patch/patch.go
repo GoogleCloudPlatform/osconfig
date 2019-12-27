@@ -36,7 +36,7 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 	"google.golang.org/api/iterator"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/_internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
+	osconfigpb "google.golang.org/genproto/googleapis/cloud/osconfig/v1beta"
 )
 
 const (
@@ -179,7 +179,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 }
 
 func getPatchJobInstanceDetails(ctx context.Context, parent string) ([]string, error) {
-	client, err := gcpclients.GetOsConfigClientV1alpha2()
+	client, err := gcpclients.GetOsConfigClientV1beta()
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +199,7 @@ func getPatchJobInstanceDetails(ctx context.Context, parent string) ([]string, e
 }
 
 func awaitPatchJob(ctx context.Context, job *osconfigpb.PatchJob, timeout time.Duration) (*osconfigpb.PatchJob, error) {
-	client, err := gcpclients.GetOsConfigClientV1alpha2()
+	client, err := gcpclients.GetOsConfigClientV1beta()
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +224,7 @@ func awaitPatchJob(ctx context.Context, job *osconfigpb.PatchJob, timeout time.D
 			}
 
 			if res.State == osconfigpb.PatchJob_SUCCEEDED {
-				if res.InstanceDetailsSummary.GetInstancesSucceeded() < 1 && res.InstanceDetailsSummary.GetInstancesSucceededRebootRequired() < 1 {
+				if res.GetInstanceDetailsSummary().GetSucceededInstanceCount() < 1 && res.GetInstanceDetailsSummary().GetSucceededRebootRequiredInstanceCount() < 1 {
 					return nil, errors.New("completed with no instances patched")
 				}
 				return res, nil
@@ -271,18 +271,18 @@ func runExecutePatchJobTest(ctx context.Context, testCase *junitxml.TestCase, te
 	}
 
 	parent := fmt.Sprintf("projects/%s", testProjectConfig.TestProjectID)
-	osconfigClient, err := gcpclients.GetOsConfigClientV1alpha2()
+	osconfigClient, err := gcpclients.GetOsConfigClientV1beta()
 	if err != nil {
 		testCase.WriteFailure("Error getting osconfig client: %v", err)
 		return
 	}
 
 	req := &osconfigpb.ExecutePatchJobRequest{
-		Parent:      parent,
-		Description: "testing patch job run",
-		Filter:      fmt.Sprintf("name=\"%s\"", name),
-		Duration:    &duration.Duration{Seconds: int64(testSetup.assertTimeout / time.Second)},
-		PatchConfig: pc,
+		Parent:         parent,
+		Description:    "testing patch job run",
+		InstanceFilter: &osconfigpb.PatchInstanceFilter{InstanceNamePrefixes: []string{name}},
+		Duration:       &duration.Duration{Seconds: int64(testSetup.assertTimeout / time.Second)},
+		PatchConfig:    pc,
 	}
 	testCase.Logf("Running ExecutePatchJob")
 	job, err := osconfigClient.ExecutePatchJob(ctx, req)
@@ -340,18 +340,18 @@ func runRebootPatchTest(ctx context.Context, testCase *junitxml.TestCase, testSe
 	}
 
 	parent := fmt.Sprintf("projects/%s", testProjectConfig.TestProjectID)
-	osconfigClient, err := gcpclients.GetOsConfigClientV1alpha2()
+	osconfigClient, err := gcpclients.GetOsConfigClientV1beta()
 	if err != nil {
 		testCase.WriteFailure("Error getting osconfig client: %v", err)
 		return
 	}
 
 	req := &osconfigpb.ExecutePatchJobRequest{
-		Parent:      parent,
-		Description: "testing patch job reboot",
-		Filter:      fmt.Sprintf("name=\"%s\"", name),
-		Duration:    &duration.Duration{Seconds: int64(testSetup.assertTimeout / time.Second)},
-		PatchConfig: pc,
+		Parent:         parent,
+		Description:    "testing patch job reboot",
+		InstanceFilter: &osconfigpb.PatchInstanceFilter{InstanceNamePrefixes: []string{name}},
+		Duration:       &duration.Duration{Seconds: int64(testSetup.assertTimeout / time.Second)},
+		PatchConfig:    pc,
 	}
 	testCase.Logf("Running ExecutePatchJob")
 	job, err := osconfigClient.ExecutePatchJob(ctx, req)
@@ -368,12 +368,12 @@ func runRebootPatchTest(ctx context.Context, testCase *junitxml.TestCase, testSe
 	}
 
 	// If shouldReboot is true that instance should not report a pending reboot.
-	if shouldReboot && pj.GetInstanceDetailsSummary().GetInstancesSucceededRebootRequired() > 0 {
+	if shouldReboot && pj.GetInstanceDetailsSummary().GetSucceededRebootRequiredInstanceCount() > 0 {
 		testCase.WriteFailure("PatchJob finished with status InstancesSucceededRebootRequired.")
 		return
 	}
 	// If shouldReboot is false that instance should report a pending reboot.
-	if !shouldReboot && pj.GetInstanceDetailsSummary().GetInstancesSucceededRebootRequired() == 0 {
+	if !shouldReboot && pj.GetInstanceDetailsSummary().GetSucceededRebootRequiredInstanceCount() == 0 {
 		testCase.WriteFailure("PatchJob should have finished with status InstancesSucceededRebootRequired.")
 		return
 	}

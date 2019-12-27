@@ -23,8 +23,8 @@ import (
 	"sync"
 	"time"
 
+	agentendpoint "cloud.google.com/go/osconfig/agentendpoint/apiv1beta"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-	agentendpoint "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/cloud.google.com/go/osconfig/agentendpoint/apiv1beta"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
@@ -35,7 +35,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 
-	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/_internal/gapi-cloud-osconfig-go/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
+	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
 const apiRetrySec = 600

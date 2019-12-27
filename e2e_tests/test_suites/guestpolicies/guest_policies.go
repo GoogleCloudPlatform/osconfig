@@ -24,8 +24,8 @@ import (
 	"sync"
 	"time"
 
+	osconfigV1beta "cloud.google.com/go/osconfig/apiv1beta"
 	"github.com/GoogleCloudPlatform/compute-image-tools/go/e2e_test_utils/junitxml"
-	osconfigV1alpha2 "github.com/GoogleCloudPlatform/osconfig/e2e_tests/_internal/cloud.google.com/go/osconfig/apiv1alpha2"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/compute"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/config"
 	gcpclients "github.com/GoogleCloudPlatform/osconfig/e2e_tests/gcp_clients"
@@ -34,7 +34,7 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 	computeApi "google.golang.org/api/compute/v1"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/_internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha2"
+	osconfigpb "google.golang.org/genproto/googleapis/cloud/osconfig/v1beta"
 )
 
 var (
@@ -117,7 +117,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 // We only want to create one GuestPolicy at a time to limit QPS.
 var gpMx sync.Mutex
 
-func createGuestPolicy(ctx context.Context, client *osconfigV1alpha2.Client, req *osconfigpb.CreateGuestPolicyRequest) (*osconfigpb.GuestPolicy, error) {
+func createGuestPolicy(ctx context.Context, client *osconfigV1beta.Client, req *osconfigpb.CreateGuestPolicyRequest) (*osconfigpb.GuestPolicy, error) {
 	gpMx.Lock()
 	defer gpMx.Unlock()
 	return client.CreateGuestPolicy(ctx, req)
@@ -157,7 +157,7 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *guestP
 	}
 
 	// Only create the guest policy after the instance has installed the agent.
-	client, err := gcpclients.GetOsConfigClientV1alpha2()
+	client, err := gcpclients.GetOsConfigClientV1beta()
 	if err != nil {
 		testCase.WriteFailure("Error getting osconfig client: %v", err)
 		return
@@ -232,7 +232,7 @@ func getTestCaseFromTestSetUp(testSetup *guestPolicyTestSetup) (*junitxml.TestCa
 }
 
 func cleanupGuestPolicy(ctx context.Context, testCase *junitxml.TestCase, gp *osconfigpb.GuestPolicy) {
-	client, err := gcpclients.GetOsConfigClientV1alpha2()
+	client, err := gcpclients.GetOsConfigClientV1beta()
 	if err != nil {
 		testCase.WriteFailure(fmt.Sprintf("Error while deleting guest policy: %s", utils.GetStatusFromError(err)))
 	}
