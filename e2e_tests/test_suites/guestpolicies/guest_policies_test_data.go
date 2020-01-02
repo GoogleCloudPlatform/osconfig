@@ -20,8 +20,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/compute"
 	osconfigserver "github.com/GoogleCloudPlatform/osconfig/e2e_tests/osconfig_server"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
+	"github.com/gogo/protobuf/jsonpb"
 
 	osconfigpb "google.golang.org/genproto/googleapis/cloud/osconfig/v1beta"
 )
@@ -244,6 +246,24 @@ func addRecipeInstallTest(key string) []*guestPolicyTestSetup {
 	}
 	return recipeTestSetup
 }
+
+func addMetadataPolicyTest(key string) []*guestPolicyTestSetup {
+	var policyTestSetup []*guestPolicyTestSetup
+	for name, image := range utils.HeadAptImages {
+		policyTestSetup = append(policyTestSetup, buildMetadataPolicyTestSetup(name, image, "apt", key))
+	}
+	for name, image := range utils.HeadELImages {
+		policyTestSetup = append(policyTestSetup, buildMetadataPolicyTestSetup(name, image, "yum", key))
+	}
+	for name, image := range utils.HeadSUSEImages {
+		policyTestSetup = append(policyTestSetup, buildMetadataPolicyTestSetup(name, image, "zypper", key))
+	}
+	for name, image := range utils.HeadWindowsImages {
+		policyTestSetup = append(policyTestSetup, buildMetadataPolicyTestSetup(name, image, "googet", key))
+	}
+	return policyTestSetup
+}
+
 func buildRecipeInstallTestSetup(name, image, pkgManager, key string) *guestPolicyTestSetup {
 	assertTimeout := 120 * time.Second
 	testName := recipeInstallFunction
@@ -415,6 +435,32 @@ func buildRecipeStepsTestSetup(name, image, pkgManager, key string) *guestPolicy
 	return newGuestPolicyTestSetup(image, instanceName, testName, packageInstalled, machineType, gp, ss, assertTimeout)
 }
 
+func buildMetadataPolicyTestSetup(name, image, pkgManager, key string) *guestPolicyTestSetup {
+	assertTimeout := 60 * time.Second
+	testName := metadataPolicyFunction
+	recipeName := "testrecipe"
+	machineType := "n1-standard-2"
+	if strings.HasPrefix(image, "windows") {
+		machineType = "n1-standard-4"
+	}
+
+	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
+
+	ss := getRecipeInstallStartupScript(name, recipeName, pkgManager)
+	ts := newGuestPolicyTestSetup(image, instanceName, testName, packageInstalled, machineType, nil, ss, assertTimeout)
+
+	marshaler := jsonpb.Marshaler{}
+	recipeString, err := marshaler.MarshalToString(osconfigserver.BuildSoftwareRecipe(recipeName, "", nil, nil))
+	if err != nil {
+		// An error in the test setup means something seriously wrong.
+		panic(err)
+	}
+	rec := fmt.Sprintf(`{"softwareRecipes": [%s]}`, recipeString)
+	ts.mdPolicy = compute.BuildInstanceMetadataItem("gce-software-declaration", rec)
+	return ts
+
+}
+
 func generateAllTestSetup() []*guestPolicyTestSetup {
 	key := utils.RandString(3)
 
@@ -426,5 +472,6 @@ func generateAllTestSetup() []*guestPolicyTestSetup {
 	pkgTestSetup = append(pkgTestSetup, addPackageDoesNotUpdateTest(key)...)
 	pkgTestSetup = append(pkgTestSetup, addRecipeInstallTest(key)...)
 	pkgTestSetup = append(pkgTestSetup, addRecipeStepsTest(key)...)
+	pkgTestSetup = append(pkgTestSetup, addMetadataPolicyTest(key)...)
 	return pkgTestSetup
 }
