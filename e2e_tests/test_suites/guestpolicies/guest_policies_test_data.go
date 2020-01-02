@@ -30,6 +30,7 @@ const (
 	packageInstalled    = "osconfig_tests/pkg_installed"
 	packageNotInstalled = "osconfig_tests/pkg_not_installed"
 	osconfigTestRepo    = "osconfig-agent-test-repository"
+	testResourceBucket  = "osconfig-agent-end2end-test-resources"
 	yumTestRepoBaseURL  = "https://packages.cloud.google.com/yum/repos/osconfig-agent-test-repository"
 	aptTestRepoBaseURL  = "http://packages.cloud.google.com/apt"
 	gooTestRepoURL      = "https://packages.cloud.google.com/yuck/repos/osconfig-agent-test-repository"
@@ -338,6 +339,38 @@ func buildRecipeStepsTestSetup(name, image, pkgManager, key string) *guestPolicy
 				},
 			},
 		},
+		&osconfigpb.SoftwareRecipe_Artifact{
+			AllowInsecure: true,
+			Id:            "dpkg-test",
+			Artifact: &osconfigpb.SoftwareRecipe_Artifact_Gcs_{
+				Gcs: &osconfigpb.SoftwareRecipe_Artifact_Gcs{
+					Bucket: testResourceBucket,
+					Object: "software_recipes/ed_1.15-1_amd64.deb",
+				},
+			},
+		},
+		&osconfigpb.SoftwareRecipe_Artifact{
+			AllowInsecure: true,
+			Id:            "rpm-test",
+			Artifact: &osconfigpb.SoftwareRecipe_Artifact_Gcs_{
+				Gcs: &osconfigpb.SoftwareRecipe_Artifact_Gcs{
+					Bucket: testResourceBucket,
+					Object: "software_recipes/ed-1.1-3.3.el6.x86_64.rpm",
+				},
+			},
+		},
+	}
+
+	pkgTest := &osconfigpb.SoftwareRecipe_Step{}
+	switch pkgManager {
+	case "apt":
+		pkgTest = &osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_DpkgInstallation{
+			DpkgInstallation: &osconfigpb.SoftwareRecipe_Step_InstallDpkg{ArtifactId: "dpkg-test"},
+		}}
+	case "yum", "zypper":
+		pkgTest = &osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_RpmInstallation{
+			RpmInstallation: &osconfigpb.SoftwareRecipe_Step_InstallRpm{ArtifactId: "rpm-test"},
+		}}
 	}
 
 	gp := &osconfigpb.GuestPolicy{
@@ -369,6 +402,7 @@ func buildRecipeStepsTestSetup(name, image, pkgManager, key string) *guestPolicy
 					&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_ArchiveExtraction{
 						ArchiveExtraction: &osconfigpb.SoftwareRecipe_Step_ExtractArchive{ArtifactId: "zip-test", Destination: "/tmp/zip-test", Type: osconfigpb.SoftwareRecipe_Step_ExtractArchive_ZIP},
 					}},
+					pkgTest,
 				},
 			),
 		},
@@ -401,10 +435,9 @@ func buildRecipeStepsTestSetup(name, image, pkgManager, key string) *guestPolicy
 						&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_ArchiveExtraction{
 							ArchiveExtraction: &osconfigpb.SoftwareRecipe_Step_ExtractArchive{ArtifactId: "tar-test", Destination: "c:\\tar-test", Type: osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_GZIP},
 						}},
-						// Current bug preventing zip extraction on Windows.
-						//&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_ArchiveExtraction{
-						//	ArchiveExtraction: &osconfigpb.SoftwareRecipe_Step_ExtractArchive{ArtifactId: "zip-test", Destination: "c:\\zip-test", Type: osconfigpb.SoftwareRecipe_Step_ExtractArchive_ZIP},
-						//}},
+						&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_ArchiveExtraction{
+							ArchiveExtraction: &osconfigpb.SoftwareRecipe_Step_ExtractArchive{ArtifactId: "zip-test", Destination: "c:\\zip-test", Type: osconfigpb.SoftwareRecipe_Step_ExtractArchive_ZIP},
+						}},
 					},
 				),
 			},

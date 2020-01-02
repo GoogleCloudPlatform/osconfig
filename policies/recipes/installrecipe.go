@@ -62,7 +62,6 @@ func InstallRecipe(ctx context.Context, recipe *agentendpointpb.SoftwareRecipe) 
 			logger.Warningf("Failed to remove recipe working directory at %q: %v", runDir, err)
 		}
 	}()
-	logger.Debugf("Downloading artifacts for recipe %s.", recipe.Name)
 	artifacts, err := fetchArtifacts(ctx, recipe.Artifacts, runDir)
 	if err != nil {
 		return fmt.Errorf("failed to obtain artifacts: %v", err)
@@ -96,6 +95,10 @@ func InstallRecipe(ctx context.Context, recipe *agentendpointpb.SoftwareRecipe) 
 			err = stepExecFile(step.GetFileExec(), artifacts, runEnvs, stepDir)
 		case step.GetScriptRun() != nil:
 			err = stepRunScript(step.GetScriptRun(), artifacts, runEnvs, stepDir)
+		case step.GetDpkgInstallation() != nil:
+			err = stepInstallDpkg(step.GetDpkgInstallation(), artifacts)
+		case step.GetRpmInstallation() != nil:
+			err = stepInstallRpm(step.GetRpmInstallation(), artifacts)
 		default:
 			err = fmt.Errorf("unknown step type for step %d", i)
 		}

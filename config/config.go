@@ -82,7 +82,7 @@ func (c *config) parseFeatures(features string, enabled bool) {
 	for _, f := range strings.Split(features, ",") {
 		f = strings.ToLower(strings.TrimSpace(f))
 		switch f {
-		case "tasknotification", "ospatch": // ospatch is the legacy flag
+		case "tasks", "tasknotification", "ospatch": // ospatch is the legacy flag
 			c.taskNotificationEnabled = enabled
 		case "guestpolicies", "ospackage": // ospackage is the legacy flag
 			c.guestPoliciesEnabled = enabled

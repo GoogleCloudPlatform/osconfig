@@ -67,7 +67,7 @@ func (r *softwareRecipe) UnmarshalJSON(b []byte) error {
 func readLocalConfig() (*localConfig, error) {
 	s, err := metadata.Get("/instance/attributes/gce-software-declaration")
 	if err != nil {
-		logger.Debugf("Error getting gce-software-declaration from metadata: %v", err)
+		logger.Debugf("No local config: %v", err)
 		return nil, nil
 	}
 

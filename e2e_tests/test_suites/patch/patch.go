@@ -76,9 +76,10 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		wg.Add(1)
 		s := setup
 		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[PatchJob triggers reboot] [%s]", s.testName))
+		pc := &osconfigpb.PatchConfig{Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST}}
 		shouldReboot := true
 		f := func() {
-			runRebootPatchTest(ctx, tc, s, &osconfigpb.PatchConfig{Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST}}, shouldReboot)
+			runRebootPatchTest(ctx, tc, s, pc, shouldReboot)
 		}
 		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
 	}

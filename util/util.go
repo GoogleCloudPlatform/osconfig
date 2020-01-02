@@ -47,14 +47,9 @@ func PrettyFmt(pb proto.Message) string {
 
 // NormPath transforms a windows path into an extended-length path as described in
 // https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx#maxpath
-// when not running on windows it will just return the input path. Copied from
-// https://github.com/google/googet/blob/master/oswrap/oswrap_windows.go
+// when not running on windows it will just return the input path.
 func NormPath(path string) (string, error) {
-	if runtime.GOOS != "windows" {
-		return path, nil
-	}
-
-	if strings.HasPrefix(path, "\\\\?\\") {
+	if strings.HasPrefix(path, `\\?\`) {
 		return path, nil
 	}
 
@@ -62,8 +57,12 @@ func NormPath(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	path = filepath.Clean(path)
-	return "\\\\?\\" + path, nil
+
+	if runtime.GOOS != "windows" {
+		return path, nil
+	}
+
+	return `\\?\` + strings.ReplaceAll(path, "/", `\`), nil
 }
 
 // Exists check for the existence of a file
