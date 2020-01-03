@@ -38,7 +38,7 @@ import (
 )
 
 var (
-	testSuiteName      = "GuestPolicies"
+	testSuiteName = "GuestPolicies"
 )
 
 var (
