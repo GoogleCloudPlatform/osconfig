@@ -35,8 +35,8 @@ import (
 func fetchArtifacts(ctx context.Context, artifacts []*agentendpointpb.SoftwareRecipe_Artifact, directory string) (map[string]string, error) {
 	localNames := make(map[string]string)
 
-	for i, a := range artifacts {
-		logger.Debugf("Downloading artifact %d: %q", i, a)
+	for _, a := range artifacts {
+		logger.Debugf("Downloading artifact: %q", a)
 		path, err := fetchArtifact(ctx, a, directory)
 		if err != nil {
 			return nil, err
