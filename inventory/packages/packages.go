@@ -27,12 +27,16 @@ import (
 var (
 	// AptExists indicates whether apt is installed.
 	AptExists bool
+	// DpkgExists indicates whether dpkg is installed.
+	DpkgExists bool
 	// DpkgQueryExists indicates whether dpkg-query is installed.
 	DpkgQueryExists bool
 	// YumExists indicates whether yum is installed.
 	YumExists bool
 	// ZypperExists indicates whether zypper is installed.
 	ZypperExists bool
+	// RPMExists indicates whether rpm is installed.
+	RPMExists bool
 	// RPMQueryExists indicates whether rpmquery is installed.
 	RPMQueryExists bool
 	// GemExists indicates whether gem is installed.

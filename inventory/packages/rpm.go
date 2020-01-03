@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"os/exec"
 	"runtime"
+	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/util"
@@ -25,15 +26,19 @@ import (
 
 var (
 	rpmquery string
+	rpm      string
 
-	rpmqueryArgs = []string{"-a", "--queryformat", "%{NAME} %{ARCH} %{VERSION}-%{RELEASE}\n"}
+	rpmInstallArgs = []string{"--upgrade", "--replacepkgs", "-v"}
+	rpmqueryArgs   = []string{"-a", "--queryformat", "%{NAME} %{ARCH} %{VERSION}-%{RELEASE}\n"}
 )
 
 func init() {
 	if runtime.GOOS != "windows" {
 		rpmquery = "/usr/bin/rpmquery"
+		rpm = "/bin/rpm"
 	}
 	RPMQueryExists = util.Exists(rpmquery)
+	RPMExists = util.Exists(rpm)
 }
 
 func parseInstalledRPMPackages(data []byte) []PkgInfo {
@@ -64,4 +69,12 @@ func InstalledRPMPackages() ([]PkgInfo, error) {
 	}
 
 	return parseInstalledRPMPackages(out), nil
+}
+
+// RPMInstall installs an rpm packages.
+func RPMInstall(path string) error {
+	args := append(rpmInstallArgs, path)
+	out, err := run(exec.Command(rpm, args...))
+	DebugLogger.Printf("rpm output:\n%s", strings.ReplaceAll(string(out), "\n", "\n "))
+	return err
 }

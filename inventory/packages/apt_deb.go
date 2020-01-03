@@ -27,10 +27,11 @@ import (
 )
 
 var (
-	// dpkg-query
+	dpkg      string
 	dpkgquery string
 	aptGet    string
 
+	dpkgInstallArgs   = []string{"--install"}
 	dpkgQueryArgs     = []string{"-W", "-f", "${Package} ${Architecture} ${Version}\n"}
 	aptGetInstallArgs = []string{"install", "-y"}
 	aptGetRemoveArgs  = []string{"remove", "-y"}
@@ -44,10 +45,12 @@ var (
 
 func init() {
 	if runtime.GOOS != "windows" {
+		dpkg = "/usr/bin/dpkg"
 		dpkgquery = "/usr/bin/dpkg-query"
 		aptGet = "/usr/bin/apt-get"
 	}
 	AptExists = util.Exists(aptGet)
+	DpkgExists = util.Exists(dpkg)
 	DpkgQueryExists = util.Exists(dpkgquery)
 }
 
@@ -223,4 +226,12 @@ func InstalledDebPackages() ([]PkgInfo, error) {
 		return nil, err
 	}
 	return parseInstalledDebpackages(out), nil
+}
+
+// DpkgInstall installs a deb package.
+func DpkgInstall(path string) error {
+	args := append(dpkgInstallArgs, path)
+	out, err := run(exec.Command(dpkg, args...))
+	DebugLogger.Printf("dpkg output:\n%s", strings.ReplaceAll(string(out), "\n", "\n "))
+	return err
 }

@@ -38,8 +38,7 @@ import (
 )
 
 var (
-	testSuiteName      = "GuestPolicies"
-	testResourceBucket = "osconfig-agent-end2end-test-resources"
+	testSuiteName = "GuestPolicies"
 )
 
 var (

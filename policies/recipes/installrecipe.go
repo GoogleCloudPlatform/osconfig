@@ -62,7 +62,6 @@ func InstallRecipe(ctx context.Context, recipe *agentendpointpb.SoftwareRecipe) 
 			logger.Warningf("Failed to remove recipe working directory at %q: %v", runDir, err)
 		}
 	}()
-	logger.Debugf("Downloading artifacts for recipe %s.", recipe.Name)
 	artifacts, err := fetchArtifacts(ctx, recipe.Artifacts, runDir)
 	if err != nil {
 		return fmt.Errorf("failed to obtain artifacts: %v", err)
@@ -85,23 +84,36 @@ func InstallRecipe(ctx context.Context, recipe *agentendpointpb.SoftwareRecipe) 
 		}
 
 		var err error
+		var stepType string
 		switch {
 		case step.GetFileCopy() != nil:
+			stepType = "CopyFile"
 			err = stepCopyFile(step.GetFileCopy(), artifacts, runEnvs, stepDir)
 		case step.GetArchiveExtraction() != nil:
+			stepType = "ExtractArchive"
 			err = stepExtractArchive(step.GetArchiveExtraction(), artifacts, runEnvs, stepDir)
 		case step.GetMsiInstallation() != nil:
+			stepType = "InstallMsi"
 			err = stepInstallMsi(step.GetMsiInstallation(), artifacts, runEnvs, stepDir)
 		case step.GetFileExec() != nil:
+			stepType = "ExecFile"
 			err = stepExecFile(step.GetFileExec(), artifacts, runEnvs, stepDir)
 		case step.GetScriptRun() != nil:
+			stepType = "RunScript"
 			err = stepRunScript(step.GetScriptRun(), artifacts, runEnvs, stepDir)
-		default:
-			err = fmt.Errorf("unknown step type for step %d", i)
+		case step.GetDpkgInstallation() != nil:
+			stepType = "InstallDpkg"
+			err = stepInstallDpkg(step.GetDpkgInstallation(), artifacts)
+		case step.GetRpmInstallation() != nil:
+			stepType = "InstallRpm"
+			err = stepInstallRpm(step.GetRpmInstallation(), artifacts)
 		}
 		if err != nil {
 			recipeDB.addRecipe(recipe.Name, recipe.Version, false)
-			return err
+			if stepType == "" {
+				return fmt.Errorf("unknown step type for step %d", i)
+			}
+			return fmt.Errorf("error running step %d (%s): %v", i, stepType, err)
 		}
 	}
 

@@ -19,6 +19,7 @@ import (
 	"archive/zip"
 	"compress/bzip2"
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -30,6 +31,7 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 	"github.com/ulikunitz/xz"
 	"github.com/ulikunitz/xz/lzma"
@@ -124,14 +126,10 @@ func stepExtractArchive(step *agentendpointpb.SoftwareRecipe_Step_ExtractArchive
 }
 
 func zipIsDir(name string) bool {
-	return strings.HasSuffix(name, string(os.PathSeparator))
-}
-
-func normalizeSlashes(s string) string {
-	if os.PathSeparator != '/' {
-		return strings.Replace(s, "/", string(os.PathSeparator), -1)
+	if os.PathSeparator == '\\' {
+		return strings.HasSuffix(name, `\`) || strings.HasSuffix(name, "/")
 	}
-	return s
+	return strings.HasSuffix(name, "/")
 }
 
 func extractZip(zipPath string, dst string) error {
@@ -143,7 +141,7 @@ func extractZip(zipPath string, dst string) error {
 
 	// Check for conflicts
 	for _, f := range zr.File {
-		filen, err := util.NormPath(filepath.Join(dst, normalizeSlashes(f.Name)))
+		filen, err := util.NormPath(filepath.Join(dst, f.Name))
 		if err != nil {
 			return err
 		}
@@ -163,7 +161,7 @@ func extractZip(zipPath string, dst string) error {
 
 	// Create files.
 	for _, f := range zr.File {
-		filen, err := util.NormPath(filepath.Join(dst, normalizeSlashes(f.Name)))
+		filen, err := util.NormPath(filepath.Join(dst, f.Name))
 		if err != nil {
 			return err
 		}
@@ -378,6 +376,9 @@ func extractTar(tarName string, dst string, archiveType agentendpointpb.Software
 }
 
 func stepInstallMsi(step *agentendpointpb.SoftwareRecipe_Step_InstallMsi, artifacts map[string]string, runEnvs []string, stepDir string) error {
+	if runtime.GOOS != "windows" {
+		return errors.New("SoftwareRecipe_Step_InstallMsi only applicable on Windows")
+	}
 	artifact := step.GetArtifactId()
 	path, ok := artifacts[artifact]
 	if !ok {
@@ -396,12 +397,32 @@ func stepInstallMsi(step *agentendpointpb.SoftwareRecipe_Step_InstallMsi, artifa
 	return executeCommand("C:\\Windows\\System32\\msiexec.exe", args, stepDir, runEnvs, exitCodes)
 }
 
-func stepInstallDpkg(step *agentendpointpb.SoftwareRecipe_Step_InstallDpkg, artifacts map[string]string, runEnvs []string, stepDir string) error {
-	return fmt.Errorf("InstallDpkg not yet supported")
+func stepInstallDpkg(step *agentendpointpb.SoftwareRecipe_Step_InstallDpkg, artifacts map[string]string) error {
+	if !packages.DpkgExists {
+		return fmt.Errorf("dpkg does not exist on system")
+	}
+
+	artifact := step.GetArtifactId()
+	path, ok := artifacts[artifact]
+	if !ok {
+		return fmt.Errorf("%q not found in artifact map", artifact)
+	}
+
+	return packages.DpkgInstall(path)
 }
 
-func stepInstallRpm(step *agentendpointpb.SoftwareRecipe_Step_InstallRpm, artifacts map[string]string, runEnvs []string, stepDir string) error {
-	return fmt.Errorf("InstallRpm not yet supported")
+func stepInstallRpm(step *agentendpointpb.SoftwareRecipe_Step_InstallRpm, artifacts map[string]string) error {
+	if !packages.RPMExists {
+		return fmt.Errorf("rpm does not exist on system")
+	}
+
+	artifact := step.GetArtifactId()
+	path, ok := artifacts[artifact]
+	if !ok {
+		return fmt.Errorf("%q not found in artifact map", artifact)
+	}
+
+	return packages.RPMInstall(path)
 }
 
 func stepExecFile(step *agentendpointpb.SoftwareRecipe_Step_ExecFile, artifacts map[string]string, runEnvs []string, stepDir string) error {
@@ -453,7 +474,7 @@ func stepRunScript(step *agentendpointpb.SoftwareRecipe_Step_RunScript, artifact
 		}
 	case agentendpointpb.SoftwareRecipe_Step_RunScript_POWERSHELL:
 		if runtime.GOOS != "windows" {
-			return fmt.Errorf("interpreter %q can only used on Windows systems", step.Interpreter)
+			return fmt.Errorf("interpreter %q can only be used on Windows systems", step.Interpreter)
 		}
 		args = append([]string{"-File", scriptPath})
 		cmd = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\PowerShell.exe"

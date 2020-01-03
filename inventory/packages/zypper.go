@@ -31,8 +31,8 @@ var (
 	zypper string
 
 	// zypperInstallArgs is zypper command to install patches, packages
-	zypperInstallArgs     = []string{"--gpg-auto-import-keys", "install", "--no-confirm"}
-	zypperRemoveArgs      = []string{"remove", "--no-confirm"}
+	zypperInstallArgs     = []string{"--auto-agree-with-licenses", "--gpg-auto-import-keys", "--non-interactive", "install"}
+	zypperRemoveArgs      = []string{"--non-interactive", "remove"}
 	zypperListUpdatesArgs = []string{"--gpg-auto-import-keys", "-q", "list-updates"}
 	zypperListPatchesArgs = []string{"--gpg-auto-import-keys", "-q", "list-patches"}
 	zypperPatchInfoArgs   = []string{"info", "-t", "patch"}
