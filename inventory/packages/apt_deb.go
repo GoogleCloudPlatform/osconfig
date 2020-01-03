@@ -232,10 +232,6 @@ func InstalledDebPackages() ([]PkgInfo, error) {
 func DpkgInstall(path string) error {
 	args := append(dpkgInstallArgs, path)
 	out, err := run(exec.Command(dpkg, args...))
-	var msg string
-	for _, s := range strings.Split(string(out), "\n") {
-		msg += fmt.Sprintf(" %s\n", s)
-	}
-	DebugLogger.Printf("dpkg output:\n%s", msg)
+	DebugLogger.Printf("dpkg output:\n%s", strings.ReplaceAll(string(out), "\n", "\n "))
 	return err
 }

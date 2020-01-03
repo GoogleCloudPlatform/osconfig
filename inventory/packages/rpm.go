@@ -16,7 +16,6 @@ package packages
 
 import (
 	"bytes"
-	"fmt"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -76,10 +75,6 @@ func InstalledRPMPackages() ([]PkgInfo, error) {
 func RPMInstall(path string) error {
 	args := append(rpmInstallArgs, path)
 	out, err := run(exec.Command(rpm, args...))
-	var msg string
-	for _, s := range strings.Split(string(out), "\n") {
-		msg += fmt.Sprintf(" %s\n", s)
-	}
-	DebugLogger.Printf("rpm output:\n%s", msg)
+	DebugLogger.Printf("rpm output:\n%s", strings.ReplaceAll(string(out), "\n", "\n "))
 	return err
 }
