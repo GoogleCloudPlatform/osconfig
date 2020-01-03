@@ -55,11 +55,11 @@ func SystemRebootRequired() (bool, error) {
 	}
 	for _, key := range regKeys {
 		logger.Debugf("Checking if reboot required by testing the existance of %s", key)
-		k, err := registry.OpenKey(registry.LOCAL_MACHINE, path, registry.QUERY_VALUE)
+		k, err := registry.OpenKey(registry.LOCAL_MACHINE, key, registry.QUERY_VALUE)
 		if err == nil {
 			k.Close()
 			logger.Debugf("%s exists indicating a reboot is required.", key)
-			rebootRequired := true
+			rebootRequired = true
 			break
 		}
 		if err != registry.ErrNotExist {
