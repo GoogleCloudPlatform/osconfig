@@ -23,7 +23,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/compute"
 	osconfigserver "github.com/GoogleCloudPlatform/osconfig/e2e_tests/osconfig_server"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
-	"github.com/gogo/protobuf/jsonpb"
+	"github.com/golang/protobuf/jsonpb"
 
 	osconfigpb "google.golang.org/genproto/googleapis/cloud/osconfig/v1beta"
 )
