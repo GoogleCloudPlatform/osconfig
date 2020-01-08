@@ -53,6 +53,7 @@ const (
 	packageNoUpdateFunction           = "pkgnoupdate"
 	recipeInstallFunction             = "recipeinstall"
 	recipeStepsFunction               = "recipesteps"
+	metadataPolicyFunction            = "metadatapolicy"
 )
 
 type guestPolicyTestSetup struct {
@@ -62,6 +63,7 @@ type guestPolicyTestSetup struct {
 	testName      string
 	guestPolicy   *osconfigpb.GuestPolicy
 	startup       *computeApi.MetadataItems
+	mdPolicy      *computeApi.MetadataItems
 	machineType   string
 	queryPath     string
 	assertTimeout time.Duration
@@ -73,6 +75,7 @@ func newGuestPolicyTestSetup(image, instanceName, testName, queryPath, machineTy
 		guestPolicyID: instanceName,
 		instanceName:  instanceName,
 		guestPolicy:   gp,
+		mdPolicy:      nil,
 		testName:      testName,
 		machineType:   machineType,
 		queryPath:     queryPath,
@@ -162,18 +165,27 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *guestP
 		return
 	}
 
-	req := &osconfigpb.CreateGuestPolicyRequest{
-		Parent:        fmt.Sprintf("projects/%s", testProjectConfig.TestProjectID),
-		GuestPolicyId: testSetup.guestPolicyID,
-		GuestPolicy:   testSetup.guestPolicy,
+	if testSetup.guestPolicy != nil {
+		req := &osconfigpb.CreateGuestPolicyRequest{
+			Parent:        fmt.Sprintf("projects/%s", testProjectConfig.TestProjectID),
+			GuestPolicyId: testSetup.guestPolicyID,
+			GuestPolicy:   testSetup.guestPolicy,
+		}
+
+		res, err := createGuestPolicy(ctx, client, req)
+		if err != nil {
+			testCase.WriteFailure("Error running CreateGuestPolicy: %s", utils.GetStatusFromError(err))
+			return
+		}
+		defer cleanupGuestPolicy(ctx, testCase, res)
 	}
 
-	res, err := createGuestPolicy(ctx, client, req)
-	if err != nil {
-		testCase.WriteFailure("Error running CreateGuestPolicy: %s", utils.GetStatusFromError(err))
-		return
+	if testSetup.mdPolicy != nil {
+		if err := inst.AddMetadata(testSetup.mdPolicy); err != nil {
+			testCase.WriteFailure("Error running AddMetadata: %s", utils.GetStatusFromError(err))
+			return
+		}
 	}
-	defer cleanupGuestPolicy(ctx, testCase, res)
 
 	if err := inst.AddMetadata(compute.BuildInstanceMetadataItem("restart-agent", "true")); err != nil {
 		testCase.WriteFailure("Error running AddMetadata: %s", utils.GetStatusFromError(err))
@@ -223,6 +235,8 @@ func getTestCaseFromTestSetUp(testSetup *guestPolicyTestSetup) (*junitxml.TestCa
 		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Recipe installation] [%s]", path.Base(testSetup.image)))
 	case recipeStepsFunction:
 		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Recipe steps] [%s]", path.Base(testSetup.image)))
+	case metadataPolicyFunction:
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Metadata policy] [%s]", path.Base(testSetup.image)))
 	default:
 		return nil, fmt.Errorf("unknown test function name: %s", testSetup.testName)
 	}
