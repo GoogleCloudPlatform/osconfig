@@ -28,21 +28,45 @@ import (
 
 // SystemRebootRequired checks whether a system reboot is required.
 func SystemRebootRequired() (bool, error) {
-	reg := `SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired`
-	regPath := `HKLM:\` + reg
-	logger.Debugf("Checking if reboot required by looking at %s", regPath)
-	k, err := registry.OpenKey(registry.LOCAL_MACHINE, reg, registry.QUERY_VALUE)
-	if err != nil {
-		if err == registry.ErrNotExist {
-			logger.Debugf("%s does not exist, indicating no reboot is required.", regPath)
-			return false, nil
+	// https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-movefileexw#remarks
+	logger.Debugf("Checking for PendingFileRenameOperations")
+	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SYSTEM\CurrentControlSet\Control\Session Manager`, registry.QUERY_VALUE)
+	if err == nil {
+		val, _, err := k.GetStringsValue("PendingFileRenameOperations")
+		if err == nil {
+			k.Close()
+
+			if len(val) > 0 {
+				logger.Debugf("PendingFileRenameOperations indicate a reboot is required: %q", val)
+				return true, nil
+			}
 		}
+		if err != registry.ErrNotExist {
+			return false, err
+		}
+	}
+	if err != registry.ErrNotExist {
 		return false, err
 	}
-	k.Close()
 
-	logger.Debugf("%s exists indicating a reboot is required.", regPath)
-	return true, nil
+	regKeys := []string{
+		`SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired`,
+		`SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending`,
+	}
+	for _, key := range regKeys {
+		logger.Debugf("Checking if reboot required by testing the existance of %s", key)
+		k, err := registry.OpenKey(registry.LOCAL_MACHINE, key, registry.QUERY_VALUE)
+		if err == nil {
+			k.Close()
+			logger.Debugf("%s exists indicating a reboot is required.", key)
+			return true, nil
+		}
+		if err != registry.ErrNotExist {
+			return false, err
+		}
+	}
+
+	return false, nil
 }
 
 func getIterativeProp(src *packages.IUpdate, prop string) (*ole.IDispatch, int32, error) {
