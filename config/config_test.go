@@ -29,7 +29,7 @@ import (
 
 func TestSetConfig(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, `{"project":{"numericProjectID":12345,"projectId":"projectId","attributes":{"os-config-endpoint":"bad!!1","enable-os-inventory":"false"}},"instance":{"id":12345,"name":"name","zone":"zone","attributes":{"os-config-endpoint":"SvcEndpoint","enable-os-inventory":"1","enable-os-config-debug":"true","os-config-enabled-prerelease-features":"ospackage,ospatch", "os-config-poll-interval":"3"}}}`)
+		fmt.Fprintln(w, `{"project":{"numericProjectID":12345,"projectId":"projectId","attributes":{"osconfig-endpoint":"bad!!1","enable-os-inventory":"false"}},"instance":{"id":12345,"name":"name","zone":"zone","attributes":{"osconfig-endpoint":"SvcEndpoint","enable-os-inventory":"1","enable-os-config-debug":"true","osconfig-enabled-prerelease-features":"ospackage,ospatch", "osconfig-poll-interval":"3"}}}`)
 	}))
 	defer ts.Close()
 
@@ -84,6 +84,68 @@ func TestSetConfig(t *testing.T) {
 
 	if Instance() != "zone/instances/name" {
 		t.Errorf("zone: got(%s) != want(%s)", Instance(), "zone/instances/name")
+	}
+}
+
+func TestSetConfigEnabled(t *testing.T) {
+	var request int
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch request {
+		case 0:
+			fmt.Fprintln(w, `{"project":{"attributes":{"enable-osconfig":"false"}},"instance":{"attributes":{"enable-osconfig":"false"}}}`)
+		case 1:
+			fmt.Fprintln(w, `{"project":{"attributes":{"enable-osconfig":"true"}},"instance":{"attributes":{"enable-osconfig":"false"}}}`)
+		case 2:
+			fmt.Fprintln(w, `{"project":{"attributes":{"enable-osconfig":"false"}},"instance":{"attributes":{"enable-osconfig":"true"}}}`)
+		case 3:
+			fmt.Fprintln(w, `{"project":{"attributes":{"enable-osconfig":"true","osconfig-disabled-features":"osinventory"}}}`)
+		}
+	}))
+	defer ts.Close()
+
+	if err := os.Setenv("GCE_METADATA_HOST", strings.Trim(ts.URL, "http://")); err != nil {
+		t.Fatalf("Error running os.Setenv: %v", err)
+	}
+
+	for i, want := range []bool{false, false, true} {
+		request = i
+		if err := SetConfig(); err != nil {
+			t.Fatalf("Error running SetConfig: %v", err)
+		}
+
+		testsBool := []struct {
+			desc string
+			op   func() bool
+		}{
+			{"OSInventoryEnabled", OSInventoryEnabled},
+			{"TaskNotificationEnabled", TaskNotificationEnabled},
+			{"GuestPoliciesEnabled", GuestPoliciesEnabled},
+		}
+		for _, tt := range testsBool {
+			if tt.op() != want {
+				t.Errorf("Request %d: %s: got(%t) != want(%t)", request, tt.desc, tt.op(), want)
+			}
+		}
+	}
+
+	request = 3
+	if err := SetConfig(); err != nil {
+		t.Fatalf("Error running SetConfig: %v", err)
+	}
+
+	testsBool := []struct {
+		desc string
+		op   func() bool
+		want bool
+	}{
+		{"OSInventoryEnabled", OSInventoryEnabled, false},
+		{"TaskNotificationEnabled", TaskNotificationEnabled, true},
+		{"GuestPoliciesEnabled", GuestPoliciesEnabled, true},
+	}
+	for _, tt := range testsBool {
+		if tt.op() != tt.want {
+			t.Errorf("%s: got(%t) != want(%t)", tt.desc, tt.op(), tt.want)
+		}
 	}
 }
 

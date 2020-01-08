@@ -82,7 +82,7 @@ func (c *config) parseFeatures(features string, enabled bool) {
 	for _, f := range strings.Split(features, ",") {
 		f = strings.ToLower(strings.TrimSpace(f))
 		switch f {
-		case "tasks", "tasknotification", "ospatch": // ospatch is the legacy flag
+		case "tasks", "ospatch": // ospatch is the legacy flag
 			c.taskNotificationEnabled = enabled
 		case "guestpolicies", "ospackage": // ospackage is the legacy flag
 			c.guestPoliciesEnabled = enabled
@@ -126,14 +126,18 @@ type projectJSON struct {
 }
 
 type attributesJSON struct {
-	InventoryEnabledOld string       `json:"os-inventory-enabled"`
-	InventoryEnabled    string       `json:"enable-os-inventory"`
-	PreReleaseFeatures  string       `json:"os-config-enabled-prerelease-features"`
-	EnabledFeatures     string       `json:"os-config-enabled-features"`
-	DisabledFeatures    string       `json:"os-config-disabled-features"`
-	DebugEnabled        string       `json:"enable-os-config-debug"`
-	OSConfigEndpoint    string       `json:"os-config-endpoint"`
-	PollInterval        *json.Number `json:"os-config-poll-interval"`
+	InventoryEnabledOld   string       `json:"os-inventory-enabled"`
+	InventoryEnabled      string       `json:"enable-os-inventory"`
+	PreReleaseFeaturesOld string       `json:"os-config-enabled-prerelease-features"`
+	PreReleaseFeatures    string       `json:"osconfig-enabled-prerelease-features"`
+	OSConfigEnabled       string       `json:"enable-osconfig"`
+	DisabledFeatures      string       `json:"osconfig-disabled-features"`
+	DebugEnabledOld       string       `json:"enable-os-config-debug"`
+	LogLevel              string       `json:"osconfig-log-level"`
+	OSConfigEndpointOld   string       `json:"os-config-endpoint"`
+	OSConfigEndpoint      string       `json:"osconfig-endpoint"`
+	PollIntervalOld       *json.Number `json:"os-config-poll-interval"`
+	PollInterval          *json.Number `json:"osconfig-poll-interval"`
 }
 
 func createConfigFromMetadata(md metadataJSON) *config {
@@ -175,47 +179,92 @@ func createConfigFromMetadata(md metadataJSON) *config {
 	}
 
 	// Check project first then instance as instance metadata overrides project.
-	if md.Project.Attributes.InventoryEnabledOld != "" {
+	switch {
+	case md.Project.Attributes.InventoryEnabled != "":
+		c.osInventoryEnabled = parseBool(md.Project.Attributes.InventoryEnabled)
+	case md.Project.Attributes.InventoryEnabledOld != "":
 		c.osInventoryEnabled = parseBool(md.Project.Attributes.InventoryEnabledOld)
 	}
-	if md.Project.Attributes.InventoryEnabled != "" {
-		c.osInventoryEnabled = parseBool(md.Project.Attributes.InventoryEnabled)
-	}
+
+	c.parseFeatures(md.Project.Attributes.PreReleaseFeaturesOld, true)
 	c.parseFeatures(md.Project.Attributes.PreReleaseFeatures, true)
-	c.parseFeatures(md.Project.Attributes.EnabledFeatures, true)
+	if md.Project.Attributes.OSConfigEnabled != "" {
+		e := parseBool(md.Project.Attributes.OSConfigEnabled)
+		c.taskNotificationEnabled = e
+		c.guestPoliciesEnabled = e
+		c.osInventoryEnabled = e
+	}
 	c.parseFeatures(md.Project.Attributes.DisabledFeatures, false)
 
-	if md.Instance.Attributes.InventoryEnabledOld != "" {
+	switch {
+	case md.Instance.Attributes.InventoryEnabled != "":
+		c.osInventoryEnabled = parseBool(md.Instance.Attributes.InventoryEnabled)
+	case md.Instance.Attributes.InventoryEnabledOld != "":
 		c.osInventoryEnabled = parseBool(md.Instance.Attributes.InventoryEnabledOld)
 	}
-	if md.Instance.Attributes.InventoryEnabled != "" {
-		c.osInventoryEnabled = parseBool(md.Instance.Attributes.InventoryEnabled)
-	}
+
+	c.parseFeatures(md.Instance.Attributes.PreReleaseFeaturesOld, true)
 	c.parseFeatures(md.Instance.Attributes.PreReleaseFeatures, true)
-	c.parseFeatures(md.Instance.Attributes.EnabledFeatures, true)
+	if md.Instance.Attributes.OSConfigEnabled != "" {
+		e := parseBool(md.Instance.Attributes.OSConfigEnabled)
+		c.taskNotificationEnabled = e
+		c.guestPoliciesEnabled = e
+		c.osInventoryEnabled = e
+	}
 	c.parseFeatures(md.Instance.Attributes.DisabledFeatures, false)
+
+	if md.Instance.Attributes.PollIntervalOld != nil {
+		if val, err := md.Instance.Attributes.PollIntervalOld.Int64(); err == nil {
+			c.osConfigPollInterval = int(val)
+		}
+	}
+	if md.Instance.Attributes.PollIntervalOld != nil {
+		if val, err := md.Instance.Attributes.PollIntervalOld.Int64(); err == nil {
+			c.osConfigPollInterval = int(val)
+		}
+	}
 
 	if md.Instance.Attributes.PollInterval != nil {
 		if val, err := md.Instance.Attributes.PollInterval.Int64(); err == nil {
 			c.osConfigPollInterval = int(val)
 		}
 	}
+	if md.Instance.Attributes.PollInterval != nil {
+		if val, err := md.Instance.Attributes.PollInterval.Int64(); err == nil {
+			c.osConfigPollInterval = int(val)
+		}
+	}
+
+	switch {
+	case md.Instance.Attributes.DebugEnabledOld != "":
+		c.debugEnabled = parseBool(md.Instance.Attributes.DebugEnabledOld)
+	case md.Project.Attributes.DebugEnabledOld != "":
+		c.debugEnabled = parseBool(md.Project.Attributes.DebugEnabledOld)
+	}
+
+	switch strings.ToLower(md.Instance.Attributes.LogLevel) {
+	case "debug":
+		c.debugEnabled = true
+	case "info":
+		c.debugEnabled = false
+	}
 
 	// Flags take precedence over metadata.
 	if *debug {
 		c.debugEnabled = true
-	} else if md.Instance.Attributes.DebugEnabled != "" {
-		c.debugEnabled = parseBool(md.Instance.Attributes.DebugEnabled)
-	} else if md.Project.Attributes.DebugEnabled != "" {
-		c.debugEnabled = parseBool(md.Project.Attributes.DebugEnabled)
 	}
 
-	if *endpoint != prodEndpoint {
+	switch {
+	case *endpoint != prodEndpoint:
 		c.svcEndpoint = *endpoint
-	} else if md.Instance.Attributes.OSConfigEndpoint != "" {
+	case md.Instance.Attributes.OSConfigEndpoint != "":
 		c.svcEndpoint = md.Instance.Attributes.OSConfigEndpoint
-	} else if md.Project.Attributes.OSConfigEndpoint != "" {
+	case md.Instance.Attributes.OSConfigEndpointOld != "":
+		c.svcEndpoint = md.Instance.Attributes.OSConfigEndpointOld
+	case md.Project.Attributes.OSConfigEndpoint != "":
 		c.svcEndpoint = md.Project.Attributes.OSConfigEndpoint
+	case md.Project.Attributes.OSConfigEndpointOld != "":
+		c.svcEndpoint = md.Project.Attributes.OSConfigEndpointOld
 	}
 
 	return c
