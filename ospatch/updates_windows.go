@@ -31,24 +31,24 @@ func SystemRebootRequired() (bool, error) {
 	// https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-movefileexw#remarks
 	logger.Debugf("Checking for PendingFileRenameOperations")
 	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SYSTEM\CurrentControlSet\Control\Session Manager`, registry.QUERY_VALUE)
-	if err != nil {
+	if err == nil {
+		val, _, err := k.GetStringsValue("PendingFileRenameOperations")
+		if err == nil {
+			k.Close()
+
+			if len(val) > 0 {
+				logger.Debugf("PendingFileRenameOperations indicate a reboot is required: %q", val)
+				return true, nil
+			}
+		}
 		if err != registry.ErrNotExist {
 			return false, err
 		}
-	} else {
-		val, _, err := k.GetStringsValue("PendingFileRenameOperations")
-		if err != nil && err != registry.ErrNotExist {
-			return false, err
-		}
-		k.Close()
-
-		if len(val) > 0 {
-			logger.Debugf("PendingFileRenameOperations indicate a reboot is required: %q", val)
-			return true, nil
-		}
+	}
+	if err != registry.ErrNotExist {
+		return false, err
 	}
 
-	rebootRequired := false
 	regKeys := []string{
 		`SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired`,
 		`SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending`,
@@ -59,15 +59,14 @@ func SystemRebootRequired() (bool, error) {
 		if err == nil {
 			k.Close()
 			logger.Debugf("%s exists indicating a reboot is required.", key)
-			rebootRequired = true
-			break
+			return true, nil
 		}
 		if err != registry.ErrNotExist {
 			return false, err
 		}
 	}
 
-	return rebootRequired, nil
+	return false, nil
 }
 
 func getIterativeProp(src *packages.IUpdate, prop string) (*ole.IDispatch, int32, error) {
