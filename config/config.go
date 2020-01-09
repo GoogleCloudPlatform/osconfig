@@ -213,33 +213,40 @@ func createConfigFromMetadata(md metadataJSON) *config {
 	}
 	c.parseFeatures(md.Instance.Attributes.DisabledFeatures, false)
 
-	if md.Instance.Attributes.PollIntervalOld != nil {
-		if val, err := md.Instance.Attributes.PollIntervalOld.Int64(); err == nil {
+	switch {
+	case md.Project.Attributes.PollInterval != nil:
+		if val, err := md.Project.Attributes.PollInterval.Int64(); err == nil {
 			c.osConfigPollInterval = int(val)
 		}
-	}
-	if md.Instance.Attributes.PollIntervalOld != nil {
-		if val, err := md.Instance.Attributes.PollIntervalOld.Int64(); err == nil {
+	case md.Project.Attributes.PollIntervalOld != nil:
+		if val, err := md.Project.Attributes.PollIntervalOld.Int64(); err == nil {
 			c.osConfigPollInterval = int(val)
 		}
 	}
 
-	if md.Instance.Attributes.PollInterval != nil {
+	switch {
+	case md.Instance.Attributes.PollInterval != nil:
 		if val, err := md.Instance.Attributes.PollInterval.Int64(); err == nil {
 			c.osConfigPollInterval = int(val)
 		}
-	}
-	if md.Instance.Attributes.PollInterval != nil {
+	case md.Instance.Attributes.PollIntervalOld != nil:
 		if val, err := md.Instance.Attributes.PollInterval.Int64(); err == nil {
 			c.osConfigPollInterval = int(val)
 		}
 	}
 
 	switch {
-	case md.Instance.Attributes.DebugEnabledOld != "":
-		c.debugEnabled = parseBool(md.Instance.Attributes.DebugEnabledOld)
 	case md.Project.Attributes.DebugEnabledOld != "":
 		c.debugEnabled = parseBool(md.Project.Attributes.DebugEnabledOld)
+	case md.Instance.Attributes.DebugEnabledOld != "":
+		c.debugEnabled = parseBool(md.Instance.Attributes.DebugEnabledOld)
+	}
+
+	switch strings.ToLower(md.Project.Attributes.LogLevel) {
+	case "debug":
+		c.debugEnabled = true
+	case "info":
+		c.debugEnabled = false
 	}
 
 	switch strings.ToLower(md.Instance.Attributes.LogLevel) {
