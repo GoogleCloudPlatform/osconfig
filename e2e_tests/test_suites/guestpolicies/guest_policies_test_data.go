@@ -46,16 +46,14 @@ var (
 func buildPkgInstallTestSetup(name, image, pkgManager, key string) *guestPolicyTestSetup {
 	assertTimeout := 120 * time.Second
 	testName := packageInstallFunction
-	packageName := "cowsay"
+	packageName := "ed"
 	machineType := "n1-standard-2"
 	if pkgManager == "googet" {
+		packageName = "cowsay"
 		machineType = "n1-standard-4"
 	}
-	if pkgManager == "zypper" {
-		packageName = "xeyes"
-	}
-	if strings.Contains(image, "rhel-8") || strings.Contains(image, "centos-8") {
-		packageName = "xorg-x11-apps"
+	if strings.Contains(image, "rhel-6") || strings.Contains(image, "centos-6") {
+		packageName = "cowsay"
 	}
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
@@ -87,9 +85,10 @@ func addPackageInstallTest(key string) []*guestPolicyTestSetup {
 func buildPkgUpdateTestSetup(name, image, pkgManager, key string) *guestPolicyTestSetup {
 	assertTimeout := 240 * time.Second
 	testName := packageUpdateFunction
-	packageName := "cowsay"
+	packageName := "ed"
 	machineType := "n1-standard-2"
 	if pkgManager == "googet" {
+		packageName = "cowsay"
 		machineType = "n1-standard-4"
 	}
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
@@ -97,7 +96,7 @@ func buildPkgUpdateTestSetup(name, image, pkgManager, key string) *guestPolicyTe
 		Packages:   osconfigserver.BuildPackagePolicy(nil, nil, []string{packageName}),
 		Assignment: &osconfigpb.Assignment{InstanceNamePrefixes: []string{instanceName}},
 	}
-	ss := getUpdateStartupScript(name, pkgManager, packageName)
+	ss := getUpdateStartupScript(name, pkgManager)
 	return newGuestPolicyTestSetup(image, instanceName, testName, packageNotInstalled, machineType, gp, ss, assertTimeout)
 }
 
@@ -121,9 +120,10 @@ func addPackageUpdateTest(key string) []*guestPolicyTestSetup {
 func buildPkgDoesNotUpdateTestSetup(name, image, pkgManager, key string) *guestPolicyTestSetup {
 	assertTimeout := 240 * time.Second
 	testName := packageNoUpdateFunction
-	packageName := "cowsay"
+	packageName := "ed"
 	machineType := "n1-standard-2"
 	if pkgManager == "googet" {
+		packageName = "cowsay"
 		machineType = "n1-standard-4"
 	}
 
@@ -132,7 +132,7 @@ func buildPkgDoesNotUpdateTestSetup(name, image, pkgManager, key string) *guestP
 		Packages:   osconfigserver.BuildPackagePolicy([]string{packageName}, nil, nil),
 		Assignment: &osconfigpb.Assignment{InstanceNamePrefixes: []string{instanceName}},
 	}
-	ss := getUpdateStartupScript(name, pkgManager, packageName)
+	ss := getUpdateStartupScript(name, pkgManager)
 	return newGuestPolicyTestSetup(image, instanceName, testName, packageInstalled, machineType, gp, ss, assertTimeout)
 }
 
