@@ -67,8 +67,9 @@ func getStartupScript(image, pkgManager, packageName string) *computeApi.Metadat
 	switch pkgManager {
 	case "apt":
 		ss = `systemctl stop google-osconfig-agent
-%s
-%s
+apt-get -y remove %[3]s || exit 1
+%[1]s
+%[2]s
 while true; do
   isinstalled=$(/usr/bin/dpkg-query -s %s)
   if [[ $isinstalled =~ "Status: install ok installed" ]]; then
@@ -86,8 +87,15 @@ done`
 	case "yum":
 		ss = `systemctl stop google-osconfig-agent
 stop -q -n google-osconfig-agent  # required for EL6
-%s
-%s
+while ! yum -y remove %[3]s; do
+  if [[ n -gt 5 ]]; then
+    exit 1
+  fi
+  n=$[$n+1]
+  sleep 10
+done
+%[1]s
+%[2]s
 while true; do
   isinstalled=$(/usr/bin/rpmquery -a %[3]s)
   if [[ $isinstalled =~ ^%[3]s-* ]]; then
@@ -121,8 +129,9 @@ while(1) {
 
 	case "zypper":
 		ss = `systemctl stop google-osconfig-agent
-%s
-%s
+zypper -n remove %[3]s
+%[1]s
+%[2]s
 while true; do
   isinstalled=$(/usr/bin/rpmquery -a %[3]s)
   if [[ $isinstalled =~ ^%[3]s-* ]]; then
@@ -146,7 +155,7 @@ done`
 	}
 }
 
-func getUpdateStartupScript(image, pkgManager, packageName string) *computeApi.MetadataItems {
+func getUpdateStartupScript(image, pkgManager string) *computeApi.MetadataItems {
 	var ss, key string
 
 	switch pkgManager {
@@ -159,22 +168,22 @@ while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
    sleep 5
 done
 apt-get update
-apt-get -y remove %[2]s || exit 1
-apt-get -y install %[2]s=3.03+dfsg1-10 || exit 1
+apt-get -y remove ed || exit 1
+apt-get -y install ed=1.9-2 || exit 1
 %[1]s
-%[3]s
+%[2]s
 while true; do
-  isinstalled=$(/usr/bin/dpkg-query -s %[2]s)
-  if [[ $isinstalled =~ "Version: 3.03+dfsg1-10" ]]; then
-    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[4]s
+  isinstalled=$(/usr/bin/dpkg-query -f '${Version}' -W ed)
+  if [[ $isinstalled == "1.9-2" ]]; then
+    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[3]s
   else
-    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[5]s
+    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[4]s
   fi
   curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
   sleep 5;
 done`
 
-		ss = fmt.Sprintf(ss, utils.InstallOSConfigDeb(), packageName, waitForRestartLinux, packageInstalled, packageNotInstalled)
+		ss = fmt.Sprintf(ss, utils.InstallOSConfigDeb(), waitForRestartLinux, packageInstalled, packageNotInstalled)
 		key = "startup-script"
 
 	case "yum":
@@ -188,49 +197,55 @@ enabled=1
 gpgcheck=0
 EOM
 n=0
-while ! yum -y remove %[2]s; do
+while ! yum -y remove ed; do
   if [[ n -gt 5 ]]; then
     exit 1
   fi
   n=$[$n+1]
   sleep 10
 done
-yum -y install %[2]s-3.03-2.fc7 || exit 1
+while ! yum -y install ed-0.2-39.el5_2; do
+  if [[ n -gt 5 ]]; then
+    exit 1
+  fi
+  n=$[$n+1]
+  sleep 10
+done
 %[1]s
-%[3]s
+%[2]s
 while true; do
-  isinstalled=$(/usr/bin/rpmquery -a %[2]s)
-  if [[ $isinstalled =~ 3.03-2.fc7 ]]; then
-    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[4]s
+  isinstalled=$(/usr/bin/rpmquery -a ed)
+  if [[ $isinstalled =~ 0.2-39.el5_2 ]]; then
+    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[3]s
   else
-    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[5]s
+    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[4]s
   fi
   curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
   sleep 5
 done`
-		ss = fmt.Sprintf(ss, yumStartupScripts[path.Base(image)], packageName, waitForRestartLinux, packageInstalled, packageNotInstalled)
+		ss = fmt.Sprintf(ss, yumStartupScripts[path.Base(image)], waitForRestartLinux, packageInstalled, packageNotInstalled)
 		key = "startup-script"
 
 	case "googet":
 		ss = `
 echo 'Adding test repo'
 googet addrepo test https://packages.cloud.google.com/yuck/repos/osconfig-agent-test-repository
-googet -noconfirm remove %[2]s
-googet -noconfirm install %[2]s.x86_64.0.1.0@1
+googet -noconfirm remove cowsay
+googet -noconfirm install cowsay.x86_64.0.1.0@1
 %[1]s
-%[3]s
+%[2]s
 while(1) {
-  $installed_packages = googet installed %[2]s
+  $installed_packages = googet installed cowsay
   Write-Host $installed_packages
   if ($installed_packages -like "*0.1.0@1*") {
-    $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[4]s'
+    $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[3]s'
   } else {
-    $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[5]s'
+    $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[4]s'
   }
   Invoke-RestMethod -Method PUT -Uri $uri -Headers @{"Metadata-Flavor" = "Google"} -Body 1
   sleep 5
 }`
-		ss = fmt.Sprintf(ss, utils.InstallOSConfigGooGet(), packageName, waitForRestartWin, packageInstalled, packageNotInstalled)
+		ss = fmt.Sprintf(ss, utils.InstallOSConfigGooGet(), waitForRestartWin, packageInstalled, packageNotInstalled)
 		key = "windows-startup-script-ps1"
 
 	case "zypper":
@@ -243,21 +258,21 @@ baseurl=https://packages.cloud.google.com/yum/repos/osconfig-agent-test-reposito
 enabled=1
 gpgcheck=0
 EOM
-zypper -n remove %[2]s
-zypper -n --no-gpg-checks install %[2]s-3.03-2.fc7
+zypper -n remove ed
+zypper -n --no-gpg-checks install ed-0.2-39.el5_2
 %[1]s
-%[3]s
+%[2]s
 while true; do
-  isinstalled=$(/usr/bin/rpmquery -a %[2]s)
-  if [[ $isinstalled =~ 3.03-2.fc7 ]]; then
-    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[4]s
+  isinstalled=$(/usr/bin/rpmquery -a ed)
+  if [[ $isinstalled =~ 0.2-39.el5_2 ]]; then
+    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[3]s
   else
-    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[5]s
+    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[4]s
   fi
   curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
   sleep 5
 done`
-		ss = fmt.Sprintf(ss, utils.InstallOSConfigSUSE(), packageName, waitForRestartLinux, packageInstalled, packageNotInstalled)
+		ss = fmt.Sprintf(ss, utils.InstallOSConfigSUSE(), waitForRestartLinux, packageInstalled, packageNotInstalled)
 		key = "startup-script"
 
 	default:

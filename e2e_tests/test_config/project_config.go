@@ -40,8 +40,8 @@ func GetProject() *Project {
 	projectIDs := config.Projects()
 	projectID := projectIDs[rand.Intn(len(projectIDs))]
 	mx.Lock()
+	defer mx.Unlock()
 	p, ok := projects[projectID]
-	mx.Unlock()
 	if ok {
 		return p
 	}
@@ -64,9 +64,7 @@ func GetProject() *Project {
 		},
 	}
 
-	mx.Lock()
 	projects[projectID] = p
-	mx.Unlock()
 	return p
 }
 
