@@ -16,6 +16,7 @@ override_dh_auto_install:
 	# Binary-only package.
 	dh_auto_install -- --no-source
 	mv debian/google-osconfig-agent/usr/bin/osconfig debian/google-osconfig-agent/usr/bin/google_osconfig_agent
+	rm debian/google-osconfig-agent/usr/bin/e2e_tests
 
 override_dh_golang:
 	# We don't use any packaged dependencies, so skip dh_golang step.
@@ -27,6 +28,7 @@ override_dh_auto_build:
 	dh_auto_build -O--buildsystem=golang -- -ldflags="-s -w -X main.version=$(VERSION)" -mod=readonly
 
 override_dh_installinit:
+	install -p -m 0644 *.service *.preset debian/
 	dh_installinit --noscripts
 
 override_dh_installsystemd:
