@@ -67,7 +67,7 @@ func getStartupScript(image, pkgManager, packageName string) *computeApi.Metadat
 	switch pkgManager {
 	case "apt":
 		ss = `systemctl stop google-osconfig-agent
-apt-get -y remove %[3]s || exit 1
+apt-get -y remove %[3]s
 %[1]s
 %[2]s
 while true; do
