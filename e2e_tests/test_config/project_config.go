@@ -30,7 +30,7 @@ type Project struct {
 	ServiceAccountEmail  string
 	ServiceAccountScopes []string
 	testZones            map[string]int
-	zoneIndices          []string                
+	zoneIndices          []string
 }
 
 var mx sync.Mutex
@@ -49,7 +49,7 @@ func GetProject() *Project {
 
 	testZones := map[string]int{}
 	var zoneIndices []string
-	for k,v :=range config.Zones() {
+	for k, v := range config.Zones() {
 		testZones[k] = v
 		zoneIndices = append(zoneIndices, k)
 	}

@@ -25,7 +25,6 @@ import (
 
 	"cloud.google.com/go/storage"
 	daisyCompute "github.com/GoogleCloudPlatform/compute-image-tools/daisy/compute"
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	computeApiBeta "google.golang.org/api/compute/v0.beta"
 	computeApi "google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
@@ -113,7 +112,7 @@ func (i *Instance) RecordSerialOutput(ctx context.Context, storageClient *storag
 		// Instance is stopped or stopping.
 		status, _ := i.client.InstanceStatus(path.Base(i.Project), path.Base(i.Zone), i.Name)
 		if !isTerminal(status) {
-			logger.Errorf("Instance %q: error getting serial port: %s", i.Name, err)
+			fmt.Printf("Instance %q: error getting serial port: %s", i.Name, err)
 		}
 		return
 	}
@@ -121,11 +120,11 @@ func (i *Instance) RecordSerialOutput(ctx context.Context, storageClient *storag
 	buf.WriteString(resp.Contents)
 	wc.ContentType = "text/plain"
 	if _, err := wc.Write(buf.Bytes()); err != nil {
-		logger.Errorf("Instance %q: error writing log to GCS: %v", i.Name, err)
+		fmt.Printf("Instance %q: error writing log to GCS: %v", i.Name, err)
 		return
 	}
 	if err := wc.Close(); err != nil {
-		logger.Errorf("Instance %q: error saving log to GCS: %v", i.Name, err)
+		fmt.Printf("Instance %q: error saving log to GCS: %v", i.Name, err)
 		return
 	}
 
@@ -137,7 +136,6 @@ func isTerminal(status string) bool {
 
 // CreateInstance creates a compute instance.
 func CreateInstance(client daisyCompute.Client, project, zone string, i *computeApi.Instance) (*Instance, error) {
-	logger.Infof("Creating instance %s in zone %s", i.Name, zone)
 	if err := client.CreateInstance(project, zone, i); err != nil {
 		return nil, err
 	}

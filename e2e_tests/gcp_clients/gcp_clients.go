@@ -21,7 +21,6 @@ import (
 	osconfigV1beta "cloud.google.com/go/osconfig/apiv1beta"
 	"cloud.google.com/go/storage"
 	"github.com/GoogleCloudPlatform/compute-image-tools/daisy/compute"
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/config"
 	"google.golang.org/api/option"
 )
@@ -50,14 +49,12 @@ func createComputeClient(ctx context.Context) error {
 }
 
 func createStorageClient(ctx context.Context) error {
-	logger.Debugf("creating storage client\n")
 	var err error
 	storageClient, err = storage.NewClient(ctx, option.WithCredentialsFile(config.OauthPath()))
 	return err
 }
 
 func createOsConfigClientV1beta(ctx context.Context) error {
-	logger.Debugf("creating v1alpha2 osconfig client\n")
 	var err error
 	osconfigClientV1beta, err = osconfigV1beta.NewClient(ctx, option.WithCredentialsFile(config.OauthPath()), option.WithEndpoint(config.SvcEndpoint()))
 	return err

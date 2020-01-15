@@ -19,7 +19,6 @@ import (
 	"path"
 
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
-	"github.com/google/logger"
 	computeApi "google.golang.org/api/compute/v1"
 )
 
@@ -146,7 +145,7 @@ done`
 		key = "startup-script"
 
 	default:
-		logger.Errorf(fmt.Sprintf("invalid package manager: %s", pkgManager))
+		fmt.Printf("Invalid package manager: %s", pkgManager)
 	}
 
 	return &computeApi.MetadataItems{
@@ -276,7 +275,7 @@ done`
 		key = "startup-script"
 
 	default:
-		logger.Errorf(fmt.Sprintf("invalid package manager: %s", pkgManager))
+		fmt.Printf("invalid package manager: %s", pkgManager)
 	}
 
 	return &computeApi.MetadataItems{
@@ -327,7 +326,7 @@ while ($true) {
 		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigGooGet(), waitForRestartWin, scriptWin)
 		key = "windows-startup-script-ps1"
 	default:
-		logger.Errorf(fmt.Sprintf("invalid package manager: %s", pkgManager))
+		fmt.Printf("invalid package manager: %s", pkgManager)
 	}
 
 	return &computeApi.MetadataItems{
@@ -413,7 +412,7 @@ while ($true) {
 		key = "windows-startup-script-ps1"
 
 	default:
-		logger.Errorf(fmt.Sprintf("invalid package manager: %s", pkgManager))
+		fmt.Printf("invalid package manager: %s", pkgManager)
 	}
 
 	return &computeApi.MetadataItems{
