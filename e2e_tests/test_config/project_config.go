@@ -24,12 +24,13 @@ import (
 
 // Project is details of test Project.
 type Project struct {
+	sync.Mutex
+
 	TestProjectID        string
 	ServiceAccountEmail  string
 	ServiceAccountScopes []string
 	testZones            map[string]int
-	zoneIndices          []string
-	mux                  sync.Mutex
+	zoneIndices          []string                
 }
 
 var mx sync.Mutex
@@ -46,11 +47,11 @@ func GetProject() *Project {
 		return p
 	}
 
-	testZones := config.Zones()
+	testZones := map[string]int{}
 	var zoneIndices []string
-
-	for z := range testZones {
-		zoneIndices = append(zoneIndices, z)
+	for k,v :=range config.Zones() {
+		testZones[k] = v
+		zoneIndices = append(zoneIndices, k)
 	}
 
 	p = &Project{
@@ -72,11 +73,11 @@ func GetProject() *Project {
 func (p *Project) AcquireZone() string {
 	timer := time.NewTimer(30 * time.Minute)
 	for {
-		p.mux.Lock()
+		p.Lock()
 
 		zc := len(p.zoneIndices)
 		if zc == 0 {
-			p.mux.Unlock()
+			p.Unlock()
 			select {
 			case <-timer.C:
 				return "Not enough zone quota sepcified. Specify additional quota in `test_zones`."
@@ -97,15 +98,15 @@ func (p *Project) AcquireZone() string {
 			p.zoneIndices = append(p.zoneIndices[:zi], p.zoneIndices[zi+1:]...)
 		}
 
-		p.mux.Unlock()
+		p.Unlock()
 		return z
 	}
 }
 
 // ReleaseZone returns a zone so other tests can use it.
 func (p *Project) ReleaseZone(z string) {
-	p.mux.Lock()
-	defer p.mux.Unlock()
+	p.Lock()
+	defer p.Unlock()
 
 	n, ok := p.testZones[z]
 	if !ok {
