@@ -252,7 +252,7 @@ var HeadWindowsImages = map[string]string{
 	"windows-cloud/windows-2019-core":    "projects/windows-cloud/global/images/family/windows-2019-core",
 	"windows-cloud/windows-1809-core":    "projects/windows-cloud/global/images/family/windows-1809-core",
 	"windows-cloud/windows-1903-core":    "projects/windows-cloud/global/images/family/windows-1903-core",
-	"windows-cloud/windows-1909-core":    "projects/windows-cloud/global/images/family/windows-1910-core",
+	"windows-cloud/windows-1909-core":    "projects/windows-cloud/global/images/family/windows-1909-core",
 }
 
 // OldWindowsImages is a map of names to image paths for old Windows images.
