@@ -244,30 +244,28 @@ var HeadELImages = func() (newMap map[string]string) {
 
 // HeadWindowsImages is a map of names to image paths for public Windows image families.
 var HeadWindowsImages = map[string]string{
-	"windows-cloud/windows-2008-r2":      "projects/windows-cloud/global/images/family/windows-2008-r2",
 	"windows-cloud/windows-2012-r2":      "projects/windows-cloud/global/images/family/windows-2012-r2",
 	"windows-cloud/windows-2012-r2-core": "projects/windows-cloud/global/images/family/windows-2012-r2-core",
 	"windows-cloud/windows-2016":         "projects/windows-cloud/global/images/family/windows-2016",
 	"windows-cloud/windows-2016-core":    "projects/windows-cloud/global/images/family/windows-2016-core",
 	"windows-cloud/windows-2019":         "projects/windows-cloud/global/images/family/windows-2019",
 	"windows-cloud/windows-2019-core":    "projects/windows-cloud/global/images/family/windows-2019-core",
-	"windows-cloud/windows-1803-core":    "projects/windows-cloud/global/images/family/windows-1803-core",
 	"windows-cloud/windows-1809-core":    "projects/windows-cloud/global/images/family/windows-1809-core",
 	"windows-cloud/windows-1903-core":    "projects/windows-cloud/global/images/family/windows-1903-core",
+	"windows-cloud/windows-1909-core":    "projects/windows-cloud/global/images/family/windows-1909-core",
 }
 
 // OldWindowsImages is a map of names to image paths for old Windows images.
 var OldWindowsImages = map[string]string{
-	"old/windows-2008-r2":      "projects/windows-cloud/global/images/windows-server-2008-r2-dc-v20191008",
 	"old/windows-2012-r2":      "projects/windows-cloud/global/images/windows-server-2012-r2-dc-v20191008",
 	"old/windows-2012-r2-core": "projects/windows-cloud/global/images/windows-server-2012-r2-dc-core-v20191008",
 	"old/windows-2016":         "projects/windows-cloud/global/images/windows-server-2016-dc-v20191008",
 	"old/windows-2016-core":    "projects/windows-cloud/global/images/windows-server-2016-dc-core-v20191008",
 	"old/windows-2019":         "projects/windows-cloud/global/images/windows-server-2019-dc-v20191008",
 	"old/windows-2019-core":    "projects/windows-cloud/global/images/windows-server-2019-dc-core-v20191008",
-	"old/windows-1803-core":    "projects/windows-cloud/global/images/windows-server-1803-dc-core-v20191008",
 	"old/windows-1809-core":    "projects/windows-cloud/global/images/windows-server-1809-dc-core-v20191008",
 	"old/windows-1903-core":    "projects/windows-cloud/global/images/windows-server-1903-dc-core-v20191008",
+	"old/windows-1909-core":    "projects/windows-cloud/global/images/windows-server-1909-dc-core-v20191210",
 }
 
 // RandString generates a random string of n length.
