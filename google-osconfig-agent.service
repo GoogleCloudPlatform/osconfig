@@ -1,7 +1,7 @@
 [Unit]
 Description=Google OSConfig Agent
-After=local-fs.target network-online.target network.target
-Wants=local-fs.target network-online.target network.target
+After=local-fs.target network-online.target
+Wants=local-fs.target network-online.target
 
 [Service]
 ExecStart=/usr/bin/google_osconfig_agent
