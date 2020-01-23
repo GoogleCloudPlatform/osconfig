@@ -16,6 +16,7 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -37,7 +38,7 @@ func TestSetConfig(t *testing.T) {
 		t.Fatalf("Error running os.Setenv: %v", err)
 	}
 
-	if err := SetConfig(); err != nil {
+	if err := SetConfig(context.Background()); err != nil {
 		t.Fatalf("Error running SetConfig: %v", err)
 	}
 
@@ -109,7 +110,7 @@ func TestSetConfigEnabled(t *testing.T) {
 
 	for i, want := range []bool{false, false, true} {
 		request = i
-		if err := SetConfig(); err != nil {
+		if err := SetConfig(context.Background()); err != nil {
 			t.Fatalf("Error running SetConfig: %v", err)
 		}
 
@@ -129,7 +130,7 @@ func TestSetConfigEnabled(t *testing.T) {
 	}
 
 	request = 3
-	if err := SetConfig(); err != nil {
+	if err := SetConfig(context.Background()); err != nil {
 		t.Fatalf("Error running SetConfig: %v", err)
 	}
 
@@ -159,7 +160,7 @@ func TestSetConfigDefaultValues(t *testing.T) {
 		t.Fatalf("Error running os.Setenv: %v", err)
 	}
 
-	if err := SetConfig(); err != nil {
+	if err := SetConfig(context.Background()); err != nil {
 		t.Fatalf("Error running SetConfig: %v", err)
 	}
 
@@ -224,7 +225,7 @@ func TestSetConfigError(t *testing.T) {
 		t.Fatalf("Error running os.Setenv: %v", err)
 	}
 
-	if err := SetConfig(); err == nil || !strings.Contains(err.Error(), "unexpected end of JSON input") {
+	if err := SetConfig(context.Background()); err == nil || !strings.Contains(err.Error(), "unexpected end of JSON input") {
 		t.Errorf("Unexpected output %+v", err)
 	}
 }
