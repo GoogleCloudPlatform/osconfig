@@ -16,6 +16,7 @@
 package config
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -290,10 +291,11 @@ func formatMetadataError(err error) error {
 }
 
 // SetConfig sets the agent config.
-func SetConfig() error {
+func SetConfig(ctx context.Context) error {
 	var md string
 	var webError error
 	webErrorCount := 0
+	ticker := time.NewTicker(5 * time.Second)
 	for {
 		md, webError = metadata.Get("?recursive=true&alt=json")
 		if webError == nil {
@@ -306,7 +308,12 @@ func SetConfig() error {
 			break
 		}
 		webErrorCount++
-		time.Sleep(5 * time.Second)
+		select {
+		case <-ticker.C:
+			continue
+		case <-ctx.Done():
+			return nil
+		}
 	}
 
 	var metadata metadataJSON

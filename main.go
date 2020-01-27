@@ -74,12 +74,82 @@ func (s *serialPort) Write(b []byte) (int, error) {
 	return p.Write(b)
 }
 
+var deferredFuncs []func()
+
 func run(ctx context.Context) {
+	// Remove any existing restart file.
+	if err := os.Remove(config.RestartFile()); err != nil && !os.IsNotExist(err) {
+		logger.Errorf("Error removing restart signal file: %v", err)
+	}
+
+	// Setup logging.
+	opts := logger.LogOpts{LoggerName: "OSConfigAgent"}
+	if config.Stdout() {
+		opts.Writers = []io.Writer{os.Stdout}
+	}
+	if runtime.GOOS == "windows" {
+		opts.Writers = append(opts.Writers, &serialPort{"COM1"})
+	}
+
+	// If this call to SetConfig fails (like a metadata error) we can't continue.
+	if err := config.SetConfig(ctx); err != nil {
+		logger.Init(ctx, opts)
+		logger.Fatalf(err.Error())
+	}
+	opts.Debug = config.Debug()
+	opts.ProjectName = config.ProjectID()
+
+	if err := logger.Init(ctx, opts); err != nil {
+		fmt.Printf("Error initializing logger: %v", err)
+		os.Exit(1)
+	}
+	packages.DebugLogger = log.New(&logWriter{}, "", 0)
+
+	deferredFuncs = append(deferredFuncs, logger.Close, func() { logger.Infof("OSConfig Agent (version %s) shutting down.", config.Version()) })
+
+	obtainLock()
+
+	// obtainLock adds functions to clear the lock at close.
+	logger.DeferredFatalFuncs = append(logger.DeferredFatalFuncs, deferredFuncs...)
+	defer func() {
+		for _, f := range deferredFuncs {
+			f()
+		}
+	}()
+
+	logger.Infof("OSConfig Agent (version %s) started.", config.Version())
+
+	switch action := flag.Arg(0); action {
+	case "", "run", "noservice":
+		runLoop(ctx)
+	case "inventory", "osinventory":
+		inventory.Run()
+		tasker.Close()
+		return
+	case "gp", "policies", "guestpolicies", "ospackage":
+		policies.Run(ctx)
+		tasker.Close()
+		return
+	case "w", "waitfortasknotification", "ospatch":
+		client, err := agentendpoint.NewClient(ctx)
+		if err != nil {
+			logger.Fatalf(err.Error())
+		}
+		client.WaitForTaskNotification(ctx)
+		select {
+		case <-ctx.Done():
+		}
+	default:
+		logger.Fatalf("Unknown arg %q", action)
+	}
+}
+
+func runLoop(ctx context.Context) {
 	var taskNotificationClient *agentendpoint.Client
 	var err error
 	ticker := time.NewTicker(config.SvcPollInterval())
 	for {
-		if err := config.SetConfig(); err != nil {
+		if err := config.SetConfig(ctx); err != nil {
 			logger.Errorf(err.Error())
 		}
 
@@ -124,51 +194,9 @@ func run(ctx context.Context) {
 	}
 }
 
-var deferredFuncs []func()
-
 func main() {
 	flag.Parse()
-	ctx := context.Background()
-	if err := os.Remove(config.RestartFile()); err != nil && !os.IsNotExist(err) {
-		logger.Errorf("Error removing restart signal file: %v", err)
-	}
-
-	opts := logger.LogOpts{LoggerName: "OSConfigAgent"}
-	if config.Stdout() {
-		opts.Writers = []io.Writer{os.Stdout}
-	}
-	if runtime.GOOS == "windows" {
-		opts.Writers = append(opts.Writers, &serialPort{"COM1"})
-	}
-
-	// If this call to SetConfig fails (like a metadata error) we can't continue.
-	if err := config.SetConfig(); err != nil {
-		logger.Init(ctx, opts)
-		logger.Fatalf(err.Error())
-	}
-	opts.Debug = config.Debug()
-	opts.ProjectName = config.ProjectID()
-
-	if err := logger.Init(ctx, opts); err != nil {
-		fmt.Printf("Error initializing logger: %v", err)
-		os.Exit(1)
-	}
-	defer logger.Close()
-
-	obtainLock()
-
-	logger.DeferredFatalFuncs = append(logger.DeferredFatalFuncs, deferredFuncs...)
-	defer func() {
-		for _, f := range deferredFuncs {
-			f()
-		}
-	}()
-
-	packages.DebugLogger = log.New(&logWriter{}, "", 0)
-
-	logger.Infof("OSConfig Agent (version %s) started.", config.Version())
-
-	ctx, cncl := context.WithCancel(ctx)
+	ctx, cncl := context.WithCancel(context.Background())
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
@@ -178,35 +206,10 @@ func main() {
 		}
 	}()
 
-	defer func() {
-		logger.Infof("OSConfig Agent (version %s) shutting down.", config.Version())
-	}()
-
 	switch action := flag.Arg(0); action {
 	case "", "run":
 		runService(ctx)
-		return
-	case "noservice":
-		run(ctx)
-		return
-	case "inventory", "osinventory":
-		inventory.Run()
-		tasker.Close()
-		return
-	case "gp", "policies", "guestpolicies", "ospackage":
-		policies.Run(ctx)
-		tasker.Close()
-		return
-	case "w", "waitfortasknotification", "ospatch":
-		client, err := agentendpoint.NewClient(ctx)
-		if err != nil {
-			logger.Fatalf(err.Error())
-		}
-		client.WaitForTaskNotification(ctx)
-		select {
-		case <-ctx.Done():
-		}
 	default:
-		logger.Fatalf("Unknown arg %q", action)
+		run(ctx)
 	}
 }
