@@ -157,7 +157,10 @@ func runLoop(ctx context.Context) {
 			logger.Infof("Restart required marker file exists, beginning agent shutdown, waiting for tasks to complete.")
 			tasker.Close()
 			logger.Infof("All tasks completed, stopping agent.")
-			return
+			for _, f := range deferredFuncs {
+				f()
+			}
+			os.Exit(2)
 		}
 
 		if config.TaskNotificationEnabled() && (taskNotificationClient == nil || taskNotificationClient.Closed()) {
