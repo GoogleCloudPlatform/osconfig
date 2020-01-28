@@ -88,7 +88,7 @@ func getStringFileInfo(block []byte, langCodePage, name string) (string, error) 
 	return syscall.UTF16ToString(u16s), nil
 }
 
-func getVersion(block []byte, langCodePage string) (string, error) {
+func getVersion(block []byte, langCodePage string) (string, string, error) {
 	ver, err := getStringFileInfo(block, langCodePage, "FileVersion")
 	if err != nil {
 		return "", "", err
@@ -104,7 +104,7 @@ func getKernelInfo() (string, string, error) {
 	}
 	path := filepath.Join(root, "System32", "ntoskrnl.exe")
 	if _, err := os.Stat(path); err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	pPtr := unsafe.Pointer(syscall.StringToUTF16Ptr(path))
@@ -112,7 +112,7 @@ func getKernelInfo() (string, string, error) {
 	size, _, _ := procGetFileVersionInfoSizeW.Call(
 		uintptr(pPtr))
 	if size <= 0 {
-		return "", errors.New("GetFileVersionInfoSize call failed, data size can not be 0")
+		return "", "", errors.New("GetFileVersionInfoSize call failed, data size can not be 0")
 	}
 
 	info := make([]byte, size)
@@ -121,13 +121,13 @@ func getKernelInfo() (string, string, error) {
 		0,
 		uintptr(len(info)),
 		uintptr(unsafe.Pointer(&info[0]))); ret == 0 {
-		return "", errors.New("zero return code from GetFileVersionInfoW indicates failure")
+		return "", "", errors.New("zero return code from GetFileVersionInfoW indicates failure")
 	}
 
 	// This should be something like 040904b0 for US English UTF16LE.
 	langCodePage, err := getTranslation(info)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	return getVersion(info, langCodePage)

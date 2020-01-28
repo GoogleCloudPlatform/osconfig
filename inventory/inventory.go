@@ -42,6 +42,7 @@ type InstanceInventory struct {
 	Version              string
 	Architecture         string
 	KernelVersion        string
+	KernelRelease        string
 	OSConfigAgentVersion string
 	InstalledPackages    packages.Packages
 	PackageUpdates       packages.Packages
@@ -97,6 +98,7 @@ func Get() *InstanceInventory {
 	hs.ShortName = oi.ShortName
 	hs.Version = oi.Version
 	hs.KernelVersion = oi.KernelVersion
+	hs.KernelRelease = oi.KernelRelease
 	hs.Architecture = oi.Architecture
 	hs.OSConfigAgentVersion = config.Version()
 	hs.InstalledPackages = installedPackages
