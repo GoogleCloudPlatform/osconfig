@@ -21,8 +21,6 @@ override_dh_auto_install:
 	install -d debian/google-osconfig-agent/etc/osconfig
 	install -d debian/google-osconfig-agent/lib/systemd/system
 	install -p -m 0644 *.service debian/google-osconfig-agent/lib/systemd/system/
-	install -d debian/google-osconfig-agent/lib/systemd/system-preset/
-	install -p -m 0644 *.preset debian/google-osconfig-agent/lib/systemd/system-preset/
 
 override_dh_golang:
 	# We don't use any packaged dependencies, so skip dh_golang step.
@@ -33,7 +31,7 @@ override_dh_auto_test:
 override_dh_auto_build:
 	dh_auto_build -O--buildsystem=golang -- -ldflags="-s -w -X main.version=$(VERSION)" -mod=readonly
 
-override_dh_installsystemd:
-	dh_installsystemd --no-restart-on-upgrade --no-restart-after-upgrade
+override_dh_installinit:
 
-override_dh_dwz:
+override_dh_systemd_start:
+	dh_systemd_start --no-restart-after-upgrade --no-restart-on-upgrade
