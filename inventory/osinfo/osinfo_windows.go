@@ -64,13 +64,13 @@ func getTranslation(block []byte) (string, error) {
 }
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/ms647464(v=vs.85).aspx
-func getFileVersion(block []byte, langCodePage string) (string, error) {
+func getStringFileInfo(block []byte, langCodePage, name string) (string, error) {
 	var start uint
 	var length uint
 	blockStart := uintptr(unsafe.Pointer(&block[0]))
 	if ret, _, _ := procVerQueryValueW.Call(
 		blockStart,
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(fmt.Sprintf(`\StringFileInfo\%s\FileVersion`, langCodePage)))),
+		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(fmt.Sprintf(`\StringFileInfo\%s\%s`, langCodePage, name)))),
 		uintptr(unsafe.Pointer(&start)),
 		uintptr(unsafe.Pointer(&length))); ret == 0 {
 		return "", errors.New("zero return code from VerQueryValueW indicates failure")
@@ -88,14 +88,23 @@ func getFileVersion(block []byte, langCodePage string) (string, error) {
 	return syscall.UTF16ToString(u16s), nil
 }
 
-func getKernelVersion() (string, error) {
+func getVersion(block []byte, langCodePage string) (string, string, error) {
+	ver, err := getStringFileInfo(block, langCodePage, "FileVersion")
+	if err != nil {
+		return "", "", err
+	}
+	rel, err := getStringFileInfo(block, langCodePage, "ProductVersion")
+	return ver, rel, err
+}
+
+func getKernelInfo() (string, string, error) {
 	root := os.Getenv("SystemRoot")
 	if root == "" {
 		root = `C:\Windows`
 	}
 	path := filepath.Join(root, "System32", "ntoskrnl.exe")
 	if _, err := os.Stat(path); err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	pPtr := unsafe.Pointer(syscall.StringToUTF16Ptr(path))
@@ -103,7 +112,7 @@ func getKernelVersion() (string, error) {
 	size, _, _ := procGetFileVersionInfoSizeW.Call(
 		uintptr(pPtr))
 	if size <= 0 {
-		return "", errors.New("GetFileVersionInfoSize call failed, data size can not be 0")
+		return "", "", errors.New("GetFileVersionInfoSize call failed, data size can not be 0")
 	}
 
 	info := make([]byte, size)
@@ -112,16 +121,16 @@ func getKernelVersion() (string, error) {
 		0,
 		uintptr(len(info)),
 		uintptr(unsafe.Pointer(&info[0]))); ret == 0 {
-		return "", errors.New("zero return code from GetFileVersionInfoW indicates failure")
+		return "", "", errors.New("zero return code from GetFileVersionInfoW indicates failure")
 	}
 
 	// This should be something like 040904b0 for US English UTF16LE.
 	langCodePage, err := getTranslation(info)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return getFileVersion(info, langCodePage)
+	return getVersion(info, langCodePage)
 }
 
 // Get reports OSInfo.
@@ -133,11 +142,12 @@ func Get() (*OSInfo, error) {
 
 	oi := &OSInfo{ShortName: Windows, LongName: i.Caption, Version: i.Version, Architecture: Architecture(runtime.GOARCH)}
 
-	kVersion, err := getKernelVersion()
+	kVersion, kRelease, err := getKernelInfo()
 	if err != nil {
 		return oi, err
 	}
 	oi.KernelVersion = kVersion
+	oi.KernelRelease = kRelease
 
 	hn, err := os.Hostname()
 	if err != nil {

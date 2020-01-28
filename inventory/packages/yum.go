@@ -136,7 +136,6 @@ func parseYumUpdates(data []byte) []PkgInfo {
 		if len(pkg) == 0 {
 			continue
 		}
-		fmt.Println(string(pkg[0]))
 		// Continue until we see the installing/upgrading section.
 		// Yum has this as Updating, dnf is Upgrading.
 		if string(pkg[0]) == "Upgrading:" || string(pkg[0]) == "Updating:" || string(pkg[0]) == "Installing:" {

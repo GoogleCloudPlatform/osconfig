@@ -116,6 +116,7 @@ func Get() (*OSInfo, error) {
 	oi.Hostname = string(bytes.TrimRight(uts.Nodename[:], "\x00"))
 	oi.Architecture = Architecture(string(bytes.TrimRight(uts.Machine[:], "\x00")))
 	oi.KernelVersion = string(bytes.TrimRight(uts.Version[:], "\x00"))
+	oi.KernelRelease = string(bytes.TrimRight(uts.Release[:], "\x00"))
 
 	return oi, nil
 }

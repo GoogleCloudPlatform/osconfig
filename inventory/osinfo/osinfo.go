@@ -24,7 +24,7 @@ const (
 
 // OSInfo describes an operating system.
 type OSInfo struct {
-	Hostname, LongName, ShortName, Version, KernelVersion, Architecture string
+	Hostname, LongName, ShortName, Version, KernelVersion, KernelRelease, Architecture string
 }
 
 // Architecture attempts to standardize architecture naming.
