@@ -92,7 +92,7 @@ chmod +x ./linux_local_pre_patch_script.sh
 		machineType: "n1-standard-4",
 	}
 	aptSetup = &patchTestSetup{
-		assertTimeout: 5 * time.Minute,
+		assertTimeout: 10 * time.Minute,
 		metadata: []*computeApi.MetadataItems{
 			compute.BuildInstanceMetadataItem("startup-script", linuxRecordBoot+utils.InstallOSConfigDeb()+linuxLocalPrePatchScript),
 			enablePatch,
@@ -100,7 +100,7 @@ chmod +x ./linux_local_pre_patch_script.sh
 		machineType: "n1-standard-2",
 	}
 	el6Setup = &patchTestSetup{
-		assertTimeout: 5 * time.Minute,
+		assertTimeout: 15 * time.Minute,
 		metadata: []*computeApi.MetadataItems{
 			compute.BuildInstanceMetadataItem("startup-script", linuxRecordBoot+utils.InstallOSConfigEL6()+linuxLocalPrePatchScript),
 			enablePatch,
@@ -108,7 +108,7 @@ chmod +x ./linux_local_pre_patch_script.sh
 		machineType: "n1-standard-2",
 	}
 	el7Setup = &patchTestSetup{
-		assertTimeout: 5 * time.Minute,
+		assertTimeout: 15 * time.Minute,
 		metadata: []*computeApi.MetadataItems{
 			compute.BuildInstanceMetadataItem("startup-script", linuxRecordBoot+utils.InstallOSConfigEL7()+linuxLocalPrePatchScript),
 			enablePatch,
@@ -116,7 +116,7 @@ chmod +x ./linux_local_pre_patch_script.sh
 		machineType: "n1-standard-2",
 	}
 	el8Setup = &patchTestSetup{
-		assertTimeout: 5 * time.Minute,
+		assertTimeout: 15 * time.Minute,
 		metadata: []*computeApi.MetadataItems{
 			compute.BuildInstanceMetadataItem("startup-script", linuxRecordBoot+utils.InstallOSConfigEL8()+linuxLocalPrePatchScript),
 			enablePatch,
@@ -124,7 +124,7 @@ chmod +x ./linux_local_pre_patch_script.sh
 		machineType: "n1-standard-2",
 	}
 	suseSetup = &patchTestSetup{
-		assertTimeout: 10 * time.Minute,
+		assertTimeout: 15 * time.Minute,
 		metadata: []*computeApi.MetadataItems{
 			compute.BuildInstanceMetadataItem("startup-script", linuxRecordBoot+utils.InstallOSConfigSUSE()+linuxLocalPrePatchScript),
 			enablePatch,
