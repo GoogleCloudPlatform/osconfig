@@ -28,10 +28,6 @@ import (
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
-func initPatch() {
-	ospatch.DisableAutoUpdates()
-}
-
 func systemRebootRequired() (bool, error) {
 	return ospatch.SystemRebootRequired()
 }

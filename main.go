@@ -33,6 +33,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
+	"github.com/GoogleCloudPlatform/osconfig/ospatch"
 	"github.com/GoogleCloudPlatform/osconfig/policies"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
 	"github.com/tarm/serial"
@@ -164,6 +165,8 @@ func runLoop(ctx context.Context) {
 		}
 
 		if config.TaskNotificationEnabled() && (taskNotificationClient == nil || taskNotificationClient.Closed()) {
+			ospatch.DisableAutoUpdates()
+
 			// Start WaitForTaskNotification if we need to.
 			taskNotificationClient, err = agentendpoint.NewClient(ctx)
 			if err != nil {

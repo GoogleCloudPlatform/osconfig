@@ -47,10 +47,10 @@ func buildPkgInstallTestSetup(name, image, pkgManager, key string) *guestPolicyT
 	assertTimeout := 120 * time.Second
 	testName := packageInstallFunction
 	packageName := "ed"
-	machineType := "n1-standard-2"
+	machineType := "e2-standard-2"
 	if pkgManager == "googet" {
 		packageName = "cowsay"
-		machineType = "n1-standard-4"
+		machineType = "e2-standard-4"
 	}
 	if strings.Contains(image, "rhel-6") || strings.Contains(image, "centos-6") {
 		packageName = "cowsay"
@@ -86,10 +86,10 @@ func buildPkgUpdateTestSetup(name, image, pkgManager, key string) *guestPolicyTe
 	assertTimeout := 240 * time.Second
 	testName := packageUpdateFunction
 	packageName := "ed"
-	machineType := "n1-standard-2"
+	machineType := "e2-standard-2"
 	if pkgManager == "googet" {
 		packageName = "cowsay"
-		machineType = "n1-standard-4"
+		machineType = "e2-standard-4"
 	}
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
 	gp := &osconfigpb.GuestPolicy{
@@ -121,10 +121,10 @@ func buildPkgDoesNotUpdateTestSetup(name, image, pkgManager, key string) *guestP
 	assertTimeout := 240 * time.Second
 	testName := packageNoUpdateFunction
 	packageName := "ed"
-	machineType := "n1-standard-2"
+	machineType := "e2-standard-2"
 	if pkgManager == "googet" {
 		packageName = "cowsay"
-		machineType = "n1-standard-4"
+		machineType = "e2-standard-4"
 	}
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
@@ -157,10 +157,10 @@ func buildPkgRemoveTestSetup(name, image, pkgManager, key string) *guestPolicyTe
 	assertTimeout := 180 * time.Second
 	testName := packageRemovalFunction
 	packageName := "vim"
-	machineType := "n1-standard-2"
+	machineType := "e2-standard-2"
 	if pkgManager == "googet" {
 		packageName = "certgen"
-		machineType = "n1-standard-4"
+		machineType = "e2-standard-4"
 	}
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
@@ -193,9 +193,9 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *g
 	assertTimeout := 120 * time.Second
 	packageName := "osconfig-agent-test"
 	testName := packageInstallFromNewRepoFunction
-	machineType := "n1-standard-2"
+	machineType := "e2-standard-2"
 	if pkgManager == "googet" {
-		machineType = "n1-standard-4"
+		machineType = "e2-standard-4"
 	}
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
@@ -269,9 +269,9 @@ func buildRecipeInstallTestSetup(name, image, pkgManager, key string) *guestPoli
 	assertTimeout := 120 * time.Second
 	testName := recipeInstallFunction
 	recipeName := "testrecipe"
-	machineType := "n1-standard-2"
+	machineType := "e2-standard-2"
 	if strings.HasPrefix(image, "windows") {
-		machineType = "n1-standard-4"
+		machineType = "e2-standard-4"
 	}
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
@@ -306,7 +306,10 @@ func buildRecipeStepsTestSetup(name, image, pkgManager, key string) *guestPolicy
 	assertTimeout := 120 * time.Second
 	testName := recipeStepsFunction
 	recipeName := "testrecipe"
-	machineType := "n1-standard-2"
+	machineType := "e2-standard-2"
+	if strings.HasPrefix(image, "windows") {
+		machineType = "e2-standard-4"
+	}
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
 	artifacts := []*osconfigpb.SoftwareRecipe_Artifact{
@@ -472,9 +475,9 @@ func buildMetadataPolicyTestSetup(name, image, pkgManager, key string) *guestPol
 	assertTimeout := 60 * time.Second
 	testName := metadataPolicyFunction
 	recipeName := "testrecipe"
-	machineType := "n1-standard-2"
+	machineType := "e2-standard-2"
 	if strings.HasPrefix(image, "windows") {
-		machineType = "n1-standard-4"
+		machineType = "e2-standard-4"
 	}
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
