@@ -38,37 +38,37 @@ var (
 		shortName:   "windows",
 
 		startup:     compute.BuildInstanceMetadataItem("windows-startup-script-ps1", utils.InstallOSConfigGooGet()),
-		machineType: "n1-standard-4",
+		machineType: "e2-standard-4",
 	}
 
 	aptSetup = &inventoryTestSetup{
 		packageType: []string{"deb"},
 		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigDeb()),
-		machineType: "n1-standard-2",
+		machineType: "e2-standard-2",
 	}
 
 	el6Setup = &inventoryTestSetup{
 		packageType: []string{"rpm"},
 		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigEL6()),
-		machineType: "n1-standard-2",
+		machineType: "e2-standard-2",
 	}
 
 	el7Setup = &inventoryTestSetup{
 		packageType: []string{"rpm"},
 		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigEL7()),
-		machineType: "n1-standard-2",
+		machineType: "e2-standard-2",
 	}
 
 	el8Setup = &inventoryTestSetup{
 		packageType: []string{"rpm"},
 		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigEL8()),
-		machineType: "n1-standard-2",
+		machineType: "e2-standard-2",
 	}
 
 	suseSetup = &inventoryTestSetup{
 		packageType: []string{"zypper"},
 		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigSUSE()),
-		machineType: "n1-standard-2",
+		machineType: "e2-standard-2",
 	}
 )
 
