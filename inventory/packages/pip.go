@@ -15,10 +15,9 @@
 package packages
 
 import (
-	"fmt"
+	"encoding/json"
 	"os/exec"
 	"runtime"
-	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
@@ -26,7 +25,7 @@ import (
 var (
 	pip string
 
-	pipListArgs     = []string{"list", "--format=legacy"}
+	pipListArgs     = []string{"list", "--format=json"}
 	pipOutdatedArgs = append(pipListArgs, "--outdated")
 )
 
@@ -37,32 +36,33 @@ func init() {
 	PipExists = util.Exists(pip)
 }
 
+type pipUpdatesPkg struct {
+	Name          string `json:"name"`
+	LatestVersion string `json:"latest_version"`
+}
+
+type pipInstalledPkg struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+}
+
 // PipUpdates queries for all available pip updates.
 func PipUpdates() ([]PkgInfo, error) {
 	out, err := run(exec.Command(pip, pipOutdatedArgs...))
 	if err != nil {
 		return nil, err
 	}
-	/*
-	   foo (4.5.3) - Latest: 4.6.0 [repo]
-	   bar (1.3) - Latest: 1.4 [repo]
-	   ...
-	*/
 
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
-	if len(lines) == 0 {
-		return nil, nil
+	var pipUpdates []pipUpdatesPkg
+	if err := json.Unmarshal(out, &pipUpdates); err != nil {
+		return nil, err
 	}
 
 	var pkgs []PkgInfo
-	for _, ln := range lines {
-		pkg := strings.Fields(ln)
-		if len(pkg) != 6 {
-			DebugLogger.Printf("%q does not represent a pip update", ln)
-			continue
-		}
-		pkgs = append(pkgs, PkgInfo{Name: pkg[0], Arch: noarch, Version: pkg[4]})
+	for _, pkg := range pipUpdates {
+		pkgs = append(pkgs, PkgInfo{Name: pkg.Name, Arch: noarch, Version: pkg.LatestVersion})
 	}
+
 	return pkgs, nil
 }
 
@@ -73,27 +73,15 @@ func InstalledPipPackages() ([]PkgInfo, error) {
 		return nil, err
 	}
 
-	/*
-	   foo (1.2.3)
-	   bar (1.2.3)
-	   ...
-	*/
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
-
-	if len(lines) == 0 {
-		fmt.Println("No python packages installed.")
-		return nil, nil
+	var pipUpdates []pipInstalledPkg
+	if err := json.Unmarshal(out, &pipUpdates); err != nil {
+		return nil, err
 	}
 
 	var pkgs []PkgInfo
-	for _, ln := range lines[2:] {
-		pkg := strings.Fields(ln)
-		if len(pkg) != 2 {
-			DebugLogger.Printf("'%s' does not represent a python packages\n", ln)
-			continue
-		}
-		ver := strings.Trim(pkg[1], "()")
-		pkgs = append(pkgs, PkgInfo{Name: pkg[0], Arch: noarch, Version: ver})
+	for _, pkg := range pipUpdates {
+		pkgs = append(pkgs, PkgInfo{Name: pkg.Name, Arch: noarch, Version: pkg.Version})
 	}
+
 	return pkgs, nil
 }

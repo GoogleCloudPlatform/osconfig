@@ -69,7 +69,6 @@ func GetPackageUpdates() (Packages, error) {
 		if err != nil {
 			msg := fmt.Sprintf("error getting gem updates: %v", err)
 			DebugLogger.Println("Error:", msg)
-			errs = append(errs, msg)
 		} else {
 			pkgs.Gem = gem
 		}
@@ -79,7 +78,6 @@ func GetPackageUpdates() (Packages, error) {
 		if err != nil {
 			msg := fmt.Sprintf("error getting pip updates: %v", err)
 			DebugLogger.Println("Error:", msg)
-			errs = append(errs, msg)
 		} else {
 			pkgs.Pip = pip
 		}

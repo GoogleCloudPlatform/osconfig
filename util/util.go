@@ -67,6 +67,9 @@ func NormPath(path string) (string, error) {
 
 // Exists check for the existence of a file
 func Exists(name string) bool {
+	if name == "" {
+		return false
+	}
 	if _, err := os.Stat(name); err != nil {
 		return false
 	}
