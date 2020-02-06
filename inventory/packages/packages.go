@@ -59,7 +59,7 @@ type Packages struct {
 	Apt           []PkgInfo     `json:"apt,omitempty"`
 	Deb           []PkgInfo     `json:"deb,omitempty"`
 	Zypper        []PkgInfo     `json:"zypper,omitempty"`
-	ZypperPatches []ZypperPatch `json:"Zypper_patches,omitempty"`
+	ZypperPatches []ZypperPatch `json:"zypperPatches,omitempty"`
 	Gem           []PkgInfo     `json:"gem,omitempty"`
 	Pip           []PkgInfo     `json:"pip,omitempty"`
 	GooGet        []PkgInfo     `json:"googet,omitempty"`
