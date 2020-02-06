@@ -1,3 +1,3 @@
-# Google OSConfig Agent
+# Google OS Config Agent
 
-This repository contains the OSConfig agent and associated end to end tests.
+This repository contains the OS Config agent and associated end to end tests.
