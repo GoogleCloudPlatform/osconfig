@@ -45,7 +45,7 @@ var (
 	testProjectIDs         = flag.String("test_project_ids", "", "test project ids")
 
 	// OutDir is the out directory to use.
-	OutDir = flag.String("out_dir", "/tmp", "junit xml directory")
+	OutDir = flag.String("out_dir", "/tmp", "artifact directory")
 )
 
 func init() {

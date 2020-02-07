@@ -95,18 +95,13 @@ func runGatherInventoryTest(ctx context.Context, testSetup *inventoryTestSetup, 
 	zone := testProjectConfig.AcquireZone()
 	defer testProjectConfig.ReleaseZone(zone)
 
-	inst, err := utils.CreateComputeInstance(metadataItems, computeClient, "n1-standard-2", testSetup.image, testSetup.hostname, testProjectConfig.TestProjectID, zone, testProjectConfig.ServiceAccountEmail, testProjectConfig.ServiceAccountScopes)
+	inst, err := utils.CreateComputeInstance(metadataItems, computeClient, testSetup.machineType, testSetup.image, testSetup.hostname, testProjectConfig.TestProjectID, zone, testProjectConfig.ServiceAccountEmail, testProjectConfig.ServiceAccountScopes)
 	if err != nil {
 		testCase.WriteFailure("Error creating instance: %v", err)
 		return nil, false
 	}
 	defer inst.Cleanup()
-
-	storageClient, err := gcpclients.GetStorageClient()
-	if err != nil {
-		testCase.WriteFailure("Error getting storage client: %v", err)
-	}
-	defer inst.RecordSerialOutput(ctx, storageClient, path.Join(testSuiteName, config.LogsPath()), config.LogBucket(), 1)
+	defer inst.RecordSerialOutput(ctx, path.Join(*config.OutDir, testSuiteName), 1)
 
 	testCase.Logf("Waiting for agent install to complete")
 	if _, err := inst.WaitForGuestAttributes("osconfig_tests/install_done", 5*time.Second, 10*time.Minute); err != nil {
