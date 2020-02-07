@@ -34,10 +34,7 @@ func PopulateClients(ctx context.Context) error {
 	if err := createComputeClient(ctx); err != nil {
 		return err
 	}
-	if err := createOsConfigClientV1beta(ctx); err != nil {
-		return err
-	}
-	return createStorageClient(ctx)
+	return createOsConfigClientV1beta(ctx)
 }
 
 func createComputeClient(ctx context.Context) error {
