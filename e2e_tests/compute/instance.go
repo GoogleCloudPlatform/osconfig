@@ -16,14 +16,13 @@
 package compute
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"path"
 	"time"
 
-	"cloud.google.com/go/storage"
 	daisyCompute "github.com/GoogleCloudPlatform/compute-image-tools/daisy/compute"
 	computeApiBeta "google.golang.org/api/compute/v0.beta"
 	computeApi "google.golang.org/api/compute/v1"
@@ -104,9 +103,12 @@ func (i *Instance) AddMetadata(mdi ...*computeApi.MetadataItems) error {
 }
 
 // RecordSerialOutput stores the serial output of an instance to GCS bucket
-func (i *Instance) RecordSerialOutput(ctx context.Context, storageClient *storage.Client, logsPath, bucket string, port int64) {
-	logsObj := path.Join(logsPath, fmt.Sprintf("%s-serial-port%d.log", i.Name, port))
-	var buf bytes.Buffer
+func (i *Instance) RecordSerialOutput(ctx context.Context, logsPath string, port int64) {
+	os.MkdirAll(logsPath, 0770)
+	f, err := os.Create(path.Join(logsPath, fmt.Sprintf("%s-serial-port%d.log", i.Name, port)))
+	if err != nil {
+		fmt.Printf("Instance %q: error creating serial log file: %s", i.Name, err)
+	}
 	resp, err := i.client.GetSerialPortOutput(path.Base(i.Project), path.Base(i.Zone), i.Name, port, 0)
 	if err != nil {
 		// Instance is stopped or stopping.
@@ -116,18 +118,12 @@ func (i *Instance) RecordSerialOutput(ctx context.Context, storageClient *storag
 		}
 		return
 	}
-	wc := storageClient.Bucket(bucket).Object(logsObj).NewWriter(ctx)
-	buf.WriteString(resp.Contents)
-	wc.ContentType = "text/plain"
-	if _, err := wc.Write(buf.Bytes()); err != nil {
-		fmt.Printf("Instance %q: error writing log to GCS: %v", i.Name, err)
-		return
+	if _, err := f.Write([]byte(resp.Contents)); err != nil {
+		fmt.Printf("Instance %q: error writing serial log file: %s", i.Name, err)
 	}
-	if err := wc.Close(); err != nil {
-		fmt.Printf("Instance %q: error saving log to GCS: %v", i.Name, err)
-		return
+	if err := f.Close(); err != nil {
+		fmt.Printf("Instance %q: error closing serial log file: %s", i.Name, err)
 	}
-
 }
 
 func isTerminal(status string) bool {

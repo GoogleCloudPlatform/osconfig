@@ -29,6 +29,7 @@ import (
 
 var (
 	yumInstallAgent = `
+sleep 10
 systemctl stop google-osconfig-agent
 stop -q -n google-osconfig-agent  # required for EL6
 while ! yum install -y google-osconfig-agent; do
