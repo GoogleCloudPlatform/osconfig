@@ -93,6 +93,9 @@ EOM`
 
 // InstallOSConfigDeb installs the osconfig agent on deb based systems.
 func InstallOSConfigDeb() string {
+	if config.AgentRepo() == "" {
+		return curlPost
+	}
 	return fmt.Sprintf(`systemctl stop google-osconfig-agent
 dpkg --configure -a
 echo 'deb http://packages.cloud.google.com/apt google-osconfig-agent-%s main' >> /etc/apt/sources.list
@@ -104,6 +107,9 @@ systemctl start google-osconfig-agent`+curlPost, config.AgentRepo())
 
 // InstallOSConfigGooGet installs the osconfig agent on Windows systems.
 func InstallOSConfigGooGet() string {
+	if config.AgentRepo() == "" {
+		return windowsPost
+	}
 	if config.AgentRepo() == "stable" {
 		return `c:\programdata\googet\googet.exe -noconfirm remove google-osconfig-agent
 c:\programdata\googet\googet.exe -noconfirm install google-osconfig-agent` + windowsPost
@@ -115,6 +121,9 @@ c:\programdata\googet\googet.exe -noconfirm install -sources https://packages.cl
 
 // InstallOSConfigSUSE installs the osconfig agent on suse systems.
 func InstallOSConfigSUSE() string {
+	if config.AgentRepo() == "" {
+		return ""
+	}
 	if config.AgentRepo() == "staging" || config.AgentRepo() == "stable" {
 		return fmt.Sprintf(zypperRepoSetup+zypperInstallAgent, "el8", config.AgentRepo(), 1)
 	}
@@ -123,6 +132,9 @@ func InstallOSConfigSUSE() string {
 
 // InstallOSConfigEL8 installs the osconfig agent on el8 based systems.
 func InstallOSConfigEL8() string {
+	if config.AgentRepo() == "" {
+		return curlPost
+	}
 	if config.AgentRepo() == "stable" {
 		return yumInstallAgent
 	}
@@ -134,6 +146,9 @@ func InstallOSConfigEL8() string {
 
 // InstallOSConfigEL7 installs the osconfig agent on el7 based systems.
 func InstallOSConfigEL7() string {
+	if config.AgentRepo() == "" {
+		return curlPost
+	}
 	if config.AgentRepo() == "stable" {
 		return yumInstallAgent
 	}
@@ -145,6 +160,9 @@ func InstallOSConfigEL7() string {
 
 // InstallOSConfigEL6 installs the osconfig agent on el6 based systems.
 func InstallOSConfigEL6() string {
+	if config.AgentRepo() == "" {
+		return curlPost
+	}
 	if config.AgentRepo() == "stable" {
 		return "sleep 10" + yumInstallAgent
 	}
