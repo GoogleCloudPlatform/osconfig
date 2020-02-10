@@ -30,7 +30,7 @@ var (
 	prodEndpoint           = "osconfig.googleapis.com:443"
 	endpoint               = flag.String("endpoint", prodEndpoint, "API endpoint to use for the tests")
 	oauthDefault           = flag.String("local_oauth", "", "path to service creds file")
-	agentRepo              = flag.String("agent_repo", "unstable", "repo to pull agent from (unstable, staging, or stable)")
+	agentRepo              = flag.String("agent_repo", "", "repo to pull agent from (unstable, staging, or stable, leave blank for no agent install)")
 	bucketDefault          = "osconfig-agent-end2end-tests"
 	logPushIntervalDefault = 3 * time.Second
 	logsPath               = fmt.Sprintf("logs-%s", time.Now().Format("2006-01-02-15:04:05"))
