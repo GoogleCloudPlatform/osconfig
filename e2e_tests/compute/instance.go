@@ -19,9 +19,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"path"
 	"time"
-	"os"
 
 	daisyCompute "github.com/GoogleCloudPlatform/compute-image-tools/daisy/compute"
 	computeApiBeta "google.golang.org/api/compute/v0.beta"
