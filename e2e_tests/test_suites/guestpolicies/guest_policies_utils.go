@@ -65,7 +65,7 @@ func getStartupScript(image, pkgManager, packageName string) *computeApi.Metadat
 
 	switch pkgManager {
 	case "apt":
-		ss = `systemctl stop google-osconfig-agent
+		ss = `
 apt-get -y remove %[3]s
 %[1]s
 %[2]s
@@ -84,8 +84,7 @@ done`
 		key = "startup-script"
 
 	case "yum":
-		ss = `systemctl stop google-osconfig-agent
-stop -q -n google-osconfig-agent  # required for EL6
+		ss = `
 while ! yum -y remove %[3]s; do
   if [[ n -gt 5 ]]; then
     exit 1
@@ -109,7 +108,7 @@ done`
 		key = "startup-script"
 
 	case "googet":
-		ss = `Stop-Service google_osconfig_agent
+		ss = `
 googet addrepo test https://packages.cloud.google.com/yuck/repos/osconfig-agent-test-repository
 %s
 %s
@@ -127,7 +126,7 @@ while(1) {
 		key = "windows-startup-script-ps1"
 
 	case "zypper":
-		ss = `systemctl stop google-osconfig-agent
+		ss = `
 zypper -n remove %[3]s
 %[1]s
 %[2]s
@@ -159,7 +158,7 @@ func getUpdateStartupScript(image, pkgManager string) *computeApi.MetadataItems 
 
 	switch pkgManager {
 	case "apt":
-		ss = `systemctl stop google-osconfig-agent
+		ss = `
 echo 'Adding test repo'
 echo 'deb http://packages.cloud.google.com/apt osconfig-agent-test-repository main' >> /etc/apt/sources.list
 curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
