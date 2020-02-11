@@ -43,6 +43,7 @@ systemctl start google-osconfig-agent
 start -q -n google-osconfig-agent  # required for EL6` + curlPost
 
 	zypperInstallAgent = `
+sleep 10
 systemctl stop google-osconfig-agent
 while ! zypper -n -i --no-gpg-checks install google-osconfig-agent; do
 if [[ n -gt 2 ]]; then
@@ -96,8 +97,9 @@ func InstallOSConfigDeb() string {
 	if config.AgentRepo() == "" {
 		return curlPost
 	}
-	return fmt.Sprintf(`systemctl stop google-osconfig-agent
-dpkg --configure -a
+	return fmt.Sprintf(`
+sleep 10
+systemctl stop google-osconfig-agent
 echo 'deb http://packages.cloud.google.com/apt google-osconfig-agent-%s main' >> /etc/apt/sources.list
 curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 apt-get update
@@ -164,12 +166,12 @@ func InstallOSConfigEL6() string {
 		return curlPost
 	}
 	if config.AgentRepo() == "stable" {
-		return "sleep 10" + yumInstallAgent
+		return yumInstallAgent
 	}
 	if config.AgentRepo() == "staging" {
-		return fmt.Sprintf("sleep 10"+yumRepoSetup+yumInstallAgent, "el6", config.AgentRepo(), 1)
+		return fmt.Sprintf(yumRepoSetup+yumInstallAgent, "el6", config.AgentRepo(), 1)
 	}
-	return fmt.Sprintf("sleep 10"+yumRepoSetup+yumInstallAgent, "el6", config.AgentRepo(), 0)
+	return fmt.Sprintf(yumRepoSetup+yumInstallAgent, "el6", config.AgentRepo(), 0)
 }
 
 // HeadAptImages is a map of names to image paths for public image families that use APT.
