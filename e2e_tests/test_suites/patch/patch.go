@@ -241,11 +241,11 @@ func runExecutePatchJobTest(ctx context.Context, testCase *junitxml.TestCase, te
 		return
 	}
 
-	testCase.Logf("Creating instance %q with image %q", testSetup.instanceName, testSetup.image)
 	name := fmt.Sprintf("patch-test-%s-%s-%s", path.Base(testSetup.testName), testSuffix, utils.RandString(5))
 	testProjectConfig := testconfig.GetProject()
 	zone := testProjectConfig.AcquireZone()
 	defer testProjectConfig.ReleaseZone(zone)
+	testCase.Logf("Creating instance %q with image %q", name, testSetup.image)
 	inst, err := utils.CreateComputeInstance(testSetup.metadata, computeClient, testSetup.machineType, testSetup.image, name, testProjectConfig.TestProjectID, zone, testProjectConfig.ServiceAccountEmail, testProjectConfig.ServiceAccountScopes)
 	if err != nil {
 		testCase.WriteFailure("Error creating instance: %v", utils.GetStatusFromError(err))
@@ -305,11 +305,11 @@ func runRebootPatchTest(ctx context.Context, testCase *junitxml.TestCase, testSe
 		return
 	}
 
-	testCase.Logf("Creating instance %q with image %q", testSetup.instanceName, testSetup.image)
 	name := fmt.Sprintf("patch-reboot-%s-%s-%s", path.Base(testSetup.testName), testSuffix, utils.RandString(5))
 	testProjectConfig := testconfig.GetProject()
 	zone := testProjectConfig.AcquireZone()
 	defer testProjectConfig.ReleaseZone(zone)
+	testCase.Logf("Creating instance %q with image %q", name, testSetup.image)
 	inst, err := utils.CreateComputeInstance(testSetup.metadata, computeClient, testSetup.machineType, testSetup.image, name, testProjectConfig.TestProjectID, zone, testProjectConfig.ServiceAccountEmail, testProjectConfig.ServiceAccountScopes)
 	if err != nil {
 		testCase.WriteFailure("Error creating instance: %v", utils.GetStatusFromError(err))

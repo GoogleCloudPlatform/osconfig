@@ -84,7 +84,6 @@ func runGatherInventoryTest(ctx context.Context, testSetup *inventoryTestSetup, 
 		return nil, false
 	}
 
-	testCase.Logf("Creating instance %q with image %q", testSetup.instanceName, testSetup.image)
 	testSetup.hostname = fmt.Sprintf("inventory-test-%s-%s", path.Base(testSetup.testName), utils.RandString(5))
 
 	var metadataItems []*api.MetadataItems
@@ -95,6 +94,7 @@ func runGatherInventoryTest(ctx context.Context, testSetup *inventoryTestSetup, 
 	zone := testProjectConfig.AcquireZone()
 	defer testProjectConfig.ReleaseZone(zone)
 
+	testCase.Logf("Creating instance %q with image %q", testSetup.hostname, testSetup.image)
 	inst, err := utils.CreateComputeInstance(metadataItems, computeClient, testSetup.machineType, testSetup.image, testSetup.hostname, testProjectConfig.TestProjectID, zone, testProjectConfig.ServiceAccountEmail, testProjectConfig.ServiceAccountScopes)
 	if err != nil {
 		testCase.WriteFailure("Error creating instance: %v", err)
