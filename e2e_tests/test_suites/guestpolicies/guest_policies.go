@@ -132,7 +132,7 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *guestP
 		return
 	}
 
-	testCase.Logf("Creating instance with image %q", testSetup.image)
+	testCase.Logf("Creating instance %q with image %q", testSetup.instanceName, testSetup.image)
 	var metadataItems []*computeApi.MetadataItems
 	metadataItems = append(metadataItems, testSetup.startup)
 	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("os-config-enabled-prerelease-features", "ospackage"))

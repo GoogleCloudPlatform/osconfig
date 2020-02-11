@@ -241,7 +241,7 @@ func runExecutePatchJobTest(ctx context.Context, testCase *junitxml.TestCase, te
 		return
 	}
 
-	testCase.Logf("Creating instance with image %q", testSetup.image)
+	testCase.Logf("Creating instance %q with image %q", testSetup.instanceName, testSetup.image)
 	name := fmt.Sprintf("patch-test-%s-%s-%s", path.Base(testSetup.testName), testSuffix, utils.RandString(5))
 	testProjectConfig := testconfig.GetProject()
 	zone := testProjectConfig.AcquireZone()
@@ -305,7 +305,7 @@ func runRebootPatchTest(ctx context.Context, testCase *junitxml.TestCase, testSe
 		return
 	}
 
-	testCase.Logf("Creating instance with image %q", testSetup.image)
+	testCase.Logf("Creating instance %q with image %q", testSetup.instanceName, testSetup.image)
 	name := fmt.Sprintf("patch-reboot-%s-%s-%s", path.Base(testSetup.testName), testSuffix, utils.RandString(5))
 	testProjectConfig := testconfig.GetProject()
 	zone := testProjectConfig.AcquireZone()

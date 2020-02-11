@@ -84,7 +84,7 @@ func runGatherInventoryTest(ctx context.Context, testSetup *inventoryTestSetup, 
 		return nil, false
 	}
 
-	testCase.Logf("Creating instance with image %q", testSetup.image)
+	testCase.Logf("Creating instance %q with image %q", testSetup.instanceName, testSetup.image)
 	testSetup.hostname = fmt.Sprintf("inventory-test-%s-%s", path.Base(testSetup.testName), utils.RandString(5))
 
 	var metadataItems []*api.MetadataItems
