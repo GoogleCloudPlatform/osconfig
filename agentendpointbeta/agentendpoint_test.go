@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-package agentendpoint
+package agentendpointbeta
 
 import (
 	"context"
@@ -31,7 +31,7 @@ import (
 	"testing"
 	"time"
 
-	agentendpoint "cloud.google.com/go/osconfig/agentendpoint/apiv1"
+	agentendpoint "cloud.google.com/go/osconfig/agentendpoint/apiv1beta"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"golang.org/x/oauth2/jws"
 	"google.golang.org/api/option"
@@ -40,7 +40,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 
-	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
+	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
 var testIDToken string
@@ -190,8 +190,9 @@ func (s *agentEndpointServiceTestServer) ReportTaskComplete(ctx context.Context,
 	}
 	return &agentendpointpb.ReportTaskCompleteResponse{}, nil
 }
-
-// Placeholder for LookupEffectiveGuestPolicies.
+func (*agentEndpointServiceTestServer) LookupEffectiveGuestPolicy(ctx context.Context, req *agentendpointpb.LookupEffectiveGuestPolicyRequest) (*agentendpointpb.EffectiveGuestPolicy, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LookupEffectiveGuestPolicies not implemented")
+}
 
 func TestWaitForTask(t *testing.T) {
 	ctx := context.Background()

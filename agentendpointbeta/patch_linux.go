@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-package agentendpoint
+package agentendpointbeta
 
 import (
 	"context"
@@ -23,7 +23,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 	"github.com/GoogleCloudPlatform/osconfig/ospatch"
 
-	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
+	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
 func (r *patchTask) runUpdates(ctx context.Context) error {
