@@ -2,9 +2,11 @@
 
 This repository contains the OS Config agent and associated end to end tests.
 
-[Instructions](https://cloud.google.com/compute/docs/manage-os#check-install) for installing the agent on a GCE instance.
+The OS Config agent currently supports the following three main features:
+- [OS inventory management](https://cloud.google.com/compute/docs/instances/os-inventory-management)
+- [OS patch management](https://cloud.google.com/compute/docs/os-patch-management)
+- [OS configuration management](https://cloud.google.com/compute/docs/os-config-management)
 
-The agent currently has three main features:
-- [OS Inventory](https://cloud.google.com/compute/docs/instances/os-inventory-management)
-- [OS Patch](https://cloud.google.com/compute/docs/os-patch-management)
-- [OS Configuration](https://cloud.google.com/compute/docs/os-config-management)
+For instructions on how to install the OS Config agent on a [Compute Engine](https://cloud.google.com/compute) VM instance, see [Installing the OS Config agent](https://cloud.google.com/compute/docs/manage-os#agent-install).
+
+
