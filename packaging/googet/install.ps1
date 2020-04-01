@@ -17,6 +17,10 @@ $ErrorActionPreference = 'Stop'
 function Set-FailureMode {
   # Restart service after 1s, then 2s. Reset error counter after 60s.
   sc.exe failure google_osconfig_agent reset= 60 actions= restart/1000/restart/2000
+  # Set dependency and delayed start
+  sc.exe config google_osconfig_agent depend= "rpcss" start= delayed-auto
+  # Create trigger to start the service on first IP address
+  sc.exe triggerinfo google_osconfig_agent start/networkon
 }
 
 try {
