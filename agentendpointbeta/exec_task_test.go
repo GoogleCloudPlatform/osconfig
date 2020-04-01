@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-package agentendpoint
+package agentendpointbeta
 
 import (
 	"context"
@@ -23,7 +23,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
+	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
 type agentEndpointServiceExecTestServer struct {
@@ -47,7 +47,9 @@ func (s *agentEndpointServiceExecTestServer) ReportTaskComplete(ctx context.Cont
 	return &agentendpointpb.ReportTaskCompleteResponse{}, nil
 }
 
-// Placeholder for LookupEffectiveGuestPolicy.
+func (*agentEndpointServiceExecTestServer) LookupEffectiveGuestPolicy(ctx context.Context, req *agentendpointpb.LookupEffectiveGuestPolicyRequest) (*agentendpointpb.EffectiveGuestPolicy, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LookupEffectiveGuestPolicies not implemented")
+}
 
 func outputGen(id string, msg string, st agentendpointpb.ExecStepTaskOutput_State, exitCode int32) *agentendpointpb.ReportTaskCompleteRequest {
 	return &agentendpointpb.ReportTaskCompleteRequest{

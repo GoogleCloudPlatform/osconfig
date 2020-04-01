@@ -12,8 +12,8 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-// Package agentendpoint connects to the osconfig agentendpoint api.
-package agentendpoint
+// Package agentendpointbeta connects to the osconfig agentendpoint beta api.
+package agentendpointbeta
 
 import (
 	"context"
@@ -23,9 +23,10 @@ import (
 	"sync"
 	"time"
 
-	agentendpoint "cloud.google.com/go/osconfig/agentendpoint/apiv1"
+	agentendpoint "cloud.google.com/go/osconfig/agentendpoint/apiv1beta"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/config"
+	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 	"google.golang.org/api/option"
@@ -34,7 +35,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 
-	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
+	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
 const apiRetrySec = 600
@@ -60,7 +61,7 @@ func NewClient(ctx context.Context) (*Client, error) {
 		option.WithGRPCDialOption(grpc.WithTransportCredentials(credentials.NewTLS(nil))), // Because we disabled Auth we need to specifically enable TLS.
 		option.WithEndpoint(config.SvcEndpoint()),
 	}
-	logger.Debugf("Creating new agentendpoint client.")
+	logger.Debugf("Creating new agentendpoint beta client.")
 	c, err := agentendpoint.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -155,7 +156,39 @@ func (c *Client) reportTaskComplete(ctx context.Context, req *agentendpointpb.Re
 	return nil
 }
 
-// Placeholder for LookupEffectiveGuestPolicies.
+// LookupEffectiveGuestPolicies calls the agentendpoint service LookupEffectiveGuestPolicies.
+func (c *Client) LookupEffectiveGuestPolicies(ctx context.Context) (res *agentendpointpb.EffectiveGuestPolicy, err error) {
+	info, err := osinfo.Get()
+	if err != nil {
+		return nil, err
+	}
+
+	req := &agentendpointpb.LookupEffectiveGuestPolicyRequest{
+		OsShortName:    info.ShortName,
+		OsVersion:      info.Version,
+		OsArchitecture: info.Architecture,
+	}
+
+	token, err := config.IDToken()
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Debugf("Calling LookupEffectiveGuestPolicies with request:\n%s", util.PrettyFmt(req))
+	req.InstanceIdToken = token
+
+	if err := retryAPICall(apiRetrySec*time.Second, "LookupEffectiveGuestPolicies", func() error {
+		res, err = c.raw.LookupEffectiveGuestPolicy(ctx, req)
+		if err != nil {
+			return err
+		}
+		logger.Debugf("LookupEffectiveGuestPolicies response:\n%s", util.PrettyFmt(res))
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("error calling LookupEffectiveGuestPolicies: %v", err)
+	}
+	return res, nil
+}
 
 func (c *Client) runTask(ctx context.Context) {
 	logger.Debugf("Beginning run task loop.")
