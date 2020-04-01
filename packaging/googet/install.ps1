@@ -14,7 +14,7 @@
 
 $ErrorActionPreference = 'Stop'
 
-function Set-FailureMode {
+function Set-ServiceConfig {
   # Restart service after 1s, then 2s. Reset error counter after 60s.
   sc.exe failure google_osconfig_agent reset= 60 actions= restart/1000/restart/2000
   # Set dependency and delayed start
@@ -31,11 +31,11 @@ try {
                 -StartupType Automatic `
                 -Description 'Google OSConfig service agent'
 
-    Set-FailureMode
+    Set-ServiceConfig
     Start-Service google_osconfig_agent -Verbose -ErrorAction Stop
   } 
   else {
-    Set-FailureMode
+    Set-ServiceConfig
     New-Item -Path 'C:\Program Files\Google\OSConfig\osconfig_agent_restart_required' -Force -Type File -ErrorAction SilentlyContinue | Out-Null
   }
 }
