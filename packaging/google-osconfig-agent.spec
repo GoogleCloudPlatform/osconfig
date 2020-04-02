@@ -40,7 +40,7 @@ GOPATH=%{_gopath} CGO_ENABLED=0 %{_go} build -ldflags="-s -w -X main.version=%{_
 
 %install
 install -d %{buildroot}%{_bindir}
-install -d /etc/osconfig
+install -d %{buildroot}/etc/osconfig
 install -p -m 0755 google_osconfig_agent %{buildroot}%{_bindir}/google_osconfig_agent
 %if 0%{?el6}
 install -d %{buildroot}/etc/init
