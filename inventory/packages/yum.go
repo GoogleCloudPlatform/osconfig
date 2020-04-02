@@ -144,12 +144,12 @@ func parseYumUpdates(data []byte) []PkgInfo {
 		} else if !upgrading {
 			continue
 		}
-		// Break as soon as we don't see "Transaction Summary".
-		if string(pkg[0]) == "Transaction" && string(pkg[1]) == "Summary" {
-			break
-		}
+		// A package line should have 6 fields, break unless this is a 'replacing' entry.
 		if len(pkg) < 6 {
-			continue
+			if string(pkg[0]) == "replacing" {
+				continue
+			}
+			break
 		}
 		pkgs = append(pkgs, PkgInfo{Name: string(pkg[0]), Arch: osinfo.Architecture(string(pkg[1])), Version: string(pkg[2])})
 	}

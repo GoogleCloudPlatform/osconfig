@@ -73,7 +73,8 @@ func TestParseYumUpdates(t *testing.T) {
 	=================================================================================================================================================================================
 	Installing:
       kernel                                    x86_64                         2.6.32-754.24.3.el6                                  updates                                   32 M
-    Upgrading:
+	    replacing kernel.x86_64 1.0.0-4
+	Upgrading:
 	  foo                                       noarch                         2.0.0-1                                              BaseOS                                   361 k
 	  bar                                       x86_64                         2.0.0-1                                              repo                                      10 M
 	Obsoleting:
