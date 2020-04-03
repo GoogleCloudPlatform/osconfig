@@ -21,8 +21,6 @@ import (
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
-	ole "github.com/go-ole/go-ole"
-	"github.com/go-ole/go-ole/oleutil"
 	"golang.org/x/sys/windows/registry"
 )
 
@@ -66,31 +64,25 @@ func SystemRebootRequired() (bool, error) {
 	return false, nil
 }
 
-func getIterativeProp(src *packages.IUpdate, prop string) (*ole.IDispatch, int32, error) {
-	raw, err := src.GetProperty(prop)
-	if err != nil {
-		return nil, 0, err
-	}
-	dis := raw.ToIDispatch()
-
-	countRaw, err := dis.GetProperty("Count")
-	if err != nil {
-		return nil, 0, err
-	}
-	count, _ := countRaw.Value().(int32)
-
-	return dis, count, nil
-}
-
 func checkFilters(updt *packages.IUpdate, kbExcludes, classFilter, exclusive_patches []string) (bool, error) {
 	title, err := updt.GetProperty("Title")
 	if err != nil {
 		return false, fmt.Errorf(`updt.GetProperty("Title"): %v`, err)
 	}
+	defer title.Clear()
 
-	kbArticleIDs, kbArticleIDsCount, err := getIterativeProp(updt, "KBArticleIDs")
+	kbArticleIDsRaw, err := updt.GetProperty("KBArticleIDs")
 	if err != nil {
-		return false, fmt.Errorf(`getIterativeProp(updt, "KBArticleIDs"): %v`, err)
+		return false, fmt.Errorf(`updt.GetProperty("KBArticleIDs"): %v`, err)
+	}
+	defer kbArticleIDsRaw.Clear()
+
+	kbArticleIDs := kbArticleIDsRaw.ToIDispatch()
+	defer kbArticleIDs.Release()
+
+	kbArticleIDsCount, err := packages.GetCount(kbArticleIDs)
+	if err != nil {
+		return false, err
 	}
 
 	if len(exclusive_patches) > 0 {
@@ -99,6 +91,7 @@ func checkFilters(updt *packages.IUpdate, kbExcludes, classFilter, exclusive_pat
 			if err != nil {
 				return false, err
 			}
+			defer kbRaw.Clear()
 			for _, e := range exclusive_patches {
 				if e == kbRaw.ToString() {
 					// until now we have only seen at most 1 kbarticles
@@ -119,6 +112,7 @@ func checkFilters(updt *packages.IUpdate, kbExcludes, classFilter, exclusive_pat
 			if err != nil {
 				return false, err
 			}
+			defer kbRaw.Clear()
 			for _, e := range kbExcludes {
 				if e == kbRaw.ToString() {
 					logger.Debugf("Update %s (%s) matched exclude filter", title.ToString(), kbRaw.ToString())
@@ -132,21 +126,35 @@ func checkFilters(updt *packages.IUpdate, kbExcludes, classFilter, exclusive_pat
 		return true, nil
 	}
 
-	categories, categoriesCount, err := getIterativeProp(updt, "Categories")
+	categoriesRaw, err := updt.GetProperty("Categories")
 	if err != nil {
-		return false, fmt.Errorf(`getIterativeProp(updt, "Categories"): %v`, err)
+		return false, fmt.Errorf(`updt.GetProperty("Categories"): %v`, err)
+	}
+	defer categoriesRaw.Clear()
+
+	categories := categoriesRaw.ToIDispatch()
+	defer categories.Release()
+
+	categoriesCount, err := packages.GetCount(categories)
+	if err != nil {
+		return false, err
 	}
 
 	for i := 0; i < int(categoriesCount); i++ {
 		catRaw, err := categories.GetProperty("Item", i)
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf(`categories.GetProperty("Item", i): %v`, err)
 		}
+		defer catRaw.Clear()
 
-		catIdRaw, err := catRaw.ToIDispatch().GetProperty("CategoryID")
+		cat := catRaw.ToIDispatch()
+		defer cat.Release()
+
+		catIdRaw, err := cat.GetProperty("CategoryID")
 		if err != nil {
-			return false, fmt.Errorf(`catRaw.ToIDispatch().GetProperty("CategoryID"): %v`, err)
+			return false, fmt.Errorf(`cat.GetProperty("CategoryID"): %v`, err)
 		}
+		defer catIdRaw.Clear()
 
 		for _, c := range classFilter {
 			if c == catIdRaw.ToString() {
@@ -166,29 +174,20 @@ func GetWUAUpdates(session *packages.IUpdateSession, classFilter, kbExcludes, ex
 	if err != nil {
 		return nil, fmt.Errorf("GetWUAUpdateCollection error: %v", err)
 	}
+	if len(classFilter) == 0 && len(kbExcludes) == 0 {
+		return updts, nil
+	}
+	defer updts.Release()
 
 	count, err := updts.Count()
 	if err != nil {
 		return nil, err
 	}
 
-	if len(classFilter) == 0 && len(kbExcludes) == 0 {
-		return updts, nil
-	}
-
-	defer updts.Release()
-
-	updateCollObj, err := oleutil.CreateObject("Microsoft.Update.UpdateColl")
-	if err != nil {
-		return nil, fmt.Errorf(`oleutil.CreateObject("updateColl"): %v`, err)
-	}
-
-	updateColl, err := updateCollObj.IDispatch(ole.IID_IDispatch)
+	newUpdts, err := packages.NewUpdateCollection()
 	if err != nil {
 		return nil, err
 	}
-
-	newUpdts := &packages.IUpdateCollection{IDispatch: updateColl}
 
 	for i := 0; i < int(count); i++ {
 		updt, err := updts.Item(i)
@@ -198,9 +197,11 @@ func GetWUAUpdates(session *packages.IUpdateSession, classFilter, kbExcludes, ex
 
 		ok, err := checkFilters(updt, kbExcludes, classFilter, exclusive_patches)
 		if err != nil {
+			updt.Release()
 			return nil, err
 		}
 		if !ok {
+			updt.Release()
 			continue
 		}
 

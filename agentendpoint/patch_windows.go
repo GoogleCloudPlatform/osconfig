@@ -64,6 +64,7 @@ func (r *patchTask) installWUAUpdates(ctx context.Context, cf []string) (int32, 
 	if err != nil {
 		return 0, err
 	}
+	defer updts.Release()
 
 	count, err := updts.Count()
 	if err != nil {
