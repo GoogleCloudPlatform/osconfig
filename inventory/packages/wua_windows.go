@@ -36,7 +36,7 @@ func NewUpdateSession() (*IUpdateSession, error) {
 		return nil, err
 	}
 
-	s := &IUpdateSession{con: &ole.Connection{nil}}
+	s := &IUpdateSession{con: &ole.Connection{Object: nil}}
 	if err := s.con.Create("Microsoft.Update.Session"); err != nil {
 		s.Close()
 		return nil, fmt.Errorf(`Connection.Create("Microsoft.Update.Session"): %v`, err)
@@ -127,7 +127,7 @@ type IUpdateCollection struct {
 }
 
 func (c *IUpdateCollection) Release() {
-	c.Release()
+	c.IDispatch.Release()
 	if c.u != nil {
 		c.u.Release()
 	}
@@ -142,7 +142,7 @@ type IUpdate struct {
 }
 
 func (u *IUpdate) Release() {
-	u.Release()
+	u.IDispatch.Release()
 	u.v.Clear()
 }
 
@@ -184,20 +184,20 @@ func GetCount(dis *ole.IDispatch) (int32, error) {
 	return count, nil
 }
 
-func getKBAIDs(updt *ole.IDispatch) ([]string, error) {
-	kbArticleIDsRaw, err := updt.GetProperty("KBArticleIDs")
+func (u *IUpdate) kbaIDs() ([]string, error) {
+	kbArticleIDsRaw, err := u.GetProperty("KBArticleIDs")
 	if err != nil {
-		return nil, fmt.Errorf(`updt.GetProperty("KBArticleIDs"): %v`, err)
+		return nil, fmt.Errorf(`IUpdate.GetProperty("KBArticleIDs"): %v`, err)
 	}
 	defer kbArticleIDsRaw.Clear()
+
 	kbArticleIDs := kbArticleIDsRaw.ToIDispatch()
 	defer kbArticleIDs.Release()
-	countRaw, err := kbArticleIDs.GetProperty("Count")
+
+	count, err := GetCount(kbArticleIDs)
 	if err != nil {
-		return nil, fmt.Errorf(`kbArticleIDs.GetProperty("Count"): %v`, err)
+		return nil, err
 	}
-	defer countRaw.Clear()
-	count, _ := countRaw.Value().(int32)
 
 	if count == 0 {
 		return nil, nil
@@ -216,21 +216,20 @@ func getKBAIDs(updt *ole.IDispatch) ([]string, error) {
 	return ss, nil
 }
 
-func getCategories(updt *ole.IDispatch) ([]string, []string, error) {
-	catRaw, err := updt.GetProperty("Categories")
+func (u *IUpdate) categories() ([]string, []string, error) {
+	catRaw, err := u.GetProperty("Categories")
 	if err != nil {
-		return nil, nil, fmt.Errorf(`updt.GetProperty("Categories"): %v`, err)
+		return nil, nil, fmt.Errorf(`IUpdate.GetProperty("Categories"): %v`, err)
 	}
 	defer catRaw.Clear()
+
 	cat := catRaw.ToIDispatch()
 	defer cat.Release()
-	countRaw, err := cat.GetProperty("Count")
-	if err != nil {
-		return nil, nil, fmt.Errorf(`cat.GetProperty("Count"): %v`, err)
-	}
-	defer countRaw.Clear()
 
-	count, _ := countRaw.Value().(int32)
+	count, err := GetCount(cat)
+	if err != nil {
+		return nil, nil, err
+	}
 	if count == 0 {
 		return nil, nil, nil
 	}
@@ -263,8 +262,88 @@ func getCategories(updt *ole.IDispatch) ([]string, []string, error) {
 	return cns, cids, nil
 }
 
+func (c *IUpdateCollection) extractPkg(item int) (*WUAPackage, error) {
+	updt, err := c.Item(item)
+	if err != nil {
+		return nil, err
+	}
+	defer updt.Release()
+
+	title, err := updt.GetProperty("Title")
+	if err != nil {
+		return nil, fmt.Errorf(`updt.GetProperty("Title"): %v`, err)
+	}
+	defer title.Clear()
+
+	description, err := updt.GetProperty("Description")
+	if err != nil {
+		return nil, fmt.Errorf(`updt.GetProperty("Description"): %v`, err)
+	}
+	defer description.Clear()
+
+	kbArticleIDs, err := updt.kbaIDs()
+	if err != nil {
+		return nil, err
+	}
+
+	categories, categoryIDs, err := updt.categories()
+	if err != nil {
+		return nil, err
+	}
+
+	supportURL, err := updt.GetProperty("SupportURL")
+	if err != nil {
+		return nil, fmt.Errorf(`updt.GetProperty("SupportURL"): %v`, err)
+	}
+	defer supportURL.Clear()
+
+	lastDeploymentChangeTimeRaw, err := updt.GetProperty("LastDeploymentChangeTime")
+	if err != nil {
+		return nil, fmt.Errorf(`updt.GetProperty("LastDeploymentChangeTime"): %v`, err)
+	}
+	defer lastDeploymentChangeTimeRaw.Clear()
+
+	lastDeploymentChangeTime, err := ole.GetVariantDate(uint64(lastDeploymentChangeTimeRaw.Val))
+	if err != nil {
+		return nil, fmt.Errorf(`ole.GetVariantDate(uint64(lastDeploymentChangeTimeRaw.Val)): %v`, err)
+	}
+
+	identityRaw, err := updt.GetProperty("Identity")
+	if err != nil {
+		return nil, fmt.Errorf(`updt.GetProperty("Identity"): %v`, err)
+	}
+	defer identityRaw.Clear()
+
+	identity := identityRaw.ToIDispatch()
+	defer identity.Release()
+
+	revisionNumber, err := identity.GetProperty("RevisionNumber")
+	if err != nil {
+		return nil, fmt.Errorf(`identity.GetProperty("RevisionNumber"): %v`, err)
+	}
+	defer revisionNumber.Clear()
+
+	updateID, err := identity.GetProperty("UpdateID")
+	if err != nil {
+		return nil, fmt.Errorf(`identity.GetProperty("UpdateID"): %v`, err)
+	}
+	defer updateID.Clear()
+
+	return &WUAPackage{
+		Title:                    title.ToString(),
+		Description:              description.ToString(),
+		SupportURL:               supportURL.ToString(),
+		KBArticleIDs:             kbArticleIDs,
+		UpdateID:                 updateID.ToString(),
+		Categories:               categories,
+		CategoryIDs:              categoryIDs,
+		RevisionNumber:           int32(revisionNumber.Val),
+		LastDeploymentChangeTime: lastDeploymentChangeTime,
+	}, nil
+}
+
 // WUAUpdates queries the Windows Update Agent API searcher with the provided query.
-func WUAUpdates(query string) ([]WUAPackage, error) {
+func WUAUpdates(query string) ([]*WUAPackage, error) {
 	session, err := NewUpdateSession()
 	if err != nil {
 		return nil, err
@@ -286,89 +365,12 @@ func WUAUpdates(query string) ([]WUAPackage, error) {
 		return nil, nil
 	}
 
-	var packages []WUAPackage
+	var packages []*WUAPackage
 	for i := 0; i < int(updtCnt); i++ {
-		updtRaw, err := updts.GetProperty("Item", i)
+		pkg, err := updts.extractPkg(i)
 		if err != nil {
 			return nil, err
 		}
-		defer updtRaw.Clear()
-
-		updt := updtRaw.ToIDispatch()
-		defer updt.Release()
-
-		title, err := updt.GetProperty("Title")
-		if err != nil {
-			return nil, fmt.Errorf(`updt.GetProperty("Title"): %v`, err)
-		}
-		defer title.Clear()
-
-		description, err := updt.GetProperty("Description")
-		if err != nil {
-			return nil, fmt.Errorf(`updt.GetProperty("Description"): %v`, err)
-		}
-		defer description.Clear()
-
-		kbArticleIDs, err := getKBAIDs(updt)
-		if err != nil {
-			return nil, err
-		}
-
-		categories, categoryIDs, err := getCategories(updt)
-		if err != nil {
-			return nil, err
-		}
-
-		supportURL, err := updt.GetProperty("SupportURL")
-		if err != nil {
-			return nil, fmt.Errorf(`updt.GetProperty("SupportURL"): %v`, err)
-		}
-		defer supportURL.Clear()
-
-		lastDeploymentChangeTimeRaw, err := updt.GetProperty("LastDeploymentChangeTime")
-		if err != nil {
-			return nil, fmt.Errorf(`updt.GetProperty("LastDeploymentChangeTime"): %v`, err)
-		}
-		defer lastDeploymentChangeTimeRaw.Clear()
-
-		lastDeploymentChangeTime, err := ole.GetVariantDate(uint64(lastDeploymentChangeTimeRaw.Val))
-		if err != nil {
-			return nil, fmt.Errorf(`ole.GetVariantDate(uint64(lastDeploymentChangeTimeRaw.Val)): %v`, err)
-		}
-
-		identityRaw, err := updt.GetProperty("Identity")
-		if err != nil {
-			return nil, fmt.Errorf(`updt.GetProperty("Identity"): %v`, err)
-		}
-		defer identityRaw.Clear()
-
-		identity := identityRaw.ToIDispatch()
-		defer identity.Release()
-
-		revisionNumber, err := identity.GetProperty("RevisionNumber")
-		if err != nil {
-			return nil, fmt.Errorf(`identity.GetProperty("RevisionNumber"): %v`, err)
-		}
-		defer revisionNumber.Clear()
-
-		updateID, err := identity.GetProperty("UpdateID")
-		if err != nil {
-			return nil, fmt.Errorf(`identity.GetProperty("UpdateID"): %v`, err)
-		}
-		defer updateID.Clear()
-
-		pkg := WUAPackage{
-			Title:                    title.ToString(),
-			Description:              description.ToString(),
-			SupportURL:               supportURL.ToString(),
-			KBArticleIDs:             kbArticleIDs,
-			UpdateID:                 updateID.ToString(),
-			Categories:               categories,
-			CategoryIDs:              categoryIDs,
-			RevisionNumber:           int32(revisionNumber.Val),
-			LastDeploymentChangeTime: lastDeploymentChangeTime,
-		}
-
 		packages = append(packages, pkg)
 	}
 

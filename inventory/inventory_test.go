@@ -51,7 +51,7 @@ func TestWrite(t *testing.T) {
 		Version:       "Version",
 		InstalledPackages: packages.Packages{
 			Yum: []packages.PkgInfo{{Name: "Name", Arch: "Arch", Version: "Version"}},
-			WUA: []packages.WUAPackage{{Title: "Title"}},
+			WUA: []*packages.WUAPackage{{Title: "Title"}},
 			QFE: []packages.QFEPackage{{HotFixID: "HotFixID"}},
 		},
 		PackageUpdates: packages.Packages{
@@ -112,13 +112,13 @@ func TestWrite(t *testing.T) {
 		case "/InstalledPackages":
 			got := decodePackages(buf.String())
 			if !reflect.DeepEqual(got, inv.InstalledPackages) {
-				t.Errorf("did not get expected InstalledPackages, got: %q, want: %q", got, inv.InstalledPackages)
+				t.Errorf("did not get expected InstalledPackages, got: %+v, want: %+v", got, inv.InstalledPackages)
 			}
 			want["InstalledPackages"] = true
 		case "/PackageUpdates":
 			got := decodePackages(buf.String())
 			if !reflect.DeepEqual(got, inv.PackageUpdates) {
-				t.Errorf("did not get expected PackageUpdates, got: %q, want: %q", got, inv.PackageUpdates)
+				t.Errorf("did not get expected PackageUpdates, got: %+v, want: %+v", got, inv.PackageUpdates)
 			}
 			want["PackageUpdates"] = true
 		default:
