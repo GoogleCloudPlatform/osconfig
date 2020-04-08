@@ -261,7 +261,7 @@ func (u *IUpdate) categories() ([]string, []string, error) {
 	return cns, cids, nil
 }
 
-func (c *IUpdateCollection) extractPkg(item int) (WUAPackage, error) {
+func (c *IUpdateCollection) extractPkg(item int) (*WUAPackage, error) {
 	updt, err := c.Item(item)
 	if err != nil {
 		return nil, err
@@ -328,7 +328,7 @@ func (c *IUpdateCollection) extractPkg(item int) (WUAPackage, error) {
 	}
 	defer updateID.Clear()
 
-	return WUAPackage{
+	return &WUAPackage{
 		Title:                    title.ToString(),
 		Description:              description.ToString(),
 		SupportURL:               supportURL.ToString(),
@@ -370,7 +370,7 @@ func WUAUpdates(query string) ([]WUAPackage, error) {
 		if err != nil {
 			return nil, err
 		}
-		packages = append(packages, pkg)
+		packages = append(packages, *pkg)
 	}
 	return packages, nil
 }
