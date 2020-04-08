@@ -26,6 +26,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"syscall"
 	"time"
 
@@ -196,6 +197,10 @@ func runLoop(ctx context.Context) {
 			// This should always run after ospackage.SetConfig.
 			inventory.Run()
 		}
+
+		// Return unused memory to ensure our footprint doesn't keep increasing.
+		logger.Debugf("Running debug.FreeOSMemory()")
+		debug.FreeOSMemory()
 
 		select {
 		case <-ticker.C:
