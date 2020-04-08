@@ -19,6 +19,7 @@ import (
 
 	ole "github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
+	//"github.com/go-ole/go-ole/oleutil"
 )
 
 var wuaSession sync.Mutex
@@ -122,28 +123,26 @@ func NewUpdateCollection() (*IUpdateCollection, error) {
 
 type IUpdateCollection struct {
 	*ole.IDispatch
-	u *ole.IUnknown
 	v *ole.VARIANT
+	u *ole.IUnknown
+	r *ole.IDispatch
 }
 
 func (c *IUpdateCollection) Release() {
 	c.IDispatch.Release()
+	if c.v != nil {
+		c.v.Clear()
+	}
 	if c.u != nil {
 		c.u.Release()
 	}
-	if c.v != nil {
-		c.v.Clear()
+	if c.r != nil {
+		c.r.Release()
 	}
 }
 
 type IUpdate struct {
 	*ole.IDispatch
-	v *ole.VARIANT
-}
-
-func (u *IUpdate) Release() {
-	u.IDispatch.Release()
-	u.v.Clear()
 }
 
 func (c *IUpdateCollection) Add(updt *IUpdate) error {
@@ -169,7 +168,7 @@ func (c *IUpdateCollection) Item(i int) (*IUpdate, error) {
 	if err != nil {
 		return nil, fmt.Errorf(`IUpdateCollection.CallMethod("Item", %d): %v`, i, err)
 	}
-	return &IUpdate{v: updtRaw, IDispatch: updtRaw.ToIDispatch()}, nil
+	return &IUpdate{IDispatch: updtRaw.ToIDispatch()}, nil
 }
 
 // GetCount returns the Count property.
@@ -267,7 +266,7 @@ func (c *IUpdateCollection) extractPkg(item int) (*WUAPackage, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer updt.Release()
+	// We don't call Release on updt as it's in an IUpdateCollection.
 
 	title, err := updt.GetProperty("Title")
 	if err != nil {
@@ -373,7 +372,6 @@ func WUAUpdates(query string) ([]*WUAPackage, error) {
 		}
 		packages = append(packages, pkg)
 	}
-
 	return packages, nil
 }
 
@@ -436,7 +434,7 @@ func (s *IUpdateSession) GetWUAUpdateCollection(query string) (*IUpdateCollectio
 	defer searcherRaw.Clear()
 
 	searcher := searcherRaw.ToIDispatch()
-	defer searcher.Release()
+	defer searcherRaw.Clear()
 
 	// returns ISearchResult
 	// https://msdn.microsoft.com/en-us/library/windows/desktop/aa386077(v=vs.85).aspx
@@ -447,8 +445,6 @@ func (s *IUpdateSession) GetWUAUpdateCollection(query string) (*IUpdateCollectio
 	defer resultRaw.Clear()
 
 	result := resultRaw.ToIDispatch()
-	defer result.Release()
-
 	// returns IUpdateCollection
 	// https://msdn.microsoft.com/en-us/library/windows/desktop/aa386107(v=vs.85).aspx
 	updtsRaw, err := result.GetProperty("Updates")
@@ -456,5 +452,5 @@ func (s *IUpdateSession) GetWUAUpdateCollection(query string) (*IUpdateCollectio
 		return nil, fmt.Errorf("error calling GetProperty Updates on ISearchResult: %v", err)
 	}
 
-	return &IUpdateCollection{v: updtsRaw, IDispatch: updtsRaw.ToIDispatch()}, nil
+	return &IUpdateCollection{r: result, v: updtsRaw, IDispatch: updtsRaw.ToIDispatch()}, nil
 }

@@ -34,6 +34,6 @@
   }],
   "build": {
     "linux": "/bin/bash",
-    "linuxArgs": ["-c", "GOOS=windows /tmp/go/bin/go build -ldflags='-X main.version={{.version}}' -mod=readonly -o google_osconfig_agent.exe"]
+    "linuxArgs": ["-c", "GOOS=windows /tmp/go/bin/go build -ldflags='-s -w -X main.version={{.version}}' -mod=readonly -o google_osconfig_agent.exe"]
   }
 }

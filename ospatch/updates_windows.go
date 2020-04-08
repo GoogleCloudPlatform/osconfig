@@ -197,11 +197,9 @@ func GetWUAUpdates(session *packages.IUpdateSession, classFilter, kbExcludes, ex
 
 		ok, err := checkFilters(updt, kbExcludes, classFilter, exclusive_patches)
 		if err != nil {
-			updt.Release()
 			return nil, err
 		}
 		if !ok {
-			updt.Release()
 			continue
 		}
 
