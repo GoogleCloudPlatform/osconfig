@@ -261,7 +261,7 @@ func (u *IUpdate) categories() ([]string, []string, error) {
 	return cns, cids, nil
 }
 
-func (c *IUpdateCollection) extractPkg(item int) (*WUAPackage, error) {
+func (c *IUpdateCollection) extractPkg(item int) (WUAPackage, error) {
 	updt, err := c.Item(item)
 	if err != nil {
 		return nil, err
@@ -328,7 +328,7 @@ func (c *IUpdateCollection) extractPkg(item int) (*WUAPackage, error) {
 	}
 	defer updateID.Clear()
 
-	return &WUAPackage{
+	return WUAPackage{
 		Title:                    title.ToString(),
 		Description:              description.ToString(),
 		SupportURL:               supportURL.ToString(),
@@ -342,7 +342,7 @@ func (c *IUpdateCollection) extractPkg(item int) (*WUAPackage, error) {
 }
 
 // WUAUpdates queries the Windows Update Agent API searcher with the provided query.
-func WUAUpdates(query string) ([]*WUAPackage, error) {
+func WUAUpdates(query string) ([]WUAPackage, error) {
 	session, err := NewUpdateSession()
 	if err != nil {
 		return nil, err
@@ -364,7 +364,7 @@ func WUAUpdates(query string) ([]*WUAPackage, error) {
 		return nil, nil
 	}
 
-	var packages []*WUAPackage
+	var packages []WUAPackage
 	for i := 0; i < int(updtCnt); i++ {
 		pkg, err := updts.extractPkg(i)
 		if err != nil {

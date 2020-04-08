@@ -63,7 +63,7 @@ type Packages struct {
 	Gem           []PkgInfo     `json:"gem,omitempty"`
 	Pip           []PkgInfo     `json:"pip,omitempty"`
 	GooGet        []PkgInfo     `json:"googet,omitempty"`
-	WUA           []*WUAPackage `json:"wua,omitempty"`
+	WUA           []WUAPackage  `json:"wua,omitempty"`
 	QFE           []QFEPackage  `json:"qfe,omitempty"`
 }
 
