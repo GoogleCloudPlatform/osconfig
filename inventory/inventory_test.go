@@ -51,7 +51,7 @@ func TestWrite(t *testing.T) {
 		Version:       "Version",
 		InstalledPackages: packages.Packages{
 			Yum: []packages.PkgInfo{{Name: "Name", Arch: "Arch", Version: "Version"}},
-			WUA: []*packages.WUAPackage{{Title: "Title"}},
+			WUA: []packages.WUAPackage{{Title: "Title"}},
 			QFE: []packages.QFEPackage{{HotFixID: "HotFixID"}},
 		},
 		PackageUpdates: packages.Packages{
