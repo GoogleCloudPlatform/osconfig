@@ -21,12 +21,16 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"syscall"
 	"time"
+
+	_ "net/http/pprof"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/agentendpoint"
@@ -40,7 +44,10 @@ import (
 	_ "google.golang.org/genproto/googleapis/rpc/errdetails"
 )
 
-var version string
+var (
+	version string
+	profile = flag.Bool("profile", false, "serve profiling data at localhost:6060/debug/pprof")
+)
 
 func init() {
 	if version == "" {
@@ -188,6 +195,10 @@ func runLoop(ctx context.Context) {
 			inventory.Run()
 		}
 
+		// Return unused memory to ensure our footprint doesn't keep increasing.
+		logger.Debugf("Running debug.FreeOSMemory()")
+		debug.FreeOSMemory()
+
 		select {
 		case <-ticker.C:
 			continue
@@ -208,6 +219,12 @@ func main() {
 			cncl()
 		}
 	}()
+
+	if *profile {
+		go func() {
+			fmt.Println(http.ListenAndServe("localhost:6060", nil))
+		}()
+	}
 
 	switch action := flag.Arg(0); action {
 	case "", "run":
