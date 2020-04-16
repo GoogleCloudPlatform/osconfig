@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Don't build debuginfo packages.
-%define debug_package %{nil}
+%global debug_package %{nil}
 
 Name: google-osconfig-agent
 Epoch:   1
@@ -36,7 +36,7 @@ Contains the OSConfig agent binary and startup scripts
 %autosetup
 
 %build
-GOPATH=%{_gopath} CGO_ENABLED=0 %{_go} build -ldflags="-s -w -X main.version=%{_version}" -mod=readonly -o google_osconfig_agent
+GOPATH=%{_gopath} CGO_ENABLED=0 %{_go} build -ldflags="-s -w -X main.version=%{version}-%{release}" -mod=readonly -o google_osconfig_agent
 
 %install
 install -d %{buildroot}%{_bindir}
