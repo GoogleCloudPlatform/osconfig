@@ -98,8 +98,8 @@ func run(ctx context.Context) {
 		opts.Writers = append(opts.Writers, &serialPort{"COM1"})
 	}
 
-	// If this call to SetConfig fails (like a metadata error) we can't continue.
-	if err := config.SetConfig(ctx); err != nil {
+	// If this call to WatchConfig fails (like a metadata error) we can't continue.
+	if err := config.WatchConfig(ctx); err != nil {
 		logger.Init(ctx, opts)
 		logger.Fatalf(err.Error())
 	}
@@ -154,12 +154,39 @@ func run(ctx context.Context) {
 func runLoop(ctx context.Context) {
 	var taskNotificationClient *agentendpoint.Client
 	var err error
+
+	go func() {
+		for {
+			config.LogFeatures()
+			if config.TaskNotificationEnabled() && (taskNotificationClient == nil || taskNotificationClient.Closed()) {
+				// Start WaitForTaskNotification if we need to.
+				taskNotificationClient, err = agentendpoint.NewClient(ctx)
+				if err != nil {
+					logger.Errorf(err.Error())
+				} else {
+					taskNotificationClient.WaitForTaskNotification(ctx)
+				}
+			} else if !config.TaskNotificationEnabled() && taskNotificationClient != nil && !taskNotificationClient.Closed() {
+				// Cancel WaitForTaskNotification if we need to, this will block if there is
+				// an existing current task running.
+				if err := taskNotificationClient.Close(); err != nil {
+					logger.Errorf(err.Error())
+				}
+			}
+			if err := config.WatchConfig(ctx); err != nil {
+				logger.Errorf(err.Error())
+			}
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				continue
+			}
+		}
+	}()
+
 	ticker := time.NewTicker(config.SvcPollInterval())
 	for {
-		if err := config.SetConfig(ctx); err != nil {
-			logger.Errorf(err.Error())
-		}
-
 		if _, err := os.Stat(config.RestartFile()); err == nil {
 			logger.Infof("Restart required marker file exists, beginning agent shutdown, waiting for tasks to complete.")
 			tasker.Close()
@@ -168,22 +195,6 @@ func runLoop(ctx context.Context) {
 				f()
 			}
 			os.Exit(2)
-		}
-
-		if config.TaskNotificationEnabled() && (taskNotificationClient == nil || taskNotificationClient.Closed()) {
-			// Start WaitForTaskNotification if we need to.
-			taskNotificationClient, err = agentendpoint.NewClient(ctx)
-			if err != nil {
-				logger.Errorf(err.Error())
-			} else {
-				taskNotificationClient.WaitForTaskNotification(ctx)
-			}
-		} else if !config.TaskNotificationEnabled() && taskNotificationClient != nil && !taskNotificationClient.Closed() {
-			// Cancel WaitForTaskNotification if we need to, this will block if there is
-			// an existing current task running.
-			if err := taskNotificationClient.Close(); err != nil {
-				logger.Errorf(err.Error())
-			}
 		}
 
 		if config.GuestPoliciesEnabled() {
