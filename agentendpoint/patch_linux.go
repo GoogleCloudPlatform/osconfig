@@ -20,8 +20,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
 	"github.com/GoogleCloudPlatform/osconfig/ospatch"
+	"github.com/GoogleCloudPlatform/osconfig/packages"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
 )

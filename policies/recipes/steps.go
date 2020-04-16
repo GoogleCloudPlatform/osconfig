@@ -31,7 +31,7 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
+	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 	"github.com/ulikunitz/xz"
 	"github.com/ulikunitz/xz/lzma"

@@ -27,7 +27,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
+	"github.com/GoogleCloudPlatform/osconfig/packages"
 )
 
 func TestPostAttributeHappyCase(t *testing.T) {
