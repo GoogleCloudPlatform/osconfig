@@ -26,7 +26,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
+	"github.com/GoogleCloudPlatform/osconfig/packages"
 )
 
 func decodePackages(str string) packages.Packages {

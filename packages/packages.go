@@ -21,7 +21,7 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/GoogleCloudPlatform/osconfig/inventory/osinfo"
+	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 )
 
 var (

@@ -23,7 +23,7 @@ import (
 	"os/exec"
 	"strconv"
 
-	"github.com/GoogleCloudPlatform/osconfig/inventory/packages"
+	"github.com/GoogleCloudPlatform/osconfig/packages"
 )
 
 const (
