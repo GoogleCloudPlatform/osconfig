@@ -96,11 +96,10 @@ func InstallAptPackages(pkgs []string) error {
 		"DEBIAN_FRONTEND=noninteractive",
 	)
 	out, err := run(install)
-	var msg string
-	for _, s := range strings.Split(string(out), "\n") {
-		msg += fmt.Sprintf(" %s\n", s)
+	DebugLogger.Printf("apt-get %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	if err != nil {
+		err = fmt.Errorf("error running apt-get with args %q: %v, stdout: %s", args, err, out)
 	}
-	DebugLogger.Printf("apt install output:\n%s", msg)
 	return err
 }
 
@@ -112,11 +111,10 @@ func RemoveAptPackages(pkgs []string) error {
 		"DEBIAN_FRONTEND=noninteractive",
 	)
 	out, err := run(remove)
-	var msg string
-	for _, s := range strings.Split(string(out), "\n") {
-		msg += fmt.Sprintf(" %s\n", s)
+	DebugLogger.Printf("apt-get %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	if err != nil {
+		err = fmt.Errorf("error running apt-get with args %q: %v, stdout: %s", args, err, out)
 	}
-	DebugLogger.Printf("apt remove output:\n%s", msg)
 	return err
 }
 
@@ -187,13 +185,14 @@ func AptUpdates(opts ...AptGetUpgradeOption) ([]PkgInfo, error) {
 		return nil, fmt.Errorf("unknown upgrade type: %q", aptOpts.upgradeType)
 	}
 
-	if _, err := run(exec.Command(aptGet, aptGetUpdateArgs...)); err != nil {
-		return nil, err
+	if out, err := run(exec.Command(aptGet, aptGetUpdateArgs...)); err != nil {
+		return nil, fmt.Errorf("error running apt-get with args %q: %v, stdout: %s", args, err, out)
 	}
 
 	out, err := run(exec.Command(aptGet, args...))
+	DebugLogger.Printf("apt-get %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error running apt-get with args %q: %v, stdout: %s", args, err, out)
 	}
 
 	return parseAptUpdates(out, aptOpts.showNew), nil
@@ -222,8 +221,9 @@ func parseInstalledDebpackages(data []byte) []PkgInfo {
 // InstalledDebPackages queries for all installed deb packages.
 func InstalledDebPackages() ([]PkgInfo, error) {
 	out, err := run(exec.Command(dpkgquery, dpkgQueryArgs...))
+	DebugLogger.Printf("dpkgquery %q output:\n%s", dpkgQueryArgs, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error running dpkgquery with args %q: %v, stdout: %s", dpkgQueryArgs, err, out)
 	}
 	return parseInstalledDebpackages(out), nil
 }
@@ -232,6 +232,9 @@ func InstalledDebPackages() ([]PkgInfo, error) {
 func DpkgInstall(path string) error {
 	args := append(dpkgInstallArgs, path)
 	out, err := run(exec.Command(dpkg, args...))
-	DebugLogger.Printf("dpkg output:\n%s", strings.ReplaceAll(string(out), "\n", "\n "))
+	DebugLogger.Printf("dpkg %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	if err != nil {
+		err = fmt.Errorf("error running dpkg with args %q: %v, stdout: %s", args, err, out)
+	}
 	return err
 }

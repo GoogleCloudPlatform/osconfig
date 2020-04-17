@@ -70,8 +70,9 @@ func parseGooGetUpdates(data []byte) []PkgInfo {
 // GooGetUpdates queries for all available googet updates.
 func GooGetUpdates() ([]PkgInfo, error) {
 	out, err := run(exec.Command(googet, googetUpdateQueryArgs...))
+	DebugLogger.Printf("googet %q output:\n%s", googetUpdateQueryArgs, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error running googet with args %q: %v, stdout: %s", googetUpdateQueryArgs, err, out)
 	}
 
 	return parseGooGetUpdates(out), nil
@@ -81,11 +82,10 @@ func GooGetUpdates() ([]PkgInfo, error) {
 func InstallGooGetPackages(pkgs []string) error {
 	args := append(googetInstallArgs, pkgs...)
 	out, err := run(exec.Command(googet, args...))
-	var msg string
-	for _, s := range strings.Split(string(out), "\n") {
-		msg += fmt.Sprintf("  %s\n", s)
+	DebugLogger.Printf("googet %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	if err != nil {
+		err = fmt.Errorf("error running googet with args %q: %v, stdout: %s", args, err, out)
 	}
-	DebugLogger.Printf("GooGet install output:\n%s", msg)
 	return err
 }
 
@@ -93,11 +93,10 @@ func InstallGooGetPackages(pkgs []string) error {
 func RemoveGooGetPackages(pkgs []string) error {
 	args := append(googetRemoveArgs, pkgs...)
 	out, err := run(exec.Command(googet, args...))
-	var msg string
-	for _, s := range strings.Split(string(out), "\n") {
-		msg += fmt.Sprintf("  %s\n", s)
+	DebugLogger.Printf("googet %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	if err != nil {
+		err = fmt.Errorf("error running googet with args %q: %v, stdout: %s", args, err, out)
 	}
-	DebugLogger.Printf("GooGet remove output:\n%s", msg)
 	return err
 }
 
@@ -130,8 +129,9 @@ func parseInstalledGooGetPackages(data []byte) []PkgInfo {
 // InstalledGooGetPackages queries for all installed googet packages.
 func InstalledGooGetPackages() ([]PkgInfo, error) {
 	out, err := run(exec.Command(googet, googetInstalledQueryArgs...))
+	DebugLogger.Printf("googet %q output:\n%s", googetInstalledQueryArgs, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error running googet with args %q: %v, stdout: %s", googetInstalledQueryArgs, err, out)
 	}
 
 	return parseInstalledGooGetPackages(out), nil
