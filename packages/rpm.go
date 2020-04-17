@@ -16,6 +16,7 @@ package packages
 
 import (
 	"bytes"
+	"fmt"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -64,8 +65,9 @@ func parseInstalledRPMPackages(data []byte) []PkgInfo {
 // InstalledRPMPackages queries for all installed rpm packages.
 func InstalledRPMPackages() ([]PkgInfo, error) {
 	out, err := run(exec.Command(rpmquery, rpmqueryArgs...))
+	DebugLogger.Printf("rpmquery %q output:\n%s", rpmqueryArgs, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error running rpmquery with args %q: %v, stdout: %s", rpmqueryArgs, err, out)
 	}
 
 	return parseInstalledRPMPackages(out), nil
@@ -76,5 +78,8 @@ func RPMInstall(path string) error {
 	args := append(rpmInstallArgs, path)
 	out, err := run(exec.Command(rpm, args...))
 	DebugLogger.Printf("rpm output:\n%s", strings.ReplaceAll(string(out), "\n", "\n "))
+	if err != nil {
+		err = fmt.Errorf("error running rpm with args %q: %v, stdout: %s", args, err, out)
+	}
 	return err
 }

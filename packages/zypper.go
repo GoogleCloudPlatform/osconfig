@@ -87,11 +87,10 @@ func ZypperListPatchAll(all bool) ZypperListOption {
 func InstallZypperPackages(pkgs []string) error {
 	args := append(zypperInstallArgs, pkgs...)
 	out, err := run(exec.Command(zypper, args...))
-	var msg string
-	for _, s := range strings.Split(string(out), "\n") {
-		msg += fmt.Sprintf(" %s\n", s)
+	DebugLogger.Printf("zypper %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	if err != nil {
+		err = fmt.Errorf("error running zypper with args %q: %v, stdout: %s", args, err, out)
 	}
-	DebugLogger.Printf("Zypper install output:\n%s", msg)
 	return err
 }
 
@@ -109,20 +108,16 @@ func ZypperInstall(patches []ZypperPatch, pkgs []PkgInfo) error {
 	}
 
 	out, err := run(exec.Command(zypper, args...))
-	var msg string
-	for _, s := range strings.Split(string(out), "\n") {
-		msg += fmt.Sprintf(" %s\n", s)
-	}
-	DebugLogger.Printf("zypper install output:\n%s", msg)
-	if err == nil {
-		return nil
-	}
-
+	DebugLogger.Printf("zypper %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
 	// https://en.opensuse.org/SDB:Zypper_manual#EXIT_CODES
-	if exitErr, ok := err.(*exec.ExitError); ok {
-		// ZYPPER_EXIT_INF_REBOOT_NEEDED
-		if exitErr.ExitCode() == 102 {
-			err = nil
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			// ZYPPER_EXIT_INF_REBOOT_NEEDED
+			if exitErr.ExitCode() == 102 {
+				err = nil
+			}
+		} else {
+			err = fmt.Errorf("error running zypper with args %q: %v, stdout: %s", args, err, out)
 		}
 	}
 
@@ -133,11 +128,10 @@ func ZypperInstall(patches []ZypperPatch, pkgs []PkgInfo) error {
 func RemoveZypperPackages(pkgs []string) error {
 	args := append(zypperRemoveArgs, pkgs...)
 	out, err := run(exec.Command(zypper, args...))
-	var msg string
-	for _, s := range strings.Split(string(out), "\n") {
-		msg += fmt.Sprintf("  %s\n", s)
+	DebugLogger.Printf("zypper %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	if err != nil {
+		err = fmt.Errorf("error running zypper with args %q: %v, stdout: %s", args, err, out)
 	}
-	DebugLogger.Printf("Zypper remove output:\n%s", msg)
 	return err
 }
 
@@ -169,8 +163,9 @@ func parseZypperUpdates(data []byte) []PkgInfo {
 // ZypperUpdates queries for all available zypper updates.
 func ZypperUpdates() ([]PkgInfo, error) {
 	out, err := run(exec.Command(zypper, zypperListUpdatesArgs...))
+	DebugLogger.Printf("zypper %q output:\n%s", zypperListUpdatesArgs, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error running zypper with args %q: %v, stdout: %s", zypperListUpdatesArgs, err, out)
 	}
 	return parseZypperUpdates(out), nil
 }
@@ -244,7 +239,12 @@ func zypperPatches(opts ...ZypperListOption) ([]byte, error) {
 		args = append(args, "--all")
 	}
 
-	return run(exec.Command(zypper, args...))
+	out, err := run(exec.Command(zypper, args...))
+	DebugLogger.Printf("zypper %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	if err != nil {
+		return nil, fmt.Errorf("error running zypper with args %q: %v, stdout: %s", args, err, out)
+	}
+	return out, nil
 }
 
 // ZypperPatches queries for all available zypper patches.
@@ -272,7 +272,12 @@ func zypperPatchInfo(patches []string) ([]byte, error) {
 	for _, name := range patches {
 		args = append(args, name)
 	}
-	return run(exec.Command(zypper, args...))
+	out, err := run(exec.Command(zypper, args...))
+	DebugLogger.Printf("zypper %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	if err != nil {
+		return nil, fmt.Errorf("error running zypper with args %q: %v, stdout: %s", args, err, out)
+	}
+	return out, nil
 }
 
 func parseZypperPatchInfo(out []byte) (map[string][]string, error) {

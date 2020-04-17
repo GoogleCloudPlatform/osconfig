@@ -71,11 +71,10 @@ func YumUpdateMinimal(minimal bool) YumUpdateOption {
 func InstallYumPackages(pkgs []string) error {
 	args := append(yumInstallArgs, pkgs...)
 	out, err := run(exec.Command(yum, args...))
-	var msg string
-	for _, s := range strings.Split(string(out), "\n") {
-		msg += fmt.Sprintf(" %s\n", s)
+	DebugLogger.Printf("yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	if err != nil {
+		err = fmt.Errorf("error running yum with args %q: %v, stdout: %s", args, err, out)
 	}
-	DebugLogger.Printf("yum install output:\n%s", msg)
 	return err
 }
 
@@ -83,11 +82,10 @@ func InstallYumPackages(pkgs []string) error {
 func UpdateYumPackages(pkgs []string) error {
 	args := append(yumUpdateArgs, pkgs...)
 	out, err := run(exec.Command(yum, args...))
-	var msg string
-	for _, s := range strings.Split(string(out), "\n") {
-		msg += fmt.Sprintf(" %s\n", s)
+	DebugLogger.Printf("yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	if err != nil {
+		err = fmt.Errorf("error running yum with args %q: %v, stdout: %s", args, err, out)
 	}
-	DebugLogger.Printf("yum update output:\n%s", msg)
 	return err
 }
 
@@ -95,11 +93,10 @@ func UpdateYumPackages(pkgs []string) error {
 func RemoveYumPackages(pkgs []string) error {
 	args := append(yumRemoveArgs, pkgs...)
 	out, err := run(exec.Command(yum, args...))
-	var msg string
-	for _, s := range strings.Split(string(out), "\n") {
-		msg += fmt.Sprintf(" %s\n", s)
+	DebugLogger.Printf("yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	if err != nil {
+		err = fmt.Errorf("error running yum with args %q: %v, stdout: %s", args, err, out)
 	}
-	DebugLogger.Printf("yum remove output:\n%s", msg)
 	return err
 }
 
@@ -178,6 +175,7 @@ func YumUpdates(opts ...YumUpdateOption) ([]PkgInfo, error) {
 	// We just use check-update to ensure all repo keys are synced as we run
 	// update with --assumeno.
 	out, err := run(exec.Command(yum, yumCheckUpdateArgs...))
+	DebugLogger.Printf("yum %q output:\n%s", yumCheckUpdateArgs, strings.ReplaceAll(string(out), "\n", "\n "))
 	// Exit code 0 means no updates, 100 means there are updates.
 	if err == nil {
 		return nil, nil
@@ -189,12 +187,13 @@ func YumUpdates(opts ...YumUpdateOption) ([]PkgInfo, error) {
 	}
 	// Since we don't get good error codes from 'yum update' exit now if there is an issue.
 	if err != nil {
-		return nil, fmt.Errorf("error checking for yum updates: %v, stdout: %s", err, out)
+		return nil, fmt.Errorf("error running yum with args %q: %v, stdout: %s", yumCheckUpdateArgs, err, out)
 	}
 
 	out, err = runWithPty(exec.Command(yum, yumListUpdatesArgs...))
+	DebugLogger.Printf("yum %q output:\n%s", yumListUpdatesArgs, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error running yum with args %q: %v, stdout: %s", yumListUpdatesArgs, err, out)
 	}
 	if out == nil {
 		return nil, nil
