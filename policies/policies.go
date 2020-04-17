@@ -25,7 +25,7 @@ import (
 	"path/filepath"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-	"github.com/GoogleCloudPlatform/osconfig/agentendpointbeta"
+	"github.com/GoogleCloudPlatform/osconfig/agentendpoint"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"github.com/GoogleCloudPlatform/osconfig/policies/recipes"
@@ -37,9 +37,9 @@ import (
 func run(ctx context.Context) {
 	var resp *agentendpointpb.EffectiveGuestPolicy
 
-	client, err := agentendpointbeta.NewClient(ctx)
+	client, err := agentendpoint.NewBetaClient(ctx)
 	if err != nil {
-		logger.Errorf("agentendpointbeta.NewClient Error: %v", err)
+		logger.Errorf("agentendpoint.NewClient Error: %v", err)
 	} else {
 		defer client.Close()
 		resp, err = client.LookupEffectiveGuestPolicies(ctx)

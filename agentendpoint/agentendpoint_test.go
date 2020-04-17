@@ -191,7 +191,9 @@ func (s *agentEndpointServiceTestServer) ReportTaskComplete(ctx context.Context,
 	return &agentendpointpb.ReportTaskCompleteResponse{}, nil
 }
 
-// Placeholder for LookupEffectiveGuestPolicies.
+func (*agentEndpointServiceTestServer) RegisterAgent(ctx context.Context, req *agentendpointpb.RegisterAgentRequest) (*agentendpointpb.RegisterAgentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterAgent not implemented")
+}
 
 func TestWaitForTask(t *testing.T) {
 	ctx := context.Background()

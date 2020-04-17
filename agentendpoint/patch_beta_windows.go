@@ -14,7 +14,7 @@
 
 // +build windows
 
-package agentendpointbeta
+package agentendpoint
 
 import (
 	"context"
@@ -52,7 +52,7 @@ func classFilter(cs []agentendpointpb.WindowsUpdateSettings_Classification) ([]s
 	return cf, nil
 }
 
-func (r *patchTask) installWUAUpdates(ctx context.Context, cf []string) (int32, error) {
+func (r *patchTaskBeta) installWUAUpdates(ctx context.Context, cf []string) (int32, error) {
 	r.infof("Searching for available Windows updates.")
 	session, err := packages.NewUpdateSession()
 	if err != nil {
@@ -100,7 +100,7 @@ func (r *patchTask) installWUAUpdates(ctx context.Context, cf []string) (int32, 
 	return count, nil
 }
 
-func (r *patchTask) wuaUpdates(ctx context.Context) error {
+func (r *patchTaskBeta) wuaUpdates(ctx context.Context) error {
 	cf, err := classFilter(r.Task.GetPatchConfig().GetWindowsUpdate().GetClassifications())
 	if err != nil {
 		return err
@@ -121,7 +121,7 @@ func (r *patchTask) wuaUpdates(ctx context.Context) error {
 	return fmt.Errorf("failed to install all updates after trying %d times", retries)
 }
 
-func (r *patchTask) runUpdates(ctx context.Context) error {
+func (r *patchTaskBeta) runUpdates(ctx context.Context) error {
 	if err := retryFunc(30*time.Minute, "installing Windows updates", func() error { return r.wuaUpdates(ctx) }); err != nil {
 		return err
 	}

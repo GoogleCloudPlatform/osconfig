@@ -12,12 +12,10 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-// Package agentendpointbeta connects to the osconfig agentendpoint beta api.
-package agentendpointbeta
+package agentendpoint
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"sync"
@@ -38,15 +36,8 @@ import (
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
-const apiRetrySec = 600
-
-var (
-	errServerCancel = errors.New("task canceled by server")
-	taskStateFile   = config.TaskStateFile()
-)
-
-// Client is a an agentendpoint client.
-type Client struct {
+// BetaClient is a an agentendpoint client.
+type BetaClient struct {
 	raw    *agentendpoint.Client
 	cancel context.CancelFunc
 	noti   chan struct{}
@@ -54,8 +45,8 @@ type Client struct {
 	mx     sync.Mutex
 }
 
-// NewClient a new agentendpoint Client.
-func NewClient(ctx context.Context) (*Client, error) {
+// NewBetaClient a new agentendpoint Client.
+func NewBetaClient(ctx context.Context) (*BetaClient, error) {
 	opts := []option.ClientOption{
 		option.WithoutAuthentication(), // Do not use oauth.
 		option.WithGRPCDialOption(grpc.WithTransportCredentials(credentials.NewTLS(nil))), // Because we disabled Auth we need to specifically enable TLS.
@@ -67,11 +58,11 @@ func NewClient(ctx context.Context) (*Client, error) {
 		return nil, err
 	}
 
-	return &Client{raw: c, noti: make(chan struct{}, 1)}, nil
+	return &BetaClient{raw: c, noti: make(chan struct{}, 1)}, nil
 }
 
 // Close cancels WaitForTaskNotification and closes the underlying ClientConn.
-func (c *Client) Close() error {
+func (c *BetaClient) Close() error {
 	// Lock so nothing can use the client while we are closing.
 	c.mx.Lock()
 	if c.cancel != nil {
@@ -82,11 +73,11 @@ func (c *Client) Close() error {
 }
 
 // Closed reports whether the Client has been closed.
-func (c *Client) Closed() bool {
+func (c *BetaClient) Closed() bool {
 	return c.closed
 }
 
-func (c *Client) startNextTask(ctx context.Context) (res *agentendpointpb.StartNextTaskResponse, err error) {
+func (c *BetaClient) startNextTask(ctx context.Context) (res *agentendpointpb.StartNextTaskResponse, err error) {
 	token, err := config.IDToken()
 	if err != nil {
 		return nil, err
@@ -110,7 +101,7 @@ func (c *Client) startNextTask(ctx context.Context) (res *agentendpointpb.StartN
 	return res, nil
 }
 
-func (c *Client) reportTaskProgress(ctx context.Context, req *agentendpointpb.ReportTaskProgressRequest) (res *agentendpointpb.ReportTaskProgressResponse, err error) {
+func (c *BetaClient) reportTaskProgress(ctx context.Context, req *agentendpointpb.ReportTaskProgressRequest) (res *agentendpointpb.ReportTaskProgressResponse, err error) {
 	token, err := config.IDToken()
 	if err != nil {
 		return nil, err
@@ -133,7 +124,7 @@ func (c *Client) reportTaskProgress(ctx context.Context, req *agentendpointpb.Re
 	return res, nil
 }
 
-func (c *Client) reportTaskComplete(ctx context.Context, req *agentendpointpb.ReportTaskCompleteRequest) error {
+func (c *BetaClient) reportTaskComplete(ctx context.Context, req *agentendpointpb.ReportTaskCompleteRequest) error {
 	token, err := config.IDToken()
 	if err != nil {
 		return err
@@ -157,7 +148,7 @@ func (c *Client) reportTaskComplete(ctx context.Context, req *agentendpointpb.Re
 }
 
 // LookupEffectiveGuestPolicies calls the agentendpoint service LookupEffectiveGuestPolicies.
-func (c *Client) LookupEffectiveGuestPolicies(ctx context.Context) (res *agentendpointpb.EffectiveGuestPolicy, err error) {
+func (c *BetaClient) LookupEffectiveGuestPolicies(ctx context.Context) (res *agentendpointpb.EffectiveGuestPolicy, err error) {
 	info, err := osinfo.Get()
 	if err != nil {
 		return nil, err
@@ -190,7 +181,7 @@ func (c *Client) LookupEffectiveGuestPolicies(ctx context.Context) (res *agenten
 	return res, nil
 }
 
-func (c *Client) runTask(ctx context.Context) {
+func (c *BetaClient) runTask(ctx context.Context) {
 	logger.Debugf("Beginning run task loop.")
 	for {
 		res, err := c.startNextTask(ctx)
@@ -221,7 +212,7 @@ func (c *Client) runTask(ctx context.Context) {
 	}
 }
 
-func (c *Client) handleStream(ctx context.Context, stream agentendpointpb.AgentEndpointService_ReceiveTaskNotificationClient) error {
+func (c *BetaClient) handleStream(ctx context.Context, stream agentendpointpb.AgentEndpointService_ReceiveTaskNotificationClient) error {
 	for {
 		logger.Debugf("Waiting on ReceiveTaskNotification stream Recv().")
 		if _, err := stream.Recv(); err != nil {
@@ -258,7 +249,7 @@ func (c *Client) handleStream(ctx context.Context, stream agentendpointpb.AgentE
 	}
 }
 
-func (c *Client) receiveTaskNotification(ctx context.Context) (agentendpointpb.AgentEndpointService_ReceiveTaskNotificationClient, error) {
+func (c *BetaClient) receiveTaskNotification(ctx context.Context) (agentendpointpb.AgentEndpointService_ReceiveTaskNotificationClient, error) {
 	req := &agentendpointpb.ReceiveTaskNotificationRequest{
 		AgentVersion: config.Version(),
 	}
@@ -274,8 +265,8 @@ func (c *Client) receiveTaskNotification(ctx context.Context) (agentendpointpb.A
 	return c.raw.ReceiveTaskNotification(ctx, req)
 }
 
-func (c *Client) loadTaskFromState(ctx context.Context) error {
-	st, err := loadState(taskStateFile)
+func (c *BetaClient) loadTaskFromState(ctx context.Context) error {
+	st, err := loadStateBeta(taskStateFile)
 	if err != nil {
 		return fmt.Errorf("loadState error: %v", err)
 	}
@@ -289,10 +280,7 @@ func (c *Client) loadTaskFromState(ctx context.Context) error {
 	return nil
 }
 
-var errServiceNotEnabled = errors.New("service is not enabled for this project")
-var errResourceExhausted = errors.New("ResourceExhausted")
-
-func (c *Client) waitForTask(ctx context.Context) error {
+func (c *BetaClient) waitForTask(ctx context.Context) error {
 	stream, err := c.receiveTaskNotification(ctx)
 	if err != nil {
 		return err
@@ -322,7 +310,7 @@ func (c *Client) waitForTask(ctx context.Context) error {
 
 // WaitForTaskNotification waits for and acts on any task notification until the Client is closed.
 // Multiple calls to WaitForTaskNotification will not create new watchers.
-func (c *Client) WaitForTaskNotification(ctx context.Context) {
+func (c *BetaClient) WaitForTaskNotification(ctx context.Context) {
 	c.mx.Lock()
 	defer c.mx.Unlock()
 	if c.cancel != nil {
@@ -367,14 +355,4 @@ func (c *Client) WaitForTaskNotification(ctx context.Context) {
 			}
 		}
 	}()
-}
-
-func mkLabels(task *agentendpointpb.Task) map[string]string {
-	labels := task.GetServiceLabels()
-	if labels == nil {
-		labels = make(map[string]string)
-	}
-	labels["instance_name"] = config.Name()
-	labels["agent_version"] = config.Version()
-	return labels
 }

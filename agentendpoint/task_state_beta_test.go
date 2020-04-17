@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-package agentendpointbeta
+package agentendpoint
 
 import (
 	"io/ioutil"
@@ -23,7 +23,7 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 )
 
-func TestLoadState(t *testing.T) {
+func TestLoadStateBeta(t *testing.T) {
 	td, err := ioutil.TempDir(os.TempDir(), "")
 	if err != nil {
 		t.Fatalf("error creating temp dir: %v", err)
@@ -32,7 +32,7 @@ func TestLoadState(t *testing.T) {
 	testState := filepath.Join(td, "testState")
 
 	// test no state file
-	if _, err := loadState(testState); err != nil {
+	if _, err := loadStateBeta(testState); err != nil {
 		t.Errorf("no state file: unexpected error: %v", err)
 	}
 
@@ -73,7 +73,7 @@ func TestLoadState(t *testing.T) {
 				t.Fatalf("error writing state: %v", err)
 			}
 
-			st, err := loadState(testState)
+			st, err := loadStateBeta(testState)
 			if err != nil && !tt.wantErr {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -87,7 +87,7 @@ func TestLoadState(t *testing.T) {
 	}
 }
 
-func TestStateSave(t *testing.T) {
+func TestStateSaveBeta(t *testing.T) {
 	td, err := ioutil.TempDir(os.TempDir(), "")
 	if err != nil {
 		t.Fatalf("error creating temp dir: %v", err)
@@ -97,7 +97,7 @@ func TestStateSave(t *testing.T) {
 
 	var tests = []struct {
 		desc  string
-		state *taskState
+		state *taskStateBeta
 		want  string
 	}{
 		{
@@ -107,22 +107,22 @@ func TestStateSave(t *testing.T) {
 		},
 		{
 			"BlankState",
-			&taskState{},
+			&taskStateBeta{},
 			"{}",
 		},
 		{
 			"PatchTask",
-			&taskState{PatchTask: &patchTask{TaskID: "foo"}, ExecTask: nil},
+			&taskStateBeta{PatchTask: &patchTaskBeta{TaskID: "foo"}, ExecTask: nil},
 			"{\"PatchTask\":{\"TaskID\":\"foo\",\"Task\":null,\"StartedAt\":\"0001-01-01T00:00:00Z\",\"RebootCount\":0}}",
 		},
 		{
 			"ExecTask",
-			&taskState{ExecTask: &execTask{TaskID: "foo"}, PatchTask: nil},
+			&taskStateBeta{ExecTask: &execTaskBeta{TaskID: "foo"}, PatchTask: nil},
 			"{\"ExecTask\":{\"TaskID\":\"foo\",\"Task\":null,\"StartedAt\":\"0001-01-01T00:00:00Z\"}}",
 		},
 	}
 	for _, tt := range tests {
-		err := saveState(tt.state, testState)
+		err := tt.state.save(testState)
 		if err != nil {
 			t.Errorf("%s: unexpected save error: %v", tt.desc, err)
 			continue

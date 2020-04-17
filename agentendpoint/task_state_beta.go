@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-package agentendpointbeta
+package agentendpoint
 
 import (
 	"encoding/json"
@@ -21,21 +21,21 @@ import (
 	"path/filepath"
 )
 
-type taskState struct {
-	PatchTask *patchTask `json:",omitempty"`
-	ExecTask  *execTask  `json:",omitempty"`
+type taskStateBeta struct {
+	PatchTask *patchTaskBeta `json:",omitempty"`
+	ExecTask  *execTaskBeta  `json:",omitempty"`
 }
 
-func saveState(st *taskState, path string) error {
+func (s *taskStateBeta) save(path string) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
 
-	if st == nil {
+	if s == nil {
 		return writeFile(path, []byte("{}"))
 	}
 
-	d, err := json.Marshal(st)
+	d, err := json.Marshal(s)
 	if err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func saveState(st *taskState, path string) error {
 	return writeFile(path, d)
 }
 
-func loadState(path string) (*taskState, error) {
+func loadStateBeta(path string) (*taskStateBeta, error) {
 	d, err := ioutil.ReadFile(path)
 	if os.IsNotExist(err) {
 		return nil, nil
@@ -52,25 +52,6 @@ func loadState(path string) (*taskState, error) {
 		return nil, err
 	}
 
-	var st taskState
+	var st taskStateBeta
 	return &st, json.Unmarshal(d, &st)
-}
-
-func writeFile(path string, data []byte) error {
-	// Write state to a temporary file first.
-	tmp, err := ioutil.TempFile(filepath.Dir(path), "")
-	if err != nil {
-		return err
-	}
-	newStateFile := tmp.Name()
-
-	if _, err = tmp.Write(data); err != nil {
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-
-	// Move the new temp file to the live path.
-	return os.Rename(newStateFile, path)
 }

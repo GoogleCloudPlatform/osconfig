@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-package agentendpointbeta
+package agentendpoint
 
 import (
 	"context"
@@ -26,7 +26,7 @@ import (
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
-func (r *patchTask) runUpdates(ctx context.Context) error {
+func (r *patchTaskBeta) runUpdates(ctx context.Context) error {
 	var errs []string
 	const retryPeriod = 3 * time.Minute
 	// Check for both apt-get and dpkg-query to give us a clean signal.

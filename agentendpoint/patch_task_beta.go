@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-package agentendpointbeta
+package agentendpoint
 
 import (
 	"context"
@@ -22,31 +22,18 @@ import (
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
-	"github.com/GoogleCloudPlatform/osconfig/ospatch"
 	"github.com/golang/protobuf/jsonpb"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
-func systemRebootRequired() (bool, error) {
-	return ospatch.SystemRebootRequired()
-}
-
-type patchStep string
-
-const (
-	prePatch  = "PrePatch"
-	patching  = "Patching"
-	postPatch = "PostPatch"
-)
-
-type patchTask struct {
-	client *Client
+type patchTaskBeta struct {
+	client *BetaClient
 
 	lastProgressState map[agentendpointpb.ApplyPatchesTaskProgress_State]time.Time
 
 	TaskID      string
-	Task        *applyPatchesTask
+	Task        *applyPatchesTaskBeta
 	StartedAt   time.Time `json:",omitempty"`
 	PatchStep   patchStep `json:",omitempty"`
 	RebootCount int
@@ -54,34 +41,34 @@ type patchTask struct {
 	// TODO add Attempts and track number of retries with backoff, jitter, etc.
 }
 
-func (r *patchTask) saveState() error {
-	return saveState(&taskState{PatchTask: r}, taskStateFile)
+func (r *patchTaskBeta) saveState() error {
+	return (&taskStateBeta{PatchTask: r}).save(taskStateFile)
 }
 
-func (r *patchTask) complete() {
-	if err := saveState(nil, taskStateFile); err != nil {
+func (r *patchTaskBeta) complete() {
+	if err := (&taskState{}).save(taskStateFile); err != nil {
 		r.errorf("Error saving state: %v", err)
 	}
 }
 
-func (r *patchTask) debugf(format string, v ...interface{}) {
+func (r *patchTaskBeta) debugf(format string, v ...interface{}) {
 	logger.Log(logger.LogEntry{Message: fmt.Sprintf(format, v...), Severity: logger.Debug, Labels: r.LogLabels})
 }
 
-func (r *patchTask) infof(format string, v ...interface{}) {
+func (r *patchTaskBeta) infof(format string, v ...interface{}) {
 	logger.Log(logger.LogEntry{Message: fmt.Sprintf(format, v...), Severity: logger.Info, Labels: r.LogLabels})
 }
 
-func (r *patchTask) errorf(format string, v ...interface{}) {
+func (r *patchTaskBeta) errorf(format string, v ...interface{}) {
 	logger.Log(logger.LogEntry{Message: fmt.Sprintf(format, v...), Severity: logger.Error, Labels: r.LogLabels})
 }
 
-type applyPatchesTask struct {
+type applyPatchesTaskBeta struct {
 	*agentendpointpb.ApplyPatchesTask
 }
 
 // MarshalJSON marshals a patchConfig using jsonpb.
-func (j *applyPatchesTask) MarshalJSON() ([]byte, error) {
+func (j *applyPatchesTaskBeta) MarshalJSON() ([]byte, error) {
 	m := jsonpb.Marshaler{}
 	s, err := m.MarshalToString(j)
 	if err != nil {
@@ -91,11 +78,11 @@ func (j *applyPatchesTask) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON unmarshals a patchConfig using jsonpb.
-func (j *applyPatchesTask) UnmarshalJSON(b []byte) error {
+func (j *applyPatchesTaskBeta) UnmarshalJSON(b []byte) error {
 	return jsonpb.UnmarshalString(string(b), j)
 }
 
-func (r *patchTask) setStep(step patchStep) error {
+func (r *patchTaskBeta) setStep(step patchStep) error {
 	r.PatchStep = step
 	if err := r.saveState(); err != nil {
 		return fmt.Errorf("error saving state: %v", err)
@@ -103,21 +90,21 @@ func (r *patchTask) setStep(step patchStep) error {
 	return nil
 }
 
-func (r *patchTask) handleErrorState(ctx context.Context, msg string, err error) error {
+func (r *patchTaskBeta) handleErrorState(ctx context.Context, msg string, err error) error {
 	if err == errServerCancel {
 		return r.reportCanceled(ctx)
 	}
 	return r.reportFailed(ctx, msg)
 }
 
-func (r *patchTask) reportFailed(ctx context.Context, msg string) error {
+func (r *patchTaskBeta) reportFailed(ctx context.Context, msg string) error {
 	r.errorf(msg)
 	return r.reportCompletedState(ctx, msg, &agentendpointpb.ReportTaskCompleteRequest_ApplyPatchesTaskOutput{
 		ApplyPatchesTaskOutput: &agentendpointpb.ApplyPatchesTaskOutput{State: agentendpointpb.ApplyPatchesTaskOutput_FAILED},
 	})
 }
 
-func (r *patchTask) reportCanceled(ctx context.Context) error {
+func (r *patchTaskBeta) reportCanceled(ctx context.Context) error {
 	r.infof("Canceling patch execution")
 	return r.reportCompletedState(ctx, errServerCancel.Error(), &agentendpointpb.ReportTaskCompleteRequest_ApplyPatchesTaskOutput{
 		// Is this right? Maybe there should be a canceled state instead.
@@ -125,7 +112,7 @@ func (r *patchTask) reportCanceled(ctx context.Context) error {
 	})
 }
 
-func (r *patchTask) reportCompletedState(ctx context.Context, errMsg string, output *agentendpointpb.ReportTaskCompleteRequest_ApplyPatchesTaskOutput) error {
+func (r *patchTaskBeta) reportCompletedState(ctx context.Context, errMsg string, output *agentendpointpb.ReportTaskCompleteRequest_ApplyPatchesTaskOutput) error {
 	req := &agentendpointpb.ReportTaskCompleteRequest{
 		TaskId:       r.TaskID,
 		TaskType:     agentendpointpb.TaskType_APPLY_PATCHES,
@@ -138,7 +125,7 @@ func (r *patchTask) reportCompletedState(ctx context.Context, errMsg string, out
 	return nil
 }
 
-func (r *patchTask) reportContinuingState(ctx context.Context, patchState agentendpointpb.ApplyPatchesTaskProgress_State) error {
+func (r *patchTaskBeta) reportContinuingState(ctx context.Context, patchState agentendpointpb.ApplyPatchesTaskProgress_State) error {
 	st, ok := r.lastProgressState[patchState]
 	if ok && st.After(time.Now().Add(-5*time.Second)) {
 		// Don't resend the same state more than once every 5s.
@@ -169,15 +156,15 @@ func (r *patchTask) reportContinuingState(ctx context.Context, patchState agente
 
 // TODO: Add MaxRebootCount so we don't loop endlessly.
 
-func (r *patchTask) prePatchReboot(ctx context.Context) error {
+func (r *patchTaskBeta) prePatchReboot(ctx context.Context) error {
 	return r.rebootIfNeeded(ctx, true)
 }
 
-func (r *patchTask) postPatchReboot(ctx context.Context) error {
+func (r *patchTaskBeta) postPatchReboot(ctx context.Context) error {
 	return r.rebootIfNeeded(ctx, false)
 }
 
-func (r *patchTask) rebootIfNeeded(ctx context.Context, prePatch bool) error {
+func (r *patchTaskBeta) rebootIfNeeded(ctx context.Context, prePatch bool) error {
 	var reboot bool
 	var err error
 	if r.Task.GetPatchConfig().GetRebootConfig() == agentendpointpb.PatchConfig_ALWAYS && !prePatch && r.RebootCount == 0 {
@@ -228,7 +215,7 @@ func (r *patchTask) rebootIfNeeded(ctx context.Context, prePatch bool) error {
 	}
 }
 
-func (r *patchTask) run(ctx context.Context) (err error) {
+func (r *patchTaskBeta) run(ctx context.Context) (err error) {
 	r.infof("Beginning patch task")
 	defer func() {
 		// This should not happen but the WUA libraries are complicated and
@@ -298,12 +285,12 @@ func (r *patchTask) run(ctx context.Context) (err error) {
 }
 
 // RunApplyPatches runs a apply patches task.
-func (c *Client) RunApplyPatches(ctx context.Context, task *agentendpointpb.Task) error {
-	r := &patchTask{
+func (c *BetaClient) RunApplyPatches(ctx context.Context, task *agentendpointpb.Task) error {
+	r := &patchTaskBeta{
 		TaskID:    task.GetTaskId(),
 		client:    c,
-		Task:      &applyPatchesTask{task.GetApplyPatchesTask()},
-		LogLabels: mkLabels(task),
+		Task:      &applyPatchesTaskBeta{task.GetApplyPatchesTask()},
+		LogLabels: mkLabels(task.GetServiceLabels()),
 	}
 	r.setStep(prePatch)
 
