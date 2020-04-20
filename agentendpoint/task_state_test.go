@@ -122,7 +122,7 @@ func TestStateSave(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		err := saveState(tt.state, testState)
+		err := tt.state.save(testState)
 		if err != nil {
 			t.Errorf("%s: unexpected save error: %v", tt.desc, err)
 			continue

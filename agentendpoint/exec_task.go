@@ -59,23 +59,19 @@ var run = func(cmd *exec.Cmd) ([]byte, error) {
 	return cmd.CombinedOutput()
 }
 
-func getGCSObject(ctx context.Context, gcsObject *agentendpointpb.GcsObject, loggingLabels map[string]string) (string, error) {
-	if gcsObject == nil {
-		return "", errors.New("gcsObject cannot be nil")
-	}
-
+func getGCSObject(ctx context.Context, bkt, obj string, gen int64, loggingLabels map[string]string) (string, error) {
 	cl, err := storage.NewClient(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error creating gcs client: %v", err)
 	}
-	reader, err := external.FetchGCSObject(ctx, cl, gcsObject.Object, gcsObject.Bucket, gcsObject.GenerationNumber)
+	reader, err := external.FetchGCSObject(ctx, cl, obj, bkt, gen)
 	if err != nil {
 		return "", fmt.Errorf("error fetching GCS object: %v", err)
 	}
 	defer reader.Close()
-	logger.Debugf("Fetched GCS object bucket %s object %s generation number %d", gcsObject.GetBucket(), gcsObject.GetObject(), gcsObject.GetGenerationNumber())
+	logger.Debugf("Fetched GCS object bucket %s object %s generation number %d", bkt, obj, gen)
 
-	localPath := filepath.Join(os.TempDir(), path.Base(gcsObject.GetObject()))
+	localPath := filepath.Join(os.TempDir(), path.Base(obj))
 	if err := external.DownloadStream(reader, "", localPath, 0755); err != nil {
 		return "", fmt.Errorf("error downloading GCS object: %s", err)
 	}
@@ -157,7 +153,7 @@ func (e *execTask) run(ctx context.Context) error {
 	localPath := stepConfig.GetLocalPath()
 	if gcsObject := stepConfig.GetGcsObject(); gcsObject != nil {
 		var err error
-		localPath, err = getGCSObject(ctx, gcsObject, e.LogLabels)
+		localPath, err = getGCSObject(ctx, gcsObject.GetBucket(), gcsObject.GetObject(), gcsObject.GetGenerationNumber(), e.LogLabels)
 		if err != nil {
 			return fmt.Errorf("error getting executable path: %v", err)
 		}
@@ -214,7 +210,7 @@ func (c *Client) RunExecStep(ctx context.Context, task *agentendpointpb.Task) er
 		TaskID:    task.GetTaskId(),
 		client:    c,
 		Task:      &execStepTask{task.GetExecStepTask()},
-		LogLabels: mkLabels(task),
+		LogLabels: mkLabels(task.GetServiceLabels()),
 	}
 
 	return e.run(ctx)

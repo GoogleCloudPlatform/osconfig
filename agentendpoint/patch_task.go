@@ -55,11 +55,11 @@ type patchTask struct {
 }
 
 func (r *patchTask) saveState() error {
-	return saveState(&taskState{PatchTask: r}, taskStateFile)
+	return (&taskState{PatchTask: r}).save(taskStateFile)
 }
 
 func (r *patchTask) complete() {
-	if err := saveState(nil, taskStateFile); err != nil {
+	if err := (&taskState{}).save(taskStateFile); err != nil {
 		r.errorf("Error saving state: %v", err)
 	}
 }
@@ -303,7 +303,7 @@ func (c *Client) RunApplyPatches(ctx context.Context, task *agentendpointpb.Task
 		TaskID:    task.GetTaskId(),
 		client:    c,
 		Task:      &applyPatchesTask{task.GetApplyPatchesTask()},
-		LogLabels: mkLabels(task),
+		LogLabels: mkLabels(task.GetServiceLabels()),
 	}
 	r.setStep(prePatch)
 

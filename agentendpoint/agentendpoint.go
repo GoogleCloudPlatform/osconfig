@@ -336,8 +336,7 @@ func (c *Client) WaitForTaskNotification(ctx context.Context) {
 	}()
 }
 
-func mkLabels(task *agentendpointpb.Task) map[string]string {
-	labels := task.GetServiceLabels()
+func mkLabels(labels map[string]string) map[string]string {
 	if labels == nil {
 		labels = make(map[string]string)
 	}

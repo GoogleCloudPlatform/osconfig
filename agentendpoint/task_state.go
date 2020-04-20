@@ -26,16 +26,16 @@ type taskState struct {
 	ExecTask  *execTask  `json:",omitempty"`
 }
 
-func saveState(st *taskState, path string) error {
+func (s *taskState) save(path string) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
 
-	if st == nil {
+	if s == nil {
 		return writeFile(path, []byte("{}"))
 	}
 
-	d, err := json.Marshal(st)
+	d, err := json.Marshal(s)
 	if err != nil {
 		return err
 	}

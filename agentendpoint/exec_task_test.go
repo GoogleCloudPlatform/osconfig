@@ -47,7 +47,9 @@ func (s *agentEndpointServiceExecTestServer) ReportTaskComplete(ctx context.Cont
 	return &agentendpointpb.ReportTaskCompleteResponse{}, nil
 }
 
-// Placeholder for LookupEffectiveGuestPolicy.
+func (*agentEndpointServiceExecTestServer) RegisterAgent(ctx context.Context, req *agentendpointpb.RegisterAgentRequest) (*agentendpointpb.RegisterAgentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterAgent not implemented")
+}
 
 func outputGen(id string, msg string, st agentendpointpb.ExecStepTaskOutput_State, exitCode int32) *agentendpointpb.ReportTaskCompleteRequest {
 	return &agentendpointpb.ReportTaskCompleteRequest{

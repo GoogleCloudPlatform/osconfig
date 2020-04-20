@@ -12,111 +12,33 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-package agentendpointbeta
+package agentendpoint
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
-	"os/exec"
-	"path"
-	"path/filepath"
-	"runtime"
 	"time"
 
-	"cloud.google.com/go/storage"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-	"github.com/GoogleCloudPlatform/osconfig/external"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
-var (
-	winRoot = os.Getenv("SystemRoot")
-	sh      = "/bin/sh"
-
-	winPowershell string
-	winCmd        string
-
-	winPowershellArgs = []string{"-NonInteractive", "-NoProfile", "-ExecutionPolicy", "Bypass"}
-
-	goos = runtime.GOOS
-
-	errLinuxPowerShell = errors.New("interpreter POWERSHELL cannot be used on non-Windows system")
-	errWinNoInt        = fmt.Errorf("interpreter must be specified for a Windows system")
-)
-
-func init() {
-	if winRoot == "" {
-		winRoot = `C:\Windows`
-	}
-	winPowershell = filepath.Join(winRoot, `System32\WindowsPowerShell\v1.0\PowerShell.exe`)
-	winCmd = filepath.Join(winRoot, `System32\cmd.exe`)
-}
-
-var run = func(cmd *exec.Cmd) ([]byte, error) {
-	return cmd.CombinedOutput()
-}
-
-func getGCSObject(ctx context.Context, gcsObject *agentendpointpb.GcsObject, loggingLabels map[string]string) (string, error) {
-	if gcsObject == nil {
-		return "", errors.New("gcsObject cannot be nil")
-	}
-
-	cl, err := storage.NewClient(ctx)
-	if err != nil {
-		return "", fmt.Errorf("error creating gcs client: %v", err)
-	}
-	reader, err := external.FetchGCSObject(ctx, cl, gcsObject.Object, gcsObject.Bucket, gcsObject.GenerationNumber)
-	if err != nil {
-		return "", fmt.Errorf("error fetching GCS object: %v", err)
-	}
-	defer reader.Close()
-	logger.Debugf("Fetched GCS object bucket %s object %s generation number %d", gcsObject.GetBucket(), gcsObject.GetObject(), gcsObject.GetGenerationNumber())
-
-	localPath := filepath.Join(os.TempDir(), path.Base(gcsObject.GetObject()))
-	if err := external.DownloadStream(reader, "", localPath, 0755); err != nil {
-		return "", fmt.Errorf("error downloading GCS object: %s", err)
-	}
-
-	logger.Debugf("Downloaded to local path %s", localPath)
-	return localPath, nil
-}
-
-func executeCommand(path string, args []string, loggingLabels map[string]string) (int32, error) {
-	logger.Debugf("Running command %s with args %s", path, args)
-
-	cmd := exec.Command(path, args...)
-	out, err := run(cmd)
-	var exitCode int32
-	if cmd.ProcessState != nil {
-		exitCode = int32(cmd.ProcessState.ExitCode())
-		logger.Infof("Command exit code: %d, out:\n%s", exitCode, out)
-	}
-	if err != nil {
-		if _, ok := err.(*exec.ExitError); !ok {
-			return -1, err
-		}
-	}
-
-	return exitCode, nil
-}
-
-type execTask struct {
-	client *Client
+type execTaskBeta struct {
+	client *BetaClient
 
 	TaskID    string
-	Task      *execStepTask
+	Task      *execStepTaskBeta
 	StartedAt time.Time         `json:",omitempty"`
 	LogLabels map[string]string `json:",omitempty"`
 }
 
-type execStepTask struct {
+type execStepTaskBeta struct {
 	*agentendpointpb.ExecStepTask
 }
 
-func (e *execTask) reportCompletedState(ctx context.Context, errMsg string, output *agentendpointpb.ReportTaskCompleteRequest_ExecStepTaskOutput) error {
+func (e *execTaskBeta) reportCompletedState(ctx context.Context, errMsg string, output *agentendpointpb.ReportTaskCompleteRequest_ExecStepTaskOutput) error {
 	req := &agentendpointpb.ReportTaskCompleteRequest{
 		TaskId:       e.TaskID,
 		TaskType:     agentendpointpb.TaskType_EXEC_STEP_TASK,
@@ -129,7 +51,7 @@ func (e *execTask) reportCompletedState(ctx context.Context, errMsg string, outp
 	return nil
 }
 
-func (e *execTask) run(ctx context.Context) error {
+func (e *execTaskBeta) run(ctx context.Context) error {
 	e.StartedAt = time.Now()
 	req := &agentendpointpb.ReportTaskProgressRequest{
 		TaskId:   e.TaskID,
@@ -157,7 +79,7 @@ func (e *execTask) run(ctx context.Context) error {
 	localPath := stepConfig.GetLocalPath()
 	if gcsObject := stepConfig.GetGcsObject(); gcsObject != nil {
 		var err error
-		localPath, err = getGCSObject(ctx, gcsObject, e.LogLabels)
+		localPath, err = getGCSObject(ctx, gcsObject.GetBucket(), gcsObject.GetObject(), gcsObject.GetGenerationNumber(), e.LogLabels)
 		if err != nil {
 			return fmt.Errorf("error getting executable path: %v", err)
 		}
@@ -209,12 +131,12 @@ func (e *execTask) run(ctx context.Context) error {
 }
 
 // RunExecStep runs an exec step task.
-func (c *Client) RunExecStep(ctx context.Context, task *agentendpointpb.Task) error {
-	e := &execTask{
+func (c *BetaClient) RunExecStep(ctx context.Context, task *agentendpointpb.Task) error {
+	e := &execTaskBeta{
 		TaskID:    task.GetTaskId(),
 		client:    c,
-		Task:      &execStepTask{task.GetExecStepTask()},
-		LogLabels: mkLabels(task),
+		Task:      &execStepTaskBeta{task.GetExecStepTask()},
+		LogLabels: mkLabels(task.GetServiceLabels()),
 	}
 
 	return e.run(ctx)
