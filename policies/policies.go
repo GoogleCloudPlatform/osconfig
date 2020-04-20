@@ -39,7 +39,7 @@ func run(ctx context.Context) {
 
 	client, err := agentendpoint.NewBetaClient(ctx)
 	if err != nil {
-		logger.Errorf("agentendpoint.NewClient Error: %v", err)
+		logger.Errorf("agentendpoint.NewBetaClient Error: %v", err)
 	} else {
 		defer client.Close()
 		resp, err = client.LookupEffectiveGuestPolicies(ctx)
