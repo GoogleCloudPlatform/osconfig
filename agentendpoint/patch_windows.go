@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/ospatch"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 
@@ -116,7 +117,7 @@ func (r *patchTask) wuaUpdates(ctx context.Context) error {
 		}
 		count, err := r.installWUAUpdates(ctx, cf)
 		if err != nil {
-			log.Errorf("Error installing Windows updates (attempt %d): %v", i, err)
+			logger.Errorf("Error installing Windows updates (attempt %d): %v", i, err)
 		}
 		if count == 0 {
 			return nil
