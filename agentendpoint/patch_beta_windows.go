@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/ospatch"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 
@@ -93,7 +94,7 @@ func (r *patchTaskBeta) installWUAUpdates(ctx context.Context, cf []string) (int
 		defer updt.Release()
 
 		if err := session.InstallWUAUpdate(updt); err != nil {
-			return i, fmt.Errorf(`installUpdate(class, excludes, updt): %v`, err)
+			return i, fmt.Errorf(`installUpdate(updt): %v`, err)
 		}
 	}
 
@@ -106,12 +107,17 @@ func (r *patchTaskBeta) wuaUpdates(ctx context.Context) error {
 		return err
 	}
 
-	// We keep searching for and installing updates until the count == 0 or there is an error.
-	retries := 20
-	for i := 0; i < retries; i++ {
+	// We keep searching for and installing updates until the count == 0,
+	// we get a stop signal, or retries exceed 10.
+	retries := 10
+	for i := 1; i <= retries; i++ {
+		if err := r.reportContinuingState(ctx, agentendpointpb.ApplyPatchesTaskProgress_APPLYING_PATCHES); err != nil {
+			return err
+		}
 		count, err := r.installWUAUpdates(ctx, cf)
 		if err != nil {
-			return err
+			logger.Errorf("Error installing Windows updates (attempt %d): %v", i, err)
+			continue
 		}
 		if count == 0 {
 			return nil
@@ -122,7 +128,8 @@ func (r *patchTaskBeta) wuaUpdates(ctx context.Context) error {
 }
 
 func (r *patchTaskBeta) runUpdates(ctx context.Context) error {
-	if err := retryFunc(30*time.Minute, "installing Windows updates", func() error { return r.wuaUpdates(ctx) }); err != nil {
+	// Don't use retry function as wuaUpdates handles it's own retries.
+	if err := r.wuaUpdates(ctx); err != nil {
 		return err
 	}
 
