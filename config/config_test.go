@@ -28,7 +28,7 @@ import (
 	"testing"
 )
 
-func TestSetConfig(t *testing.T) {
+func TestWatchConfig(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, `{"project":{"numericProjectID":12345,"projectId":"projectId","attributes":{"osconfig-endpoint":"bad!!1","enable-os-inventory":"false"}},"instance":{"id":12345,"name":"name","zone":"zone","attributes":{"osconfig-endpoint":"SvcEndpoint","enable-os-inventory":"1","enable-os-config-debug":"true","osconfig-enabled-prerelease-features":"ospackage,ospatch", "osconfig-poll-interval":"3"}}}`)
 	}))
@@ -38,8 +38,8 @@ func TestSetConfig(t *testing.T) {
 		t.Fatalf("Error running os.Setenv: %v", err)
 	}
 
-	if err := SetConfig(context.Background()); err != nil {
-		t.Fatalf("Error running SetConfig: %v", err)
+	if err := WatchConfig(context.Background()); err != nil {
+		t.Fatalf("Error running WatchConfig: %v", err)
 	}
 
 	testsString := []struct {
@@ -93,12 +93,16 @@ func TestSetConfigEnabled(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch request {
 		case 0:
+			w.Header().Set("Etag", "etag-0")
 			fmt.Fprintln(w, `{"project":{"attributes":{"enable-osconfig":"false"}},"instance":{"attributes":{"enable-osconfig":"false"}}}`)
 		case 1:
+			w.Header().Set("Etag", "etag-1")
 			fmt.Fprintln(w, `{"project":{"attributes":{"enable-osconfig":"true"}},"instance":{"attributes":{"enable-osconfig":"false"}}}`)
 		case 2:
+			w.Header().Set("Etag", "etag-2")
 			fmt.Fprintln(w, `{"project":{"attributes":{"enable-osconfig":"false"}},"instance":{"attributes":{"enable-osconfig":"true"}}}`)
 		case 3:
+			w.Header().Set("Etag", "etag-3")
 			fmt.Fprintln(w, `{"project":{"attributes":{"enable-osconfig":"true","osconfig-disabled-features":"osinventory"}}}`)
 		}
 	}))
@@ -110,7 +114,7 @@ func TestSetConfigEnabled(t *testing.T) {
 
 	for i, want := range []bool{false, false, true} {
 		request = i
-		if err := SetConfig(context.Background()); err != nil {
+		if err := WatchConfig(context.Background()); err != nil {
 			t.Fatalf("Error running SetConfig: %v", err)
 		}
 
@@ -130,7 +134,7 @@ func TestSetConfigEnabled(t *testing.T) {
 	}
 
 	request = 3
-	if err := SetConfig(context.Background()); err != nil {
+	if err := WatchConfig(context.Background()); err != nil {
 		t.Fatalf("Error running SetConfig: %v", err)
 	}
 
@@ -152,6 +156,7 @@ func TestSetConfigEnabled(t *testing.T) {
 
 func TestSetConfigDefaultValues(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Etag", "sample-etag")
 		fmt.Fprintln(w, `{}`)
 	}))
 	defer ts.Close()
@@ -160,7 +165,7 @@ func TestSetConfigDefaultValues(t *testing.T) {
 		t.Fatalf("Error running os.Setenv: %v", err)
 	}
 
-	if err := SetConfig(context.Background()); err != nil {
+	if err := WatchConfig(context.Background()); err != nil {
 		t.Fatalf("Error running SetConfig: %v", err)
 	}
 
@@ -225,7 +230,7 @@ func TestSetConfigError(t *testing.T) {
 		t.Fatalf("Error running os.Setenv: %v", err)
 	}
 
-	if err := SetConfig(context.Background()); err == nil || !strings.Contains(err.Error(), "unexpected end of JSON input") {
+	if err := WatchConfig(context.Background()); err == nil || !strings.Contains(err.Error(), "unexpected end of JSON input") {
 		t.Errorf("Unexpected output %+v", err)
 	}
 }

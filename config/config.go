@@ -20,8 +20,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"net"
+	"net/http"
 	"net/url"
+	"os"
 	"runtime"
 	"strconv"
 	"strings"
@@ -29,11 +32,17 @@ import (
 	"time"
 
 	"cloud.google.com/go/compute/metadata"
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"golang.org/x/oauth2/jws"
 )
 
 const (
-	// InstanceMetadata is the instance metadata URL.
+	// metadataIP is the documented metadata server IP address.
+	metadataIP = "169.254.169.254"
+	// metadataHostEnv is the environment variable specifying the
+	// GCE metadata hostname.
+	metadataHostEnv = "GCE_METADATA_HOST"
+	// InstanceMetadata is the compute metadata URL.
 	InstanceMetadata = "http://metadata.google.internal/computeMetadata/v1/instance"
 	// IdentityTokenPath is the instance identity token path.
 	IdentityTokenPath = "instance/service-accounts/default/identity?audience=osconfig.googleapis.com&format=full"
@@ -60,6 +69,7 @@ const (
 	restartFileLinux     = configDirLinux + "/osconfig_agent_restart_required"
 
 	osConfigPollIntervalDefault = 10
+	osConfigMetadataPollTimeout = 300
 )
 
 var (
@@ -70,6 +80,7 @@ var (
 	agentConfig   = &config{}
 	agentConfigMx sync.RWMutex
 	version       string
+	lEtag         = &lastEtag{Etag: "0"}
 )
 
 type config struct {
@@ -97,6 +108,23 @@ func getAgentConfig() config {
 	agentConfigMx.RLock()
 	defer agentConfigMx.RUnlock()
 	return *agentConfig
+}
+
+type lastEtag struct {
+	mu   sync.RWMutex
+	Etag string
+}
+
+func (e *lastEtag) set(etag string) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.Etag = etag
+}
+
+func (e *lastEtag) get() string {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	return e.Etag
 }
 
 func parseBool(s string) bool {
@@ -290,58 +318,95 @@ func formatMetadataError(err error) error {
 	return err
 }
 
-// SetConfig sets the agent config.
-func SetConfig(ctx context.Context) error {
-	var md string
+func getMetadata(suffix string) ([]byte, string, error) {
+	host := os.Getenv(metadataHostEnv)
+	if host == "" {
+		// Using 169.254.169.254 instead of "metadata" here because Go
+		// binaries built with the "netgo" tag and without cgo won't
+		// know the search suffix for "metadata" is
+		// ".google.internal", and this IP address is documented as
+		// being stable anyway.
+		host = metadataIP
+	}
+	computeMetadataURL := "http://" + host + "/computeMetadata/v1/" + suffix
+	req, err := http.NewRequest("GET", computeMetadataURL, nil)
+	if err != nil {
+		return nil, "", err
+	}
+	req.Header.Add("Metadata-Flavor", "Google")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, "", err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, "", err
+	}
+	all, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return all, resp.Header.Get("Etag"), nil
+}
+
+// WatchConfig looks for changes in metadata keys. Upon receiving successful response,
+// it create a new agent config.
+func WatchConfig(ctx context.Context) error {
+	var md []byte
 	var webError error
+	eTag := lEtag.get()
 	webErrorCount := 0
-	ticker := time.NewTicker(5 * time.Second)
 	for {
-		md, webError = metadata.Get("?recursive=true&alt=json")
-		if webError == nil {
+		md, eTag, webError = getMetadata(fmt.Sprintf("?recursive=true&alt=json&wait_for_change=true&last_etag=%s&timeout_sec=%d", lEtag.get(), osConfigMetadataPollTimeout))
+		if webError == nil && eTag != lEtag.get() {
 			break
 		}
+
 		// Try up to 3 times to wait for slow network initialization, after
 		// that resort to using defaults and returning the error.
-		if webErrorCount == 2 {
-			webError = formatMetadataError(webError)
-			break
+		if webError != nil {
+			if webErrorCount == 2 {
+				return formatMetadataError(webError)
+			}
+			webErrorCount++
 		}
-		webErrorCount++
+
 		select {
-		case <-ticker.C:
-			continue
 		case <-ctx.Done():
 			return nil
+		default:
+			continue
 		}
 	}
 
-	var metadata metadataJSON
-	if err := json.Unmarshal([]byte(md), &metadata); err != nil {
+	lEtag.set(eTag)
+
+	var metadataConfig metadataJSON
+	if err := json.Unmarshal(md, &metadataConfig); err != nil {
 		return err
 	}
 
-	new := createConfigFromMetadata(metadata)
+	newAgentConfig := createConfigFromMetadata(metadataConfig)
 	agentConfigMx.Lock()
-	agentConfig = new
+	agentConfig = newAgentConfig
 	agentConfigMx.Unlock()
 
 	return webError
 }
 
+// LogFeatures logs the osconfig feature status.
+func LogFeatures() {
+	logger.Infof("OSConfig enabled features status:{GuestPolicies: %t, OSInventory: %t, PatchManagement: %t}.", GuestPoliciesEnabled(), OSInventoryEnabled(), TaskNotificationEnabled())
+}
+
 // SvcPollInterval returns the frequency to poll the service.
 func SvcPollInterval() time.Duration {
 	return time.Duration(getAgentConfig().osConfigPollInterval) * time.Minute
-}
-
-// MaxMetadataRetryDelay is the maximum retry delay when getting data from the metadata server.
-func MaxMetadataRetryDelay() time.Duration {
-	return 30 * time.Second
-}
-
-// MaxMetadataRetries is the maximum number of retry when getting data from the metadata server.
-func MaxMetadataRetries() int {
-	return 3
 }
 
 // SerialLogPort is the serial port to log to.
@@ -355,7 +420,7 @@ func SerialLogPort() string {
 
 // Debug sets the debug log verbosity.
 func Debug() bool {
-	return (*debug || getAgentConfig().debugEnabled)
+	return *debug || getAgentConfig().debugEnabled
 }
 
 // Stdout flag.
