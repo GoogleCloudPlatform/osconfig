@@ -23,12 +23,14 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/agentendpoint"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"github.com/GoogleCloudPlatform/osconfig/policies/recipes"
+	"github.com/GoogleCloudPlatform/osconfig/retryutil"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
@@ -175,7 +177,9 @@ func setConfig(egp *agentendpointpb.EffectiveGuestPolicy) {
 		if err := googetRepositories(gooRepos, config.GooGetRepoFilePath()); err != nil {
 			logger.Errorf("Error writing googet repo file: %v", err)
 		}
-		if err := googetChanges(gooInstallPkgs, gooRemovePkgs, gooUpdatePkgs); err != nil {
+		if err := retryutil.RetryFunc(2*time.Minute, "Applying googet changes", func() error {
+			return googetChanges(gooInstallPkgs, gooRemovePkgs, gooUpdatePkgs)
+		}); err != nil {
 			logger.Errorf("Error performing googet changes: %v", err)
 		}
 	}
@@ -190,7 +194,9 @@ func setConfig(egp *agentendpointpb.EffectiveGuestPolicy) {
 		if err := aptRepositories(aptRepos, config.AptRepoFilePath()); err != nil {
 			logger.Errorf("Error writing apt repo file: %v", err)
 		}
-		if err := aptChanges(aptInstallPkgs, aptRemovePkgs, aptUpdatePkgs); err != nil {
+		if err := retryutil.RetryFunc(2*time.Minute, "Applying apt changes", func() error {
+			return aptChanges(aptInstallPkgs, aptRemovePkgs, aptUpdatePkgs)
+		}); err != nil {
 			logger.Errorf("Error performing apt changes: %v", err)
 		}
 	}
@@ -205,7 +211,9 @@ func setConfig(egp *agentendpointpb.EffectiveGuestPolicy) {
 		if err := yumRepositories(yumRepos, config.YumRepoFilePath()); err != nil {
 			logger.Errorf("Error writing yum repo file: %v", err)
 		}
-		if err := yumChanges(yumInstallPkgs, yumRemovePkgs, yumUpdatePkgs); err != nil {
+		if err := retryutil.RetryFunc(2*time.Minute, "Applying yum changes", func() error {
+			return yumChanges(yumInstallPkgs, yumRemovePkgs, yumUpdatePkgs)
+		}); err != nil {
 			logger.Errorf("Error performing yum changes: %v", err)
 		}
 	}
@@ -220,7 +228,9 @@ func setConfig(egp *agentendpointpb.EffectiveGuestPolicy) {
 		if err := zypperRepositories(zypperRepos, config.ZypperRepoFilePath()); err != nil {
 			logger.Errorf("Error writing zypper repo file: %v", err)
 		}
-		if err := zypperChanges(zypperInstallPkgs, zypperRemovePkgs, zypperUpdatePkgs); err != nil {
+		if err := retryutil.RetryFunc(2*time.Minute, "Applying zypper changes.", func() error {
+			return zypperChanges(zypperInstallPkgs, zypperRemovePkgs, zypperUpdatePkgs)
+		}); err != nil {
 			logger.Errorf("Error performing zypper changes: %v", err)
 		}
 	}

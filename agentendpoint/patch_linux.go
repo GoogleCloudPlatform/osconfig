@@ -22,6 +22,7 @@ import (
 
 	"github.com/GoogleCloudPlatform/osconfig/ospatch"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
+	"github.com/GoogleCloudPlatform/osconfig/retryutil"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
 )
@@ -39,7 +40,7 @@ func (r *patchTask) runUpdates(ctx context.Context) error {
 			opts = append(opts, ospatch.AptGetUpgradeType(packages.AptGetDistUpgrade))
 		}
 		r.debugf("Installing APT package updates.")
-		if err := retryFunc(retryPeriod, "installing APT package updates", func() error { return ospatch.RunAptGetUpgrade(opts...) }); err != nil {
+		if err := retryutil.RetryFunc(retryPeriod, "installing APT package updates", func() error { return ospatch.RunAptGetUpgrade(opts...) }); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}
@@ -51,7 +52,7 @@ func (r *patchTask) runUpdates(ctx context.Context) error {
 			ospatch.YumDryRun(r.Task.GetDryRun()),
 		}
 		r.debugf("Installing YUM package updates.")
-		if err := retryFunc(retryPeriod, "installing YUM package updates", func() error { return ospatch.RunYumUpdate(opts...) }); err != nil {
+		if err := retryutil.RetryFunc(retryPeriod, "installing YUM package updates", func() error { return ospatch.RunYumUpdate(opts...) }); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}
@@ -64,7 +65,7 @@ func (r *patchTask) runUpdates(ctx context.Context) error {
 			ospatch.ZypperUpdateDryrun(r.Task.GetDryRun()),
 		}
 		r.debugf("Installing Zypper updates.")
-		if err := retryFunc(retryPeriod, "installing Zypper updates", func() error { return ospatch.RunZypperPatch(opts...) }); err != nil {
+		if err := retryutil.RetryFunc(retryPeriod, "installing Zypper updates", func() error { return ospatch.RunZypperPatch(opts...) }); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}

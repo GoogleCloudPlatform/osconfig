@@ -26,6 +26,7 @@ import (
 	agentendpoint "cloud.google.com/go/osconfig/agentendpoint/apiv1"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/config"
+	"github.com/GoogleCloudPlatform/osconfig/retryutil"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 	"google.golang.org/api/option"
@@ -95,7 +96,7 @@ func (c *Client) startNextTask(ctx context.Context) (res *agentendpointpb.StartN
 	logger.Debugf("Calling StartNextTask with request:\n%s", util.PrettyFmt(req))
 	req.InstanceIdToken = token
 
-	if err := retryAPICall(apiRetrySec*time.Second, "StartNextTask", func() error {
+	if err := retryutil.RetryAPICall(apiRetrySec*time.Second, "StartNextTask", func() error {
 		res, err = c.raw.StartNextTask(ctx, req)
 		if err != nil {
 			return err
@@ -118,7 +119,7 @@ func (c *Client) reportTaskProgress(ctx context.Context, req *agentendpointpb.Re
 	logger.Debugf("Calling ReportTaskProgress with request:\n%s", util.PrettyFmt(req))
 	req.InstanceIdToken = token
 
-	if err := retryAPICall(apiRetrySec*time.Second, "ReportTaskProgress", func() error {
+	if err := retryutil.RetryAPICall(apiRetrySec*time.Second, "ReportTaskProgress", func() error {
 		res, err = c.raw.ReportTaskProgress(ctx, req)
 		if err != nil {
 			return err
@@ -141,7 +142,7 @@ func (c *Client) reportTaskComplete(ctx context.Context, req *agentendpointpb.Re
 	logger.Debugf("Calling ReportTaskComplete with request:\n%s", util.PrettyFmt(req))
 	req.InstanceIdToken = token
 
-	if err := retryAPICall(apiRetrySec*time.Second, "ReportTaskComplete", func() error {
+	if err := retryutil.RetryAPICall(apiRetrySec*time.Second, "ReportTaskComplete", func() error {
 		res, err := c.raw.ReportTaskComplete(ctx, req)
 		if err != nil {
 			return err
@@ -325,7 +326,7 @@ func (c *Client) WaitForTaskNotification(ctx context.Context) {
 				logger.Errorf("Error waiting for task: %v", err)
 				sleep := 5 * time.Second
 				if err == errResourceExhausted {
-					sleep = retrySleep(resourceExhausted, 5)
+					sleep = retryutil.RetrySleep(resourceExhausted, 5)
 					resourceExhausted++
 				} else {
 					resourceExhausted = 1
