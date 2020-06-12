@@ -25,8 +25,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// retrySleep returns a pseudo-random sleep duration.
-func retrySleep(base int, extra int) time.Duration {
+// RetrySleep returns a pseudo-random sleep duration.
+func RetrySleep(base int, extra int) time.Duration {
 	// base=1 and extra=0 => 1*1+[0,1] => 1-2s
 	// base=2 and extra=0 => 2*2+[0,2] => 4-6s
 	// base=3 and extra=0 => 3*3+[0,3] => 9-12s
@@ -43,7 +43,7 @@ func retrySleep(base int, extra int) time.Duration {
 	return time.Duration(int(nf)) * time.Second
 }
 
-func retryFunc(maxRetryTime time.Duration, desc string, f func() error) error {
+func RetryFunc(maxRetryTime time.Duration, desc string, f func() error) error {
 	var tot time.Duration
 	for i := 1; ; i++ {
 		err := f()
@@ -51,7 +51,7 @@ func retryFunc(maxRetryTime time.Duration, desc string, f func() error) error {
 			return nil
 		}
 
-		ns := retrySleep(i, 0)
+		ns := RetrySleep(i, 0)
 		tot += ns
 		if tot > maxRetryTime {
 			return err
@@ -62,7 +62,7 @@ func retryFunc(maxRetryTime time.Duration, desc string, f func() error) error {
 	}
 }
 
-func retryAPICall(maxRetryTime time.Duration, name string, f func() error) error {
+func RetryAPICall(maxRetryTime time.Duration, name string, f func() error) error {
 	var tot time.Duration
 	for i := 1; ; i++ {
 		extra := 1
@@ -85,7 +85,7 @@ func retryAPICall(maxRetryTime time.Duration, name string, f func() error) error
 			return err
 		}
 
-		ns := retrySleep(i, extra)
+		ns := RetrySleep(i, extra)
 		tot += ns
 		if tot > maxRetryTime {
 			return err
