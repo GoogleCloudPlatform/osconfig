@@ -44,6 +44,7 @@ func RetrySleep(base int, extra int) time.Duration {
 	return time.Duration(int(nf)) * time.Second
 }
 
+// RetryFunc retries a function provided as a parameter for maxRetryTime.
 func RetryFunc(maxRetryTime time.Duration, desc string, f func() error) error {
 	var tot time.Duration
 	for i := 1; ; i++ {
@@ -63,6 +64,7 @@ func RetryFunc(maxRetryTime time.Duration, desc string, f func() error) error {
 	}
 }
 
+// RetryAPICall retries an API call for maxRetryTime.
 func RetryAPICall(maxRetryTime time.Duration, name string, f func() error) error {
 	var tot time.Duration
 	for i := 1; ; i++ {
