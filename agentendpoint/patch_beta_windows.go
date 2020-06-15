@@ -24,7 +24,7 @@ import (
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/ospatch"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
-
+	"github.com/GoogleCloudPlatform/osconfig/retryutil"
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
@@ -142,7 +142,7 @@ func (r *patchTaskBeta) runUpdates(ctx context.Context) error {
 		opts := []ospatch.GooGetUpdateOption{
 			ospatch.GooGetDryRun(r.Task.GetDryRun()),
 		}
-		if err := retryFunc(3*time.Minute, "installing GooGet package updates", func() error { return ospatch.RunGooGetUpdate(opts...) }); err != nil {
+		if err := retryutil.RetryFunc(3*time.Minute, "installing GooGet package updates", func() error { return ospatch.RunGooGetUpdate(opts...) }); err != nil {
 			return err
 		}
 	}
