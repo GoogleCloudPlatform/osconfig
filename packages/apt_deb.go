@@ -33,7 +33,7 @@ var (
 
 	dpkgInstallArgs   = []string{"--install"}
 	dpkgQueryArgs     = []string{"-W", "-f", "${Package} ${Architecture} ${Version}\n"}
-	dpkgRepairArgs    = []string{"--configure -a"}
+	dpkgRepairArgs    = []string{"--configure", "-a"}
 	aptGetInstallArgs = []string{"install", "-y"}
 	aptGetRemoveArgs  = []string{"remove", "-y"}
 	aptGetUpdateArgs  = []string{"update"}
@@ -89,6 +89,19 @@ func AptGetUpgradeShowNew(showNew bool) AptGetUpgradeOption {
 	}
 }
 
+func dpkgRepair(out []byte) bool {
+	// Error code 100 may occur for non repairable errors, just check the output.
+	if !bytes.Contains(out, []byte("dpkg --configure -a")) {
+		return false
+	}
+	DebugLogger.Printf("apt-get error, attempting dpkg repair.")
+	// Ignore error here, just log and rerun apt-get.
+	out, _ = run(exec.Command(dpkg, dpkgRepairArgs...))
+	DebugLogger.Printf("dpkg %q output:\n%s", dpkgRepairArgs, strings.ReplaceAll(string(out), "\n", "\n "))
+
+	return true
+}
+
 // InstallAptPackages installs apt packages.
 func InstallAptPackages(pkgs []string) error {
 	args := append(aptGetInstallArgs, pkgs...)
@@ -98,6 +111,13 @@ func InstallAptPackages(pkgs []string) error {
 	)
 	out, err := run(install)
 	DebugLogger.Printf("apt-get %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	if err != nil {
+		if dpkgRepair(out) {
+			out, err = run(install)
+			DebugLogger.Printf("apt-get %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+		}
+	}
+
 	if err != nil {
 		err = fmt.Errorf("error running apt-get with args %q: %v, stdout: %s", args, err, out)
 	}
@@ -112,6 +132,13 @@ func RemoveAptPackages(pkgs []string) error {
 		"DEBIAN_FRONTEND=noninteractive",
 	)
 	out, err := run(remove)
+	if err != nil {
+		if dpkgRepair(out) {
+			out, err = run(remove)
+			DebugLogger.Printf("apt-get %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+		}
+	}
+
 	DebugLogger.Printf("apt-get %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
 		err = fmt.Errorf("error running apt-get with args %q: %v, stdout: %s", args, err, out)
@@ -187,17 +214,7 @@ func AptUpdates(opts ...AptGetUpgradeOption) ([]PkgInfo, error) {
 	}
 
 	if out, err := run(exec.Command(aptGet, aptGetUpdateArgs...)); err != nil {
-		// Error code 100 is pretty common for not repairable errors, just check the output.
-		if bytes.Contains(out, []byte("dpkg --configure -a")) {
-			DebugLogger.Printf("apt-get error, attempting dpkg repair: %q", strings.ReplaceAll(string(out), "\n", "\n "))
-			// Ignore error here, just log and rerun apt-get.
-			out, _ = run(exec.Command(dpkg, dpkgRepairArgs...))
-			DebugLogger.Printf("dpkg %q output:\n%s", dpkgRepairArgs, strings.ReplaceAll(string(out), "\n", "\n "))
-			out, err = run(exec.Command(aptGet, aptGetUpdateArgs...))
-		}
-		if err != nil {
-			return nil, fmt.Errorf("error running apt-get with args %q: %v, stdout: %s", aptGetUpdateArgs, err, out)
-		}
+		return nil, fmt.Errorf("error running apt-get with args %q: %v, stdout: %s", aptGetUpdateArgs, err, out)
 	}
 
 	out, err := run(exec.Command(aptGet, args...))
