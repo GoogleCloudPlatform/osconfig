@@ -47,7 +47,10 @@ func SystemRebootRequired() (bool, error) {
 
 	regKeys := []string{
 		`SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired`,
-		`SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending`,
+		// Skip checking CBS for now until we implement rate limiting on reboots, this key
+		// will not be reset in some instances for a few minutes after a reboot. This should
+		// not prevent updates from running as this mainly indicates a feature install.
+		// `SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending`,
 	}
 	for _, key := range regKeys {
 		logger.Debugf("Checking if reboot required by testing the existance of %s", key)
