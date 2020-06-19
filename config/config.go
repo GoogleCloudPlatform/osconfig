@@ -17,6 +17,7 @@ package config
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -102,6 +103,13 @@ func (c *config) parseFeatures(features string, enabled bool) {
 			c.osInventoryEnabled = enabled
 		}
 	}
+}
+
+func (c *config) asSha256() string {
+	h := sha256.New()
+	h.Write([]byte(fmt.Sprintf("%v", c)))
+
+	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
 func getAgentConfig() config {
@@ -364,7 +372,21 @@ func WatchConfig(ctx context.Context) error {
 	for {
 		md, eTag, webError = getMetadata(fmt.Sprintf("?recursive=true&alt=json&wait_for_change=true&last_etag=%s&timeout_sec=%d", lEtag.get(), osConfigMetadataPollTimeout))
 		if webError == nil && eTag != lEtag.get() {
-			break
+			lEtag.set(eTag)
+			var metadataConfig metadataJSON
+			if err := json.Unmarshal(md, &metadataConfig); err != nil {
+				return err
+			}
+
+			newAgentConfig := createConfigFromMetadata(metadataConfig)
+
+			agentConfigMx.Lock()
+			if agentConfig.asSha256() != newAgentConfig.asSha256() {
+				agentConfig = newAgentConfig
+				agentConfigMx.Unlock()
+				break
+			}
+			agentConfigMx.Unlock()
 		}
 
 		// Try up to 3 times to wait for slow network initialization, after
@@ -383,18 +405,6 @@ func WatchConfig(ctx context.Context) error {
 			continue
 		}
 	}
-
-	lEtag.set(eTag)
-
-	var metadataConfig metadataJSON
-	if err := json.Unmarshal(md, &metadataConfig); err != nil {
-		return err
-	}
-
-	newAgentConfig := createConfigFromMetadata(metadataConfig)
-	agentConfigMx.Lock()
-	agentConfig = newAgentConfig
-	agentConfigMx.Unlock()
 
 	return webError
 }
