@@ -97,10 +97,10 @@ func TestSetConfigEnabled(t *testing.T) {
 			fmt.Fprintln(w, `{"project":{"attributes":{"enable-osconfig":"false"}},"instance":{"attributes":{"enable-osconfig":"false"}}}`)
 		case 1:
 			w.Header().Set("Etag", "etag-1")
-			fmt.Fprintln(w, `{"project":{"attributes":{"enable-osconfig":"true"}},"instance":{"attributes":{"enable-osconfig":"false"}}}`)
+			fmt.Fprintln(w, `{"project":{"attributes":{"enable-osconfig":"false"}},"instance":{"attributes":{"enable-osconfig":"true"}}}`)
 		case 2:
 			w.Header().Set("Etag", "etag-2")
-			fmt.Fprintln(w, `{"project":{"attributes":{"enable-osconfig":"false"}},"instance":{"attributes":{"enable-osconfig":"true"}}}`)
+			fmt.Fprintln(w, `{"project":{"attributes":{"enable-osconfig":"false"}},"instance":{"attributes":{"enable-osconfig":"false"}}}`)
 		case 3:
 			w.Header().Set("Etag", "etag-3")
 			fmt.Fprintln(w, `{"project":{"attributes":{"enable-osconfig":"true","osconfig-disabled-features":"osinventory"}}}`)
@@ -112,7 +112,7 @@ func TestSetConfigEnabled(t *testing.T) {
 		t.Fatalf("Error running os.Setenv: %v", err)
 	}
 
-	for i, want := range []bool{false, false, true} {
+	for i, want := range []bool{false, true, false} {
 		request = i
 		if err := WatchConfig(context.Background()); err != nil {
 			t.Fatalf("Error running SetConfig: %v", err)
