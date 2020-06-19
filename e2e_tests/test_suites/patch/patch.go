@@ -32,6 +32,7 @@ import (
 	gcpclients "github.com/GoogleCloudPlatform/osconfig/e2e_tests/gcp_clients"
 	testconfig "github.com/GoogleCloudPlatform/osconfig/e2e_tests/test_config"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
+	"github.com/GoogleCloudPlatform/osconfig/retryutil"
 	"github.com/golang/protobuf/ptypes/duration"
 	"github.com/kylelemons/godebug/pretty"
 	"google.golang.org/api/iterator"
@@ -199,7 +200,7 @@ func getPatchJobInstanceDetails(ctx context.Context, parent string) ([]string, e
 	return ret, nil
 }
 
-func awaitPatchJob(ctx context.Context, job *osconfigpb.PatchJob, timeout time.Duration) (*osconfigpb.PatchJob, error) {
+func awaitPatchJob(ctx context.Context, job *osconfigpb.PatchJob, timeout time.Duration) (res *osconfigpb.PatchJob, err error) {
 	client, err := gcpclients.GetOsConfigClientV1beta()
 	if err != nil {
 		return nil, err
@@ -211,8 +212,10 @@ func awaitPatchJob(ctx context.Context, job *osconfigpb.PatchJob, timeout time.D
 		case <-timedout:
 			return nil, errors.New("timed out while waiting for patch job to complete")
 		case <-tick:
-			res, err := client.GetPatchJob(ctx, &osconfigpb.GetPatchJobRequest{Name: job.GetName()})
-			if err != nil {
+			if err := retryutil.RetryAPICall(timeout*time.Second, "GetPatchJobRequest", func() error {
+				res, err = client.GetPatchJob(ctx, &osconfigpb.GetPatchJobRequest{Name: job.GetName()})
+				return err
+			}); err != nil {
 				return nil, fmt.Errorf("error while fetching patch job: %s", utils.GetStatusFromError(err))
 			}
 
@@ -288,7 +291,8 @@ func runExecutePatchJobTest(ctx context.Context, testCase *junitxml.TestCase, te
 	}
 
 	testCase.Logf("Started patch job %q", job.GetName())
-	if pj, err := awaitPatchJob(ctx, job, testSetup.assertTimeout); err != nil {
+	pj, err := awaitPatchJob(ctx, job, testSetup.assertTimeout)
+	if err != nil {
 		testCase.WriteFailure("Patch job %q error: %v", job.GetName(), err)
 		return
 	}
