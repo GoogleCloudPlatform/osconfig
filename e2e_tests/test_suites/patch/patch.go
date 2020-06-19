@@ -288,10 +288,11 @@ func runExecutePatchJobTest(ctx context.Context, testCase *junitxml.TestCase, te
 	}
 
 	testCase.Logf("Started patch job %q", job.GetName())
-	if _, err := awaitPatchJob(ctx, job, testSetup.assertTimeout); err != nil {
+	if pj, err := awaitPatchJob(ctx, job, testSetup.assertTimeout); err != nil {
 		testCase.WriteFailure("Patch job %q error: %v", job.GetName(), err)
 		return
 	}
+	testCase.Logf("Executed PatchJob: %+v", pj)
 
 	if pc.GetPreStep() != nil && pc.GetPostStep() != nil {
 		validatePrePostStepSuccess(inst, testCase)
@@ -357,6 +358,7 @@ func runRebootPatchTest(ctx context.Context, testCase *junitxml.TestCase, testSe
 		testCase.WriteFailure("Patch job '%s' error: %v", job.GetName(), err)
 		return
 	}
+	testCase.Logf("Executed PatchJob: %+v", pj)
 
 	// If shouldReboot is true that instance should not report a pending reboot.
 	if shouldReboot && pj.GetInstanceDetailsSummary().GetSucceededRebootRequiredInstanceCount() > 0 {
