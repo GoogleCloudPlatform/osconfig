@@ -298,6 +298,12 @@ func createConfigFromMetadata(md metadataJSON) *config {
 		c.debugEnabled = true
 	}
 
+	setSVCEndpoint(md, c)
+
+	return c
+}
+
+func setSVCEndpoint(md metadataJSON, c *config) {
 	switch {
 	case *endpoint != prodEndpoint:
 		c.svcEndpoint = *endpoint
@@ -311,7 +317,10 @@ func createConfigFromMetadata(md metadataJSON) *config {
 		c.svcEndpoint = md.Project.Attributes.OSConfigEndpointOld
 	}
 
-	return c
+	// Example instanceZone: projects/123456/zones/us-west1-b
+	parts := strings.Split(c.instanceZone, "/")
+	zone := parts[len(parts)-1]
+	c.svcEndpoint = strings.ReplaceAll(c.svcEndpoint, "{zone}", zone)
 }
 
 func formatMetadataError(err error) error {
