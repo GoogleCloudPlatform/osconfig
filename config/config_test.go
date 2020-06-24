@@ -157,7 +157,8 @@ func TestSetConfigEnabled(t *testing.T) {
 func TestSetConfigDefaultValues(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Etag", "sample-etag")
-		fmt.Fprintln(w, `{}`)
+		// we always get zone value in instance metadata.
+		fmt.Fprintln(w, `{ "instance": {"zone": "zone"}}`)
 	}))
 	defer ts.Close()
 
@@ -219,6 +220,29 @@ func TestVersion(t *testing.T) {
 	if Version() != v {
 		t.Errorf("Unexpected version %q, want %q", Version(), v)
 	}
+}
+
+func TestSvcEndpoint(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Etag", "sametag")
+		// we always get zone value in instance metadata.
+		fmt.Fprintln(w, `{"instance": {"id": 12345,"name": "name","zone": "fakezone","attributes": {"osconfig-endpoint": "{zone}-dev.osconfig.googleapis.com"}}}`)
+	}))
+	defer ts.Close()
+
+	if err := os.Setenv("GCE_METADATA_HOST", strings.Trim(ts.URL, "http://")); err != nil {
+		t.Fatalf("Error running os.Setenv: %v", err)
+	}
+
+	if err := WatchConfig(context.Background()); err != nil {
+		t.Fatalf("Error running SetConfig: %v", err)
+	}
+
+	expectedSvcEndpoint := "fakezone-dev.osconfig.googleapis.com"
+	if SvcEndpoint() != expectedSvcEndpoint {
+		t.Errorf("Default endpoint: got(%s) != want(%s)", SvcEndpoint(), expectedSvcEndpoint)
+	}
+
 }
 
 func TestSetConfigError(t *testing.T) {
