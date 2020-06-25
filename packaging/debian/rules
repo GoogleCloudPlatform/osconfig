@@ -18,7 +18,6 @@ override_dh_auto_install:
 	# Binary-only package.
 	dh_auto_install -- --no-source
 	mv debian/google-osconfig-agent/usr/bin/osconfig debian/google-osconfig-agent/usr/bin/google_osconfig_agent
-	rm debian/google-osconfig-agent/usr/bin/e2e_tests
 	install -d debian/google-osconfig-agent/etc/osconfig
 	install -d debian/google-osconfig-agent/lib/systemd/system
 	install -p -m 0644 *.service debian/google-osconfig-agent/lib/systemd/system/
