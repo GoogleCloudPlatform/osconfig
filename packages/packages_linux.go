@@ -125,6 +125,15 @@ func GetInstalledPackages() (Packages, error) {
 			pkgs.Deb = deb
 		}
 	}
+	if util.Exists(cosPkgList) {
+		cos, err := InstalledCosPackages()
+		if err != nil {
+			msg := fmt.Sprintf("error listing installed cos packages: %v", err)
+			DebugLogger.Println("Error:", msg)
+		} else {
+			pkgs.Cos = cos
+		}
+	}
 	if util.Exists(gem) {
 		gem, err := InstalledGemPackages()
 		if err != nil {
