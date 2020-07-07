@@ -23,15 +23,15 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/attributes"
-	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
 )
 
 const (
-	inventoryURL = config.ReportURL + "/guestInventory"
+	inventoryURL = agentconfig.ReportURL + "/guestInventory"
 )
 
 // InstanceInventory is an instances inventory data.
@@ -100,7 +100,7 @@ func Get() *InstanceInventory {
 	hs.KernelVersion = oi.KernelVersion
 	hs.KernelRelease = oi.KernelRelease
 	hs.Architecture = oi.Architecture
-	hs.OSConfigAgentVersion = config.Version()
+	hs.OSConfigAgentVersion = agentconfig.Version()
 	hs.InstalledPackages = installedPackages
 	hs.PackageUpdates = packageUpdates
 

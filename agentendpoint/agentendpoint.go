@@ -28,7 +28,7 @@ import (
 
 	"cloud.google.com/go/compute/metadata"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-	"github.com/GoogleCloudPlatform/osconfig/config"
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	agentendpoint "github.com/GoogleCloudPlatform/osconfig/internal/cloud.google.com/go/osconfig/agentendpoint/apiv1alpha1"
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
@@ -49,7 +49,7 @@ var (
 	errServerCancel      = errors.New("task canceled by server")
 	errServiceNotEnabled = errors.New("service is not enabled for this project")
 	errResourceExhausted = errors.New("ResourceExhausted")
-	taskStateFile        = config.TaskStateFile()
+	taskStateFile        = agentconfig.TaskStateFile()
 )
 
 // Client is a an agentendpoint client.
@@ -66,7 +66,7 @@ func NewClient(ctx context.Context) (*Client, error) {
 	opts := []option.ClientOption{
 		option.WithoutAuthentication(), // Do not use oauth.
 		option.WithGRPCDialOption(grpc.WithTransportCredentials(credentials.NewTLS(nil))), // Because we disabled Auth we need to specifically enable TLS.
-		option.WithEndpoint(config.SvcEndpoint()),
+		option.WithEndpoint(agentconfig.SvcEndpoint()),
 	}
 	logger.Debugf("Creating new agentendpoint client.")
 	c, err := agentendpoint.NewClient(ctx, opts...)
@@ -95,12 +95,12 @@ func (c *Client) Closed() bool {
 
 // RegisterAgent calls RegisterAgent discarding the response.
 func (c *Client) RegisterAgent(ctx context.Context) error {
-	token, err := config.IDToken()
+	token, err := agentconfig.IDToken()
 	if err != nil {
 		return err
 	}
 
-	req := &agentendpointpb.RegisterAgentRequest{AgentVersion: config.Version(), SupportedCapabilities: config.Capabilities()}
+	req := &agentendpointpb.RegisterAgentRequest{AgentVersion: agentconfig.Version(), SupportedCapabilities: agentconfig.Capabilities()}
 	logger.Debugf("Calling RegisterAgent with request:\n%s", util.PrettyFmt(req))
 	req.InstanceIdToken = token
 
@@ -130,7 +130,7 @@ func (c *Client) ReportInventory(ctx context.Context, inventory *agentendpointpb
 }
 
 func (c *Client) startNextTask(ctx context.Context) (res *agentendpointpb.StartNextTaskResponse, err error) {
-	token, err := config.IDToken()
+	token, err := agentconfig.IDToken()
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func (c *Client) startNextTask(ctx context.Context) (res *agentendpointpb.StartN
 }
 
 func (c *Client) reportTaskProgress(ctx context.Context, req *agentendpointpb.ReportTaskProgressRequest) (res *agentendpointpb.ReportTaskProgressResponse, err error) {
-	token, err := config.IDToken()
+	token, err := agentconfig.IDToken()
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +177,7 @@ func (c *Client) reportTaskProgress(ctx context.Context, req *agentendpointpb.Re
 }
 
 func (c *Client) reportTaskComplete(ctx context.Context, req *agentendpointpb.ReportTaskCompleteRequest) error {
-	token, err := config.IDToken()
+	token, err := agentconfig.IDToken()
 	if err != nil {
 		return err
 	}
@@ -269,10 +269,10 @@ func (c *Client) handleStream(ctx context.Context, stream agentendpointpb.AgentE
 
 func (c *Client) receiveTaskNotification(ctx context.Context) (agentendpointpb.AgentEndpointService_ReceiveTaskNotificationClient, error) {
 	req := &agentendpointpb.ReceiveTaskNotificationRequest{
-		AgentVersion: config.Version(),
+		AgentVersion: agentconfig.Version(),
 	}
 
-	token, err := config.IDToken()
+	token, err := agentconfig.IDToken()
 	if err != nil {
 		return nil, fmt.Errorf("error fetching Instance IDToken: %w", err)
 	}
@@ -387,7 +387,7 @@ func mkLabels(labels map[string]string) map[string]string {
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	labels["instance_name"] = config.Name()
-	labels["agent_version"] = config.Version()
+	labels["instance_name"] = agentconfig.Name()
+	labels["agent_version"] = agentconfig.Version()
 	return labels
 }

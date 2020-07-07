@@ -22,7 +22,7 @@ import (
 
 	agentendpoint "cloud.google.com/go/osconfig/agentendpoint/apiv1beta"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-	"github.com/GoogleCloudPlatform/osconfig/config"
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
 	"github.com/GoogleCloudPlatform/osconfig/util"
@@ -47,7 +47,7 @@ func NewBetaClient(ctx context.Context) (*BetaClient, error) {
 	opts := []option.ClientOption{
 		option.WithoutAuthentication(), // Do not use oauth.
 		option.WithGRPCDialOption(grpc.WithTransportCredentials(credentials.NewTLS(nil))), // Because we disabled Auth we need to specifically enable TLS.
-		option.WithEndpoint(config.SvcEndpoint()),
+		option.WithEndpoint(agentconfig.SvcEndpoint()),
 	}
 	logger.Debugf("Creating new agentendpoint beta client.")
 	c, err := agentendpoint.NewClient(ctx, opts...)

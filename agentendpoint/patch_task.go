@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-	"github.com/GoogleCloudPlatform/osconfig/config"
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/ospatch"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -237,7 +237,7 @@ func (r *patchTask) run(ctx context.Context) (err error) {
 			return
 		}
 		r.complete()
-		if config.OSInventoryEnabled() {
+		if agentconfig.OSInventoryEnabled() {
 			go inventory.Run()
 		}
 	}()

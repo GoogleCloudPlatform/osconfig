@@ -12,592 +12,259 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-// Package config stores and retrieves configuration settings for the OS Config agent.
+// Package config ...
 package config
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
-	"encoding/json"
-	"errors"
-	"flag"
-	"fmt"
-	"io/ioutil"
-	"net"
-	"net/http"
-	"net/url"
+	"hash"
+	"io"
 	"os"
-	"runtime"
-	"strconv"
-	"strings"
-	"sync"
+	"path/filepath"
 	"time"
 
-	"cloud.google.com/go/compute/metadata"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-	"golang.org/x/oauth2/jws"
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
+	"github.com/GoogleCloudPlatform/osconfig/agentendpoint"
+	"github.com/GoogleCloudPlatform/osconfig/packages"
+	"github.com/GoogleCloudPlatform/osconfig/policies/recipes"
+	"github.com/GoogleCloudPlatform/osconfig/retryutil"
+	"github.com/GoogleCloudPlatform/osconfig/tasker"
+
+	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
-const (
-	// metadataIP is the documented metadata server IP address.
-	metadataIP = "169.254.169.254"
-	// metadataHostEnv is the environment variable specifying the
-	// GCE metadata hostname.
-	metadataHostEnv = "GCE_METADATA_HOST"
-	// InstanceMetadata is the compute metadata URL.
-	InstanceMetadata = "http://metadata.google.internal/computeMetadata/v1/instance"
-	// IdentityTokenPath is the instance identity token path.
-	IdentityTokenPath = "instance/service-accounts/default/identity?audience=osconfig.googleapis.com&format=full"
-	// ReportURL is the guest attributes endpoint.
-	ReportURL = InstanceMetadata + "/guest-attributes"
+func run(ctx context.Context) {
+	var resp *agentendpointpb.EffectiveGuestPolicy
 
-	googetRepoFilePath = "C:/ProgramData/GooGet/repos/google_osconfig_managed.repo"
-	zypperRepoFilePath = "/etc/zypp/repos.d/google_osconfig_managed.repo"
-	yumRepoFilePath    = "/etc/yum.repos.d/google_osconfig_managed.repo"
-	aptRepoFilePath    = "/etc/apt/sources.list.d/google_osconfig_managed.list"
-
-	prodEndpoint = "{zone}-osconfig.googleapis.com:443"
-
-	osInventoryEnabledDefault      = false
-	guestPoliciesEnabledDefault    = false
-	taskNotificationEnabledDefault = false
-	debugEnabledDefault            = false
-
-	configDirWindows     = `C:\Program Files\Google\OSConfig`
-	configDirLinux       = "/etc/osconfig"
-	taskStateFileWindows = configDirWindows + `\osconfig_task.state`
-	taskStateFileLinux   = configDirLinux + "/osconfig_task.state"
-	restartFileWindows   = configDirWindows + `\osconfig_agent_restart_required`
-	restartFileLinux     = configDirLinux + "/osconfig_agent_restart_required"
-
-	osConfigPollIntervalDefault = 10
-	osConfigMetadataPollTimeout = 60
-	osConfigWatchConfigTimeout  = 10 * time.Minute
-)
-
-var (
-	endpoint = flag.String("endpoint", prodEndpoint, "osconfig endpoint override")
-	debug    = flag.Bool("debug", false, "set debug log verbosity")
-	stdout   = flag.Bool("stdout", false, "log to stdout")
-
-	agentConfig   = &config{}
-	agentConfigMx sync.RWMutex
-	version       string
-	lEtag         = &lastEtag{Etag: "0"}
-
-	// Current supported capabilites for this agent.
-	// These are matched server side to what tasks this agent can
-	// perform.
-	capabilities = []string{"PATCH_GA", "GUEST_POLICY_BETA"}
-)
-
-type config struct {
-	osInventoryEnabled, guestPoliciesEnabled, taskNotificationEnabled, debugEnabled       bool
-	svcEndpoint, googetRepoFilePath, zypperRepoFilePath, yumRepoFilePath, aptRepoFilePath string
-	numericProjectID, osConfigPollInterval                                                int
-	projectID, instanceZone, instanceName, instanceID                                     string
-}
-
-func (c *config) parseFeatures(features string, enabled bool) {
-	for _, f := range strings.Split(features, ",") {
-		f = strings.ToLower(strings.TrimSpace(f))
-		switch f {
-		case "tasks", "ospatch": // ospatch is the legacy flag
-			c.taskNotificationEnabled = enabled
-		case "guestpolicies", "ospackage": // ospackage is the legacy flag
-			c.guestPoliciesEnabled = enabled
-		case "osinventory":
-			c.osInventoryEnabled = enabled
-		}
-	}
-}
-
-func (c *config) asSha256() string {
-	h := sha256.New()
-	h.Write([]byte(fmt.Sprintf("%v", c)))
-
-	return fmt.Sprintf("%x", h.Sum(nil))
-}
-
-func getAgentConfig() config {
-	agentConfigMx.RLock()
-	defer agentConfigMx.RUnlock()
-	return *agentConfig
-}
-
-type lastEtag struct {
-	mu   sync.RWMutex
-	Etag string
-}
-
-func (e *lastEtag) set(etag string) {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	e.Etag = etag
-}
-
-func (e *lastEtag) get() string {
-	e.mu.RLock()
-	defer e.mu.RUnlock()
-	return e.Etag
-}
-
-func parseBool(s string) bool {
-	enabled, err := strconv.ParseBool(s)
+	client, err := agentendpoint.NewBetaClient(ctx)
 	if err != nil {
-		// Bad entry returns as not enabled.
-		return false
-	}
-	return enabled
-}
-
-type metadataJSON struct {
-	Instance instanceJSON
-	Project  projectJSON
-}
-
-type instanceJSON struct {
-	Attributes attributesJSON
-	Zone       string
-	Name       string
-	ID         *json.Number
-}
-
-type projectJSON struct {
-	Attributes       attributesJSON
-	ProjectID        string
-	NumericProjectID int
-}
-
-type attributesJSON struct {
-	InventoryEnabledOld   string       `json:"os-inventory-enabled"`
-	InventoryEnabled      string       `json:"enable-os-inventory"`
-	PreReleaseFeaturesOld string       `json:"os-config-enabled-prerelease-features"`
-	PreReleaseFeatures    string       `json:"osconfig-enabled-prerelease-features"`
-	OSConfigEnabled       string       `json:"enable-osconfig"`
-	DisabledFeatures      string       `json:"osconfig-disabled-features"`
-	DebugEnabledOld       string       `json:"enable-os-config-debug"`
-	LogLevel              string       `json:"osconfig-log-level"`
-	OSConfigEndpointOld   string       `json:"os-config-endpoint"`
-	OSConfigEndpoint      string       `json:"osconfig-endpoint"`
-	PollIntervalOld       *json.Number `json:"os-config-poll-interval"`
-	PollInterval          *json.Number `json:"osconfig-poll-interval"`
-}
-
-func createConfigFromMetadata(md metadataJSON) *config {
-	old := getAgentConfig()
-	c := &config{
-		osInventoryEnabled:      osInventoryEnabledDefault,
-		guestPoliciesEnabled:    guestPoliciesEnabledDefault,
-		taskNotificationEnabled: taskNotificationEnabledDefault,
-		debugEnabled:            debugEnabledDefault,
-		svcEndpoint:             prodEndpoint,
-		osConfigPollInterval:    osConfigPollIntervalDefault,
-
-		googetRepoFilePath: googetRepoFilePath,
-		zypperRepoFilePath: zypperRepoFilePath,
-		yumRepoFilePath:    yumRepoFilePath,
-		aptRepoFilePath:    aptRepoFilePath,
-
-		projectID:        old.projectID,
-		numericProjectID: old.numericProjectID,
-		instanceZone:     old.instanceZone,
-		instanceName:     old.instanceName,
-		instanceID:       old.instanceID,
-	}
-
-	if md.Project.ProjectID != "" {
-		c.projectID = md.Project.ProjectID
-	}
-	if md.Project.NumericProjectID != 0 {
-		c.numericProjectID = md.Project.NumericProjectID
-	}
-	if md.Instance.Zone != "" {
-		c.instanceZone = md.Instance.Zone
-	}
-	if md.Instance.Name != "" {
-		c.instanceName = md.Instance.Name
-	}
-	if md.Instance.ID != nil {
-		c.instanceID = md.Instance.ID.String()
-	}
-
-	// Check project first then instance as instance metadata overrides project.
-	switch {
-	case md.Project.Attributes.InventoryEnabled != "":
-		c.osInventoryEnabled = parseBool(md.Project.Attributes.InventoryEnabled)
-	case md.Project.Attributes.InventoryEnabledOld != "":
-		c.osInventoryEnabled = parseBool(md.Project.Attributes.InventoryEnabledOld)
-	}
-
-	c.parseFeatures(md.Project.Attributes.PreReleaseFeaturesOld, true)
-	c.parseFeatures(md.Project.Attributes.PreReleaseFeatures, true)
-	if md.Project.Attributes.OSConfigEnabled != "" {
-		e := parseBool(md.Project.Attributes.OSConfigEnabled)
-		c.taskNotificationEnabled = e
-		c.guestPoliciesEnabled = e
-		c.osInventoryEnabled = e
-	}
-	c.parseFeatures(md.Project.Attributes.DisabledFeatures, false)
-
-	switch {
-	case md.Instance.Attributes.InventoryEnabled != "":
-		c.osInventoryEnabled = parseBool(md.Instance.Attributes.InventoryEnabled)
-	case md.Instance.Attributes.InventoryEnabledOld != "":
-		c.osInventoryEnabled = parseBool(md.Instance.Attributes.InventoryEnabledOld)
-	}
-
-	c.parseFeatures(md.Instance.Attributes.PreReleaseFeaturesOld, true)
-	c.parseFeatures(md.Instance.Attributes.PreReleaseFeatures, true)
-	if md.Instance.Attributes.OSConfigEnabled != "" {
-		e := parseBool(md.Instance.Attributes.OSConfigEnabled)
-		c.taskNotificationEnabled = e
-		c.guestPoliciesEnabled = e
-		c.osInventoryEnabled = e
-	}
-	c.parseFeatures(md.Instance.Attributes.DisabledFeatures, false)
-
-	switch {
-	case md.Project.Attributes.PollInterval != nil:
-		if val, err := md.Project.Attributes.PollInterval.Int64(); err == nil {
-			c.osConfigPollInterval = int(val)
-		}
-	case md.Project.Attributes.PollIntervalOld != nil:
-		if val, err := md.Project.Attributes.PollIntervalOld.Int64(); err == nil {
-			c.osConfigPollInterval = int(val)
+		logger.Errorf("agentendpoint.NewBetaClient Error: %v", err)
+	} else {
+		defer client.Close()
+		resp, err = client.LookupEffectiveGuestPolicies(ctx)
+		if err != nil {
+			logger.Errorf("Error running LookupEffectiveGuestPolicies: %v", err)
 		}
 	}
 
-	switch {
-	case md.Instance.Attributes.PollInterval != nil:
-		if val, err := md.Instance.Attributes.PollInterval.Int64(); err == nil {
-			c.osConfigPollInterval = int(val)
-		}
-	case md.Instance.Attributes.PollIntervalOld != nil:
-		if val, err := md.Instance.Attributes.PollInterval.Int64(); err == nil {
-			c.osConfigPollInterval = int(val)
-		}
-	}
-
-	switch {
-	case md.Project.Attributes.DebugEnabledOld != "":
-		c.debugEnabled = parseBool(md.Project.Attributes.DebugEnabledOld)
-	case md.Instance.Attributes.DebugEnabledOld != "":
-		c.debugEnabled = parseBool(md.Instance.Attributes.DebugEnabledOld)
-	}
-
-	switch strings.ToLower(md.Project.Attributes.LogLevel) {
-	case "debug":
-		c.debugEnabled = true
-	case "info":
-		c.debugEnabled = false
-	}
-
-	switch strings.ToLower(md.Instance.Attributes.LogLevel) {
-	case "debug":
-		c.debugEnabled = true
-	case "info":
-		c.debugEnabled = false
-	}
-
-	// Flags take precedence over metadata.
-	if *debug {
-		c.debugEnabled = true
-	}
-
-	setSVCEndpoint(md, c)
-
-	return c
-}
-
-func setSVCEndpoint(md metadataJSON, c *config) {
-	switch {
-	case *endpoint != prodEndpoint:
-		c.svcEndpoint = *endpoint
-	case md.Instance.Attributes.OSConfigEndpoint != "":
-		c.svcEndpoint = md.Instance.Attributes.OSConfigEndpoint
-	case md.Instance.Attributes.OSConfigEndpointOld != "":
-		c.svcEndpoint = md.Instance.Attributes.OSConfigEndpointOld
-	case md.Project.Attributes.OSConfigEndpoint != "":
-		c.svcEndpoint = md.Project.Attributes.OSConfigEndpoint
-	case md.Project.Attributes.OSConfigEndpointOld != "":
-		c.svcEndpoint = md.Project.Attributes.OSConfigEndpointOld
-	}
-
-	// Example instanceZone: projects/123456/zones/us-west1-b
-	parts := strings.Split(c.instanceZone, "/")
-	zone := parts[len(parts)-1]
-	c.svcEndpoint = strings.ReplaceAll(c.svcEndpoint, "{zone}", zone)
-}
-
-func formatMetadataError(err error) error {
-	if urlErr, ok := err.(*url.Error); ok {
-		if _, ok := urlErr.Err.(*net.DNSError); ok {
-			return errors.New("DNS error when requesting metadata, check DNS settings and ensure metadata.google.internal is setup in your hosts file")
-		}
-		if _, ok := urlErr.Err.(*net.OpError); ok {
-			return errors.New("network error when requesting metadata, make sure your instance has an active network and can reach the metadata server")
-		}
-	}
-	return err
-}
-
-func getMetadata(suffix string) ([]byte, string, error) {
-	host := os.Getenv(metadataHostEnv)
-	if host == "" {
-		// Using 169.254.169.254 instead of "metadata" here because Go
-		// binaries built with the "netgo" tag and without cgo won't
-		// know the search suffix for "metadata" is
-		// ".google.internal", and this IP address is documented as
-		// being stable anyway.
-		host = metadataIP
-	}
-	computeMetadataURL := "http://" + host + "/computeMetadata/v1/" + suffix
-	req, err := http.NewRequest("GET", computeMetadataURL, nil)
+	local, err := readLocalConfig()
 	if err != nil {
-		return nil, "", err
-	}
-	req.Header.Add("Metadata-Flavor", "Google")
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, "", err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, "", err
-	}
-	all, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, "", err
+		logger.Errorf("Error reading local software config: %v", err)
 	}
 
-	return all, resp.Header.Get("Etag"), nil
+	effective := mergeConfigs(local, resp)
+
+	// We don't check the error from setConfig or installRecipes as all errors are already logged.
+	setConfig(effective)
+	installRecipes(ctx, effective)
 }
 
-// WatchConfig looks for changes in metadata keys. Upon receiving successful response,
-// it create a new agent config.
-func WatchConfig(ctx context.Context) error {
-	var md []byte
-	var webError error
-	ticker := time.NewTicker(osConfigWatchConfigTimeout)
-	eTag := lEtag.get()
-	webErrorCount := 0
-	for {
-		md, eTag, webError = getMetadata(fmt.Sprintf("?recursive=true&alt=json&wait_for_change=true&last_etag=%s&timeout_sec=%d", lEtag.get(), osConfigMetadataPollTimeout))
-		if webError == nil && eTag != lEtag.get() {
-			lEtag.set(eTag)
-			var metadataConfig metadataJSON
-			if err := json.Unmarshal(md, &metadataConfig); err != nil {
-				return err
+// Run looks up osconfigs and applies them using tasker.Enqueue.
+func Run(ctx context.Context) {
+	tasker.Enqueue("Run GuestPolicies", func() { run(ctx) })
+}
+
+func installRecipes(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) error {
+	for _, recipe := range egp.GetSoftwareRecipes() {
+		if r := recipe.GetSoftwareRecipe(); r != nil {
+			if err := recipes.InstallRecipe(ctx, r); err != nil {
+				logger.Errorf("Error installing recipe: %v", err)
 			}
-
-			newAgentConfig := createConfigFromMetadata(metadataConfig)
-
-			agentConfigMx.Lock()
-			if agentConfig.asSha256() != newAgentConfig.asSha256() {
-				agentConfig = newAgentConfig
-				agentConfigMx.Unlock()
-				break
-			}
-			agentConfigMx.Unlock()
 		}
+	}
+	return nil
+}
 
-		// Try up to 3 times to wait for slow network initialization, after
-		// that resort to using defaults and returning the error.
-		if webError != nil {
-			if webErrorCount == 2 {
-				return formatMetadataError(webError)
-			}
-			webErrorCount++
+func setConfig(egp *agentendpointpb.EffectiveGuestPolicy) {
+	var aptRepos []*agentendpointpb.AptRepository
+	var yumRepos []*agentendpointpb.YumRepository
+	var zypperRepos []*agentendpointpb.ZypperRepository
+	var gooRepos []*agentendpointpb.GooRepository
+	for _, repo := range egp.GetPackageRepositories() {
+		if r := repo.GetPackageRepository().GetGoo(); r != nil {
+			gooRepos = append(gooRepos, r)
+			continue
 		}
-
-		select {
-		case <-ticker.C:
-			return nil
-		case <-ctx.Done():
-			return nil
-		default:
+		if r := repo.GetPackageRepository().GetApt(); r != nil {
+			aptRepos = append(aptRepos, r)
+			continue
+		}
+		if r := repo.GetPackageRepository().GetYum(); r != nil {
+			yumRepos = append(yumRepos, r)
+			continue
+		}
+		if r := repo.GetPackageRepository().GetZypper(); r != nil {
+			zypperRepos = append(zypperRepos, r)
 			continue
 		}
 	}
 
-	return webError
-}
+	var gooInstallPkgs, gooRemovePkgs, gooUpdatePkgs []*agentendpointpb.Package
+	var aptInstallPkgs, aptRemovePkgs, aptUpdatePkgs []*agentendpointpb.Package
+	var yumInstallPkgs, yumRemovePkgs, yumUpdatePkgs []*agentendpointpb.Package
+	var zypperInstallPkgs, zypperRemovePkgs, zypperUpdatePkgs []*agentendpointpb.Package
+	for _, pkg := range egp.GetPackages() {
+		switch pkg.GetPackage().GetManager() {
+		case agentendpointpb.Package_ANY, agentendpointpb.Package_MANAGER_UNSPECIFIED:
+			switch pkg.GetPackage().GetDesiredState() {
+			case agentendpointpb.DesiredState_INSTALLED, agentendpointpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
+				gooInstallPkgs = append(gooInstallPkgs, pkg.GetPackage())
+				aptInstallPkgs = append(aptInstallPkgs, pkg.GetPackage())
+				yumInstallPkgs = append(yumInstallPkgs, pkg.GetPackage())
+				zypperInstallPkgs = append(zypperInstallPkgs, pkg.GetPackage())
+			case agentendpointpb.DesiredState_REMOVED:
+				gooRemovePkgs = append(gooRemovePkgs, pkg.GetPackage())
+				aptRemovePkgs = append(aptRemovePkgs, pkg.GetPackage())
+				yumRemovePkgs = append(yumRemovePkgs, pkg.GetPackage())
+				zypperRemovePkgs = append(zypperRemovePkgs, pkg.GetPackage())
+			case agentendpointpb.DesiredState_UPDATED:
+				gooUpdatePkgs = append(gooUpdatePkgs, pkg.GetPackage())
+				aptUpdatePkgs = append(aptUpdatePkgs, pkg.GetPackage())
+				yumUpdatePkgs = append(yumUpdatePkgs, pkg.GetPackage())
+				zypperUpdatePkgs = append(zypperUpdatePkgs, pkg.GetPackage())
+			}
+		case agentendpointpb.Package_GOO:
+			switch pkg.GetPackage().GetDesiredState() {
+			case agentendpointpb.DesiredState_INSTALLED, agentendpointpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
+				gooInstallPkgs = append(gooInstallPkgs, pkg.GetPackage())
+			case agentendpointpb.DesiredState_REMOVED:
+				gooRemovePkgs = append(gooRemovePkgs, pkg.GetPackage())
+			case agentendpointpb.DesiredState_UPDATED:
+				gooUpdatePkgs = append(gooUpdatePkgs, pkg.GetPackage())
+			}
+		case agentendpointpb.Package_APT:
+			switch pkg.GetPackage().GetDesiredState() {
+			case agentendpointpb.DesiredState_INSTALLED, agentendpointpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
+				aptInstallPkgs = append(aptInstallPkgs, pkg.GetPackage())
+			case agentendpointpb.DesiredState_REMOVED:
+				aptRemovePkgs = append(aptRemovePkgs, pkg.GetPackage())
+			case agentendpointpb.DesiredState_UPDATED:
+				aptUpdatePkgs = append(aptUpdatePkgs, pkg.GetPackage())
+			}
+		case agentendpointpb.Package_YUM:
+			switch pkg.GetPackage().GetDesiredState() {
+			case agentendpointpb.DesiredState_INSTALLED, agentendpointpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
+				yumInstallPkgs = append(yumInstallPkgs, pkg.GetPackage())
+			case agentendpointpb.DesiredState_REMOVED:
+				yumRemovePkgs = append(yumRemovePkgs, pkg.GetPackage())
+			case agentendpointpb.DesiredState_UPDATED:
+				yumUpdatePkgs = append(yumUpdatePkgs, pkg.GetPackage())
+			}
+		case agentendpointpb.Package_ZYPPER:
+			switch pkg.GetPackage().GetDesiredState() {
+			case agentendpointpb.DesiredState_INSTALLED, agentendpointpb.DesiredState_DESIRED_STATE_UNSPECIFIED:
+				zypperInstallPkgs = append(zypperInstallPkgs, pkg.GetPackage())
+			case agentendpointpb.DesiredState_REMOVED:
+				zypperRemovePkgs = append(zypperRemovePkgs, pkg.GetPackage())
+			case agentendpointpb.DesiredState_UPDATED:
+				zypperUpdatePkgs = append(zypperUpdatePkgs, pkg.GetPackage())
+			}
 
-// LogFeatures logs the osconfig feature status.
-func LogFeatures() {
-	logger.Infof("OSConfig enabled features status:{GuestPolicies: %t, OSInventory: %t, PatchManagement: %t}.", GuestPoliciesEnabled(), OSInventoryEnabled(), TaskNotificationEnabled())
-}
+		}
 
-// SvcPollInterval returns the frequency to poll the service.
-func SvcPollInterval() time.Duration {
-	return time.Duration(getAgentConfig().osConfigPollInterval) * time.Minute
-}
-
-// SerialLogPort is the serial port to log to.
-func SerialLogPort() string {
-	if runtime.GOOS == "windows" {
-		return "COM1"
-	}
-	// Don't write directly to the serial port on Linux as syslog already writes there.
-	return ""
-}
-
-// Debug sets the debug log verbosity.
-func Debug() bool {
-	return *debug || getAgentConfig().debugEnabled
-}
-
-// Stdout flag.
-func Stdout() bool {
-	return *stdout
-}
-
-// SvcEndpoint is the OS Config service endpoint.
-func SvcEndpoint() string {
-	return getAgentConfig().svcEndpoint
-}
-
-// ZypperRepoFilePath is the location where the zypper repo file will be created.
-func ZypperRepoFilePath() string {
-	return getAgentConfig().zypperRepoFilePath
-}
-
-// YumRepoFilePath is the location where the zypper repo file will be created.
-func YumRepoFilePath() string {
-	return getAgentConfig().yumRepoFilePath
-}
-
-// AptRepoFilePath is the location where the zypper repo file will be created.
-func AptRepoFilePath() string {
-	return getAgentConfig().aptRepoFilePath
-}
-
-// GooGetRepoFilePath is the location where the googet repo file will be created.
-func GooGetRepoFilePath() string {
-	return getAgentConfig().googetRepoFilePath
-}
-
-// OSInventoryEnabled indicates whether OSInventory should be enabled.
-func OSInventoryEnabled() bool {
-	return getAgentConfig().osInventoryEnabled
-}
-
-// GuestPoliciesEnabled indicates whether GuestPolicies should be enabled.
-func GuestPoliciesEnabled() bool {
-	return getAgentConfig().guestPoliciesEnabled
-}
-
-// TaskNotificationEnabled indicates whether TaskNotification should be enabled.
-func TaskNotificationEnabled() bool {
-	return getAgentConfig().taskNotificationEnabled
-}
-
-// Instance is the URI of the instance the agent is running on.
-func Instance() string {
-	// Zone contains 'projects/project-id/zones' as a prefix.
-	return fmt.Sprintf("%s/instances/%s", Zone(), Name())
-}
-
-// NumericProjectID is the numeric project ID of the instance.
-func NumericProjectID() int {
-	return getAgentConfig().numericProjectID
-}
-
-// ProjectID is the project ID of the instance.
-func ProjectID() string {
-	return getAgentConfig().projectID
-}
-
-// Zone is the zone the instance is running in.
-func Zone() string {
-	return getAgentConfig().instanceZone
-}
-
-// Name is the instance name.
-func Name() string {
-	return getAgentConfig().instanceName
-}
-
-// ID is the instance id.
-func ID() string {
-	return getAgentConfig().instanceID
-}
-
-type idToken struct {
-	raw string
-	exp *time.Time
-	sync.Mutex
-}
-
-func (t *idToken) get() error {
-	data, err := metadata.Get(IdentityTokenPath)
-	if err != nil {
-		return fmt.Errorf("error getting token from metadata: %w", err)
 	}
 
-	cs, err := jws.Decode(data)
+	if packages.GooGetExists {
+		if _, err := os.Stat(agentconfig.GooGetRepoFilePath()); os.IsNotExist(err) {
+			logger.Debugf("Repo file does not exist, will create one...")
+			if err := os.MkdirAll(filepath.Dir(agentconfig.GooGetRepoFilePath()), 07550); err != nil {
+				logger.Errorf("Error creating repo file: %v", err)
+			}
+		}
+		if err := googetRepositories(gooRepos, agentconfig.GooGetRepoFilePath()); err != nil {
+			logger.Errorf("Error writing googet repo file: %v", err)
+		}
+		if err := retryutil.RetryFunc(2*time.Minute, "Applying googet changes", func() error {
+			return googetChanges(gooInstallPkgs, gooRemovePkgs, gooUpdatePkgs)
+		}); err != nil {
+			logger.Errorf("Error performing googet changes: %v", err)
+		}
+	}
+
+	if packages.AptExists {
+		if _, err := os.Stat(agentconfig.AptRepoFilePath()); os.IsNotExist(err) {
+			logger.Debugf("Repo file does not exist, will create one...")
+			if err := os.MkdirAll(filepath.Dir(agentconfig.AptRepoFilePath()), 07550); err != nil {
+				logger.Errorf("Error creating repo file: %v", err)
+			}
+		}
+		if err := aptRepositories(aptRepos, agentconfig.AptRepoFilePath()); err != nil {
+			logger.Errorf("Error writing apt repo file: %v", err)
+		}
+		if err := retryutil.RetryFunc(2*time.Minute, "Applying apt changes", func() error {
+			return aptChanges(aptInstallPkgs, aptRemovePkgs, aptUpdatePkgs)
+		}); err != nil {
+			logger.Errorf("Error performing apt changes: %v", err)
+		}
+	}
+
+	if packages.YumExists {
+		if _, err := os.Stat(agentconfig.YumRepoFilePath()); os.IsNotExist(err) {
+			logger.Debugf("Repo file does not exist, will create one...")
+			if err := os.MkdirAll(filepath.Dir(agentconfig.YumRepoFilePath()), 07550); err != nil {
+				logger.Errorf("Error creating repo file: %v", err)
+			}
+		}
+		if err := yumRepositories(yumRepos, agentconfig.YumRepoFilePath()); err != nil {
+			logger.Errorf("Error writing yum repo file: %v", err)
+		}
+		if err := retryutil.RetryFunc(2*time.Minute, "Applying yum changes", func() error {
+			return yumChanges(yumInstallPkgs, yumRemovePkgs, yumUpdatePkgs)
+		}); err != nil {
+			logger.Errorf("Error performing yum changes: %v", err)
+		}
+	}
+
+	if packages.ZypperExists {
+		if _, err := os.Stat(agentconfig.ZypperRepoFilePath()); os.IsNotExist(err) {
+			logger.Debugf("Repo file does not exist, will create one...")
+			if err := os.MkdirAll(filepath.Dir(agentconfig.ZypperRepoFilePath()), 07550); err != nil {
+				logger.Errorf("Error creating repo file: %v", err)
+			}
+		}
+		if err := zypperRepositories(zypperRepos, agentconfig.ZypperRepoFilePath()); err != nil {
+			logger.Errorf("Error writing zypper repo file: %v", err)
+		}
+		if err := retryutil.RetryFunc(2*time.Minute, "Applying zypper changes.", func() error {
+			return zypperChanges(zypperInstallPkgs, zypperRemovePkgs, zypperUpdatePkgs)
+		}); err != nil {
+			logger.Errorf("Error performing zypper changes: %v", err)
+		}
+	}
+}
+
+func checksum(r io.Reader) hash.Hash {
+	hash := sha256.New()
+	io.Copy(hash, r)
+	return hash
+}
+
+func writeIfChanged(content []byte, path string) error {
+	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		return err
 	}
 
-	t.raw = data
-	exp := time.Unix(cs.Exp, 0)
-	t.exp = &exp
-
-	return nil
-}
-
-var identity idToken
-
-// IDToken is the instance id token.
-func IDToken() (string, error) {
-	identity.Lock()
-	defer identity.Unlock()
-
-	// Rerequest token if expiry is within 10 minutes.
-	if identity.exp == nil || time.Now().After(identity.exp.Add(-10*time.Minute)) {
-		if err := identity.get(); err != nil {
-			return "", err
-		}
+	reader := bytes.NewReader(content)
+	h1 := checksum(reader)
+	h2 := checksum(file)
+	if bytes.Equal(h1.Sum(nil), h2.Sum(nil)) {
+		file.Close()
+		return nil
 	}
 
-	return identity.raw, nil
-}
-
-// Version is the agent version.
-func Version() string {
-	return version
-}
-
-// SetVersion sets the agent version.
-func SetVersion(v string) {
-	version = v
-}
-
-// Capabilities returns the agents capabilities.
-func Capabilities() []string {
-	return capabilities
-}
-
-// TaskStateFile is the location of the task state file.
-func TaskStateFile() string {
-	if runtime.GOOS == "windows" {
-		return taskStateFileWindows
+	logger.Infof("Writing repo file %s with updated contents", path)
+	if err := file.Truncate(0); err != nil {
+		file.Close()
+		return err
+	}
+	if _, err := file.WriteAt(content, 0); err != nil {
+		file.Close()
+		return err
 	}
 
-	return taskStateFileLinux
-}
-
-// RestartFile is the location of the restart required file.
-func RestartFile() string {
-	if runtime.GOOS == "windows" {
-		return restartFileWindows
-	}
-
-	return restartFileLinux
+	return file.Close()
 }

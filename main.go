@@ -31,8 +31,8 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/agentendpoint"
-	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"github.com/GoogleCloudPlatform/osconfig/policies"
@@ -54,9 +54,9 @@ func init() {
 		version = "manual-" + time.Now().Format(time.RFC3339)
 	}
 	// We do this here so the -X value doesn't need the full path.
-	config.SetVersion(version)
+	agentconfig.SetVersion(version)
 
-	os.MkdirAll(filepath.Dir(config.RestartFile()), 0755)
+	os.MkdirAll(filepath.Dir(agentconfig.RestartFile()), 0755)
 }
 
 type logWriter struct{}
@@ -85,13 +85,13 @@ var deferredFuncs []func()
 
 func run(ctx context.Context) {
 	// Remove any existing restart file.
-	if err := os.Remove(config.RestartFile()); err != nil && !os.IsNotExist(err) {
+	if err := os.Remove(agentconfig.RestartFile()); err != nil && !os.IsNotExist(err) {
 		logger.Errorf("Error removing restart signal file: %v", err)
 	}
 
 	// Setup logging.
 	opts := logger.LogOpts{LoggerName: "OSConfigAgent"}
-	if config.Stdout() {
+	if agentconfig.Stdout() {
 		opts.Writers = []io.Writer{os.Stdout}
 	}
 	if runtime.GOOS == "windows" {
@@ -99,12 +99,12 @@ func run(ctx context.Context) {
 	}
 
 	// If this call to WatchConfig fails (like a metadata error) we can't continue.
-	if err := config.WatchConfig(ctx); err != nil {
+	if err := agentconfig.WatchConfig(ctx); err != nil {
 		logger.Init(ctx, opts)
 		logger.Fatalf(err.Error())
 	}
-	opts.Debug = config.Debug()
-	opts.ProjectName = config.ProjectID()
+	opts.Debug = agentconfig.Debug()
+	opts.ProjectName = agentconfig.ProjectID()
 
 	if err := logger.Init(ctx, opts); err != nil {
 		fmt.Printf("Error initializing logger: %v", err)
@@ -112,7 +112,7 @@ func run(ctx context.Context) {
 	}
 	packages.DebugLogger = log.New(&logWriter{}, "", 0)
 
-	deferredFuncs = append(deferredFuncs, logger.Close, func() { logger.Infof("OSConfig Agent (version %s) shutting down.", config.Version()) })
+	deferredFuncs = append(deferredFuncs, logger.Close, func() { logger.Infof("OSConfig Agent (version %s) shutting down.", agentconfig.Version()) })
 
 	obtainLock()
 
@@ -124,7 +124,7 @@ func run(ctx context.Context) {
 		}
 	}()
 
-	logger.Infof("OSConfig Agent (version %s) started.", config.Version())
+	logger.Infof("OSConfig Agent (version %s) started.", agentconfig.Version())
 
 	// Call RegisterAgent on start then at least once every day.
 	go func() {
@@ -171,7 +171,7 @@ func runLoop(ctx context.Context) {
 
 	go func() {
 		for {
-			if config.TaskNotificationEnabled() && (taskNotificationClient == nil || taskNotificationClient.Closed()) {
+			if agentconfig.TaskNotificationEnabled() && (taskNotificationClient == nil || taskNotificationClient.Closed()) {
 				// Start WaitForTaskNotification if we need to.
 				taskNotificationClient, err = agentendpoint.NewClient(ctx)
 				if err != nil {
@@ -179,14 +179,14 @@ func runLoop(ctx context.Context) {
 				} else {
 					taskNotificationClient.WaitForTaskNotification(ctx)
 				}
-			} else if !config.TaskNotificationEnabled() && taskNotificationClient != nil && !taskNotificationClient.Closed() {
+			} else if !agentconfig.TaskNotificationEnabled() && taskNotificationClient != nil && !taskNotificationClient.Closed() {
 				// Cancel WaitForTaskNotification if we need to, this will block if there is
 				// an existing current task running.
 				if err := taskNotificationClient.Close(); err != nil {
 					logger.Errorf(err.Error())
 				}
 			}
-			if err := config.WatchConfig(ctx); err != nil {
+			if err := agentconfig.WatchConfig(ctx); err != nil {
 				logger.Errorf(err.Error())
 			}
 			select {
@@ -198,9 +198,9 @@ func runLoop(ctx context.Context) {
 		}
 	}()
 
-	ticker := time.NewTicker(config.SvcPollInterval())
+	ticker := time.NewTicker(agentconfig.SvcPollInterval())
 	for {
-		if _, err := os.Stat(config.RestartFile()); err == nil {
+		if _, err := os.Stat(agentconfig.RestartFile()); err == nil {
 			logger.Infof("Restart required marker file exists, beginning agent shutdown, waiting for tasks to complete.")
 			tasker.Close()
 			logger.Infof("All tasks completed, stopping agent.")
@@ -210,11 +210,11 @@ func runLoop(ctx context.Context) {
 			os.Exit(2)
 		}
 
-		if config.GuestPoliciesEnabled() {
+		if agentconfig.GuestPoliciesEnabled() {
 			policies.Run(ctx)
 		}
 
-		if config.OSInventoryEnabled() {
+		if agentconfig.OSInventoryEnabled() {
 			// This should always run after ospackage.SetConfig.
 			inventory.Run()
 		}
