@@ -70,7 +70,8 @@ const (
 	restartFileLinux     = configDirLinux + "/osconfig_agent_restart_required"
 
 	osConfigPollIntervalDefault = 10
-	osConfigMetadataPollTimeout = 300
+	osConfigMetadataPollTimeout = 60
+	osConfigWatchConfigTimeout  = 600
 )
 
 var (
@@ -376,6 +377,7 @@ func getMetadata(suffix string) ([]byte, string, error) {
 func WatchConfig(ctx context.Context) error {
 	var md []byte
 	var webError error
+	ticker := time.NewTicker(osConfigWatchConfigTimeout)
 	eTag := lEtag.get()
 	webErrorCount := 0
 	for {
@@ -408,6 +410,8 @@ func WatchConfig(ctx context.Context) error {
 		}
 
 		select {
+		case <-ticker.C:
+			break
 		case <-ctx.Done():
 			return nil
 		default:
