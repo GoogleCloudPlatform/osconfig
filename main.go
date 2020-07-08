@@ -157,7 +157,6 @@ func runLoop(ctx context.Context) {
 
 	go func() {
 		for {
-			config.LogFeatures()
 			if config.TaskNotificationEnabled() && (taskNotificationClient == nil || taskNotificationClient.Closed()) {
 				// Start WaitForTaskNotification if we need to.
 				taskNotificationClient, err = agentendpoint.NewClient(ctx)
