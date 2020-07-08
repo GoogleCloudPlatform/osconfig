@@ -23,6 +23,7 @@ import (
 	"sync"
 	"time"
 
+	"cloud.google.com/go/compute/metadata"
 	agentendpoint "cloud.google.com/go/osconfig/agentendpoint/apiv1"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/config"
@@ -86,6 +87,21 @@ func (c *Client) Closed() bool {
 	return c.closed
 }
 
+// RegisterAgent calls RegisterAgent discarding the response.
+func (c *Client) RegisterAgent(ctx context.Context) error {
+	token, err := config.IDToken()
+	if err != nil {
+		return err
+	}
+
+	req := &agentendpointpb.RegisterAgentRequest{AgentVersion: config.Version(), SupportedCapabilities: config.Capabilities()}
+	logger.Debugf("Calling RegisterAgent with request:\n%s", util.PrettyFmt(req))
+	req.InstanceIdToken = token
+
+	_, err = c.raw.RegisterAgent(ctx, req)
+	return err
+}
+
 func (c *Client) startNextTask(ctx context.Context) (res *agentendpointpb.StartNextTaskResponse, err error) {
 	token, err := config.IDToken()
 	if err != nil {
@@ -104,7 +120,7 @@ func (c *Client) startNextTask(ctx context.Context) (res *agentendpointpb.StartN
 		logger.Debugf("StartNextTask response:\n%s", util.PrettyFmt(res))
 		return nil
 	}); err != nil {
-		return nil, fmt.Errorf("error calling StartNextTask: %v", err)
+		return nil, fmt.Errorf("error calling StartNextTask: %w", err)
 	}
 
 	return res, nil
@@ -127,7 +143,7 @@ func (c *Client) reportTaskProgress(ctx context.Context, req *agentendpointpb.Re
 		logger.Debugf("ReportTaskProgress response:\n%s", util.PrettyFmt(res))
 		return nil
 	}); err != nil {
-		return nil, fmt.Errorf("error calling ReportTaskProgress: %v", err)
+		return nil, fmt.Errorf("error calling ReportTaskProgress: %w", err)
 	}
 
 	return res, nil
@@ -150,7 +166,7 @@ func (c *Client) reportTaskComplete(ctx context.Context, req *agentendpointpb.Re
 		logger.Debugf("ReportTaskComplete response:\n%s", util.PrettyFmt(res))
 		return nil
 	}); err != nil {
-		return fmt.Errorf("error calling ReportTaskComplete: %v", err)
+		return fmt.Errorf("error calling ReportTaskComplete: %w", err)
 	}
 
 	return nil
@@ -233,7 +249,7 @@ func (c *Client) receiveTaskNotification(ctx context.Context) (agentendpointpb.A
 
 	token, err := config.IDToken()
 	if err != nil {
-		return nil, fmt.Errorf("error fetching Instance IDToken: %v", err)
+		return nil, fmt.Errorf("error fetching Instance IDToken: %w", err)
 	}
 
 	logger.Debugf("Calling ReceiveTaskNotification with request:\n%s", util.PrettyFmt(req))
@@ -245,7 +261,7 @@ func (c *Client) receiveTaskNotification(ctx context.Context) (agentendpointpb.A
 func (c *Client) loadTaskFromState(ctx context.Context) error {
 	st, err := loadState(taskStateFile)
 	if err != nil {
-		return fmt.Errorf("loadState error: %v", err)
+		return fmt.Errorf("loadState error: %w", err)
 	}
 	if st != nil && st.PatchTask != nil {
 		st.PatchTask.client = c
@@ -257,8 +273,8 @@ func (c *Client) loadTaskFromState(ctx context.Context) error {
 	return nil
 }
 
-var errServiceNotEnabled = errors.New("service is not enabled for this project")
-var errResourceExhausted = errors.New("ResourceExhausted")
+var serviceNotEnabledError = errors.New("service is not enabled for this project")
+var resourceExhaustedError = errors.New("ResourceExhausted")
 
 func (c *Client) waitForTask(ctx context.Context) error {
 	stream, err := c.receiveTaskNotification(ctx)
@@ -279,9 +295,9 @@ func (c *Client) waitForTask(ctx context.Context) error {
 			return nil
 		case codes.PermissionDenied:
 			// Service is not enabled for this project.
-			return errServiceNotEnabled
+			return serviceNotEnabledError
 		case codes.ResourceExhausted:
-			return errResourceExhausted
+			return resourceExhaustedError
 		}
 	}
 	// TODO: Add more error checking (handle more API erros vs non API errors) and backoff where appropriate.
@@ -318,15 +334,22 @@ func (c *Client) WaitForTaskNotification(ctx context.Context) {
 			}
 
 			if err := c.waitForTask(ctx); err != nil {
-				if err == errServiceNotEnabled {
+				if errors.Is(err, serviceNotEnabledError) {
 					// Service is disabled, close this client and return.
 					logger.Warningf("OSConfig Service is disabled.")
 					c.Close()
 					return
 				}
+				var ndr *metadata.NotDefinedError
+				if errors.As(err, &ndr) {
+					// No service account setup for this instance, close this client and return.
+					logger.Warningf("No service account set for instance.")
+					c.Close()
+					return
+				}
 				logger.Errorf("Error waiting for task: %v", err)
 				sleep := 5 * time.Second
-				if err == errResourceExhausted {
+				if errors.Is(err, resourceExhaustedError) {
 					sleep = retryutil.RetrySleep(resourceExhausted, 5)
 					resourceExhausted++
 				} else {
