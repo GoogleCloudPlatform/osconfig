@@ -15,6 +15,7 @@
 package agentendpoint
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"time"
@@ -79,7 +80,8 @@ func (j *applyPatchesTaskBeta) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON unmarshals a patchConfig using jsonpb.
 func (j *applyPatchesTaskBeta) UnmarshalJSON(b []byte) error {
-	return jsonpb.UnmarshalString(string(b), j)
+	un := &jsonpb.Unmarshaler{AllowUnknownFields: true}
+	return un.Unmarshal(bytes.NewReader(b), j)
 }
 
 func (r *patchTaskBeta) setStep(step patchStep) error {
