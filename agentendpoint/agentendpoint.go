@@ -42,8 +42,10 @@ import (
 const apiRetrySec = 600
 
 var (
-	errServerCancel = errors.New("task canceled by server")
-	taskStateFile   = config.TaskStateFile()
+	errServerCancel      = errors.New("task canceled by server")
+	errServiceNotEnabled = errors.New("service is not enabled for this project")
+	errResourceExhausted = errors.New("ResourceExhausted")
+	taskStateFile        = config.TaskStateFile()
 )
 
 // Client is a an agentendpoint client.
@@ -273,9 +275,6 @@ func (c *Client) loadTaskFromState(ctx context.Context) error {
 	return nil
 }
 
-var serviceNotEnabledError = errors.New("service is not enabled for this project")
-var resourceExhaustedError = errors.New("ResourceExhausted")
-
 func (c *Client) waitForTask(ctx context.Context) error {
 	stream, err := c.receiveTaskNotification(ctx)
 	if err != nil {
@@ -295,9 +294,9 @@ func (c *Client) waitForTask(ctx context.Context) error {
 			return nil
 		case codes.PermissionDenied:
 			// Service is not enabled for this project.
-			return serviceNotEnabledError
+			return errServiceNotEnabled
 		case codes.ResourceExhausted:
-			return resourceExhaustedError
+			return errResourceExhausted
 		}
 	}
 	// TODO: Add more error checking (handle more API erros vs non API errors) and backoff where appropriate.
@@ -334,7 +333,7 @@ func (c *Client) WaitForTaskNotification(ctx context.Context) {
 			}
 
 			if err := c.waitForTask(ctx); err != nil {
-				if errors.Is(err, serviceNotEnabledError) {
+				if errors.Is(err, errServiceNotEnabled) {
 					// Service is disabled, close this client and return.
 					logger.Warningf("OSConfig Service is disabled.")
 					c.Close()
@@ -349,7 +348,7 @@ func (c *Client) WaitForTaskNotification(ctx context.Context) {
 				}
 				logger.Errorf("Error waiting for task: %v", err)
 				sleep := 5 * time.Second
-				if errors.Is(err, resourceExhaustedError) {
+				if errors.Is(err, errResourceExhausted) {
 					sleep = retryutil.RetrySleep(resourceExhausted, 5)
 					resourceExhausted++
 				} else {

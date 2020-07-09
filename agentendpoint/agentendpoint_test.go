@@ -250,7 +250,7 @@ func TestWaitForTaskErrors(t *testing.T) {
 
 	// errServiceNotEnabled from PermissionDenied error.
 	srv.permissionError <- struct{}{}
-	if err := tc.client.waitForTask(ctx); !errors.Is(err, serviceNotEnabledError) {
+	if err := tc.client.waitForTask(ctx); !errors.Is(err, errServiceNotEnabled) {
 		t.Errorf("did not get expected errServiceNotEnabled, got: %v", err)
 	}
 

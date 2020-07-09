@@ -317,9 +317,9 @@ func (c *BetaClient) waitForTask(ctx context.Context) error {
 			return nil
 		case codes.PermissionDenied:
 			// Service is not enabled for this project.
-			return serviceNotEnabledError
+			return errServiceNotEnabled
 		case codes.ResourceExhausted:
-			return resourceExhaustedError
+			return errResourceExhausted
 		}
 	}
 	// TODO: Add more error checking (handle more API erros vs non API errors) and backoff where appropriate.
@@ -356,7 +356,7 @@ func (c *BetaClient) WaitForTaskNotification(ctx context.Context) {
 			}
 
 			if err := c.waitForTask(ctx); err != nil {
-				if errors.Is(err, serviceNotEnabledError) {
+				if errors.Is(err, errServiceNotEnabled) {
 					// Service is disabled, close this client and return.
 					logger.Warningf("OSConfig Service is disabled.")
 					c.Close()
@@ -371,7 +371,7 @@ func (c *BetaClient) WaitForTaskNotification(ctx context.Context) {
 				}
 				logger.Errorf("Error waiting for task: %v", err)
 				sleep := 5 * time.Second
-				if errors.Is(err, resourceExhaustedError) {
+				if errors.Is(err, errResourceExhausted) {
 					sleep = retryutil.RetrySleep(resourceExhausted, 5)
 					resourceExhausted++
 				} else {
