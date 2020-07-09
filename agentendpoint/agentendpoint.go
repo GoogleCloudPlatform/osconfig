@@ -320,6 +320,7 @@ func (c *Client) WaitForTaskNotification(ctx context.Context) {
 			if err := c.waitForTask(ctx); err != nil {
 				if err == errServiceNotEnabled {
 					// Service is disabled, close this client and return.
+					logger.Warningf("OSConfig Service is disabled.")
 					c.Close()
 					return
 				}
