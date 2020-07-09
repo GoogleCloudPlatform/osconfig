@@ -71,7 +71,7 @@ const (
 
 	osConfigPollIntervalDefault = 10
 	osConfigMetadataPollTimeout = 60
-	osConfigWatchConfigTimeout  = 600
+	osConfigWatchConfigTimeout  = 10 * time.Minute
 )
 
 var (
@@ -411,7 +411,7 @@ func WatchConfig(ctx context.Context) error {
 
 		select {
 		case <-ticker.C:
-			break
+			return nil
 		case <-ctx.Done():
 			return nil
 		default:
