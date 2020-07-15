@@ -34,6 +34,8 @@ func (r *patchTaskBeta) runUpdates(ctx context.Context) error {
 	if packages.AptExists && packages.DpkgQueryExists {
 		opts := []ospatch.AptGetUpgradeOption{
 			ospatch.AptGetDryRun(r.Task.GetDryRun()),
+			ospatch.AptGetExcludes(r.Task.GetPatchConfig().GetApt().GetExcludes()),
+			ospatch.AptGetExclusivePackages(r.Task.GetPatchConfig().GetApt().GetExclusivePackages()),
 		}
 		switch r.Task.GetPatchConfig().GetApt().GetType() {
 		case agentendpointpb.AptSettings_DIST:
@@ -49,6 +51,7 @@ func (r *patchTaskBeta) runUpdates(ctx context.Context) error {
 			ospatch.YumUpdateSecurity(r.Task.GetPatchConfig().GetYum().GetSecurity()),
 			ospatch.YumUpdateMinimal(r.Task.GetPatchConfig().GetYum().GetMinimal()),
 			ospatch.YumUpdateExcludes(r.Task.GetPatchConfig().GetYum().GetExcludes()),
+			ospatch.YumExclusivePackages(r.Task.GetPatchConfig().GetYum().GetExclusivePackages()),
 			ospatch.YumDryRun(r.Task.GetDryRun()),
 		}
 		r.debugf("Installing YUM package updates.")
@@ -62,6 +65,8 @@ func (r *patchTaskBeta) runUpdates(ctx context.Context) error {
 			ospatch.ZypperPatchSeverities(r.Task.GetPatchConfig().GetZypper().GetSeverities()),
 			ospatch.ZypperUpdateWithUpdate(r.Task.GetPatchConfig().GetZypper().GetWithUpdate()),
 			ospatch.ZypperUpdateWithOptional(r.Task.GetPatchConfig().GetZypper().GetWithOptional()),
+			ospatch.ZypperUpdateWithExcludes(r.Task.GetPatchConfig().GetZypper().GetExcludes()),
+			ospatch.ZypperUpdateWithExclusivePatches(r.Task.GetPatchConfig().GetZypper().GetExclusivePatches()),
 			ospatch.ZypperUpdateDryrun(r.Task.GetDryRun()),
 		}
 		r.debugf("Installing Zypper updates.")
