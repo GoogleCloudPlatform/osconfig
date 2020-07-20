@@ -19,6 +19,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -83,6 +84,11 @@ var (
 	agentConfigMx sync.RWMutex
 	version       string
 	lEtag         = &lastEtag{Etag: "0"}
+
+	// Current supported capabilites for this agent.
+	// These are matched server side to what tasks this agent can
+	// perform.
+	capabilities = []string{"PATCH_GA", "GUEST_POLICY_BETA"}
 )
 
 type config struct {
@@ -327,10 +333,10 @@ func setSVCEndpoint(md metadataJSON, c *config) {
 func formatMetadataError(err error) error {
 	if urlErr, ok := err.(*url.Error); ok {
 		if _, ok := urlErr.Err.(*net.DNSError); ok {
-			return fmt.Errorf("DNS error when requesting metadata, check DNS settings and ensure metadata.google.internal is setup in your hosts file")
+			return errors.New("DNS error when requesting metadata, check DNS settings and ensure metadata.google.internal is setup in your hosts file")
 		}
 		if _, ok := urlErr.Err.(*net.OpError); ok {
-			return fmt.Errorf("network error when requesting metadata, make sure your instance has an active network and can reach the metadata server")
+			return errors.New("network error when requesting metadata, make sure your instance has an active network and can reach the metadata server")
 		}
 	}
 	return err
@@ -531,7 +537,7 @@ type idToken struct {
 func (t *idToken) get() error {
 	data, err := metadata.Get(IdentityTokenPath)
 	if err != nil {
-		return fmt.Errorf("error getting token from metadata: %v", err)
+		return fmt.Errorf("error getting token from metadata: %w", err)
 	}
 
 	cs, err := jws.Decode(data)
@@ -571,6 +577,11 @@ func Version() string {
 // SetVersion sets the agent version.
 func SetVersion(v string) {
 	version = v
+}
+
+// Capabilities returns the agents capabilities.
+func Capabilities() []string {
+	return capabilities
 }
 
 // TaskStateFile is the location of the task state file.

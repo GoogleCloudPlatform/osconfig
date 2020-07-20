@@ -17,11 +17,12 @@ package agentendpoint
 import (
 	"context"
 	"os/exec"
-	"reflect"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/testing/protocmp"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
@@ -107,16 +108,16 @@ func TestRunExecStepBeta(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if !reflect.DeepEqual(srv.lastReportTaskCompleteRequest, tt.wantComReq) {
-				t.Fatalf("ReportTaskCompleteRequest does not match expectations, want: %q, got: %q", tt.wantComReq, srv.lastReportTaskCompleteRequest)
+			if diff := cmp.Diff(tt.wantComReq, srv.lastReportTaskCompleteRequest, protocmp.Transform()); diff != "" {
+				t.Fatalf("ReportTaskCompleteRequest mismatch (-want +got):\n%s", diff)
 			}
 
 			if gotPath != tt.wantPath {
 				t.Errorf("did not get expected path, want: %q, got: %q", tt.wantPath, gotPath)
 			}
 
-			if !reflect.DeepEqual(tt.wantArgs, gotArgs) {
-				t.Errorf("did not get expected args, want: %q, got: %q", tt.wantArgs, gotArgs)
+			if diff := cmp.Diff(tt.wantArgs, gotArgs); diff != "" {
+				t.Fatalf("did not get expected args (-want +got):\n%s", diff)
 			}
 		})
 	}

@@ -16,6 +16,7 @@ package agentendpoint
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -208,7 +209,7 @@ func TestWaitForTaskErrorsBeta(t *testing.T) {
 
 	// errServiceNotEnabled from PermissionDenied error.
 	srv.permissionError <- struct{}{}
-	if err := tc.client.waitForTask(ctx); err != errServiceNotEnabled {
+	if err := tc.client.waitForTask(ctx); !errors.Is(err, errServiceNotEnabled) {
 		t.Errorf("did not get expected errServiceNotEnabled, got: %v", err)
 	}
 
@@ -216,12 +217,6 @@ func TestWaitForTaskErrorsBeta(t *testing.T) {
 	srv.streamClose <- struct{}{}
 	if err := tc.client.waitForTask(ctx); err != nil {
 		t.Errorf("did not expect error from a closed stream: %v", err)
-	}
-
-	tc.close()
-	// Error from a closed server
-	if err := tc.client.waitForTask(ctx); err == nil {
-		t.Error("expected error from a closed server")
 	}
 }
 
