@@ -85,6 +85,9 @@ var (
 	version       string
 	lEtag         = &lastEtag{Etag: "0"}
 
+	// Current supported capabilites for this agent.
+	// These are matched server side to what tasks this agent can
+	// perform.
 	capabilities = []string{"PATCH_GA", "GUEST_POLICY_BETA"}
 )
 

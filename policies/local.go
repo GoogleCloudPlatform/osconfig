@@ -32,9 +32,9 @@ import (
 // The types of members of the struct are wrappers for protobufs and delegate
 // the parsing to jsonpb lib via their UnmarshalJSON implementations.
 type localConfig struct {
-	Packages            []pkg
-	PackageRepositories []packageRepository
-	SoftwareRecipes     []softwareRecipe
+	Packages            []*pkg
+	PackageRepositories []*packageRepository
+	SoftwareRecipes     []*softwareRecipe
 }
 
 type pkg struct {
@@ -79,7 +79,7 @@ func readLocalConfig() (*localConfig, error) {
 // override by higher priotiry policy(-ies).
 // For repositories that have no such Id, GetId returns "", in which
 // case the repository is never overridden.
-func getID(repo agentendpointpb.PackageRepository) string {
+func getID(repo *agentendpointpb.PackageRepository) string {
 	switch repo.Repository.(type) {
 	case *agentendpointpb.PackageRepository_Yum:
 		return "yum-" + repo.GetYum().GetId()
@@ -109,7 +109,7 @@ func mergeConfigs(local *localConfig, egp *agentendpointpb.EffectiveGuestPolicy)
 		pkgs[v.Package.Name] = true
 	}
 	for _, v := range egp.GetPackageRepositories() {
-		if id := getID(*v.PackageRepository); id != "" {
+		if id := getID(v.GetPackageRepository()); id != "" {
 			repos[id] = true
 		}
 	}
@@ -124,7 +124,7 @@ func mergeConfigs(local *localConfig, egp *agentendpointpb.EffectiveGuestPolicy)
 		}
 	}
 	for _, v := range local.PackageRepositories {
-		id := getID(v.PackageRepository)
+		id := getID(&v.PackageRepository)
 		if id != "" {
 			if _, ok := repos[id]; ok {
 				continue
