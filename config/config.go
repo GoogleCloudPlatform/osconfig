@@ -56,7 +56,7 @@ const (
 	yumRepoFilePath    = "/etc/yum.repos.d/google_osconfig_managed.repo"
 	aptRepoFilePath    = "/etc/apt/sources.list.d/google_osconfig_managed.list"
 
-	prodEndpoint = "osconfig.googleapis.com:443"
+	prodEndpoint = "{zone}-osconfig.googleapis.com:443"
 
 	osInventoryEnabledDefault      = false
 	guestPoliciesEnabledDefault    = false

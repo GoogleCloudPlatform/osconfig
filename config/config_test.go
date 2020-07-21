@@ -158,7 +158,7 @@ func TestSetConfigDefaultValues(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Etag", "sample-etag")
 		// we always get zone value in instance metadata.
-		fmt.Fprintln(w, `{ "instance": {"zone": "zone"}}`)
+		fmt.Fprintln(w, `{ "instance": {"zone": "fake-zone"}}`)
 	}))
 	defer ts.Close()
 
@@ -206,8 +206,9 @@ func TestSetConfigDefaultValues(t *testing.T) {
 		t.Errorf("Default poll interval: got(%f) != want(%d)", SvcPollInterval().Minutes(), osConfigPollIntervalDefault)
 	}
 
-	if SvcEndpoint() != prodEndpoint {
-		t.Errorf("Default endpoint: got(%s) != want(%s)", SvcEndpoint(), prodEndpoint)
+	expectedEndpoint := "fake-zone-osconfig.googleapis.com:443"
+	if SvcEndpoint() != expectedEndpoint {
+		t.Errorf("Default endpoint: got(%s) != want(%s)", SvcEndpoint(), expectedEndpoint)
 	}
 }
 
