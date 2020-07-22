@@ -90,7 +90,7 @@ func (a *applyPatchesTask) MarshalJSON() ([]byte, error) {
 func (a *applyPatchesTask) UnmarshalJSON(b []byte) error {
 	a.ApplyPatchesTask = &agentendpointpb.ApplyPatchesTask{}
 	un := &protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
-	return un.Unmarshal(b, a)
+	return un.Unmarshal(b, a.ApplyPatchesTask)
 }
 
 func (r *patchTask) setStep(step patchStep) error {
