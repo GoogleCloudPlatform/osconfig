@@ -16,11 +16,11 @@ limitations under the License.
 package packages
 
 import (
-	"io/ioutil"
-	"log"
+	"context"
 	"os/exec"
 	"time"
 
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 )
 
@@ -47,9 +47,6 @@ var (
 	GooGetExists bool
 
 	noarch = osinfo.Architecture("noarch")
-
-	// DebugLogger is the debug logger to use.
-	DebugLogger = log.New(ioutil.Discard, "", 0)
 )
 
 // Packages is a selection of packages based on their manager.
@@ -95,7 +92,7 @@ type QFEPackage struct {
 	Caption, Description, HotFixID, InstalledOn string
 }
 
-var run = func(cmd *exec.Cmd) ([]byte, error) {
-	DebugLogger.Printf("Running %q with args %q\n", cmd.Path, cmd.Args[1:])
+var run = func(ctx context.Context, cmd *exec.Cmd) ([]byte, error) {
+	clog.Debugf(ctx, "Running %q with args %q\n", cmd.Path, cmd.Args[1:])
 	return cmd.CombinedOutput()
 }

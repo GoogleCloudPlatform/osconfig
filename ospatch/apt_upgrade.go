@@ -15,6 +15,8 @@
 package ospatch
 
 import (
+	"context"
+
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 )
@@ -58,7 +60,7 @@ func AptGetDryRun(dryrun bool) AptGetUpgradeOption {
 }
 
 // RunAptGetUpgrade runs apt-get upgrade.
-func RunAptGetUpgrade(opts ...AptGetUpgradeOption) error {
+func RunAptGetUpgrade(ctx context.Context, opts ...AptGetUpgradeOption) error {
 	aptOpts := &aptGetUpgradeOpts{
 		upgradeType:       packages.AptGetUpgrade,
 		excludes:          nil,
@@ -70,7 +72,7 @@ func RunAptGetUpgrade(opts ...AptGetUpgradeOption) error {
 		opt(aptOpts)
 	}
 
-	pkgs, err := packages.AptUpdates(packages.AptGetUpgradeType(aptOpts.upgradeType), packages.AptGetUpgradeShowNew(true))
+	pkgs, err := packages.AptUpdates(ctx, packages.AptGetUpgradeType(aptOpts.upgradeType), packages.AptGetUpgradeShowNew(true))
 	if err != nil {
 		return err
 	}
@@ -89,12 +91,12 @@ func RunAptGetUpgrade(opts ...AptGetUpgradeOption) error {
 		pkgNames = append(pkgNames, pkg.Name)
 	}
 	logger.Infof("Updating %d packages.", len(pkgNames))
-	logger.Debugf("Packages to be installed: %s", fPkgs)
+	logger.Infof("Packages to be installed: %s", fPkgs)
 
 	if aptOpts.dryrun {
 		logger.Infof("Running in dryrun mode, not updating packages.")
 		return nil
 	}
 
-	return packages.InstallAptPackages(pkgNames)
+	return packages.InstallAptPackages(ctx, pkgNames)
 }

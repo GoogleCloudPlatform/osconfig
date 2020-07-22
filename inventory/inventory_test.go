@@ -17,6 +17,7 @@ package inventory
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -42,6 +43,7 @@ func decodePackages(str string) packages.Packages {
 }
 
 func TestWrite(t *testing.T) {
+	ctx := context.Background()
 	inv := &InstanceInventory{
 		Hostname:      "Hostname",
 		LongName:      "LongName",
@@ -128,7 +130,7 @@ func TestWrite(t *testing.T) {
 	}))
 	defer svr.Close()
 
-	write(inv, svr.URL)
+	write(ctx, inv, svr.URL)
 
 	for k, v := range want {
 		if v {

@@ -22,42 +22,42 @@ import (
 
 func TestInstallYumPackages(t *testing.T) {
 	run = getMockRun([]byte("TestInstallYumPackages"), nil)
-	if err := InstallYumPackages(pkgs); err != nil {
+	if err := InstallYumPackages(testCtx, pkgs); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
 
 func TestInstallYumPackagesReturnsError(t *testing.T) {
 	run = getMockRun([]byte("TestInstallYumPackagesReturnsError"), errors.New("Could not install package"))
-	if err := InstallYumPackages(pkgs); err == nil {
+	if err := InstallYumPackages(testCtx, pkgs); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }
 
 func TestRemoveYum(t *testing.T) {
 	run = getMockRun([]byte("TestRemoveYum"), nil)
-	if err := RemoveYumPackages(pkgs); err != nil {
+	if err := RemoveYumPackages(testCtx, pkgs); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
 
 func TestRemoveYumReturnError(t *testing.T) {
 	run = getMockRun([]byte("TestRemoveYumReturnError"), errors.New("Could not find package"))
-	if err := RemoveYumPackages(pkgs); err == nil {
+	if err := RemoveYumPackages(testCtx, pkgs); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }
 
 func TestYumUpdates(t *testing.T) {
 	run = getMockRun([]byte("TestYumUpdatesError"), errors.New("Bad error"))
-	if _, err := YumUpdates(); err == nil {
+	if _, err := YumUpdates(testCtx); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }
 
 func TestYumUpdatesExitCode0(t *testing.T) {
 	run = getMockRun([]byte("TestYumUpdatesError"), nil)
-	ret, err := YumUpdates()
+	ret, err := YumUpdates(testCtx)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}

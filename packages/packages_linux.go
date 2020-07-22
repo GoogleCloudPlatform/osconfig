@@ -14,70 +14,72 @@ limitations under the License.
 package packages
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 // GetPackageUpdates gets all available package updates from any known
 // installed package manager.
-func GetPackageUpdates() (Packages, error) {
+func GetPackageUpdates(ctx context.Context) (Packages, error) {
 	pkgs := Packages{}
 	var errs []string
 	if AptExists {
-		apt, err := AptUpdates(AptGetUpgradeType(AptGetFullUpgrade), AptGetUpgradeShowNew(false))
+		apt, err := AptUpdates(ctx, AptGetUpgradeType(AptGetFullUpgrade), AptGetUpgradeShowNew(false))
 		if err != nil {
 			msg := fmt.Sprintf("error getting apt updates: %v", err)
-			DebugLogger.Println("Error:", msg)
+			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
 			pkgs.Apt = apt
 		}
 	}
 	if YumExists {
-		yum, err := YumUpdates()
+		yum, err := YumUpdates(ctx)
 		if err != nil {
 			msg := fmt.Sprintf("error getting yum updates: %v", err)
-			DebugLogger.Println("Error:", msg)
+			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
 			pkgs.Yum = yum
 		}
 	}
 	if ZypperExists {
-		zypper, err := ZypperUpdates()
+		zypper, err := ZypperUpdates(ctx)
 		if err != nil {
 			msg := fmt.Sprintf("error getting zypper updates: %v", err)
-			DebugLogger.Println("Error:", msg)
+			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
 			pkgs.Zypper = zypper
 		}
-		zypperPatches, err := ZypperPatches()
+		zypperPatches, err := ZypperPatches(ctx)
 		if err != nil {
 			msg := fmt.Sprintf("error getting zypper available patches: %v", err)
-			DebugLogger.Println("Error:", msg)
+			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
 			pkgs.ZypperPatches = zypperPatches
 		}
 	}
 	if GemExists {
-		gem, err := GemUpdates()
+		gem, err := GemUpdates(ctx)
 		if err != nil {
 			msg := fmt.Sprintf("error getting gem updates: %v", err)
-			DebugLogger.Println("Error:", msg)
+			clog.Debugf(ctx, "Error: %s", msg)
 		} else {
 			pkgs.Gem = gem
 		}
 	}
 	if PipExists {
-		pip, err := PipUpdates()
+		pip, err := PipUpdates(ctx)
 		if err != nil {
 			msg := fmt.Sprintf("error getting pip updates: %v", err)
-			DebugLogger.Println("Error:", msg)
+			clog.Debugf(ctx, "Error: %s", msg)
 		} else {
 			pkgs.Pip = pip
 		}
@@ -92,54 +94,54 @@ func GetPackageUpdates() (Packages, error) {
 
 // GetInstalledPackages gets all installed packages from any known installed
 // package manager.
-func GetInstalledPackages() (Packages, error) {
+func GetInstalledPackages(ctx context.Context) (Packages, error) {
 	pkgs := Packages{}
 	var errs []string
 	if util.Exists(rpmquery) {
-		rpm, err := InstalledRPMPackages()
+		rpm, err := InstalledRPMPackages(ctx)
 		if err != nil {
 			msg := fmt.Sprintf("error listing installed rpm packages: %v", err)
-			DebugLogger.Println("Error:", msg)
+			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
 			pkgs.Rpm = rpm
 		}
 	}
 	if util.Exists(zypper) {
-		zypperPatches, err := ZypperInstalledPatches()
+		zypperPatches, err := ZypperInstalledPatches(ctx)
 		if err != nil {
 			msg := fmt.Sprintf("error getting zypper installed patches: %v", err)
-			DebugLogger.Println("Error:", msg)
+			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
 			pkgs.ZypperPatches = zypperPatches
 		}
 	}
 	if util.Exists(dpkgquery) {
-		deb, err := InstalledDebPackages()
+		deb, err := InstalledDebPackages(ctx)
 		if err != nil {
 			msg := fmt.Sprintf("error listing installed deb packages: %v", err)
-			DebugLogger.Println("Error:", msg)
+			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
 			pkgs.Deb = deb
 		}
 	}
 	if util.Exists(gem) {
-		gem, err := InstalledGemPackages()
+		gem, err := InstalledGemPackages(ctx)
 		if err != nil {
 			msg := fmt.Sprintf("error listing installed gem packages: %v", err)
-			DebugLogger.Println("Error:", msg)
+			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
 			pkgs.Gem = gem
 		}
 	}
 	if util.Exists(pip) {
-		pip, err := InstalledPipPackages()
+		pip, err := InstalledPipPackages(ctx)
 		if err != nil {
 			msg := fmt.Sprintf("error listing installed pip packages: %v", err)
-			DebugLogger.Println("Error:", msg)
+			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
 			pkgs.Pip = pip

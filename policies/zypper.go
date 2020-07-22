@@ -16,18 +16,19 @@ package policies
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
 // TODO: Write repo_gpgcheck, pkg_gpgcheck, type
-func zypperRepositories(repos []*agentendpointpb.ZypperRepository, repoFile string) error {
+func zypperRepositories(ctx context.Context, repos []*agentendpointpb.ZypperRepository, repoFile string) error {
 	/*
 		# Repo file managed by Google OSConfig agent
 		[repo1]
@@ -63,39 +64,39 @@ func zypperRepositories(repos []*agentendpointpb.ZypperRepository, repoFile stri
 		}
 	}
 
-	return writeIfChanged(buf.Bytes(), repoFile)
+	return writeIfChanged(ctx, buf.Bytes(), repoFile)
 }
 
-func zypperChanges(zypperInstalled, zypperRemoved, zypperUpdated []*agentendpointpb.Package) error {
+func zypperChanges(ctx context.Context, zypperInstalled, zypperRemoved, zypperUpdated []*agentendpointpb.Package) error {
 	var errs []string
 
-	installed, err := packages.InstalledRPMPackages()
+	installed, err := packages.InstalledRPMPackages(ctx)
 	if err != nil {
 		return err
 	}
-	updates, err := packages.ZypperUpdates()
+	updates, err := packages.ZypperUpdates(ctx)
 	if err != nil {
 		return err
 	}
 	changes := getNecessaryChanges(installed, updates, zypperInstalled, zypperRemoved, zypperUpdated)
 
 	if changes.packagesToInstall != nil {
-		logger.Infof("Installing packages %s", changes.packagesToInstall)
-		if err := packages.InstallZypperPackages(changes.packagesToInstall); err != nil {
+		clog.Infof(ctx, "Installing packages %s", changes.packagesToInstall)
+		if err := packages.InstallZypperPackages(ctx, changes.packagesToInstall); err != nil {
 			errs = append(errs, fmt.Sprintf("error installing zypper packages: %v", err))
 		}
 	}
 
 	if changes.packagesToUpgrade != nil {
-		logger.Infof("Upgrading packages %s", changes.packagesToUpgrade)
-		if err := packages.InstallZypperPackages(changes.packagesToUpgrade); err != nil {
+		clog.Infof(ctx, "Upgrading packages %s", changes.packagesToUpgrade)
+		if err := packages.InstallZypperPackages(ctx, changes.packagesToUpgrade); err != nil {
 			errs = append(errs, fmt.Sprintf("error upgrading zypper packages: %v", err))
 		}
 	}
 
 	if changes.packagesToRemove != nil {
-		logger.Infof("Removing packages %s", changes.packagesToRemove)
-		if err := packages.RemoveZypperPackages(changes.packagesToRemove); err != nil {
+		clog.Infof(ctx, "Removing packages %s", changes.packagesToRemove)
+		if err := packages.RemoveZypperPackages(ctx, changes.packagesToRemove); err != nil {
 			errs = append(errs, fmt.Sprintf("error removing zypper packages: %v", err))
 		}
 	}

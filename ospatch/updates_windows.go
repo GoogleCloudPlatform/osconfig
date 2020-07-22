@@ -35,7 +35,7 @@ func SystemRebootRequired() (bool, error) {
 			k.Close()
 
 			if len(val) > 0 {
-				logger.Debugf("PendingFileRenameOperations indicate a reboot is required: %q", val)
+				logger.Infof("PendingFileRenameOperations indicate a reboot is required: %q", val)
 				return true, nil
 			}
 		} else if err != registry.ErrNotExist {
@@ -57,7 +57,7 @@ func SystemRebootRequired() (bool, error) {
 		k, err := registry.OpenKey(registry.LOCAL_MACHINE, key, registry.QUERY_VALUE)
 		if err == nil {
 			k.Close()
-			logger.Debugf("%s exists indicating a reboot is required.", key)
+			logger.Infof("%s exists indicating a reboot is required.", key)
 			return true, nil
 		} else if err != registry.ErrNotExist {
 			return false, err

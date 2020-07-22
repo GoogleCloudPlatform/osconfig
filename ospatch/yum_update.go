@@ -15,6 +15,8 @@
 package ospatch
 
 import (
+	"context"
+
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 )
@@ -76,7 +78,7 @@ func YumDryRun(dryrun bool) YumUpdateOption {
 }
 
 // RunYumUpdate runs yum update.
-func RunYumUpdate(opts ...YumUpdateOption) error {
+func RunYumUpdate(ctx context.Context, opts ...YumUpdateOption) error {
 	yumOpts := &yumUpdateOpts{
 		security: false,
 		minimal:  false,
@@ -87,7 +89,7 @@ func RunYumUpdate(opts ...YumUpdateOption) error {
 		opt(yumOpts)
 	}
 
-	pkgs, err := packages.YumUpdates(packages.YumUpdateMinimal(yumOpts.minimal), packages.YumUpdateSecurity(yumOpts.security))
+	pkgs, err := packages.YumUpdates(ctx, packages.YumUpdateMinimal(yumOpts.minimal), packages.YumUpdateSecurity(yumOpts.security))
 	if err != nil {
 		return err
 	}
@@ -106,12 +108,12 @@ func RunYumUpdate(opts ...YumUpdateOption) error {
 		pkgNames = append(pkgNames, pkg.Name)
 	}
 	logger.Infof("Updating %d packages.", len(pkgNames))
-	logger.Debugf("Packages to be installed: %s", fPkgs)
+	logger.Infof("Packages to be installed: %s", fPkgs)
 
 	if yumOpts.dryrun {
 		logger.Infof("Running in dryrun mode, not updating packages.")
 		return nil
 	}
 
-	return packages.InstallYumPackages(pkgNames)
+	return packages.InstallYumPackages(ctx, pkgNames)
 }

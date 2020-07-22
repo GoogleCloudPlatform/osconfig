@@ -26,6 +26,7 @@ import (
 	"cloud.google.com/go/compute/metadata"
 	agentendpoint "cloud.google.com/go/osconfig/agentendpoint/apiv1"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
@@ -64,7 +65,7 @@ func NewClient(ctx context.Context) (*Client, error) {
 		option.WithGRPCDialOption(grpc.WithTransportCredentials(credentials.NewTLS(nil))), // Because we disabled Auth we need to specifically enable TLS.
 		option.WithEndpoint(config.SvcEndpoint()),
 	}
-	logger.Debugf("Creating new agentendpoint client.")
+	clog.Debugf(ctx, "Creating new agentendpoint client.")
 	c, err := agentendpoint.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -111,15 +112,15 @@ func (c *Client) startNextTask(ctx context.Context) (res *agentendpointpb.StartN
 	}
 
 	req := &agentendpointpb.StartNextTaskRequest{}
-	logger.Debugf("Calling StartNextTask with request:\n%s", util.PrettyFmt(req))
+	clog.Debugf(ctx, "Calling StartNextTask with request:\n%s", util.PrettyFmt(req))
 	req.InstanceIdToken = token
 
-	if err := retryutil.RetryAPICall(apiRetrySec*time.Second, "StartNextTask", func() error {
+	if err := retryutil.RetryAPICall(ctx, apiRetrySec*time.Second, "StartNextTask", func() error {
 		res, err = c.raw.StartNextTask(ctx, req)
 		if err != nil {
 			return err
 		}
-		logger.Debugf("StartNextTask response:\n%s", util.PrettyFmt(res))
+		clog.Debugf(ctx, "StartNextTask response:\n%s", util.PrettyFmt(res))
 		return nil
 	}); err != nil {
 		return nil, fmt.Errorf("error calling StartNextTask: %w", err)
@@ -134,15 +135,15 @@ func (c *Client) reportTaskProgress(ctx context.Context, req *agentendpointpb.Re
 		return nil, err
 	}
 
-	logger.Debugf("Calling ReportTaskProgress with request:\n%s", util.PrettyFmt(req))
+	clog.Debugf(ctx, "Calling ReportTaskProgress with request:\n%s", util.PrettyFmt(req))
 	req.InstanceIdToken = token
 
-	if err := retryutil.RetryAPICall(apiRetrySec*time.Second, "ReportTaskProgress", func() error {
+	if err := retryutil.RetryAPICall(ctx, apiRetrySec*time.Second, "ReportTaskProgress", func() error {
 		res, err = c.raw.ReportTaskProgress(ctx, req)
 		if err != nil {
 			return err
 		}
-		logger.Debugf("ReportTaskProgress response:\n%s", util.PrettyFmt(res))
+		clog.Debugf(ctx, "ReportTaskProgress response:\n%s", util.PrettyFmt(res))
 		return nil
 	}); err != nil {
 		return nil, fmt.Errorf("error calling ReportTaskProgress: %w", err)
@@ -157,15 +158,15 @@ func (c *Client) reportTaskComplete(ctx context.Context, req *agentendpointpb.Re
 		return err
 	}
 
-	logger.Debugf("Calling ReportTaskComplete with request:\n%s", util.PrettyFmt(req))
+	clog.Debugf(ctx, "Calling ReportTaskComplete with request:\n%s", util.PrettyFmt(req))
 	req.InstanceIdToken = token
 
-	if err := retryutil.RetryAPICall(apiRetrySec*time.Second, "ReportTaskComplete", func() error {
+	if err := retryutil.RetryAPICall(ctx, apiRetrySec*time.Second, "ReportTaskComplete", func() error {
 		res, err := c.raw.ReportTaskComplete(ctx, req)
 		if err != nil {
 			return err
 		}
-		logger.Debugf("ReportTaskComplete response:\n%s", util.PrettyFmt(res))
+		clog.Debugf(ctx, "ReportTaskComplete response:\n%s", util.PrettyFmt(res))
 		return nil
 	}); err != nil {
 		return fmt.Errorf("error calling ReportTaskComplete: %w", err)
@@ -177,45 +178,45 @@ func (c *Client) reportTaskComplete(ctx context.Context, req *agentendpointpb.Re
 // Placeholder for LookupEffectiveGuestPolicies.
 
 func (c *Client) runTask(ctx context.Context) {
-	logger.Debugf("Beginning run task loop.")
+	clog.Debugf(ctx, "Beginning run task loop.")
 	for {
 		res, err := c.startNextTask(ctx)
 		if err != nil {
-			logger.Errorf("Error running StartNextTask, cannot continue: %v", err)
+			clog.Errorf(ctx, "Error running StartNextTask, cannot continue: %v", err)
 			return
 		}
 
 		task := res.GetTask()
 		if task == nil {
-			logger.Debugf("No task to run, ending run task loop.")
+			clog.Debugf(ctx, "No task to run, ending run task loop.")
 			return
 		}
 
-		logger.Debugf("Received task: %s.", task.GetTaskType())
+		clog.Debugf(ctx, "Received task: %s.", task.GetTaskType())
 		switch task.GetTaskType() {
 		case agentendpointpb.TaskType_APPLY_PATCHES:
 			if err := c.RunApplyPatches(ctx, task); err != nil {
-				logger.Errorf("Error running TaskType_APPLY_PATCHES: %v", err)
+				clog.Errorf(ctx, "Error running TaskType_APPLY_PATCHES: %v", err)
 			}
 		case agentendpointpb.TaskType_EXEC_STEP_TASK:
 			if err := c.RunExecStep(ctx, task); err != nil {
-				logger.Errorf("Error running TaskType_EXEC_STEP_TASK: %v", err)
+				clog.Errorf(ctx, "Error running TaskType_EXEC_STEP_TASK: %v", err)
 			}
 		default:
-			logger.Errorf("Unknown task type: %v", task.GetTaskType())
+			clog.Errorf(ctx, "Unknown task type: %v", task.GetTaskType())
 		}
 	}
 }
 
 func (c *Client) handleStream(ctx context.Context, stream agentendpointpb.AgentEndpointService_ReceiveTaskNotificationClient) error {
 	for {
-		logger.Debugf("Waiting on ReceiveTaskNotification stream Recv().")
+		clog.Debugf(ctx, "Waiting on ReceiveTaskNotification stream Recv().")
 		if _, err := stream.Recv(); err != nil {
 			// Return on any stream error, even a close, the caller will simply
 			// reconnect the stream as needed.
 			return err
 		}
-		logger.Debugf("Received task notification.")
+		clog.Debugf(ctx, "Received task notification.")
 
 		// Only queue up one notifcation at a time. We should only ever
 		// have one active task being worked on and one in the queue.
@@ -224,7 +225,7 @@ func (c *Client) handleStream(ctx context.Context, stream agentendpointpb.AgentE
 			// We have been canceled.
 			return nil
 		case c.noti <- struct{}{}:
-			tasker.Enqueue("TaskNotification", func() {
+			tasker.Enqueue(ctx, "TaskNotification", func() {
 				// We lock so that this task will complete before the client can get canceled.
 				c.mx.Lock()
 				defer c.mx.Unlock()
@@ -254,7 +255,7 @@ func (c *Client) receiveTaskNotification(ctx context.Context) (agentendpointpb.A
 		return nil, fmt.Errorf("error fetching Instance IDToken: %w", err)
 	}
 
-	logger.Debugf("Calling ReceiveTaskNotification with request:\n%s", util.PrettyFmt(req))
+	clog.Debugf(ctx, "Calling ReceiveTaskNotification with request:\n%s", util.PrettyFmt(req))
 	req.InstanceIdToken = token
 
 	return c.raw.ReceiveTaskNotification(ctx, req)
@@ -267,7 +268,7 @@ func (c *Client) loadTaskFromState(ctx context.Context) error {
 	}
 	if st != nil && st.PatchTask != nil {
 		st.PatchTask.client = c
-		tasker.Enqueue("PatchRun", func() {
+		tasker.Enqueue(ctx, "PatchRun", func() {
 			st.PatchTask.run(ctx)
 		})
 	}
@@ -290,7 +291,7 @@ func (c *Client) waitForTask(ctx context.Context) error {
 		switch s.Code() {
 		case codes.Unavailable:
 			// Something canceled the stream (could be deadline/timeout), we should reconnect.
-			logger.Debugf("Stream canceled, will reconnect: %v", err)
+			clog.Debugf(ctx, "Stream canceled, will reconnect: %v", err)
 			return nil
 		case codes.PermissionDenied:
 			// Service is not enabled for this project.
@@ -312,22 +313,22 @@ func (c *Client) WaitForTaskNotification(ctx context.Context) {
 		// WaitForTaskNotification is already running on this client.
 		return
 	}
-	logger.Debugf("Running WaitForTaskNotification")
+	clog.Debugf(ctx, "Running WaitForTaskNotification")
 	ctx, c.cancel = context.WithCancel(ctx)
 
-	logger.Debugf("Checking local state file for saved task.")
+	clog.Debugf(ctx, "Checking local state file for saved task.")
 	if err := c.loadTaskFromState(ctx); err != nil {
-		logger.Errorf(err.Error())
+		clog.Errorf(ctx, err.Error())
 	}
 
-	logger.Debugf("Setting up ReceiveTaskNotification stream watcher.")
+	clog.Debugf(ctx, "Setting up ReceiveTaskNotification stream watcher.")
 	go func() {
 		resourceExhausted := 1
 		for {
 			select {
 			case <-ctx.Done():
 				// We have been canceled.
-				logger.Debugf("Disabling WaitForTaskNotification")
+				clog.Debugf(ctx, "Disabling WaitForTaskNotification")
 				return
 			default:
 			}
@@ -335,18 +336,18 @@ func (c *Client) WaitForTaskNotification(ctx context.Context) {
 			if err := c.waitForTask(ctx); err != nil {
 				if errors.Is(err, errServiceNotEnabled) {
 					// Service is disabled, close this client and return.
-					logger.Warningf("OSConfig Service is disabled.")
+					clog.Warningf(ctx, "OSConfig Service is disabled.")
 					c.Close()
 					return
 				}
 				var ndr *metadata.NotDefinedError
 				if errors.As(err, &ndr) {
 					// No service account setup for this instance, close this client and return.
-					logger.Warningf("No service account set for instance.")
+					clog.Warningf(ctx, "No service account set for instance.")
 					c.Close()
 					return
 				}
-				logger.Errorf("Error waiting for task: %v", err)
+				clog.Errorf(ctx, "Error waiting for task: %v", err)
 				sleep := 5 * time.Second
 				if errors.Is(err, errResourceExhausted) {
 					sleep = retryutil.RetrySleep(resourceExhausted, 5)
@@ -358,13 +359,4 @@ func (c *Client) WaitForTaskNotification(ctx context.Context) {
 			}
 		}
 	}()
-}
-
-func mkLabels(labels map[string]string) map[string]string {
-	if labels == nil {
-		labels = make(map[string]string)
-	}
-	labels["instance_name"] = config.Name()
-	labels["agent_version"] = config.Version()
-	return labels
 }

@@ -14,32 +14,34 @@ limitations under the License.
 package packages
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 // GetPackageUpdates gets available package updates GooGet as well as any
 // available updates from Windows Update Agent.
-func GetPackageUpdates() (Packages, error) {
+func GetPackageUpdates(ctx context.Context) (Packages, error) {
 	var pkgs Packages
 	var errs []string
 
 	if GooGetExists {
-		if googet, err := GooGetUpdates(); err != nil {
+		if googet, err := GooGetUpdates(ctx); err != nil {
 			msg := fmt.Sprintf("error listing googet updates: %v", err)
-			DebugLogger.Println("Error:", msg)
+			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
 			pkgs.GooGet = googet
 		}
 	}
-	DebugLogger.Println("Searching for available WUA updates.")
+	clog.Debugf(ctx, "Searching for available WUA updates.")
 	if wua, err := WUAUpdates("IsInstalled=0"); err != nil {
 		msg := fmt.Sprintf("error listing installed Windows updates: %v", err)
-		DebugLogger.Println("Error:", msg)
+		clog.Debugf(ctx, "Error: %s", msg)
 		errs = append(errs, msg)
 	} else {
 		pkgs.WUA = wua
@@ -54,32 +56,32 @@ func GetPackageUpdates() (Packages, error) {
 
 // GetInstalledPackages gets all installed GooGet packages and Windows updates.
 // Windows updates are read from Windows Update Agent and Win32_QuickFixEngineering.
-func GetInstalledPackages() (Packages, error) {
+func GetInstalledPackages(ctx context.Context) (Packages, error) {
 	var pkgs Packages
 	var errs []string
 
 	if util.Exists(googet) {
-		if googet, err := InstalledGooGetPackages(); err != nil {
+		if googet, err := InstalledGooGetPackages(ctx); err != nil {
 			msg := fmt.Sprintf("error listing installed googet packages: %v", err)
-			DebugLogger.Println("Error:", msg)
+			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
 			pkgs.GooGet = googet
 		}
 	}
 
-	DebugLogger.Println("Searching for installed WUA updates.")
+	clog.Debugf(ctx, "Searching for installed WUA updates.")
 	if wua, err := WUAUpdates("IsInstalled=1"); err != nil {
 		msg := fmt.Sprintf("error listing installed Windows updates: %v", err)
-		DebugLogger.Println("Error:", msg)
+		clog.Debugf(ctx, "Error: %s", msg)
 		errs = append(errs, msg)
 	} else {
 		pkgs.WUA = wua
 	}
 
-	if qfe, err := QuickFixEngineering(); err != nil {
+	if qfe, err := QuickFixEngineering(ctx); err != nil {
 		msg := fmt.Sprintf("error listing installed QuickFixEngineering updates: %v", err)
-		DebugLogger.Println("Error:", msg)
+		clog.Debugf(ctx, "Error: %s", msg)
 		errs = append(errs, msg)
 	} else {
 		pkgs.QFE = qfe

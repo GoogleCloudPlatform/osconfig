@@ -17,18 +17,19 @@
 package ospatch
 
 import (
+	"context"
 	"os"
 
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"golang.org/x/sys/windows/registry"
 )
 
 // DisableAutoUpdates disables system auto updates.
-func DisableAutoUpdates() {
+func DisableAutoUpdates(ctx context.Context) {
 	k, openedExisting, err := registry.CreateKey(registry.LOCAL_MACHINE, `SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU`, registry.ALL_ACCESS)
 	if err != nil {
-		logger.Errorf("error disabling Windows auto updates, error: %v", err)
+		clog.Errorf(ctx, "Error disabling Windows auto updates, error: %v", err)
 	}
 	defer k.Close()
 
@@ -38,16 +39,16 @@ func DisableAutoUpdates() {
 			return
 		}
 	}
-	logger.Debugf("Disabling Windows Auto Updates")
+	clog.Debugf(ctx, "Disabling Windows Auto Updates")
 
 	if err := k.SetDWordValue("NoAutoUpdate", 1); err != nil {
-		logger.Errorf("error disabling Windows auto updates, error: %v", err)
+		clog.Errorf(ctx, "Error disabling Windows auto updates, error: %v", err)
 	}
 
 	if _, err := os.Stat(`C:\Program Files\Google\Compute Engine\tools\auto_updater.ps1`); err == nil {
-		logger.Debugf("Removing google-compute-engine-auto-updater package")
-		if err := packages.RemoveGooGetPackages([]string{"google-compute-engine-auto-updater"}); err != nil {
-			logger.Errorf(err.Error())
+		clog.Debugf(ctx, "Removing google-compute-engine-auto-updater package")
+		if err := packages.RemoveGooGetPackages(ctx, []string{"google-compute-engine-auto-updater"}); err != nil {
+			clog.Errorf(ctx, err.Error())
 		}
 	}
 }

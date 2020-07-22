@@ -15,6 +15,8 @@
 package ospatch
 
 import (
+	"context"
+
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 )
@@ -50,14 +52,14 @@ func GooGetDryRun(dryrun bool) GooGetUpdateOption {
 }
 
 // RunGooGetUpdate runs googet update.
-func RunGooGetUpdate(opts ...GooGetUpdateOption) error {
+func RunGooGetUpdate(ctx context.Context, opts ...GooGetUpdateOption) error {
 	googetOpts := &googetUpdateOpts{}
 
 	for _, opt := range opts {
 		opt(googetOpts)
 	}
 
-	pkgs, err := packages.GooGetUpdates()
+	pkgs, err := packages.GooGetUpdates(ctx)
 	if err != nil {
 		return err
 	}
@@ -76,12 +78,12 @@ func RunGooGetUpdate(opts ...GooGetUpdateOption) error {
 		pkgNames = append(pkgNames, pkg.Name)
 	}
 	logger.Infof("Updating %d packages.", len(pkgNames))
-	logger.Debugf("Packages to be installed: %s", fPkgs)
+	logger.Infof("Packages to be installed: %s", fPkgs)
 
 	if googetOpts.dryrun {
 		logger.Infof("Running in dryrun mode, not updating packages.")
 		return nil
 	}
 
-	return packages.InstallGooGetPackages(pkgNames)
+	return packages.InstallGooGetPackages(ctx, pkgNames)
 }

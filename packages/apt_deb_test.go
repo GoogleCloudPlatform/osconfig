@@ -22,14 +22,14 @@ import (
 
 func TestInstallAptPackages(t *testing.T) {
 	run = getMockRun([]byte("TestInstallAptPackages"), nil)
-	if err := InstallAptPackages(pkgs); err != nil {
+	if err := InstallAptPackages(testCtx, pkgs); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
 
 func TestInstallAptPackagesReturnsError(t *testing.T) {
 	run = getMockRun([]byte("TestInstallAptPackagesReturnsError"), errors.New("Could not install package"))
-	err := InstallAptPackages(pkgs)
+	err := InstallAptPackages(testCtx, pkgs)
 	if err == nil {
 		t.Errorf("did not get expected error")
 	}
@@ -37,21 +37,21 @@ func TestInstallAptPackagesReturnsError(t *testing.T) {
 
 func TestRemoveAptPackages(t *testing.T) {
 	run = getMockRun([]byte("TestRemoveAptPackages"), nil)
-	if err := RemoveAptPackages(pkgs); err != nil {
+	if err := RemoveAptPackages(testCtx, pkgs); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
 
 func TestRemoveAptPackagesReturnError(t *testing.T) {
 	run = getMockRun([]byte("TestRemoveAptPackagesReturnError"), errors.New("Could not find package"))
-	if err := RemoveAptPackages(pkgs); err == nil {
+	if err := RemoveAptPackages(testCtx, pkgs); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }
 
 func TestInstalledDebPackages(t *testing.T) {
 	run = getMockRun([]byte("foo amd64 1.2.3-4"), nil)
-	ret, err := InstalledDebPackages()
+	ret, err := InstalledDebPackages(testCtx)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -62,7 +62,7 @@ func TestInstalledDebPackages(t *testing.T) {
 	}
 
 	run = getMockRun(nil, errors.New("bad error"))
-	if _, err := InstalledDebPackages(); err == nil {
+	if _, err := InstalledDebPackages(testCtx); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }
@@ -109,7 +109,7 @@ Conf firmware-linux-free (3.4 Debian:9.9/stable [all])
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := parseAptUpdates(tt.data, tt.showNew); !reflect.DeepEqual(got, tt.want) {
+			if got := parseAptUpdates(testCtx, tt.data, tt.showNew); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("parseAptUpdates() = %v, want %v", got, tt.want)
 			}
 		})
@@ -118,7 +118,7 @@ Conf firmware-linux-free (3.4 Debian:9.9/stable [all])
 
 func TestAptUpdates(t *testing.T) {
 	run = getMockRun([]byte("Inst google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [amd64])"), nil)
-	ret, err := AptUpdates()
+	ret, err := AptUpdates(testCtx)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -129,7 +129,7 @@ func TestAptUpdates(t *testing.T) {
 	}
 
 	run = getMockRun(nil, errors.New("bad error"))
-	if _, err := AptUpdates(); err == nil {
+	if _, err := AptUpdates(testCtx); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }

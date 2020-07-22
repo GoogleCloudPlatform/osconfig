@@ -15,10 +15,12 @@
 package packages
 
 import (
+	"context"
 	"os/exec"
 	"runtime"
 	"strings"
 
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
@@ -37,8 +39,8 @@ func init() {
 }
 
 // GemUpdates queries for all available gem updates.
-func GemUpdates() ([]PkgInfo, error) {
-	out, err := run(exec.Command(gem, gemOutdatedArgs...))
+func GemUpdates(ctx context.Context) ([]PkgInfo, error) {
+	out, err := run(ctx, exec.Command(gem, gemOutdatedArgs...))
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +59,7 @@ func GemUpdates() ([]PkgInfo, error) {
 	for _, ln := range lines {
 		pkg := strings.Fields(ln)
 		if len(pkg) != 4 {
-			DebugLogger.Printf("%q does not represent a gem update\n", ln)
+			clog.Debugf(ctx, "%q does not represent a gem update\n", ln)
 			continue
 		}
 		ver := strings.Trim(pkg[3], ")")
@@ -67,8 +69,8 @@ func GemUpdates() ([]PkgInfo, error) {
 }
 
 // InstalledGemPackages queries for all installed gem packages.
-func InstalledGemPackages() ([]PkgInfo, error) {
-	out, err := run(exec.Command(gem, gemListArgs...))
+func InstalledGemPackages(ctx context.Context) ([]PkgInfo, error) {
+	out, err := run(ctx, exec.Command(gem, gemListArgs...))
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +86,7 @@ func InstalledGemPackages() ([]PkgInfo, error) {
 	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
 
 	if len(lines) == 0 {
-		DebugLogger.Println("No gems installed.")
+		clog.Debugf(ctx, "No gems installed.")
 		return nil, nil
 	}
 
@@ -92,7 +94,7 @@ func InstalledGemPackages() ([]PkgInfo, error) {
 	for _, ln := range lines[2:] {
 		pkg := strings.Fields(ln)
 		if len(pkg) < 2 {
-			DebugLogger.Printf("'%s' does not represent a gem", ln)
+			clog.Debugf(ctx, "'%s' does not represent a gem", ln)
 			continue
 		}
 		for _, ver := range strings.Split(strings.Trim(pkg[1], "()"), ", ") {

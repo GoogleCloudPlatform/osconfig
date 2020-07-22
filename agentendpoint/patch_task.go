@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/ospatch"
@@ -50,7 +50,6 @@ type patchTask struct {
 	StartedAt   time.Time `json:",omitempty"`
 	PatchStep   patchStep `json:",omitempty"`
 	RebootCount int
-	LogLabels   map[string]string `json:",omitempty"`
 	// TODO add Attempts and track number of retries with backoff, jitter, etc.
 }
 
@@ -58,22 +57,10 @@ func (r *patchTask) saveState() error {
 	return (&taskState{PatchTask: r}).save(taskStateFile)
 }
 
-func (r *patchTask) complete() {
+func (r *patchTask) complete(ctx context.Context) {
 	if err := (&taskState{}).save(taskStateFile); err != nil {
-		r.errorf("Error saving state: %v", err)
+		clog.Errorf(ctx, "Error saving state: %v", err)
 	}
-}
-
-func (r *patchTask) debugf(format string, v ...interface{}) {
-	logger.Log(logger.LogEntry{Message: fmt.Sprintf(format, v...), Severity: logger.Debug, Labels: r.LogLabels})
-}
-
-func (r *patchTask) infof(format string, v ...interface{}) {
-	logger.Log(logger.LogEntry{Message: fmt.Sprintf(format, v...), Severity: logger.Info, Labels: r.LogLabels})
-}
-
-func (r *patchTask) errorf(format string, v ...interface{}) {
-	logger.Log(logger.LogEntry{Message: fmt.Sprintf(format, v...), Severity: logger.Error, Labels: r.LogLabels})
 }
 
 type applyPatchesTask struct {
@@ -109,14 +96,14 @@ func (r *patchTask) handleErrorState(ctx context.Context, msg string, err error)
 }
 
 func (r *patchTask) reportFailed(ctx context.Context, msg string) error {
-	r.errorf(msg)
+	clog.Errorf(ctx, msg)
 	return r.reportCompletedState(ctx, msg, &agentendpointpb.ReportTaskCompleteRequest_ApplyPatchesTaskOutput{
 		ApplyPatchesTaskOutput: &agentendpointpb.ApplyPatchesTaskOutput{State: agentendpointpb.ApplyPatchesTaskOutput_FAILED},
 	})
 }
 
 func (r *patchTask) reportCanceled(ctx context.Context) error {
-	r.infof("Canceling patch execution")
+	clog.Infof(ctx, "Canceling patch execution")
 	return r.reportCompletedState(ctx, errServerCancel.Error(), &agentendpointpb.ReportTaskCompleteRequest_ApplyPatchesTaskOutput{
 		// Is this right? Maybe there should be a canceled state instead.
 		ApplyPatchesTaskOutput: &agentendpointpb.ApplyPatchesTaskOutput{State: agentendpointpb.ApplyPatchesTaskOutput_FAILED},
@@ -180,16 +167,16 @@ func (r *patchTask) rebootIfNeeded(ctx context.Context, prePatch bool) error {
 	var err error
 	if r.Task.GetPatchConfig().GetRebootConfig() == agentendpointpb.PatchConfig_ALWAYS && !prePatch && r.RebootCount == 0 {
 		reboot = true
-		r.infof("PatchConfig RebootConfig set to %s.", agentendpointpb.PatchConfig_ALWAYS)
+		clog.Infof(ctx, "PatchConfig RebootConfig set to %s.", agentendpointpb.PatchConfig_ALWAYS)
 	} else {
 		reboot, err = systemRebootRequired()
 		if err != nil {
 			return fmt.Errorf("error checking if a system reboot is required: %v", err)
 		}
 		if reboot {
-			r.infof("System indicates a reboot is required.")
+			clog.Infof(ctx, "System indicates a reboot is required.")
 		} else {
-			r.infof("System indicates a reboot is not required.")
+			clog.Infof(ctx, "System indicates a reboot is not required.")
 		}
 	}
 
@@ -198,7 +185,7 @@ func (r *patchTask) rebootIfNeeded(ctx context.Context, prePatch bool) error {
 	}
 
 	if r.Task.GetPatchConfig().GetRebootConfig() == agentendpointpb.PatchConfig_NEVER {
-		r.infof("Skipping reboot because of PatchConfig RebootConfig set to %s.", agentendpointpb.PatchConfig_NEVER)
+		clog.Infof(ctx, "Skipping reboot because of PatchConfig RebootConfig set to %s.", agentendpointpb.PatchConfig_NEVER)
 		return nil
 	}
 
@@ -207,7 +194,7 @@ func (r *patchTask) rebootIfNeeded(ctx context.Context, prePatch bool) error {
 	}
 
 	if r.Task.GetDryRun() {
-		r.infof("Dry run - not rebooting for patch task")
+		clog.Infof(ctx, "Dry run - not rebooting for patch task")
 		return nil
 	}
 
@@ -221,13 +208,13 @@ func (r *patchTask) rebootIfNeeded(ctx context.Context, prePatch bool) error {
 
 	// Reboot can take a bit, pause here so other activities don't start.
 	for {
-		r.debugf("Waiting for system reboot.")
+		clog.Debugf(ctx, "Waiting for system reboot.")
 		time.Sleep(1 * time.Minute)
 	}
 }
 
 func (r *patchTask) run(ctx context.Context) (err error) {
-	r.infof("Beginning patch task")
+	clog.Infof(ctx, "Beginning patch task")
 	defer func() {
 		// This should not happen but the WUA libraries are complicated and
 		// recovering with an error is better than crashing.
@@ -236,14 +223,14 @@ func (r *patchTask) run(ctx context.Context) (err error) {
 			r.reportFailed(ctx, err.Error())
 			return
 		}
-		r.complete()
+		r.complete(ctx)
 		if config.OSInventoryEnabled() {
-			go inventory.Run()
+			go inventory.Run(ctx)
 		}
 	}()
 
 	for {
-		r.debugf("Running PatchStep %q.", r.PatchStep)
+		clog.Debugf(ctx, "Running PatchStep %q.", r.PatchStep)
 		switch r.PatchStep {
 		default:
 			return r.reportFailed(ctx, fmt.Sprintf("unknown step: %q", r.PatchStep))
@@ -289,7 +276,7 @@ func (r *patchTask) run(ctx context.Context) (err error) {
 			}); err != nil {
 				return fmt.Errorf("failed to report state %s: %v", finalState, err)
 			}
-			r.infof("Successfully completed patch task")
+			clog.Infof(ctx, "Successfully completed patch task")
 			return nil
 		}
 	}
@@ -297,11 +284,11 @@ func (r *patchTask) run(ctx context.Context) (err error) {
 
 // RunApplyPatches runs a apply patches task.
 func (c *Client) RunApplyPatches(ctx context.Context, task *agentendpointpb.Task) error {
+	ctx = clog.WithLabels(ctx, task.GetServiceLabels())
 	r := &patchTask{
-		TaskID:    task.GetTaskId(),
-		client:    c,
-		Task:      &applyPatchesTask{task.GetApplyPatchesTask()},
-		LogLabels: mkLabels(task.GetServiceLabels()),
+		TaskID: task.GetTaskId(),
+		client: c,
+		Task:   &applyPatchesTask{task.GetApplyPatchesTask()},
 	}
 	r.setStep(prePatch)
 

@@ -15,6 +15,8 @@
 package ospatch
 
 import (
+	"context"
+
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 )
@@ -94,7 +96,7 @@ func ZypperUpdateDryrun(dryrun bool) ZypperPatchOption {
 }
 
 // RunZypperPatch runs zypper patch.
-func RunZypperPatch(opts ...ZypperPatchOption) error {
+func RunZypperPatch(ctx context.Context, opts ...ZypperPatchOption) error {
 	zOpts := &zypperPatchOpts{
 		excludes:         nil,
 		exclusivePatches: nil,
@@ -115,7 +117,7 @@ func RunZypperPatch(opts ...ZypperPatchOption) error {
 		// if there is no filter on category and severity,
 		// zypper fetches all available patch updates
 	}
-	patches, err := packages.ZypperPatches(zListOpts...)
+	patches, err := packages.ZypperPatches(ctx, zListOpts...)
 	if err != nil {
 		return err
 	}
@@ -125,11 +127,11 @@ func RunZypperPatch(opts ...ZypperPatchOption) error {
 	var pkgToPatchesMap map[string][]string
 	var pkgUpdates []packages.PkgInfo
 	if zOpts.withUpdate {
-		pkgUpdates, err = packages.ZypperUpdates()
+		pkgUpdates, err = packages.ZypperUpdates(ctx)
 		if err != nil {
 			return nil
 		}
-		pkgToPatchesMap, err = packages.ZypperPackagesInPatch(patches)
+		pkgToPatchesMap, err = packages.ZypperPackagesInPatch(ctx, patches)
 		if err != nil {
 			return nil
 		}
@@ -146,14 +148,14 @@ func RunZypperPatch(opts ...ZypperPatchOption) error {
 		logger.Infof("No patches to install.")
 	} else {
 		logger.Infof("Installing %d patches.", len(fPatches))
-		logger.Debugf("Patches to be installed: %s", fPatches)
+		logger.Infof("Patches to be installed: %s", fPatches)
 	}
 
 	if len(fpkgs) == 0 {
 		logger.Infof("No non-patch packages to update.")
 	} else {
 		logger.Infof("Updating %d packages.", len(fpkgs))
-		logger.Debugf("Packages to be installed: %s", fpkgs)
+		logger.Infof("Packages to be installed: %s", fpkgs)
 	}
 
 	if zOpts.dryrun {
@@ -161,7 +163,7 @@ func RunZypperPatch(opts ...ZypperPatchOption) error {
 		return nil
 	}
 
-	return packages.ZypperInstall(fPatches, fpkgs)
+	return packages.ZypperInstall(ctx, fPatches, fpkgs)
 }
 
 func runFilter(patches []packages.ZypperPatch, exclusivePatches, excludes []string, pkgUpdates []packages.PkgInfo, pkgToPatchesMap map[string][]string, withUpdate bool) ([]packages.ZypperPatch, []packages.PkgInfo, error) {
