@@ -16,14 +16,13 @@
 package util
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 // Logger holds log functions.
@@ -37,12 +36,8 @@ type Logger struct {
 
 // PrettyFmt uses jsonpb to marshal a proto for pretty printing.
 func PrettyFmt(pb proto.Message) string {
-	m := jsonpb.Marshaler{Indent: "  ", EmitDefaults: true, EnumsAsInts: false}
-	out, err := m.MarshalToString(pb)
-	if err != nil {
-		out = fmt.Sprintf("Error marshaling proto message: %v\n%s", err, out)
-	}
-	return out
+	m := &protojson.MarshalOptions{Indent: "  ", AllowPartial: true, UseProtoNames: true, EmitUnpopulated: true, UseEnumNumbers: false}
+	return m.Format(pb)
 }
 
 // NormPath transforms a windows path into an extended-length path as described in
