@@ -20,7 +20,21 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/kylelemons/godebug/pretty"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
+	"google.golang.org/protobuf/testing/protocmp"
+)
+
+var (
+	testPatchTaskStateString = "{\"PatchTask\":{\"TaskID\":\"foo\",\"Task\":{\"patchConfig\":{\"apt\":{\"type\":\"DIST\",\"excludes\":[\"foo\",\"bar\"],\"exclusivePackages\":[\"foo\",\"bar\"]},\"windowsUpdate\":{\"classifications\":[\"CRITICAL\",\"SECURITY\"],\"excludes\":[\"foo\",\"bar\"],\"exclusivePatches\":[\"foo\",\"bar\"]}}},\"StartedAt\":\"0001-01-01T00:00:00Z\",\"RebootCount\":0}}"
+	testPatchTaskState       = &taskState{PatchTask: &patchTask{TaskID: "foo", Task: &applyPatchesTask{
+		// This is not exhaustive but it's a good test for having multiple settings.
+		&agentendpointpb.ApplyPatchesTask{PatchConfig: &agentendpointpb.PatchConfig{
+			Apt:           &agentendpointpb.AptSettings{Type: agentendpointpb.AptSettings_DIST, Excludes: []string{"foo", "bar"}, ExclusivePackages: []string{"foo", "bar"}},
+			WindowsUpdate: &agentendpointpb.WindowsUpdateSettings{Classifications: []agentendpointpb.WindowsUpdateSettings_Classification{agentendpointpb.WindowsUpdateSettings_CRITICAL, agentendpointpb.WindowsUpdateSettings_SECURITY}, Excludes: []string{"foo", "bar"}, ExclusivePatches: []string{"foo", "bar"}},
+		}},
+	}}}
 )
 
 func TestLoadState(t *testing.T) {
@@ -46,25 +60,25 @@ func TestLoadState(t *testing.T) {
 			"BlankState",
 			[]byte("{}"),
 			false,
-			&taskState{PatchTask: nil, ExecTask: nil},
+			&taskState{},
 		},
 		{
 			"BadState",
 			[]byte("foo"),
 			true,
-			&taskState{PatchTask: nil, ExecTask: nil},
+			&taskState{},
 		},
 		{
 			"PatchTask",
-			[]byte(`{"PatchTask": {"TaskID": "foo"}}`),
+			[]byte(testPatchTaskStateString),
 			false,
-			&taskState{PatchTask: &patchTask{TaskID: "foo"}, ExecTask: nil},
+			testPatchTaskState,
 		},
 		{
 			"ExecTask",
 			[]byte(`{"ExecTask": {"TaskID": "foo"}}`),
 			false,
-			&taskState{PatchTask: nil, ExecTask: &execTask{TaskID: "foo"}},
+			&taskState{ExecTask: &execTask{TaskID: "foo"}},
 		},
 	}
 	for _, tt := range tests {
@@ -80,7 +94,7 @@ func TestLoadState(t *testing.T) {
 			if err == nil && tt.wantErr {
 				t.Fatalf("expected error")
 			}
-			if diff := pretty.Compare(tt.want, st); diff != "" {
+			if diff := cmp.Diff(tt.want, st, cmpopts.IgnoreFields(execTask{}, "Task"), cmpopts.IgnoreUnexported(execTask{}, patchTask{}), protocmp.Transform()); diff != "" {
 				t.Errorf("patchWindow does not match expectation: (-got +want)\n%s", diff)
 			}
 		})
@@ -112,12 +126,12 @@ func TestStateSave(t *testing.T) {
 		},
 		{
 			"PatchTask",
-			&taskState{PatchTask: &patchTask{TaskID: "foo"}, ExecTask: nil},
-			"{\"PatchTask\":{\"TaskID\":\"foo\",\"Task\":null,\"StartedAt\":\"0001-01-01T00:00:00Z\",\"RebootCount\":0}}",
+			testPatchTaskState,
+			testPatchTaskStateString,
 		},
 		{
 			"ExecTask",
-			&taskState{ExecTask: &execTask{TaskID: "foo"}, PatchTask: nil},
+			&taskState{ExecTask: &execTask{TaskID: "foo"}},
 			"{\"ExecTask\":{\"TaskID\":\"foo\",\"Task\":null,\"StartedAt\":\"0001-01-01T00:00:00Z\"}}",
 		},
 	}

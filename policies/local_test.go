@@ -18,71 +18,72 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/golang/protobuf/proto"
-
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
+	"google.golang.org/protobuf/encoding/prototext"
 )
 
-const (
-	sampleConfig string = `{
-		       "packages": [
-			 {
-			   "name": "my-package",
-			   "desiredState": "INSTALLED",
-			   "manager": "APT"
-			 },
-			 {
-			   "name": "my-other-package",
-			   "desired_state": "INSTALLED",
-			   "manager": "APT"
-			 }
-		       ],
-		       "packageRepositories": [
-			 {
-			   "apt": {
-			     "uri": "http://packages.cloud.google.com/apt",
-			     "archiveType": "DEB",
-			     "distribution": "google-cloud-monitoring-stretch",
-			     "components": [
-			       "main"
-			     ],
-			     "gpgKey": "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
-			   },
-                           "yum": {
-			     "id": "my-yum",
-			     "display_name": "my-yum-name",
-			     "base_url": "http://my-base-url",
-			     "gpg_keys": ["https://packages.cloud.google.com/apt/doc/apt-key.gpg"]
-			   }
-
-			 }
-		       ],
-		       "softwareRecipes": [
-			 {
-                            "name": "install-envoy",
-                            "desired_state": "INSTALLED",
-			    "installSteps": [
-			      {
-				"scriptRun": {
-				  "script": ""
-				}
-			      }
-			    ]
-			  },
-                          {
-                            "name": "install-something",
-                            "desired_state": "INSTALLED",
-			    "installSteps": [
-			      {
-				"scriptRun": {
-				  "script": ""
-				}
-			      }
-			    ]
-			  }
-		       ]
-		     }`
-)
+const sampleConfig = `
+  {
+	"packages": [
+	  {
+		"name": "my-package",
+		"desiredState": "INSTALLED",
+		"manager": "APT"
+	  },
+	  {
+		"name": "my-other-package",
+		"desired_state": "INSTALLED",
+		"manager": "APT"
+	  }
+	],
+	"packageRepositories": [
+	  {
+		"apt": {
+		  "uri": "http://packages.cloud.google.com/apt",
+		  "archiveType": "DEB",
+		  "distribution": "google-cloud-monitoring-stretch",
+		  "components": [
+			"main"
+		  ],
+		  "gpgKey": "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+		}
+	  },
+	  {
+		"yum": {
+		  "id": "my-yum",
+		  "display_name": "my-yum-name",
+		  "base_url": "http://my-base-url",
+		  "gpg_keys": [
+			"https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+		  ]
+		}
+	  }
+	],
+	"softwareRecipes": [
+	  {
+		"name": "install-envoy",
+		"desired_state": "INSTALLED",
+		"installSteps": [
+		  {
+			"scriptRun": {
+			  "script": ""
+			}
+		  }
+		]
+	  },
+	  {
+		"name": "install-something",
+		"desired_state": "INSTALLED",
+		"installSteps": [
+		  {
+			"scriptRun": {
+			  "script": ""
+			}
+		  }
+		]
+	  }
+	]
+  }`
 
 func TestMerging(t *testing.T) {
 	s := []byte(sampleConfig)
@@ -119,7 +120,8 @@ func TestMerging(t *testing.T) {
 	rs := pr2.SoftwareRecipes[0].SoftwareRecipe.DesiredState
 	want := agentendpointpb.DesiredState_REMOVED
 	if rs != want {
-		t.Logf("Merged: %s", proto.MarshalTextString(pr2))
+		txt, _ := prototext.Marshal(pr2)
+		t.Logf("Merged: %s", txt)
 		t.Errorf("Wrong recipe state. Got: %d(%s), want: %d(%s).", rs, rs.String(), want, want.String())
 	}
 
