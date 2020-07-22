@@ -15,7 +15,6 @@
 package agentendpoint
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"time"
@@ -24,7 +23,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/ospatch"
-	"github.com/golang/protobuf/jsonpb"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
 )
@@ -81,20 +80,17 @@ type applyPatchesTask struct {
 	*agentendpointpb.ApplyPatchesTask
 }
 
-// MarshalJSON marshals a patchConfig using jsonpb.
-func (j *applyPatchesTask) MarshalJSON() ([]byte, error) {
-	m := jsonpb.Marshaler{}
-	s, err := m.MarshalToString(j)
-	if err != nil {
-		return nil, err
-	}
-	return []byte(s), nil
+// MarshalJSON marshals a patchConfig using protojson.
+func (a *applyPatchesTask) MarshalJSON() ([]byte, error) {
+	m := &protojson.MarshalOptions{AllowPartial: true, EmitUnpopulated: false}
+	return m.Marshal(a)
 }
 
-// UnmarshalJSON unmarshals a patchConfig using jsonpb.
-func (j *applyPatchesTask) UnmarshalJSON(b []byte) error {
-	un := &jsonpb.Unmarshaler{AllowUnknownFields: true}
-	return un.Unmarshal(bytes.NewReader(b), j)
+// UnmarshalJSON unmarshals a patchConfig using protojson.
+func (a *applyPatchesTask) UnmarshalJSON(b []byte) error {
+	a.ApplyPatchesTask = &agentendpointpb.ApplyPatchesTask{}
+	un := &protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
+	return un.Unmarshal(b, a)
 }
 
 func (r *patchTask) setStep(step patchStep) error {

@@ -16,13 +16,12 @@
 package policies
 
 import (
-	"bytes"
 	"encoding/json"
 
 	"cloud.google.com/go/compute/metadata"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
@@ -30,7 +29,7 @@ import (
 // localConfig represents the structure of the config to the JSON parser.
 //
 // The types of members of the struct are wrappers for protobufs and delegate
-// the parsing to jsonpb lib via their UnmarshalJSON implementations.
+// the parsing to protojson lib via their UnmarshalJSON implementations.
 type localConfig struct {
 	Packages            []*pkg
 	PackageRepositories []*packageRepository
@@ -42,8 +41,7 @@ type pkg struct {
 }
 
 func (r *pkg) UnmarshalJSON(b []byte) error {
-	rd := bytes.NewReader(b)
-	return jsonpb.Unmarshal(rd, &r.Package)
+	return protojson.Unmarshal(b, &r.Package)
 }
 
 type packageRepository struct {
@@ -51,8 +49,7 @@ type packageRepository struct {
 }
 
 func (r *packageRepository) UnmarshalJSON(b []byte) error {
-	rd := bytes.NewReader(b)
-	return jsonpb.Unmarshal(rd, &r.PackageRepository)
+	return protojson.Unmarshal(b, &r.PackageRepository)
 }
 
 type softwareRecipe struct {
@@ -60,8 +57,7 @@ type softwareRecipe struct {
 }
 
 func (r *softwareRecipe) UnmarshalJSON(b []byte) error {
-	rd := bytes.NewReader(b)
-	return jsonpb.Unmarshal(rd, &r.SoftwareRecipe)
+	return protojson.Unmarshal(b, &r.SoftwareRecipe)
 }
 
 func readLocalConfig() (*localConfig, error) {
