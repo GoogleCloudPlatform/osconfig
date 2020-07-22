@@ -41,7 +41,8 @@ type pkg struct {
 }
 
 func (r *pkg) UnmarshalJSON(b []byte) error {
-	return protojson.Unmarshal(b, &r.Package)
+	un := &protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
+	return un.Unmarshal(b, &r.Package)
 }
 
 type packageRepository struct {
@@ -49,7 +50,8 @@ type packageRepository struct {
 }
 
 func (r *packageRepository) UnmarshalJSON(b []byte) error {
-	return protojson.Unmarshal(b, &r.PackageRepository)
+	un := &protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
+	return un.Unmarshal(b, &r.PackageRepository)
 }
 
 type softwareRecipe struct {
@@ -57,7 +59,8 @@ type softwareRecipe struct {
 }
 
 func (r *softwareRecipe) UnmarshalJSON(b []byte) error {
-	return protojson.Unmarshal(b, &r.SoftwareRecipe)
+	un := &protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
+	return un.Unmarshal(b, &r.SoftwareRecipe)
 }
 
 func readLocalConfig() (*localConfig, error) {
