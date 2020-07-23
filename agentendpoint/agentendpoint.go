@@ -174,8 +174,6 @@ func (c *Client) reportTaskComplete(ctx context.Context, req *agentendpointpb.Re
 	return nil
 }
 
-// Placeholder for LookupEffectiveGuestPolicies.
-
 func (c *Client) runTask(ctx context.Context) {
 	logger.Debugf("Beginning run task loop.")
 	for {
