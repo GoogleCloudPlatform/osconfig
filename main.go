@@ -126,6 +126,20 @@ func run(ctx context.Context) {
 
 	logger.Infof("OSConfig Agent (version %s) started.", config.Version())
 
+	// Call RegisterAgent on start then at least once every day.
+	go func() {
+		for {
+			if config.TaskNotificationEnabled() || config.GuestPoliciesEnabled() {
+				if client, err := agentendpoint.NewClient(ctx); err != nil {
+					logger.Errorf(err.Error())
+				} else if err := client.RegisterAgent(ctx); err != nil {
+					logger.Errorf(err.Error())
+				}
+			}
+			time.Sleep(24 * time.Hour)
+		}
+	}()
+
 	switch action := flag.Arg(0); action {
 	case "", "run", "noservice":
 		runLoop(ctx)
