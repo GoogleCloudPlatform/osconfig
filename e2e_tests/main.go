@@ -19,6 +19,7 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -27,6 +28,7 @@ import (
 	"sync"
 
 	"github.com/GoogleCloudPlatform/compute-image-tools/go/e2e_test_utils/junitxml"
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/config"
 	gcpclients "github.com/GoogleCloudPlatform/osconfig/e2e_tests/gcp_clients"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/test_suites/guestpolicies"
@@ -42,6 +44,15 @@ var testFunctions = []func(context.Context, *sync.WaitGroup, chan *junitxml.Test
 	patch.TestSuite,
 }
 
+type logWriter struct {
+	log *log.Logger
+}
+
+func (l *logWriter) Write(b []byte) (int, error) {
+	l.log.Print(string(b))
+	return len(b), nil
+}
+
 func main() {
 	ctx := context.Background()
 
@@ -49,14 +60,18 @@ func main() {
 		log.Fatal(err)
 	}
 
-	logger := log.New(os.Stdout, "[OsConfigTests] ", 0)
-	logger.Println("Starting...")
+	testLogger := log.New(os.Stdout, "[OsConfigTests] ", 0)
+	testLogger.Println("Starting...")
+
+	// Initialize logger for any shared function calls.
+	opts := logger.LogOpts{LoggerName: "OsConfigTests", Debug: true, Writers: []io.Writer{&logWriter{log: testLogger}}, DisableCloudLogging: true, DisableLocalLogging: true}
+	logger.Init(ctx, opts)
 
 	tests := make(chan *junitxml.TestSuite)
 	var wg sync.WaitGroup
 	for _, tf := range testFunctions {
 		wg.Add(1)
-		go tf(ctx, &wg, tests, logger, config.TestSuiteFilter(), config.TestCaseFilter())
+		go tf(ctx, &wg, tests, testLogger, config.TestSuiteFilter(), config.TestCaseFilter())
 	}
 	go func() {
 		wg.Wait()
@@ -68,17 +83,17 @@ func main() {
 		testSuites = append(testSuites, ret)
 		testSuiteOutPath := filepath.Join(*config.OutDir, fmt.Sprintf("junit_%s.xml", ret.Name))
 		if err := os.MkdirAll(filepath.Dir(testSuiteOutPath), 0770); err != nil {
-			log.Fatal(err)
+			testLogger.Fatal(err)
 		}
 
-		logger.Printf("Creating junit xml file: %s", testSuiteOutPath)
+		testLogger.Printf("Creating junit xml file: %s", testSuiteOutPath)
 		d, err := xml.MarshalIndent(ret, "  ", "   ")
 		if err != nil {
-			log.Fatal(err)
+			testLogger.Fatal(err)
 		}
 
 		if err := ioutil.WriteFile(testSuiteOutPath, d, 0644); err != nil {
-			log.Fatal(err)
+			testLogger.Fatal(err)
 		}
 	}
 
@@ -96,7 +111,7 @@ func main() {
 	}
 
 	if buf.Len() > 0 {
-		logger.Fatalf("%sExiting with exit code 1", buf.String())
+		testLogger.Fatalf("%sExiting with exit code 1", buf.String())
 	}
-	logger.Print("All test cases completed successfully.")
+	testLogger.Print("All test cases completed successfully.")
 }
