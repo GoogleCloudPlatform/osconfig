@@ -323,7 +323,9 @@ func CreateComputeInstance(metadataitems []*api.MetadataItems, client daisyCompu
 	// enable debug logging and guest-attributes for all test instances
 	items = append(items, compute.BuildInstanceMetadataItem("enable-os-config-debug", "true"))
 	items = append(items, compute.BuildInstanceMetadataItem("enable-guest-attributes", "true"))
-	items = append(items, compute.BuildInstanceMetadataItem("os-config-endpoint", config.SvcEndpoint()))
+	if config.SvcEndpoint() != "" {
+		items = append(items, compute.BuildInstanceMetadataItem("os-config-endpoint", config.SvcEndpoint()))
+	}
 
 	for _, item := range metadataitems {
 		items = append(items, item)

@@ -26,9 +26,7 @@ import (
 )
 
 var (
-	// TODO: allow this to be configurable through flag to test against staging
-	prodEndpoint           = "osconfig.googleapis.com:443"
-	endpoint               = flag.String("endpoint", prodEndpoint, "API endpoint to use for the tests")
+	endpoint               = flag.String("endpoint", "", "API endpoint to use for the tests")
 	oauthDefault           = flag.String("local_oauth", "", "path to service creds file")
 	agentRepo              = flag.String("agent_repo", "", "repo to pull agent from (unstable, staging, or stable, leave blank for no agent install)")
 	bucketDefault          = "osconfig-agent-end2end-tests"
