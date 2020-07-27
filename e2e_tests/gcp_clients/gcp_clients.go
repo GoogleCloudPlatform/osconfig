@@ -45,11 +45,7 @@ func createComputeClient(ctx context.Context) error {
 
 func createOsConfigClientV1beta(ctx context.Context) error {
 	var err error
-	opts := []option.ClientOption{option.WithCredentialsFile(config.OauthPath())}
-	if config.SvcEndpoint() != "" {
-		opts = append(opts, option.WithEndpoint(config.SvcEndpoint()))
-	}
-	osconfigClientV1beta, err = osconfigV1beta.NewClient(ctx, opts...)
+	osconfigClientV1beta, err = osconfigV1beta.NewClient(ctx, option.WithCredentialsFile(config.OauthPath()), option.WithEndpoint(config.SvcEndpoint()))
 	return err
 }
 
