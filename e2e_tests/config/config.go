@@ -26,7 +26,8 @@ import (
 )
 
 var (
-	endpoint               = flag.String("endpoint", "", "API endpoint to use for the tests")
+	agentEndpoint          = flag.String("agent_endpoint", "", "API endpoint to use for the agent to use for the tests")
+	endpoint               = flag.String("endpoint", "osconfig.googleapis.com:443", "API endpoint to use for the tests")
 	oauthDefault           = flag.String("local_oauth", "", "path to service creds file")
 	agentRepo              = flag.String("agent_repo", "", "repo to pull agent from (unstable, staging, or stable, leave blank for no agent install)")
 	bucketDefault          = "osconfig-agent-end2end-tests"
@@ -116,7 +117,12 @@ func AgentRepo() string {
 	return *agentRepo
 }
 
-// SvcEndpoint returns the svcEndpoint
+// AgentSvcEndpoint returns the agentEndpoint
+func AgentSvcEndpoint() string {
+	return *agentEndpoint
+}
+
+// SvcEndpoint returns the endpoint
 func SvcEndpoint() string {
 	return *endpoint
 }
