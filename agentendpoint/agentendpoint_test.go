@@ -32,8 +32,8 @@ import (
 	"testing"
 	"time"
 
-	agentendpoint "cloud.google.com/go/osconfig/agentendpoint/apiv1"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	agentendpoint "github.com/GoogleCloudPlatform/osconfig/internal/cloud.google.com/go/osconfig/agentendpoint/apiv1alpha1"
 	"golang.org/x/oauth2/jws"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
@@ -41,7 +41,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 
-	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
 var testIDToken string
@@ -157,6 +157,7 @@ func (s *agentEndpointServiceTestServer) ReceiveTaskNotification(req *agentendpo
 		}
 	}
 }
+
 func (s *agentEndpointServiceTestServer) StartNextTask(ctx context.Context, req *agentendpointpb.StartNextTaskRequest) (*agentendpointpb.StartNextTaskResponse, error) {
 	// We first return an TaskType_EXEC_STEP_TASK, then TaskType_APPLY_PATCHES. If patchTaskRun we return nothing signalling the end to tasks.
 	switch {
@@ -169,6 +170,7 @@ func (s *agentEndpointServiceTestServer) StartNextTask(ctx context.Context, req 
 		return &agentendpointpb.StartNextTaskResponse{Task: &agentendpointpb.Task{TaskType: agentendpointpb.TaskType_EXEC_STEP_TASK, TaskId: "TaskType_EXEC_STEP_TASK"}}, nil
 	}
 }
+
 func (s *agentEndpointServiceTestServer) ReportTaskProgress(ctx context.Context, req *agentendpointpb.ReportTaskProgressRequest) (*agentendpointpb.ReportTaskProgressResponse, error) {
 	// Simply record and send STOP.
 	if req.GetTaskType() == agentendpointpb.TaskType_EXEC_STEP_TASK {
@@ -179,6 +181,7 @@ func (s *agentEndpointServiceTestServer) ReportTaskProgress(ctx context.Context,
 	}
 	return &agentendpointpb.ReportTaskProgressResponse{TaskDirective: agentendpointpb.TaskDirective_STOP}, nil
 }
+
 func (s *agentEndpointServiceTestServer) ReportTaskComplete(ctx context.Context, req *agentendpointpb.ReportTaskCompleteRequest) (*agentendpointpb.ReportTaskCompleteResponse, error) {
 	// Record what task types we have seen, when the complete is called for TaskType_APPLY_PATCHES, close the stream.
 	s.runTaskIDs = append(s.runTaskIDs, req.GetTaskId())
@@ -194,6 +197,14 @@ func (s *agentEndpointServiceTestServer) ReportTaskComplete(ctx context.Context,
 
 func (*agentEndpointServiceTestServer) RegisterAgent(ctx context.Context, req *agentendpointpb.RegisterAgentRequest) (*agentendpointpb.RegisterAgentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterAgent not implemented")
+}
+
+func (*agentEndpointServiceTestServer) LookupEffectiveGuestPolicies(ctx context.Context, req *agentendpointpb.LookupEffectiveGuestPoliciesRequest) (*agentendpointpb.LookupEffectiveGuestPoliciesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LookupEffectiveGuestPolicies not implemented")
+}
+
+func (*agentEndpointServiceTestServer) ReportInventory(ctx context.Context, req *agentendpointpb.ReportInventoryRequest) (*agentendpointpb.ReportInventoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReportInventory not implemented")
 }
 
 func TestWaitForTask(t *testing.T) {

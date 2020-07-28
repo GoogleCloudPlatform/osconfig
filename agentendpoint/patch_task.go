@@ -25,7 +25,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/ospatch"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
 func systemRebootRequired() (bool, error) {

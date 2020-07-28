@@ -16,7 +16,10 @@
 package agentendpoint
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -24,9 +27,9 @@ import (
 	"time"
 
 	"cloud.google.com/go/compute/metadata"
-	agentendpoint "cloud.google.com/go/osconfig/agentendpoint/apiv1"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/config"
+	agentendpoint "github.com/GoogleCloudPlatform/osconfig/internal/cloud.google.com/go/osconfig/agentendpoint/apiv1alpha1"
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
 	"github.com/GoogleCloudPlatform/osconfig/util"
@@ -35,8 +38,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
-	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
 const apiRetrySec = 600
@@ -102,6 +106,27 @@ func (c *Client) RegisterAgent(ctx context.Context) error {
 
 	_, err = c.raw.RegisterAgent(ctx, req)
 	return err
+}
+
+// ReportInventory calls ReportInventory with the provided inventory.
+func (c *Client) ReportInventory(ctx context.Context, inventory *agentendpointpb.Inventory) (*agentendpointpb.ReportInventoryResponse, error) {
+	token, err := config.IDToken()
+	if err != nil {
+		return nil, err
+	}
+
+	hash := sha256.New()
+	b, err := proto.Marshal(inventory)
+	if err != nil {
+		return nil, err
+	}
+	io.Copy(hash, bytes.NewReader(b))
+
+	req := &agentendpointpb.ReportInventoryRequest{InventoryChecksum: hex.EncodeToString(hash.Sum(nil)), Inventory: inventory}
+	logger.Debugf("Calling ReportInventory with request:\n%s", util.PrettyFmt(req))
+	req.InstanceIdToken = token
+
+	return c.raw.ReportInventory(ctx, req)
 }
 
 func (c *Client) startNextTask(ctx context.Context) (res *agentendpointpb.StartNextTaskResponse, err error) {
