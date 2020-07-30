@@ -87,7 +87,7 @@ func (c *BetaClient) LookupEffectiveGuestPolicies(ctx context.Context) (res *age
 		OsArchitecture: info.Architecture,
 	}
 
-	token, err := config.IDToken()
+	token, err := agentconfig.IDToken()
 	if err != nil {
 		return nil, err
 	}

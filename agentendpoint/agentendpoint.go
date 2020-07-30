@@ -110,7 +110,7 @@ func (c *Client) RegisterAgent(ctx context.Context) error {
 
 // ReportInventory calls ReportInventory with the provided inventory.
 func (c *Client) ReportInventory(ctx context.Context, inventory *agentendpointpb.Inventory) (*agentendpointpb.ReportInventoryResponse, error) {
-	token, err := config.IDToken()
+	token, err := agentconfig.IDToken()
 	if err != nil {
 		return nil, err
 	}
