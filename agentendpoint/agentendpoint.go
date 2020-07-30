@@ -108,8 +108,8 @@ func (c *Client) RegisterAgent(ctx context.Context) error {
 	return err
 }
 
-// ReportInventory calls ReportInventory with the provided inventory.
-func (c *Client) ReportInventory(ctx context.Context, inventory *agentendpointpb.Inventory) (*agentendpointpb.ReportInventoryResponse, error) {
+// reportInventory calls ReportInventory with the provided inventory.
+func (c *Client) reportInventory(ctx context.Context, inventory *agentendpointpb.Inventory, reportFull bool) (*agentendpointpb.ReportInventoryResponse, error) {
 	token, err := config.IDToken()
 	if err != nil {
 		return nil, err
@@ -122,9 +122,12 @@ func (c *Client) ReportInventory(ctx context.Context, inventory *agentendpointpb
 	}
 	io.Copy(hash, bytes.NewReader(b))
 
-	req := &agentendpointpb.ReportInventoryRequest{InventoryChecksum: hex.EncodeToString(hash.Sum(nil)), Inventory: inventory}
+	checksum := hex.EncodeToString(hash.Sum(nil))
+	req := &agentendpointpb.ReportInventoryRequest{InstanceIdToken: token, InventoryChecksum: checksum}
+	if reportFull {
+		req = &agentendpointpb.ReportInventoryRequest{InstanceIdToken: token, InventoryChecksum: checksum, Inventory: inventory}
+	}
 	clog.Debugf(ctx, "Calling ReportInventory with request:\n%s", util.PrettyFmt(req))
-	req.InstanceIdToken = token
 
 	return c.raw.ReportInventory(ctx, req)
 }

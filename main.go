@@ -33,7 +33,6 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/agentendpoint"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/config"
-	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/policies"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
 	"github.com/tarm/serial"
@@ -136,7 +135,13 @@ func run(ctx context.Context) {
 	case "", "run", "noservice":
 		runServiceLoop(ctx)
 	case "inventory", "osinventory":
-		inventory.Run(ctx)
+		client, err := agentendpoint.NewClient(ctx)
+		if err != nil {
+			logger.Fatalf(err.Error())
+		}
+		tasker.Enqueue(ctx, "Report OSInventory", func() {
+			client.ReportInventory(ctx)
+		})
 		tasker.Close()
 		return
 	case "gp", "policies", "guestpolicies", "ospackage":
@@ -222,8 +227,14 @@ func runServiceLoop(ctx context.Context) {
 		}
 
 		if config.OSInventoryEnabled() {
-			// This should always run after policies.Run().
-			inventory.Run(ctx)
+			// This should always run after ospackage.SetConfig.
+			tasker.Enqueue(ctx, "Report OSInventory", func() {
+				client, err := agentendpoint.NewClient(ctx)
+				if err != nil {
+					logger.Errorf(err.Error())
+				}
+				client.ReportInventory(ctx)
+			})
 		}
 
 		// Return unused memory to ensure our footprint doesn't keep increasing.
