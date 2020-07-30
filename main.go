@@ -129,7 +129,7 @@ func run(ctx context.Context) {
 	// Call RegisterAgent on start then at least once every day.
 	go func() {
 		for {
-			if config.TaskNotificationEnabled() || config.GuestPoliciesEnabled() {
+			if agentconfig.TaskNotificationEnabled() || agentconfig.GuestPoliciesEnabled() {
 				if client, err := agentendpoint.NewClient(ctx); err != nil {
 					logger.Errorf(err.Error())
 				} else if err := client.RegisterAgent(ctx); err != nil {
