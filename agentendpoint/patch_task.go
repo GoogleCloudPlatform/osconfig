@@ -28,8 +28,8 @@ import (
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
 )
 
-func systemRebootRequired() (bool, error) {
-	return ospatch.SystemRebootRequired()
+func systemRebootRequired(ctx context.Context) (bool, error) {
+	return ospatch.SystemRebootRequired(ctx)
 }
 
 type patchStep string
@@ -169,7 +169,7 @@ func (r *patchTask) rebootIfNeeded(ctx context.Context, prePatch bool) error {
 		reboot = true
 		clog.Infof(ctx, "PatchConfig RebootConfig set to %s.", agentendpointpb.PatchConfig_ALWAYS)
 	} else {
-		reboot, err = systemRebootRequired()
+		reboot, err = systemRebootRequired(ctx)
 		if err != nil {
 			return fmt.Errorf("error checking if a system reboot is required: %v", err)
 		}
@@ -261,7 +261,7 @@ func (r *patchTask) run(ctx context.Context) (err error) {
 				return r.reportFailed(ctx, fmt.Sprintf("Error saving agent step: %v", err))
 			}
 		case postPatch:
-			isRebootRequired, err := systemRebootRequired()
+			isRebootRequired, err := systemRebootRequired(ctx)
 			if err != nil {
 				return r.reportFailed(ctx, fmt.Sprintf("Error checking if system reboot is required: %v", err))
 			}

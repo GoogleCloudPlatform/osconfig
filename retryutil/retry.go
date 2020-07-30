@@ -95,7 +95,7 @@ func RetryAPICall(ctx context.Context, maxRetryTime time.Duration, name string, 
 			return err
 		}
 
-		clog.Errorf(ctx, "Error calling %s, attempt %d, retrying in %s: %v", name, i, ns, err)
+		clog.Warningf(ctx, "Error calling %s, attempt %d, retrying in %s: %v", name, i, ns, err)
 		time.Sleep(ns)
 	}
 }

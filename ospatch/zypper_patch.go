@@ -16,8 +16,9 @@ package ospatch
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 )
 
@@ -140,26 +141,33 @@ func RunZypperPatch(ctx context.Context, opts ...ZypperPatchOption) error {
 	fPatches, fpkgs, err := runFilter(patches, zOpts.exclusivePatches, zOpts.excludes, pkgUpdates, pkgToPatchesMap, zOpts.withUpdate)
 
 	if len(fPatches) == 0 && len(fpkgs) == 0 {
-		logger.Infof("No updates required.")
+		clog.Infof(ctx, "No updates required.")
 		return nil
 	}
 
 	if len(fPatches) == 0 {
-		logger.Infof("No patches to install.")
+		clog.Infof(ctx, "No patches to install.")
 	} else {
-		logger.Infof("Installing %d patches.", len(fPatches))
-		logger.Infof("Patches to be installed: %s", fPatches)
+		msg := fmt.Sprintf("%d patches: %s", len(fPatches), fPatches)
+		if zOpts.dryrun {
+			clog.Infof(ctx, "Running in dryrun mode, not installing %s", msg)
+		} else {
+			clog.Infof(ctx, "Installing %s", msg)
+		}
 	}
 
 	if len(fpkgs) == 0 {
-		logger.Infof("No non-patch packages to update.")
+		clog.Infof(ctx, "No non-patch packages to update.")
 	} else {
-		logger.Infof("Updating %d packages.", len(fpkgs))
-		logger.Infof("Packages to be installed: %s", fpkgs)
+		msg := fmt.Sprintf("%d patches: %s", len(fpkgs), fpkgs)
+		if zOpts.dryrun {
+			clog.Infof(ctx, "Running in dryrun mode, not Updating %s", msg)
+		} else {
+			clog.Infof(ctx, "Updating %s", msg)
+		}
 	}
 
 	if zOpts.dryrun {
-		logger.Infof("Running in dryrun mode, not updating.")
 		return nil
 	}
 

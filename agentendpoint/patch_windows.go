@@ -61,7 +61,7 @@ func (r *patchTask) installWUAUpdates(ctx context.Context, cf []string) (int32, 
 	}
 	defer session.Close()
 
-	updts, err := ospatch.GetWUAUpdates(session, cf, r.Task.GetPatchConfig().GetWindowsUpdate().GetExcludes(), r.Task.GetPatchConfig().GetWindowsUpdate().GetExclusivePatches())
+	updts, err := ospatch.GetWUAUpdates(ctx, session, cf, r.Task.GetPatchConfig().GetWindowsUpdate().GetExcludes(), r.Task.GetPatchConfig().GetWindowsUpdate().GetExclusivePatches())
 	if err != nil {
 		return 0, err
 	}
