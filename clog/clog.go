@@ -35,6 +35,7 @@ type log struct {
 }
 
 func (l *log) log(msg string, sev logger.Severity) {
+	// Default CallDepth fro Log is 2, add 2 for this function and the calling log function.
 	logger.Log(logger.LogEntry{Message: msg, Severity: sev, CallDepth: 4, Labels: l.labels})
 }
 
