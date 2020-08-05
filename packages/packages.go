@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -73,12 +74,16 @@ func init() {
 	runner = &packageCommandRunner{}
 =======
 	// runner is the CommandRunner used for running exec commands.
-	runner CommandRunner
+	runner util.CommandRunner
 )
 
 func init() {
+<<<<<<< HEAD
 	runner = &PackageCommandRunner{}
 >>>>>>> 5345774... make runner non-public
+=======
+	runner = &packageCommandRunner{}
+>>>>>>> 661c003... do not export packageCommandRunner
 }
 
 // Packages is a selection of packages based on their manager.
@@ -127,6 +132,7 @@ type QFEPackage struct {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 // packageCommandRunner is the CommandRunner implementation used for running
 // package manager commands.
 type packageCommandRunner struct {
@@ -160,14 +166,21 @@ type CommandRunner interface {
 =======
 >>>>>>> d06ae33... Revert "implement feedback from reviewer"
 // PackageCommandRunner is the CommandRunner implementation used for running
+=======
+// packageCommandRunner is the CommandRunner implementation used for running
+>>>>>>> 661c003... do not export packageCommandRunner
 // package manager commands.
-type PackageCommandRunner struct {
-	runner CommandRunner
+type packageCommandRunner struct {
+	runner util.CommandRunner
 }
 
 // RunCommand takes precreated exec.Cmd and returns the results of execution.
+<<<<<<< HEAD
 func (runner *PackageCommandRunner) RunCommand(cmd *exec.Cmd) ([]byte, error) {
 >>>>>>> ca5d879... fix linter
+=======
+func (runner *packageCommandRunner) RunCommand(cmd *exec.Cmd) ([]byte, error) {
+>>>>>>> 661c003... do not export packageCommandRunner
 	DebugLogger.Printf("Running %q with args %q\n", cmd.Path, cmd.Args[1:])
 	return cmd.CombinedOutput()
 }
@@ -175,20 +188,28 @@ func (runner *PackageCommandRunner) RunCommand(cmd *exec.Cmd) ([]byte, error) {
 // Run takes string arguments of command to be executed
 // and returns the results of execution.
 <<<<<<< HEAD
+<<<<<<< HEAD
 func (runner *packageCommandRunner) Run(arg string, args ...string) ([]byte, error) {
 =======
 func (runner *PackageCommandRunner) Run(arg string, args ...string) ([]byte, error) {
 >>>>>>> ca5d879... fix linter
+=======
+func (runner *packageCommandRunner) Run(arg string, args ...string) ([]byte, error) {
+>>>>>>> 661c003... do not export packageCommandRunner
 	return runner.RunCommand(exec.Command(arg, args...))
 }
 
 // RunWithPty is a special case for RunCommand, except it runs with
 // pty instead of tty.
 <<<<<<< HEAD
+<<<<<<< HEAD
 func (runner *packageCommandRunner) RunWithPty(cmd *exec.Cmd) ([]byte, error) {
 =======
 func (runner *PackageCommandRunner) RunWithPty(cmd *exec.Cmd) ([]byte, error) {
 >>>>>>> ca5d879... fix linter
+=======
+func (runner *packageCommandRunner) RunWithPty(cmd *exec.Cmd) ([]byte, error) {
+>>>>>>> 661c003... do not export packageCommandRunner
 	return runWithPty(cmd)
 }
 
