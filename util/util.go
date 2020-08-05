@@ -17,6 +17,7 @@ package util
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -69,4 +70,20 @@ func Exists(name string) bool {
 		return false
 	}
 	return true
+}
+
+// CommandRunner will execute the commands and return the results of that
+// execution.
+type CommandRunner interface {
+
+	// RunCommand takes precreated exec.Cmd and returns the results of execution.
+	RunCommand(command *exec.Cmd) ([]byte, error)
+
+	// Run takes string arguments of command to be executed
+	// and returns the results of execution.
+	Run(command string, args ...string) ([]byte, error)
+
+	// RunWithPty is a special case for RunCommand, except it runs with
+	// pty instead of tty.
+	RunWithPty(command *exec.Cmd) ([]byte, error)
 }

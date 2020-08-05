@@ -57,8 +57,12 @@ var (
 	runner util.CommandRunner
 =======
 	// Runner is the CommandRunner used for running exec commands.
+<<<<<<< HEAD
 	Runner CommandRunner
 >>>>>>> ca5d879... fix linter
+=======
+	Runner util.CommandRunner
+>>>>>>> bae3585... implement feedback from reviewer
 )
 
 func init() {
@@ -109,6 +113,7 @@ type QFEPackage struct {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 // packageCommandRunner is the CommandRunner implementation used for running
 // package manager commands.
 type packageCommandRunner struct {
@@ -134,10 +139,12 @@ type CommandRunner interface {
 	RunWithPty(command *exec.Cmd) ([]byte, error)
 }
 
+=======
+>>>>>>> bae3585... implement feedback from reviewer
 // PackageCommandRunner is the CommandRunner implementation used for running
 // package manager commands.
 type PackageCommandRunner struct {
-	runner CommandRunner
+	runner util.CommandRunner
 }
 
 // RunCommand takes precreated exec.Cmd and returns the results of execution.

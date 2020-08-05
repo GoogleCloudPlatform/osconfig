@@ -72,7 +72,6 @@ func YumUpdateMinimal(minimal bool) YumUpdateOption {
 // InstallYumPackages installs yum packages.
 func InstallYumPackages(ctx context.Context, pkgs []string) error {
 	args := append(yumInstallArgs, pkgs...)
-<<<<<<< HEAD
 	out, err := run(ctx, exec.Command(yum, args...))
 	clog.Debugf(ctx, "yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
