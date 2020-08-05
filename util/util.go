@@ -16,7 +16,9 @@
 package util
 
 import (
+	"context"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -69,4 +71,12 @@ func Exists(name string) bool {
 		return false
 	}
 	return true
+}
+
+// CommandRunner will execute the commands and return the results of that
+// execution.
+type CommandRunner interface {
+
+	// Run takes precreated exec.Cmd and returns the results of execution.
+	Run(ctx context.Context, command *exec.Cmd) ([]byte, error)
 }

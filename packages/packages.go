@@ -22,6 +22,7 @@ import (
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -47,6 +48,10 @@ var (
 	GooGetExists bool
 
 	noarch = osinfo.Architecture("noarch")
+
+	runner = util.CommandRunner(&defaultRunner{})
+
+	ptyrunner = util.CommandRunner(&ptyRunner{})
 )
 
 // Packages is a selection of packages based on their manager.
@@ -93,6 +98,20 @@ type QFEPackage struct {
 }
 
 var run = func(ctx context.Context, cmd *exec.Cmd) ([]byte, error) {
+	clog.Debugf(ctx, "Running %q with args %q\n", cmd.Path, cmd.Args[1:])
+	return cmd.CombinedOutput()
+}
+
+type ptyRunner struct{}
+
+func (p *ptyRunner) Run(ctx context.Context, cmd *exec.Cmd) ([]byte, error) {
+	clog.Debugf(ctx, "Running %q with args %q\n", cmd.Path, cmd.Args[1:])
+	return runWithPty(cmd)
+}
+
+type defaultRunner struct{}
+
+func (p *defaultRunner) Run(ctx context.Context, cmd *exec.Cmd) ([]byte, error) {
 	clog.Debugf(ctx, "Running %q with args %q\n", cmd.Path, cmd.Args[1:])
 	return cmd.CombinedOutput()
 }
