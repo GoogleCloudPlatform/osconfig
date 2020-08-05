@@ -202,7 +202,7 @@ func YumUpdates(ctx context.Context, opts ...YumUpdateOption) ([]PkgInfo, error)
 	if err != nil {
 		return nil, fmt.Errorf("error running yum with args %q: %v, stdout: %s", yumCheckUpdateArgs, err, out)
 	}
-	
+
 
 	return parseAndUpdateYumPackages(opts...)
 }

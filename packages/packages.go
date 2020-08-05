@@ -52,8 +52,13 @@ var (
 	// DebugLogger is the debug logger to use.
 	DebugLogger = log.New(ioutil.Discard, "", 0)
 
+<<<<<<< HEAD
 	// runner is the CommandRunner used for running exec commands.
 	runner util.CommandRunner
+=======
+	// Runner is the CommandRunner used for running exec commands.
+	Runner CommandRunner
+>>>>>>> ca5d879... fix linter
 )
 
 func init() {
@@ -103,6 +108,7 @@ type QFEPackage struct {
 	Caption, Description, HotFixID, InstalledOn string
 }
 
+<<<<<<< HEAD
 // packageCommandRunner is the CommandRunner implementation used for running
 // package manager commands.
 type packageCommandRunner struct {
@@ -111,19 +117,53 @@ type packageCommandRunner struct {
 
 // RunCommand takes precreated exec.Cmd and returns the results of execution.
 func (runner *packageCommandRunner) RunCommand(cmd *exec.Cmd) ([]byte, error) {
+=======
+// CommandRunner will execute the commands and return the results of that
+// execution.
+type CommandRunner interface {
+
+	// RunCommand takes precreated exec.Cmd and returns the results of execution.
+	RunCommand(command *exec.Cmd) ([]byte, error)
+
+	// Run takes string arguments of command to be executed
+	// and returns the results of execution.
+	Run(command string, args ...string) ([]byte, error)
+
+	// RunWithPty is a special case for RunCommand, except it runs with
+	// pty instead of tty.
+	RunWithPty(command *exec.Cmd) ([]byte, error)
+}
+
+// PackageCommandRunner is the CommandRunner implementation used for running
+// package manager commands.
+type PackageCommandRunner struct {
+	runner CommandRunner
+}
+
+// RunCommand takes precreated exec.Cmd and returns the results of execution.
+func (runner *PackageCommandRunner) RunCommand(cmd *exec.Cmd) ([]byte, error) {
+>>>>>>> ca5d879... fix linter
 	DebugLogger.Printf("Running %q with args %q\n", cmd.Path, cmd.Args[1:])
 	return cmd.CombinedOutput()
 }
 
 // Run takes string arguments of command to be executed
 // and returns the results of execution.
+<<<<<<< HEAD
 func (runner *packageCommandRunner) Run(arg string, args ...string) ([]byte, error) {
+=======
+func (runner *PackageCommandRunner) Run(arg string, args ...string) ([]byte, error) {
+>>>>>>> ca5d879... fix linter
 	return runner.RunCommand(exec.Command(arg, args...))
 }
 
 // RunWithPty is a special case for RunCommand, except it runs with
 // pty instead of tty.
+<<<<<<< HEAD
 func (runner *packageCommandRunner) RunWithPty(cmd *exec.Cmd) ([]byte, error) {
+=======
+func (runner *PackageCommandRunner) RunWithPty(cmd *exec.Cmd) ([]byte, error) {
+>>>>>>> ca5d879... fix linter
 	return runWithPty(cmd)
 }
 
