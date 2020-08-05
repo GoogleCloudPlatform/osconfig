@@ -16,11 +16,11 @@ limitations under the License.
 package packages
 
 import (
-	"io/ioutil"
-	"log"
+	"context"
 	"os/exec"
 	"time"
 
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
@@ -49,41 +49,14 @@ var (
 
 	noarch = osinfo.Architecture("noarch")
 
-	// DebugLogger is the debug logger to use.
-	DebugLogger = log.New(ioutil.Discard, "", 0)
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-	// runner is the CommandRunner used for running exec commands.
 	runner util.CommandRunner
-=======
-	// Runner is the CommandRunner used for running exec commands.
-<<<<<<< HEAD
-<<<<<<< HEAD
-	Runner CommandRunner
->>>>>>> ca5d879... fix linter
-=======
-	Runner util.CommandRunner
->>>>>>> bae3585... implement feedback from reviewer
-=======
-	Runner CommandRunner
->>>>>>> d06ae33... Revert "implement feedback from reviewer"
+
+	ptyrunner util.CommandRunner
 )
 
 func init() {
-	runner = &packageCommandRunner{}
-=======
-	// runner is the CommandRunner used for running exec commands.
-	runner util.CommandRunner
-)
-
-func init() {
-<<<<<<< HEAD
-	runner = &PackageCommandRunner{}
->>>>>>> 5345774... make runner non-public
-=======
-	runner = &packageCommandRunner{}
->>>>>>> 661c003... do not export packageCommandRunner
+	runner = &defaultRunner{}
+	ptyrunner = &ptyRunner{}
 }
 
 // Packages is a selection of packages based on their manager.
@@ -129,91 +102,21 @@ type QFEPackage struct {
 	Caption, Description, HotFixID, InstalledOn string
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-// packageCommandRunner is the CommandRunner implementation used for running
-// package manager commands.
-type packageCommandRunner struct {
-	runner util.CommandRunner
-}
-
-// RunCommand takes precreated exec.Cmd and returns the results of execution.
-func (runner *packageCommandRunner) RunCommand(cmd *exec.Cmd) ([]byte, error) {
-=======
-=======
->>>>>>> d06ae33... Revert "implement feedback from reviewer"
-// CommandRunner will execute the commands and return the results of that
-// execution.
-type CommandRunner interface {
-
-	// RunCommand takes precreated exec.Cmd and returns the results of execution.
-	RunCommand(command *exec.Cmd) ([]byte, error)
-
-	// Run takes string arguments of command to be executed
-	// and returns the results of execution.
-	Run(command string, args ...string) ([]byte, error)
-
-	// RunWithPty is a special case for RunCommand, except it runs with
-	// pty instead of tty.
-	RunWithPty(command *exec.Cmd) ([]byte, error)
-}
-
-<<<<<<< HEAD
-=======
->>>>>>> bae3585... implement feedback from reviewer
-=======
->>>>>>> d06ae33... Revert "implement feedback from reviewer"
-// PackageCommandRunner is the CommandRunner implementation used for running
-=======
-// packageCommandRunner is the CommandRunner implementation used for running
->>>>>>> 661c003... do not export packageCommandRunner
-// package manager commands.
-type packageCommandRunner struct {
-	runner util.CommandRunner
-}
-
-// RunCommand takes precreated exec.Cmd and returns the results of execution.
-<<<<<<< HEAD
-func (runner *PackageCommandRunner) RunCommand(cmd *exec.Cmd) ([]byte, error) {
->>>>>>> ca5d879... fix linter
-=======
-func (runner *packageCommandRunner) RunCommand(cmd *exec.Cmd) ([]byte, error) {
->>>>>>> 661c003... do not export packageCommandRunner
-	DebugLogger.Printf("Running %q with args %q\n", cmd.Path, cmd.Args[1:])
+var run = func(ctx context.Context, cmd *exec.Cmd) ([]byte, error) {
+	clog.Debugf(ctx, "Running %q with args %q\n", cmd.Path, cmd.Args[1:])
 	return cmd.CombinedOutput()
 }
 
-// Run takes string arguments of command to be executed
-// and returns the results of execution.
-<<<<<<< HEAD
-<<<<<<< HEAD
-func (runner *packageCommandRunner) Run(arg string, args ...string) ([]byte, error) {
-=======
-func (runner *PackageCommandRunner) Run(arg string, args ...string) ([]byte, error) {
->>>>>>> ca5d879... fix linter
-=======
-func (runner *packageCommandRunner) Run(arg string, args ...string) ([]byte, error) {
->>>>>>> 661c003... do not export packageCommandRunner
-	return runner.RunCommand(exec.Command(arg, args...))
-}
+type ptyRunner struct{}
 
-// RunWithPty is a special case for RunCommand, except it runs with
-// pty instead of tty.
-<<<<<<< HEAD
-<<<<<<< HEAD
-func (runner *packageCommandRunner) RunWithPty(cmd *exec.Cmd) ([]byte, error) {
-=======
-func (runner *PackageCommandRunner) RunWithPty(cmd *exec.Cmd) ([]byte, error) {
->>>>>>> ca5d879... fix linter
-=======
-func (runner *packageCommandRunner) RunWithPty(cmd *exec.Cmd) ([]byte, error) {
->>>>>>> 661c003... do not export packageCommandRunner
+func (p *ptyRunner) RunCommand(ctx context.Context, cmd *exec.Cmd) ([]byte, error) {
+	clog.Debugf(ctx, "Running %q with args %q\n", cmd.Path, cmd.Args[1:])
 	return runWithPty(cmd)
 }
 
-var run = func(cmd *exec.Cmd) ([]byte, error) {
-	DebugLogger.Printf("Running %q with args %q\n", cmd.Path, cmd.Args[1:])
+type defaultRunner struct{}
+
+func (p *defaultRunner) RunCommand(ctx context.Context, cmd *exec.Cmd) ([]byte, error) {
+	clog.Debugf(ctx, "Running %q with args %q\n", cmd.Path, cmd.Args[1:])
 	return cmd.CombinedOutput()
 }

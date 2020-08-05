@@ -72,8 +72,7 @@ func YumUpdateMinimal(minimal bool) YumUpdateOption {
 // InstallYumPackages installs yum packages.
 func InstallYumPackages(ctx context.Context, pkgs []string) error {
 	args := append(yumInstallArgs, pkgs...)
-<<<<<<< HEAD
-	out, err := run(ctx, exec.Command(yum, args...))
+	out, err := runner.RunCommand(ctx, exec.Command(yum, args...))
 	clog.Debugf(ctx, "yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
 		err = fmt.Errorf("error running yum with args %q: %v, stdout: %s", args, err, out)
@@ -84,15 +83,8 @@ func InstallYumPackages(ctx context.Context, pkgs []string) error {
 // UpdateYumPackages updates yum packages.
 func UpdateYumPackages(ctx context.Context, pkgs []string) error {
 	args := append(yumUpdateArgs, pkgs...)
-	out, err := run(ctx, exec.Command(yum, args...))
+	out, err := runner.RunCommand(ctx, exec.Command(yum, args...))
 	clog.Debugf(ctx, "yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
-=======
-	out, err := Runner.RunCommand(exec.Command(yum, args...))
-=======
-	out, err := runner.RunCommand(exec.Command(yum, args...))
->>>>>>> 5345774... make runner non-public
-	DebugLogger.Printf("yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
->>>>>>> 8bd98c9... fix missing yum flags passed during yum update
 	if err != nil {
 		err = fmt.Errorf("error running yum with args %q: %v, stdout: %s", args, err, out)
 	}
@@ -102,17 +94,8 @@ func UpdateYumPackages(ctx context.Context, pkgs []string) error {
 // RemoveYumPackages removes yum packages.
 func RemoveYumPackages(ctx context.Context, pkgs []string) error {
 	args := append(yumRemoveArgs, pkgs...)
-<<<<<<< HEAD
-<<<<<<< HEAD
-	out, err := run(ctx, exec.Command(yum, args...))
+	out, err := runner.RunCommand(ctx, exec.Command(yum, args...))
 	clog.Debugf(ctx, "yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
-=======
-	out, err := Runner.RunCommand(exec.Command(yum, args...))
-=======
-	out, err := runner.RunCommand(exec.Command(yum, args...))
->>>>>>> 5345774... make runner non-public
-	DebugLogger.Printf("yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
->>>>>>> 8bd98c9... fix missing yum flags passed during yum update
 	if err != nil {
 		err = fmt.Errorf("error running yum with args %q: %v, stdout: %s", args, err, out)
 	}
@@ -193,13 +176,9 @@ func YumUpdates(ctx context.Context, opts ...YumUpdateOption) ([]PkgInfo, error)
 
 	// We just use check-update to ensure all repo keys are synced as we run
 	// update with --assumeno.
-<<<<<<< HEAD
-	out, err := run(ctx, exec.Command(yum, yumCheckUpdateArgs...))
+	out, err := runner.RunCommand(ctx, exec.Command(yum, yumCheckUpdateArgs...))
 	clog.Debugf(ctx, "yum %q output:\n%s", yumCheckUpdateArgs, strings.ReplaceAll(string(out), "\n", "\n "))
-=======
-	out, err := runner.RunCommand(exec.Command(yum, yumCheckUpdateArgs...))
-	DebugLogger.Printf("yum %q output:\n%s", yumCheckUpdateArgs, strings.ReplaceAll(string(out), "\n", "\n "))
->>>>>>> 5345774... make runner non-public
+
 	// Exit code 0 means no updates, 100 means there are updates.
 	if err == nil {
 		return nil, nil
@@ -215,11 +194,10 @@ func YumUpdates(ctx context.Context, opts ...YumUpdateOption) ([]PkgInfo, error)
 		return nil, fmt.Errorf("error running yum with args %q: %v, stdout: %s", yumCheckUpdateArgs, err, out)
 	}
 
-
-	return parseAndUpdateYumPackages(opts...)
+	return parseAndUpdateYumPackages(ctx, opts...)
 }
 
-func parseAndUpdateYumPackages(opts ...YumUpdateOption) ([]PkgInfo, error) {
+func parseAndUpdateYumPackages(ctx context.Context, opts ...YumUpdateOption) ([]PkgInfo, error) {
 	yumOpts := &yumUpdateOpts{
 		security: false,
 		minimal:  false,
@@ -237,13 +215,8 @@ func parseAndUpdateYumPackages(opts ...YumUpdateOption) ([]PkgInfo, error) {
 		args = append(args, "--security")
 	}
 
-<<<<<<< HEAD
-	out, err := Runner.RunWithPty(exec.Command(yum, args...))
-	clog.Debugf(ctx, "yum %q output:\n%s", yumListUpdatesArgs, strings.ReplaceAll(string(out), "\n", "\n "))
-=======
-	out, err := runner.RunWithPty(exec.Command(yum, args...))
-	DebugLogger.Printf("yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
->>>>>>> 5345774... make runner non-public
+	out, err := ptyrunner.RunCommand(ctx, exec.Command(yum, args...))
+	clog.Debugf(ctx, "yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
 		return nil, fmt.Errorf("error running yum with args %q: %v, stdout: %s", args, err, out)
 	}
