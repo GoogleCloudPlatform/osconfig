@@ -52,6 +52,7 @@ var (
 	DebugLogger = log.New(ioutil.Discard, "", 0)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 	// runner is the CommandRunner used for running exec commands.
 	runner util.CommandRunner
 =======
@@ -70,6 +71,14 @@ var (
 
 func init() {
 	runner = &packageCommandRunner{}
+=======
+	// runner is the CommandRunner used for running exec commands.
+	runner CommandRunner
+)
+
+func init() {
+	runner = &PackageCommandRunner{}
+>>>>>>> 5345774... make runner non-public
 }
 
 // Packages is a selection of packages based on their manager.
