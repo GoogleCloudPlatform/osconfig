@@ -49,15 +49,10 @@ var (
 
 	noarch = osinfo.Architecture("noarch")
 
-	runner util.CommandRunner
+	runner = util.CommandRunner(&defaultRunner{})
 
-	ptyrunner util.CommandRunner
+	ptyrunner = util.CommandRunner(&ptyRunner{})
 )
-
-func init() {
-	runner = &defaultRunner{}
-	ptyrunner = &ptyRunner{}
-}
 
 // Packages is a selection of packages based on their manager.
 type Packages struct {
@@ -109,14 +104,14 @@ var run = func(ctx context.Context, cmd *exec.Cmd) ([]byte, error) {
 
 type ptyRunner struct{}
 
-func (p *ptyRunner) RunCommand(ctx context.Context, cmd *exec.Cmd) ([]byte, error) {
+func (p *ptyRunner) Run(ctx context.Context, cmd *exec.Cmd) ([]byte, error) {
 	clog.Debugf(ctx, "Running %q with args %q\n", cmd.Path, cmd.Args[1:])
 	return runWithPty(cmd)
 }
 
 type defaultRunner struct{}
 
-func (p *defaultRunner) RunCommand(ctx context.Context, cmd *exec.Cmd) ([]byte, error) {
+func (p *defaultRunner) Run(ctx context.Context, cmd *exec.Cmd) ([]byte, error) {
 	clog.Debugf(ctx, "Running %q with args %q\n", cmd.Path, cmd.Args[1:])
 	return cmd.CombinedOutput()
 }

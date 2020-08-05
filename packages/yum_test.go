@@ -32,7 +32,7 @@ func TestInstallYumPackages(t *testing.T) {
 
 	mockCommandRunner := mocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	mockCommandRunner.EXPECT().RunCommand(ctx, exec.Command("/usr/bin/yum", []string{"install", "--assumeyes", "pkg1", "pkg2"}...)).Return([]byte("update successful"), nil).Times(1)
+	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"install", "--assumeyes", "pkg1", "pkg2"}...)).Return([]byte("update successful"), nil).Times(1)
 
 	if err := InstallYumPackages(ctx, pkgs); err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -46,7 +46,7 @@ func TestInstallYumPackagesReturnsError(t *testing.T) {
 
 	mockCommandRunner := mocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	mockCommandRunner.EXPECT().RunCommand(ctx, exec.Command("/usr/bin/yum", []string{"install", "--assumeyes", "pkg1", "pkg2"}...)).Return([]byte("update unsuccessful"), errors.New("could not update")).Times(1)
+	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"install", "--assumeyes", "pkg1", "pkg2"}...)).Return([]byte("update unsuccessful"), errors.New("could not update")).Times(1)
 
 	if err := InstallYumPackages(ctx, pkgs); err == nil {
 		t.Errorf("did not get expected error")
@@ -60,7 +60,7 @@ func TestRemoveYum(t *testing.T) {
 
 	mockCommandRunner := mocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	mockCommandRunner.EXPECT().RunCommand(ctx, exec.Command("/usr/bin/yum", []string{"remove", "--assumeyes", "pkg1", "pkg2"}...)).Return([]byte("removed successfully"), nil).Times(1)
+	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"remove", "--assumeyes", "pkg1", "pkg2"}...)).Return([]byte("removed successfully"), nil).Times(1)
 
 	if err := RemoveYumPackages(ctx, pkgs); err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -74,7 +74,7 @@ func TestRemoveYumReturnError(t *testing.T) {
 
 	mockCommandRunner := mocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	mockCommandRunner.EXPECT().RunCommand(ctx, exec.Command("/usr/bin/yum", []string{"remove", "--assumeyes", "pkg1", "pkg2"}...)).Return([]byte("could not remove successfully"), errors.New("removal error")).Times(1)
+	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"remove", "--assumeyes", "pkg1", "pkg2"}...)).Return([]byte("could not remove successfully"), errors.New("removal error")).Times(1)
 
 	if err := RemoveYumPackages(ctx, pkgs); err == nil {
 		t.Errorf("did not get expected error")
@@ -88,7 +88,7 @@ func TestYumUpdates(t *testing.T) {
 
 	mockCommandRunner := mocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	mockCommandRunner.EXPECT().RunCommand(ctx, exec.Command("/usr/bin/yum", []string{"check-update", "--assumeyes"}...)).Return([]byte("TestYumUpdatesError"), errors.New("Bad error")).Times(1)
+	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"check-update", "--assumeyes"}...)).Return([]byte("TestYumUpdatesError"), errors.New("Bad error")).Times(1)
 
 	if _, err := YumUpdates(ctx); err == nil {
 		t.Errorf("did not get expected error")
@@ -116,9 +116,9 @@ func TestYumUpdatesMinimalWithSecurity(t *testing.T) {
 
 	mockCommandRunner := mocks.NewMockCommandRunner(mockCtrl)
 	ptyrunner = mockCommandRunner
-	mockCommandRunner.EXPECT().RunCommand(ctx, exec.Command("/usr/bin/yum", []string{"update-minimal", "--assumeno", "--cacheonly", "--security"}...)).Return(data, nil).Times(1)
+	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"update-minimal", "--assumeno", "--cacheonly", "--security"}...)).Return(data, nil).Times(1)
 
-	ret, err := parseAndUpdateYumPackages(ctx, YumUpdateMinimal(true), YumUpdateSecurity(true))
+	ret, err := listAndParseYumPackages(ctx, YumUpdateMinimal(true), YumUpdateSecurity(true))
 	if err != nil {
 		t.Errorf("did not expect error: %+v", err)
 	}
@@ -144,15 +144,14 @@ func contains(names []string, name string) bool {
 	return false
 }
 
-func
-TestYumUpdatesExitCode0(t *testing.T) {
+func TestYumUpdatesExitCode0(t *testing.T) {
 	ctx := context.Background()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
 	mockCommandRunner := mocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	mockCommandRunner.EXPECT().RunCommand(ctx, exec.Command("/usr/bin/yum", []string{"check-update", "--assumeyes"}...)).Return([]byte("TestYumUpdatesError"), nil).Times(1)
+	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"check-update", "--assumeyes"}...)).Return([]byte("TestYumUpdatesError"), nil).Times(1)
 
 	ret, err := YumUpdates(ctx)
 	if err != nil {
@@ -163,8 +162,7 @@ TestYumUpdatesExitCode0(t *testing.T) {
 	}
 }
 
-func
-TestParseYumUpdates(t *testing.T) {
+func TestParseYumUpdates(t *testing.T) {
 	data := []byte(`
 	=================================================================================================================================================================================
 	Package                                      Arch                           Version                                              Repository                                Size

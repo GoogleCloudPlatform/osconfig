@@ -77,6 +77,6 @@ func Exists(name string) bool {
 // execution.
 type CommandRunner interface {
 
-	// RunCommand takes precreated exec.Cmd and returns the results of execution.
-	RunCommand(ctx context.Context, command *exec.Cmd) ([]byte, error)
+	// Run takes precreated exec.Cmd and returns the results of execution.
+	Run(ctx context.Context, command *exec.Cmd) ([]byte, error)
 }

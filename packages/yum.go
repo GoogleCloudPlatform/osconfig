@@ -72,7 +72,7 @@ func YumUpdateMinimal(minimal bool) YumUpdateOption {
 // InstallYumPackages installs yum packages.
 func InstallYumPackages(ctx context.Context, pkgs []string) error {
 	args := append(yumInstallArgs, pkgs...)
-	out, err := runner.RunCommand(ctx, exec.Command(yum, args...))
+	out, err := runner.Run(ctx, exec.Command(yum, args...))
 	clog.Debugf(ctx, "yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
 		err = fmt.Errorf("error running yum with args %q: %v, stdout: %s", args, err, out)
@@ -83,7 +83,7 @@ func InstallYumPackages(ctx context.Context, pkgs []string) error {
 // UpdateYumPackages updates yum packages.
 func UpdateYumPackages(ctx context.Context, pkgs []string) error {
 	args := append(yumUpdateArgs, pkgs...)
-	out, err := runner.RunCommand(ctx, exec.Command(yum, args...))
+	out, err := runner.Run(ctx, exec.Command(yum, args...))
 	clog.Debugf(ctx, "yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
 		err = fmt.Errorf("error running yum with args %q: %v, stdout: %s", args, err, out)
@@ -94,7 +94,7 @@ func UpdateYumPackages(ctx context.Context, pkgs []string) error {
 // RemoveYumPackages removes yum packages.
 func RemoveYumPackages(ctx context.Context, pkgs []string) error {
 	args := append(yumRemoveArgs, pkgs...)
-	out, err := runner.RunCommand(ctx, exec.Command(yum, args...))
+	out, err := runner.Run(ctx, exec.Command(yum, args...))
 	clog.Debugf(ctx, "yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
 		err = fmt.Errorf("error running yum with args %q: %v, stdout: %s", args, err, out)
@@ -157,26 +157,9 @@ func parseYumUpdates(data []byte) []PkgInfo {
 
 // YumUpdates queries for all available yum updates.
 func YumUpdates(ctx context.Context, opts ...YumUpdateOption) ([]PkgInfo, error) {
-	yumOpts := &yumUpdateOpts{
-		security: false,
-		minimal:  false,
-	}
-
-	for _, opt := range opts {
-		opt(yumOpts)
-	}
-
-	args := yumUpdateArgs
-	if yumOpts.minimal {
-		args = yumListUpdateMinimalArgs
-	}
-	if yumOpts.security {
-		args = append(args, "--security")
-	}
-
 	// We just use check-update to ensure all repo keys are synced as we run
 	// update with --assumeno.
-	out, err := runner.RunCommand(ctx, exec.Command(yum, yumCheckUpdateArgs...))
+	out, err := runner.Run(ctx, exec.Command(yum, yumCheckUpdateArgs...))
 	clog.Debugf(ctx, "yum %q output:\n%s", yumCheckUpdateArgs, strings.ReplaceAll(string(out), "\n", "\n "))
 
 	// Exit code 0 means no updates, 100 means there are updates.
@@ -194,10 +177,10 @@ func YumUpdates(ctx context.Context, opts ...YumUpdateOption) ([]PkgInfo, error)
 		return nil, fmt.Errorf("error running yum with args %q: %v, stdout: %s", yumCheckUpdateArgs, err, out)
 	}
 
-	return parseAndUpdateYumPackages(ctx, opts...)
+	return listAndParseYumPackages(ctx, opts...)
 }
 
-func parseAndUpdateYumPackages(ctx context.Context, opts ...YumUpdateOption) ([]PkgInfo, error) {
+func listAndParseYumPackages(ctx context.Context, opts ...YumUpdateOption) ([]PkgInfo, error) {
 	yumOpts := &yumUpdateOpts{
 		security: false,
 		minimal:  false,
@@ -215,7 +198,7 @@ func parseAndUpdateYumPackages(ctx context.Context, opts ...YumUpdateOption) ([]
 		args = append(args, "--security")
 	}
 
-	out, err := ptyrunner.RunCommand(ctx, exec.Command(yum, args...))
+	out, err := ptyrunner.Run(ctx, exec.Command(yum, args...))
 	clog.Debugf(ctx, "yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
 		return nil, fmt.Errorf("error running yum with args %q: %v, stdout: %s", args, err, out)
