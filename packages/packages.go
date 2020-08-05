@@ -16,12 +16,13 @@ limitations under the License.
 package packages
 
 import (
-	"context"
+	"io/ioutil"
+	"log"
 	"os/exec"
 	"time"
 
-	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -47,7 +48,17 @@ var (
 	GooGetExists bool
 
 	noarch = osinfo.Architecture("noarch")
+
+	// DebugLogger is the debug logger to use.
+	DebugLogger = log.New(ioutil.Discard, "", 0)
+
+	// runner is the CommandRunner used for running exec commands.
+	runner util.CommandRunner
 )
+
+func init() {
+	runner = &packageCommandRunner{}
+}
 
 // Packages is a selection of packages based on their manager.
 type Packages struct {
@@ -92,7 +103,31 @@ type QFEPackage struct {
 	Caption, Description, HotFixID, InstalledOn string
 }
 
-var run = func(ctx context.Context, cmd *exec.Cmd) ([]byte, error) {
-	clog.Debugf(ctx, "Running %q with args %q\n", cmd.Path, cmd.Args[1:])
+// packageCommandRunner is the CommandRunner implementation used for running
+// package manager commands.
+type packageCommandRunner struct {
+	runner util.CommandRunner
+}
+
+// RunCommand takes precreated exec.Cmd and returns the results of execution.
+func (runner *packageCommandRunner) RunCommand(cmd *exec.Cmd) ([]byte, error) {
+	DebugLogger.Printf("Running %q with args %q\n", cmd.Path, cmd.Args[1:])
+	return cmd.CombinedOutput()
+}
+
+// Run takes string arguments of command to be executed
+// and returns the results of execution.
+func (runner *packageCommandRunner) Run(arg string, args ...string) ([]byte, error) {
+	return runner.RunCommand(exec.Command(arg, args...))
+}
+
+// RunWithPty is a special case for RunCommand, except it runs with
+// pty instead of tty.
+func (runner *packageCommandRunner) RunWithPty(cmd *exec.Cmd) ([]byte, error) {
+	return runWithPty(cmd)
+}
+
+var run = func(cmd *exec.Cmd) ([]byte, error) {
+	DebugLogger.Printf("Running %q with args %q\n", cmd.Path, cmd.Args[1:])
 	return cmd.CombinedOutput()
 }
