@@ -16,11 +16,13 @@ package packages
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os/exec"
 	"runtime"
 	"strings"
 
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
@@ -68,10 +70,10 @@ func YumUpdateMinimal(minimal bool) YumUpdateOption {
 }
 
 // InstallYumPackages installs yum packages.
-func InstallYumPackages(pkgs []string) error {
+func InstallYumPackages(ctx context.Context, pkgs []string) error {
 	args := append(yumInstallArgs, pkgs...)
-	out, err := run(exec.Command(yum, args...))
-	DebugLogger.Printf("yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	out, err := run(ctx, exec.Command(yum, args...))
+	clog.Debugf(ctx, "yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
 		err = fmt.Errorf("error running yum with args %q: %v, stdout: %s", args, err, out)
 	}
@@ -79,10 +81,10 @@ func InstallYumPackages(pkgs []string) error {
 }
 
 // UpdateYumPackages updates yum packages.
-func UpdateYumPackages(pkgs []string) error {
+func UpdateYumPackages(ctx context.Context, pkgs []string) error {
 	args := append(yumUpdateArgs, pkgs...)
-	out, err := run(exec.Command(yum, args...))
-	DebugLogger.Printf("yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	out, err := run(ctx, exec.Command(yum, args...))
+	clog.Debugf(ctx, "yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
 		err = fmt.Errorf("error running yum with args %q: %v, stdout: %s", args, err, out)
 	}
@@ -90,10 +92,10 @@ func UpdateYumPackages(pkgs []string) error {
 }
 
 // RemoveYumPackages removes yum packages.
-func RemoveYumPackages(pkgs []string) error {
+func RemoveYumPackages(ctx context.Context, pkgs []string) error {
 	args := append(yumRemoveArgs, pkgs...)
-	out, err := run(exec.Command(yum, args...))
-	DebugLogger.Printf("yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	out, err := run(ctx, exec.Command(yum, args...))
+	clog.Debugf(ctx, "yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
 		err = fmt.Errorf("error running yum with args %q: %v, stdout: %s", args, err, out)
 	}
@@ -154,7 +156,7 @@ func parseYumUpdates(data []byte) []PkgInfo {
 }
 
 // YumUpdates queries for all available yum updates.
-func YumUpdates(opts ...YumUpdateOption) ([]PkgInfo, error) {
+func YumUpdates(ctx context.Context, opts ...YumUpdateOption) ([]PkgInfo, error) {
 	yumOpts := &yumUpdateOpts{
 		security: false,
 		minimal:  false,
@@ -174,8 +176,8 @@ func YumUpdates(opts ...YumUpdateOption) ([]PkgInfo, error) {
 
 	// We just use check-update to ensure all repo keys are synced as we run
 	// update with --assumeno.
-	out, err := run(exec.Command(yum, yumCheckUpdateArgs...))
-	DebugLogger.Printf("yum %q output:\n%s", yumCheckUpdateArgs, strings.ReplaceAll(string(out), "\n", "\n "))
+	out, err := run(ctx, exec.Command(yum, yumCheckUpdateArgs...))
+	clog.Debugf(ctx, "yum %q output:\n%s", yumCheckUpdateArgs, strings.ReplaceAll(string(out), "\n", "\n "))
 	// Exit code 0 means no updates, 100 means there are updates.
 	if err == nil {
 		return nil, nil
@@ -191,7 +193,7 @@ func YumUpdates(opts ...YumUpdateOption) ([]PkgInfo, error) {
 	}
 
 	out, err = runWithPty(exec.Command(yum, yumListUpdatesArgs...))
-	DebugLogger.Printf("yum %q output:\n%s", yumListUpdatesArgs, strings.ReplaceAll(string(out), "\n", "\n "))
+	clog.Debugf(ctx, "yum %q output:\n%s", yumListUpdatesArgs, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
 		return nil, fmt.Errorf("error running yum with args %q: %v, stdout: %s", yumListUpdatesArgs, err, out)
 	}

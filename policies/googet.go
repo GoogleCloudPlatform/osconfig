@@ -16,17 +16,18 @@ package policies
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
-func googetRepositories(repos []*agentendpointpb.GooRepository, repoFile string) error {
+func googetRepositories(ctx context.Context, repos []*agentendpointpb.GooRepository, repoFile string) error {
 	/*
 		# Repo file managed by Google OSConfig agent
 
@@ -42,39 +43,39 @@ func googetRepositories(repos []*agentendpointpb.GooRepository, repoFile string)
 		buf.WriteString(fmt.Sprintf("  url: %s\n", repo.Url))
 	}
 
-	return writeIfChanged(buf.Bytes(), repoFile)
+	return writeIfChanged(ctx, buf.Bytes(), repoFile)
 }
 
-func googetChanges(gooInstalled, gooRemoved, gooUpdated []*agentendpointpb.Package) error {
+func googetChanges(ctx context.Context, gooInstalled, gooRemoved, gooUpdated []*agentendpointpb.Package) error {
 	var errs []string
 
-	installed, err := packages.InstalledGooGetPackages()
+	installed, err := packages.InstalledGooGetPackages(ctx)
 	if err != nil {
 		return err
 	}
-	updates, err := packages.GooGetUpdates()
+	updates, err := packages.GooGetUpdates(ctx)
 	if err != nil {
 		return err
 	}
 	changes := getNecessaryChanges(installed, updates, gooInstalled, gooRemoved, gooUpdated)
 
 	if changes.packagesToInstall != nil {
-		logger.Infof("Installing packages %s", changes.packagesToInstall)
-		if err := packages.InstallGooGetPackages(changes.packagesToInstall); err != nil {
+		clog.Infof(ctx, "Installing packages %s", changes.packagesToInstall)
+		if err := packages.InstallGooGetPackages(ctx, changes.packagesToInstall); err != nil {
 			errs = append(errs, fmt.Sprintf("error installing googet packages: %v", err))
 		}
 	}
 
 	if changes.packagesToUpgrade != nil {
-		logger.Infof("Upgrading packages %s", changes.packagesToUpgrade)
-		if err := packages.InstallGooGetPackages(changes.packagesToUpgrade); err != nil {
+		clog.Infof(ctx, "Upgrading packages %s", changes.packagesToUpgrade)
+		if err := packages.InstallGooGetPackages(ctx, changes.packagesToUpgrade); err != nil {
 			errs = append(errs, fmt.Sprintf("error upgrading googet packages: %v", err))
 		}
 	}
 
 	if changes.packagesToRemove != nil {
-		logger.Infof("Removing packages %s", changes.packagesToRemove)
-		if err := packages.RemoveGooGetPackages(changes.packagesToRemove); err != nil {
+		clog.Infof(ctx, "Removing packages %s", changes.packagesToRemove)
+		if err := packages.RemoveGooGetPackages(ctx, changes.packagesToRemove); err != nil {
 			errs = append(errs, fmt.Sprintf("error removing googet packages: %v", err))
 		}
 	}

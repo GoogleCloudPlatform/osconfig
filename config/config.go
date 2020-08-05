@@ -34,7 +34,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/compute/metadata"
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"golang.org/x/oauth2/jws"
 )
 
@@ -429,8 +429,8 @@ func WatchConfig(ctx context.Context) error {
 }
 
 // LogFeatures logs the osconfig feature status.
-func LogFeatures() {
-	logger.Infof("OSConfig enabled features status:{GuestPolicies: %t, OSInventory: %t, PatchManagement: %t}.", GuestPoliciesEnabled(), OSInventoryEnabled(), TaskNotificationEnabled())
+func LogFeatures(ctx context.Context) {
+	clog.Infof(ctx, "OSConfig enabled features status:{GuestPolicies: %t, OSInventory: %t, PatchManagement: %t}.", GuestPoliciesEnabled(), OSInventoryEnabled(), TaskNotificationEnabled())
 }
 
 // SvcPollInterval returns the frequency to poll the service.

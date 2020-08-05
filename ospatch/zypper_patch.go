@@ -15,7 +15,10 @@
 package ospatch
 
 import (
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"context"
+	"fmt"
+
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 )
 
@@ -94,7 +97,7 @@ func ZypperUpdateDryrun(dryrun bool) ZypperPatchOption {
 }
 
 // RunZypperPatch runs zypper patch.
-func RunZypperPatch(opts ...ZypperPatchOption) error {
+func RunZypperPatch(ctx context.Context, opts ...ZypperPatchOption) error {
 	zOpts := &zypperPatchOpts{
 		excludes:         nil,
 		exclusivePatches: nil,
@@ -115,7 +118,7 @@ func RunZypperPatch(opts ...ZypperPatchOption) error {
 		// if there is no filter on category and severity,
 		// zypper fetches all available patch updates
 	}
-	patches, err := packages.ZypperPatches(zListOpts...)
+	patches, err := packages.ZypperPatches(ctx, zListOpts...)
 	if err != nil {
 		return err
 	}
@@ -125,11 +128,11 @@ func RunZypperPatch(opts ...ZypperPatchOption) error {
 	var pkgToPatchesMap map[string][]string
 	var pkgUpdates []packages.PkgInfo
 	if zOpts.withUpdate {
-		pkgUpdates, err = packages.ZypperUpdates()
+		pkgUpdates, err = packages.ZypperUpdates(ctx)
 		if err != nil {
 			return nil
 		}
-		pkgToPatchesMap, err = packages.ZypperPackagesInPatch(patches)
+		pkgToPatchesMap, err = packages.ZypperPackagesInPatch(ctx, patches)
 		if err != nil {
 			return nil
 		}
@@ -138,30 +141,37 @@ func RunZypperPatch(opts ...ZypperPatchOption) error {
 	fPatches, fpkgs, err := runFilter(patches, zOpts.exclusivePatches, zOpts.excludes, pkgUpdates, pkgToPatchesMap, zOpts.withUpdate)
 
 	if len(fPatches) == 0 && len(fpkgs) == 0 {
-		logger.Infof("No updates required.")
+		clog.Infof(ctx, "No updates required.")
 		return nil
 	}
 
 	if len(fPatches) == 0 {
-		logger.Infof("No patches to install.")
+		clog.Infof(ctx, "No patches to install.")
 	} else {
-		logger.Infof("Installing %d patches.", len(fPatches))
-		logger.Debugf("Patches to be installed: %s", fPatches)
+		msg := fmt.Sprintf("%d patches: %s", len(fPatches), fPatches)
+		if zOpts.dryrun {
+			clog.Infof(ctx, "Running in dryrun mode, not installing %s", msg)
+		} else {
+			clog.Infof(ctx, "Installing %s", msg)
+		}
 	}
 
 	if len(fpkgs) == 0 {
-		logger.Infof("No non-patch packages to update.")
+		clog.Infof(ctx, "No non-patch packages to update.")
 	} else {
-		logger.Infof("Updating %d packages.", len(fpkgs))
-		logger.Debugf("Packages to be installed: %s", fpkgs)
+		msg := fmt.Sprintf("%d patches: %s", len(fpkgs), fpkgs)
+		if zOpts.dryrun {
+			clog.Infof(ctx, "Running in dryrun mode, not Updating %s", msg)
+		} else {
+			clog.Infof(ctx, "Updating %s", msg)
+		}
 	}
 
 	if zOpts.dryrun {
-		logger.Infof("Running in dryrun mode, not updating.")
 		return nil
 	}
 
-	return packages.ZypperInstall(fPatches, fpkgs)
+	return packages.ZypperInstall(ctx, fPatches, fpkgs)
 }
 
 func runFilter(patches []packages.ZypperPatch, exclusivePatches, excludes []string, pkgUpdates []packages.PkgInfo, pkgToPatchesMap map[string][]string, withUpdate bool) ([]packages.ZypperPatch, []packages.PkgInfo, error) {

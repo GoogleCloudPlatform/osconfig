@@ -21,7 +21,7 @@ import (
 	"time"
 
 	agentendpoint "cloud.google.com/go/osconfig/agentendpoint/apiv1beta"
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
@@ -49,7 +49,7 @@ func NewBetaClient(ctx context.Context) (*BetaClient, error) {
 		option.WithGRPCDialOption(grpc.WithTransportCredentials(credentials.NewTLS(nil))), // Because we disabled Auth we need to specifically enable TLS.
 		option.WithEndpoint(config.SvcEndpoint()),
 	}
-	logger.Debugf("Creating new agentendpoint beta client.")
+	clog.Debugf(ctx, "Creating new agentendpoint beta client.")
 	c, err := agentendpoint.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -92,15 +92,15 @@ func (c *BetaClient) LookupEffectiveGuestPolicies(ctx context.Context) (res *age
 		return nil, err
 	}
 
-	logger.Debugf("Calling LookupEffectiveGuestPolicies with request:\n%s", util.PrettyFmt(req))
+	clog.Debugf(ctx, "Calling LookupEffectiveGuestPolicies with request:\n%s", util.PrettyFmt(req))
 	req.InstanceIdToken = token
 
-	if err := retryutil.RetryAPICall(apiRetrySec*time.Second, "LookupEffectiveGuestPolicies", func() error {
+	if err := retryutil.RetryAPICall(ctx, apiRetrySec*time.Second, "LookupEffectiveGuestPolicies", func() error {
 		res, err = c.raw.LookupEffectiveGuestPolicy(ctx, req)
 		if err != nil {
 			return err
 		}
-		logger.Debugf("LookupEffectiveGuestPolicies response:\n%s", util.PrettyFmt(res))
+		clog.Debugf(ctx, "LookupEffectiveGuestPolicies response:\n%s", util.PrettyFmt(res))
 		return nil
 	}); err != nil {
 		return nil, fmt.Errorf("error calling LookupEffectiveGuestPolicies: %w", err)

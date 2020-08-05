@@ -15,6 +15,7 @@
 package policies
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -24,7 +25,7 @@ import (
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
-func runYumRepositories(repos []*agentendpointpb.YumRepository) (string, error) {
+func runYumRepositories(ctx context.Context, repos []*agentendpointpb.YumRepository) (string, error) {
 	td, err := ioutil.TempDir(os.TempDir(), "")
 	if err != nil {
 		return "", fmt.Errorf("error creating temp dir: %v", err)
@@ -32,7 +33,7 @@ func runYumRepositories(repos []*agentendpointpb.YumRepository) (string, error) 
 	defer os.RemoveAll(td)
 	testRepo := filepath.Join(td, "testRepo")
 
-	if err := yumRepositories(repos, testRepo); err != nil {
+	if err := yumRepositories(ctx, repos, testRepo); err != nil {
 		return "", fmt.Errorf("error running yumRepositories: %v", err)
 	}
 
@@ -69,7 +70,7 @@ func TestYumRepositories(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got, err := runYumRepositories(tt.repos)
+		got, err := runYumRepositories(context.Background(), tt.repos)
 		if err != nil {
 			t.Fatal(err)
 		}

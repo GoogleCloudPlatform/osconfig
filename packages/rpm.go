@@ -16,11 +16,13 @@ package packages
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os/exec"
 	"runtime"
 	"strings"
 
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
@@ -63,9 +65,9 @@ func parseInstalledRPMPackages(data []byte) []PkgInfo {
 }
 
 // InstalledRPMPackages queries for all installed rpm packages.
-func InstalledRPMPackages() ([]PkgInfo, error) {
-	out, err := run(exec.Command(rpmquery, rpmqueryArgs...))
-	DebugLogger.Printf("rpmquery %q output:\n%s", rpmqueryArgs, strings.ReplaceAll(string(out), "\n", "\n "))
+func InstalledRPMPackages(ctx context.Context) ([]PkgInfo, error) {
+	out, err := run(ctx, exec.Command(rpmquery, rpmqueryArgs...))
+	clog.Debugf(ctx, "rpmquery %q output:\n%s", rpmqueryArgs, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
 		return nil, fmt.Errorf("error running rpmquery with args %q: %v, stdout: %s", rpmqueryArgs, err, out)
 	}
@@ -74,10 +76,10 @@ func InstalledRPMPackages() ([]PkgInfo, error) {
 }
 
 // RPMInstall installs an rpm packages.
-func RPMInstall(path string) error {
+func RPMInstall(ctx context.Context, path string) error {
 	args := append(rpmInstallArgs, path)
-	out, err := run(exec.Command(rpm, args...))
-	DebugLogger.Printf("rpm output:\n%s", strings.ReplaceAll(string(out), "\n", "\n "))
+	out, err := run(ctx, exec.Command(rpm, args...))
+	clog.Debugf(ctx, "rpm output:\n%s", strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
 		err = fmt.Errorf("error running rpm with args %q: %v, stdout: %s", args, err, out)
 	}

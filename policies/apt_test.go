@@ -15,6 +15,7 @@
 package policies
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -24,7 +25,7 @@ import (
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
-func runAptRepositories(repos []*agentendpointpb.AptRepository) (string, error) {
+func runAptRepositories(ctx context.Context, repos []*agentendpointpb.AptRepository) (string, error) {
 	td, err := ioutil.TempDir(os.TempDir(), "")
 	if err != nil {
 		return "", fmt.Errorf("error creating temp dir: %v", err)
@@ -32,7 +33,7 @@ func runAptRepositories(repos []*agentendpointpb.AptRepository) (string, error) 
 	defer os.RemoveAll(td)
 	testRepo := filepath.Join(td, "testRepo")
 
-	if err := aptRepositories(repos, testRepo); err != nil {
+	if err := aptRepositories(ctx, repos, testRepo); err != nil {
 		return "", fmt.Errorf("error running aptRepositories: %v", err)
 	}
 
@@ -69,7 +70,7 @@ func TestAptRepositories(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got, err := runAptRepositories(tt.repos)
+		got, err := runAptRepositories(context.Background(), tt.repos)
 		if err != nil {
 			t.Fatal(err)
 		}

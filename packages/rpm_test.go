@@ -43,7 +43,7 @@ func TestParseInstalledRPMPackages(t *testing.T) {
 
 func TestInstalledRPMPackages(t *testing.T) {
 	run = getMockRun([]byte("foo x86_64 1.2.3-4"), nil)
-	ret, err := InstalledRPMPackages()
+	ret, err := InstalledRPMPackages(testCtx)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -54,7 +54,7 @@ func TestInstalledRPMPackages(t *testing.T) {
 	}
 
 	run = getMockRun(nil, errors.New("bad error"))
-	if _, err := InstalledRPMPackages(); err == nil {
+	if _, err := InstalledRPMPackages(testCtx); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }
