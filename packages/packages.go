@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
-	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -58,11 +57,15 @@ var (
 =======
 	// Runner is the CommandRunner used for running exec commands.
 <<<<<<< HEAD
+<<<<<<< HEAD
 	Runner CommandRunner
 >>>>>>> ca5d879... fix linter
 =======
 	Runner util.CommandRunner
 >>>>>>> bae3585... implement feedback from reviewer
+=======
+	Runner CommandRunner
+>>>>>>> d06ae33... Revert "implement feedback from reviewer"
 )
 
 func init() {
@@ -114,6 +117,7 @@ type QFEPackage struct {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 // packageCommandRunner is the CommandRunner implementation used for running
 // package manager commands.
 type packageCommandRunner struct {
@@ -123,6 +127,8 @@ type packageCommandRunner struct {
 // RunCommand takes precreated exec.Cmd and returns the results of execution.
 func (runner *packageCommandRunner) RunCommand(cmd *exec.Cmd) ([]byte, error) {
 =======
+=======
+>>>>>>> d06ae33... Revert "implement feedback from reviewer"
 // CommandRunner will execute the commands and return the results of that
 // execution.
 type CommandRunner interface {
@@ -139,12 +145,15 @@ type CommandRunner interface {
 	RunWithPty(command *exec.Cmd) ([]byte, error)
 }
 
+<<<<<<< HEAD
 =======
 >>>>>>> bae3585... implement feedback from reviewer
+=======
+>>>>>>> d06ae33... Revert "implement feedback from reviewer"
 // PackageCommandRunner is the CommandRunner implementation used for running
 // package manager commands.
 type PackageCommandRunner struct {
-	runner util.CommandRunner
+	runner CommandRunner
 }
 
 // RunCommand takes precreated exec.Cmd and returns the results of execution.
