@@ -77,7 +77,7 @@ func forContext(ctx context.Context) (*log, context.Context) {
 	cv := ctx.Value(ctxValueKey)
 	l, ok := cv.(*log)
 	if !ok {
-		l = &log{}
+		l = &log{labels: map[string]string{}}
 	} else {
 		l = l.clone()
 	}
