@@ -154,7 +154,7 @@ func (e *execTask) run(ctx context.Context) error {
 		var err error
 		localPath, err = getGCSObject(ctx, gcsObject.GetBucket(), gcsObject.GetObject(), gcsObject.GetGenerationNumber())
 		if err != nil {
-			msg := fmt.Sprintf("Error getting executable path: %v", err)
+			msg := fmt.Sprintf("Error downloading GCS object: %v", err)
 			clog.Errorf(ctx, msg)
 			return e.reportCompletedState(ctx, msg, &agentendpointpb.ReportTaskCompleteRequest_ExecStepTaskOutput{
 				ExecStepTaskOutput: &agentendpointpb.ExecStepTaskOutput{
