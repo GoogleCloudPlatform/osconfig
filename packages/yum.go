@@ -33,7 +33,6 @@ var (
 	yumInstallArgs           = []string{"install", "--assumeyes"}
 	yumRemoveArgs            = []string{"remove", "--assumeyes"}
 	yumCheckUpdateArgs       = []string{"check-update", "--assumeyes"}
-	yumUpdateArgs            = []string{"update", "--assumeyes"}
 	yumListUpdatesArgs       = []string{"update", "--assumeno", "--cacheonly"}
 	yumListUpdateMinimalArgs = []string{"update-minimal", "--assumeno", "--cacheonly"}
 )
@@ -48,6 +47,7 @@ func init() {
 type yumUpdateOpts struct {
 	security bool
 	minimal  bool
+	excludes []string
 }
 
 // YumUpdateOption is an option for yum update.
@@ -69,20 +69,17 @@ func YumUpdateMinimal(minimal bool) YumUpdateOption {
 	}
 }
 
+// YumExcludes returns a YumUpdateOption that specifies the excludes
+// command should be used.
+func YumExcludes(excludes []string) YumUpdateOption {
+	return func(args *yumUpdateOpts) {
+		args.excludes = excludes
+	}
+}
+
 // InstallYumPackages installs yum packages.
 func InstallYumPackages(ctx context.Context, pkgs []string) error {
 	args := append(yumInstallArgs, pkgs...)
-	out, err := runner.Run(ctx, exec.Command(yum, args...))
-	clog.Debugf(ctx, "yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
-	if err != nil {
-		err = fmt.Errorf("error running yum with args %q: %v, stdout: %s", args, err, out)
-	}
-	return err
-}
-
-// UpdateYumPackages updates yum packages.
-func UpdateYumPackages(ctx context.Context, pkgs []string) error {
-	args := append(yumUpdateArgs, pkgs...)
 	out, err := runner.Run(ctx, exec.Command(yum, args...))
 	clog.Debugf(ctx, "yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
@@ -184,6 +181,7 @@ func listAndParseYumPackages(ctx context.Context, opts ...YumUpdateOption) ([]Pk
 	yumOpts := &yumUpdateOpts{
 		security: false,
 		minimal:  false,
+		excludes: []string{},
 	}
 
 	for _, opt := range opts {
@@ -196,6 +194,11 @@ func listAndParseYumPackages(ctx context.Context, opts ...YumUpdateOption) ([]Pk
 	}
 	if yumOpts.security {
 		args = append(args, "--security")
+	}
+	if len(yumOpts.excludes) > 0 {
+		for _, pkg := range yumOpts.excludes {
+			args = append(args, []string{"--exclude", pkg}...)
+		}
 	}
 
 	out, err := ptyrunner.Run(ctx, exec.Command(yum, args...))

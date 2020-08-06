@@ -90,12 +90,14 @@ func RunYumUpdate(ctx context.Context, opts ...YumUpdateOption) error {
 		opt(yumOpts)
 	}
 
-	pkgs, err := packages.YumUpdates(ctx, packages.YumUpdateMinimal(yumOpts.minimal), packages.YumUpdateSecurity(yumOpts.security))
+	pkgs, err := packages.YumUpdates(ctx, packages.YumUpdateMinimal(yumOpts.minimal), packages.YumUpdateSecurity(yumOpts.security), packages.YumExcludes(yumOpts.excludes))
 	if err != nil {
 		return err
 	}
 
-	fPkgs, err := filterPackages(pkgs, yumOpts.exclusivePackages, yumOpts.excludes)
+	// Yum excludes are already excluded while listing yumUpdates, so we send
+	// and empty list.
+	fPkgs, err := filterPackages(pkgs, yumOpts.exclusivePackages, []string{})
 	if err != nil {
 		return err
 	}
