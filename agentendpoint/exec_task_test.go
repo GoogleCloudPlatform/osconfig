@@ -53,6 +53,9 @@ func (*agentEndpointServiceExecTestServer) RegisterAgent(ctx context.Context, re
 }
 
 func outputGen(id string, msg string, st agentendpointpb.ExecStepTaskOutput_State, exitCode int32) *agentendpointpb.ReportTaskCompleteRequest {
+	if msg != "" {
+		msg = "Error running exec task: " + msg
+	}
 	return &agentendpointpb.ReportTaskCompleteRequest{
 		TaskId:       id,
 		TaskType:     agentendpointpb.TaskType_EXEC_STEP_TASK,
