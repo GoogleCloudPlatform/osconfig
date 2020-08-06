@@ -25,7 +25,6 @@ import (
 
 	"cloud.google.com/go/compute/metadata"
 	agentendpoint "cloud.google.com/go/osconfig/agentendpoint/apiv1"
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
@@ -98,7 +97,7 @@ func (c *Client) RegisterAgent(ctx context.Context) error {
 	}
 
 	req := &agentendpointpb.RegisterAgentRequest{AgentVersion: config.Version(), SupportedCapabilities: config.Capabilities()}
-	logger.Debugf("Calling RegisterAgent with request:\n%s", util.PrettyFmt(req))
+	clog.Debugf(ctx, "Calling RegisterAgent with request:\n%s", util.PrettyFmt(req))
 	req.InstanceIdToken = token
 
 	_, err = c.raw.RegisterAgent(ctx, req)

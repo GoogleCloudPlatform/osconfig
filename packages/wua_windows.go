@@ -21,7 +21,6 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	ole "github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
-	//"github.com/go-ole/go-ole/oleutil"
 )
 
 var wuaSession sync.Mutex
