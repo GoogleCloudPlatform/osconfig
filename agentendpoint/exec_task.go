@@ -154,7 +154,14 @@ func (e *execTask) run(ctx context.Context) error {
 		var err error
 		localPath, err = getGCSObject(ctx, gcsObject.GetBucket(), gcsObject.GetObject(), gcsObject.GetGenerationNumber())
 		if err != nil {
-			return fmt.Errorf("error getting executable path: %v", err)
+			msg := fmt.Sprintf("Error getting executable path: %v", err)
+			clog.Errorf(ctx, msg)
+			return e.reportCompletedState(ctx, msg, &agentendpointpb.ReportTaskCompleteRequest_ExecStepTaskOutput{
+				ExecStepTaskOutput: &agentendpointpb.ExecStepTaskOutput{
+					State:    agentendpointpb.ExecStepTaskOutput_COMPLETED,
+					ExitCode: -1,
+				},
+			})
 		}
 		defer func() {
 			if err := os.Remove(localPath); err != nil {
@@ -187,7 +194,9 @@ func (e *execTask) run(ctx context.Context) error {
 		err = fmt.Errorf("invalid interpreter %q", stepConfig.GetInterpreter())
 	}
 	if err != nil {
-		return e.reportCompletedState(ctx, err.Error(), &agentendpointpb.ReportTaskCompleteRequest_ExecStepTaskOutput{
+		msg := fmt.Sprintf("Error running exec task: %v", err)
+		clog.Errorf(ctx, msg)
+		return e.reportCompletedState(ctx, msg, &agentendpointpb.ReportTaskCompleteRequest_ExecStepTaskOutput{
 			ExecStepTaskOutput: &agentendpointpb.ExecStepTaskOutput{
 				State:    agentendpointpb.ExecStepTaskOutput_COMPLETED,
 				ExitCode: exitCode,
