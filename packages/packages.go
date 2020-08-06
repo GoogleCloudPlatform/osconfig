@@ -115,3 +115,14 @@ func (p *defaultRunner) Run(ctx context.Context, cmd *exec.Cmd) ([]byte, error) 
 	clog.Debugf(ctx, "Running %q with args %q\n", cmd.Path, cmd.Args[1:])
 	return cmd.CombinedOutput()
 }
+
+// SetCommandRunner allows external clients to set a custom commandRunner.
+func SetCommandRunner(commandRunner util.CommandRunner) {
+	runner = commandRunner
+}
+
+// SetPtyCommandRunner allows external clients to set a custom
+// custom commandRunner.
+func SetPtyCommandRunner(commandRunner util.CommandRunner) {
+	ptyrunner = commandRunner
+}
