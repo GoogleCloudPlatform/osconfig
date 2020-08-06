@@ -212,7 +212,7 @@ func awaitPatchJob(ctx context.Context, job *osconfigpb.PatchJob, timeout time.D
 		case <-timedout:
 			return nil, errors.New("timed out while waiting for patch job to complete")
 		case <-tick:
-			if err := retryutil.RetryAPICall(timeout*time.Second, "GetPatchJobRequest", func() error {
+			if err := retryutil.RetryAPICall(ctx, timeout*time.Second, "GetPatchJobRequest", func() error {
 				res, err = client.GetPatchJob(ctx, &osconfigpb.GetPatchJobRequest{Name: job.GetName()})
 				return err
 			}); err != nil {
