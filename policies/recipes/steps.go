@@ -19,6 +19,7 @@ import (
 	"archive/zip"
 	"compress/bzip2"
 	"compress/gzip"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -30,7 +31,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 	"github.com/ulikunitz/xz"
@@ -105,7 +106,7 @@ func parsePermissions(s string) (os.FileMode, error) {
 	return os.FileMode(i), nil
 }
 
-func stepExtractArchive(step *agentendpointpb.SoftwareRecipe_Step_ExtractArchive, artifacts map[string]string, runEnvs []string, stepDir string) error {
+func stepExtractArchive(ctx context.Context, step *agentendpointpb.SoftwareRecipe_Step_ExtractArchive, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	artifact := step.GetArtifactId()
 	filename, ok := artifacts[artifact]
 	if !ok {
@@ -119,7 +120,7 @@ func stepExtractArchive(step *agentendpointpb.SoftwareRecipe_Step_ExtractArchive
 		agentendpointpb.SoftwareRecipe_Step_ExtractArchive_TAR_LZMA,
 		agentendpointpb.SoftwareRecipe_Step_ExtractArchive_TAR_XZ,
 		agentendpointpb.SoftwareRecipe_Step_ExtractArchive_TAR:
-		return extractTar(filename, step.Destination, typ)
+		return extractTar(ctx, filename, step.Destination, typ)
 	default:
 		return fmt.Errorf("Unrecognized archive type %q", typ)
 	}
@@ -261,7 +262,7 @@ func checkForConflicts(tr *tar.Reader, dst string) error {
 	return nil
 }
 
-func extractTar(tarName string, dst string, archiveType agentendpointpb.SoftwareRecipe_Step_ExtractArchive_ArchiveType) error {
+func extractTar(ctx context.Context, tarName string, dst string, archiveType agentendpointpb.SoftwareRecipe_Step_ExtractArchive_ArchiveType) error {
 	file, err := os.Open(tarName)
 	if err != nil {
 		return err
@@ -361,7 +362,7 @@ func extractTar(tarName string, dst string, archiveType agentendpointpb.Software
 				return err
 			}
 		default:
-			logger.Infof("unknown file type for tar entry %s\n", filen)
+			clog.Infof(ctx, "Unknown file type for tar entry %s\n", filen)
 			continue
 		}
 		if err := chown(filen, header.Uid, header.Gid); err != nil {
@@ -375,7 +376,7 @@ func extractTar(tarName string, dst string, archiveType agentendpointpb.Software
 	return nil
 }
 
-func stepInstallMsi(step *agentendpointpb.SoftwareRecipe_Step_InstallMsi, artifacts map[string]string, runEnvs []string, stepDir string) error {
+func stepInstallMsi(ctx context.Context, step *agentendpointpb.SoftwareRecipe_Step_InstallMsi, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	if runtime.GOOS != "windows" {
 		return errors.New("SoftwareRecipe_Step_InstallMsi only applicable on Windows")
 	}
@@ -394,10 +395,10 @@ func stepInstallMsi(step *agentendpointpb.SoftwareRecipe_Step_InstallMsi, artifa
 	if len(exitCodes) == 0 {
 		exitCodes = []int32{0, 1641, 3010}
 	}
-	return executeCommand("C:\\Windows\\System32\\msiexec.exe", args, stepDir, runEnvs, exitCodes)
+	return executeCommand(ctx, "C:\\Windows\\System32\\msiexec.exe", args, stepDir, runEnvs, exitCodes)
 }
 
-func stepInstallDpkg(step *agentendpointpb.SoftwareRecipe_Step_InstallDpkg, artifacts map[string]string) error {
+func stepInstallDpkg(ctx context.Context, step *agentendpointpb.SoftwareRecipe_Step_InstallDpkg, artifacts map[string]string) error {
 	if !packages.DpkgExists {
 		return fmt.Errorf("dpkg does not exist on system")
 	}
@@ -408,10 +409,10 @@ func stepInstallDpkg(step *agentendpointpb.SoftwareRecipe_Step_InstallDpkg, arti
 		return fmt.Errorf("%q not found in artifact map", artifact)
 	}
 
-	return packages.DpkgInstall(path)
+	return packages.DpkgInstall(ctx, path)
 }
 
-func stepInstallRpm(step *agentendpointpb.SoftwareRecipe_Step_InstallRpm, artifacts map[string]string) error {
+func stepInstallRpm(ctx context.Context, step *agentendpointpb.SoftwareRecipe_Step_InstallRpm, artifacts map[string]string) error {
 	if !packages.RPMExists {
 		return fmt.Errorf("rpm does not exist on system")
 	}
@@ -422,10 +423,10 @@ func stepInstallRpm(step *agentendpointpb.SoftwareRecipe_Step_InstallRpm, artifa
 		return fmt.Errorf("%q not found in artifact map", artifact)
 	}
 
-	return packages.RPMInstall(path)
+	return packages.RPMInstall(ctx, path)
 }
 
-func stepExecFile(step *agentendpointpb.SoftwareRecipe_Step_ExecFile, artifacts map[string]string, runEnvs []string, stepDir string) error {
+func stepExecFile(ctx context.Context, step *agentendpointpb.SoftwareRecipe_Step_ExecFile, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	var path string
 	switch {
 	case step.GetArtifactId() != "":
@@ -447,10 +448,10 @@ func stepExecFile(step *agentendpointpb.SoftwareRecipe_Step_ExecFile, artifacts 
 
 	}
 
-	return executeCommand(path, step.Args, stepDir, runEnvs, []int32{0})
+	return executeCommand(ctx, path, step.Args, stepDir, runEnvs, []int32{0})
 }
 
-func stepRunScript(step *agentendpointpb.SoftwareRecipe_Step_RunScript, artifacts map[string]string, runEnvs []string, stepDir string) error {
+func stepRunScript(ctx context.Context, step *agentendpointpb.SoftwareRecipe_Step_RunScript, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	var extension string
 	if runtime.GOOS == "windows" {
 		extension = extensionMap[step.Interpreter]
@@ -481,7 +482,7 @@ func stepRunScript(step *agentendpointpb.SoftwareRecipe_Step_RunScript, artifact
 	default:
 		return fmt.Errorf("unsupported interpreter %q", step.Interpreter)
 	}
-	return executeCommand(cmd, args, stepDir, runEnvs, step.AllowedExitCodes)
+	return executeCommand(ctx, cmd, args, stepDir, runEnvs, step.AllowedExitCodes)
 }
 
 func writeScript(path, contents string) error {
@@ -502,7 +503,7 @@ func writeScript(path, contents string) error {
 	return nil
 }
 
-func executeCommand(cmd string, args []string, workDir string, runEnvs []string, allowedExitCodes []int32) error {
+func executeCommand(ctx context.Context, cmd string, args []string, workDir string, runEnvs []string, allowedExitCodes []int32) error {
 	cmdObj := exec.Command(cmd, args...)
 	cmdObj.Dir = workDir
 	defaultEnv, err := createDefaultEnvironment()
@@ -513,6 +514,7 @@ func executeCommand(cmd string, args []string, workDir string, runEnvs []string,
 	cmdObj.Env = append(cmdObj.Env, runEnvs...)
 
 	o, err := cmdObj.CombinedOutput()
+	clog.Infof(ctx, "Combined output for %q command:\n%s", cmd, o)
 	if err == nil {
 		return nil
 	}
@@ -525,7 +527,6 @@ func executeCommand(cmd string, args []string, workDir string, runEnvs []string,
 			}
 		}
 	}
-	logger.Infof("Combined output for %q command:\n%s", cmd, o)
 	return err
 }
 

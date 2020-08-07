@@ -15,7 +15,10 @@
 package ospatch
 
 import (
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"context"
+	"fmt"
+
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 )
 
@@ -50,14 +53,14 @@ func GooGetDryRun(dryrun bool) GooGetUpdateOption {
 }
 
 // RunGooGetUpdate runs googet update.
-func RunGooGetUpdate(opts ...GooGetUpdateOption) error {
+func RunGooGetUpdate(ctx context.Context, opts ...GooGetUpdateOption) error {
 	googetOpts := &googetUpdateOpts{}
 
 	for _, opt := range opts {
 		opt(googetOpts)
 	}
 
-	pkgs, err := packages.GooGetUpdates()
+	pkgs, err := packages.GooGetUpdates(ctx)
 	if err != nil {
 		return err
 	}
@@ -67,7 +70,7 @@ func RunGooGetUpdate(opts ...GooGetUpdateOption) error {
 		return err
 	}
 	if len(fPkgs) == 0 {
-		logger.Infof("No packages to update.")
+		clog.Infof(ctx, "No packages to update.")
 		return nil
 	}
 
@@ -75,13 +78,13 @@ func RunGooGetUpdate(opts ...GooGetUpdateOption) error {
 	for _, pkg := range fPkgs {
 		pkgNames = append(pkgNames, pkg.Name)
 	}
-	logger.Infof("Updating %d packages.", len(pkgNames))
-	logger.Debugf("Packages to be installed: %s", fPkgs)
 
+	msg := fmt.Sprintf("%d packages: %s", len(pkgNames), fPkgs)
 	if googetOpts.dryrun {
-		logger.Infof("Running in dryrun mode, not updating packages.")
+		clog.Infof(ctx, "Running in dryrun mode, not updating %s", msg)
 		return nil
 	}
+	clog.Infof(ctx, "Updating %s", msg)
 
-	return packages.InstallGooGetPackages(pkgNames)
+	return packages.InstallGooGetPackages(ctx, pkgNames)
 }

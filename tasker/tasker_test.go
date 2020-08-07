@@ -15,6 +15,7 @@
 package tasker
 
 import (
+	"context"
 	"strconv"
 	"testing"
 )
@@ -41,7 +42,7 @@ func TestEnqueueTaskRunSequentially(t *testing.T) {
 }
 
 func addToQueue(i int) {
-	Enqueue(strconv.Itoa(i), func() {
+	Enqueue(context.Background(), strconv.Itoa(i), func() {
 		notes = append(notes, i)
 	})
 }

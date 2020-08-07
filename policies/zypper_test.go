@@ -15,6 +15,7 @@
 package policies
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -24,7 +25,7 @@ import (
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
-func runZypperRepositories(repos []*agentendpointpb.ZypperRepository) (string, error) {
+func runZypperRepositories(ctx context.Context, repos []*agentendpointpb.ZypperRepository) (string, error) {
 	td, err := ioutil.TempDir(os.TempDir(), "")
 	if err != nil {
 		return "", fmt.Errorf("error creating temp dir: %v", err)
@@ -32,7 +33,7 @@ func runZypperRepositories(repos []*agentendpointpb.ZypperRepository) (string, e
 	defer os.RemoveAll(td)
 	testRepo := filepath.Join(td, "testRepo")
 
-	if err := zypperRepositories(repos, testRepo); err != nil {
+	if err := zypperRepositories(ctx, repos, testRepo); err != nil {
 		return "", fmt.Errorf("error running zypperRepositories: %v", err)
 	}
 
@@ -69,7 +70,7 @@ func TestZypperRepositories(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got, err := runZypperRepositories(tt.repos)
+		got, err := runZypperRepositories(context.Background(), tt.repos)
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -16,6 +16,7 @@ package policies
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -23,7 +24,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/armor"
@@ -72,7 +73,7 @@ func containsEntity(es []*openpgp.Entity, e *openpgp.Entity) bool {
 	return false
 }
 
-func aptRepositories(repos []*agentendpointpb.AptRepository, repoFile string) error {
+func aptRepositories(ctx context.Context, repos []*agentendpointpb.AptRepository, repoFile string) error {
 	var es []*openpgp.Entity
 	var keys []string
 	for _, repo := range repos {
@@ -87,7 +88,7 @@ func aptRepositories(repos []*agentendpointpb.AptRepository, repoFile string) er
 	for _, key := range keys {
 		e, err := getAptGPGKey(key)
 		if err != nil {
-			logger.Errorf("Error fetching gpg key %q: %v", key, err)
+			clog.Errorf(ctx, "Error fetching gpg key %q: %v", key, err)
 			continue
 		}
 		if !containsEntity(es, e) {
@@ -99,11 +100,11 @@ func aptRepositories(repos []*agentendpointpb.AptRepository, repoFile string) er
 		var buf bytes.Buffer
 		for _, e := range es {
 			if err := e.Serialize(&buf); err != nil {
-				logger.Errorf("Error serializing gpg key: %v", err)
+				clog.Errorf(ctx, "Error serializing gpg key: %v", err)
 			}
 		}
-		if err := writeIfChanged(buf.Bytes(), aptGPGFile); err != nil {
-			logger.Errorf("Error writing gpg key: %v", err)
+		if err := writeIfChanged(ctx, buf.Bytes(), aptGPGFile); err != nil {
+			clog.Errorf(ctx, "Error writing gpg key: %v", err)
 		}
 	}
 
@@ -126,79 +127,79 @@ func aptRepositories(repos []*agentendpointpb.AptRepository, repoFile string) er
 		buf.WriteString(line + "\n")
 	}
 
-	return writeIfChanged(buf.Bytes(), repoFile)
+	return writeIfChanged(ctx, buf.Bytes(), repoFile)
 }
 
-func aptChanges(aptInstalled, aptRemoved, aptUpdated []*agentendpointpb.Package) error {
+func aptChanges(ctx context.Context, aptInstalled, aptRemoved, aptUpdated []*agentendpointpb.Package) error {
 	var errs []string
 
-	installed, err := packages.InstalledDebPackages()
+	installed, err := packages.InstalledDebPackages(ctx)
 	if err != nil {
 		return err
 	}
 
-	updates, err := packages.AptUpdates(packages.AptGetUpgradeType(packages.AptGetDistUpgrade), packages.AptGetUpgradeShowNew(false))
+	updates, err := packages.AptUpdates(ctx, packages.AptGetUpgradeType(packages.AptGetDistUpgrade), packages.AptGetUpgradeShowNew(false))
 	if err != nil {
 		return err
 	}
 	changes := getNecessaryChanges(installed, updates, aptInstalled, aptRemoved, aptUpdated)
 
 	if changes.packagesToInstall != nil {
-		logger.Infof("Installing packages %s", changes.packagesToInstall)
-		if err := packages.InstallAptPackages(changes.packagesToInstall); err != nil {
-			logger.Errorf("Error installing apt packages: %v", err)
+		clog.Infof(ctx, "Installing packages %s", changes.packagesToInstall)
+		if err := packages.InstallAptPackages(ctx, changes.packagesToInstall); err != nil {
+			clog.Errorf(ctx, "Error installing apt packages: %v", err)
 
 			// Try fallback logic to install the packages individually.
-			logger.Infof("Trying to install packages individually")
+			clog.Infof(ctx, "Trying to install packages individually")
 			var installPkgErrs []string
 			for _, pkg := range changes.packagesToInstall {
-				if err = packages.InstallAptPackages([]string{pkg}); err != nil {
+				if err = packages.InstallAptPackages(ctx, []string{pkg}); err != nil {
 					installPkgErrs = append(installPkgErrs, fmt.Sprintf("Error installing apt package: %v. Error details: %v", pkg, err))
 				}
 			}
 
 			if len(installPkgErrs) > 0 {
 				errorString := strings.Join(installPkgErrs, "\n")
-				logger.Errorf("Error installing apt packages individually: %v", errorString)
+				clog.Errorf(ctx, "Error installing apt packages individually: %v", errorString)
 				errs = append(errs, fmt.Sprintf("error installing apt packages: %v", errorString))
 			}
 		}
 	} else {
-		logger.Debugf("No packages to install.")
+		clog.Debugf(ctx, "No packages to install.")
 	}
 
 	if changes.packagesToUpgrade != nil {
-		logger.Infof("Upgrading packages %s", changes.packagesToUpgrade)
-		if err := packages.InstallAptPackages(changes.packagesToUpgrade); err != nil {
-			logger.Errorf("Error upgrading apt packages: %v", err)
+		clog.Infof(ctx, "Upgrading packages %s", changes.packagesToUpgrade)
+		if err := packages.InstallAptPackages(ctx, changes.packagesToUpgrade); err != nil {
+			clog.Errorf(ctx, "Error upgrading apt packages: %v", err)
 			errs = append(errs, fmt.Sprintf("error upgrading apt packages: %v", err))
 		}
 	} else {
-		logger.Debugf("No packages to upgrade.")
+		clog.Debugf(ctx, "No packages to upgrade.")
 	}
 
 	if changes.packagesToRemove != nil {
-		logger.Infof("Removing packages %s", changes.packagesToRemove)
-		if err := packages.RemoveAptPackages(changes.packagesToRemove); err != nil {
-			logger.Errorf("Error removing apt packages: %v", err)
+		clog.Infof(ctx, "Removing packages %s", changes.packagesToRemove)
+		if err := packages.RemoveAptPackages(ctx, changes.packagesToRemove); err != nil {
+			clog.Errorf(ctx, "Error removing apt packages: %v", err)
 
 			// Try fallback logic to remove the packages individually.
-			logger.Infof("Trying to remove packages individually")
+			clog.Infof(ctx, "Trying to remove packages individually")
 			var removePkgErrs []string
 			for _, pkg := range changes.packagesToRemove {
-				if err = packages.RemoveAptPackages([]string{pkg}); err != nil {
+				if err = packages.RemoveAptPackages(ctx, []string{pkg}); err != nil {
 					removePkgErrs = append(removePkgErrs, fmt.Sprintf("Error removing apt package: %v. Error details: %v", pkg, err))
 				}
 			}
 
 			if len(removePkgErrs) > 0 {
 				errorString := strings.Join(removePkgErrs, "\n")
-				logger.Errorf("Error removing apt packages individually: %v", errorString)
+				clog.Errorf(ctx, "Error removing apt packages individually: %v", errorString)
 				errs = append(errs, fmt.Sprintf("error removing apt packages: %v", errorString))
 			}
 		}
 	} else {
-		logger.Debugf("No packages to remove.")
+		clog.Debugf(ctx, "No packages to remove.")
 	}
 
 	if errs == nil {

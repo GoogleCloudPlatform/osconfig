@@ -5,6 +5,7 @@
   "authors": "Google Inc.",
   "license": "http://www.apache.org/licenses/LICENSE-2.0",
   "description": "Google OSConfig agent",
+  "source": "https://github.com/GoogleCloudPlatform/osconfig",
   "files": {
     "google_osconfig_agent.exe": "<ProgramFiles>/Google/OSConfig/google_osconfig_agent.exe",
     "LICENSE": "<ProgramFiles>/Google/OSConfig/LICENSE.txt"

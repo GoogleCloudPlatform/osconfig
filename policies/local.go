@@ -16,10 +16,11 @@
 package policies
 
 import (
+	"context"
 	"encoding/json"
 
 	"cloud.google.com/go/compute/metadata"
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
@@ -63,10 +64,10 @@ func (r *softwareRecipe) UnmarshalJSON(b []byte) error {
 	return un.Unmarshal(b, &r.SoftwareRecipe)
 }
 
-func readLocalConfig() (*localConfig, error) {
+func readLocalConfig(ctx context.Context) (*localConfig, error) {
 	s, err := metadata.Get("/instance/attributes/gce-software-declaration")
 	if err != nil {
-		logger.Debugf("No local config: %v", err)
+		clog.Debugf(ctx, "No local config: %v", err)
 		return nil, nil
 	}
 

@@ -21,7 +21,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
@@ -32,6 +32,7 @@ var (
 
 // InstallRecipe installs a recipe.
 func InstallRecipe(ctx context.Context, recipe *agentendpointpb.SoftwareRecipe) error {
+	ctx = clog.WithLabels(ctx, map[string]string{"recipe_name": recipe.GetName()})
 	steps := recipe.InstallSteps
 	recipeDB, err := newRecipeDB()
 	if err != nil {
@@ -39,19 +40,19 @@ func InstallRecipe(ctx context.Context, recipe *agentendpointpb.SoftwareRecipe) 
 	}
 	installedRecipe, ok := recipeDB.getRecipe(recipe.Name)
 	if ok {
-		logger.Debugf("Currently installed version of software recipe %s with version %s.", recipe.Name, installedRecipe.Version)
+		clog.Debugf(ctx, "Currently installed version of software recipe %s with version %s.", recipe.GetName(), installedRecipe.Version)
 		if (installedRecipe.compare(recipe.Version)) && (recipe.DesiredState == agentendpointpb.DesiredState_UPDATED) {
-			logger.Infof("Upgrading software recipe %s from version %s to %s.", recipe.Name, installedRecipe.Version, recipe.Version)
+			clog.Infof(ctx, "Upgrading software recipe %s from version %s to %s.", recipe.Name, installedRecipe.Version, recipe.GetVersion())
 			steps = recipe.UpdateSteps
 		} else {
-			logger.Debugf("Skipping software recipe %s.", recipe.Name)
+			clog.Debugf(ctx, "Skipping software recipe %s.", recipe.GetName())
 			return nil
 		}
 	} else {
-		logger.Infof("Installing software recipe %s.", recipe.Name)
+		clog.Infof(ctx, "Installing software recipe %s.", recipe.GetName())
 	}
 
-	logger.Debugf("Creating working directory for recipe %s.", recipe.Name)
+	clog.Debugf(ctx, "Creating working directory for recipe %s.", recipe.GetName())
 	runID := fmt.Sprintf("run_%d", time.Now().UnixNano())
 	runDir, err := createBaseDir(recipe, runID)
 	if err != nil {
@@ -59,7 +60,7 @@ func InstallRecipe(ctx context.Context, recipe *agentendpointpb.SoftwareRecipe) 
 	}
 	defer func() {
 		if err := os.RemoveAll(runDir); err != nil {
-			logger.Warningf("Failed to remove recipe working directory at %q: %v", runDir, err)
+			clog.Warningf(ctx, "Failed to remove recipe working directory at %q: %v", runDir, err)
 		}
 	}()
 	artifacts, err := fetchArtifacts(ctx, recipe.Artifacts, runDir)
@@ -77,7 +78,7 @@ func InstallRecipe(ctx context.Context, recipe *agentendpointpb.SoftwareRecipe) 
 	}
 
 	for i, step := range steps {
-		logger.Debugf("Running step %d: %q", i, step)
+		clog.Debugf(ctx, "Running step %d: %q", i, step)
 		stepDir := filepath.Join(runDir, fmt.Sprintf("step%02d", i))
 		if err := os.MkdirAll(stepDir, 0755); err != nil {
 			return fmt.Errorf("failed to create recipe step dir %q: %s", stepDir, err)
@@ -91,22 +92,22 @@ func InstallRecipe(ctx context.Context, recipe *agentendpointpb.SoftwareRecipe) 
 			err = stepCopyFile(step.GetFileCopy(), artifacts, runEnvs, stepDir)
 		case step.GetArchiveExtraction() != nil:
 			stepType = "ExtractArchive"
-			err = stepExtractArchive(step.GetArchiveExtraction(), artifacts, runEnvs, stepDir)
+			err = stepExtractArchive(ctx, step.GetArchiveExtraction(), artifacts, runEnvs, stepDir)
 		case step.GetMsiInstallation() != nil:
 			stepType = "InstallMsi"
-			err = stepInstallMsi(step.GetMsiInstallation(), artifacts, runEnvs, stepDir)
+			err = stepInstallMsi(ctx, step.GetMsiInstallation(), artifacts, runEnvs, stepDir)
 		case step.GetFileExec() != nil:
 			stepType = "ExecFile"
-			err = stepExecFile(step.GetFileExec(), artifacts, runEnvs, stepDir)
+			err = stepExecFile(ctx, step.GetFileExec(), artifacts, runEnvs, stepDir)
 		case step.GetScriptRun() != nil:
 			stepType = "RunScript"
-			err = stepRunScript(step.GetScriptRun(), artifacts, runEnvs, stepDir)
+			err = stepRunScript(ctx, step.GetScriptRun(), artifacts, runEnvs, stepDir)
 		case step.GetDpkgInstallation() != nil:
 			stepType = "InstallDpkg"
-			err = stepInstallDpkg(step.GetDpkgInstallation(), artifacts)
+			err = stepInstallDpkg(ctx, step.GetDpkgInstallation(), artifacts)
 		case step.GetRpmInstallation() != nil:
 			stepType = "InstallRpm"
-			err = stepInstallRpm(step.GetRpmInstallation(), artifacts)
+			err = stepInstallRpm(ctx, step.GetRpmInstallation(), artifacts)
 		}
 		if err != nil {
 			recipeDB.addRecipe(recipe.Name, recipe.Version, false)
@@ -117,7 +118,7 @@ func InstallRecipe(ctx context.Context, recipe *agentendpointpb.SoftwareRecipe) 
 		}
 	}
 
-	logger.Infof("All steps completed successfully, marking recipe %s as installed.", recipe.Name)
+	clog.Infof(ctx, "All steps completed successfully, marking recipe %s as installed.", recipe.Name)
 	return recipeDB.addRecipe(recipe.Name, recipe.Version, true)
 }
 

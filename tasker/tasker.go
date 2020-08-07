@@ -16,9 +16,10 @@
 package tasker
 
 import (
+	"context"
 	"sync"
 
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 )
 
 var (
@@ -27,9 +28,9 @@ var (
 	mx sync.Mutex
 )
 
-func initTasker() {
+func initTasker(ctx context.Context) {
 	tc = make(chan *task)
-	go tasker()
+	go tasker(ctx)
 }
 
 type task struct {
@@ -39,10 +40,10 @@ type task struct {
 
 // Enqueue adds a task to the task queue.
 // Calls to Enqueue after a Close will block.
-func Enqueue(name string, f func()) {
+func Enqueue(ctx context.Context, name string, f func()) {
 	mx.Lock()
 	if tc == nil {
-		initTasker()
+		initTasker(ctx)
 	}
 	tc <- &task{name: name, run: f}
 	mx.Unlock()
@@ -56,20 +57,20 @@ func Close() {
 	wg.Wait()
 }
 
-func tasker() {
+func tasker(ctx context.Context) {
 	wg.Add(1)
 	defer wg.Done()
 	for {
-		logger.Debugf("Waiting for tasks to run.")
+		clog.Debugf(ctx, "Waiting for tasks to run.")
 		select {
 		case t, ok := <-tc:
 			// Indicates an empty and closed channel.
 			if !ok {
 				return
 			}
-			logger.Debugf("Tasker running %q.", t.name)
+			clog.Debugf(ctx, "Tasker running %q.", t.name)
 			t.run()
-			logger.Debugf("Finished task %q.", t.name)
+			clog.Debugf(ctx, "Finished task %q.", t.name)
 		}
 	}
 }

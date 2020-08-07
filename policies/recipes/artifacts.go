@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 
 	"cloud.google.com/go/storage"
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/external"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
@@ -36,7 +36,7 @@ func fetchArtifacts(ctx context.Context, artifacts []*agentendpointpb.SoftwareRe
 	localNames := make(map[string]string)
 
 	for _, a := range artifacts {
-		logger.Debugf("Downloading artifact: %q", a)
+		clog.Debugf(ctx, "Downloading artifact: %q", a)
 		path, err := fetchArtifact(ctx, a, directory)
 		if err != nil {
 			return nil, err

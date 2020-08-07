@@ -25,8 +25,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/agentendpoint"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"github.com/GoogleCloudPlatform/osconfig/policies/recipes"
@@ -41,44 +41,44 @@ func run(ctx context.Context) {
 
 	client, err := agentendpoint.NewBetaClient(ctx)
 	if err != nil {
-		logger.Errorf("agentendpoint.NewBetaClient Error: %v", err)
+		clog.Errorf(ctx, "agentendpoint.NewBetaClient Error: %v", err)
 	} else {
 		defer client.Close()
 		resp, err = client.LookupEffectiveGuestPolicies(ctx)
 		if err != nil {
-			logger.Errorf("Error running LookupEffectiveGuestPolicies: %v", err)
+			clog.Errorf(ctx, "Error running LookupEffectiveGuestPolicies: %v", err)
 		}
 	}
 
-	local, err := readLocalConfig()
+	local, err := readLocalConfig(ctx)
 	if err != nil {
-		logger.Errorf("Error reading local software config: %v", err)
+		clog.Errorf(ctx, "Error reading local software config: %v", err)
 	}
 
 	effective := mergeConfigs(local, resp)
 
 	// We don't check the error from setConfig or installRecipes as all errors are already logged.
-	setConfig(effective)
+	setConfig(ctx, effective)
 	installRecipes(ctx, effective)
 }
 
 // Run looks up osconfigs and applies them using tasker.Enqueue.
 func Run(ctx context.Context) {
-	tasker.Enqueue("Run GuestPolicies", func() { run(ctx) })
+	tasker.Enqueue(ctx, "Run GuestPolicies", func() { run(ctx) })
 }
 
 func installRecipes(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) error {
 	for _, recipe := range egp.GetSoftwareRecipes() {
 		if r := recipe.GetSoftwareRecipe(); r != nil {
 			if err := recipes.InstallRecipe(ctx, r); err != nil {
-				logger.Errorf("Error installing recipe: %v", err)
+				clog.Errorf(ctx, "Error installing recipe: %v", err)
 			}
 		}
 	}
 	return nil
 }
 
-func setConfig(egp *agentendpointpb.EffectiveGuestPolicy) {
+func setConfig(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) {
 	var aptRepos []*agentendpointpb.AptRepository
 	var yumRepos []*agentendpointpb.YumRepository
 	var zypperRepos []*agentendpointpb.ZypperRepository
@@ -169,69 +169,69 @@ func setConfig(egp *agentendpointpb.EffectiveGuestPolicy) {
 
 	if packages.GooGetExists {
 		if _, err := os.Stat(config.GooGetRepoFilePath()); os.IsNotExist(err) {
-			logger.Debugf("Repo file does not exist, will create one...")
+			clog.Debugf(ctx, "Repo file does not exist, will create one...")
 			if err := os.MkdirAll(filepath.Dir(config.GooGetRepoFilePath()), 07550); err != nil {
-				logger.Errorf("Error creating repo file: %v", err)
+				clog.Errorf(ctx, "Error creating repo file: %v", err)
 			}
 		}
-		if err := googetRepositories(gooRepos, config.GooGetRepoFilePath()); err != nil {
-			logger.Errorf("Error writing googet repo file: %v", err)
+		if err := googetRepositories(ctx, gooRepos, config.GooGetRepoFilePath()); err != nil {
+			clog.Errorf(ctx, "Error writing googet repo file: %v", err)
 		}
-		if err := retryutil.RetryFunc(1*time.Minute, "Applying googet changes", func() error {
-			return googetChanges(gooInstallPkgs, gooRemovePkgs, gooUpdatePkgs)
+		if err := retryutil.RetryFunc(ctx, 1*time.Minute, "Applying googet changes", func() error {
+			return googetChanges(ctx, gooInstallPkgs, gooRemovePkgs, gooUpdatePkgs)
 		}); err != nil {
-			logger.Errorf("Error performing googet changes: %v", err)
+			clog.Errorf(ctx, "Error performing googet changes: %v", err)
 		}
 	}
 
 	if packages.AptExists {
 		if _, err := os.Stat(config.AptRepoFilePath()); os.IsNotExist(err) {
-			logger.Debugf("Repo file does not exist, will create one...")
+			clog.Debugf(ctx, "Repo file does not exist, will create one...")
 			if err := os.MkdirAll(filepath.Dir(config.AptRepoFilePath()), 07550); err != nil {
-				logger.Errorf("Error creating repo file: %v", err)
+				clog.Errorf(ctx, "Error creating repo file: %v", err)
 			}
 		}
-		if err := aptRepositories(aptRepos, config.AptRepoFilePath()); err != nil {
-			logger.Errorf("Error writing apt repo file: %v", err)
+		if err := aptRepositories(ctx, aptRepos, config.AptRepoFilePath()); err != nil {
+			clog.Errorf(ctx, "Error writing apt repo file: %v", err)
 		}
-		if err := retryutil.RetryFunc(1*time.Minute, "Applying apt changes", func() error {
-			return aptChanges(aptInstallPkgs, aptRemovePkgs, aptUpdatePkgs)
+		if err := retryutil.RetryFunc(ctx, 1*time.Minute, "Applying apt changes", func() error {
+			return aptChanges(ctx, aptInstallPkgs, aptRemovePkgs, aptUpdatePkgs)
 		}); err != nil {
-			logger.Errorf("Error performing apt changes: %v", err)
+			clog.Errorf(ctx, "Error performing apt changes: %v", err)
 		}
 	}
 
 	if packages.YumExists {
 		if _, err := os.Stat(config.YumRepoFilePath()); os.IsNotExist(err) {
-			logger.Debugf("Repo file does not exist, will create one...")
+			clog.Debugf(ctx, "Repo file does not exist, will create one...")
 			if err := os.MkdirAll(filepath.Dir(config.YumRepoFilePath()), 07550); err != nil {
-				logger.Errorf("Error creating repo file: %v", err)
+				clog.Errorf(ctx, "Error creating repo file: %v", err)
 			}
 		}
-		if err := yumRepositories(yumRepos, config.YumRepoFilePath()); err != nil {
-			logger.Errorf("Error writing yum repo file: %v", err)
+		if err := yumRepositories(ctx, yumRepos, config.YumRepoFilePath()); err != nil {
+			clog.Errorf(ctx, "Error writing yum repo file: %v", err)
 		}
-		if err := retryutil.RetryFunc(1*time.Minute, "Applying yum changes", func() error {
-			return yumChanges(yumInstallPkgs, yumRemovePkgs, yumUpdatePkgs)
+		if err := retryutil.RetryFunc(ctx, 1*time.Minute, "Applying yum changes", func() error {
+			return yumChanges(ctx, yumInstallPkgs, yumRemovePkgs, yumUpdatePkgs)
 		}); err != nil {
-			logger.Errorf("Error performing yum changes: %v", err)
+			clog.Errorf(ctx, "Error performing yum changes: %v", err)
 		}
 	}
 
 	if packages.ZypperExists {
 		if _, err := os.Stat(config.ZypperRepoFilePath()); os.IsNotExist(err) {
-			logger.Debugf("Repo file does not exist, will create one...")
+			clog.Debugf(ctx, "Repo file does not exist, will create one...")
 			if err := os.MkdirAll(filepath.Dir(config.ZypperRepoFilePath()), 07550); err != nil {
-				logger.Errorf("Error creating repo file: %v", err)
+				clog.Errorf(ctx, "Error creating repo file: %v", err)
 			}
 		}
-		if err := zypperRepositories(zypperRepos, config.ZypperRepoFilePath()); err != nil {
-			logger.Errorf("Error writing zypper repo file: %v", err)
+		if err := zypperRepositories(ctx, zypperRepos, config.ZypperRepoFilePath()); err != nil {
+			clog.Errorf(ctx, "Error writing zypper repo file: %v", err)
 		}
-		if err := retryutil.RetryFunc(1*time.Minute, "Applying zypper changes.", func() error {
-			return zypperChanges(zypperInstallPkgs, zypperRemovePkgs, zypperUpdatePkgs)
+		if err := retryutil.RetryFunc(ctx, 1*time.Minute, "Applying zypper changes.", func() error {
+			return zypperChanges(ctx, zypperInstallPkgs, zypperRemovePkgs, zypperUpdatePkgs)
 		}); err != nil {
-			logger.Errorf("Error performing zypper changes: %v", err)
+			clog.Errorf(ctx, "Error performing zypper changes: %v", err)
 		}
 	}
 }
@@ -242,7 +242,7 @@ func checksum(r io.Reader) hash.Hash {
 	return hash
 }
 
-func writeIfChanged(content []byte, path string) error {
+func writeIfChanged(ctx context.Context, content []byte, path string) error {
 	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		return err
@@ -256,7 +256,7 @@ func writeIfChanged(content []byte, path string) error {
 		return nil
 	}
 
-	logger.Infof("Writing repo file %s with updated contents", path)
+	clog.Infof(ctx, "Writing repo file %s with updated contents", path)
 	if err := file.Truncate(0); err != nil {
 		file.Close()
 		return err

@@ -14,12 +14,13 @@ limitations under the License.
 package packages
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	ole "github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
-	//"github.com/go-ole/go-ole/oleutil"
 )
 
 var wuaSession sync.Mutex
@@ -64,7 +65,7 @@ func (s *IUpdateSession) Close() {
 }
 
 // InstallWUAUpdate install a WIndows update.
-func (s *IUpdateSession) InstallWUAUpdate(updt *IUpdate) error {
+func (s *IUpdateSession) InstallWUAUpdate(ctx context.Context, updt *IUpdate) error {
 	title, err := updt.GetProperty("Title")
 	if err != nil {
 		return fmt.Errorf(`updt.GetProperty("Title"): %v`, err)
@@ -82,24 +83,24 @@ func (s *IUpdateSession) InstallWUAUpdate(updt *IUpdate) error {
 	}
 	// https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-oaut/7b39eb24-9d39-498a-bcd8-75c38e5823d0
 	if eula.Val == 0 {
-		DebugLogger.Printf("%s - Accepting EULA", title.Value())
+		clog.Debugf(ctx, "%s - Accepting EULA", title.Value())
 		if _, err := updt.CallMethod("AcceptEula"); err != nil {
 			return fmt.Errorf(`updt.CallMethod("AcceptEula"): %v`, err)
 		}
 	} else {
-		DebugLogger.Printf("%s - EulaAccepted: %v", title.Value(), eula.Value())
+		clog.Debugf(ctx, "%s - EulaAccepted: %v", title.Value(), eula.Value())
 	}
 
 	if err := updts.Add(updt); err != nil {
 		return err
 	}
 
-	DebugLogger.Printf("Downloading update %s", title.Value())
+	clog.Debugf(ctx, "Downloading update %s", title.Value())
 	if err := s.DownloadWUAUpdateCollection(updts); err != nil {
 		return fmt.Errorf("DownloadWUAUpdateCollection error: %v", err)
 	}
 
-	DebugLogger.Printf("Installing update %s", title.Value())
+	clog.Debugf(ctx, "Installing update %s", title.Value())
 	if err := s.InstallWUAUpdateCollection(updts); err != nil {
 		return fmt.Errorf("InstallWUAUpdateCollection error: %v", err)
 	}

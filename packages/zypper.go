@@ -16,6 +16,7 @@ package packages
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os/exec"
 	"regexp"
@@ -23,6 +24,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
@@ -84,10 +86,10 @@ func ZypperListPatchAll(all bool) ZypperListOption {
 }
 
 // InstallZypperPackages Installs zypper packages
-func InstallZypperPackages(pkgs []string) error {
+func InstallZypperPackages(ctx context.Context, pkgs []string) error {
 	args := append(zypperInstallArgs, pkgs...)
-	out, err := run(exec.Command(zypper, args...))
-	DebugLogger.Printf("zypper %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	out, err := run(ctx, exec.Command(zypper, args...))
+	clog.Debugf(ctx, "zypper %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
 		err = fmt.Errorf("error running zypper with args %q: %v, stdout: %s", args, err, out)
 	}
@@ -95,7 +97,7 @@ func InstallZypperPackages(pkgs []string) error {
 }
 
 // ZypperInstall installs zypper patches and packages
-func ZypperInstall(patches []ZypperPatch, pkgs []PkgInfo) error {
+func ZypperInstall(ctx context.Context, patches []ZypperPatch, pkgs []PkgInfo) error {
 	args := zypperInstallArgs
 
 	// https://www.mankier.com/8/zypper#Concepts-Package_Types use patch install
@@ -107,8 +109,8 @@ func ZypperInstall(patches []ZypperPatch, pkgs []PkgInfo) error {
 		args = append(args, "package:"+pkg.Name)
 	}
 
-	out, err := run(exec.Command(zypper, args...))
-	DebugLogger.Printf("zypper %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	out, err := run(ctx, exec.Command(zypper, args...))
+	clog.Debugf(ctx, "zypper %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
 	// https://en.opensuse.org/SDB:Zypper_manual#EXIT_CODES
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
@@ -125,10 +127,10 @@ func ZypperInstall(patches []ZypperPatch, pkgs []PkgInfo) error {
 }
 
 // RemoveZypperPackages installed Zypper packages.
-func RemoveZypperPackages(pkgs []string) error {
+func RemoveZypperPackages(ctx context.Context, pkgs []string) error {
 	args := append(zypperRemoveArgs, pkgs...)
-	out, err := run(exec.Command(zypper, args...))
-	DebugLogger.Printf("zypper %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	out, err := run(ctx, exec.Command(zypper, args...))
+	clog.Debugf(ctx, "zypper %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
 		err = fmt.Errorf("error running zypper with args %q: %v, stdout: %s", args, err, out)
 	}
@@ -161,9 +163,9 @@ func parseZypperUpdates(data []byte) []PkgInfo {
 }
 
 // ZypperUpdates queries for all available zypper updates.
-func ZypperUpdates() ([]PkgInfo, error) {
-	out, err := run(exec.Command(zypper, zypperListUpdatesArgs...))
-	DebugLogger.Printf("zypper %q output:\n%s", zypperListUpdatesArgs, strings.ReplaceAll(string(out), "\n", "\n "))
+func ZypperUpdates(ctx context.Context) ([]PkgInfo, error) {
+	out, err := run(ctx, exec.Command(zypper, zypperListUpdatesArgs...))
+	clog.Debugf(ctx, "zypper %q output:\n%s", zypperListUpdatesArgs, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
 		return nil, fmt.Errorf("error running zypper with args %q: %v, stdout: %s", zypperListUpdatesArgs, err, out)
 	}
@@ -207,7 +209,7 @@ func parseZypperPatches(data []byte) ([]ZypperPatch, []ZypperPatch) {
 	return ins, avail
 }
 
-func zypperPatches(opts ...ZypperListOption) ([]byte, error) {
+func zypperPatches(ctx context.Context, opts ...ZypperListOption) ([]byte, error) {
 	zOpts := &zypperListPatchOpts{
 		categories:   nil,
 		severities:   nil,
@@ -239,8 +241,8 @@ func zypperPatches(opts ...ZypperListOption) ([]byte, error) {
 		args = append(args, "--all")
 	}
 
-	out, err := run(exec.Command(zypper, args...))
-	DebugLogger.Printf("zypper %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	out, err := run(ctx, exec.Command(zypper, args...))
+	clog.Debugf(ctx, "zypper %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
 		return nil, fmt.Errorf("error running zypper with args %q: %v, stdout: %s", args, err, out)
 	}
@@ -248,8 +250,8 @@ func zypperPatches(opts ...ZypperListOption) ([]byte, error) {
 }
 
 // ZypperPatches queries for all available zypper patches.
-func ZypperPatches(opts ...ZypperListOption) ([]ZypperPatch, error) {
-	out, err := zypperPatches(opts...)
+func ZypperPatches(ctx context.Context, opts ...ZypperListOption) ([]ZypperPatch, error) {
+	out, err := zypperPatches(ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -258,8 +260,8 @@ func ZypperPatches(opts ...ZypperListOption) ([]ZypperPatch, error) {
 }
 
 // ZypperInstalledPatches queries for all installed zypper patches.
-func ZypperInstalledPatches(opts ...ZypperListOption) ([]ZypperPatch, error) {
-	out, err := zypperPatches(opts...)
+func ZypperInstalledPatches(ctx context.Context, opts ...ZypperListOption) ([]ZypperPatch, error) {
+	out, err := zypperPatches(ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -267,13 +269,13 @@ func ZypperInstalledPatches(opts ...ZypperListOption) ([]ZypperPatch, error) {
 	return patches, nil
 }
 
-func zypperPatchInfo(patches []string) ([]byte, error) {
+func zypperPatchInfo(ctx context.Context, patches []string) ([]byte, error) {
 	args := zypperPatchInfoArgs
 	for _, name := range patches {
 		args = append(args, name)
 	}
-	out, err := run(exec.Command(zypper, args...))
-	DebugLogger.Printf("zypper %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	out, err := run(ctx, exec.Command(zypper, args...))
+	clog.Debugf(ctx, "zypper %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
 		return nil, fmt.Errorf("error running zypper with args %q: %v, stdout: %s", args, err, out)
 	}
@@ -401,12 +403,12 @@ func parseZypperPatchInfo(out []byte) (map[string][]string, error) {
 }
 
 // ZypperPackagesInPatch returns the list of patches, a package upgrade belongs to
-func ZypperPackagesInPatch(patches []ZypperPatch) (map[string][]string, error) {
+func ZypperPackagesInPatch(ctx context.Context, patches []ZypperPatch) (map[string][]string, error) {
 	var patchNames []string
 	for _, patch := range patches {
 		patchNames = append(patchNames, patch.Name)
 	}
-	out, err := zypperPatchInfo(patchNames)
+	out, err := zypperPatchInfo(ctx, patchNames)
 	if err != nil {
 		return nil, err
 	}
