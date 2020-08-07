@@ -134,7 +134,7 @@ func run(ctx context.Context) {
 
 	switch action := flag.Arg(0); action {
 	case "", "run", "noservice":
-		runLoop(ctx)
+		runServiceLoop(ctx)
 	case "inventory", "osinventory":
 		inventory.Run(ctx)
 		tasker.Close()
@@ -157,39 +157,54 @@ func run(ctx context.Context) {
 	}
 }
 
-func runLoop(ctx context.Context) {
+func runTaskLoop(ctx context.Context, c chan struct{}) {
 	var taskNotificationClient *agentendpoint.Client
 	var err error
-
-	go func() {
-		for {
-			if config.TaskNotificationEnabled() && (taskNotificationClient == nil || taskNotificationClient.Closed()) {
-				// Start WaitForTaskNotification if we need to.
-				taskNotificationClient, err = agentendpoint.NewClient(ctx)
-				if err != nil {
-					clog.Errorf(ctx, err.Error())
-				} else {
-					taskNotificationClient.WaitForTaskNotification(ctx)
-				}
-			} else if !config.TaskNotificationEnabled() && taskNotificationClient != nil && !taskNotificationClient.Closed() {
-				// Cancel WaitForTaskNotification if we need to, this will block if there is
-				// an existing current task running.
-				if err := taskNotificationClient.Close(); err != nil {
-					clog.Errorf(ctx, err.Error())
-				}
+	for {
+		if config.TaskNotificationEnabled() && (taskNotificationClient == nil || taskNotificationClient.Closed()) {
+			// Start WaitForTaskNotification if we need to.
+			taskNotificationClient, err = agentendpoint.NewClient(ctx)
+			if err != nil {
+				clog.Errorf(ctx, err.Error())
+			} else {
+				taskNotificationClient.WaitForTaskNotification(ctx)
 			}
-			if err := config.WatchConfig(ctx); err != nil {
+		} else if !config.TaskNotificationEnabled() && taskNotificationClient != nil && !taskNotificationClient.Closed() {
+			// Cancel WaitForTaskNotification if we need to, this will block if there is
+			// an existing current task running.
+			if err := taskNotificationClient.Close(); err != nil {
 				clog.Errorf(ctx, err.Error())
 			}
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				continue
-			}
 		}
-	}()
 
+		// This is just to signal WaitForTaskNotification has run if needed.
+		select {
+		case c <- struct{}{}:
+			fmt.Println("c")
+		default:
+			fmt.Println("default")
+		}
+
+		if err := config.WatchConfig(ctx); err != nil {
+			clog.Errorf(ctx, err.Error())
+		}
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			continue
+		}
+	}
+}
+
+func runServiceLoop(ctx context.Context) {
+	// This is just to ensure WaitForTaskNotification runs before any periodocs.
+	c := make(chan struct{})
+	// Configures WaitForTaskNotification, waits for config changes with WatchConfig.
+	go runTaskLoop(ctx, c)
+	<-c
+
+	// Runs functions that need to run on a set interval.
 	ticker := time.NewTicker(config.SvcPollInterval())
 	for {
 		if _, err := os.Stat(config.RestartFile()); err == nil {
@@ -207,7 +222,7 @@ func runLoop(ctx context.Context) {
 		}
 
 		if config.OSInventoryEnabled() {
-			// This should always run after ospackage.SetConfig.
+			// This should always run after policies.Run().
 			inventory.Run(ctx)
 		}
 
