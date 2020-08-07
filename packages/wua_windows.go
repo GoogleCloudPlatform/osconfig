@@ -262,6 +262,38 @@ func (u *IUpdate) categories() ([]string, []string, error) {
 	return cns, cids, nil
 }
 
+func (u *IUpdate) moreInfoURLs() ([]string, error) {
+	moreInfoURLsRaw, err := u.GetProperty("MoreInfoURLs")
+	if err != nil {
+		return nil, fmt.Errorf(`IUpdate.GetProperty("MoreInfoURLs"): %v`, err)
+	}
+	defer moreInfoURLsRaw.Clear()
+
+	moreInfoURLs := moreInfoURLsRaw.ToIDispatch()
+	defer moreInfoURLs.Release()
+
+	count, err := GetCount(moreInfoURLs)
+	if err != nil {
+		return nil, err
+	}
+
+	if count == 0 {
+		return nil, nil
+	}
+
+	var ss []string
+	for i := 0; i < int(count); i++ {
+		item, err := moreInfoURLs.GetProperty("Item", i)
+		if err != nil {
+			return nil, fmt.Errorf(`moreInfoURLs.GetProperty("Item", %d): %v`, i, err)
+		}
+		defer item.Clear()
+
+		ss = append(ss, item.ToString())
+	}
+	return ss, nil
+}
+
 func (c *IUpdateCollection) extractPkg(item int) (*WUAPackage, error) {
 	updt, err := c.Item(item)
 	if err != nil {
@@ -287,6 +319,11 @@ func (c *IUpdateCollection) extractPkg(item int) (*WUAPackage, error) {
 	}
 
 	categories, categoryIDs, err := updt.categories()
+	if err != nil {
+		return nil, err
+	}
+
+	moreInfoURLs, err := updt.moreInfoURLs()
 	if err != nil {
 		return nil, err
 	}
@@ -337,6 +374,7 @@ func (c *IUpdateCollection) extractPkg(item int) (*WUAPackage, error) {
 		UpdateID:                 updateID.ToString(),
 		Categories:               categories,
 		CategoryIDs:              categoryIDs,
+		MoreInfoURLs:             moreInfoURLs,
 		RevisionNumber:           int32(revisionNumber.Val),
 		LastDeploymentChangeTime: lastDeploymentChangeTime,
 	}, nil
