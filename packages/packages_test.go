@@ -15,15 +15,17 @@
 package packages
 
 import (
+	"context"
 	"io/ioutil"
 	"os/exec"
 	"path/filepath"
 )
 
 var pkgs = []string{"pkg1", "pkg2"}
+var testCtx = context.Background()
 
-func getMockRun(content []byte, err error) func(cmd *exec.Cmd) ([]byte, error) {
-	return func(cmd *exec.Cmd) ([]byte, error) {
+func getMockRun(content []byte, err error) func(_ context.Context, cmd *exec.Cmd) ([]byte, error) {
+	return func(_ context.Context, cmd *exec.Cmd) ([]byte, error) {
 		return content, err
 	}
 }

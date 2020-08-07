@@ -16,17 +16,18 @@ package policies
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
-func yumRepositories(repos []*agentendpointpb.YumRepository, repoFile string) error {
+func yumRepositories(ctx context.Context, repos []*agentendpointpb.YumRepository, repoFile string) error {
 	// TODO: Would it be easier to just use templates?
 	/*
 		# Repo file managed by Google OSConfig agent
@@ -63,39 +64,39 @@ func yumRepositories(repos []*agentendpointpb.YumRepository, repoFile string) er
 		}
 	}
 
-	return writeIfChanged(buf.Bytes(), repoFile)
+	return writeIfChanged(ctx, buf.Bytes(), repoFile)
 }
 
-func yumChanges(yumInstalled, yumRemoved, yumUpdated []*agentendpointpb.Package) error {
+func yumChanges(ctx context.Context, yumInstalled, yumRemoved, yumUpdated []*agentendpointpb.Package) error {
 	var errs []string
 
-	installed, err := packages.InstalledRPMPackages()
+	installed, err := packages.InstalledRPMPackages(ctx)
 	if err != nil {
 		return err
 	}
-	updates, err := packages.YumUpdates()
+	updates, err := packages.YumUpdates(ctx)
 	if err != nil {
 		return err
 	}
 	changes := getNecessaryChanges(installed, updates, yumInstalled, yumRemoved, yumUpdated)
 
 	if changes.packagesToInstall != nil {
-		logger.Infof("Installing packages %s", changes.packagesToInstall)
-		if err := packages.InstallYumPackages(changes.packagesToInstall); err != nil {
+		clog.Infof(ctx, "Installing packages %s", changes.packagesToInstall)
+		if err := packages.InstallYumPackages(ctx, changes.packagesToInstall); err != nil {
 			errs = append(errs, fmt.Sprintf("error installing yum packages: %v", err))
 		}
 	}
 
 	if changes.packagesToUpgrade != nil {
-		logger.Infof("Upgrading packages %s", changes.packagesToUpgrade)
-		if err := packages.InstallYumPackages(changes.packagesToUpgrade); err != nil {
+		clog.Infof(ctx, "Upgrading packages %s", changes.packagesToUpgrade)
+		if err := packages.InstallYumPackages(ctx, changes.packagesToUpgrade); err != nil {
 			errs = append(errs, fmt.Sprintf("error upgrading yum packages: %v", err))
 		}
 	}
 
 	if changes.packagesToRemove != nil {
-		logger.Infof("Removing packages %s", changes.packagesToRemove)
-		if err := packages.RemoveYumPackages(changes.packagesToRemove); err != nil {
+		clog.Infof(ctx, "Removing packages %s", changes.packagesToRemove)
+		if err := packages.RemoveYumPackages(ctx, changes.packagesToRemove); err != nil {
 			errs = append(errs, fmt.Sprintf("error removing yum packages: %v", err))
 		}
 	}

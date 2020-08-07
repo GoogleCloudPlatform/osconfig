@@ -26,7 +26,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/external"
 
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
@@ -59,7 +59,7 @@ var run = func(cmd *exec.Cmd) ([]byte, error) {
 	return cmd.CombinedOutput()
 }
 
-func getGCSObject(ctx context.Context, bkt, obj string, gen int64, loggingLabels map[string]string) (string, error) {
+func getGCSObject(ctx context.Context, bkt, obj string, gen int64) (string, error) {
 	cl, err := storage.NewClient(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error creating gcs client: %v", err)
@@ -69,26 +69,26 @@ func getGCSObject(ctx context.Context, bkt, obj string, gen int64, loggingLabels
 		return "", fmt.Errorf("error fetching GCS object: %v", err)
 	}
 	defer reader.Close()
-	logger.Debugf("Fetched GCS object bucket %s object %s generation number %d", bkt, obj, gen)
+	clog.Debugf(ctx, "Fetched GCS object bucket %s object %s generation number %d", bkt, obj, gen)
 
 	localPath := filepath.Join(os.TempDir(), path.Base(obj))
 	if err := external.DownloadStream(reader, "", localPath, 0755); err != nil {
 		return "", fmt.Errorf("error downloading GCS object: %s", err)
 	}
 
-	logger.Debugf("Downloaded to local path %s", localPath)
+	clog.Debugf(ctx, "Downloaded to local path %s", localPath)
 	return localPath, nil
 }
 
-func executeCommand(path string, args []string, loggingLabels map[string]string) (int32, error) {
-	logger.Debugf("Running command %s with args %s", path, args)
+func executeCommand(ctx context.Context, path string, args []string) (int32, error) {
+	clog.Debugf(ctx, "Running command %s with args %s", path, args)
 
 	cmd := exec.Command(path, args...)
 	out, err := run(cmd)
 	var exitCode int32
 	if cmd.ProcessState != nil {
 		exitCode = int32(cmd.ProcessState.ExitCode())
-		logger.Infof("Command exit code: %d, out:\n%s", exitCode, out)
+		clog.Infof(ctx, "Command exit code: %d, out:\n%s", exitCode, out)
 	}
 	if err != nil {
 		if _, ok := err.(*exec.ExitError); !ok {
@@ -104,8 +104,7 @@ type execTask struct {
 
 	TaskID    string
 	Task      *execStepTask
-	StartedAt time.Time         `json:",omitempty"`
-	LogLabels map[string]string `json:",omitempty"`
+	StartedAt time.Time `json:",omitempty"`
 }
 
 type execStepTask struct {
@@ -153,13 +152,20 @@ func (e *execTask) run(ctx context.Context) error {
 	localPath := stepConfig.GetLocalPath()
 	if gcsObject := stepConfig.GetGcsObject(); gcsObject != nil {
 		var err error
-		localPath, err = getGCSObject(ctx, gcsObject.GetBucket(), gcsObject.GetObject(), gcsObject.GetGenerationNumber(), e.LogLabels)
+		localPath, err = getGCSObject(ctx, gcsObject.GetBucket(), gcsObject.GetObject(), gcsObject.GetGenerationNumber())
 		if err != nil {
-			return fmt.Errorf("error getting executable path: %v", err)
+			msg := fmt.Sprintf("Error downloading GCS object: %v", err)
+			clog.Errorf(ctx, msg)
+			return e.reportCompletedState(ctx, msg, &agentendpointpb.ReportTaskCompleteRequest_ExecStepTaskOutput{
+				ExecStepTaskOutput: &agentendpointpb.ExecStepTaskOutput{
+					State:    agentendpointpb.ExecStepTaskOutput_COMPLETED,
+					ExitCode: -1,
+				},
+			})
 		}
 		defer func() {
 			if err := os.Remove(localPath); err != nil {
-				logger.Errorf("error removing downloaded file %s", err)
+				clog.Errorf(ctx, "error removing downloaded file %s", err)
 			}
 		}()
 	}
@@ -170,17 +176,17 @@ func (e *execTask) run(ctx context.Context) error {
 		if goos == "windows" {
 			err = errWinNoInt
 		} else {
-			exitCode, err = executeCommand(localPath, nil, e.LogLabels)
+			exitCode, err = executeCommand(ctx, localPath, nil)
 		}
 	case agentendpointpb.ExecStepConfig_SHELL:
 		if goos == "windows" {
-			exitCode, err = executeCommand(winCmd, []string{"/c", localPath}, e.LogLabels)
+			exitCode, err = executeCommand(ctx, winCmd, []string{"/c", localPath})
 		} else {
-			exitCode, err = executeCommand(sh, []string{localPath}, e.LogLabels)
+			exitCode, err = executeCommand(ctx, sh, []string{localPath})
 		}
 	case agentendpointpb.ExecStepConfig_POWERSHELL:
 		if goos == "windows" {
-			exitCode, err = executeCommand(winPowershell, append(winPowershellArgs, "-File", localPath), e.LogLabels)
+			exitCode, err = executeCommand(ctx, winPowershell, append(winPowershellArgs, "-File", localPath))
 		} else {
 			err = errLinuxPowerShell
 		}
@@ -188,7 +194,9 @@ func (e *execTask) run(ctx context.Context) error {
 		err = fmt.Errorf("invalid interpreter %q", stepConfig.GetInterpreter())
 	}
 	if err != nil {
-		return e.reportCompletedState(ctx, err.Error(), &agentendpointpb.ReportTaskCompleteRequest_ExecStepTaskOutput{
+		msg := fmt.Sprintf("Error running exec task: %v", err)
+		clog.Errorf(ctx, msg)
+		return e.reportCompletedState(ctx, msg, &agentendpointpb.ReportTaskCompleteRequest_ExecStepTaskOutput{
 			ExecStepTaskOutput: &agentendpointpb.ExecStepTaskOutput{
 				State:    agentendpointpb.ExecStepTaskOutput_COMPLETED,
 				ExitCode: exitCode,
@@ -206,11 +214,11 @@ func (e *execTask) run(ctx context.Context) error {
 
 // RunExecStep runs an exec step task.
 func (c *Client) RunExecStep(ctx context.Context, task *agentendpointpb.Task) error {
+	ctx = clog.WithLabels(ctx, task.GetServiceLabels())
 	e := &execTask{
-		TaskID:    task.GetTaskId(),
-		client:    c,
-		Task:      &execStepTask{task.GetExecStepTask()},
-		LogLabels: mkLabels(task.GetServiceLabels()),
+		TaskID: task.GetTaskId(),
+		client: c,
+		Task:   &execStepTask{task.GetExecStepTask()},
 	}
 
 	return e.run(ctx)

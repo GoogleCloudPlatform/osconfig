@@ -17,13 +17,14 @@
 package inventory
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
 	"time"
 
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/attributes"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
@@ -49,8 +50,8 @@ type InstanceInventory struct {
 	LastUpdated          string
 }
 
-func write(state *InstanceInventory, url string) {
-	logger.Debugf("Writing instance inventory.")
+func write(ctx context.Context, state *InstanceInventory, url string) {
+	clog.Debugf(ctx, "Writing instance inventory.")
 
 	e := reflect.ValueOf(state).Elem()
 	t := e.Type()
@@ -59,38 +60,38 @@ func write(state *InstanceInventory, url string) {
 		u := fmt.Sprintf("%s/%s", url, t.Field(i).Name)
 		switch f.Kind() {
 		case reflect.String:
-			logger.Debugf("postAttribute %s: %+v", u, f)
+			clog.Debugf(ctx, "postAttribute %s: %+v", u, f)
 			if err := attributes.PostAttribute(u, strings.NewReader(f.String())); err != nil {
-				logger.Errorf("postAttribute error: %v", err)
+				clog.Errorf(ctx, "postAttribute error: %v", err)
 			}
 		case reflect.Struct:
-			logger.Debugf("postAttributeCompressed %s: %+v", u, f)
+			clog.Debugf(ctx, "postAttributeCompressed %s: %+v", u, f)
 			if err := attributes.PostAttributeCompressed(u, f.Interface()); err != nil {
-				logger.Errorf("postAttributeCompressed error: %v", err)
+				clog.Errorf(ctx, "postAttributeCompressed error: %v", err)
 			}
 		}
 	}
 }
 
 // Get generates inventory data.
-func Get() *InstanceInventory {
-	logger.Debugf("Gathering instance inventory.")
+func Get(ctx context.Context) *InstanceInventory {
+	clog.Debugf(ctx, "Gathering instance inventory.")
 
 	hs := &InstanceInventory{}
 
-	installedPackages, err := packages.GetInstalledPackages()
+	installedPackages, err := packages.GetInstalledPackages(ctx)
 	if err != nil {
-		logger.Errorf("packages.GetInstalledPackages() error: %v", err)
+		clog.Errorf(ctx, "packages.GetInstalledPackages() error: %v", err)
 	}
 
-	packageUpdates, err := packages.GetPackageUpdates()
+	packageUpdates, err := packages.GetPackageUpdates(ctx)
 	if err != nil {
-		logger.Errorf("packages.GetPackageUpdates() error: %v", err)
+		clog.Errorf(ctx, "packages.GetPackageUpdates() error: %v", err)
 	}
 
 	oi, err := osinfo.Get()
 	if err != nil {
-		logger.Errorf("osinfo.Get() error: %v", err)
+		clog.Errorf(ctx, "osinfo.Get() error: %v", err)
 	}
 
 	hs.Hostname = oi.Hostname
@@ -110,6 +111,6 @@ func Get() *InstanceInventory {
 }
 
 // Run gathers and records inventory information using tasker.Enqueue.
-func Run() {
-	tasker.Enqueue("Run OSInventory", func() { write(Get(), inventoryURL) })
+func Run(ctx context.Context) {
+	tasker.Enqueue(ctx, "Run OSInventory", func() { write(ctx, Get(ctx), inventoryURL) })
 }

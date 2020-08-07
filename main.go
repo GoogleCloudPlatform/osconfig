@@ -20,7 +20,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -32,9 +31,9 @@ import (
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/agentendpoint"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
-	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"github.com/GoogleCloudPlatform/osconfig/policies"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
 	"github.com/tarm/serial"
@@ -59,13 +58,6 @@ func init() {
 	os.MkdirAll(filepath.Dir(config.RestartFile()), 0755)
 }
 
-type logWriter struct{}
-
-func (l *logWriter) Write(b []byte) (int, error) {
-	logger.Log(logger.LogEntry{Message: string(b), Severity: logger.Debug})
-	return len(b), nil
-}
-
 type serialPort struct {
 	port string
 }
@@ -84,11 +76,6 @@ func (s *serialPort) Write(b []byte) (int, error) {
 var deferredFuncs []func()
 
 func run(ctx context.Context) {
-	// Remove any existing restart file.
-	if err := os.Remove(config.RestartFile()); err != nil && !os.IsNotExist(err) {
-		logger.Errorf("Error removing restart signal file: %v", err)
-	}
-
 	// Setup logging.
 	opts := logger.LogOpts{LoggerName: "OSConfigAgent"}
 	if config.Stdout() {
@@ -110,9 +97,14 @@ func run(ctx context.Context) {
 		fmt.Printf("Error initializing logger: %v", err)
 		os.Exit(1)
 	}
-	packages.DebugLogger = log.New(&logWriter{}, "", 0)
+	ctx = clog.WithLabels(ctx, map[string]string{"instance_name": config.Name()})
 
-	deferredFuncs = append(deferredFuncs, logger.Close, func() { logger.Infof("OSConfig Agent (version %s) shutting down.", config.Version()) })
+	// Remove any existing restart file.
+	if err := os.Remove(config.RestartFile()); err != nil && !os.IsNotExist(err) {
+		clog.Errorf(ctx, "Error removing restart signal file: %v", err)
+	}
+
+	deferredFuncs = append(deferredFuncs, logger.Close, func() { clog.Infof(ctx, "OSConfig Agent (version %s) shutting down.", config.Version()) })
 
 	obtainLock()
 
@@ -124,7 +116,7 @@ func run(ctx context.Context) {
 		}
 	}()
 
-	logger.Infof("OSConfig Agent (version %s) started.", config.Version())
+	clog.Infof(ctx, "OSConfig Agent (version %s) started.", config.Version())
 
 	// Call RegisterAgent on start then at least once every day.
 	go func() {
@@ -142,9 +134,9 @@ func run(ctx context.Context) {
 
 	switch action := flag.Arg(0); action {
 	case "", "run", "noservice":
-		runLoop(ctx)
+		runServiceLoop(ctx)
 	case "inventory", "osinventory":
-		inventory.Run()
+		inventory.Run(ctx)
 		tasker.Close()
 		return
 	case "gp", "policies", "guestpolicies", "ospackage":
@@ -165,45 +157,60 @@ func run(ctx context.Context) {
 	}
 }
 
-func runLoop(ctx context.Context) {
+func runTaskLoop(ctx context.Context, c chan struct{}) {
 	var taskNotificationClient *agentendpoint.Client
 	var err error
-
-	go func() {
-		for {
-			if config.TaskNotificationEnabled() && (taskNotificationClient == nil || taskNotificationClient.Closed()) {
-				// Start WaitForTaskNotification if we need to.
-				taskNotificationClient, err = agentendpoint.NewClient(ctx)
-				if err != nil {
-					logger.Errorf(err.Error())
-				} else {
-					taskNotificationClient.WaitForTaskNotification(ctx)
-				}
-			} else if !config.TaskNotificationEnabled() && taskNotificationClient != nil && !taskNotificationClient.Closed() {
-				// Cancel WaitForTaskNotification if we need to, this will block if there is
-				// an existing current task running.
-				if err := taskNotificationClient.Close(); err != nil {
-					logger.Errorf(err.Error())
-				}
+	for {
+		if config.TaskNotificationEnabled() && (taskNotificationClient == nil || taskNotificationClient.Closed()) {
+			// Start WaitForTaskNotification if we need to.
+			taskNotificationClient, err = agentendpoint.NewClient(ctx)
+			if err != nil {
+				clog.Errorf(ctx, err.Error())
+			} else {
+				taskNotificationClient.WaitForTaskNotification(ctx)
 			}
-			if err := config.WatchConfig(ctx); err != nil {
-				logger.Errorf(err.Error())
-			}
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				continue
+		} else if !config.TaskNotificationEnabled() && taskNotificationClient != nil && !taskNotificationClient.Closed() {
+			// Cancel WaitForTaskNotification if we need to, this will block if there is
+			// an existing current task running.
+			if err := taskNotificationClient.Close(); err != nil {
+				clog.Errorf(ctx, err.Error())
 			}
 		}
-	}()
 
+		// This is just to signal WaitForTaskNotification has run if needed.
+		select {
+		case c <- struct{}{}:
+			fmt.Println("c")
+		default:
+			fmt.Println("default")
+		}
+
+		if err := config.WatchConfig(ctx); err != nil {
+			clog.Errorf(ctx, err.Error())
+		}
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			continue
+		}
+	}
+}
+
+func runServiceLoop(ctx context.Context) {
+	// This is just to ensure WaitForTaskNotification runs before any periodocs.
+	c := make(chan struct{})
+	// Configures WaitForTaskNotification, waits for config changes with WatchConfig.
+	go runTaskLoop(ctx, c)
+	<-c
+
+	// Runs functions that need to run on a set interval.
 	ticker := time.NewTicker(config.SvcPollInterval())
 	for {
 		if _, err := os.Stat(config.RestartFile()); err == nil {
-			logger.Infof("Restart required marker file exists, beginning agent shutdown, waiting for tasks to complete.")
+			clog.Infof(ctx, "Restart required marker file exists, beginning agent shutdown, waiting for tasks to complete.")
 			tasker.Close()
-			logger.Infof("All tasks completed, stopping agent.")
+			clog.Infof(ctx, "All tasks completed, stopping agent.")
 			for _, f := range deferredFuncs {
 				f()
 			}
@@ -215,12 +222,12 @@ func runLoop(ctx context.Context) {
 		}
 
 		if config.OSInventoryEnabled() {
-			// This should always run after ospackage.SetConfig.
-			inventory.Run()
+			// This should always run after policies.Run().
+			inventory.Run(ctx)
 		}
 
 		// Return unused memory to ensure our footprint doesn't keep increasing.
-		logger.Debugf("Running debug.FreeOSMemory()")
+		clog.Debugf(ctx, "Running debug.FreeOSMemory()")
 		debug.FreeOSMemory()
 
 		select {
@@ -235,6 +242,7 @@ func runLoop(ctx context.Context) {
 func main() {
 	flag.Parse()
 	ctx, cncl := context.WithCancel(context.Background())
+	ctx = clog.WithLabels(ctx, map[string]string{"agent_version": config.Version()})
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 	go func() {

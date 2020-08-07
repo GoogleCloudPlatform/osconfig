@@ -16,12 +16,13 @@
 package retryutil
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"math/rand"
 	"time"
 
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -45,7 +46,7 @@ func RetrySleep(base int, extra int) time.Duration {
 }
 
 // RetryFunc retries a function provided as a parameter for maxRetryTime.
-func RetryFunc(maxRetryTime time.Duration, desc string, f func() error) error {
+func RetryFunc(ctx context.Context, maxRetryTime time.Duration, desc string, f func() error) error {
 	var tot time.Duration
 	for i := 1; ; i++ {
 		err := f()
@@ -59,13 +60,13 @@ func RetryFunc(maxRetryTime time.Duration, desc string, f func() error) error {
 			return err
 		}
 
-		logger.Errorf("Error %s, attempt %d, retrying in %s: %v", desc, i, ns, err)
+		clog.Errorf(ctx, "Error %s, attempt %d, retrying in %s: %v", desc, i, ns, err)
 		time.Sleep(ns)
 	}
 }
 
 // RetryAPICall retries an API call for maxRetryTime.
-func RetryAPICall(maxRetryTime time.Duration, name string, f func() error) error {
+func RetryAPICall(ctx context.Context, maxRetryTime time.Duration, name string, f func() error) error {
 	var tot time.Duration
 	for i := 1; ; i++ {
 		extra := 1
@@ -94,7 +95,7 @@ func RetryAPICall(maxRetryTime time.Duration, name string, f func() error) error
 			return err
 		}
 
-		logger.Errorf("Error calling %s, attempt %d, retrying in %s: %v", name, i, ns, err)
+		clog.Warningf(ctx, "Error calling %s, attempt %d, retrying in %s: %v", name, i, ns, err)
 		time.Sleep(ns)
 	}
 }

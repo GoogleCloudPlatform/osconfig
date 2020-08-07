@@ -19,7 +19,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -34,7 +33,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/compute/metadata"
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"golang.org/x/oauth2/jws"
 )
 
@@ -333,10 +332,10 @@ func setSVCEndpoint(md metadataJSON, c *config) {
 func formatMetadataError(err error) error {
 	if urlErr, ok := err.(*url.Error); ok {
 		if _, ok := urlErr.Err.(*net.DNSError); ok {
-			return errors.New("DNS error when requesting metadata, check DNS settings and ensure metadata.google.internal is setup in your hosts file")
+			return fmt.Errorf("DNS error when requesting metadata, check DNS settings and ensure metadata.google.internal is setup in your hosts file: %w", err)
 		}
 		if _, ok := urlErr.Err.(*net.OpError); ok {
-			return errors.New("network error when requesting metadata, make sure your instance has an active network and can reach the metadata server")
+			return fmt.Errorf("network error when requesting metadata, make sure your instance has an active network and can reach the metadata server: %w", err)
 		}
 	}
 	return err
@@ -383,7 +382,10 @@ func getMetadata(suffix string) ([]byte, string, error) {
 func WatchConfig(ctx context.Context) error {
 	var md []byte
 	var webError error
-	ticker := time.NewTicker(osConfigWatchConfigTimeout)
+	// Max watch time, after this WatchConfig will return.
+	timeout := time.NewTicker(osConfigWatchConfigTimeout)
+	// Min watch loop time.
+	loopTicker := time.NewTicker(5 * time.Second)
 	eTag := lEtag.get()
 	webErrorCount := 0
 	for {
@@ -406,21 +408,21 @@ func WatchConfig(ctx context.Context) error {
 			agentConfigMx.Unlock()
 		}
 
-		// Try up to 3 times to wait for slow network initialization, after
+		// Try up to 12 times (60s) to wait for slow network initialization, after
 		// that resort to using defaults and returning the error.
 		if webError != nil {
-			if webErrorCount == 2 {
+			if webErrorCount == 12 {
 				return formatMetadataError(webError)
 			}
 			webErrorCount++
 		}
 
 		select {
-		case <-ticker.C:
-			return nil
+		case <-timeout.C:
+			return webError
 		case <-ctx.Done():
 			return nil
-		default:
+		case <-loopTicker.C:
 			continue
 		}
 	}
@@ -429,8 +431,8 @@ func WatchConfig(ctx context.Context) error {
 }
 
 // LogFeatures logs the osconfig feature status.
-func LogFeatures() {
-	logger.Infof("OSConfig enabled features status:{GuestPolicies: %t, OSInventory: %t, PatchManagement: %t}.", GuestPoliciesEnabled(), OSInventoryEnabled(), TaskNotificationEnabled())
+func LogFeatures(ctx context.Context) {
+	clog.Infof(ctx, "OSConfig enabled features status:{GuestPolicies: %t, OSInventory: %t, PatchManagement: %t}.", GuestPoliciesEnabled(), OSInventoryEnabled(), TaskNotificationEnabled())
 }
 
 // SvcPollInterval returns the frequency to poll the service.

@@ -15,7 +15,10 @@
 package ospatch
 
 import (
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"context"
+	"fmt"
+
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 )
 
@@ -76,7 +79,7 @@ func YumDryRun(dryrun bool) YumUpdateOption {
 }
 
 // RunYumUpdate runs yum update.
-func RunYumUpdate(opts ...YumUpdateOption) error {
+func RunYumUpdate(ctx context.Context, opts ...YumUpdateOption) error {
 	yumOpts := &yumUpdateOpts{
 		security: false,
 		minimal:  false,
@@ -87,17 +90,19 @@ func RunYumUpdate(opts ...YumUpdateOption) error {
 		opt(yumOpts)
 	}
 
-	pkgs, err := packages.YumUpdates(packages.YumUpdateMinimal(yumOpts.minimal), packages.YumUpdateSecurity(yumOpts.security))
+	pkgs, err := packages.YumUpdates(ctx, packages.YumUpdateMinimal(yumOpts.minimal), packages.YumUpdateSecurity(yumOpts.security), packages.YumExcludes(yumOpts.excludes))
 	if err != nil {
 		return err
 	}
 
-	fPkgs, err := filterPackages(pkgs, yumOpts.exclusivePackages, yumOpts.excludes)
+	// Yum excludes are already excluded while listing yumUpdates, so we send
+	// and empty list.
+	fPkgs, err := filterPackages(pkgs, yumOpts.exclusivePackages, []string{})
 	if err != nil {
 		return err
 	}
 	if len(fPkgs) == 0 {
-		logger.Infof("No packages to update.")
+		clog.Infof(ctx, "No packages to update.")
 		return nil
 	}
 
@@ -105,13 +110,13 @@ func RunYumUpdate(opts ...YumUpdateOption) error {
 	for _, pkg := range fPkgs {
 		pkgNames = append(pkgNames, pkg.Name)
 	}
-	logger.Infof("Updating %d packages.", len(pkgNames))
-	logger.Debugf("Packages to be installed: %s", fPkgs)
 
+	msg := fmt.Sprintf("%d packages: %s", len(pkgNames), fPkgs)
 	if yumOpts.dryrun {
-		logger.Infof("Running in dryrun mode, not updating packages.")
+		clog.Infof(ctx, "Running in dryrun mode, not updating %s", msg)
 		return nil
 	}
+	clog.Infof(ctx, "Updating %s", msg)
 
-	return packages.InstallYumPackages(pkgNames)
+	return packages.InstallYumPackages(ctx, pkgNames)
 }

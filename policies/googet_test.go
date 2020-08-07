@@ -15,6 +15,7 @@
 package policies
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -24,7 +25,7 @@ import (
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
-func runGooGetRepositories(repos []*agentendpointpb.GooRepository) (string, error) {
+func runGooGetRepositories(ctx context.Context, repos []*agentendpointpb.GooRepository) (string, error) {
 	td, err := ioutil.TempDir(os.TempDir(), "")
 	if err != nil {
 		return "", fmt.Errorf("error creating temp dir: %v", err)
@@ -32,7 +33,7 @@ func runGooGetRepositories(repos []*agentendpointpb.GooRepository) (string, erro
 	defer os.RemoveAll(td)
 	testRepo := filepath.Join(td, "testRepo")
 
-	if err := googetRepositories(repos, testRepo); err != nil {
+	if err := googetRepositories(ctx, repos, testRepo); err != nil {
 		return "", fmt.Errorf("error running googetRepositories: %v", err)
 	}
 
@@ -69,7 +70,7 @@ func TestGooGetRepositories(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got, err := runGooGetRepositories(tt.repos)
+		got, err := runGooGetRepositories(context.Background(), tt.repos)
 		if err != nil {
 			t.Fatal(err)
 		}

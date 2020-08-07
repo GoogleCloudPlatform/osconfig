@@ -16,12 +16,13 @@ limitations under the License.
 package packages
 
 import (
-	"io/ioutil"
-	"log"
+	"context"
 	"os/exec"
 	"time"
 
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 var (
@@ -48,8 +49,9 @@ var (
 
 	noarch = osinfo.Architecture("noarch")
 
-	// DebugLogger is the debug logger to use.
-	DebugLogger = log.New(ioutil.Discard, "", 0)
+	runner = util.CommandRunner(&defaultRunner{})
+
+	ptyrunner = util.CommandRunner(&ptyRunner{})
 )
 
 // Packages is a selection of packages based on their manager.
@@ -95,7 +97,32 @@ type QFEPackage struct {
 	Caption, Description, HotFixID, InstalledOn string
 }
 
-var run = func(cmd *exec.Cmd) ([]byte, error) {
-	DebugLogger.Printf("Running %q with args %q\n", cmd.Path, cmd.Args[1:])
+var run = func(ctx context.Context, cmd *exec.Cmd) ([]byte, error) {
+	clog.Debugf(ctx, "Running %q with args %q\n", cmd.Path, cmd.Args[1:])
 	return cmd.CombinedOutput()
+}
+
+type ptyRunner struct{}
+
+func (p *ptyRunner) Run(ctx context.Context, cmd *exec.Cmd) ([]byte, error) {
+	clog.Debugf(ctx, "Running %q with args %q\n", cmd.Path, cmd.Args[1:])
+	return runWithPty(cmd)
+}
+
+type defaultRunner struct{}
+
+func (p *defaultRunner) Run(ctx context.Context, cmd *exec.Cmd) ([]byte, error) {
+	clog.Debugf(ctx, "Running %q with args %q\n", cmd.Path, cmd.Args[1:])
+	return cmd.CombinedOutput()
+}
+
+// SetCommandRunner allows external clients to set a custom commandRunner.
+func SetCommandRunner(commandRunner util.CommandRunner) {
+	runner = commandRunner
+}
+
+// SetPtyCommandRunner allows external clients to set a custom
+// custom commandRunner.
+func SetPtyCommandRunner(commandRunner util.CommandRunner) {
+	ptyrunner = commandRunner
 }

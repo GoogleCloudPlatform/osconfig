@@ -16,6 +16,7 @@ package packages
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -23,6 +24,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
@@ -68,9 +70,9 @@ func parseGooGetUpdates(data []byte) []PkgInfo {
 }
 
 // GooGetUpdates queries for all available googet updates.
-func GooGetUpdates() ([]PkgInfo, error) {
-	out, err := run(exec.Command(googet, googetUpdateQueryArgs...))
-	DebugLogger.Printf("googet %q output:\n%s", googetUpdateQueryArgs, strings.ReplaceAll(string(out), "\n", "\n "))
+func GooGetUpdates(ctx context.Context) ([]PkgInfo, error) {
+	out, err := run(ctx, exec.Command(googet, googetUpdateQueryArgs...))
+	clog.Debugf(ctx, "googet %q output:\n%s", googetUpdateQueryArgs, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
 		return nil, fmt.Errorf("error running googet with args %q: %v, stdout: %s", googetUpdateQueryArgs, err, out)
 	}
@@ -79,10 +81,10 @@ func GooGetUpdates() ([]PkgInfo, error) {
 }
 
 // InstallGooGetPackages installs GooGet packages.
-func InstallGooGetPackages(pkgs []string) error {
+func InstallGooGetPackages(ctx context.Context, pkgs []string) error {
 	args := append(googetInstallArgs, pkgs...)
-	out, err := run(exec.Command(googet, args...))
-	DebugLogger.Printf("googet %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	out, err := run(ctx, exec.Command(googet, args...))
+	clog.Debugf(ctx, "googet %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
 		err = fmt.Errorf("error running googet with args %q: %v, stdout: %s", args, err, out)
 	}
@@ -90,10 +92,10 @@ func InstallGooGetPackages(pkgs []string) error {
 }
 
 // RemoveGooGetPackages installs GooGet packages.
-func RemoveGooGetPackages(pkgs []string) error {
+func RemoveGooGetPackages(ctx context.Context, pkgs []string) error {
 	args := append(googetRemoveArgs, pkgs...)
-	out, err := run(exec.Command(googet, args...))
-	DebugLogger.Printf("googet %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	out, err := run(ctx, exec.Command(googet, args...))
+	clog.Debugf(ctx, "googet %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
 		err = fmt.Errorf("error running googet with args %q: %v, stdout: %s", args, err, out)
 	}
@@ -127,9 +129,9 @@ func parseInstalledGooGetPackages(data []byte) []PkgInfo {
 }
 
 // InstalledGooGetPackages queries for all installed googet packages.
-func InstalledGooGetPackages() ([]PkgInfo, error) {
-	out, err := run(exec.Command(googet, googetInstalledQueryArgs...))
-	DebugLogger.Printf("googet %q output:\n%s", googetInstalledQueryArgs, strings.ReplaceAll(string(out), "\n", "\n "))
+func InstalledGooGetPackages(ctx context.Context) ([]PkgInfo, error) {
+	out, err := run(ctx, exec.Command(googet, googetInstalledQueryArgs...))
+	clog.Debugf(ctx, "googet %q output:\n%s", googetInstalledQueryArgs, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
 		return nil, fmt.Errorf("error running googet with args %q: %v, stdout: %s", googetInstalledQueryArgs, err, out)
 	}

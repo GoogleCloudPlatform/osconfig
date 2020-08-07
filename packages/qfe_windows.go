@@ -13,16 +13,21 @@ limitations under the License.
 
 package packages
 
-import "github.com/StackExchange/wmi"
+import (
+	"context"
+
+	"github.com/GoogleCloudPlatform/osconfig/clog"
+	"github.com/StackExchange/wmi"
+)
 
 type win32_QuickFixEngineering struct {
 	Caption, Description, HotFixID, InstalledOn string
 }
 
 // QuickFixEngineering queries the wmi object win32_QuickFixEngineering for a list of installed updates.
-func QuickFixEngineering() ([]QFEPackage, error) {
+func QuickFixEngineering(ctx context.Context) ([]QFEPackage, error) {
 	var updts []win32_QuickFixEngineering
-	DebugLogger.Print("Querying WMI for installed QuickFixEngineering updates.")
+	clog.Debugf(ctx, "Querying WMI for installed QuickFixEngineering updates.")
 	if err := wmi.Query(wmi.CreateQuery(&updts, ""), &updts); err != nil {
 		return nil, err
 	}

@@ -17,32 +17,33 @@
 package ospatch
 
 import (
+	"context"
 	"errors"
 	"io/ioutil"
 	"os"
 
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 // SystemRebootRequired checks whether a system reboot is required.
-func SystemRebootRequired() (bool, error) {
+func SystemRebootRequired(ctx context.Context) (bool, error) {
 	if packages.AptExists {
-		logger.Debugf("Checking if reboot required by looking at /var/run/reboot-required.")
+		clog.Debugf(ctx, "Checking if reboot required by looking at /var/run/reboot-required.")
 		data, err := ioutil.ReadFile("/var/run/reboot-required")
 		if os.IsNotExist(err) {
-			logger.Debugf("/var/run/reboot-required does not exist, indicating no reboot is required.")
+			clog.Debugf(ctx, "/var/run/reboot-required does not exist, indicating no reboot is required.")
 			return false, nil
 		}
 		if err != nil {
 			return false, err
 		}
-		logger.Debugf("/var/run/reboot-required exists indicating a reboot is required, content:\n%s", string(data))
+		clog.Debugf(ctx, "/var/run/reboot-required exists indicating a reboot is required, content:\n%s", string(data))
 		return true, nil
 	}
 	if ok := util.Exists(rpmquery); ok {
-		logger.Debugf("Checking if reboot required by querying rpm database.")
+		clog.Debugf(ctx, "Checking if reboot required by querying rpm database.")
 		return rpmReboot()
 	}
 
@@ -50,6 +51,6 @@ func SystemRebootRequired() (bool, error) {
 }
 
 // InstallWUAUpdates is the linux stub for InstallWUAUpdates.
-func InstallWUAUpdates() error {
+func InstallWUAUpdates(ctx context.Context) error {
 	return nil
 }

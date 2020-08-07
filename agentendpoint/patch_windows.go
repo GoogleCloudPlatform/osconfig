@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/ospatch"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
@@ -55,14 +55,14 @@ func (r *patchTask) classFilter() ([]string, error) {
 }
 
 func (r *patchTask) installWUAUpdates(ctx context.Context, cf []string) (int32, error) {
-	r.infof("Searching for available Windows updates.")
+	clog.Infof(ctx, "Searching for available Windows updates.")
 	session, err := packages.NewUpdateSession()
 	if err != nil {
 		return 0, err
 	}
 	defer session.Close()
 
-	updts, err := ospatch.GetWUAUpdates(session, cf, r.Task.GetPatchConfig().GetWindowsUpdate().GetExcludes(), r.Task.GetPatchConfig().GetWindowsUpdate().GetExclusivePatches())
+	updts, err := ospatch.GetWUAUpdates(ctx, session, cf, r.Task.GetPatchConfig().GetWindowsUpdate().GetExcludes(), r.Task.GetPatchConfig().GetWindowsUpdate().GetExclusivePatches())
 	if err != nil {
 		return 0, err
 	}
@@ -74,14 +74,14 @@ func (r *patchTask) installWUAUpdates(ctx context.Context, cf []string) (int32, 
 	}
 
 	if count == 0 {
-		r.infof("No Windows updates available to install")
+		clog.Infof(ctx, "No Windows updates available to install")
 		return 0, nil
 	}
 
-	r.infof("%d Windows updates to install", count)
+	clog.Infof(ctx, "%d Windows updates to install", count)
 
 	if r.Task.GetDryRun() {
-		r.infof("Running in dryrun mode, not updating.")
+		clog.Infof(ctx, "Running in dryrun mode, not updating.")
 		return 0, nil
 	}
 
@@ -95,7 +95,7 @@ func (r *patchTask) installWUAUpdates(ctx context.Context, cf []string) (int32, 
 		}
 		defer updt.Release()
 
-		if err := session.InstallWUAUpdate(updt); err != nil {
+		if err := session.InstallWUAUpdate(ctx, updt); err != nil {
 			return i, fmt.Errorf(`installUpdate(updt): %v`, err)
 		}
 	}
@@ -118,7 +118,7 @@ func (r *patchTask) wuaUpdates(ctx context.Context) error {
 		}
 		count, err := r.installWUAUpdates(ctx, cf)
 		if err != nil {
-			logger.Errorf("Error installing Windows updates (attempt %d): %v", i, err)
+			clog.Errorf(ctx, "Error installing Windows updates (attempt %d): %v", i, err)
 		}
 		if count == 0 {
 			return nil
@@ -129,23 +129,24 @@ func (r *patchTask) wuaUpdates(ctx context.Context) error {
 }
 
 func (r *patchTask) runUpdates(ctx context.Context) error {
-	// Don't use retry function as wuaUpdates handles it's own retries.
-	if err := r.wuaUpdates(ctx); err != nil {
-		return err
-	}
-
+	// Install GooGet updates first as this will allow us to update the agent prior to any potential WUA bugs/errors.
 	if packages.GooGetExists {
 		if err := r.reportContinuingState(ctx, agentendpointpb.ApplyPatchesTaskProgress_APPLYING_PATCHES); err != nil {
 			return err
 		}
 
-		r.debugf("Installing GooGet package updates.")
+		clog.Debugf(ctx, "Installing GooGet package updates.")
 		opts := []ospatch.GooGetUpdateOption{
 			ospatch.GooGetDryRun(r.Task.GetDryRun()),
 		}
-		if err := retryutil.RetryFunc(3*time.Minute, "installing GooGet package updates", func() error { return ospatch.RunGooGetUpdate(opts...) }); err != nil {
+		if err := retryutil.RetryFunc(ctx, 3*time.Minute, "installing GooGet package updates", func() error { return ospatch.RunGooGetUpdate(ctx, opts...) }); err != nil {
 			return err
 		}
+	}
+
+	// Don't use retry function as wuaUpdates handles it's own retries.
+	if err := r.wuaUpdates(ctx); err != nil {
+		return err
 	}
 
 	return nil
