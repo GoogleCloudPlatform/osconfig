@@ -86,6 +86,7 @@ type WUAPackage struct {
 	Categories               []string
 	CategoryIDs              []string
 	KBArticleIDs             []string
+	MoreInfoURLs             []string
 	SupportURL               string
 	UpdateID                 string
 	RevisionNumber           int32
