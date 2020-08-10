@@ -227,6 +227,10 @@ func (c *Client) runTask(ctx context.Context) {
 			if err := c.RunExecStep(ctx, task); err != nil {
 				clog.Errorf(ctx, "Error running TaskType_EXEC_STEP_TASK: %v", err)
 			}
+		case agentendpointpb.TaskType_APPLY_CONFIG_TASK:
+			if err := c.RunApplyConfig(ctx, task); err != nil {
+				clog.Errorf(ctx, "Error running TaskType_APPLY_CONFIG_TASK: %v", err)
+			}
 		default:
 			clog.Errorf(ctx, "Unknown task type: %v", task.GetTaskType())
 		}
