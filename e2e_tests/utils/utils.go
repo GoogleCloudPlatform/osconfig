@@ -40,7 +40,7 @@ n=$[$n+1]
 sleep 5
 done
 systemctl start google-osconfig-agent
-start -q -n google-osconfig-agent  # required for EL6` + curlPost
+start -q -n google-osconfig-agent  # required for EL6` + CurlPost
 
 	zypperInstallAgent = `
 sleep 10
@@ -54,9 +54,10 @@ fi
 n=$[$n+1]
 sleep 5
 done
-systemctl start google-osconfig-agent` + curlPost
+systemctl start google-osconfig-agent` + CurlPost
 
-	curlPost = `
+	// CurlPost indicates agent is installed.
+	CurlPost = `
 uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/osconfig_tests/install_done
 curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
 `
@@ -95,7 +96,7 @@ EOM`
 // InstallOSConfigDeb installs the osconfig agent on deb based systems.
 func InstallOSConfigDeb() string {
 	if config.AgentRepo() == "" {
-		return curlPost
+		return CurlPost
 	}
 	return fmt.Sprintf(`
 sleep 10
@@ -104,7 +105,7 @@ echo 'deb http://packages.cloud.google.com/apt google-osconfig-agent-%s main' >>
 curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 apt-get update
 apt-get install -y google-osconfig-agent
-systemctl start google-osconfig-agent`+curlPost, config.AgentRepo())
+systemctl start google-osconfig-agent`+CurlPost, config.AgentRepo())
 }
 
 // InstallOSConfigGooGet installs the osconfig agent on Windows systems.
@@ -135,7 +136,7 @@ func InstallOSConfigSUSE() string {
 // InstallOSConfigEL8 installs the osconfig agent on el8 based systems.
 func InstallOSConfigEL8() string {
 	if config.AgentRepo() == "" {
-		return curlPost
+		return CurlPost
 	}
 	if config.AgentRepo() == "stable" {
 		return yumInstallAgent
@@ -149,7 +150,7 @@ func InstallOSConfigEL8() string {
 // InstallOSConfigEL7 installs the osconfig agent on el7 based systems.
 func InstallOSConfigEL7() string {
 	if config.AgentRepo() == "" {
-		return curlPost
+		return CurlPost
 	}
 	if config.AgentRepo() == "stable" {
 		return yumInstallAgent
@@ -163,7 +164,7 @@ func InstallOSConfigEL7() string {
 // InstallOSConfigEL6 installs the osconfig agent on el6 based systems.
 func InstallOSConfigEL6() string {
 	if config.AgentRepo() == "" {
-		return curlPost
+		return CurlPost
 	}
 	if config.AgentRepo() == "stable" {
 		return yumInstallAgent
@@ -287,6 +288,13 @@ var OldWindowsImages = map[string]string{
 	"old/windows-1809-core":    "projects/windows-cloud/global/images/windows-server-1809-dc-core-v20191008",
 	"old/windows-1903-core":    "projects/windows-cloud/global/images/windows-server-1903-dc-core-v20191008",
 	"old/windows-1909-core":    "projects/windows-cloud/global/images/windows-server-1909-dc-core-v20191210",
+}
+
+// HeadCOSImages is a map of names to image paths for public COS image families.
+var HeadCOSImages = map[string]string{
+	"cos-cloud/cos-stable": "projects/cos-cloud/global/images/family/cos-stable",
+	"cos-cloud/cos-beta":   "projects/cos-cloud/global/images/family/cos-beta",
+	"cos-cloud/cos-dev":    "projects/cos-cloud/global/images/family/cos-dev",
 }
 
 // RandString generates a random string of n length.
