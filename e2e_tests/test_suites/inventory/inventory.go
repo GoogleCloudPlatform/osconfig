@@ -286,10 +286,6 @@ func inventoryTestCase(ctx context.Context, testSetup *inventoryTestSetup, tests
 		return
 	}
 
-	if strings.Contains(testSetup.testName, "cos") {
-
-	}
-
 	for tc, f := range map[*junitxml.TestCase]func([]*apiBeta.GuestAttributesEntry, *inventoryTestSetup, *junitxml.TestCase){
 		hostnameTest:  runHostnameTest,
 		shortNameTest: runShortNameTest,
