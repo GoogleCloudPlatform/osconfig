@@ -17,6 +17,7 @@ package recipes
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -26,9 +27,7 @@ import (
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
-var (
-	recipeBasePath = filepath.Join(os.TempDir(), "osconfig_software_recipes")
-)
+const recipeBase = "osconfig_software_recipes"
 
 // InstallRecipe installs a recipe.
 func InstallRecipe(ctx context.Context, recipe *agentendpointpb.SoftwareRecipe) error {
@@ -123,15 +122,15 @@ func InstallRecipe(ctx context.Context, recipe *agentendpointpb.SoftwareRecipe) 
 }
 
 func createBaseDir(recipe *agentendpointpb.SoftwareRecipe, runID string) (string, error) {
-	dirName := recipe.Name
+	name := recipe.Name
 	if recipe.Version != "" {
-		dirName = fmt.Sprintf("%s_%s", dirName, recipe.Version)
+		name = fmt.Sprintf("%s_%s", name, recipe.Version)
 	}
-	fullPath := filepath.Join(recipeBasePath, dirName, runID)
 
-	if err := os.MkdirAll(fullPath, os.ModeDir|0755); err != nil {
+	dir, err := ioutil.TempDir("", fmt.Sprintf("%s_%s_*", name, runID))
+	if err != nil {
 		return "", fmt.Errorf("failed to create working dir for recipe: %q %s", recipe.Name, err)
 	}
 
-	return fullPath, nil
+	return dir, nil
 }
