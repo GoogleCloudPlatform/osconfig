@@ -27,8 +27,6 @@ import (
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
-const recipeBase = "osconfig_software_recipes"
-
 // InstallRecipe installs a recipe.
 func InstallRecipe(ctx context.Context, recipe *agentendpointpb.SoftwareRecipe) error {
 	ctx = clog.WithLabels(ctx, map[string]string{"recipe_name": recipe.GetName()})
