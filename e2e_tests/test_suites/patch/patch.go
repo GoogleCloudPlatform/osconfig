@@ -87,16 +87,17 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 			}
 			go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
 		}
-	}
-	// Test that PatchConfig_NEVER prevents reboot.
-	for _, setup := range oldImageTestSetup() {
-		wg.Add(1)
-		s := setup
-		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[PatchJob does not reboot] [%s]", s.testName))
-		pc := &osconfigpb.PatchConfig{RebootConfig: osconfigpb.PatchConfig_NEVER, Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST}}
-		shouldReboot := false
-		f := func() { runRebootPatchTest(ctx, tc, s, pc, shouldReboot) }
-		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
+
+		// Test that PatchConfig_NEVER prevents reboot.
+		for _, setup := range oldImageTestSetup() {
+			wg.Add(1)
+			s := setup
+			tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[PatchJob does not reboot] [%s]", s.testName))
+			pc := &osconfigpb.PatchConfig{RebootConfig: osconfigpb.PatchConfig_NEVER, Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST}}
+			shouldReboot := false
+			f := func() { runRebootPatchTest(ctx, tc, s, pc, shouldReboot) }
+			go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
+		}
 	}
 	// Test that pre- and post-patch steps run as expected.
 	for _, setup := range headImageTestSetup() {
