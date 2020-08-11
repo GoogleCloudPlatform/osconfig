@@ -122,16 +122,18 @@ func newTestClient(ctx context.Context, srv agentendpointpb.AgentEndpointService
 }
 
 type agentEndpointServiceTestServer struct {
-	streamClose       chan struct{}
-	unavailableError  chan struct{}
-	streamSend        chan struct{}
-	permissionError   chan struct{}
-	taskStart         bool
-	execTaskStart     bool
-	patchTaskStart    bool
-	execTaskComplete  bool
-	patchTaskComplete bool
-	runTaskIDs        []string
+	streamClose             chan struct{}
+	unavailableError        chan struct{}
+	streamSend              chan struct{}
+	permissionError         chan struct{}
+	taskStart               bool
+	execTaskProgress        bool
+	patchTaskProgress       bool
+	applyConfigTaskProgress bool
+	execTaskComplete        bool
+	patchTaskComplete       bool
+	applyConfigTaskComplete bool
+	runTaskIDs              []string
 }
 
 func newAgentEndpointServiceTestServer() *agentEndpointServiceTestServer {
@@ -159,37 +161,52 @@ func (s *agentEndpointServiceTestServer) ReceiveTaskNotification(req *agentendpo
 }
 
 func (s *agentEndpointServiceTestServer) StartNextTask(ctx context.Context, req *agentendpointpb.StartNextTaskRequest) (*agentendpointpb.StartNextTaskResponse, error) {
-	// We first return an TaskType_EXEC_STEP_TASK, then TaskType_APPLY_PATCHES. If patchTaskRun we return nothing signalling the end to tasks.
+	// We first return an TaskType_EXEC_STEP_TASK, then TaskType_APPLY_PATCHES, then TaskType_APPLY_CONFIG_TASK.
+	// After all tasks complete, we return nothing signalling the end to tasks.
+	s.taskStart = true
 	switch {
-	case s.patchTaskComplete:
+	case s.applyConfigTaskComplete && s.execTaskComplete && s.patchTaskComplete:
 		return &agentendpointpb.StartNextTaskResponse{}, nil
-	case s.taskStart:
-		return &agentendpointpb.StartNextTaskResponse{Task: &agentendpointpb.Task{TaskType: agentendpointpb.TaskType_APPLY_PATCHES, TaskId: "TaskType_APPLY_PATCHES"}}, nil
-	default:
-		s.taskStart = true
+	case !s.execTaskComplete:
 		return &agentendpointpb.StartNextTaskResponse{Task: &agentendpointpb.Task{TaskType: agentendpointpb.TaskType_EXEC_STEP_TASK, TaskId: "TaskType_EXEC_STEP_TASK"}}, nil
+	case !s.patchTaskComplete:
+		return &agentendpointpb.StartNextTaskResponse{Task: &agentendpointpb.Task{TaskType: agentendpointpb.TaskType_APPLY_PATCHES, TaskId: "TaskType_APPLY_PATCHES"}}, nil
+	case !s.applyConfigTaskComplete:
+		return &agentendpointpb.StartNextTaskResponse{Task: &agentendpointpb.Task{TaskType: agentendpointpb.TaskType_APPLY_CONFIG_TASK, TaskId: "TaskType_APPLY_CONFIG_TASK"}}, nil
+	default:
+		return &agentendpointpb.StartNextTaskResponse{}, status.Errorf(codes.Unimplemented, "unexpected start next task")
 	}
 }
 
 func (s *agentEndpointServiceTestServer) ReportTaskProgress(ctx context.Context, req *agentendpointpb.ReportTaskProgressRequest) (*agentendpointpb.ReportTaskProgressResponse, error) {
 	// Simply record and send STOP.
-	if req.GetTaskType() == agentendpointpb.TaskType_EXEC_STEP_TASK {
-		s.execTaskStart = true
-	}
-	if req.GetTaskType() == agentendpointpb.TaskType_APPLY_PATCHES {
-		s.patchTaskStart = true
+	switch req.GetTaskType() {
+	case agentendpointpb.TaskType_EXEC_STEP_TASK:
+		s.execTaskProgress = true
+	case agentendpointpb.TaskType_APPLY_PATCHES:
+		s.patchTaskProgress = true
+	case agentendpointpb.TaskType_APPLY_CONFIG_TASK:
+		s.applyConfigTaskProgress = true
+	default:
+		return &agentendpointpb.ReportTaskProgressResponse{}, status.Errorf(codes.Unimplemented, "task type %q not implemented", req.GetTaskType())
 	}
 	return &agentendpointpb.ReportTaskProgressResponse{TaskDirective: agentendpointpb.TaskDirective_STOP}, nil
 }
 
 func (s *agentEndpointServiceTestServer) ReportTaskComplete(ctx context.Context, req *agentendpointpb.ReportTaskCompleteRequest) (*agentendpointpb.ReportTaskCompleteResponse, error) {
-	// Record what task types we have seen, when the complete is called for TaskType_APPLY_PATCHES, close the stream.
+	// Record what task types we have seen, when the complete is called for TaskType_APPLY_CONFIG_TASK, close the stream.
 	s.runTaskIDs = append(s.runTaskIDs, req.GetTaskId())
-	if req.GetTaskType() == agentendpointpb.TaskType_EXEC_STEP_TASK {
+	switch req.GetTaskType() {
+	case agentendpointpb.TaskType_EXEC_STEP_TASK:
 		s.execTaskComplete = true
-	}
-	if req.GetTaskType() == agentendpointpb.TaskType_APPLY_PATCHES {
+	case agentendpointpb.TaskType_APPLY_PATCHES:
 		s.patchTaskComplete = true
+	case agentendpointpb.TaskType_APPLY_CONFIG_TASK:
+		s.applyConfigTaskComplete = true
+	default:
+		return &agentendpointpb.ReportTaskCompleteResponse{}, status.Errorf(codes.Unimplemented, "task type %q not implemented", req.GetTaskType())
+	}
+	if s.execTaskComplete && s.patchTaskComplete && s.applyConfigTaskComplete {
 		s.streamClose <- struct{}{}
 	}
 	return &agentendpointpb.ReportTaskCompleteResponse{}, nil
@@ -228,20 +245,23 @@ func TestWaitForTask(t *testing.T) {
 	if err := tc.client.waitForTask(ctx); err != nil {
 		t.Errorf("did not expect error from a closed stream: %v", err)
 	}
-	if !srv.taskStart {
-		t.Error("expected ReportTaskStart to have been called")
-	}
-	if !srv.execTaskStart {
+	if !srv.execTaskProgress {
 		t.Error("expected ReportTaskProgress for TaskType_EXEC_STEP_TASK to have been called")
 	}
 	if !srv.execTaskComplete {
 		t.Error("expected ReportTaskComplete for TaskType_EXEC_STEP_TASK to have been called")
 	}
-	if !srv.patchTaskStart {
+	if !srv.patchTaskProgress {
 		t.Error("expected ReportTaskProgress for TaskType_APPLY_PATCHES to have been called")
 	}
 	if !srv.patchTaskComplete {
 		t.Error("expected ReportTaskComplete for TaskType_APPLY_PATCHES to have been called")
+	}
+	if !srv.applyConfigTaskProgress {
+		t.Error("expected ReportTaskProgress for TaskType_APPLY_CONFIG_TASK to have been called")
+	}
+	if !srv.applyConfigTaskComplete {
+		t.Error("expected ReportTaskComplete for TaskType_APPLY_CONFIG_TASK to have been called")
 	}
 }
 
@@ -272,7 +292,7 @@ func TestWaitForTaskErrors(t *testing.T) {
 	}
 }
 
-func TestLoadTaskFromState(t *testing.T) {
+func TestLoadPatchTaskFromState(t *testing.T) {
 	ctx := context.Background()
 	srv := newAgentEndpointServiceTestServer()
 	tc, err := newTestClient(ctx, srv)
@@ -287,6 +307,8 @@ func TestLoadTaskFromState(t *testing.T) {
 	}
 	defer os.RemoveAll(td)
 	taskStateFile = filepath.Join(td, "testState")
+
+	srv.streamSend <- struct{}{}
 
 	// No state.
 	if err := tc.client.loadTaskFromState(ctx); err != nil {
@@ -313,7 +335,9 @@ func TestLoadTaskFromState(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Launch another, this should run AFTER the task loaded from state file, but the previous task should have closed the stream.
+	srv.execTaskComplete = true
+	srv.applyConfigTaskComplete = true
+	// Launch another patch task, this should run AFTER the task loaded from state file
 	if err := tc.client.waitForTask(ctx); err != nil {
 		t.Errorf("did not expect error from a closed stream: %v", err)
 	}
@@ -321,7 +345,7 @@ func TestLoadTaskFromState(t *testing.T) {
 	if srv.taskStart {
 		t.Error("did not expect ReportTaskStart to have been called")
 	}
-	if !srv.patchTaskStart {
+	if !srv.patchTaskProgress {
 		t.Error("expected ReportTaskProgress for TaskType_APPLY_PATCHES to have been called")
 	}
 	if !srv.patchTaskComplete {
