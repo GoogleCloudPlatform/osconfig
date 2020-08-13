@@ -16,6 +16,7 @@ package agentendpoint
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -25,6 +26,13 @@ import (
 
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
+
+func TestUnmarshal(t *testing.T) {
+	test := &agentendpointpb.FileResource{Path: "foo"}
+	fmt.Println(test.ProtoReflect().Descriptor().Name())
+	fmt.Println()
+	t.Error()
+}
 
 type agentEndpointServiceConfigTestServer struct {
 	lastReportTaskCompleteRequest *agentendpointpb.ReportTaskCompleteRequest

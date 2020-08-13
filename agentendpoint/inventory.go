@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/attributes"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
-	"github.com/GoogleCloudPlatform/osconfig/config"
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	inventoryURL = config.ReportURL + "/guestInventory"
+	inventoryURL = agentconfig.ReportURL + "/guestInventory"
 	maxRetries   = 5
 )
 

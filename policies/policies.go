@@ -25,9 +25,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/agentendpoint"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
-	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"github.com/GoogleCloudPlatform/osconfig/policies/recipes"
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
@@ -168,13 +168,13 @@ func setConfig(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) {
 	}
 
 	if packages.GooGetExists {
-		if _, err := os.Stat(config.GooGetRepoFilePath()); os.IsNotExist(err) {
+		if _, err := os.Stat(agentconfig.GooGetRepoFilePath()); os.IsNotExist(err) {
 			clog.Debugf(ctx, "Repo file does not exist, will create one...")
-			if err := os.MkdirAll(filepath.Dir(config.GooGetRepoFilePath()), 07550); err != nil {
+			if err := os.MkdirAll(filepath.Dir(agentconfig.GooGetRepoFilePath()), 07550); err != nil {
 				clog.Errorf(ctx, "Error creating repo file: %v", err)
 			}
 		}
-		if err := googetRepositories(ctx, gooRepos, config.GooGetRepoFilePath()); err != nil {
+		if err := googetRepositories(ctx, gooRepos, agentconfig.GooGetRepoFilePath()); err != nil {
 			clog.Errorf(ctx, "Error writing googet repo file: %v", err)
 		}
 		if err := retryutil.RetryFunc(ctx, 1*time.Minute, "Applying googet changes", func() error {
@@ -185,13 +185,13 @@ func setConfig(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) {
 	}
 
 	if packages.AptExists {
-		if _, err := os.Stat(config.AptRepoFilePath()); os.IsNotExist(err) {
+		if _, err := os.Stat(agentconfig.AptRepoFilePath()); os.IsNotExist(err) {
 			clog.Debugf(ctx, "Repo file does not exist, will create one...")
-			if err := os.MkdirAll(filepath.Dir(config.AptRepoFilePath()), 07550); err != nil {
+			if err := os.MkdirAll(filepath.Dir(agentconfig.AptRepoFilePath()), 07550); err != nil {
 				clog.Errorf(ctx, "Error creating repo file: %v", err)
 			}
 		}
-		if err := aptRepositories(ctx, aptRepos, config.AptRepoFilePath()); err != nil {
+		if err := aptRepositories(ctx, aptRepos, agentconfig.AptRepoFilePath()); err != nil {
 			clog.Errorf(ctx, "Error writing apt repo file: %v", err)
 		}
 		if err := retryutil.RetryFunc(ctx, 1*time.Minute, "Applying apt changes", func() error {
@@ -202,13 +202,13 @@ func setConfig(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) {
 	}
 
 	if packages.YumExists {
-		if _, err := os.Stat(config.YumRepoFilePath()); os.IsNotExist(err) {
+		if _, err := os.Stat(agentconfig.YumRepoFilePath()); os.IsNotExist(err) {
 			clog.Debugf(ctx, "Repo file does not exist, will create one...")
-			if err := os.MkdirAll(filepath.Dir(config.YumRepoFilePath()), 07550); err != nil {
+			if err := os.MkdirAll(filepath.Dir(agentconfig.YumRepoFilePath()), 07550); err != nil {
 				clog.Errorf(ctx, "Error creating repo file: %v", err)
 			}
 		}
-		if err := yumRepositories(ctx, yumRepos, config.YumRepoFilePath()); err != nil {
+		if err := yumRepositories(ctx, yumRepos, agentconfig.YumRepoFilePath()); err != nil {
 			clog.Errorf(ctx, "Error writing yum repo file: %v", err)
 		}
 		if err := retryutil.RetryFunc(ctx, 1*time.Minute, "Applying yum changes", func() error {
@@ -219,13 +219,13 @@ func setConfig(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) {
 	}
 
 	if packages.ZypperExists {
-		if _, err := os.Stat(config.ZypperRepoFilePath()); os.IsNotExist(err) {
+		if _, err := os.Stat(agentconfig.ZypperRepoFilePath()); os.IsNotExist(err) {
 			clog.Debugf(ctx, "Repo file does not exist, will create one...")
-			if err := os.MkdirAll(filepath.Dir(config.ZypperRepoFilePath()), 07550); err != nil {
+			if err := os.MkdirAll(filepath.Dir(agentconfig.ZypperRepoFilePath()), 07550); err != nil {
 				clog.Errorf(ctx, "Error creating repo file: %v", err)
 			}
 		}
-		if err := zypperRepositories(ctx, zypperRepos, config.ZypperRepoFilePath()); err != nil {
+		if err := zypperRepositories(ctx, zypperRepos, agentconfig.ZypperRepoFilePath()); err != nil {
 			clog.Errorf(ctx, "Error writing zypper repo file: %v", err)
 		}
 		if err := retryutil.RetryFunc(ctx, 1*time.Minute, "Applying zypper changes.", func() error {

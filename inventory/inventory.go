@@ -20,8 +20,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
-	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 )
@@ -69,7 +69,7 @@ func Get(ctx context.Context) *InstanceInventory {
 	hs.KernelVersion = oi.KernelVersion
 	hs.KernelRelease = oi.KernelRelease
 	hs.Architecture = oi.Architecture
-	hs.OSConfigAgentVersion = config.Version()
+	hs.OSConfigAgentVersion = agentconfig.Version()
 	hs.InstalledPackages = installedPackages
 	hs.PackageUpdates = packageUpdates
 
