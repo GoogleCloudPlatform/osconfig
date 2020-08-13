@@ -76,12 +76,13 @@ func (r *resource) unmarshal(ctx context.Context, res *agentendpointpb.ApplyConf
 
 func (r *resource) checkState(ctx context.Context) error {
 	// TODO: implement
-	r.inDesiredState = false
+	r.inDesiredState = true
 	return nil
 }
 
 func (r *resource) runEnforcement(ctx context.Context) error {
 	// TODO: implement
+	r.inDesiredState = true
 	return nil
 }
 
@@ -132,12 +133,12 @@ func (c *configTask) validation(ctx context.Context) {
 	// First populate validation results and internal assignment state.
 	c.assignments = map[string]*assignment{}
 	for i, a := range c.Task.GetConfig().GetConfigAssignments() {
-		asgnmnt := &assignment{policies: map[string]*policy{}}
-		c.assignments[a.GetConfigAssignment()] = asgnmnt
+		assgnmnt := &assignment{policies: map[string]*policy{}}
+		c.assignments[a.GetConfigAssignment()] = assgnmnt
 		aResult := c.results.GetResults()[i]
 		for i, p := range a.GetPolicies() {
 			plcy := &policy{resources: map[string]*resource{}}
-			asgnmnt.policies[p.GetId()] = plcy
+			assgnmnt.policies[p.GetId()] = plcy
 			pResult := aResult.GetOsPolicyResults().GetResults()[i]
 			for i, r := range p.GetResources() {
 				plcy.resources[r.GetId()] = &resource{}
@@ -156,11 +157,11 @@ func (c *configTask) validation(ctx context.Context) {
 	// Unmarshal all resources.
 	for i, a := range c.Task.GetConfig().GetConfigAssignments() {
 		ctx = clog.WithLabels(ctx, map[string]string{"config_assignment": a.GetConfigAssignment()})
-		asgnmnt := c.assignments[a.GetConfigAssignment()]
+		assgnmnt := c.assignments[a.GetConfigAssignment()]
 		aResult := c.results.GetResults()[i]
 		for i, p := range a.GetPolicies() {
 			ctx = clog.WithLabels(ctx, map[string]string{"policy_id": p.GetId()})
-			plcy := asgnmnt.policies[p.GetId()]
+			plcy := assgnmnt.policies[p.GetId()]
 			pResult := aResult.GetOsPolicyResults().GetResults()[i]
 			for i, taskResource := range p.GetResources() {
 				ctx = clog.WithLabels(ctx, map[string]string{"resource_id": taskResource.GetId()})
@@ -197,10 +198,10 @@ func (c *configTask) validation(ctx context.Context) {
 func (c *configTask) checkState(ctx context.Context) {
 	// First populate check state results (for policies that do not have validation errors).
 	for i, a := range c.Task.GetConfig().GetConfigAssignments() {
-		asgnmnt := c.assignments[a.GetConfigAssignment()]
+		assgnmnt := c.assignments[a.GetConfigAssignment()]
 		aResult := c.results.GetResults()[i]
 		for i, p := range a.GetPolicies() {
-			plcy := asgnmnt.policies[p.GetId()]
+			plcy := assgnmnt.policies[p.GetId()]
 			// Skip state check if this policy already has an error from a previous step.
 			if plcy.hasError {
 				continue
@@ -222,11 +223,11 @@ func (c *configTask) checkState(ctx context.Context) {
 	// Actually run check state.
 	for i, a := range c.Task.GetConfig().GetConfigAssignments() {
 		ctx = clog.WithLabels(ctx, map[string]string{"config_assignment": a.GetConfigAssignment()})
-		asgnmnt := c.assignments[a.GetConfigAssignment()]
+		assgnmnt := c.assignments[a.GetConfigAssignment()]
 		aResult := c.results.GetResults()[i]
 		for i, p := range a.GetPolicies() {
 			ctx = clog.WithLabels(ctx, map[string]string{"policy_id": p.GetId()})
-			plcy := asgnmnt.policies[p.GetId()]
+			plcy := assgnmnt.policies[p.GetId()]
 			// Skip state check if this policy already has an error from a previous step.
 			if plcy.hasError {
 				clog.Debugf(ctx, "Policy has error, skipping state check.")
@@ -247,7 +248,7 @@ func (c *configTask) checkState(ctx context.Context) {
 					clog.Errorf(ctx, errMsg)
 				}
 
-				if res.inDesiredState {
+				if !res.inDesiredState {
 					outcome = agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_NOT_IN_DESIRED_STATE
 				}
 
@@ -274,11 +275,11 @@ func (c *configTask) enforceState(ctx context.Context) {
 	// Run enforcement (for resources that require it).
 	for i, a := range c.Task.GetConfig().GetConfigAssignments() {
 		ctx = clog.WithLabels(ctx, map[string]string{"config_assignment": a.GetConfigAssignment()})
-		asgnmnt := c.assignments[a.GetConfigAssignment()]
+		assgnmnt := c.assignments[a.GetConfigAssignment()]
 		aResult := c.results.GetResults()[i]
 		for i, p := range a.GetPolicies() {
 			ctx = clog.WithLabels(ctx, map[string]string{"policy_id": p.GetId()})
-			plcy := asgnmnt.policies[p.GetId()]
+			plcy := assgnmnt.policies[p.GetId()]
 			// Skip enforcement if this policy already has an error from a previous step.
 			if plcy.hasError {
 				clog.Debugf(ctx, "Policy has error, skipping enforcement.")
@@ -289,12 +290,11 @@ func (c *configTask) enforceState(ctx context.Context) {
 				ctx = clog.WithLabels(ctx, map[string]string{"resource_id": taskResource.GetId()})
 				res := plcy.resources[taskResource.GetId()]
 				// Only enforce resources that need it.
-				if !res.inDesiredState {
+				if res.inDesiredState {
 					clog.Debugf(ctx, "No enforcement required.")
 					continue
 				}
 				c.postCheckRequired = true
-				res.inDesiredState = false
 
 				result := pResult.GetResourceResults().GetResults()[i]
 				outcome := agentendpointpb.ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_SUCCESS
@@ -330,11 +330,11 @@ func (c *configTask) postCheckState(ctx context.Context) {
 	// No prepopulate run for post check as we will always check every resource.
 	for i, a := range c.Task.GetConfig().GetConfigAssignments() {
 		ctx = clog.WithLabels(ctx, map[string]string{"config_assignment": a.GetConfigAssignment()})
-		asgnmnt := c.assignments[a.GetConfigAssignment()]
+		assgnmnt := c.assignments[a.GetConfigAssignment()]
 		aResult := c.results.GetResults()[i]
 		for i, p := range a.GetPolicies() {
 			ctx = clog.WithLabels(ctx, map[string]string{"policy_id": p.GetId()})
-			plcy := asgnmnt.policies[p.GetId()]
+			plcy := assgnmnt.policies[p.GetId()]
 			// Skip post check if this policy already has an error from a previous step.
 			if plcy.hasError {
 				clog.Debugf(ctx, "Policy has error, skipping post check.")
@@ -355,7 +355,7 @@ func (c *configTask) postCheckState(ctx context.Context) {
 					clog.Errorf(ctx, errMsg)
 				}
 
-				if res.inDesiredState {
+				if !res.inDesiredState {
 					outcome = agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_NOT_IN_DESIRED_STATE
 				}
 
