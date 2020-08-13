@@ -25,11 +25,11 @@ import (
 )
 
 const (
-	numExecutionSteps       = 4
-	validationStepIndex     = 0
-	checkStateStepIndex     = 1
-	enforcementStepIndex    = 2
-	postCheckStateStepIndex = 3
+	numExecutionSteps              = 4
+	validationStepIndex            = 0
+	checkDesiredStateStepIndex     = 1
+	enforcementStepIndex           = 2
+	postCheckDesiredStateStepIndex = 3
 )
 
 type configTask struct {
@@ -59,7 +59,7 @@ type policy struct {
 }
 
 type resource struct {
-	enforcementNeeded bool
+	inDesiredState bool
 
 	packageResource        *agentendpointpb.PackageResource
 	repositoryResource     *agentendpointpb.RepositoryResource
@@ -76,7 +76,7 @@ func (r *resource) unmarshal(ctx context.Context, res *agentendpointpb.ApplyConf
 
 func (r *resource) checkState(ctx context.Context) error {
 	// TODO: implement
-	r.enforcementNeeded = false
+	r.inDesiredState = false
 	return nil
 }
 
@@ -159,14 +159,16 @@ func (c *configTask) validation(ctx context.Context) {
 		asgnmnt := c.assignments[a.GetConfigAssignment()]
 		aResult := c.results.GetResults()[i]
 		for i, p := range a.GetPolicies() {
+			ctx = clog.WithLabels(ctx, map[string]string{"policy_id": p.GetId()})
 			plcy := asgnmnt.policies[p.GetId()]
 			pResult := aResult.GetOsPolicyResults().GetResults()[i]
-			for i, r := range p.GetResources() {
-				res := plcy.resources[r.GetId()]
+			for i, taskResource := range p.GetResources() {
+				ctx = clog.WithLabels(ctx, map[string]string{"resource_id": taskResource.GetId()})
+				res := plcy.resources[taskResource.GetId()]
 
 				outcome := agentendpointpb.ApplyConfigTaskOutput_ResourceResult_Validation_OK
 				errMsg := ""
-				err := res.unmarshal(ctx, r)
+				err := res.unmarshal(ctx, taskResource)
 				if err != nil {
 					outcome = agentendpointpb.ApplyConfigTaskOutput_ResourceResult_Validation_RESOURCE_PAYLOAD_CONVERSION_ERROR
 					plcy.hasError = true
@@ -206,7 +208,7 @@ func (c *configTask) checkState(ctx context.Context) {
 			pResult := aResult.GetOsPolicyResults().GetResults()[i]
 			for i := range p.GetResources() {
 				result := pResult.GetResourceResults().GetResults()[i]
-				result.GetExecutionSteps()[checkStateStepIndex] = &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep{
+				result.GetExecutionSteps()[checkDesiredStateStepIndex] = &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep{
 					Step: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_CheckDesiredState{
 						CheckDesiredState: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredState{
 							Outcome: agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_SKIPPED,
@@ -231,9 +233,9 @@ func (c *configTask) checkState(ctx context.Context) {
 				continue
 			}
 			pResult := aResult.GetOsPolicyResults().GetResults()[i]
-			for i, r := range p.GetResources() {
-				ctx = clog.WithLabels(ctx, map[string]string{"resource_id": r.GetId()})
-				res := plcy.resources[r.GetId()]
+			for i, taskResource := range p.GetResources() {
+				ctx = clog.WithLabels(ctx, map[string]string{"resource_id": taskResource.GetId()})
+				res := plcy.resources[taskResource.GetId()]
 
 				outcome := agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_IN_DESIRED_STATE
 				errMsg := ""
@@ -245,12 +247,12 @@ func (c *configTask) checkState(ctx context.Context) {
 					clog.Errorf(ctx, errMsg)
 				}
 
-				if res.enforcementNeeded {
+				if res.inDesiredState {
 					outcome = agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_NOT_IN_DESIRED_STATE
 				}
 
 				result := pResult.GetResourceResults().GetResults()[i]
-				result.GetExecutionSteps()[checkStateStepIndex] = &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep{
+				result.GetExecutionSteps()[checkDesiredStateStepIndex] = &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep{
 					Step: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_CheckDesiredState{
 						CheckDesiredState: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredState{
 							Outcome: outcome,
@@ -283,16 +285,16 @@ func (c *configTask) enforceState(ctx context.Context) {
 				continue
 			}
 			pResult := aResult.GetOsPolicyResults().GetResults()[i]
-			for i, r := range p.GetResources() {
-				ctx = clog.WithLabels(ctx, map[string]string{"resource_id": r.GetId()})
-				res := plcy.resources[r.GetId()]
+			for i, taskResource := range p.GetResources() {
+				ctx = clog.WithLabels(ctx, map[string]string{"resource_id": taskResource.GetId()})
+				res := plcy.resources[taskResource.GetId()]
 				// Only enforce resources that need it.
-				if !res.enforcementNeeded {
+				if !res.inDesiredState {
 					clog.Debugf(ctx, "No enforcement required.")
 					continue
 				}
 				c.postCheckRequired = true
-				res.enforcementNeeded = false
+				res.inDesiredState = false
 
 				result := pResult.GetResourceResults().GetResults()[i]
 				outcome := agentendpointpb.ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_SUCCESS
@@ -353,12 +355,12 @@ func (c *configTask) postCheckState(ctx context.Context) {
 					clog.Errorf(ctx, errMsg)
 				}
 
-				if res.enforcementNeeded {
+				if res.inDesiredState {
 					outcome = agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_NOT_IN_DESIRED_STATE
 				}
 
 				result := pResult.GetResourceResults().GetResults()[i]
-				result.GetExecutionSteps()[checkStateStepIndex] = &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep{
+				result.GetExecutionSteps()[checkDesiredStateStepIndex] = &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep{
 					Step: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_CheckDesiredStatePostEnforcement{
 						CheckDesiredStatePostEnforcement: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement{
 							Outcome: outcome,
