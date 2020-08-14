@@ -133,6 +133,10 @@ func getKernelInfo() (string, string, error) {
 	return getVersion(info, langCodePage)
 }
 
+type win32OperatingSystem struct {
+	Caption, Version string
+}
+
 // Get reports OSInfo.
 func Get() (*OSInfo, error) {
 	oi := &OSInfo{ShortName: Windows, Architecture: Architecture(runtime.GOARCH)}
@@ -143,13 +147,6 @@ func Get() (*OSInfo, error) {
 	}
 	oi.Hostname = hn
 
-	i, err := osInfo()
-	if err != nil {
-		return oi, fmt.Errorf("osInfo() error: %v", err)
-	}
-	oi.LongName = i.Caption
-	oi.Version = i.Version
-
 	kVersion, kRelease, err := getKernelInfo()
 	if err != nil {
 		return oi, fmt.Errorf("getKernelInfo() error: %v", err)
@@ -157,18 +154,13 @@ func Get() (*OSInfo, error) {
 	oi.KernelVersion = kVersion
 	oi.KernelRelease = kRelease
 
-	return oi, nil
-}
-
-type win32_OperatingSystem struct {
-	Caption, Version string
-}
-
-func osInfo() (*win32_OperatingSystem, error) {
-	var ops []win32_OperatingSystem
-	query := wmi.CreateQuery(&ops, "")
+	var ops []win32OperatingSystem
+	query := "SELECT Caption, Version FROM Win32_OperatingSystem"
 	if err := wmi.Query(query, &ops); err != nil {
-		return nil, fmt.Errorf("wmi.Query(%q) error: %v", query, err)
+		return oi, fmt.Errorf("wmi.Query(%q) error: %v", query, err)
 	}
-	return &ops[0], nil
+	oi.LongName = ops[0].Caption
+	oi.Version = ops[0].Version
+
+	return oi, nil
 }

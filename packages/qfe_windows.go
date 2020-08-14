@@ -15,21 +15,23 @@ package packages
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/StackExchange/wmi"
 )
 
-type win32_QuickFixEngineering struct {
+type win32QuickFixEngineering struct {
 	Caption, Description, HotFixID, InstalledOn string
 }
 
 // QuickFixEngineering queries the wmi object win32_QuickFixEngineering for a list of installed updates.
 func QuickFixEngineering(ctx context.Context) ([]QFEPackage, error) {
-	var updts []win32_QuickFixEngineering
+	var updts []win32QuickFixEngineering
 	clog.Debugf(ctx, "Querying WMI for installed QuickFixEngineering updates.")
-	if err := wmi.Query(wmi.CreateQuery(&updts, ""), &updts); err != nil {
-		return nil, err
+	query := "SELECT Caption, Description, HotFixID, InstalledOn FROM Win32_QuickFixEngineering"
+	if err := wmi.Query(query, &updts); err != nil {
+		return nil, fmt.Errorf("wmi.Query(%q) error: %v", query, err)
 	}
 	var qfe []QFEPackage
 	for _, update := range updts {
