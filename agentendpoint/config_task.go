@@ -20,9 +20,7 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/reflect/protoreflect"
+	"github.com/GoogleCloudPlatform/osconfig/config"
 
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
@@ -35,7 +33,7 @@ const (
 	postCheckDesiredStateStepIndex = 3
 )
 
-var resource = resourceIface(&resourceImpl{})
+var resource = resourceIface(&config.Resource{})
 
 type configTask struct {
 	client *Client
@@ -64,58 +62,10 @@ type policy struct {
 }
 
 type resourceIface interface {
-	unmarshal(context.Context, *agentendpointpb.ApplyConfigTask_Config_Resource) error
-	checkState(context.Context) error
-	runEnforcement(context.Context) error
-	inDesiredState() bool
-}
-
-type resourceImpl struct {
-	inDS bool
-
-	packageResource        *agentendpointpb.PackageResource
-	repositoryResource     *agentendpointpb.RepositoryResource
-	execResource           *agentendpointpb.ExecResource
-	fileResource           *agentendpointpb.FileResource
-	extractArchiveResource *agentendpointpb.ExtractArchiveResource
-	serviceResource        *agentendpointpb.ServiceResource
-}
-
-func (r *resourceImpl) inDesiredState() bool {
-	return r.inDS
-}
-
-func (r *resourceImpl) unmarshal(ctx context.Context, res *agentendpointpb.ApplyConfigTask_Config_Resource) error {
-	// TODO: implement
-
-	switch protoreflect.Name(res.GetType().GetType()) {
-	case r.packageResource.ProtoReflect().Descriptor().Name():
-		b, err := proto.Marshal(res.GetPayload())
-		if err != nil {
-			return err
-		}
-		return protojson.Unmarshal(b, r.packageResource)
-	case r.repositoryResource.ProtoReflect().Descriptor().Name():
-	case r.execResource.ProtoReflect().Descriptor().Name():
-	case r.fileResource.ProtoReflect().Descriptor().Name():
-	case r.extractArchiveResource.ProtoReflect().Descriptor().Name():
-	case r.serviceResource.ProtoReflect().Descriptor().Name():
-	default:
-		return fmt.Errorf("unknown resource type: %q", res.GetType().GetType())
-	}
-	return nil
-}
-
-func (r *resourceImpl) checkState(ctx context.Context) error {
-	// TODO: implement
-	r.inDS = true
-	return nil
-}
-
-func (r *resourceImpl) runEnforcement(ctx context.Context) error {
-	// TODO: implement
-	r.inDS = true
-	return nil
+	Unmarshal(context.Context, *agentendpointpb.ApplyConfigTask_Config_Resource) error
+	CheckState(context.Context) error
+	EnforceState(context.Context) error
+	InDesiredState() bool
 }
 
 func (c *configTask) reportCompletedState(ctx context.Context, errMsg string, state agentendpointpb.ApplyConfigTaskOutput_State) error {
@@ -201,7 +151,7 @@ func (c *configTask) validation(ctx context.Context) {
 
 				outcome := agentendpointpb.ApplyConfigTaskOutput_ResourceResult_Validation_OK
 				errMsg := ""
-				err := res.unmarshal(ctx, taskResource)
+				err := res.Unmarshal(ctx, taskResource)
 				if err != nil {
 					outcome = agentendpointpb.ApplyConfigTaskOutput_ResourceResult_Validation_RESOURCE_PAYLOAD_CONVERSION_ERROR
 					plcy.hasError = true
@@ -272,7 +222,7 @@ func (c *configTask) checkState(ctx context.Context) {
 
 				outcome := agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_IN_DESIRED_STATE
 				errMsg := ""
-				err := res.checkState(ctx)
+				err := res.CheckState(ctx)
 				if err != nil {
 					outcome = agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_ERROR
 					plcy.hasError = true
@@ -280,7 +230,7 @@ func (c *configTask) checkState(ctx context.Context) {
 					clog.Errorf(ctx, errMsg)
 				}
 
-				if !res.inDesiredState() {
+				if !res.InDesiredState() {
 					outcome = agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_NOT_IN_DESIRED_STATE
 				}
 
@@ -322,7 +272,7 @@ func (c *configTask) enforceState(ctx context.Context) {
 				ctx = clog.WithLabels(ctx, map[string]string{"resource_id": taskResource.GetId()})
 				res := plcy.resources[taskResource.GetId()]
 				// Only enforce resources that need it.
-				if res.inDesiredState() {
+				if res.InDesiredState() {
 					clog.Debugf(ctx, "No enforcement required.")
 					continue
 				}
@@ -331,7 +281,7 @@ func (c *configTask) enforceState(ctx context.Context) {
 				result := pResult.GetResourceResults().GetResults()[i]
 				outcome := agentendpointpb.ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_SUCCESS
 				errMsg := ""
-				err := res.runEnforcement(ctx)
+				err := res.EnforceState(ctx)
 				if err != nil {
 					outcome = agentendpointpb.ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_ERROR
 					plcy.hasError = true
@@ -379,7 +329,7 @@ func (c *configTask) postCheckState(ctx context.Context) {
 
 				outcome := agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_IN_DESIRED_STATE
 				errMsg := ""
-				err := res.checkState(ctx)
+				err := res.CheckState(ctx)
 				if err != nil {
 					outcome = agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_ERROR
 					plcy.hasError = true
@@ -387,7 +337,7 @@ func (c *configTask) postCheckState(ctx context.Context) {
 					clog.Errorf(ctx, errMsg)
 				}
 
-				if !res.inDesiredState() {
+				if !res.InDesiredState() {
 					outcome = agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_NOT_IN_DESIRED_STATE
 				}
 

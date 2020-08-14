@@ -16,7 +16,6 @@ package agentendpoint
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -27,11 +26,22 @@ import (
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
-func TestUnmarshal(t *testing.T) {
-	test := &agentendpointpb.FileResource{Path: "foo"}
-	fmt.Println(test.ProtoReflect().Descriptor().Name())
-	fmt.Println()
-	t.Error()
+type testResource struct{}
+
+func (r *testResource) InDesiredState() bool {
+	return false
+}
+
+func (r *testResource) Unmarshal(ctx context.Context, res *agentendpointpb.ApplyConfigTask_Config_Resource) error {
+	return nil
+}
+
+func (r *testResource) CheckState(ctx context.Context) error {
+	return nil
+}
+
+func (r *testResource) EnforceState(ctx context.Context) error {
+	return nil
 }
 
 type agentEndpointServiceConfigTestServer struct {
@@ -117,7 +127,7 @@ func genTestResourceResult(id string, steps int) *agentendpointpb.ApplyConfigTas
 		ret.ExecutionSteps[1] = &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep{
 			Step: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_CheckDesiredState{
 				CheckDesiredState: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredState{
-					Outcome: agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_IN_DESIRED_STATE,
+					Outcome: agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_NOT_IN_DESIRED_STATE,
 				},
 			}}
 	}
@@ -133,7 +143,7 @@ func genTestResourceResult(id string, steps int) *agentendpointpb.ApplyConfigTas
 		ret.ExecutionSteps[3] = &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep{
 			Step: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_CheckDesiredStatePostEnforcement{
 				CheckDesiredStatePostEnforcement: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement{
-					Outcome: agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_IN_DESIRED_STATE,
+					Outcome: agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_NOT_IN_DESIRED_STATE,
 				},
 			}}
 	}
@@ -190,6 +200,7 @@ func genTestAssignmentResult(id string, steps int) *agentendpointpb.ApplyConfigT
 
 func TestRunApplyConfig(t *testing.T) {
 	ctx := context.Background()
+	resource = resourceIface(&testResource{})
 
 	testConfig := &agentendpointpb.ApplyConfigTask_Config{
 		ConfigAssignments: []*agentendpointpb.ApplyConfigTask_Config_ConfigAssignment{
