@@ -127,7 +127,7 @@ func getKernelInfo() (string, string, error) {
 	// This should be something like 040904b0 for US English UTF16LE.
 	langCodePage, err := getTranslation(info)
 	if err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("getTranslation() error: %v", err)
 	}
 
 	return getVersion(info, langCodePage)
@@ -135,25 +135,27 @@ func getKernelInfo() (string, string, error) {
 
 // Get reports OSInfo.
 func Get() (*OSInfo, error) {
-	i, err := osInfo()
-	if err != nil {
-		return nil, err
-	}
-
-	oi := &OSInfo{ShortName: Windows, LongName: i.Caption, Version: i.Version, Architecture: Architecture(runtime.GOARCH)}
-
-	kVersion, kRelease, err := getKernelInfo()
-	if err != nil {
-		return oi, err
-	}
-	oi.KernelVersion = kVersion
-	oi.KernelRelease = kRelease
+	oi := &OSInfo{ShortName: Windows, Architecture: Architecture(runtime.GOARCH)}
 
 	hn, err := os.Hostname()
 	if err != nil {
 		return oi, fmt.Errorf("os.Hostname() error: %v", err)
 	}
 	oi.Hostname = hn
+
+	i, err := osInfo()
+	if err != nil {
+		return oi, fmt.Errorf("osInfo() error: %v", err)
+	}
+	oi.LongName = i.Caption
+	oi.Version = i.Version
+
+	kVersion, kRelease, err := getKernelInfo()
+	if err != nil {
+		return oi, fmt.Errorf("getKernelInfo() error: %v", err)
+	}
+	oi.KernelVersion = kVersion
+	oi.KernelRelease = kRelease
 
 	return oi, nil
 }
@@ -164,8 +166,9 @@ type win32_OperatingSystem struct {
 
 func osInfo() (*win32_OperatingSystem, error) {
 	var ops []win32_OperatingSystem
-	if err := wmi.Query(wmi.CreateQuery(&ops, ""), &ops); err != nil {
-		return nil, err
+	query := wmi.CreateQuery(&ops, "")
+	if err := wmi.Query(query, &ops); err != nil {
+		return nil, fmt.Errorf("wmi.Query(%q) error: %v", query, err)
 	}
 	return &ops[0], nil
 }
