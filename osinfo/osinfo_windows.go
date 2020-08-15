@@ -159,6 +159,9 @@ func Get() (*OSInfo, error) {
 	if err := wmi.Query(query, &ops); err != nil {
 		return oi, fmt.Errorf("wmi.Query(%q) error: %v", query, err)
 	}
+	if len(ops) == 0 {
+		return oi, fmt.Errorf("wmi.Query(%q) nil output", query)
+	}
 	oi.LongName = ops[0].Caption
 	oi.Version = ops[0].Version
 
