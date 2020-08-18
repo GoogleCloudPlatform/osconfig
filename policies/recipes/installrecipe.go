@@ -125,7 +125,7 @@ func createBaseDir(recipe *agentendpointpb.SoftwareRecipe, runID string) (string
 		name = fmt.Sprintf("%s_%s", name, recipe.Version)
 	}
 
-	dir, err := ioutil.TempDir("", fmt.Sprintf("%s_%s_*", name, runID))
+	dir, err := ioutil.TempDir("", fmt.Sprintf("%s_%s_", name, runID))
 	if err != nil {
 		return "", fmt.Errorf("failed to create working dir for recipe: %q %s", recipe.Name, err)
 	}
