@@ -22,34 +22,25 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/GoogleCloudPlatform/osconfig/util/mocks"
+	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"github.com/golang/mock/gomock"
 )
 
 func TestInstallYumPackages(t *testing.T) {
-	ctx := context.Background()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockCommandRunner := mocks.NewMockCommandRunner(mockCtrl)
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"install", "--assumeyes", "pkg1", "pkg2"}...)).Return([]byte("update successful"), nil).Times(1)
+	expectedCmd := exec.Command(yum, append(yumInstallArgs, pkgs...)...)
 
-	if err := InstallYumPackages(ctx, pkgs); err != nil {
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
+	if err := InstallYumPackages(testCtx, pkgs); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-}
 
-func TestInstallYumPackagesReturnsError(t *testing.T) {
-	ctx := context.Background()
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	mockCommandRunner := mocks.NewMockCommandRunner(mockCtrl)
-	runner = mockCommandRunner
-	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"install", "--assumeyes", "pkg1", "pkg2"}...)).Return([]byte("update unsuccessful"), errors.New("could not update")).Times(1)
-
-	if err := InstallYumPackages(ctx, pkgs); err == nil {
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), errors.New("could not update")).Times(1)
+	if err := InstallYumPackages(testCtx, pkgs); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }
@@ -59,119 +50,133 @@ func TestRemoveYum(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockCommandRunner := mocks.NewMockCommandRunner(mockCtrl)
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"remove", "--assumeyes", "pkg1", "pkg2"}...)).Return([]byte("removed successfully"), nil).Times(1)
+	expectedCmd := exec.Command(yum, append(yumRemoveArgs, pkgs...)...)
 
+	mockCommandRunner.EXPECT().Run(ctx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
 	if err := RemoveYumPackages(ctx, pkgs); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-}
 
-func TestRemoveYumReturnError(t *testing.T) {
-	ctx := context.Background()
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	mockCommandRunner := mocks.NewMockCommandRunner(mockCtrl)
-	runner = mockCommandRunner
-	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"remove", "--assumeyes", "pkg1", "pkg2"}...)).Return([]byte("could not remove successfully"), errors.New("removal error")).Times(1)
-
-	if err := RemoveYumPackages(ctx, pkgs); err == nil {
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), errors.New("removal error")).Times(1)
+	if err := RemoveYumPackages(testCtx, pkgs); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }
 
 func TestYumUpdates(t *testing.T) {
-	ctx := context.Background()
+	data := []byte(`
+	=================================================================================================================================================================================
+	Package                                      Arch                           Version                                              Repository                                Size
+	=================================================================================================================================================================================
+	Installing:
+    kernel                                    x86_64                         2.6.32-754.24.3.el6                                  updates                                   32 M
+	    replacing kernel.x86_64 1.0.0-4
+	Upgrading:
+	  foo                                       noarch                         2.0.0-1                                              BaseOS                                   361 k
+	  bar                                       x86_64                         2.0.0-1                                              repo                                      10 M
+	Obsoleting:
+	  baz                                       noarch                         2.0.0-1                                              repo                                      10 M
+`)
+
+	if os.Getenv("EXIT100") == "1" {
+		os.Exit(100)
+	}
+
+	cmd := exec.Command(os.Args[0], "-test.run=TestYumUpdates")
+	cmd.Env = append(os.Environ(), "EXIT100=1")
+	errExit100 := cmd.Run()
+
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockCommandRunner := mocks.NewMockCommandRunner(mockCtrl)
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"check-update", "--assumeyes"}...)).Return([]byte("TestYumUpdatesError"), errors.New("Bad error")).Times(1)
-
-	if _, err := YumUpdates(ctx); err == nil {
-		t.Errorf("did not get expected error")
-	}
-}
-
-func TestYumUpdatesMinimalWithSecurity(t *testing.T) {
-	data := []byte(`
-	=================================================================================================================================================================================
-	Package                                      Arch                           Version                                              Repository                                Size
-	=================================================================================================================================================================================
-	Installing:
-    kernel                                    x86_64                         2.6.32-754.24.3.el6                                  updates                                   32 M
-	    replacing kernel.x86_64 1.0.0-4
-	Upgrading:
-	  foo                                       noarch                         2.0.0-1                                              BaseOS                                   361 k
-	  bar                                       x86_64                         2.0.0-1                                              repo                                      10 M
-	Obsoleting:
-	  baz                                       noarch                         2.0.0-1                                              repo                                      10 M
-`)
-
-	ctx := context.Background()
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	mockCommandRunner := mocks.NewMockCommandRunner(mockCtrl)
 	ptyrunner = mockCommandRunner
-	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"update-minimal", "--assumeno", "--cacheonly", "--security"}...)).Return(data, nil).Times(1)
+	expectedCheckUpdate := exec.Command(yum, yumCheckUpdateArgs...)
 
-	ret, err := listAndParseYumPackages(ctx, YumUpdateMinimal(true), YumUpdateSecurity(true))
-	if err != nil {
-		t.Errorf("did not expect error: %+v", err)
-	}
-
-	if len(ret) <= 0 {
-		t.Errorf("unexpected number of updates.")
-	}
-
-	allPackageNames := []string{"kernel", "foo", "bar"}
-	for _, pkg := range ret {
-		if !contains(allPackageNames, pkg.Name) {
-			t.Errorf("package %s expected to be present.", pkg.Name)
+	// Test Error
+	t.Run("Error", func(t *testing.T) {
+		mockCommandRunner.EXPECT().Run(testCtx, expectedCheckUpdate).Return(data, []byte("stderr"), errors.New("Bad error")).Times(1)
+		if _, err := YumUpdates(testCtx); err == nil {
+			t.Errorf("did not get expected error")
 		}
-	}
-}
+	})
 
-func TestYumUpdatesWithSecurityWithExcludes(t *testing.T) {
-	data := []byte(`
-	=================================================================================================================================================================================
-	Package                                      Arch                           Version                                              Repository                                Size
-	=================================================================================================================================================================================
-	Installing:
-    kernel                                    x86_64                         2.6.32-754.24.3.el6                                  updates                                   32 M
-	    replacing kernel.x86_64 1.0.0-4
-	Upgrading:
-	  foo                                       noarch                         2.0.0-1                                              BaseOS                                   361 k
-	  bar                                       x86_64                         2.0.0-1                                              repo                                      10 M
-	Obsoleting:
-	  baz                                       noarch                         2.0.0-1                                              repo                                      10 M
-`)
+	// yum check-updates exit code 0
+	t.Run("ExitCode0", func(t *testing.T) {
+		mockCommandRunner.EXPECT().Run(testCtx, expectedCheckUpdate).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
+		ret, err := YumUpdates(testCtx)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		if ret != nil {
+			t.Errorf("unexpected return: %v", ret)
+		}
+	})
 
-	// the mock data returned by mockcommandrunner will not include this
-	// package anyways. The purpose of this test is to make sure that
-	// when customer specifies excluded packages, we set the --exclude flag
-	// in the yum command.
-	excludedPackages := []string{"ex-pkg1", "ex-pkg2"}
-	ctx := context.Background()
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
+	// Test no options
+	t.Run("NoOptions", func(t *testing.T) {
+		expectedCmd := exec.Command(yum, yumListUpdatesArgs...)
 
-	mockCommandRunner := mocks.NewMockCommandRunner(mockCtrl)
-	ptyrunner = mockCommandRunner
-	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"update", "--assumeno", "--cacheonly", "--security", "--exclude", excludedPackages[0], "--exclude", excludedPackages[1]}...)).Return(data, nil).Times(1)
+		first := mockCommandRunner.EXPECT().Run(testCtx, expectedCheckUpdate).Return(data, []byte("stderr"), errExit100).Times(1)
+		mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).After(first).Return(data, []byte("stderr"), nil).Times(1)
+		ret, err := YumUpdates(testCtx)
+		if err != nil {
+			t.Errorf("did not expect error: %v", err)
+		}
 
-	ret, err := listAndParseYumPackages(ctx, YumUpdateMinimal(false), YumUpdateSecurity(true), YumExcludes(excludedPackages))
-	if err != nil {
-		t.Errorf("did not expect error: %+v", err)
-	}
+		allPackageNames := []string{"kernel", "foo", "bar"}
+		for _, pkg := range ret {
+			if !contains(allPackageNames, pkg.Name) {
+				t.Errorf("package %s expected to be present.", pkg.Name)
+			}
+		}
+	})
 
-	if len(ret) != 3 {
-		t.Errorf("unexpected number of updates.")
-	}
+	// Test MinimalWithSecurity
+	t.Run("MinimalWithSecurity", func(t *testing.T) {
+		expectedCmd := exec.Command(yum, append(yumListUpdateMinimalArgs, "--security")...)
+
+		first := mockCommandRunner.EXPECT().Run(testCtx, expectedCheckUpdate).Return(data, []byte("stderr"), errExit100).Times(1)
+		mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).After(first).Return(data, []byte("stderr"), nil).Times(1)
+		ret, err := YumUpdates(testCtx, YumUpdateMinimal(true), YumUpdateSecurity(true))
+		if err != nil {
+			t.Errorf("did not expect error: %v", err)
+		}
+
+		allPackageNames := []string{"kernel", "foo", "bar"}
+		for _, pkg := range ret {
+			if !contains(allPackageNames, pkg.Name) {
+				t.Errorf("package %s expected to be present.", pkg.Name)
+			}
+		}
+	})
+
+	// Test WithSecurityWithExcludes
+	t.Run("WithSecurityWithExcludes", func(t *testing.T) {
+		// the mock data returned by mockcommandrunner will not include this
+		// package anyways. The purpose of this test is to make sure that
+		// when customer specifies excluded packages, we set the --exclude flag
+		// in the yum command.
+		excludedPackages := []string{"ex-pkg1", "ex-pkg2"}
+		expectedCmd := exec.Command(yum, append(yumListUpdatesArgs, "--security", "--exclude", excludedPackages[0], "--exclude", excludedPackages[1])...)
+
+		first := mockCommandRunner.EXPECT().Run(testCtx, expectedCheckUpdate).Return(data, []byte("stderr"), errExit100).Times(1)
+		mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).After(first).Return(data, []byte("stderr"), nil).Times(1)
+		ret, err := YumUpdates(testCtx, YumUpdateMinimal(false), YumUpdateSecurity(true), YumExcludes(excludedPackages))
+		if err != nil {
+			t.Errorf("did not expect error: %v", err)
+		}
+
+		allPackageNames := []string{"kernel", "foo", "bar"}
+		for _, pkg := range ret {
+			if !contains(allPackageNames, pkg.Name) {
+				t.Errorf("package %s expected to be present.", pkg.Name)
+			}
+		}
+	})
 }
 
 func contains(names []string, name string) bool {
@@ -181,24 +186,6 @@ func contains(names []string, name string) bool {
 		}
 	}
 	return false
-}
-
-func TestYumUpdatesExitCode0(t *testing.T) {
-	ctx := context.Background()
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	mockCommandRunner := mocks.NewMockCommandRunner(mockCtrl)
-	runner = mockCommandRunner
-	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"check-update", "--assumeyes"}...)).Return([]byte("TestYumUpdatesError"), nil).Times(1)
-
-	ret, err := YumUpdates(ctx)
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-	if ret != nil {
-		t.Errorf("unexpected return: %v", ret)
-	}
 }
 
 func TestParseYumUpdates(t *testing.T) {
@@ -231,46 +218,5 @@ func TestParseYumUpdates(t *testing.T) {
 				t.Errorf("parseYumUpdates() = %v, want %v", got, tt.want)
 			}
 		})
-	}
-}
-
-func TestYumUpdatesExitCode100(t *testing.T) {
-	data := []byte(`
-	=================================================================================================================================================================================
-	Package                                      Arch                           Version                                              Repository                                Size
-    =================================================================================================================================================================================
-    Upgrading:
-      foo                                       noarch                         2.0.0-1                           BaseOS                                   361 k
-    blah
-`)
-	excludedPackages := []string{"ex-pkg1", "ex-pkg2"}
-	ctx := context.Background()
-
-	if os.Getenv("EXIT100") == "1" {
-		os.Exit(100)
-	}
-
-	cmd := exec.Command(os.Args[0], "-test.run=TestYumUpdatesExitCode100")
-	cmd.Env = append(os.Environ(), "EXIT100=1")
-	err := cmd.Run()
-
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	mockCommandRunner := mocks.NewMockCommandRunner(mockCtrl)
-	runner = mockCommandRunner
-	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"check-update", "--assumeyes"}...)).Return([]byte("TestYumUpdatesError"), err).Times(1)
-
-	ptyrunner = mockCommandRunner
-	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"update", "--assumeno", "--cacheonly", "--exclude", excludedPackages[0], "--exclude", excludedPackages[1]}...)).Return(data, nil).Times(1)
-
-	ret, err := YumUpdates(ctx, YumExcludes(excludedPackages))
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-
-	want := []PkgInfo{{"foo", "all", "2.0.0-1"}}
-	if !reflect.DeepEqual(ret, want) {
-		t.Errorf("YumUpdates() = %v, want %v", ret, want)
 	}
 }

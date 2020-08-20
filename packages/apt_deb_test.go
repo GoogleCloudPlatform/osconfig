@@ -16,41 +16,74 @@ package packages
 
 import (
 	"errors"
+	"os"
+	"os/exec"
 	"reflect"
 	"testing"
+
+	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
+	"github.com/golang/mock/gomock"
 )
 
 func TestInstallAptPackages(t *testing.T) {
-	run = getMockRun([]byte("TestInstallAptPackages"), nil)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	runner = mockCommandRunner
+
+	expectedCmd := exec.Command(aptGet, append(aptGetInstallArgs, pkgs...)...)
+	expectedCmd.Env = append(os.Environ(),
+		"DEBIAN_FRONTEND=noninteractive",
+	)
+
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
 	if err := InstallAptPackages(testCtx, pkgs); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-}
 
-func TestInstallAptPackagesReturnsError(t *testing.T) {
-	run = getMockRun([]byte("TestInstallAptPackagesReturnsError"), errors.New("Could not install package"))
-	err := InstallAptPackages(testCtx, pkgs)
-	if err == nil {
+	first := mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), dpkgErr, errors.New("error")).Times(1)
+	repair := mockCommandRunner.EXPECT().Run(testCtx, exec.Command(dpkg, dpkgRepairArgs...)).After(first).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).After(repair).Return([]byte("stdout"), []byte("stderr"), errors.New("error")).Times(1)
+	if err := InstallAptPackages(testCtx, pkgs); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }
 
 func TestRemoveAptPackages(t *testing.T) {
-	run = getMockRun([]byte("TestRemoveAptPackages"), nil)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	runner = mockCommandRunner
+	expectedCmd := exec.Command(aptGet, append(aptGetRemoveArgs, pkgs...)...)
+	expectedCmd.Env = append(os.Environ(),
+		"DEBIAN_FRONTEND=noninteractive",
+	)
+
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
 	if err := RemoveAptPackages(testCtx, pkgs); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-}
 
-func TestRemoveAptPackagesReturnError(t *testing.T) {
-	run = getMockRun([]byte("TestRemoveAptPackagesReturnError"), errors.New("Could not find package"))
+	first := mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), dpkgErr, errors.New("error")).Times(1)
+	repair := mockCommandRunner.EXPECT().Run(testCtx, exec.Command(dpkg, dpkgRepairArgs...)).After(first).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).After(repair).Return([]byte("stdout"), []byte("stderr"), errors.New("error")).Times(1)
 	if err := RemoveAptPackages(testCtx, pkgs); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }
 
 func TestInstalledDebPackages(t *testing.T) {
-	run = getMockRun([]byte("foo amd64 1.2.3-4"), nil)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	runner = mockCommandRunner
+	expectedCmd := exec.Command(dpkgquery, dpkgQueryArgs...)
+	data := []byte("foo amd64 1.2.3-4")
+
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return(data, []byte("stderr"), nil).Times(1)
 	ret, err := InstalledDebPackages(testCtx)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -61,7 +94,7 @@ func TestInstalledDebPackages(t *testing.T) {
 		t.Errorf("InstalledDebPackages() = %v, want %v", ret, want)
 	}
 
-	run = getMockRun(nil, errors.New("bad error"))
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return(data, []byte("stderr"), errors.New("error")).Times(1)
 	if _, err := InstalledDebPackages(testCtx); err == nil {
 		t.Errorf("did not get expected error")
 	}
@@ -117,7 +150,17 @@ Conf firmware-linux-free (3.4 Debian:9.9/stable [all])
 }
 
 func TestAptUpdates(t *testing.T) {
-	run = getMockRun([]byte("Inst google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [amd64])"), nil)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	runner = mockCommandRunner
+	updateCmd := exec.Command(aptGet, aptGetUpdateArgs...)
+	expectedCmd := exec.Command(aptGet, append(aptGetUpgradableArgs, aptGetUpgradeCmd)...)
+	data := []byte("Inst google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [amd64])")
+
+	first := mockCommandRunner.EXPECT().Run(testCtx, updateCmd).Return(data, []byte("stderr"), nil).Times(1)
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).After(first).Return(data, []byte("stderr"), nil).Times(1)
 	ret, err := AptUpdates(testCtx)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -128,7 +171,8 @@ func TestAptUpdates(t *testing.T) {
 		t.Errorf("AptUpdates() = %v, want %v", ret, want)
 	}
 
-	run = getMockRun(nil, errors.New("bad error"))
+	first = mockCommandRunner.EXPECT().Run(testCtx, updateCmd).Return(data, []byte("stderr"), nil).Times(1)
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).After(first).Return(data, []byte("stderr"), errors.New("error")).Times(1)
 	if _, err := AptUpdates(testCtx); err == nil {
 		t.Errorf("did not get expected error")
 	}
