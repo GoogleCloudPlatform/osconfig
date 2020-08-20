@@ -8,7 +8,7 @@ require (
 	github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20200113214433-6cbb518174d4
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d
 	github.com/go-ole/go-ole v1.2.4
-	github.com/golang/mock v1.4.4
+	github.com/golang/mock v1.4.3
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/google/go-cmp v0.5.1
 	github.com/kylelemons/godebug v1.1.0

@@ -16,6 +16,7 @@
 package util
 
 import (
+	"bytes"
 	"context"
 	"os"
 	"os/exec"
@@ -23,6 +24,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
@@ -76,7 +78,19 @@ func Exists(name string) bool {
 // CommandRunner will execute the commands and return the results of that
 // execution.
 type CommandRunner interface {
+	Run(ctx context.Context, command *exec.Cmd) ([]byte, []byte, error)
+}
 
-	// Run takes precreated exec.Cmd and returns the results of execution.
-	Run(ctx context.Context, command *exec.Cmd) ([]byte, error)
+// DefaultRunner is a default CommandRunner.
+type DefaultRunner struct{}
+
+// Run takes precreated exec.Cmd and returns the stdout and stderr.
+func (r *DefaultRunner) Run(ctx context.Context, cmd *exec.Cmd) ([]byte, []byte, error) {
+	clog.Debugf(ctx, "Running %q with args %q\n", cmd.Path, cmd.Args[1:])
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	clog.Debugf(ctx, "%s %q output:\n%s", cmd.Path, cmd.Args[1:], strings.ReplaceAll(stdout.String(), "\n", "\n "))
+	return stdout.Bytes(), stderr.Bytes(), err
 }

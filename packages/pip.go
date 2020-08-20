@@ -17,7 +17,6 @@ package packages
 import (
 	"context"
 	"encoding/json"
-	"os/exec"
 	"runtime"
 
 	"github.com/GoogleCloudPlatform/osconfig/util"
@@ -49,7 +48,7 @@ type pipInstalledPkg struct {
 
 // PipUpdates queries for all available pip updates.
 func PipUpdates(ctx context.Context) ([]PkgInfo, error) {
-	out, err := run(ctx, exec.Command(pip, pipOutdatedArgs...))
+	out, err := run(ctx, pip, pipOutdatedArgs)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +68,7 @@ func PipUpdates(ctx context.Context) ([]PkgInfo, error) {
 
 // InstalledPipPackages queries for all installed pip packages.
 func InstalledPipPackages(ctx context.Context) ([]PkgInfo, error) {
-	out, err := run(ctx, exec.Command(pip, pipListArgs...))
+	out, err := run(ctx, pip, pipListArgs)
 	if err != nil {
 		return nil, err
 	}

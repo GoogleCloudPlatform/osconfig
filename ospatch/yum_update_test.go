@@ -21,7 +21,7 @@ import (
 	"testing"
 
 	"github.com/GoogleCloudPlatform/osconfig/packages"
-	"github.com/GoogleCloudPlatform/osconfig/util/mocks"
+	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"github.com/golang/mock/gomock"
 )
 
@@ -47,15 +47,14 @@ func TestRunYumUpdateWithSecurity(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockCommandRunner := mocks.NewMockCommandRunner(mockCtrl)
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	packages.SetCommandRunner(mockCommandRunner)
-	checkUpdateCall := mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"check-update", "--assumeyes"}...)).Return([]byte("TestYumUpdatesError"), err).Times(1)
+	checkUpdateCall := mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"check-update", "--assumeyes"}...)).Return([]byte("stdout"), []byte("stderr"), err).Times(1)
 	// yum install call to install package
-	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"install", "--assumeyes", "foo"}...)).After(checkUpdateCall).Return([]byte("install successful"), nil).Times(1)
+	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"install", "--assumeyes", "foo"}...)).After(checkUpdateCall).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
 
-	mockPtyCommandRunner := mocks.NewMockCommandRunner(mockCtrl)
-	packages.SetPtyCommandRunner(mockPtyCommandRunner)
-	mockPtyCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"update", "--assumeno", "--cacheonly", "--security"}...)).Return(data, nil).Times(1)
+	packages.SetPtyCommandRunner(mockCommandRunner)
+	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"update", "--assumeno", "--cacheonly", "--security"}...)).Return(data, []byte("stderr"), nil).Times(1)
 
 	err = RunYumUpdate(ctx, YumUpdateMinimal(false), YumUpdateSecurity(true))
 	if err != nil {
@@ -90,15 +89,14 @@ func TestRunYumUpdateWithSecurityWithExclusives(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockCommandRunner := mocks.NewMockCommandRunner(mockCtrl)
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	packages.SetCommandRunner(mockCommandRunner)
-	checkUpdateCall := mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"check-update", "--assumeyes"}...)).Return([]byte("TestYumUpdatesError"), err).Times(1)
+	checkUpdateCall := mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"check-update", "--assumeyes"}...)).Return([]byte("stdout"), []byte("stderr"), err).Times(1)
 	// yum install call to install package, make sure only 2 packages are installed.
-	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"install", "--assumeyes", "foo", "bar"}...)).After(checkUpdateCall).Return([]byte("install successful"), nil).Times(1)
+	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"install", "--assumeyes", "foo", "bar"}...)).After(checkUpdateCall).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
 
-	mockPtyCommandRunner := mocks.NewMockCommandRunner(mockCtrl)
-	packages.SetPtyCommandRunner(mockPtyCommandRunner)
-	mockPtyCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"update", "--assumeno", "--cacheonly", "--security"}...)).Return(data, nil).Times(1)
+	packages.SetPtyCommandRunner(mockCommandRunner)
+	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"update", "--assumeno", "--cacheonly", "--security"}...)).Return(data, []byte("stderr"), nil).Times(1)
 
 	err = RunYumUpdate(ctx, YumUpdateMinimal(false), YumUpdateSecurity(true), YumExclusivePackages(exclusivePackages))
 	if err != nil {

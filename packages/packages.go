@@ -17,7 +17,9 @@ package packages
 
 import (
 	"context"
+	"fmt"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
@@ -49,7 +51,7 @@ var (
 
 	noarch = osinfo.Architecture("noarch")
 
-	runner = util.CommandRunner(&defaultRunner{})
+	runner = util.CommandRunner(&util.DefaultRunner{})
 
 	ptyrunner = util.CommandRunner(&ptyRunner{})
 )
@@ -98,23 +100,21 @@ type QFEPackage struct {
 	Caption, Description, HotFixID, InstalledOn string
 }
 
-var run = func(ctx context.Context, cmd *exec.Cmd) ([]byte, error) {
-	clog.Debugf(ctx, "Running %q with args %q\n", cmd.Path, cmd.Args[1:])
-	return cmd.CombinedOutput()
+func run(ctx context.Context, cmd string, args []string) ([]byte, error) {
+	stdout, stderr, err := runner.Run(ctx, exec.Command(cmd, args...))
+	if err != nil {
+		return nil, fmt.Errorf("error running %s with args %q: %v, stdout: %q, stderr: %q", cmd, args, err, stdout, stderr)
+	}
+	return stdout, nil
 }
 
 type ptyRunner struct{}
 
-func (p *ptyRunner) Run(ctx context.Context, cmd *exec.Cmd) ([]byte, error) {
+func (p *ptyRunner) Run(ctx context.Context, cmd *exec.Cmd) ([]byte, []byte, error) {
 	clog.Debugf(ctx, "Running %q with args %q\n", cmd.Path, cmd.Args[1:])
-	return runWithPty(cmd)
-}
-
-type defaultRunner struct{}
-
-func (p *defaultRunner) Run(ctx context.Context, cmd *exec.Cmd) ([]byte, error) {
-	clog.Debugf(ctx, "Running %q with args %q\n", cmd.Path, cmd.Args[1:])
-	return cmd.CombinedOutput()
+	stdout, stderr, err := runWithPty(cmd)
+	clog.Debugf(ctx, "%s %q output:\n%s", cmd.Path, cmd.Args[1:], strings.ReplaceAll(string(stdout), "\n", "\n "))
+	return stdout, stderr, err
 }
 
 // SetCommandRunner allows external clients to set a custom commandRunner.

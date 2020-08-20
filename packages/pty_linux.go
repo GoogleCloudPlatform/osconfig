@@ -42,13 +42,13 @@ func ioctl(fd, req, arg uintptr) (err error) {
 // See https://bugzilla.redhat.com/show_bug.cgi?id=584525#c21
 // TODO: We should probably look into a thin python shim we can
 // interact with that the utilizes the yum libraries.
-func runWithPty(cmd *exec.Cmd) ([]byte, error) {
+func runWithPty(cmd *exec.Cmd) ([]byte, []byte, error) {
 	// Much of this logic was taken from, without the CGO stuff:
 	// https://golang.org/src/os/signal/signal_cgo_test.go
 
 	pty, err := os.OpenFile("/dev/ptmx", os.O_RDWR, 0)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer pty.Close()
 
@@ -57,36 +57,37 @@ func runWithPty(cmd *exec.Cmd) ([]byte, error) {
 	// unlockpt
 	var i int
 	if err := ioctl(pty.Fd(), unix.TIOCSPTLCK, uintptr(unsafe.Pointer(&i))); err != nil {
-		return nil, fmt.Errorf("error from ioctl TIOCSPTLCK: %v", err)
+		return nil, nil, fmt.Errorf("error from ioctl TIOCSPTLCK: %v", err)
 	}
 
 	// ptsname
 	var u uint32
 	if err := ioctl(pty.Fd(), unix.TIOCGPTN, uintptr(unsafe.Pointer(&u))); err != nil {
-		return nil, fmt.Errorf("error from ioctl TIOCGPTN: %v", err)
+		return nil, nil, fmt.Errorf("error from ioctl TIOCGPTN: %v", err)
 	}
 	path := filepath.Join("/dev/pts", strconv.Itoa(int(u)))
 
 	tty, err := os.OpenFile(path, os.O_RDWR|syscall.O_NOCTTY, 0)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer tty.Close()
 
 	if err := unix.IoctlSetWinsize(int(pty.Fd()), syscall.TIOCSWINSZ, &unix.Winsize{Row: 1, Col: 500}); err != nil {
-		return nil, fmt.Errorf("error from IoctlSetWinsize: %v", err)
+		return nil, nil, fmt.Errorf("error from IoctlSetWinsize: %v", err)
 	}
 
+	var stderr bytes.Buffer
 	cmd.Stdin = tty
 	cmd.Stdout = tty
-	cmd.Stderr = tty
+	cmd.Stderr = &stderr
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setctty: true,
 		Setsid:  true,
 		Ctty:    int(tty.Fd()),
 	}
 
-	var out bytes.Buffer
+	var stdout bytes.Buffer
 	var retErr error
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -105,7 +106,7 @@ func runWithPty(cmd *exec.Cmd) ([]byte, error) {
 				return
 			}
 
-			if _, err := out.Write(b); err != nil {
+			if _, err := stdout.Write(b); err != nil {
 				retErr = err
 				return
 			}
@@ -114,13 +115,13 @@ func runWithPty(cmd *exec.Cmd) ([]byte, error) {
 
 	err = cmd.Run()
 	if err := tty.Close(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	wg.Wait()
 	// Exit code 0 means no updates, 1 probably means there are but we just didn't install them.
 	if err == nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return out.Bytes(), retErr
+	return stdout.Bytes(), stderr.Bytes(), retErr
 }
