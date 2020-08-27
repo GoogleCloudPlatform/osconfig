@@ -118,6 +118,8 @@ func (r *patchTask) wuaUpdates(ctx context.Context) error {
 		count, err := r.installWUAUpdates(ctx, cf)
 		if err != nil {
 			clog.Errorf(ctx, "Error installing Windows updates (attempt %d): %v", i, err)
+			time.Sleep(60 * time.Second)
+			continue
 		}
 		if count == 0 {
 			return nil
