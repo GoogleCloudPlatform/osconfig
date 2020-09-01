@@ -23,11 +23,6 @@ import (
 
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"github.com/golang/mock/gomock"
-	"github.com/kylelemons/godebug/pretty"
-)
-
-var (
-	dump = &pretty.Config{IncludeUnexported: true}
 )
 
 func TestZypperInstalls(t *testing.T) {

@@ -47,16 +47,25 @@ func googetRepositories(ctx context.Context, repos []*agentendpointpb.GooReposit
 }
 
 func googetChanges(ctx context.Context, gooInstalled, gooRemoved, gooUpdated []*agentendpointpb.Package) error {
+	var err error
 	var errs []string
 
-	installed, err := packages.InstalledGooGetPackages(ctx)
-	if err != nil {
-		return err
+	var installed []packages.PkgInfo
+	if len(gooInstalled) > 0 || len(gooUpdated) > 0 || len(gooRemoved) > 0 {
+		installed, err = packages.InstalledGooGetPackages(ctx)
+		if err != nil {
+			return err
+		}
 	}
-	updates, err := packages.GooGetUpdates(ctx)
-	if err != nil {
-		return err
+
+	var updates []packages.PkgInfo
+	if len(gooUpdated) > 0 {
+		updates, err = packages.GooGetUpdates(ctx)
+		if err != nil {
+			return err
+		}
 	}
+
 	changes := getNecessaryChanges(installed, updates, gooInstalled, gooRemoved, gooUpdated)
 
 	if changes.packagesToInstall != nil {

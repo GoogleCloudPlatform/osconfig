@@ -95,7 +95,8 @@ func (c *BetaClient) LookupEffectiveGuestPolicies(ctx context.Context) (res *age
 	clog.Debugf(ctx, "Calling LookupEffectiveGuestPolicies with request:\n%s", util.PrettyFmt(req))
 	req.InstanceIdToken = token
 
-	if err := retryutil.RetryAPICall(ctx, apiRetrySec*time.Second, "LookupEffectiveGuestPolicies", func() error {
+	// Only retry up to 30s for LookupEffectiveGuestPolicies in order to not hang up local configs.
+	if err := retryutil.RetryAPICall(ctx, 30*time.Second, "LookupEffectiveGuestPolicies", func() error {
 		res, err = c.raw.LookupEffectiveGuestPolicy(ctx, req)
 		if err != nil {
 			return err
