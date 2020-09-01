@@ -27,38 +27,41 @@ var wuaSession sync.Mutex
 
 // IUpdateSession is a an IUpdateSession.
 type IUpdateSession struct {
-	con *ole.Connection
-	ses *ole.Dispatch
+	*ole.IDispatch
 }
 
 func NewUpdateSession() (*IUpdateSession, error) {
 	wuaSession.Lock()
 	if err := ole.CoInitializeEx(0, ole.COINIT_MULTITHREADED); err != nil {
-		wuaSession.Unlock()
-		return nil, err
+		e, ok := err.(*ole.OleError)
+		// S_OK = 0, S_FALSE = 1, both are Success codes.
+		if !ok || (e.Code() != 0 && e.Code() != 1) {
+			wuaSession.Unlock()
+			return nil, fmt.Errorf(`ole.CoInitializeEx(0, ole.COINIT_MULTITHREADED): %v`, err)
+		}
 	}
 
-	s := &IUpdateSession{con: &ole.Connection{Object: nil}}
-	if err := s.con.Create("Microsoft.Update.Session"); err != nil {
-		s.Close()
-		return nil, fmt.Errorf(`Connection.Create("Microsoft.Update.Session"): %v`, err)
-	}
+	s := &IUpdateSession{}
 
-	ses, err := s.con.Dispatch()
+	unknown, err := oleutil.CreateObject("Microsoft.Update.Session")
 	if err != nil {
 		s.Close()
-		return nil, err
+		return nil, fmt.Errorf(`oleutil.CreateObject("Microsoft.Update.Session"): %v`, err)
 	}
-	s.ses = ses
+	disp, err := unknown.QueryInterface(ole.IID_IDispatch)
+	if err != nil {
+		unknown.Release()
+		s.Close()
+		return nil, fmt.Errorf(`error creating Dispatch object from Microsoft.Update.Session connection: %v`, err)
+	}
+	s.IDispatch = disp
+
 	return s, nil
 }
 
 func (s *IUpdateSession) Close() {
-	if s.con != nil {
-		s.con.Release()
-	}
-	if s.ses != nil {
-		s.ses.Release()
+	if s.IDispatch != nil {
+		s.IDispatch.Release()
 	}
 	ole.CoUninitialize()
 	wuaSession.Unlock()
@@ -152,7 +155,7 @@ func (c *IUpdateCollection) Count() (int32, error) {
 func (c *IUpdateCollection) Item(i int) (*IUpdate, error) {
 	updtRaw, err := c.GetProperty("Item", i)
 	if err != nil {
-		return nil, fmt.Errorf(`IUpdateCollection.CallMethod("Item", %d): %v`, i, err)
+		return nil, fmt.Errorf(`IUpdateCollection.GetProperty("Item", %d): %v`, i, err)
 	}
 	return &IUpdate{IDispatch: updtRaw.ToIDispatch()}, nil
 }
@@ -161,7 +164,7 @@ func (c *IUpdateCollection) Item(i int) (*IUpdate, error) {
 func GetCount(dis *ole.IDispatch) (int32, error) {
 	countRaw, err := dis.GetProperty("Count")
 	if err != nil {
-		return 0, fmt.Errorf(`dis.GetProperty("Count"): %v`, err)
+		return 0, fmt.Errorf(`IDispatch.GetProperty("Count"): %v`, err)
 	}
 	count, _ := countRaw.Value().(int32)
 
@@ -349,13 +352,13 @@ func (c *IUpdateCollection) extractPkg(item int) (*WUAPackage, error) {
 func WUAUpdates(query string) ([]WUAPackage, error) {
 	session, err := NewUpdateSession()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating NewUpdateSession: %v", err)
 	}
 	defer session.Close()
 
 	updts, err := session.GetWUAUpdateCollection(query)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error calling GetWUAUpdateCollection with query %q: %v", query, err)
 	}
 	defer updts.Release()
 
@@ -383,7 +386,7 @@ func WUAUpdates(query string) ([]WUAPackage, error) {
 func (s *IUpdateSession) DownloadWUAUpdateCollection(updates *IUpdateCollection) error {
 	// returns IUpdateDownloader
 	// https://docs.microsoft.com/en-us/windows/desktop/api/wuapi/nn-wuapi-iupdatedownloader
-	downloaderRaw, err := s.ses.Call("CreateUpdateDownloader")
+	downloaderRaw, err := s.CallMethod("CreateUpdateDownloader")
 	if err != nil {
 		return fmt.Errorf("error calling method CreateUpdateDownloader on IUpdateSession: %v", err)
 	}
@@ -404,7 +407,7 @@ func (s *IUpdateSession) DownloadWUAUpdateCollection(updates *IUpdateCollection)
 func (s *IUpdateSession) InstallWUAUpdateCollection(updates *IUpdateCollection) error {
 	// returns IUpdateInstallersession *ole.IDispatch,
 	// https://docs.microsoft.com/en-us/windows/desktop/api/wuapi/nf-wuapi-iupdatesession-createupdateinstaller
-	installerRaw, err := s.ses.Call("CreateUpdateInstaller")
+	installerRaw, err := s.CallMethod("CreateUpdateInstaller")
 	if err != nil {
 		return fmt.Errorf("error calling method CreateUpdateInstaller on IUpdateSession: %v", err)
 	}
@@ -427,9 +430,9 @@ func (s *IUpdateSession) InstallWUAUpdateCollection(updates *IUpdateCollection) 
 func (s *IUpdateSession) GetWUAUpdateCollection(query string) (*IUpdateCollection, error) {
 	// returns IUpdateSearcher
 	// https://msdn.microsoft.com/en-us/library/windows/desktop/aa386515(v=vs.85).aspx
-	searcherRaw, err := s.ses.Call("CreateUpdateSearcher")
+	searcherRaw, err := s.CallMethod("CreateUpdateSearcher")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error calling CreateUpdateSearcher: %v", err)
 	}
 	searcher := searcherRaw.ToIDispatch()
 	defer searcher.Release()
