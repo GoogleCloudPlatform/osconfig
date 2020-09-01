@@ -113,33 +113,18 @@ func NewUpdateCollection() (*IUpdateCollection, error) {
 	if err != nil {
 		return nil, fmt.Errorf(`oleutil.CreateObject("Microsoft.Update.UpdateColl"): %v`, err)
 	}
+	defer updateCollObj.Release()
 
 	updateColl, err := updateCollObj.IDispatch(ole.IID_IDispatch)
 	if err != nil {
 		return nil, err
 	}
 
-	return &IUpdateCollection{u: updateCollObj, IDispatch: updateColl}, nil
+	return &IUpdateCollection{IDispatch: updateColl}, nil
 }
 
 type IUpdateCollection struct {
 	*ole.IDispatch
-	v *ole.VARIANT
-	u *ole.IUnknown
-	r *ole.IDispatch
-}
-
-func (c *IUpdateCollection) Release() {
-	c.IDispatch.Release()
-	if c.v != nil {
-		c.v.Clear()
-	}
-	if c.u != nil {
-		c.u.Release()
-	}
-	if c.r != nil {
-		c.r.Release()
-	}
 }
 
 type IUpdate struct {
@@ -178,7 +163,6 @@ func GetCount(dis *ole.IDispatch) (int32, error) {
 	if err != nil {
 		return 0, fmt.Errorf(`dis.GetProperty("Count"): %v`, err)
 	}
-	defer countRaw.Clear()
 	count, _ := countRaw.Value().(int32)
 
 	return count, nil
@@ -189,8 +173,6 @@ func (u *IUpdate) kbaIDs() ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf(`IUpdate.GetProperty("KBArticleIDs"): %v`, err)
 	}
-	defer kbArticleIDsRaw.Clear()
-
 	kbArticleIDs := kbArticleIDsRaw.ToIDispatch()
 	defer kbArticleIDs.Release()
 
@@ -209,7 +191,6 @@ func (u *IUpdate) kbaIDs() ([]string, error) {
 		if err != nil {
 			return nil, fmt.Errorf(`kbArticleIDs.GetProperty("Item", %d): %v`, i, err)
 		}
-		defer item.Clear()
 
 		ss = append(ss, item.ToString())
 	}
@@ -221,8 +202,6 @@ func (u *IUpdate) categories() ([]string, []string, error) {
 	if err != nil {
 		return nil, nil, fmt.Errorf(`IUpdate.GetProperty("Categories"): %v`, err)
 	}
-	defer catRaw.Clear()
-
 	cat := catRaw.ToIDispatch()
 	defer cat.Release()
 
@@ -240,7 +219,6 @@ func (u *IUpdate) categories() ([]string, []string, error) {
 		if err != nil {
 			return nil, nil, fmt.Errorf(`cat.GetProperty("Item", %d): %v`, i, err)
 		}
-		defer itemRaw.Clear()
 		item := itemRaw.ToIDispatch()
 		defer item.Release()
 
@@ -248,13 +226,11 @@ func (u *IUpdate) categories() ([]string, []string, error) {
 		if err != nil {
 			return nil, nil, fmt.Errorf(`item.GetProperty("Name"): %v`, err)
 		}
-		defer name.Clear()
 
 		categoryID, err := item.GetProperty("CategoryID")
 		if err != nil {
 			return nil, nil, fmt.Errorf(`item.GetProperty("CategoryID"): %v`, err)
 		}
-		defer categoryID.Clear()
 
 		cns = append(cns, name.ToString())
 		cids = append(cids, categoryID.ToString())
@@ -267,8 +243,6 @@ func (u *IUpdate) moreInfoURLs() ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf(`IUpdate.GetProperty("MoreInfoURLs"): %v`, err)
 	}
-	defer moreInfoURLsRaw.Clear()
-
 	moreInfoURLs := moreInfoURLsRaw.ToIDispatch()
 	defer moreInfoURLs.Release()
 
@@ -287,7 +261,6 @@ func (u *IUpdate) moreInfoURLs() ([]string, error) {
 		if err != nil {
 			return nil, fmt.Errorf(`moreInfoURLs.GetProperty("Item", %d): %v`, i, err)
 		}
-		defer item.Clear()
 
 		ss = append(ss, item.ToString())
 	}
@@ -299,19 +272,17 @@ func (c *IUpdateCollection) extractPkg(item int) (*WUAPackage, error) {
 	if err != nil {
 		return nil, err
 	}
-	// We don't call Release on updt as it's in an IUpdateCollection.
+	defer updt.Release()
 
 	title, err := updt.GetProperty("Title")
 	if err != nil {
 		return nil, fmt.Errorf(`updt.GetProperty("Title"): %v`, err)
 	}
-	defer title.Clear()
 
 	description, err := updt.GetProperty("Description")
 	if err != nil {
 		return nil, fmt.Errorf(`updt.GetProperty("Description"): %v`, err)
 	}
-	defer description.Clear()
 
 	kbArticleIDs, err := updt.kbaIDs()
 	if err != nil {
@@ -332,13 +303,11 @@ func (c *IUpdateCollection) extractPkg(item int) (*WUAPackage, error) {
 	if err != nil {
 		return nil, fmt.Errorf(`updt.GetProperty("SupportURL"): %v`, err)
 	}
-	defer supportURL.Clear()
 
 	lastDeploymentChangeTimeRaw, err := updt.GetProperty("LastDeploymentChangeTime")
 	if err != nil {
 		return nil, fmt.Errorf(`updt.GetProperty("LastDeploymentChangeTime"): %v`, err)
 	}
-	defer lastDeploymentChangeTimeRaw.Clear()
 
 	lastDeploymentChangeTime, err := ole.GetVariantDate(uint64(lastDeploymentChangeTimeRaw.Val))
 	if err != nil {
@@ -349,8 +318,6 @@ func (c *IUpdateCollection) extractPkg(item int) (*WUAPackage, error) {
 	if err != nil {
 		return nil, fmt.Errorf(`updt.GetProperty("Identity"): %v`, err)
 	}
-	defer identityRaw.Clear()
-
 	identity := identityRaw.ToIDispatch()
 	defer identity.Release()
 
@@ -358,13 +325,11 @@ func (c *IUpdateCollection) extractPkg(item int) (*WUAPackage, error) {
 	if err != nil {
 		return nil, fmt.Errorf(`identity.GetProperty("RevisionNumber"): %v`, err)
 	}
-	defer revisionNumber.Clear()
 
 	updateID, err := identity.GetProperty("UpdateID")
 	if err != nil {
 		return nil, fmt.Errorf(`identity.GetProperty("UpdateID"): %v`, err)
 	}
-	defer updateID.Clear()
 
 	return &WUAPackage{
 		Title:                    title.ToString(),
@@ -422,8 +387,6 @@ func (s *IUpdateSession) DownloadWUAUpdateCollection(updates *IUpdateCollection)
 	if err != nil {
 		return fmt.Errorf("error calling method CreateUpdateDownloader on IUpdateSession: %v", err)
 	}
-	defer downloaderRaw.Clear()
-
 	downloader := downloaderRaw.ToIDispatch()
 	defer downloader.Release()
 
@@ -445,8 +408,6 @@ func (s *IUpdateSession) InstallWUAUpdateCollection(updates *IUpdateCollection) 
 	if err != nil {
 		return fmt.Errorf("error calling method CreateUpdateInstaller on IUpdateSession: %v", err)
 	}
-	defer installerRaw.Clear()
-
 	installer := installerRaw.ToIDispatch()
 	defer installer.Release()
 
@@ -470,10 +431,8 @@ func (s *IUpdateSession) GetWUAUpdateCollection(query string) (*IUpdateCollectio
 	if err != nil {
 		return nil, err
 	}
-	defer searcherRaw.Clear()
-
 	searcher := searcherRaw.ToIDispatch()
-	defer searcherRaw.Clear()
+	defer searcher.Release()
 
 	// returns ISearchResult
 	// https://msdn.microsoft.com/en-us/library/windows/desktop/aa386077(v=vs.85).aspx
@@ -481,9 +440,9 @@ func (s *IUpdateSession) GetWUAUpdateCollection(query string) (*IUpdateCollectio
 	if err != nil {
 		return nil, fmt.Errorf("error calling method Search on IUpdateSearcher: %v", err)
 	}
-	defer resultRaw.Clear()
-
 	result := resultRaw.ToIDispatch()
+	defer result.Release()
+
 	// returns IUpdateCollection
 	// https://msdn.microsoft.com/en-us/library/windows/desktop/aa386107(v=vs.85).aspx
 	updtsRaw, err := result.GetProperty("Updates")
@@ -491,5 +450,5 @@ func (s *IUpdateSession) GetWUAUpdateCollection(query string) (*IUpdateCollectio
 		return nil, fmt.Errorf("error calling GetProperty Updates on ISearchResult: %v", err)
 	}
 
-	return &IUpdateCollection{r: result, v: updtsRaw, IDispatch: updtsRaw.ToIDispatch()}, nil
+	return &IUpdateCollection{IDispatch: updtsRaw.ToIDispatch()}, nil
 }

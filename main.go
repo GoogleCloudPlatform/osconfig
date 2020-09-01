@@ -25,7 +25,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
-	"runtime/debug"
 	"syscall"
 	"time"
 
@@ -104,17 +103,12 @@ func run(ctx context.Context) {
 		clog.Errorf(ctx, "Error removing restart signal file: %v", err)
 	}
 
-	deferredFuncs = append(deferredFuncs, logger.Close, func() { clog.Infof(ctx, "OSConfig Agent (version %s) shutting down.", config.Version()) })
+	deferredFuncs = append(deferredFuncs, func() { clog.Infof(ctx, "OSConfig Agent (version %s) shutting down.", config.Version()) }, logger.Close)
 
 	obtainLock()
 
 	// obtainLock adds functions to clear the lock at close.
 	logger.DeferredFatalFuncs = append(logger.DeferredFatalFuncs, deferredFuncs...)
-	defer func() {
-		for _, f := range deferredFuncs {
-			f()
-		}
-	}()
 
 	clog.Infof(ctx, "OSConfig Agent (version %s) started.", config.Version())
 
@@ -180,9 +174,7 @@ func runTaskLoop(ctx context.Context, c chan struct{}) {
 		// This is just to signal WaitForTaskNotification has run if needed.
 		select {
 		case c <- struct{}{}:
-			fmt.Println("c")
 		default:
-			fmt.Println("default")
 		}
 
 		if err := config.WatchConfig(ctx); err != nil {
@@ -226,10 +218,6 @@ func runServiceLoop(ctx context.Context) {
 			inventory.Run(ctx)
 		}
 
-		// Return unused memory to ensure our footprint doesn't keep increasing.
-		clog.Debugf(ctx, "Running debug.FreeOSMemory()")
-		debug.FreeOSMemory()
-
 		select {
 		case <-ticker.C:
 			continue
@@ -263,5 +251,9 @@ func main() {
 		runService(ctx)
 	default:
 		run(ctx)
+	}
+
+	for _, f := range deferredFuncs {
+		f()
 	}
 }
