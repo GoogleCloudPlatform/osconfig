@@ -40,7 +40,7 @@ func GetPackageUpdates(ctx context.Context) (Packages, error) {
 	}
 	clog.Debugf(ctx, "Searching for available WUA updates.")
 	if wua, err := WUAUpdates("IsInstalled=0"); err != nil {
-		msg := fmt.Sprintf("error listing installed Windows updates: %v", err)
+		msg := fmt.Sprintf("error listing available Windows updates: %v", err)
 		clog.Debugf(ctx, "Error: %s", msg)
 		errs = append(errs, msg)
 	} else {
