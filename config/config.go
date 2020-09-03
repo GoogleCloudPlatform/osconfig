@@ -16,25 +16,19 @@ package config
 
 import (
 	"context"
+	"errors"
 	"fmt"
-
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/reflect/protoreflect"
 
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
 // Resource is a single config resource.
 type Resource struct {
-	inDS bool
+	resource
+	*agentendpointpb.ApplyConfigTask_Config_Resource
 
-	packageResource        *agentendpointpb.PackageResource
-	repositoryResource     *agentendpointpb.RepositoryResource
-	execResource           *agentendpointpb.ExecResource
-	fileResource           *agentendpointpb.FileResource
-	extractArchiveResource *agentendpointpb.ExtractArchiveResource
-	serviceResource        *agentendpointpb.ServiceResource
+	managedResources *ManagedResources
+	inDS             bool
 }
 
 // InDesiredState reports whether this resource is in the desired state.
@@ -43,38 +37,66 @@ func (r *Resource) InDesiredState() bool {
 	return r.inDS
 }
 
-// Unmarshal unmarshals this resource.
-func (r *Resource) Unmarshal(ctx context.Context, res *agentendpointpb.ApplyConfigTask_Config_Resource) error {
-	// TODO: implement
+// ManagedResources returns the resources that this resources manages.
+func (r *Resource) ManagedResources() *ManagedResources {
+	return r.managedResources
+}
 
-	switch protoreflect.Name(res.GetType().GetType()) {
-	case r.packageResource.ProtoReflect().Descriptor().Name():
-		b, err := proto.Marshal(res.GetPayload())
-		if err != nil {
-			return err
-		}
-		return protojson.Unmarshal(b, r.packageResource)
-	case r.repositoryResource.ProtoReflect().Descriptor().Name():
-	case r.execResource.ProtoReflect().Descriptor().Name():
-	case r.fileResource.ProtoReflect().Descriptor().Name():
-	case r.extractArchiveResource.ProtoReflect().Descriptor().Name():
-	case r.serviceResource.ProtoReflect().Descriptor().Name():
+type resource interface {
+	validate() (*ManagedResources, error)
+	checkState() (bool, error)
+	enforceState() (bool, error)
+}
+
+// ManagedResources are the resources that the resources manages.
+type ManagedResources struct {
+	Packages *Packages
+}
+
+// Validate validates this resource.
+// Validate must be called before other methods.
+func (r *Resource) Validate(ctx context.Context) error {
+	switch x := r.GetResourceType().(type) {
+	case *agentendpointpb.ApplyConfigTask_Config_Resource_Pkg:
+		r.resource = resource(&packageResouce{ApplyConfigTask_Config_Resource_PackageResource: x.Pkg})
+		/*
+			case *agentendpointpb.ApplyConfigTask_Config_Resource_Repository:
+			case *agentendpointpb.ApplyConfigTask_Config_Resource_Exec:
+			case *agentendpointpb.ApplyConfigTask_Config_Resource_File_:
+			case *agentendpointpb.ApplyConfigTask_Config_Resource_Archive:
+			case *agentendpointpb.ApplyConfigTask_Config_Resource_Srvc:
+		*/
+	case nil:
+		return errors.New("ResourceType field not set")
 	default:
-		return fmt.Errorf("unknown resource type: %q", res.GetType().GetType())
+		return fmt.Errorf("ResourceType has unexpected type: %T", x)
 	}
-	return nil
+
+	var err error
+	r.managedResources, err = r.validate()
+	return err
 }
 
 // CheckState checks this resources state.
+// Validate must be called prior to running CheckState.
 func (r *Resource) CheckState(ctx context.Context) error {
-	// TODO: implement
-	r.inDS = true
-	return nil
+	if r.resource == nil {
+		return errors.New("CheckState run before Validate")
+	}
+
+	inDS, err := r.checkState()
+	r.inDS = inDS
+	return err
 }
 
 // EnforceState enforces this resources state.
+// Validate must be called prior to running EnforceState.
 func (r *Resource) EnforceState(ctx context.Context) error {
-	// TODO: implement
-	r.inDS = true
-	return nil
+	if r.resource == nil {
+		return errors.New("EnforceState run before Validate")
+	}
+
+	inDS, err := r.enforceState()
+	r.inDS = inDS
+	return err
 }

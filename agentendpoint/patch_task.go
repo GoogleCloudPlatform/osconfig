@@ -124,7 +124,7 @@ func (r *patchTask) reportCompletedState(ctx context.Context, errMsg string, out
 
 func (r *patchTask) reportContinuingState(ctx context.Context, patchState agentendpointpb.ApplyPatchesTaskProgress_State) error {
 	st, ok := r.lastProgressState[patchState]
-	if ok && st.After(time.Now().Add(-5*time.Second)) {
+	if ok && st.After(time.Now().Add(sameStateTimeWindow)) {
 		// Don't resend the same state more than once every 5s.
 		return nil
 	}

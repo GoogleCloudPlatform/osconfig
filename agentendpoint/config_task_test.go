@@ -23,6 +23,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	"github.com/GoogleCloudPlatform/osconfig/config"
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
@@ -32,7 +33,7 @@ func (r *testResource) InDesiredState() bool {
 	return false
 }
 
-func (r *testResource) Unmarshal(ctx context.Context, res *agentendpointpb.ApplyConfigTask_Config_Resource) error {
+func (r *testResource) Validate(ctx context.Context) error {
 	return nil
 }
 
@@ -41,6 +42,10 @@ func (r *testResource) CheckState(ctx context.Context) error {
 }
 
 func (r *testResource) EnforceState(ctx context.Context) error {
+	return nil
+}
+
+func (r *testResource) ManagedResources() *config.ManagedResources {
 	return nil
 }
 
@@ -115,6 +120,7 @@ func genTestResourceResult(id string, steps int) *agentendpointpb.ApplyConfigTas
 		ExecutionSteps: make([]*agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep, 4),
 	}
 
+	// Validation
 	if steps > 0 {
 		ret.ExecutionSteps[0] = &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep{
 			Step: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_Validation{
@@ -123,6 +129,7 @@ func genTestResourceResult(id string, steps int) *agentendpointpb.ApplyConfigTas
 				},
 			}}
 	}
+	// CheckDesiredState
 	if steps > 1 {
 		ret.ExecutionSteps[1] = &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep{
 			Step: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_CheckDesiredState{
@@ -131,6 +138,7 @@ func genTestResourceResult(id string, steps int) *agentendpointpb.ApplyConfigTas
 				},
 			}}
 	}
+	// EnforceDesiredState
 	if steps > 2 {
 		ret.ExecutionSteps[2] = &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep{
 			Step: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_EnforceDesiredState{
@@ -139,7 +147,8 @@ func genTestResourceResult(id string, steps int) *agentendpointpb.ApplyConfigTas
 				},
 			}}
 	}
-	if steps > 4 {
+	// CheckDesiredStatePostEnforcement{
+	if steps > 3 {
 		ret.ExecutionSteps[3] = &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep{
 			Step: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_CheckDesiredStatePostEnforcement{
 				CheckDesiredStatePostEnforcement: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement{
@@ -200,7 +209,10 @@ func genTestAssignmentResult(id string, steps int) *agentendpointpb.ApplyConfigT
 
 func TestRunApplyConfig(t *testing.T) {
 	ctx := context.Background()
-	resource = resourceIface(&testResource{})
+	sameStateTimeWindow = 0
+	newResource = func(r *agentendpointpb.ApplyConfigTask_Config_Resource) resourceIface {
+		return resourceIface(&testResource{})
+	}
 
 	testConfig := &agentendpointpb.ApplyConfigTask_Config{
 		ConfigAssignments: []*agentendpointpb.ApplyConfigTask_Config_ConfigAssignment{
@@ -216,14 +228,15 @@ func TestRunApplyConfig(t *testing.T) {
 		callsBeforeCancel int
 		callsBeforeErr    int
 	}{
+
 		// Normal cases:
 		{
 			"InDesiredState",
 			configOutputGen("", agentendpointpb.ApplyConfigTaskOutput_SUCCEEDED,
 				&agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResults{
 					Results: []*agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResult{
-						genTestAssignmentResult("a1", 2),
-						genTestAssignmentResult("a2", 2),
+						genTestAssignmentResult("a1", 4),
+						genTestAssignmentResult("a2", 4),
 					},
 				},
 			),
@@ -323,7 +336,7 @@ func TestRunApplyConfig(t *testing.T) {
 		{
 			"ErrorVALIDATING",
 			// This generates results, but never populates.
-			configOutputGen(`Error reporting continuing state: error reporting task progress VALIDATING: error calling ReportTaskProgress: code: "Unimplemented", message: "", details: []`, agentendpointpb.ApplyConfigTaskOutput_FAILED,
+			configOutputGen(`Error reporting continuing state: error reporting task progress APPLYING_CONFIG: error calling ReportTaskProgress: code: "Unimplemented", message: "", details: []`, agentendpointpb.ApplyConfigTaskOutput_FAILED,
 				&agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResults{
 					Results: []*agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResult{
 						genTestAssignmentResult("a1", 0),
@@ -337,7 +350,7 @@ func TestRunApplyConfig(t *testing.T) {
 		{
 			"ErrorCHECKING_DESIRED_STATE",
 			// Populates results up through VALIDATE only.
-			configOutputGen(`Error reporting continuing state: error reporting task progress CHECKING_DESIRED_STATE: error calling ReportTaskProgress: code: "Unimplemented", message: "", details: []`, agentendpointpb.ApplyConfigTaskOutput_FAILED,
+			configOutputGen(`Error reporting continuing state: error reporting task progress APPLYING_CONFIG: error calling ReportTaskProgress: code: "Unimplemented", message: "", details: []`, agentendpointpb.ApplyConfigTaskOutput_FAILED,
 				&agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResults{
 					Results: []*agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResult{
 						genTestAssignmentResult("a1", 1),
@@ -351,7 +364,7 @@ func TestRunApplyConfig(t *testing.T) {
 		{
 			"ErrorENFORCING_DESIRED_STATE",
 			// Populates results up through CHECKING_DESIRED_STATE only.
-			configOutputGen(`Error reporting continuing state: error reporting task progress ENFORCING_DESIRED_STATE: error calling ReportTaskProgress: code: "Unimplemented", message: "", details: []`, agentendpointpb.ApplyConfigTaskOutput_FAILED,
+			configOutputGen(`Error reporting continuing state: error reporting task progress APPLYING_CONFIG: error calling ReportTaskProgress: code: "Unimplemented", message: "", details: []`, agentendpointpb.ApplyConfigTaskOutput_FAILED,
 				&agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResults{
 					Results: []*agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResult{
 						genTestAssignmentResult("a1", 2),
@@ -367,7 +380,7 @@ func TestRunApplyConfig(t *testing.T) {
 			{
 				"ErrorCHECKING_DESIRED_STATE_POST_ENFORCEMENT",
 				// Populates results up through ENFORCING_DESIRED_STATE only.
-				configOutputGen(`Error reporting continuing state: error reporting task progress CHECKING_DESIRED_STATE_POST_ENFORCEMENT: error calling ReportTaskProgress: code: "Unimplemented", message: "", details: []`, agentendpointpb.ApplyConfigTaskOutput_FAILED,
+				configOutputGen(`Error reporting continuing state: error reporting task progress APPLYING_CONFIG: error calling ReportTaskProgress: code: "Unimplemented", message: "", details: []`, agentendpointpb.ApplyConfigTaskOutput_FAILED,
 					&agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResults{
 						Results: []*agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResult{
 							genTestAssignmentResult("a1", 3),

@@ -146,6 +146,9 @@ type Client struct {
 	// Connection pool of gRPC connections to the service.
 	connPool gtransport.ConnPool
 
+	// flag to opt out of default deadlines via GOOGLE_API_GO_EXPERIMENTAL_DISABLE_DEFAULT_DEADLINE
+	disableDeadlines bool
+
 	// The gRPC API client.
 	client agentendpointpb.AgentEndpointServiceClient
 
@@ -170,13 +173,19 @@ func NewClient(ctx context.Context, opts ...option.ClientOption) (*Client, error
 		clientOpts = append(clientOpts, hookOpts...)
 	}
 
+	disableDeadlines, err := checkDisableDeadlines()
+	if err != nil {
+		return nil, err
+	}
+
 	connPool, err := gtransport.DialPool(ctx, append(clientOpts, opts...)...)
 	if err != nil {
 		return nil, err
 	}
 	c := &Client{
-		connPool:    connPool,
-		CallOptions: defaultCallOptions(),
+		connPool:         connPool,
+		disableDeadlines: disableDeadlines,
+		CallOptions:      defaultCallOptions(),
 
 		client: agentendpointpb.NewAgentEndpointServiceClient(connPool),
 	}
@@ -225,6 +234,11 @@ func (c *Client) ReceiveTaskNotification(ctx context.Context, req *agentendpoint
 
 // StartNextTask signals the start of a task execution and returns the task info.
 func (c *Client) StartNextTask(ctx context.Context, req *agentendpointpb.StartNextTaskRequest, opts ...gax.CallOption) (*agentendpointpb.StartNextTaskResponse, error) {
+	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
+		cctx, cancel := context.WithTimeout(ctx, 60000*time.Millisecond)
+		defer cancel()
+		ctx = cctx
+	}
 	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.StartNextTask[0:len(c.CallOptions.StartNextTask):len(c.CallOptions.StartNextTask)], opts...)
 	var resp *agentendpointpb.StartNextTaskResponse
@@ -241,6 +255,11 @@ func (c *Client) StartNextTask(ctx context.Context, req *agentendpointpb.StartNe
 
 // ReportTaskProgress signals an intermediary progress checkpoint in task execution.
 func (c *Client) ReportTaskProgress(ctx context.Context, req *agentendpointpb.ReportTaskProgressRequest, opts ...gax.CallOption) (*agentendpointpb.ReportTaskProgressResponse, error) {
+	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
+		cctx, cancel := context.WithTimeout(ctx, 60000*time.Millisecond)
+		defer cancel()
+		ctx = cctx
+	}
 	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.ReportTaskProgress[0:len(c.CallOptions.ReportTaskProgress):len(c.CallOptions.ReportTaskProgress)], opts...)
 	var resp *agentendpointpb.ReportTaskProgressResponse
@@ -258,6 +277,11 @@ func (c *Client) ReportTaskProgress(ctx context.Context, req *agentendpointpb.Re
 // ReportTaskComplete signals that the task execution is complete and optionally returns the next
 // task.
 func (c *Client) ReportTaskComplete(ctx context.Context, req *agentendpointpb.ReportTaskCompleteRequest, opts ...gax.CallOption) (*agentendpointpb.ReportTaskCompleteResponse, error) {
+	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
+		cctx, cancel := context.WithTimeout(ctx, 60000*time.Millisecond)
+		defer cancel()
+		ctx = cctx
+	}
 	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.ReportTaskComplete[0:len(c.CallOptions.ReportTaskComplete):len(c.CallOptions.ReportTaskComplete)], opts...)
 	var resp *agentendpointpb.ReportTaskCompleteResponse
@@ -274,6 +298,11 @@ func (c *Client) ReportTaskComplete(ctx context.Context, req *agentendpointpb.Re
 
 // LookupEffectiveGuestPolicies looks up the effective guest policies for an instance.
 func (c *Client) LookupEffectiveGuestPolicies(ctx context.Context, req *agentendpointpb.LookupEffectiveGuestPoliciesRequest, opts ...gax.CallOption) (*agentendpointpb.LookupEffectiveGuestPoliciesResponse, error) {
+	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
+		cctx, cancel := context.WithTimeout(ctx, 60000*time.Millisecond)
+		defer cancel()
+		ctx = cctx
+	}
 	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.LookupEffectiveGuestPolicies[0:len(c.CallOptions.LookupEffectiveGuestPolicies):len(c.CallOptions.LookupEffectiveGuestPolicies)], opts...)
 	var resp *agentendpointpb.LookupEffectiveGuestPoliciesResponse
@@ -290,6 +319,11 @@ func (c *Client) LookupEffectiveGuestPolicies(ctx context.Context, req *agentend
 
 // RegisterAgent registers the agent running on the VM.
 func (c *Client) RegisterAgent(ctx context.Context, req *agentendpointpb.RegisterAgentRequest, opts ...gax.CallOption) (*agentendpointpb.RegisterAgentResponse, error) {
+	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
+		cctx, cancel := context.WithTimeout(ctx, 60000*time.Millisecond)
+		defer cancel()
+		ctx = cctx
+	}
 	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.RegisterAgent[0:len(c.CallOptions.RegisterAgent):len(c.CallOptions.RegisterAgent)], opts...)
 	var resp *agentendpointpb.RegisterAgentResponse
@@ -306,6 +340,11 @@ func (c *Client) RegisterAgent(ctx context.Context, req *agentendpointpb.Registe
 
 // ReportInventory reports the VMs current inventory.
 func (c *Client) ReportInventory(ctx context.Context, req *agentendpointpb.ReportInventoryRequest, opts ...gax.CallOption) (*agentendpointpb.ReportInventoryResponse, error) {
+	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
+		cctx, cancel := context.WithTimeout(ctx, 60000*time.Millisecond)
+		defer cancel()
+		ctx = cctx
+	}
 	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.ReportInventory[0:len(c.CallOptions.ReportInventory):len(c.CallOptions.ReportInventory)], opts...)
 	var resp *agentendpointpb.ReportInventoryResponse

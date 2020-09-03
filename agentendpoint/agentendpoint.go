@@ -50,6 +50,7 @@ var (
 	errServiceNotEnabled = errors.New("service is not enabled for this project")
 	errResourceExhausted = errors.New("ResourceExhausted")
 	taskStateFile        = agentconfig.TaskStateFile()
+	sameStateTimeWindow  = -5 * time.Second
 )
 
 // Client is a an agentendpoint client.

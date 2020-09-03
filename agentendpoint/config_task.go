@@ -33,10 +33,14 @@ const (
 	postCheckDesiredStateStepIndex = 3
 )
 
-var resource = resourceIface(&config.Resource{})
+var newResource = func(r *agentendpointpb.ApplyConfigTask_Config_Resource) resourceIface {
+	return resourceIface(&config.Resource{ApplyConfigTask_Config_Resource: r})
+}
 
 type configTask struct {
 	client *Client
+
+	lastProgressState map[agentendpointpb.ApplyConfigTaskProgress_State]time.Time
 
 	TaskID    string
 	Task      *applyConfigTask
@@ -62,10 +66,11 @@ type policy struct {
 }
 
 type resourceIface interface {
-	Unmarshal(context.Context, *agentendpointpb.ApplyConfigTask_Config_Resource) error
+	Validate(context.Context) error
 	CheckState(context.Context) error
 	EnforceState(context.Context) error
 	InDesiredState() bool
+	ManagedResources() *config.ManagedResources
 }
 
 func (c *configTask) reportCompletedState(ctx context.Context, errMsg string, state agentendpointpb.ApplyConfigTaskOutput_State) error {
@@ -94,6 +99,12 @@ func (c *configTask) handleErrorState(ctx context.Context, msg string, err error
 }
 
 func (c *configTask) reportContinuingState(ctx context.Context, configState agentendpointpb.ApplyConfigTaskProgress_State) error {
+	st, ok := c.lastProgressState[configState]
+	if ok && st.After(time.Now().Add(sameStateTimeWindow)) {
+		// Don't resend the same state more than once every 5s.
+		return nil
+	}
+
 	req := &agentendpointpb.ReportTaskProgressRequest{
 		TaskId:   c.TaskID,
 		TaskType: agentendpointpb.TaskType_APPLY_CONFIG_TASK,
@@ -108,54 +119,52 @@ func (c *configTask) reportContinuingState(ctx context.Context, configState agen
 	if res.GetTaskDirective() == agentendpointpb.TaskDirective_STOP {
 		return errServerCancel
 	}
+	if c.lastProgressState == nil {
+		c.lastProgressState = make(map[agentendpointpb.ApplyConfigTaskProgress_State]time.Time)
+	}
+	c.lastProgressState[configState] = time.Now()
+	return nil
+}
+
+func detectPolicyConflicts(proposed, current *config.ManagedResources) error {
 	return nil
 }
 
 func (c *configTask) validation(ctx context.Context) {
-	// First populate validation results and internal assignment state.
+	// This is all the managed resources by assignment and policy.
+	globalManagedResources := map[string]map[string]*config.ManagedResources{}
+
+	// Validate each resouce and populate results and internal assignment state.
 	c.assignments = map[string]*assignment{}
 	for i, a := range c.Task.GetConfig().GetConfigAssignments() {
+		ctx = clog.WithLabels(ctx, map[string]string{"config_assignment": a.GetConfigAssignment()})
 		assgnmnt := &assignment{policies: map[string]*policy{}}
 		c.assignments[a.GetConfigAssignment()] = assgnmnt
 		aResult := c.results.GetResults()[i]
 		for i, p := range a.GetPolicies() {
+			ctx = clog.WithLabels(ctx, map[string]string{"policy_id": p.GetId()})
+			policyMR := &config.ManagedResources{}
 			plcy := &policy{resources: map[string]resourceIface{}}
 			assgnmnt.policies[p.GetId()] = plcy
 			pResult := aResult.GetOsPolicyResults().GetResults()[i]
-			for i, r := range p.GetResources() {
-				plcy.resources[r.GetId()] = resource
-				result := pResult.GetResourceResults().GetResults()[i]
-				result.GetExecutionSteps()[validationStepIndex] = &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep{
-					Step: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_Validation{
-						Validation: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_Validation{
-							Outcome: agentendpointpb.ApplyConfigTaskOutput_ResourceResult_Validation_SKIPPED,
-						},
-					},
-				}
-			}
-		}
-	}
-
-	// Unmarshal all resources.
-	for i, a := range c.Task.GetConfig().GetConfigAssignments() {
-		ctx = clog.WithLabels(ctx, map[string]string{"config_assignment": a.GetConfigAssignment()})
-		assgnmnt := c.assignments[a.GetConfigAssignment()]
-		aResult := c.results.GetResults()[i]
-		for i, p := range a.GetPolicies() {
-			ctx = clog.WithLabels(ctx, map[string]string{"policy_id": p.GetId()})
-			plcy := assgnmnt.policies[p.GetId()]
-			pResult := aResult.GetOsPolicyResults().GetResults()[i]
 			for i, taskResource := range p.GetResources() {
 				ctx = clog.WithLabels(ctx, map[string]string{"resource_id": taskResource.GetId()})
-				res := plcy.resources[taskResource.GetId()]
+				plcy.resources[taskResource.GetId()] = newResource(taskResource)
+				resource := plcy.resources[taskResource.GetId()]
 
 				outcome := agentendpointpb.ApplyConfigTaskOutput_ResourceResult_Validation_OK
 				errMsg := ""
-				err := res.Unmarshal(ctx, taskResource)
-				if err != nil {
+				if err := resource.Validate(ctx); err != nil {
 					outcome = agentendpointpb.ApplyConfigTaskOutput_ResourceResult_Validation_RESOURCE_PAYLOAD_CONVERSION_ERROR
 					plcy.hasError = true
-					errMsg = fmt.Sprintf("Error unmarshalling resource: %v", err)
+					errMsg = fmt.Sprintf("Error validating resource: %v", err)
+					clog.Errorf(ctx, errMsg)
+				}
+
+				if err := detectPolicyConflicts(resource.ManagedResources(), policyMR); err != nil {
+					outcome = agentendpointpb.ApplyConfigTaskOutput_ResourceResult_Validation_CONFLICT
+					plcy.hasError = true
+					errMsg = fmt.Sprintf("Resource conflict in policy: %v", err)
 					clog.Errorf(ctx, errMsg)
 				}
 
@@ -168,13 +177,20 @@ func (c *configTask) validation(ctx context.Context) {
 					},
 					ErrMsg: errMsg,
 				}
-
-				// Continue to unmarshal all resources even if one has an error.
+			}
+			// We only care about conflict detection across policies that are in enforcement mode.
+			if p.GetMode() == agentendpointpb.ApplyConfigTask_Config_OSPolicy_ENFORCEMENT {
+				if _, ok := globalManagedResources[a.GetConfigAssignment()]; !ok {
+					globalManagedResources[a.GetConfigAssignment()] = map[string]*config.ManagedResources{p.GetId(): policyMR}
+				} else {
+					globalManagedResources[a.GetConfigAssignment()][p.GetId()] = policyMR
+				}
 			}
 		}
 	}
 
-	// TODO: check for resouce conflicts
+	// TODO: check for global resource conflicts.
+
 }
 
 func (c *configTask) checkState(ctx context.Context) {
@@ -342,7 +358,7 @@ func (c *configTask) postCheckState(ctx context.Context) {
 				}
 
 				result := pResult.GetResourceResults().GetResults()[i]
-				result.GetExecutionSteps()[checkDesiredStateStepIndex] = &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep{
+				result.GetExecutionSteps()[postCheckDesiredStateStepIndex] = &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep{
 					Step: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_CheckDesiredStatePostEnforcement{
 						CheckDesiredStatePostEnforcement: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement{
 							Outcome: outcome,
@@ -404,23 +420,23 @@ func (c *configTask) run(ctx context.Context) error {
 	// just adds on.
 	c.generateBaseResults()
 
-	if err := c.reportContinuingState(ctx, agentendpointpb.ApplyConfigTaskProgress_VALIDATING); err != nil {
+	if err := c.reportContinuingState(ctx, agentendpointpb.ApplyConfigTaskProgress_APPLYING_CONFIG); err != nil {
 		return c.handleErrorState(ctx, rcsErrMsg, err)
 	}
 	c.validation(ctx)
 
-	if err := c.reportContinuingState(ctx, agentendpointpb.ApplyConfigTaskProgress_CHECKING_DESIRED_STATE); err != nil {
+	if err := c.reportContinuingState(ctx, agentendpointpb.ApplyConfigTaskProgress_APPLYING_CONFIG); err != nil {
 		return c.handleErrorState(ctx, rcsErrMsg, err)
 	}
 	c.checkState(ctx)
 
-	if err := c.reportContinuingState(ctx, agentendpointpb.ApplyConfigTaskProgress_ENFORCING_DESIRED_STATE); err != nil {
+	if err := c.reportContinuingState(ctx, agentendpointpb.ApplyConfigTaskProgress_APPLYING_CONFIG); err != nil {
 		return c.handleErrorState(ctx, rcsErrMsg, err)
 	}
 	c.enforceState(ctx)
 
 	if c.postCheckRequired {
-		if err := c.reportContinuingState(ctx, agentendpointpb.ApplyConfigTaskProgress_CHECKING_DESIRED_STATE_POST_ENFORCEMENT); err != nil {
+		if err := c.reportContinuingState(ctx, agentendpointpb.ApplyConfigTaskProgress_APPLYING_CONFIG); err != nil {
 			return c.handleErrorState(ctx, rcsErrMsg, err)
 		}
 		c.postCheckState(ctx)
