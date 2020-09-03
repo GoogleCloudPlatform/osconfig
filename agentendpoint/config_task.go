@@ -126,7 +126,11 @@ func (c *configTask) reportContinuingState(ctx context.Context, configState agen
 	return nil
 }
 
+// detectPolicyConflicts checks for managed resource conflicts between a proposed
+// resource and all other resources up to this point, adding to the current set
+// ManagedResources.
 func detectPolicyConflicts(proposed, current *config.ManagedResources) error {
+	// TODO: implement
 	return nil
 }
 
@@ -161,6 +165,7 @@ func (c *configTask) validation(ctx context.Context) {
 					clog.Errorf(ctx, errMsg)
 				}
 
+				// Detect any resource conflicts within this policy.
 				if err := detectPolicyConflicts(resource.ManagedResources(), policyMR); err != nil {
 					outcome = agentendpointpb.ApplyConfigTaskOutput_ResourceResult_Validation_CONFLICT
 					plcy.hasError = true
