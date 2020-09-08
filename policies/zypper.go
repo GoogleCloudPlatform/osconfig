@@ -68,16 +68,25 @@ func zypperRepositories(ctx context.Context, repos []*agentendpointpb.ZypperRepo
 }
 
 func zypperChanges(ctx context.Context, zypperInstalled, zypperRemoved, zypperUpdated []*agentendpointpb.Package) error {
+	var err error
 	var errs []string
 
-	installed, err := packages.InstalledRPMPackages(ctx)
-	if err != nil {
-		return err
+	var installed []packages.PkgInfo
+	if len(zypperInstalled) > 0 || len(zypperUpdated) > 0 || len(zypperRemoved) > 0 {
+		installed, err = packages.InstalledRPMPackages(ctx)
+		if err != nil {
+			return err
+		}
 	}
-	updates, err := packages.ZypperUpdates(ctx)
-	if err != nil {
-		return err
+
+	var updates []packages.PkgInfo
+	if len(zypperUpdated) > 0 {
+		updates, err = packages.ZypperUpdates(ctx)
+		if err != nil {
+			return err
+		}
 	}
+
 	changes := getNecessaryChanges(installed, updates, zypperInstalled, zypperRemoved, zypperUpdated)
 
 	if changes.packagesToInstall != nil {

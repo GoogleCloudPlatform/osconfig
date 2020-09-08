@@ -68,16 +68,25 @@ func yumRepositories(ctx context.Context, repos []*agentendpointpb.YumRepository
 }
 
 func yumChanges(ctx context.Context, yumInstalled, yumRemoved, yumUpdated []*agentendpointpb.Package) error {
+	var err error
 	var errs []string
 
-	installed, err := packages.InstalledRPMPackages(ctx)
-	if err != nil {
-		return err
+	var installed []packages.PkgInfo
+	if len(yumInstalled) > 0 || len(yumUpdated) > 0 || len(yumRemoved) > 0 {
+		installed, err = packages.InstalledRPMPackages(ctx)
+		if err != nil {
+			return err
+		}
 	}
-	updates, err := packages.YumUpdates(ctx)
-	if err != nil {
-		return err
+
+	var updates []packages.PkgInfo
+	if len(yumUpdated) > 0 {
+		updates, err = packages.YumUpdates(ctx)
+		if err != nil {
+			return err
+		}
 	}
+
 	changes := getNecessaryChanges(installed, updates, yumInstalled, yumRemoved, yumUpdated)
 
 	if changes.packagesToInstall != nil {

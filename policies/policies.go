@@ -22,7 +22,6 @@ import (
 	"hash"
 	"io"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/agentendpoint"
@@ -168,12 +167,6 @@ func setConfig(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) {
 	}
 
 	if packages.GooGetExists {
-		if _, err := os.Stat(config.GooGetRepoFilePath()); os.IsNotExist(err) {
-			clog.Debugf(ctx, "Repo file does not exist, will create one...")
-			if err := os.MkdirAll(filepath.Dir(config.GooGetRepoFilePath()), 07550); err != nil {
-				clog.Errorf(ctx, "Error creating repo file: %v", err)
-			}
-		}
 		if err := googetRepositories(ctx, gooRepos, config.GooGetRepoFilePath()); err != nil {
 			clog.Errorf(ctx, "Error writing googet repo file: %v", err)
 		}
@@ -185,12 +178,6 @@ func setConfig(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) {
 	}
 
 	if packages.AptExists {
-		if _, err := os.Stat(config.AptRepoFilePath()); os.IsNotExist(err) {
-			clog.Debugf(ctx, "Repo file does not exist, will create one...")
-			if err := os.MkdirAll(filepath.Dir(config.AptRepoFilePath()), 07550); err != nil {
-				clog.Errorf(ctx, "Error creating repo file: %v", err)
-			}
-		}
 		if err := aptRepositories(ctx, aptRepos, config.AptRepoFilePath()); err != nil {
 			clog.Errorf(ctx, "Error writing apt repo file: %v", err)
 		}
@@ -202,12 +189,6 @@ func setConfig(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) {
 	}
 
 	if packages.YumExists {
-		if _, err := os.Stat(config.YumRepoFilePath()); os.IsNotExist(err) {
-			clog.Debugf(ctx, "Repo file does not exist, will create one...")
-			if err := os.MkdirAll(filepath.Dir(config.YumRepoFilePath()), 07550); err != nil {
-				clog.Errorf(ctx, "Error creating repo file: %v", err)
-			}
-		}
 		if err := yumRepositories(ctx, yumRepos, config.YumRepoFilePath()); err != nil {
 			clog.Errorf(ctx, "Error writing yum repo file: %v", err)
 		}
@@ -219,12 +200,6 @@ func setConfig(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) {
 	}
 
 	if packages.ZypperExists {
-		if _, err := os.Stat(config.ZypperRepoFilePath()); os.IsNotExist(err) {
-			clog.Debugf(ctx, "Repo file does not exist, will create one...")
-			if err := os.MkdirAll(filepath.Dir(config.ZypperRepoFilePath()), 07550); err != nil {
-				clog.Errorf(ctx, "Error creating repo file: %v", err)
-			}
-		}
 		if err := zypperRepositories(ctx, zypperRepos, config.ZypperRepoFilePath()); err != nil {
 			clog.Errorf(ctx, "Error writing zypper repo file: %v", err)
 		}
