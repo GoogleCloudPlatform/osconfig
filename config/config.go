@@ -22,8 +22,8 @@ import (
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
-// Resource is a single config resource.
-type Resource struct {
+// OSPolicyResource is a single OSPolicy resource.
+type OSPolicyResource struct {
 	resource
 	*agentendpointpb.ApplyConfigTask_Config_Resource
 
@@ -33,12 +33,12 @@ type Resource struct {
 
 // InDesiredState reports whether this resource is in the desired state.
 // CheckState or EnforceState should be run prior to calling InDesiredState.
-func (r *Resource) InDesiredState() bool {
+func (r *OSPolicyResource) InDesiredState() bool {
 	return r.inDS
 }
 
-// ManagedResources returns the resources that this resources manages.
-func (r *Resource) ManagedResources() *ManagedResources {
+// ManagedResources returns the resources that this OSPolicyResource manages.
+func (r *OSPolicyResource) ManagedResources() *ManagedResources {
 	return r.managedResources
 }
 
@@ -48,14 +48,14 @@ type resource interface {
 	enforceState() (bool, error)
 }
 
-// ManagedResources are the resources that the resources manages.
+// ManagedResources are the resources that an OSPolicyResource manages.
 type ManagedResources struct {
 	Packages *Packages
 }
 
 // Validate validates this resource.
 // Validate must be called before other methods.
-func (r *Resource) Validate(ctx context.Context) error {
+func (r *OSPolicyResource) Validate(ctx context.Context) error {
 	switch x := r.GetResourceType().(type) {
 	case *agentendpointpb.ApplyConfigTask_Config_Resource_Pkg:
 		r.resource = resource(&packageResouce{ApplyConfigTask_Config_Resource_PackageResource: x.Pkg})
@@ -79,7 +79,7 @@ func (r *Resource) Validate(ctx context.Context) error {
 
 // CheckState checks this resources state.
 // Validate must be called prior to running CheckState.
-func (r *Resource) CheckState(ctx context.Context) error {
+func (r *OSPolicyResource) CheckState(ctx context.Context) error {
 	if r.resource == nil {
 		return errors.New("CheckState run before Validate")
 	}
@@ -91,7 +91,7 @@ func (r *Resource) CheckState(ctx context.Context) error {
 
 // EnforceState enforces this resources state.
 // Validate must be called prior to running EnforceState.
-func (r *Resource) EnforceState(ctx context.Context) error {
+func (r *OSPolicyResource) EnforceState(ctx context.Context) error {
 	if r.resource == nil {
 		return errors.New("EnforceState run before Validate")
 	}
