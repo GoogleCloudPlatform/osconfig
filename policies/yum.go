@@ -35,14 +35,14 @@ func yumRepositories(ctx context.Context, repos []*agentendpointpb.YumRepository
 		name=repo1-name
 		baseurl=https://repo1-url
 		enabled=1
-		gpgcheck=1
+		gpgcheck=0
 		repo_gpgcheck=1
 		gpgkey=http://repo1-url/gpg
 		[repo2]
 		display_name=repo2-name
 		baseurl=https://repo2-url
 		enabled=1
-		gpgcheck=1
+		gpgcheck=0
 		repo_gpgcheck=1
 	*/
 	var buf bytes.Buffer
@@ -55,7 +55,7 @@ func yumRepositories(ctx context.Context, repos []*agentendpointpb.YumRepository
 			buf.WriteString(fmt.Sprintf("name=%s\n", repo.DisplayName))
 		}
 		buf.WriteString(fmt.Sprintf("baseurl=%s\n", repo.BaseUrl))
-		buf.WriteString("enabled=1\ngpgcheck=1\nrepo_gpgcheck=1\n")
+		buf.WriteString("enabled=1\ngpgcheck=0\nrepo_gpgcheck=1\n")
 		if len(repo.GpgKeys) > 0 {
 			buf.WriteString(fmt.Sprintf("gpgkey=%s\n", repo.GpgKeys[0]))
 			for _, k := range repo.GpgKeys[1:] {
