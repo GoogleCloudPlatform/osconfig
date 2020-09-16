@@ -50,7 +50,7 @@ type resource interface {
 
 // ManagedResources are the resources that an OSPolicyResource manages.
 type ManagedResources struct {
-	Packages *Packages
+	Packages []ManagedPackage
 }
 
 // Validate validates this resource.
