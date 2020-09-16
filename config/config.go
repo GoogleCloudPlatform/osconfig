@@ -28,13 +28,13 @@ type OSPolicyResource struct {
 	*agentendpointpb.ApplyConfigTask_Config_Resource
 
 	managedResources *ManagedResources
-	inDS             bool
+	inDesiredState   bool
 }
 
 // InDesiredState reports whether this resource is in the desired state.
 // CheckState or EnforceState should be run prior to calling InDesiredState.
 func (r *OSPolicyResource) InDesiredState() bool {
-	return r.inDS
+	return r.inDesiredState
 }
 
 // ManagedResources returns the resources that this OSPolicyResource manages.
@@ -84,8 +84,8 @@ func (r *OSPolicyResource) CheckState(ctx context.Context) error {
 		return errors.New("CheckState run before Validate")
 	}
 
-	inDS, err := r.checkState()
-	r.inDS = inDS
+	inDesiredState, err := r.checkState()
+	r.inDesiredState = inDesiredState
 	return err
 }
 
@@ -96,7 +96,7 @@ func (r *OSPolicyResource) EnforceState(ctx context.Context) error {
 		return errors.New("EnforceState run before Validate")
 	}
 
-	inDS, err := r.enforceState()
-	r.inDS = inDS
+	inDesiredState, err := r.enforceState()
+	r.inDesiredState = inDesiredState
 	return err
 }

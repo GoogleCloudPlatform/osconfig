@@ -175,23 +175,23 @@ var yumInstalled []packages.PkgInfo
 var zypperInstalled []packages.PkgInfo
 var rpmInstalled []packages.PkgInfo
 
-func needsInstall(installedPkgs []packages.PkgInfo, name string) bool {
+func pkgInstalled(installedPkgs []packages.PkgInfo, name string) bool {
 	for _, pkg := range installedPkgs {
 		if pkg.Name == name {
-			return false
+			return true
 		}
 	}
-	return true
+	return false
 }
 
-func (p *packageResouce) checkState() (bool, error) {
+func (p *packageResouce) checkState() (inDesiredState bool, err error) {
 	switch {
 	case p.policy.Apt.Install != nil:
-		if needsInstall(aptInstalled, p.policy.Apt.Install.GetName()) {
+		if pkgInstalled(aptInstalled, p.policy.Apt.Install.GetName()) {
 			return true, nil
 		}
 	case p.policy.Apt.Remove != nil:
-		if !needsInstall(aptInstalled, p.policy.Apt.Remove.GetName()) {
+		if !pkgInstalled(aptInstalled, p.policy.Apt.Remove.GetName()) {
 			return true, nil
 		}
 
@@ -200,11 +200,11 @@ func (p *packageResouce) checkState() (bool, error) {
 	case p.policy.Deb.Remove != nil:
 
 	case p.policy.GooGet.Install != nil:
-		if needsInstall(aptInstalled, p.policy.GooGet.Install.GetName()) {
+		if pkgInstalled(aptInstalled, p.policy.GooGet.Install.GetName()) {
 			return true, nil
 		}
 	case p.policy.GooGet.Remove != nil:
-		if !needsInstall(aptInstalled, p.policy.GooGet.Remove.GetName()) {
+		if !pkgInstalled(aptInstalled, p.policy.GooGet.Remove.GetName()) {
 			return true, nil
 		}
 
@@ -213,20 +213,20 @@ func (p *packageResouce) checkState() (bool, error) {
 	case p.policy.MSI.Remove != nil:
 
 	case p.policy.Yum.Install != nil:
-		if needsInstall(aptInstalled, p.policy.Yum.Install.GetName()) {
+		if pkgInstalled(aptInstalled, p.policy.Yum.Install.GetName()) {
 			return true, nil
 		}
 	case p.policy.Yum.Remove != nil:
-		if !needsInstall(aptInstalled, p.policy.Yum.Remove.GetName()) {
+		if !pkgInstalled(aptInstalled, p.policy.Yum.Remove.GetName()) {
 			return true, nil
 		}
 
 	case p.policy.Zypper.Install != nil:
-		if needsInstall(aptInstalled, p.policy.Zypper.Install.GetName()) {
+		if pkgInstalled(aptInstalled, p.policy.Zypper.Install.GetName()) {
 			return true, nil
 		}
 	case p.policy.Zypper.Remove != nil:
-		if !needsInstall(aptInstalled, p.policy.Zypper.Remove.GetName()) {
+		if !pkgInstalled(aptInstalled, p.policy.Zypper.Remove.GetName()) {
 			return true, nil
 		}
 
@@ -235,11 +235,11 @@ func (p *packageResouce) checkState() (bool, error) {
 	case p.policy.RPM.Remove != nil:
 	}
 
-	// If we got here no actions are required.
+	// If we got here we are not in the desired state.
 	return false, nil
 }
 
-func (p *packageResouce) enforceState() (bool, error) {
+func (p *packageResouce) enforceState() (inDesiredState bool, err error) {
 	// TODO: implement
 	return true, nil
 }
