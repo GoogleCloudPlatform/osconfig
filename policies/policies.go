@@ -24,9 +24,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/agentendpoint"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
-	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"github.com/GoogleCloudPlatform/osconfig/policies/recipes"
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
@@ -163,11 +163,10 @@ func setConfig(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) {
 			}
 
 		}
-
 	}
 
 	if packages.GooGetExists {
-		if err := googetRepositories(ctx, gooRepos, config.GooGetRepoFilePath()); err != nil {
+		if err := googetRepositories(ctx, gooRepos, agentconfig.GooGetRepoFilePath()); err != nil {
 			clog.Errorf(ctx, "Error writing googet repo file: %v", err)
 		}
 		if err := retryutil.RetryFunc(ctx, 1*time.Minute, "Applying googet changes", func() error {
@@ -178,7 +177,7 @@ func setConfig(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) {
 	}
 
 	if packages.AptExists {
-		if err := aptRepositories(ctx, aptRepos, config.AptRepoFilePath()); err != nil {
+		if err := aptRepositories(ctx, aptRepos, agentconfig.AptRepoFilePath()); err != nil {
 			clog.Errorf(ctx, "Error writing apt repo file: %v", err)
 		}
 		if err := retryutil.RetryFunc(ctx, 1*time.Minute, "Applying apt changes", func() error {
@@ -189,7 +188,7 @@ func setConfig(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) {
 	}
 
 	if packages.YumExists {
-		if err := yumRepositories(ctx, yumRepos, config.YumRepoFilePath()); err != nil {
+		if err := yumRepositories(ctx, yumRepos, agentconfig.YumRepoFilePath()); err != nil {
 			clog.Errorf(ctx, "Error writing yum repo file: %v", err)
 		}
 		if err := retryutil.RetryFunc(ctx, 1*time.Minute, "Applying yum changes", func() error {
@@ -200,7 +199,7 @@ func setConfig(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) {
 	}
 
 	if packages.ZypperExists {
-		if err := zypperRepositories(ctx, zypperRepos, config.ZypperRepoFilePath()); err != nil {
+		if err := zypperRepositories(ctx, zypperRepos, agentconfig.ZypperRepoFilePath()); err != nil {
 			clog.Errorf(ctx, "Error writing zypper repo file: %v", err)
 		}
 		if err := retryutil.RetryFunc(ctx, 1*time.Minute, "Applying zypper changes.", func() error {

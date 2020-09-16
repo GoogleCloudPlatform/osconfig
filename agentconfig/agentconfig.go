@@ -12,8 +12,8 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-// Package config stores and retrieves configuration settings for the OS Config agent.
-package config
+// Package agentconfig stores and retrieves configuration settings for the OS Config agent.
+package agentconfig
 
 import (
 	"context"
@@ -91,10 +91,10 @@ var (
 )
 
 type config struct {
-	osInventoryEnabled, guestPoliciesEnabled, taskNotificationEnabled, debugEnabled       bool
-	svcEndpoint, googetRepoFilePath, zypperRepoFilePath, yumRepoFilePath, aptRepoFilePath string
-	numericProjectID, osConfigPollInterval                                                int
-	projectID, instanceZone, instanceName, instanceID                                     string
+	osInventoryEnabled, guestPoliciesEnabled, taskNotificationEnabled, inventoryReportingEnabled, debugEnabled bool
+	svcEndpoint, googetRepoFilePath, zypperRepoFilePath, yumRepoFilePath, aptRepoFilePath                      string
+	numericProjectID, osConfigPollInterval                                                                     int
+	projectID, instanceZone, instanceName, instanceID                                                          string
 }
 
 func (c *config) parseFeatures(features string, enabled bool) {
@@ -107,6 +107,8 @@ func (c *config) parseFeatures(features string, enabled bool) {
 			c.guestPoliciesEnabled = enabled
 		case "osinventory":
 			c.osInventoryEnabled = enabled
+		case "inventoryreporting":
+			c.inventoryReportingEnabled = enabled
 		}
 	}
 }
@@ -497,6 +499,11 @@ func GuestPoliciesEnabled() bool {
 // TaskNotificationEnabled indicates whether TaskNotification should be enabled.
 func TaskNotificationEnabled() bool {
 	return getAgentConfig().taskNotificationEnabled
+}
+
+// InventoryReportingEnabled indicates whether InventoryReporting should be enabled.
+func InventoryReportingEnabled() bool {
+	return getAgentConfig().inventoryReportingEnabled
 }
 
 // Instance is the URI of the instance the agent is running on.

@@ -16,7 +16,10 @@
 package agentendpoint
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -25,8 +28,8 @@ import (
 
 	"cloud.google.com/go/compute/metadata"
 	agentendpoint "cloud.google.com/go/osconfig/agentendpoint/apiv1"
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
-	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
 	"github.com/GoogleCloudPlatform/osconfig/util"
@@ -35,6 +38,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
 )
@@ -45,7 +49,8 @@ var (
 	errServerCancel      = errors.New("task canceled by server")
 	errServiceNotEnabled = errors.New("service is not enabled for this project")
 	errResourceExhausted = errors.New("ResourceExhausted")
-	taskStateFile        = config.TaskStateFile()
+	taskStateFile        = agentconfig.TaskStateFile()
+	sameStateTimeWindow  = -5 * time.Second
 )
 
 // Client is a an agentendpoint client.
@@ -62,7 +67,7 @@ func NewClient(ctx context.Context) (*Client, error) {
 	opts := []option.ClientOption{
 		option.WithoutAuthentication(), // Do not use oauth.
 		option.WithGRPCDialOption(grpc.WithTransportCredentials(credentials.NewTLS(nil))), // Because we disabled Auth we need to specifically enable TLS.
-		option.WithEndpoint(config.SvcEndpoint()),
+		option.WithEndpoint(agentconfig.SvcEndpoint()),
 	}
 	clog.Debugf(ctx, "Creating new agentendpoint client.")
 	c, err := agentendpoint.NewClient(ctx, opts...)
@@ -91,12 +96,12 @@ func (c *Client) Closed() bool {
 
 // RegisterAgent calls RegisterAgent discarding the response.
 func (c *Client) RegisterAgent(ctx context.Context) error {
-	token, err := config.IDToken()
+	token, err := agentconfig.IDToken()
 	if err != nil {
 		return err
 	}
 
-	req := &agentendpointpb.RegisterAgentRequest{AgentVersion: config.Version(), SupportedCapabilities: config.Capabilities()}
+	req := &agentendpointpb.RegisterAgentRequest{AgentVersion: agentconfig.Version(), SupportedCapabilities: agentconfig.Capabilities()}
 	clog.Debugf(ctx, "Calling RegisterAgent with request:\n%s", util.PrettyFmt(req))
 	req.InstanceIdToken = token
 
@@ -104,8 +109,32 @@ func (c *Client) RegisterAgent(ctx context.Context) error {
 	return err
 }
 
+// reportInventory calls ReportInventory with the provided inventory.
+func (c *Client) reportInventory(ctx context.Context, inventory *agentendpointpb.Inventory, reportFull bool) (*agentendpointpb.ReportInventoryResponse, error) {
+	token, err := agentconfig.IDToken()
+	if err != nil {
+		return nil, err
+	}
+
+	hash := sha256.New()
+	b, err := proto.Marshal(inventory)
+	if err != nil {
+		return nil, err
+	}
+	io.Copy(hash, bytes.NewReader(b))
+
+	checksum := hex.EncodeToString(hash.Sum(nil))
+	req := &agentendpointpb.ReportInventoryRequest{InstanceIdToken: token, InventoryChecksum: checksum}
+	if reportFull {
+		req = &agentendpointpb.ReportInventoryRequest{InstanceIdToken: token, InventoryChecksum: checksum, Inventory: inventory}
+	}
+	clog.Debugf(ctx, "Calling ReportInventory with request:\n%s", util.PrettyFmt(req))
+
+	return c.raw.ReportInventory(ctx, req)
+}
+
 func (c *Client) startNextTask(ctx context.Context) (res *agentendpointpb.StartNextTaskResponse, err error) {
-	token, err := config.IDToken()
+	token, err := agentconfig.IDToken()
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +158,7 @@ func (c *Client) startNextTask(ctx context.Context) (res *agentendpointpb.StartN
 }
 
 func (c *Client) reportTaskProgress(ctx context.Context, req *agentendpointpb.ReportTaskProgressRequest) (res *agentendpointpb.ReportTaskProgressResponse, err error) {
-	token, err := config.IDToken()
+	token, err := agentconfig.IDToken()
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +181,7 @@ func (c *Client) reportTaskProgress(ctx context.Context, req *agentendpointpb.Re
 }
 
 func (c *Client) reportTaskComplete(ctx context.Context, req *agentendpointpb.ReportTaskCompleteRequest) error {
-	token, err := config.IDToken()
+	token, err := agentconfig.IDToken()
 	if err != nil {
 		return err
 	}
@@ -199,6 +228,10 @@ func (c *Client) runTask(ctx context.Context) {
 			if err := c.RunExecStep(ctx, task); err != nil {
 				clog.Errorf(ctx, "Error running TaskType_EXEC_STEP_TASK: %v", err)
 			}
+		case agentendpointpb.TaskType_APPLY_CONFIG_TASK:
+			if err := c.RunApplyConfig(ctx, task); err != nil {
+				clog.Errorf(ctx, "Error running TaskType_APPLY_CONFIG_TASK: %v", err)
+			}
 		default:
 			clog.Errorf(ctx, "Unknown task type: %v", task.GetTaskType())
 		}
@@ -244,10 +277,10 @@ func (c *Client) handleStream(ctx context.Context, stream agentendpointpb.AgentE
 
 func (c *Client) receiveTaskNotification(ctx context.Context) (agentendpointpb.AgentEndpointService_ReceiveTaskNotificationClient, error) {
 	req := &agentendpointpb.ReceiveTaskNotificationRequest{
-		AgentVersion: config.Version(),
+		AgentVersion: agentconfig.Version(),
 	}
 
-	token, err := config.IDToken()
+	token, err := agentconfig.IDToken()
 	if err != nil {
 		return nil, fmt.Errorf("error fetching Instance IDToken: %w", err)
 	}

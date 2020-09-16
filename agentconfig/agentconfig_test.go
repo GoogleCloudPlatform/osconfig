@@ -12,8 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-// Package config stores and retrieves configuration settings for the OS Config agent.
-package config
+package agentconfig
 
 import (
 	"context"
