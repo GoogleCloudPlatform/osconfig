@@ -25,40 +25,40 @@ import (
 type packageResouce struct {
 	*agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource
 
-	policy ManagedPackage
+	managedPackage ManagedPackage
 }
 
-// AptPackage describes an apt package policy.
+// AptPackage describes an apt package resource.
 type AptPackage struct {
 	Install, Remove *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_APT
 }
 
-// DebPackage describes a deb package policy.
+// DebPackage describes a deb package resource.
 type DebPackage struct {
 	Install, Remove *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_Deb
 }
 
-// GooGetPackage describes a googet package policy.
+// GooGetPackage describes a googet package resource.
 type GooGetPackage struct {
 	Install, Remove *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_GooGet
 }
 
-// MSIPackage describes an msi package policy.
+// MSIPackage describes an msi package resource.
 type MSIPackage struct {
 	Install, Remove *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_MSI
 }
 
-// YumPackage describes a yum package policy.
+// YumPackage describes a yum package resource.
 type YumPackage struct {
 	Install, Remove *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_YUM
 }
 
-// ZypperPackage describes a zypper package policy.
+// ZypperPackage describes a zypper package resource.
 type ZypperPackage struct {
 	Install, Remove *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_Zypper
 }
 
-// RPMPackage describes an rpm package policy.
+// RPMPackage describes an rpm package resource.
 type RPMPackage struct {
 	Install, Remove *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_RPM
 }
@@ -84,9 +84,9 @@ func (p *packageResouce) validate() (*ManagedResources, error) {
 
 		switch p.GetDesiredState() {
 		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_INSTALLED:
-			p.policy.Apt.Install = pr
+			p.managedPackage.Apt.Install = pr
 		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_REMOVED:
-			p.policy.Apt.Remove = pr
+			p.managedPackage.Apt.Remove = pr
 		}
 	case *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_Deb_:
 		pr := p.GetDeb()
@@ -96,9 +96,9 @@ func (p *packageResouce) validate() (*ManagedResources, error) {
 
 		switch p.GetDesiredState() {
 		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_INSTALLED:
-			p.policy.Deb.Install = pr
+			p.managedPackage.Deb.Install = pr
 		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_REMOVED:
-			p.policy.Deb.Remove = pr
+			p.managedPackage.Deb.Remove = pr
 		}
 	case *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_Msi:
 		pr := p.GetMsi()
@@ -108,9 +108,9 @@ func (p *packageResouce) validate() (*ManagedResources, error) {
 
 		switch p.GetDesiredState() {
 		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_INSTALLED:
-			p.policy.MSI.Install = pr
+			p.managedPackage.MSI.Install = pr
 		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_REMOVED:
-			p.policy.MSI.Remove = pr
+			p.managedPackage.MSI.Remove = pr
 		}
 	case *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_Googet:
 		pr := p.GetGooget()
@@ -120,9 +120,9 @@ func (p *packageResouce) validate() (*ManagedResources, error) {
 
 		switch p.GetDesiredState() {
 		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_INSTALLED:
-			p.policy.GooGet.Install = pr
+			p.managedPackage.GooGet.Install = pr
 		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_REMOVED:
-			p.policy.GooGet.Remove = pr
+			p.managedPackage.GooGet.Remove = pr
 		}
 	case *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_Yum:
 		pr := p.GetYum()
@@ -132,9 +132,9 @@ func (p *packageResouce) validate() (*ManagedResources, error) {
 
 		switch p.GetDesiredState() {
 		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_INSTALLED:
-			p.policy.Yum.Install = pr
+			p.managedPackage.Yum.Install = pr
 		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_REMOVED:
-			p.policy.Yum.Remove = pr
+			p.managedPackage.Yum.Remove = pr
 		}
 	case *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_Zypper_:
 		pr := p.GetZypper()
@@ -144,9 +144,9 @@ func (p *packageResouce) validate() (*ManagedResources, error) {
 
 		switch p.GetDesiredState() {
 		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_INSTALLED:
-			p.policy.Zypper.Install = pr
+			p.managedPackage.Zypper.Install = pr
 		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_REMOVED:
-			p.policy.Zypper.Remove = pr
+			p.managedPackage.Zypper.Remove = pr
 		}
 	case *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_Rpm:
 		pr := p.GetRpm()
@@ -156,15 +156,15 @@ func (p *packageResouce) validate() (*ManagedResources, error) {
 
 		switch p.GetDesiredState() {
 		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_INSTALLED:
-			p.policy.RPM.Install = pr
+			p.managedPackage.RPM.Install = pr
 		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_REMOVED:
-			p.policy.RPM.Remove = pr
+			p.managedPackage.RPM.Remove = pr
 		}
 	default:
 		return nil, errors.New("SystemPackage field not set or references unknown package manager")
 	}
 
-	return &ManagedResources{Packages: []ManagedPackage{p.policy}}, nil
+	return &ManagedResources{Packages: []ManagedPackage{p.managedPackage}}, nil
 }
 
 // TODO: implement a caching system for installed packages.
@@ -186,53 +186,53 @@ func pkgInstalled(installedPkgs []packages.PkgInfo, name string) bool {
 
 func (p *packageResouce) checkState() (inDesiredState bool, err error) {
 	switch {
-	case p.policy.Apt.Install != nil:
-		if pkgInstalled(aptInstalled, p.policy.Apt.Install.GetName()) {
+	case p.managedPackage.Apt.Install != nil:
+		if pkgInstalled(aptInstalled, p.managedPackage.Apt.Install.GetName()) {
 			return true, nil
 		}
-	case p.policy.Apt.Remove != nil:
-		if !pkgInstalled(aptInstalled, p.policy.Apt.Remove.GetName()) {
+	case p.managedPackage.Apt.Remove != nil:
+		if !pkgInstalled(aptInstalled, p.managedPackage.Apt.Remove.GetName()) {
 			return true, nil
 		}
 
 	// TODO: implement check for deb
-	case p.policy.Deb.Install != nil:
-	case p.policy.Deb.Remove != nil:
+	case p.managedPackage.Deb.Install != nil:
+	case p.managedPackage.Deb.Remove != nil:
 
-	case p.policy.GooGet.Install != nil:
-		if pkgInstalled(aptInstalled, p.policy.GooGet.Install.GetName()) {
+	case p.managedPackage.GooGet.Install != nil:
+		if pkgInstalled(gooInstalled, p.managedPackage.GooGet.Install.GetName()) {
 			return true, nil
 		}
-	case p.policy.GooGet.Remove != nil:
-		if !pkgInstalled(aptInstalled, p.policy.GooGet.Remove.GetName()) {
+	case p.managedPackage.GooGet.Remove != nil:
+		if !pkgInstalled(gooInstalled, p.managedPackage.GooGet.Remove.GetName()) {
 			return true, nil
 		}
 
 	// TODO: implement check for msi
-	case p.policy.MSI.Install != nil:
-	case p.policy.MSI.Remove != nil:
+	case p.managedPackage.MSI.Install != nil:
+	case p.managedPackage.MSI.Remove != nil:
 
-	case p.policy.Yum.Install != nil:
-		if pkgInstalled(aptInstalled, p.policy.Yum.Install.GetName()) {
+	case p.managedPackage.Yum.Install != nil:
+		if pkgInstalled(yumInstalled, p.managedPackage.Yum.Install.GetName()) {
 			return true, nil
 		}
-	case p.policy.Yum.Remove != nil:
-		if !pkgInstalled(aptInstalled, p.policy.Yum.Remove.GetName()) {
+	case p.managedPackage.Yum.Remove != nil:
+		if !pkgInstalled(yumInstalled, p.managedPackage.Yum.Remove.GetName()) {
 			return true, nil
 		}
 
-	case p.policy.Zypper.Install != nil:
-		if pkgInstalled(aptInstalled, p.policy.Zypper.Install.GetName()) {
+	case p.managedPackage.Zypper.Install != nil:
+		if pkgInstalled(zypperInstalled, p.managedPackage.Zypper.Install.GetName()) {
 			return true, nil
 		}
-	case p.policy.Zypper.Remove != nil:
-		if !pkgInstalled(aptInstalled, p.policy.Zypper.Remove.GetName()) {
+	case p.managedPackage.Zypper.Remove != nil:
+		if !pkgInstalled(zypperInstalled, p.managedPackage.Zypper.Remove.GetName()) {
 			return true, nil
 		}
 
 	// TODO: implement check for rpm
-	case p.policy.RPM.Install != nil:
-	case p.policy.RPM.Remove != nil:
+	case p.managedPackage.RPM.Install != nil:
+	case p.managedPackage.RPM.Remove != nil:
 	}
 
 	// If we got here we are not in the desired state.

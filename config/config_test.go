@@ -219,7 +219,7 @@ func TestPackageResourceValidate(t *testing.T) {
 				t.Errorf("OSPolicyResource does not match expectation: (-got +want)\n%s", diff)
 			}
 
-			if diff := cmp.Diff(tt.wantMP, pr.resource.(*packageResouce).policy, protocmp.Transform()); diff != "" {
+			if diff := cmp.Diff(tt.wantMP, pr.resource.(*packageResouce).managedPackage, protocmp.Transform()); diff != "" {
 				t.Errorf("packageResouce does not match expectation: (-got +want)\n%s", diff)
 			}
 		})
