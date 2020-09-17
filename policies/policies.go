@@ -164,7 +164,6 @@ func setConfig(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) {
 			}
 
 		}
-
 	}
 
 	if packages.GooGetExists {

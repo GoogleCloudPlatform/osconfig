@@ -46,6 +46,8 @@ var (
 	PipExists bool
 	// GooGetExists indicates whether googet is installed.
 	GooGetExists bool
+	// MSIExecExists indicates whether msiexec is installed.
+	MSIExecExists bool
 
 	noarch = osinfo.Architecture("noarch")
 
@@ -65,6 +67,7 @@ type Packages struct {
 	Gem           []PkgInfo     `json:"gem,omitempty"`
 	Pip           []PkgInfo     `json:"pip,omitempty"`
 	GooGet        []PkgInfo     `json:"googet,omitempty"`
+	MSI           []PkgInfo     `json:"msi,omitempty"`
 	WUA           []WUAPackage  `json:"wua,omitempty"`
 	QFE           []QFEPackage  `json:"qfe,omitempty"`
 }
