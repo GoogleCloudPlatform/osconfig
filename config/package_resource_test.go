@@ -16,15 +16,17 @@ package config
 
 import (
 	"context"
+	"os"
 	"os/exec"
 	"testing"
 
-	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
-	"github.com/GoogleCloudPlatform/osconfig/util/mocks"
+	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
+
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
 func init() {
@@ -283,16 +285,16 @@ func TestPopulateInstalledCache(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockCommandRunner := mocks.NewMockCommandRunner(mockCtrl)
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	packages.SetCommandRunner(mockCommandRunner)
-	mockCommandRunner.EXPECT().Run(ctx, exec.Command("googet", "installed")).Return([]byte("foo.x86_64 1.2.3@4"), nil).Times(1)
+	mockCommandRunner.EXPECT().Run(ctx, exec.Command("googet.exe", "installed")).Return([]byte("Installed Packages:\nfoo.x86_64 1.2.3@4\nbar.noarch 1.2.3@4"), nil, nil).Times(1)
 
 	if err := populateInstalledCache(ctx, ManagedPackage{GooGet: &GooGetPackage{}}); err != nil {
 		t.Fatalf("Unexpected error from populateInstalledCache: %v", err)
 	}
 
 	want := map[string]struct{}{"foo": {}, "bar": {}}
-	if diff := cmp.Diff(want, gooInstalled); diff != "" {
+	if diff := cmp.Diff(gooInstalled, want); diff != "" {
 		t.Errorf("OSPolicyResource does not match expectation: (-got +want)\n%s", diff)
 	}
 }
@@ -386,12 +388,62 @@ func TestPackageResourceCheckState(t *testing.T) {
 func TestPackageResourceEnforceState(t *testing.T) {
 	ctx := context.Background()
 	var tests = []struct {
-		name    string
-		wantErr bool
-		prpb    *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource
-		wantMP  ManagedPackage
+		name        string
+		prpb        *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource
+		expectedCmd *exec.Cmd
 	}{
-		{},
+		{
+			"AptInstalled",
+			aptInstalledPR,
+			func() *exec.Cmd {
+				cmd := exec.Command("/usr/bin/apt-get", "install", "-y", "foo")
+				cmd.Env = append(os.Environ(),
+					"DEBIAN_FRONTEND=noninteractive",
+				)
+				return cmd
+			}(),
+		},
+		{
+			"AptRemoved",
+			aptRemovedPR,
+			func() *exec.Cmd {
+				cmd := exec.Command("/usr/bin/apt-get", "remove", "-y", "foo")
+				cmd.Env = append(os.Environ(),
+					"DEBIAN_FRONTEND=noninteractive",
+				)
+				return cmd
+			}(),
+		},
+		{
+			"GooGetInstalled",
+			googetInstalledPR,
+			exec.Command("googet.exe", "-noconfirm", "install", "foo"),
+		},
+		{
+			"GooGetRemoved",
+			googetRemovedPR,
+			exec.Command("googet.exe", "-noconfirm", "remove", "foo"),
+		},
+		{
+			"YumInstalled",
+			yumInstalledPR,
+			exec.Command("/usr/bin/yum", "install", "--assumeyes", "foo"),
+		},
+		{
+			"YumRemoved",
+			yumRemovedPR,
+			exec.Command("/usr/bin/yum", "remove", "--assumeyes", "foo"),
+		},
+		{
+			"ZypperInstalled",
+			zypperInstalledPR,
+			exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "foo"),
+		},
+		{
+			"ZypperRemoved",
+			zypperRemovedPR,
+			exec.Command("/usr/bin/zypper", "--non-interactive", "remove", "foo"),
+		},
 	}
 
 	for _, tt := range tests {
@@ -409,12 +461,15 @@ func TestPackageResourceEnforceState(t *testing.T) {
 				t.Fatalf("Unexpected Validate error: %v", err)
 			}
 
-			err := pr.EnforceState(ctx)
-			if err != nil && !tt.wantErr {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+			packages.SetCommandRunner(mockCommandRunner)
+			mockCommandRunner.EXPECT().Run(ctx, tt.expectedCmd)
+
+			if err := pr.EnforceState(ctx); err != nil {
 				t.Fatalf("Unexpected error: %v", err)
-			}
-			if err == nil && tt.wantErr {
-				t.Fatal("Expected error and did not get one.")
 			}
 		})
 	}
