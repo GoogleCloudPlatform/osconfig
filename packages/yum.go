@@ -20,9 +20,7 @@ import (
 	"fmt"
 	"os/exec"
 	"runtime"
-	"strings"
 
-	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
@@ -79,23 +77,13 @@ func YumExcludes(excludes []string) YumUpdateOption {
 
 // InstallYumPackages installs yum packages.
 func InstallYumPackages(ctx context.Context, pkgs []string) error {
-	args := append(yumInstallArgs, pkgs...)
-	out, err := runner.Run(ctx, exec.Command(yum, args...))
-	clog.Debugf(ctx, "yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
-	if err != nil {
-		err = fmt.Errorf("error running yum with args %q: %v, stdout: %s", args, err, out)
-	}
+	_, err := run(ctx, yum, append(yumInstallArgs, pkgs...))
 	return err
 }
 
 // RemoveYumPackages removes yum packages.
 func RemoveYumPackages(ctx context.Context, pkgs []string) error {
-	args := append(yumRemoveArgs, pkgs...)
-	out, err := runner.Run(ctx, exec.Command(yum, args...))
-	clog.Debugf(ctx, "yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
-	if err != nil {
-		err = fmt.Errorf("error running yum with args %q: %v, stdout: %s", args, err, out)
-	}
+	_, err := run(ctx, yum, append(yumRemoveArgs, pkgs...))
 	return err
 }
 
@@ -156,9 +144,7 @@ func parseYumUpdates(data []byte) []PkgInfo {
 func YumUpdates(ctx context.Context, opts ...YumUpdateOption) ([]PkgInfo, error) {
 	// We just use check-update to ensure all repo keys are synced as we run
 	// update with --assumeno.
-	out, err := runner.Run(ctx, exec.Command(yum, yumCheckUpdateArgs...))
-	clog.Debugf(ctx, "yum %q output:\n%s", yumCheckUpdateArgs, strings.ReplaceAll(string(out), "\n", "\n "))
-
+	stdout, stderr, err := runner.Run(ctx, exec.Command(yum, yumCheckUpdateArgs...))
 	// Exit code 0 means no updates, 100 means there are updates.
 	if err == nil {
 		return nil, nil
@@ -171,7 +157,7 @@ func YumUpdates(ctx context.Context, opts ...YumUpdateOption) ([]PkgInfo, error)
 
 	// Since we don't get good error codes from 'yum update' exit now if there is an issue.
 	if err != nil {
-		return nil, fmt.Errorf("error running yum with args %q: %v, stdout: %s", yumCheckUpdateArgs, err, out)
+		return nil, fmt.Errorf("error running %s with args %q: %v, stdout: %q, stderr: %q", yum, yumCheckUpdateArgs, err, stdout, stderr)
 	}
 
 	return listAndParseYumPackages(ctx, opts...)
@@ -201,19 +187,18 @@ func listAndParseYumPackages(ctx context.Context, opts ...YumUpdateOption) ([]Pk
 		}
 	}
 
-	out, err := ptyrunner.Run(ctx, exec.Command(yum, args...))
-	clog.Debugf(ctx, "yum %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	stdout, stderr, err := ptyrunner.Run(ctx, exec.Command(yum, args...))
 	if err != nil {
-		return nil, fmt.Errorf("error running yum with args %q: %v, stdout: %s", args, err, out)
+		return nil, fmt.Errorf("error running %s with args %q: %v, stdout: %q, stderr: %q", yum, args, err, stdout, stderr)
 	}
-	if out == nil {
+	if stdout == nil {
 		return nil, nil
 	}
 
-	pkgs := parseYumUpdates(out)
+	pkgs := parseYumUpdates(stdout)
 	if len(pkgs) == 0 {
 		// This means we could not parse any packages and instead got an error from yum.
-		return nil, fmt.Errorf("error checking for yum updates, non-zero error code from 'yum update' but no packages parsed, stdout: %s", out)
+		return nil, fmt.Errorf("error checking for yum updates, non-zero error code from 'yum update' but no packages parsed, stdout: %q", stdout)
 	}
 	return pkgs, nil
 }

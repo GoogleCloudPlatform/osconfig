@@ -44,6 +44,8 @@ var (
 	aptGetFullUpgradeCmd = "full-upgrade"
 	aptGetDistUpgradeCmd = "dist-upgrade"
 	aptGetUpgradableArgs = []string{"--just-print", "-qq"}
+
+	dpkgErr = []byte("dpkg --configure -a")
 )
 
 func init() {
@@ -93,13 +95,12 @@ func AptGetUpgradeShowNew(showNew bool) AptGetUpgradeOption {
 
 func dpkgRepair(ctx context.Context, out []byte) bool {
 	// Error code 100 may occur for non repairable errors, just check the output.
-	if !bytes.Contains(out, []byte("dpkg --configure -a")) {
+	if !bytes.Contains(out, dpkgErr) {
 		return false
 	}
 	clog.Debugf(ctx, "apt-get error, attempting dpkg repair.")
 	// Ignore error here, just log and rerun apt-get.
-	out, _ = run(ctx, exec.Command(dpkg, dpkgRepairArgs...))
-	clog.Debugf(ctx, "dpkg %q output:\n%s", dpkgRepairArgs, strings.ReplaceAll(string(out), "\n", "\n "))
+	run(ctx, dpkg, dpkgRepairArgs)
 
 	return true
 }
@@ -111,17 +112,14 @@ func InstallAptPackages(ctx context.Context, pkgs []string) error {
 	install.Env = append(os.Environ(),
 		"DEBIAN_FRONTEND=noninteractive",
 	)
-	out, err := run(ctx, install)
-	clog.Debugf(ctx, "apt-get %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	stdout, stderr, err := runner.Run(ctx, install)
 	if err != nil {
-		if dpkgRepair(ctx, out) {
-			out, err = run(ctx, install)
-			clog.Debugf(ctx, "apt-get %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+		if dpkgRepair(ctx, stderr) {
+			stdout, stderr, err = runner.Run(ctx, install)
 		}
 	}
-
 	if err != nil {
-		err = fmt.Errorf("error running apt-get with args %q: %v, stdout: %s", args, err, out)
+		err = fmt.Errorf("error running %s with args %q: %v, stdout: %q, stderr: %q", aptGet, args, err, stdout, stderr)
 	}
 	return err
 }
@@ -133,17 +131,14 @@ func RemoveAptPackages(ctx context.Context, pkgs []string) error {
 	remove.Env = append(os.Environ(),
 		"DEBIAN_FRONTEND=noninteractive",
 	)
-	out, err := run(ctx, remove)
+	stdout, stderr, err := runner.Run(ctx, remove)
 	if err != nil {
-		if dpkgRepair(ctx, out) {
-			out, err = run(ctx, remove)
-			clog.Debugf(ctx, "apt-get %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+		if dpkgRepair(ctx, stderr) {
+			stdout, stderr, err = runner.Run(ctx, remove)
 		}
 	}
-
-	clog.Debugf(ctx, "apt-get %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
 	if err != nil {
-		err = fmt.Errorf("error running apt-get with args %q: %v, stdout: %s", args, err, out)
+		err = fmt.Errorf("error running %s with args %q: %v, stdout: %q, stderr: %q", aptGet, args, err, stdout, stderr)
 	}
 	return err
 }
@@ -215,14 +210,13 @@ func AptUpdates(ctx context.Context, opts ...AptGetUpgradeOption) ([]PkgInfo, er
 		return nil, fmt.Errorf("unknown upgrade type: %q", aptOpts.upgradeType)
 	}
 
-	if out, err := run(ctx, exec.Command(aptGet, aptGetUpdateArgs...)); err != nil {
-		return nil, fmt.Errorf("error running apt-get with args %q: %v, stdout: %s", aptGetUpdateArgs, err, out)
+	if _, err := run(ctx, aptGet, aptGetUpdateArgs); err != nil {
+		return nil, err
 	}
 
-	out, err := run(ctx, exec.Command(aptGet, args...))
-	clog.Debugf(ctx, "apt-get %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
+	out, err := run(ctx, aptGet, args)
 	if err != nil {
-		return nil, fmt.Errorf("error running apt-get with args %q: %v, stdout: %s", args, err, out)
+		return nil, err
 	}
 
 	return parseAptUpdates(ctx, out, aptOpts.showNew), nil
@@ -250,21 +244,15 @@ func parseInstalledDebpackages(data []byte) []PkgInfo {
 
 // InstalledDebPackages queries for all installed deb packages.
 func InstalledDebPackages(ctx context.Context) ([]PkgInfo, error) {
-	out, err := run(ctx, exec.Command(dpkgquery, dpkgQueryArgs...))
-	clog.Debugf(ctx, "dpkgquery %q output:\n%s", dpkgQueryArgs, strings.ReplaceAll(string(out), "\n", "\n "))
+	out, err := run(ctx, dpkgquery, dpkgQueryArgs)
 	if err != nil {
-		return nil, fmt.Errorf("error running dpkgquery with args %q: %v, stdout: %s", dpkgQueryArgs, err, out)
+		return nil, err
 	}
 	return parseInstalledDebpackages(out), nil
 }
 
 // DpkgInstall installs a deb package.
 func DpkgInstall(ctx context.Context, path string) error {
-	args := append(dpkgInstallArgs, path)
-	out, err := run(ctx, exec.Command(dpkg, args...))
-	clog.Debugf(ctx, "dpkg %q output:\n%s", args, strings.ReplaceAll(string(out), "\n", "\n "))
-	if err != nil {
-		err = fmt.Errorf("error running dpkg with args %q: %v, stdout: %s", args, err, out)
-	}
+	_, err := run(ctx, dpkg, append(dpkgInstallArgs, path))
 	return err
 }

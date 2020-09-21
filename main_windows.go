@@ -96,7 +96,7 @@ type service struct {
 	run func(context.Context)
 }
 
-func (s *service) Execute(args []string, r <-chan svc.ChangeRequest, status chan<- svc.Status) (svcSpecificEC bool, exitCode uint32) {
+func (s *service) Execute(_ []string, r <-chan svc.ChangeRequest, status chan<- svc.Status) (bool, uint32) {
 	status <- svc.Status{State: svc.StartPending}
 	ctx, cncl := context.WithCancel(s.ctx)
 	defer cncl()
@@ -112,7 +112,7 @@ func (s *service) Execute(args []string, r <-chan svc.ChangeRequest, status chan
 		select {
 		case <-done:
 			status <- svc.Status{State: svc.StopPending}
-			return
+			return false, 0
 		case c := <-r:
 			switch c.Cmd {
 			case svc.Interrogate:

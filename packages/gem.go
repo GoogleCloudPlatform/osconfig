@@ -40,7 +40,7 @@ func init() {
 
 // GemUpdates queries for all available gem updates.
 func GemUpdates(ctx context.Context) ([]PkgInfo, error) {
-	out, err := run(ctx, exec.Command(gem, gemOutdatedArgs...))
+	stdout, _, err := runner.Run(ctx, exec.Command(gem, gemOutdatedArgs...))
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func GemUpdates(ctx context.Context) ([]PkgInfo, error) {
 	   ...
 	*/
 
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	lines := strings.Split(strings.TrimSpace(string(stdout)), "\n")
 	if len(lines) == 0 {
 		return nil, nil
 	}
@@ -70,7 +70,7 @@ func GemUpdates(ctx context.Context) ([]PkgInfo, error) {
 
 // InstalledGemPackages queries for all installed gem packages.
 func InstalledGemPackages(ctx context.Context) ([]PkgInfo, error) {
-	out, err := run(ctx, exec.Command(gem, gemListArgs...))
+	stdout, _, err := runner.Run(ctx, exec.Command(gem, gemListArgs...))
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func InstalledGemPackages(ctx context.Context) ([]PkgInfo, error) {
 	   bar (1.2.3)
 	   ...
 	*/
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	lines := strings.Split(strings.TrimSpace(string(stdout)), "\n")
 
 	if len(lines) == 0 {
 		clog.Debugf(ctx, "No gems installed.")

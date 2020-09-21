@@ -39,6 +39,9 @@ Contains the OSConfig agent binary and startup scripts
 GOPATH=%{_gopath} CGO_ENABLED=0 %{_go} build -ldflags="-s -w -X main.version=%{version}-%{release}" -mod=readonly -o google_osconfig_agent
 
 %install
+install -d "%{buildroot}/%{_docdir}/%{name}"
+cp -r THIRD_PARTY_LICENSES "%buildroot/%_docdir/%name/THIRD_PARTY_LICENSES"
+
 install -d %{buildroot}%{_bindir}
 install -d %{buildroot}/etc/osconfig
 install -p -m 0755 google_osconfig_agent %{buildroot}%{_bindir}/google_osconfig_agent
@@ -53,6 +56,7 @@ install -p -m 0644 90-%{name}.preset %{buildroot}%{_presetdir}/90-%{name}.preset
 %endif
 
 %files
+%{_docdir}/%{name}
 %defattr(-,root,root,-)
 %{_bindir}/google_osconfig_agent
 %if 0%{?el6}
