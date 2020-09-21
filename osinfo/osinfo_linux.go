@@ -110,7 +110,7 @@ func Get() (*OSInfo, error) {
 
 	var uts unix.Utsname
 	if err := unix.Uname(&uts); err != nil {
-		return nil, fmt.Errorf("unix.Uname error: %v", err)
+		return oi, fmt.Errorf("unix.Uname error: %v", err)
 	}
 	// unix.Utsname Fields are [65]byte so we need to trim any trailing null characters.
 	oi.Hostname = string(bytes.TrimRight(uts.Nodename[:], "\x00"))

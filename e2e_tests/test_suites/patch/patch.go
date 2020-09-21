@@ -72,27 +72,32 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		f := func() { runExecutePatchJobTest(ctx, tc, s, nil) }
 		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
 	}
-	// Test that updates trigger reboot as expected.
-	for _, setup := range oldImageTestSetup() {
-		wg.Add(1)
-		s := setup
-		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[PatchJob triggers reboot] [%s]", s.testName))
-		pc := &osconfigpb.PatchConfig{Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST}}
-		shouldReboot := true
-		f := func() {
-			runRebootPatchTest(ctx, tc, s, pc, shouldReboot)
+	// TODO: remove this hack and setup specific test suites for each test type.
+	// We can't test 'old' images with the head image test.
+	if config.AgentRepo() != "" {
+		// Test that updates trigger reboot as expected.
+		for _, setup := range oldImageTestSetup() {
+			wg.Add(1)
+			s := setup
+			tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[PatchJob triggers reboot] [%s]", s.testName))
+			pc := &osconfigpb.PatchConfig{Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST}}
+			shouldReboot := true
+			f := func() {
+				runRebootPatchTest(ctx, tc, s, pc, shouldReboot)
+			}
+			go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
 		}
-		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
-	}
-	// Test that PatchConfig_NEVER prevents reboot.
-	for _, setup := range oldImageTestSetup() {
-		wg.Add(1)
-		s := setup
-		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[PatchJob does not reboot] [%s]", s.testName))
-		pc := &osconfigpb.PatchConfig{RebootConfig: osconfigpb.PatchConfig_NEVER, Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST}}
-		shouldReboot := false
-		f := func() { runRebootPatchTest(ctx, tc, s, pc, shouldReboot) }
-		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
+
+		// Test that PatchConfig_NEVER prevents reboot.
+		for _, setup := range oldImageTestSetup() {
+			wg.Add(1)
+			s := setup
+			tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[PatchJob does not reboot] [%s]", s.testName))
+			pc := &osconfigpb.PatchConfig{RebootConfig: osconfigpb.PatchConfig_NEVER, Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST}}
+			shouldReboot := false
+			f := func() { runRebootPatchTest(ctx, tc, s, pc, shouldReboot) }
+			go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
+		}
 	}
 	// Test that pre- and post-patch steps run as expected.
 	for _, setup := range headImageTestSetup() {

@@ -132,7 +132,6 @@ func GetInstalledPackages(ctx context.Context) (Packages, error) {
 		if err != nil {
 			msg := fmt.Sprintf("error listing installed gem packages: %v", err)
 			clog.Debugf(ctx, "Error: %s", msg)
-			errs = append(errs, msg)
 		} else {
 			pkgs.Gem = gem
 		}
@@ -142,7 +141,6 @@ func GetInstalledPackages(ctx context.Context) (Packages, error) {
 		if err != nil {
 			msg := fmt.Sprintf("error listing installed pip packages: %v", err)
 			clog.Debugf(ctx, "Error: %s", msg)
-			errs = append(errs, msg)
 		} else {
 			pkgs.Pip = pip
 		}

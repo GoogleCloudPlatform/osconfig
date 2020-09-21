@@ -16,8 +16,10 @@ package inventory
 
 import (
 	"strings"
+	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/compute"
+	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/config"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
 	computeAPI "google.golang.org/api/compute/v1"
 )
@@ -30,6 +32,7 @@ type inventoryTestSetup struct {
 	shortName   string
 	startup     *computeAPI.MetadataItems
 	machineType string
+	timeout     time.Duration
 }
 
 var (
@@ -39,36 +42,48 @@ var (
 
 		startup:     compute.BuildInstanceMetadataItem("windows-startup-script-ps1", utils.InstallOSConfigGooGet()),
 		machineType: "e2-standard-4",
+		timeout:     25 * time.Minute,
 	}
 
 	aptSetup = &inventoryTestSetup{
 		packageType: []string{"deb"},
 		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigDeb()),
 		machineType: "e2-standard-2",
+		timeout:     10 * time.Minute,
 	}
 
 	el6Setup = &inventoryTestSetup{
 		packageType: []string{"rpm"},
 		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigEL6()),
 		machineType: "e2-standard-2",
+		timeout:     10 * time.Minute,
 	}
 
 	el7Setup = &inventoryTestSetup{
 		packageType: []string{"rpm"},
 		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigEL7()),
 		machineType: "e2-standard-2",
+		timeout:     10 * time.Minute,
 	}
 
 	el8Setup = &inventoryTestSetup{
 		packageType: []string{"rpm"},
 		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigEL8()),
 		machineType: "e2-standard-2",
+		timeout:     10 * time.Minute,
 	}
 
 	suseSetup = &inventoryTestSetup{
 		packageType: []string{"zypper"},
 		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigSUSE()),
 		machineType: "e2-standard-2",
+		timeout:     15 * time.Minute,
+	}
+
+	cosSetup = &inventoryTestSetup{
+		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.CurlPost),
+		machineType: "e2-standard-2",
+		timeout:     5 * time.Minute,
 	}
 )
 
@@ -81,6 +96,12 @@ func headImageTestSetup() (setup []*inventoryTestSetup) {
 		el8Setup:     utils.HeadEL8Images,
 		aptSetup:     utils.HeadAptImages,
 		suseSetup:    utils.HeadSUSEImages,
+	}
+
+	// TODO: remove this hack and setup specific test suites for each test type.
+	// This ensures we only run cos tests on the "head image" tests.
+	if config.AgentRepo() == "" {
+		headTestSetupMapping[cosSetup] = utils.HeadCOSImages
 	}
 
 	for s, m := range headTestSetupMapping {
@@ -100,6 +121,8 @@ func headImageTestSetup() (setup []*inventoryTestSetup) {
 				new.shortName = "sles"
 			} else if strings.Contains(name, "opensuse-leap") {
 				new.shortName = "opensuse-leap"
+			} else if strings.Contains(name, "cos") {
+				new.shortName = "cos"
 			}
 			setup = append(setup, &new)
 		}

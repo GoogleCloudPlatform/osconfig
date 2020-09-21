@@ -131,17 +131,25 @@ func aptRepositories(ctx context.Context, repos []*agentendpointpb.AptRepository
 }
 
 func aptChanges(ctx context.Context, aptInstalled, aptRemoved, aptUpdated []*agentendpointpb.Package) error {
+	var err error
 	var errs []string
 
-	installed, err := packages.InstalledDebPackages(ctx)
-	if err != nil {
-		return err
+	var installed []packages.PkgInfo
+	if len(aptInstalled) > 0 || len(aptUpdated) > 0 || len(aptRemoved) > 0 {
+		installed, err = packages.InstalledDebPackages(ctx)
+		if err != nil {
+			return err
+		}
 	}
 
-	updates, err := packages.AptUpdates(ctx, packages.AptGetUpgradeType(packages.AptGetDistUpgrade), packages.AptGetUpgradeShowNew(false))
-	if err != nil {
-		return err
+	var updates []packages.PkgInfo
+	if len(aptUpdated) > 0 {
+		updates, err = packages.AptUpdates(ctx, packages.AptGetUpgradeType(packages.AptGetDistUpgrade), packages.AptGetUpgradeShowNew(false))
+		if err != nil {
+			return err
+		}
 	}
+
 	changes := getNecessaryChanges(installed, updates, aptInstalled, aptRemoved, aptUpdated)
 
 	if changes.packagesToInstall != nil {

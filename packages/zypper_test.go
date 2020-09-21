@@ -16,41 +16,48 @@ package packages
 
 import (
 	"errors"
-	"fmt"
+	"os/exec"
 	"reflect"
 	"strings"
 	"testing"
 
-	"github.com/kylelemons/godebug/pretty"
-)
-
-var (
-	dump = &pretty.Config{IncludeUnexported: true}
+	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
+	"github.com/golang/mock/gomock"
 )
 
 func TestZypperInstalls(t *testing.T) {
-	run = getMockRun([]byte("TestZypperInstalls"), nil)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	runner = mockCommandRunner
+	expectedCmd := exec.Command(zypper, append(zypperInstallArgs, pkgs...)...)
+
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
 	if err := InstallZypperPackages(testCtx, pkgs); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-}
 
-func TestZypperInstallsReturnError(t *testing.T) {
-	run = getMockRun([]byte("TestZypperInstallsReturnError"), errors.New("Could not find package"))
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), errors.New("error")).Times(1)
 	if err := InstallZypperPackages(testCtx, pkgs); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }
 
 func TestRemoveZypper(t *testing.T) {
-	run = getMockRun([]byte("TestRemoveZypper"), nil)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	runner = mockCommandRunner
+	expectedCmd := exec.Command(zypper, append(zypperRemoveArgs, pkgs...)...)
+
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
 	if err := RemoveZypperPackages(testCtx, pkgs); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-}
 
-func TestRemoveZypperReturnError(t *testing.T) {
-	run = getMockRun([]byte("TestRemoveZypperReturnError"), errors.New("Could not find package"))
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), errors.New("error")).Times(1)
 	if err := RemoveZypperPackages(testCtx, pkgs); err == nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -82,7 +89,15 @@ this is junk data`
 }
 
 func TestZypperUpdates(t *testing.T) {
-	run = getMockRun([]byte("v | SLES12-SP3-Updates  | at                     | 3.1.14-7.3      | 3.1.14-8.3.1      | x86_64"), nil)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	runner = mockCommandRunner
+	expectedCmd := exec.Command(zypper, zypperListUpdatesArgs...)
+
+	data := []byte("v | SLES12-SP3-Updates  | at                     | 3.1.14-7.3      | 3.1.14-8.3.1      | x86_64")
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return(data, []byte("stderr"), nil).Times(1)
 	ret, err := ZypperUpdates(testCtx)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -93,7 +108,7 @@ func TestZypperUpdates(t *testing.T) {
 		t.Errorf("ZypperUpdates() = %v, want %v", ret, want)
 	}
 
-	run = getMockRun(nil, errors.New("bad error"))
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), errors.New("error")).Times(1)
 	if _, err := ZypperUpdates(testCtx); err == nil {
 		t.Errorf("did not get expected error")
 	}
@@ -137,7 +152,15 @@ some junk data`
 }
 
 func TestZypperPatches(t *testing.T) {
-	run = getMockRun([]byte("SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1258 | recommended | moderate  | ---         | needed     | Recommended update for postfix"), nil)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	runner = mockCommandRunner
+	expectedCmd := exec.Command(zypper, append(zypperListPatchesArgs, "--all")...)
+
+	data := []byte("SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1258 | recommended | moderate  | ---         | needed     | Recommended update for postfix")
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return(data, []byte("stderr"), nil).Times(1)
 	ret, err := ZypperPatches(testCtx)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -148,14 +171,22 @@ func TestZypperPatches(t *testing.T) {
 		t.Errorf("ZypperPatches() = %v, want %v", ret, want)
 	}
 
-	run = getMockRun(nil, errors.New("bad error"))
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), errors.New("error")).Times(1)
 	if _, err := ZypperPatches(testCtx); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }
 
 func TestZypperInstalledPatches(t *testing.T) {
-	run = getMockRun([]byte("SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1258 | recommended | moderate  | ---         | applied     | Recommended update for postfix"), nil)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	runner = mockCommandRunner
+	expectedCmd := exec.Command(zypper, append(zypperListPatchesArgs, "--all")...)
+
+	data := []byte("SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1258 | recommended | moderate  | ---         | applied     | Recommended update for postfix")
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return(data, []byte("stderr"), nil).Times(1)
 	ret, err := ZypperInstalledPatches(testCtx)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -166,7 +197,7 @@ func TestZypperInstalledPatches(t *testing.T) {
 		t.Errorf("ZypperInstalledPatches() = %v, want %v", ret, want)
 	}
 
-	run = getMockRun(nil, errors.New("bad error"))
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), errors.New("error")).Times(1)
 	if _, err := ZypperInstalledPatches(testCtx); err == nil {
 		t.Errorf("did not get expected error")
 	}
@@ -178,40 +209,40 @@ Loading repository data...
 Reading installed packages...
 Information for patch SUSE-SLE-SERVER-12-SP4-2019-2974:
 -------------------------------------------------------
-Repository  : SLES12-SP4-Updates                        
-Name        : SUSE-SLE-SERVER-12-SP4-2019-2974          
-Version     : 1                                         
-Arch        : noarch                                    
-Vendor      : maint-coord@suse.de                       
-Status      : needed                                    
-Category    : recommended                               
-Severity    : important                                 
-Created On  : Thu Nov 14 13:17:48 2019                  
-Interactive : ---                                       
-Summary     : Recommended update for irqbalance         
-Description :                                           
+Repository  : SLES12-SP4-Updates
+Name        : SUSE-SLE-SERVER-12-SP4-2019-2974
+Version     : 1
+Arch        : noarch
+Vendor      : maint-coord@suse.de
+Status      : needed
+Category    : recommended
+Severity    : important
+Created On  : Thu Nov 14 13:17:48 2019
+Interactive : ---
+Summary     : Recommended update for irqbalance
+Description :
     This update for irqbalance fixes the following issues:
     - Irqbalanced spreads the IRQs between the available virtual machines. (bsc#1119465, bsc#1154905)
 Provides    : patch:SUSE-SLE-SERVER-12-SP4-2019-2974 = 1
-Conflicts   : [4]                                       
+Conflicts   : [4]
     irqbalance.src < 1.1.0-9.3.1
     irqbalance.x86_64 < 1.1.0-9.3.1
     common-package.src < 1.1.0-9.3.1
     common-package.x86_64 < 1.1.0-9.3.1
 Information for patch SUSE-SLE-Module-Public-Cloud-12-2019-2026:
 ----------------------------------------------------------------
-Repository  : SLE-Module-Public-Cloud12-Updates                  
-Name        : SUSE-SLE-Module-Public-Cloud-12-2019-2026          
-Version     : 1                                                  
-Arch        : noarch                                             
-Vendor      : maint-coord@suse.de                                
-Status      : needed                                             
-Category    : recommended                                        
-Severity    : moderate                                           
-Created On  : Tue Jul 30 17:20:02 2019                           
-Interactive : ---                                                
-Summary     : Recommended update for Azure Python SDK            
-Description :                                                    
+Repository  : SLE-Module-Public-Cloud12-Updates
+Name        : SUSE-SLE-Module-Public-Cloud-12-2019-2026
+Version     : 1
+Arch        : noarch
+Vendor      : maint-coord@suse.de
+Status      : needed
+Category    : recommended
+Severity    : moderate
+Created On  : Tue Jul 30 17:20:02 2019
+Interactive : ---
+Summary     : Recommended update for Azure Python SDK
+Description :
     This update brings the following python modules for the Azure Python SDK:
     - python-Flask
     - python-Werkzeug
@@ -225,7 +256,7 @@ Description :
     - python-pytest-mock
     - python-requests
 Provides    : patch:SUSE-SLE-Module-Public-Cloud-12-2019-2026 = 1
-Conflicts   : [32]                                               
+Conflicts   : [32]
     python-Flask.noarch < 0.12.1-7.4.2
     python-Flask.src < 0.12.1-7.4.2
     python-Werkzeug.noarch < 0.12.2-10.4.2
@@ -264,8 +295,6 @@ Conflicts   : [32]
 	if err != nil {
 		t.Errorf("unexpected error: %+v", err)
 	}
-
-	fmt.Printf("result:\n%s\n", dump.Sprint(ppMap))
 
 	if _, ok := ppMap["python3-requests"]; !ok {
 		t.Errorf("Unexpected result: expected a patch for python3-requests")

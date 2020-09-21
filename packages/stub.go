@@ -18,6 +18,6 @@ package packages
 
 import "os/exec"
 
-func runWithPty(cmd *exec.Cmd) ([]byte, error) {
-	return cmd.CombinedOutput()
+func runWithPty(cmd *exec.Cmd) ([]byte, []byte, error) {
+	return nil, nil, nil
 }
