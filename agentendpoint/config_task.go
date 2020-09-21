@@ -234,7 +234,6 @@ func checkConfigResourceState(ctx context.Context, plcy *policy, rResult *agente
 		},
 		ErrMsg: errMsg,
 	}
-
 }
 
 func checkOSPolicyState(ctx context.Context, assgnmnt *assignment, osPolicy *agentendpointpb.ApplyConfigTask_Config_OSPolicy, pResult *agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult) {

@@ -15,9 +15,12 @@
 package config
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"strings"
 
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 )
@@ -30,48 +33,55 @@ type packageResouce struct {
 
 // AptPackage describes an apt package resource.
 type AptPackage struct {
-	Install, Remove *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_APT
+	PackageResource *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_APT
+	DesiredState    agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_DesiredState
 }
 
 // DebPackage describes a deb package resource.
 type DebPackage struct {
-	Install, Remove *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_Deb
+	PackageResource *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_Deb
+	DesiredState    agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_DesiredState
 }
 
 // GooGetPackage describes a googet package resource.
 type GooGetPackage struct {
-	Install, Remove *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_GooGet
+	PackageResource *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_GooGet
+	DesiredState    agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_DesiredState
 }
 
 // MSIPackage describes an msi package resource.
 type MSIPackage struct {
-	Install, Remove *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_MSI
+	PackageResource *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_MSI
+	DesiredState    agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_DesiredState
 }
 
 // YumPackage describes a yum package resource.
 type YumPackage struct {
-	Install, Remove *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_YUM
+	PackageResource *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_YUM
+	DesiredState    agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_DesiredState
 }
 
 // ZypperPackage describes a zypper package resource.
 type ZypperPackage struct {
-	Install, Remove *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_Zypper
+	PackageResource *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_Zypper
+	DesiredState    agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_DesiredState
 }
 
 // RPMPackage describes an rpm package resource.
 type RPMPackage struct {
-	Install, Remove *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_RPM
+	PackageResource *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_RPM
+	DesiredState    agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_DesiredState
 }
 
 // ManagedPackage is the package that this PackageResource manages.
 type ManagedPackage struct {
-	Apt    AptPackage
-	Deb    DebPackage
-	GooGet GooGetPackage
-	MSI    MSIPackage
-	Yum    YumPackage
-	Zypper ZypperPackage
-	RPM    RPMPackage
+	Apt    *AptPackage
+	Deb    *DebPackage
+	GooGet *GooGetPackage
+	MSI    *MSIPackage
+	Yum    *YumPackage
+	Zypper *ZypperPackage
+	RPM    *RPMPackage
 }
 
 func (p *packageResouce) validate() (*ManagedResources, error) {
@@ -82,84 +92,56 @@ func (p *packageResouce) validate() (*ManagedResources, error) {
 			return nil, fmt.Errorf("cannot manage Apt package %q because apt-get does not exist on the system", pr.GetName())
 		}
 
-		switch p.GetDesiredState() {
-		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_INSTALLED:
-			p.managedPackage.Apt.Install = pr
-		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_REMOVED:
-			p.managedPackage.Apt.Remove = pr
-		}
+		p.managedPackage.Apt = &AptPackage{DesiredState: p.GetDesiredState(), PackageResource: pr}
+
 	case *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_Deb_:
 		pr := p.GetDeb()
 		if !packages.DpkgExists {
 			return nil, fmt.Errorf("cannot manage Deb package because dpkg does not exist on the system")
 		}
 
-		switch p.GetDesiredState() {
-		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_INSTALLED:
-			p.managedPackage.Deb.Install = pr
-		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_REMOVED:
-			p.managedPackage.Deb.Remove = pr
-		}
-	case *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_Msi:
-		pr := p.GetMsi()
-		if !packages.MSIExecExists {
-			return nil, fmt.Errorf("cannot manage MSI package because msiexec does not exist on the system")
-		}
+		p.managedPackage.Deb = &DebPackage{DesiredState: p.GetDesiredState(), PackageResource: pr}
 
-		switch p.GetDesiredState() {
-		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_INSTALLED:
-			p.managedPackage.MSI.Install = pr
-		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_REMOVED:
-			p.managedPackage.MSI.Remove = pr
-		}
 	case *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_Googet:
 		pr := p.GetGooget()
 		if !packages.GooGetExists {
 			return nil, fmt.Errorf("cannot manage GooGet package %q because googet does not exist on the system", pr.GetName())
 		}
 
-		switch p.GetDesiredState() {
-		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_INSTALLED:
-			p.managedPackage.GooGet.Install = pr
-		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_REMOVED:
-			p.managedPackage.GooGet.Remove = pr
+		p.managedPackage.GooGet = &GooGetPackage{DesiredState: p.GetDesiredState(), PackageResource: pr}
+
+	case *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_Msi:
+		pr := p.GetMsi()
+		if !packages.MSIExecExists {
+			return nil, fmt.Errorf("cannot manage MSI package because msiexec does not exist on the system")
 		}
+
+		p.managedPackage.MSI = &MSIPackage{DesiredState: p.GetDesiredState(), PackageResource: pr}
+
 	case *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_Yum:
 		pr := p.GetYum()
 		if !packages.YumExists {
 			return nil, fmt.Errorf("cannot manage Yum package %q because yum does not exist on the system", pr.GetName())
 		}
 
-		switch p.GetDesiredState() {
-		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_INSTALLED:
-			p.managedPackage.Yum.Install = pr
-		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_REMOVED:
-			p.managedPackage.Yum.Remove = pr
-		}
+		p.managedPackage.Yum = &YumPackage{DesiredState: p.GetDesiredState(), PackageResource: pr}
+
 	case *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_Zypper_:
 		pr := p.GetZypper()
 		if !packages.ZypperExists {
 			return nil, fmt.Errorf("cannot manage Zypper package %q because zypper does not exist on the system", pr.GetName())
 		}
 
-		switch p.GetDesiredState() {
-		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_INSTALLED:
-			p.managedPackage.Zypper.Install = pr
-		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_REMOVED:
-			p.managedPackage.Zypper.Remove = pr
-		}
+		p.managedPackage.Zypper = &ZypperPackage{DesiredState: p.GetDesiredState(), PackageResource: pr}
+
 	case *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_Rpm:
 		pr := p.GetRpm()
 		if !packages.RPMExists {
 			return nil, fmt.Errorf("cannot manage RPM package because rpm does not exist on the system")
 		}
 
-		switch p.GetDesiredState() {
-		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_INSTALLED:
-			p.managedPackage.RPM.Install = pr
-		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_REMOVED:
-			p.managedPackage.RPM.Remove = pr
-		}
+		p.managedPackage.RPM = &RPMPackage{DesiredState: p.GetDesiredState(), PackageResource: pr}
+
 	default:
 		return nil, errors.New("SystemPackage field not set or references unknown package manager")
 	}
@@ -167,79 +149,207 @@ func (p *packageResouce) validate() (*ManagedResources, error) {
 	return &ManagedResources{Packages: []ManagedPackage{p.managedPackage}}, nil
 }
 
-// TODO: implement a caching system for installed packages.
-var aptInstalled []packages.PkgInfo
-var debInstalled []packages.PkgInfo
-var gooInstalled []packages.PkgInfo
-var yumInstalled []packages.PkgInfo
-var zypperInstalled []packages.PkgInfo
-var rpmInstalled []packages.PkgInfo
+var aptInstalled map[string]struct{}
+var debInstalled map[string]struct{}
+var gooInstalled map[string]struct{}
+var yumInstalled map[string]struct{}
+var zypperInstalled map[string]struct{}
+var rpmInstalled map[string]struct{}
 
-func pkgInstalled(installedPkgs []packages.PkgInfo, name string) bool {
-	for _, pkg := range installedPkgs {
-		if pkg.Name == name {
-			return true
-		}
+func populateInstalledCache(ctx context.Context, mp ManagedPackage) error {
+	var cache map[string]struct{}
+	var refreshFunc func(context.Context) ([]packages.PkgInfo, error)
+	var err error
+	switch {
+	// TODO: implement apt functions
+	case mp.Apt != nil:
+		cache = aptInstalled
+		refreshFunc = packages.InstalledDebPackages
+
+	case mp.Deb != nil:
+		cache = debInstalled
+		refreshFunc = packages.InstalledDebPackages
+
+	case mp.GooGet != nil:
+		cache = gooInstalled
+		refreshFunc = packages.InstalledGooGetPackages
+
+	// TODO: implement msi functions
+	case mp.MSI != nil:
+		cache = gooInstalled
+		return errors.New("msi not implemented")
+
+	// TODO: implement yum functions
+	case mp.Yum != nil:
+		cache = yumInstalled
+		refreshFunc = packages.InstalledRPMPackages
+
+	// TODO: implement zypper functions
+	case mp.Zypper != nil:
+		cache = zypperInstalled
+		refreshFunc = packages.InstalledRPMPackages
+
+	case mp.RPM != nil:
+		cache = rpmInstalled
+		refreshFunc = packages.InstalledRPMPackages
+	default:
+		return fmt.Errorf("unknown or unpopulated ManagedPackage package type: %+v", mp)
 	}
-	return false
+
+	// Cache already populated.
+	if cache != nil {
+		return nil
+	}
+
+	pis, err := refreshFunc(ctx)
+	if err != nil {
+		return err
+	}
+
+	cache = map[string]struct{}{}
+	for _, pkg := range pis {
+		cache[pkg.Name] = struct{}{}
+	}
+	return nil
 }
 
-func (p *packageResouce) checkState() (inDesiredState bool, err error) {
-	switch {
-	case p.managedPackage.Apt.Install != nil:
-		if pkgInstalled(aptInstalled, p.managedPackage.Apt.Install.GetName()) {
-			return true, nil
-		}
-	case p.managedPackage.Apt.Remove != nil:
-		if !pkgInstalled(aptInstalled, p.managedPackage.Apt.Remove.GetName()) {
-			return true, nil
-		}
-
-	// TODO: implement check for deb
-	case p.managedPackage.Deb.Install != nil:
-	case p.managedPackage.Deb.Remove != nil:
-
-	case p.managedPackage.GooGet.Install != nil:
-		if pkgInstalled(gooInstalled, p.managedPackage.GooGet.Install.GetName()) {
-			return true, nil
-		}
-	case p.managedPackage.GooGet.Remove != nil:
-		if !pkgInstalled(gooInstalled, p.managedPackage.GooGet.Remove.GetName()) {
-			return true, nil
-		}
-
-	// TODO: implement check for msi
-	case p.managedPackage.MSI.Install != nil:
-	case p.managedPackage.MSI.Remove != nil:
-
-	case p.managedPackage.Yum.Install != nil:
-		if pkgInstalled(yumInstalled, p.managedPackage.Yum.Install.GetName()) {
-			return true, nil
-		}
-	case p.managedPackage.Yum.Remove != nil:
-		if !pkgInstalled(yumInstalled, p.managedPackage.Yum.Remove.GetName()) {
-			return true, nil
-		}
-
-	case p.managedPackage.Zypper.Install != nil:
-		if pkgInstalled(zypperInstalled, p.managedPackage.Zypper.Install.GetName()) {
-			return true, nil
-		}
-	case p.managedPackage.Zypper.Remove != nil:
-		if !pkgInstalled(zypperInstalled, p.managedPackage.Zypper.Remove.GetName()) {
-			return true, nil
-		}
-
-	// TODO: implement check for rpm
-	case p.managedPackage.RPM.Install != nil:
-	case p.managedPackage.RPM.Remove != nil:
+func (p *packageResouce) checkState(ctx context.Context) (inDesiredState bool, err error) {
+	if err := populateInstalledCache(ctx, p.managedPackage); err != nil {
+		return false, err
 	}
 
-	// If we got here we are not in the desired state.
+	var desiredState agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_DesiredState
+	var pkgIns bool
+
+	switch {
+	case p.managedPackage.Apt != nil:
+		desiredState = p.managedPackage.Apt.DesiredState
+		_, pkgIns = aptInstalled[p.managedPackage.Apt.PackageResource.GetName()]
+
+	// TODO: implement check for deb
+	case p.managedPackage.Deb != nil:
+		desiredState = p.managedPackage.Deb.DesiredState
+		return false, errors.New("deb not implemented")
+
+	case p.managedPackage.GooGet != nil:
+		desiredState = p.managedPackage.GooGet.DesiredState
+		_, pkgIns = gooInstalled[p.managedPackage.GooGet.PackageResource.GetName()]
+
+	// TODO: implement check for msi
+	case p.managedPackage.MSI != nil:
+		desiredState = p.managedPackage.MSI.DesiredState
+		return false, errors.New("msi not implemented")
+
+	case p.managedPackage.Yum != nil:
+		desiredState = p.managedPackage.Yum.DesiredState
+		_, pkgIns = yumInstalled[p.managedPackage.Yum.PackageResource.GetName()]
+
+	case p.managedPackage.Zypper != nil:
+		desiredState = p.managedPackage.Zypper.DesiredState
+		_, pkgIns = zypperInstalled[p.managedPackage.Zypper.PackageResource.GetName()]
+
+	// TODO: implement check for rpm
+	case p.managedPackage.RPM != nil:
+		desiredState = p.managedPackage.RPM.DesiredState
+		return false, errors.New("rpm not implemented")
+	}
+
+	switch desiredState {
+	case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_INSTALLED:
+		if pkgIns {
+			return true, nil
+		}
+	case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_REMOVED:
+		if !pkgIns {
+			return true, nil
+		}
+	default:
+		return false, fmt.Errorf("DesiredState field not set or references state: %q", desiredState)
+	}
+
 	return false, nil
 }
 
-func (p *packageResouce) enforceState() (inDesiredState bool, err error) {
-	// TODO: implement
+func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool, err error) {
+	var (
+		installing = "installing"
+		removing   = "removing"
+
+		enforcePackage struct {
+			name           string
+			action         string
+			packageType    string
+			actionFunc     func() error
+			installedCache map[string]struct{}
+		}
+	)
+
+	switch {
+	case p.managedPackage.Apt != nil:
+		enforcePackage.name = p.managedPackage.Apt.PackageResource.GetName()
+		enforcePackage.packageType = "apt"
+		enforcePackage.installedCache = aptInstalled
+		switch p.managedPackage.Apt.DesiredState {
+		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_INSTALLED:
+			enforcePackage.action, enforcePackage.actionFunc = installing, func() error { return packages.InstallAptPackages(ctx, []string{enforcePackage.name}) }
+		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_REMOVED:
+			enforcePackage.action, enforcePackage.actionFunc = removing, func() error { return packages.RemoveAptPackages(ctx, []string{enforcePackage.name}) }
+		}
+
+	// TODO: implement check for deb
+	case p.managedPackage.Deb != nil:
+		enforcePackage.packageType = "deb"
+		enforcePackage.installedCache = debInstalled
+
+	case p.managedPackage.GooGet != nil:
+		enforcePackage.name = p.managedPackage.GooGet.PackageResource.GetName()
+		enforcePackage.packageType = "googet"
+		enforcePackage.installedCache = gooInstalled
+		switch p.managedPackage.GooGet.DesiredState {
+		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_INSTALLED:
+			enforcePackage.action, enforcePackage.actionFunc = installing, func() error { return packages.InstallGooGetPackages(ctx, []string{enforcePackage.name}) }
+		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_REMOVED:
+			enforcePackage.action, enforcePackage.actionFunc = removing, func() error { return packages.RemoveGooGetPackages(ctx, []string{enforcePackage.name}) }
+		}
+
+	// TODO: implement check for msi
+	case p.managedPackage.MSI != nil:
+		enforcePackage.packageType = "msi"
+
+	case p.managedPackage.Yum != nil:
+		enforcePackage.name = p.managedPackage.Yum.PackageResource.GetName()
+		enforcePackage.packageType = "yum"
+		enforcePackage.installedCache = yumInstalled
+		switch p.managedPackage.GooGet.DesiredState {
+		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_INSTALLED:
+			enforcePackage.action, enforcePackage.actionFunc = installing, func() error { return packages.InstallYumPackages(ctx, []string{enforcePackage.name}) }
+		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_REMOVED:
+			enforcePackage.action, enforcePackage.actionFunc = removing, func() error { return packages.RemoveYumPackages(ctx, []string{enforcePackage.name}) }
+		}
+
+	case p.managedPackage.Zypper != nil:
+		enforcePackage.name = p.managedPackage.Zypper.PackageResource.GetName()
+		enforcePackage.packageType = "zypper"
+		enforcePackage.installedCache = zypperInstalled
+		switch p.managedPackage.GooGet.DesiredState {
+		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_INSTALLED:
+			enforcePackage.action, enforcePackage.actionFunc = installing, func() error { return packages.InstallZypperPackages(ctx, []string{enforcePackage.name}) }
+		case agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_REMOVED:
+			enforcePackage.action, enforcePackage.actionFunc = removing, func() error { return packages.RemoveZypperPackages(ctx, []string{enforcePackage.name}) }
+		}
+
+	// TODO: implement check for rpm
+	case p.managedPackage.RPM != nil:
+		enforcePackage.packageType = "rpm"
+		enforcePackage.installedCache = rpmInstalled
+	}
+
+	clog.Infof(ctx, "%s %s package %q", strings.Title(enforcePackage.action), enforcePackage.packageType, enforcePackage.name)
+	// Reset the cache as we are taking action.
+	enforcePackage.installedCache = nil
+	if err := enforcePackage.actionFunc(); err != nil {
+		return false, fmt.Errorf("error %s %s package %q", enforcePackage.action, enforcePackage.packageType, enforcePackage.name)
+	}
+
 	return true, nil
 }
