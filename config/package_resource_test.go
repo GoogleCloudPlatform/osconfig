@@ -19,6 +19,7 @@ import (
 	"os"
 	"os/exec"
 	"testing"
+	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
@@ -294,7 +295,7 @@ func TestPopulateInstalledCache(t *testing.T) {
 	}
 
 	want := map[string]struct{}{"foo": {}, "bar": {}}
-	if diff := cmp.Diff(gooInstalled, want); diff != "" {
+	if diff := cmp.Diff(gooInstalled.cache, want); diff != "" {
 		t.Errorf("OSPolicyResource does not match expectation: (-got +want)\n%s", diff)
 	}
 }
@@ -304,7 +305,7 @@ func TestPackageResourceCheckState(t *testing.T) {
 	var tests = []struct {
 		name               string
 		installedCache     map[string]struct{}
-		cachePointer       *map[string]struct{}
+		cachePointer       *packageCache
 		prpb               *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource
 		wantInDesiredState bool
 	}{
@@ -377,9 +378,14 @@ func TestPackageResourceCheckState(t *testing.T) {
 				t.Fatalf("Unexpected Validate error: %v", err)
 			}
 
-			*tt.cachePointer = tt.installedCache
+			tt.cachePointer.cache = tt.installedCache
+			tt.cachePointer.refreshed = time.Now()
 			if err := pr.CheckState(ctx); err != nil {
 				t.Fatalf("Unexpected error: %v", err)
+			}
+
+			if tt.wantInDesiredState != pr.InDesiredState() {
+				t.Fatalf("Unexpected InDesiredState, want: %t, got: %t", tt.wantInDesiredState, pr.InDesiredState())
 			}
 		})
 	}
