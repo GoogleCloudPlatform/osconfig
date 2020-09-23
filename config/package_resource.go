@@ -215,6 +215,7 @@ func populateInstalledCache(ctx context.Context, mp ManagedPackage) error {
 	for _, pkg := range pis {
 		cache.cache[pkg.Name] = struct{}{}
 	}
+	cache.refreshed = time.Now()
 
 	return nil
 }
