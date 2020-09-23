@@ -44,8 +44,8 @@ func (r *OSPolicyResource) ManagedResources() *ManagedResources {
 
 type resource interface {
 	validate() (*ManagedResources, error)
-	checkState() (bool, error)
-	enforceState() (bool, error)
+	checkState(context.Context) (bool, error)
+	enforceState(context.Context) (bool, error)
 }
 
 // ManagedResources are the resources that an OSPolicyResource manages.
@@ -84,7 +84,7 @@ func (r *OSPolicyResource) CheckState(ctx context.Context) error {
 		return errors.New("CheckState run before Validate")
 	}
 
-	inDesiredState, err := r.checkState()
+	inDesiredState, err := r.checkState(ctx)
 	r.inDesiredState = inDesiredState
 	return err
 }
@@ -96,7 +96,7 @@ func (r *OSPolicyResource) EnforceState(ctx context.Context) error {
 		return errors.New("EnforceState run before Validate")
 	}
 
-	inDesiredState, err := r.enforceState()
+	inDesiredState, err := r.enforceState(ctx)
 	r.inDesiredState = inDesiredState
 	return err
 }
