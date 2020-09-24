@@ -50,10 +50,14 @@ const (
 	// ReportURL is the guest attributes endpoint.
 	ReportURL = InstanceMetadata + "/guest-attributes"
 
-	googetRepoFilePath = "C:/ProgramData/GooGet/repos/google_osconfig_managed.repo"
-	zypperRepoFilePath = "/etc/zypp/repos.d/google_osconfig_managed.repo"
-	yumRepoFilePath    = "/etc/yum.repos.d/google_osconfig_managed.repo"
-	aptRepoFilePath    = "/etc/apt/sources.list.d/google_osconfig_managed.list"
+	googetRepoDir      = "C:/ProgramData/GooGet/repos"
+	googetRepoFilePath = googetRepoDir + "/google_osconfig_managed.repo"
+	zypperRepoDir      = "/etc/zypp/repos.d"
+	zypperRepoFilePath = zypperRepoDir + "/google_osconfig_managed.repo"
+	yumRepoDir         = "/etc/yum.repos.d"
+	yumRepoFilePath    = yumRepoDir + "/google_osconfig_managed.repo"
+	aptRepoDir         = "/etc/apt/sources.list.d"
+	aptRepoFilePath    = aptRepoDir + "/google_osconfig_managed.list"
 
 	prodEndpoint = "{zone}-osconfig.googleapis.com:443"
 
@@ -464,19 +468,39 @@ func SvcEndpoint() string {
 	return getAgentConfig().svcEndpoint
 }
 
+// ZypperRepoDir is the location of the zypper repo files.
+func ZypperRepoDir() string {
+	return zypperRepoDir
+}
+
 // ZypperRepoFilePath is the location where the zypper repo file will be created.
 func ZypperRepoFilePath() string {
 	return getAgentConfig().zypperRepoFilePath
 }
 
-// YumRepoFilePath is the location where the zypper repo file will be created.
+// YumRepoDir is the location of the yum repo files.
+func YumRepoDir() string {
+	return yumRepoDir
+}
+
+// YumRepoFilePath is the location where the yum repo file will be created.
 func YumRepoFilePath() string {
 	return getAgentConfig().yumRepoFilePath
 }
 
-// AptRepoFilePath is the location where the zypper repo file will be created.
+// AptRepoDir is the location of the apt repo files.
+func AptRepoDir() string {
+	return aptRepoDir
+}
+
+// AptRepoFilePath is the location where the apt repo file will be created.
 func AptRepoFilePath() string {
 	return getAgentConfig().aptRepoFilePath
+}
+
+// GooGetRepoDir is the location of the googet repo files.
+func GooGetRepoDir() string {
+	return googetRepoDir
 }
 
 // GooGetRepoFilePath is the location where the googet repo file will be created.

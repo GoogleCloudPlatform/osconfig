@@ -144,7 +144,7 @@ func (p *packageResouce) validate() (*ManagedResources, error) {
 		p.managedPackage.RPM = &RPMPackage{DesiredState: p.GetDesiredState(), PackageResource: pr}
 
 	default:
-		return nil, errors.New("SystemPackage field not set or references unknown package manager")
+		return nil, fmt.Errorf("SystemPackage field not set or references unknown package manager: %v", p.GetSystemPackage())
 	}
 
 	return &ManagedResources{Packages: []ManagedPackage{p.managedPackage}}, nil

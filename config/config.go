@@ -50,7 +50,8 @@ type resource interface {
 
 // ManagedResources are the resources that an OSPolicyResource manages.
 type ManagedResources struct {
-	Packages []ManagedPackage
+	Packages     []ManagedPackage
+	Repositories []ManagedRepository
 }
 
 // Validate validates this resource.
@@ -59,8 +60,9 @@ func (r *OSPolicyResource) Validate(ctx context.Context) error {
 	switch x := r.GetResourceType().(type) {
 	case *agentendpointpb.ApplyConfigTask_Config_Resource_Pkg:
 		r.resource = resource(&packageResouce{ApplyConfigTask_Config_Resource_PackageResource: x.Pkg})
+	case *agentendpointpb.ApplyConfigTask_Config_Resource_Repository:
+		r.resource = resource(&repositoryResource{ApplyConfigTask_Config_Resource_RepositoryResource: x.Repository})
 		/*
-			case *agentendpointpb.ApplyConfigTask_Config_Resource_Repository:
 			case *agentendpointpb.ApplyConfigTask_Config_Resource_Exec:
 			case *agentendpointpb.ApplyConfigTask_Config_Resource_File_:
 			case *agentendpointpb.ApplyConfigTask_Config_Resource_Archive:
