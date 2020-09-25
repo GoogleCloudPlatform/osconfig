@@ -260,7 +260,7 @@ func (r *repositoryResource) validate() (*ManagedResources, error) {
 		filePath = filepath.Join(agentconfig.YumRepoDir(), "osconfig_managed_%s.repo")
 
 	case *agentendpointpb.ApplyConfigTask_Config_Resource_RepositoryResource_Zypper:
-		if !packages.YumExists {
+		if !packages.ZypperExists {
 			return nil, errors.New("cannot manage yum repository because yum does not exist on the system")
 		}
 		r.managedRepository.Zypper = &ZypperRepository{RepositoryResource: r.GetZypper()}
@@ -292,11 +292,11 @@ func (r *repositoryResource) checkState(ctx context.Context) (inDesiredState boo
 	// Check APT gpg key if applicable.
 	if r.managedRepository.Apt != nil && r.managedRepository.Apt.GpgFileContents != nil {
 		match, err := contentsMatch(r.managedRepository.Apt.GpgFilePath, r.managedRepository.Apt.GpgChecksum)
-		if !match {
-			return false, nil
-		}
 		if err != nil {
 			return false, err
+		}
+		if !match {
+			return false, nil
 		}
 	}
 
