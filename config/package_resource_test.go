@@ -30,16 +30,6 @@ import (
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
-func init() {
-	packages.YumExists = true
-	packages.AptExists = true
-	packages.GooGetExists = true
-	packages.DpkgExists = true
-	packages.RPMExists = true
-	packages.ZypperExists = true
-	packages.MSIExecExists = true
-}
-
 var (
 	aptInstalledPR = &agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource{
 		DesiredState: agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_INSTALLED,
@@ -270,10 +260,10 @@ func TestPackageResourceValidate(t *testing.T) {
 				wantMR = nil
 			}
 
-			if diff := cmp.Diff(wantMR, pr.ManagedResources(), protocmp.Transform()); diff != "" {
+			if diff := cmp.Diff(pr.ManagedResources(), wantMR, protocmp.Transform()); diff != "" {
 				t.Errorf("OSPolicyResource does not match expectation: (-got +want)\n%s", diff)
 			}
-			if diff := cmp.Diff(tt.wantMP, pr.resource.(*packageResouce).managedPackage, protocmp.Transform()); diff != "" {
+			if diff := cmp.Diff(pr.resource.(*packageResouce).managedPackage, tt.wantMP, protocmp.Transform()); diff != "" {
 				t.Errorf("packageResouce does not match expectation: (-got +want)\n%s", diff)
 			}
 		})
