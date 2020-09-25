@@ -1,6 +1,7 @@
 {
   "name": "google-osconfig-agent",
-  "version": "{{.version}}.0@1",
+  {{$package_version := printf "%s.0+win@1" .version -}}
+  "version": "{{$package_version}}",
   "arch": "x86_64",
   "authors": "Google Inc.",
   "license": "http://www.apache.org/licenses/LICENSE-2.0",
@@ -11,15 +12,6 @@
     "THIRD_PARTY_LICENSES": "<ProgramFiles>/Google/OSConfig/THIRD_PARTY_LICENSES/",
     "LICENSE": "<ProgramFiles>/Google/OSConfig/LICENSE.txt"
   },
-  "releaseNotes": [
-    "1.1.0 -  Move Patch (ALPHA) to using the v1alpha1 api",
-    "1.0.0 - Beta release of inventory functionality",
-    "0.6.1 - Add agent restart on upgrade",
-    "0.6.0 - Rework ospatch, fix a number of bugs",
-    "0.5.0 - Add ospatch functionality",
-    "0.4.2 - Add version info to binary",
-    "0.3.0 - Merge inventory agent funtionality"
-  ],
   "install": {
     "path": "packaging/googet/install.ps1"
   },
@@ -37,6 +29,6 @@
   }],
   "build": {
     "linux": "/bin/bash",
-    "linuxArgs": ["-c", "GOOS=windows $GO build -ldflags='-s -w -X main.version={{.version}}' -mod=readonly -o google_osconfig_agent.exe"]
+    "linuxArgs": ["-c", "GOOS=windows $GO build -ldflags='-s -w -X main.version={{$package_version}}' -mod=readonly -o google_osconfig_agent.exe"]
   }
 }
