@@ -84,7 +84,7 @@ func (c *Client) report(ctx context.Context, state *inventory.InstanceInventory)
 
 func formatInventory(ctx context.Context, state *inventory.InstanceInventory) *agentendpointpb.Inventory {
 	osInfo := &agentendpointpb.Inventory_OsInfo{
-		HostName:             state.Hostname,
+		Hostname:             state.Hostname,
 		LongName:             state.LongName,
 		ShortName:            state.ShortName,
 		Version:              state.Version,
@@ -183,7 +183,7 @@ func formatPackages(ctx context.Context, packages packages.Packages, shortName s
 func formatAptPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_AptPackage {
 	return &agentendpointpb.Inventory_SoftwarePackage_AptPackage{
 		AptPackage: &agentendpointpb.Inventory_VersionedPackage{
-			Name:         pkg.Name,
+			PackageName:  pkg.Name,
 			Architecture: pkg.Arch,
 			Version:      pkg.Version,
 		}}
@@ -192,7 +192,7 @@ func formatAptPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwareP
 func formatGooGetPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_GoogetPackage {
 	return &agentendpointpb.Inventory_SoftwarePackage_GoogetPackage{
 		GoogetPackage: &agentendpointpb.Inventory_VersionedPackage{
-			Name:         pkg.Name,
+			PackageName:  pkg.Name,
 			Architecture: pkg.Arch,
 			Version:      pkg.Version,
 		}}
@@ -201,7 +201,7 @@ func formatGooGetPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_Softwa
 func formatYumPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_YumPackage {
 	return &agentendpointpb.Inventory_SoftwarePackage_YumPackage{
 		YumPackage: &agentendpointpb.Inventory_VersionedPackage{
-			Name:         pkg.Name,
+			PackageName:  pkg.Name,
 			Architecture: pkg.Arch,
 			Version:      pkg.Version}}
 }
@@ -209,7 +209,7 @@ func formatYumPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwareP
 func formatZypperPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_ZypperPackage {
 	return &agentendpointpb.Inventory_SoftwarePackage_ZypperPackage{
 		ZypperPackage: &agentendpointpb.Inventory_VersionedPackage{
-			Name:         pkg.Name,
+			PackageName:  pkg.Name,
 			Architecture: pkg.Arch,
 			Version:      pkg.Version}}
 }
@@ -217,10 +217,10 @@ func formatZypperPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_Softwa
 func formatZypperPatch(pkg packages.ZypperPatch) *agentendpointpb.Inventory_SoftwarePackage_ZypperPatch {
 	return &agentendpointpb.Inventory_SoftwarePackage_ZypperPatch{
 		ZypperPatch: &agentendpointpb.Inventory_ZypperPatch{
-			Name:     pkg.Name,
-			Category: pkg.Category,
-			Severity: pkg.Severity,
-			Summary:  pkg.Summary,
+			PatchName: pkg.Name,
+			Category:  pkg.Category,
+			Severity:  pkg.Severity,
+			Summary:   pkg.Summary,
 		}}
 }
 
@@ -239,7 +239,8 @@ func formatWUAPackage(pkg packages.WUAPackage) *agentendpointpb.Inventory_Softwa
 			Description:              pkg.Description,
 			Categories:               categories,
 			KbArticleIds:             pkg.KBArticleIDs,
-			SupportUrls:              pkg.MoreInfoURLs,
+			SupportUrl:               pkg.SupportURL,
+			MoreInfoUrls:             pkg.MoreInfoURLs,
 			UpdateId:                 pkg.UpdateID,
 			RevisionNumber:           pkg.RevisionNumber,
 			LastDeploymentChangeTime: timestamppb.New(pkg.LastDeploymentChangeTime),
@@ -257,6 +258,6 @@ func formatQFEPackage(ctx context.Context, pkg packages.QFEPackage) *agentendpoi
 			Caption:     pkg.Caption,
 			Description: pkg.Description,
 			HotFixId:    pkg.HotFixID,
-			InstalledOn: timestamppb.New(installedTime),
+			InstallTime: timestamppb.New(installedTime),
 		}}
 }

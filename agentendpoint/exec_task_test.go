@@ -52,10 +52,6 @@ func (*agentEndpointServiceExecTestServer) RegisterAgent(ctx context.Context, re
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterAgent not implemented")
 }
 
-func (*agentEndpointServiceExecTestServer) LookupEffectiveGuestPolicies(ctx context.Context, req *agentendpointpb.LookupEffectiveGuestPoliciesRequest) (*agentendpointpb.LookupEffectiveGuestPoliciesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method LookupEffectiveGuestPolicies not implemented")
-}
-
 func (*agentEndpointServiceExecTestServer) ReportInventory(ctx context.Context, req *agentendpointpb.ReportInventoryRequest) (*agentendpointpb.ReportInventoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReportInventory not implemented")
 }
