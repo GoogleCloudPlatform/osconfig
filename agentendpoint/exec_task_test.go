@@ -52,6 +52,10 @@ func (*agentEndpointServiceExecTestServer) RegisterAgent(ctx context.Context, re
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterAgent not implemented")
 }
 
+func (*agentEndpointServiceExecTestServer) ReportInventory(ctx context.Context, req *agentendpointpb.ReportInventoryRequest) (*agentendpointpb.ReportInventoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReportInventory not implemented")
+}
+
 func outputGen(id string, msg string, st agentendpointpb.ExecStepTaskOutput_State, exitCode int32) *agentendpointpb.ReportTaskCompleteRequest {
 	if msg != "" {
 		msg = "Error running exec task: " + msg

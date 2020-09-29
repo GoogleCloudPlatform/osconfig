@@ -125,6 +125,7 @@ func (e *execTask) reportCompletedState(ctx context.Context, errMsg string, outp
 }
 
 func (e *execTask) run(ctx context.Context) error {
+	clog.Infof(ctx, "Beginning exec task")
 	e.StartedAt = time.Now()
 	req := &agentendpointpb.ReportTaskProgressRequest{
 		TaskId:   e.TaskID,

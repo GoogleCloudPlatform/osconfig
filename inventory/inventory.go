@@ -18,21 +18,12 @@ package inventory
 
 import (
 	"context"
-	"fmt"
-	"reflect"
-	"strings"
 	"time"
 
-	"github.com/GoogleCloudPlatform/osconfig/attributes"
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
-	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
-	"github.com/GoogleCloudPlatform/osconfig/tasker"
-)
-
-const (
-	inventoryURL = config.ReportURL + "/guestInventory"
 )
 
 // InstanceInventory is an instances inventory data.
@@ -48,29 +39,6 @@ type InstanceInventory struct {
 	InstalledPackages    packages.Packages
 	PackageUpdates       packages.Packages
 	LastUpdated          string
-}
-
-func write(ctx context.Context, state *InstanceInventory, url string) {
-	clog.Debugf(ctx, "Writing instance inventory.")
-
-	e := reflect.ValueOf(state).Elem()
-	t := e.Type()
-	for i := 0; i < e.NumField(); i++ {
-		f := e.Field(i)
-		u := fmt.Sprintf("%s/%s", url, t.Field(i).Name)
-		switch f.Kind() {
-		case reflect.String:
-			clog.Debugf(ctx, "postAttribute %s: %+v", u, f)
-			if err := attributes.PostAttribute(u, strings.NewReader(f.String())); err != nil {
-				clog.Errorf(ctx, "postAttribute error: %v", err)
-			}
-		case reflect.Struct:
-			clog.Debugf(ctx, "postAttributeCompressed %s: %+v", u, f)
-			if err := attributes.PostAttributeCompressed(u, f.Interface()); err != nil {
-				clog.Errorf(ctx, "postAttributeCompressed error: %v", err)
-			}
-		}
-	}
 }
 
 // Get generates inventory data.
@@ -101,16 +69,11 @@ func Get(ctx context.Context) *InstanceInventory {
 	hs.KernelVersion = oi.KernelVersion
 	hs.KernelRelease = oi.KernelRelease
 	hs.Architecture = oi.Architecture
-	hs.OSConfigAgentVersion = config.Version()
+	hs.OSConfigAgentVersion = agentconfig.Version()
 	hs.InstalledPackages = installedPackages
 	hs.PackageUpdates = packageUpdates
 
 	hs.LastUpdated = time.Now().UTC().Format(time.RFC3339)
 
 	return hs
-}
-
-// Run gathers and records inventory information using tasker.Enqueue.
-func Run(ctx context.Context) {
-	tasker.Enqueue(ctx, "Run OSInventory", func() { write(ctx, Get(ctx), inventoryURL) })
 }
