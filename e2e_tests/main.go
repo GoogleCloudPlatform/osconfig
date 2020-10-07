@@ -33,6 +33,7 @@ import (
 	gcpclients "github.com/GoogleCloudPlatform/osconfig/e2e_tests/gcp_clients"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/test_suites/guestpolicies"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/test_suites/inventory"
+	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/test_suites/inventoryreporting"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/test_suites/patch"
 
 	_ "google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -41,6 +42,7 @@ import (
 var testFunctions = []func(context.Context, *sync.WaitGroup, chan *junitxml.TestSuite, *log.Logger, *regexp.Regexp, *regexp.Regexp){
 	guestpolicies.TestSuite,
 	inventory.TestSuite,
+	inventoryreporting.TestSuite,
 	patch.TestSuite,
 }
 
