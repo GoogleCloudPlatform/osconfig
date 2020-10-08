@@ -127,7 +127,7 @@ func GetInstalledPackages(ctx context.Context) (Packages, error) {
 			pkgs.Deb = deb
 		}
 	}
-	if COSPackageInfoExists() {
+	if COSPkgInfoExists {
 		cos, err := InstalledCOSPackages()
 		if err != nil {
 			msg := fmt.Sprintf("error listing installed COS packages: %v", err)

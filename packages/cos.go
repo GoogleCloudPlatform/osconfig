@@ -16,15 +16,15 @@ package packages
 
 import (
 	"fmt"
+	"runtime"
 	"strconv"
 
 	"cos.googlesource.com/cos/tools.git/src/pkg/cos"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 )
 
-// COSPackageInfoExists returns whether COS package information exists.
-func COSPackageInfoExists() bool {
-	return cos.PackageInfoExists()
+func init() {
+	COSPkgInfoExists = runtime.GOOS != "windows" && cos.PackageInfoExists()
 }
 
 var readMachineArch = func() (string, error) {
