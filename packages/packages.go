@@ -42,6 +42,8 @@ var (
 	RPMExists bool
 	// RPMQueryExists indicates whether rpmquery is installed.
 	RPMQueryExists bool
+	// COSPkgInfoExists indicates whether COS package information is available.
+	COSPkgInfoExists bool
 	// GemExists indicates whether gem is installed.
 	GemExists bool
 	// PipExists indicates whether pip is installed.
@@ -64,6 +66,7 @@ type Packages struct {
 	Deb           []PkgInfo     `json:"deb,omitempty"`
 	Zypper        []PkgInfo     `json:"zypper,omitempty"`
 	ZypperPatches []ZypperPatch `json:"zypperPatches,omitempty"`
+	COS           []PkgInfo     `json:"cos,omitempty"`
 	Gem           []PkgInfo     `json:"gem,omitempty"`
 	Pip           []PkgInfo     `json:"pip,omitempty"`
 	GooGet        []PkgInfo     `json:"googet,omitempty"`
