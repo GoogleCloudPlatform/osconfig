@@ -16,7 +16,6 @@ package packages
 
 import (
 	"fmt"
-	"runtime"
 	"strconv"
 
 	"cos.googlesource.com/cos/tools.git/src/pkg/cos"
@@ -24,7 +23,7 @@ import (
 )
 
 func init() {
-	COSPkgInfoExists = runtime.GOOS != "windows" && cos.PackageInfoExists()
+	COSPkgInfoExists = cos.PackageInfoExists()
 }
 
 var readMachineArch = func() (string, error) {
