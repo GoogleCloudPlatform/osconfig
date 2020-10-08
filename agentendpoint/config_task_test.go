@@ -33,6 +33,10 @@ func (r *testResource) InDesiredState() bool {
 	return false
 }
 
+func (r *testResource) Cleanup(ctx context.Context) error {
+	return nil
+}
+
 func (r *testResource) Validate(ctx context.Context) error {
 	return nil
 }
