@@ -15,13 +15,36 @@ package packages
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
+
+// In order to work around memmory issues with the WUA library we spawn a
+// new process for these inventory queries.
+func wuaUpdates(ctx context.Context, query string) ([]WUAPackage, error) {
+	exe, err := os.Executable()
+	if err != nil {
+		return nil, err
+	}
+
+	var wua []WUAPackage
+	stdout, stderr, err := runner.Run(ctx, exec.Command(exe, "wuaupdates", query))
+	if err != nil {
+		return nil, fmt.Errorf("error running agent to query for WUA updates, err: %v, stderr: %q ", err, stderr)
+	}
+	if err := json.Unmarshal(stdout, &wua); err != nil {
+		return nil, err
+	}
+
+	return wua, nil
+}
 
 // GetPackageUpdates gets available package updates GooGet as well as any
 // available updates from Windows Update Agent.
@@ -38,9 +61,10 @@ func GetPackageUpdates(ctx context.Context) (Packages, error) {
 			pkgs.GooGet = googet
 		}
 	}
+
 	clog.Debugf(ctx, "Searching for available WUA updates.")
-	if wua, err := WUAUpdates("IsInstalled=0"); err != nil {
-		msg := fmt.Sprintf("error listing available Windows updates: %v", err)
+	if wua, err := wuaUpdates(ctx, "IsInstalled=0"); err != nil {
+		msg := fmt.Sprintf("error listing installed Windows updates: %v", err)
 		clog.Debugf(ctx, "Error: %s", msg)
 		errs = append(errs, msg)
 	} else {
@@ -71,7 +95,7 @@ func GetInstalledPackages(ctx context.Context) (Packages, error) {
 	}
 
 	clog.Debugf(ctx, "Searching for installed WUA updates.")
-	if wua, err := WUAUpdates("IsInstalled=1"); err != nil {
+	if wua, err := wuaUpdates(ctx, "IsInstalled=1"); err != nil {
 		msg := fmt.Sprintf("error listing installed Windows updates: %v", err)
 		clog.Debugf(ctx, "Error: %s", msg)
 		errs = append(errs, msg)
