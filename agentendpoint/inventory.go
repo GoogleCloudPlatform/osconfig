@@ -13,6 +13,7 @@ import (
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -62,15 +63,16 @@ func (c *Client) report(ctx context.Context, state *inventory.InstanceInventory)
 	reportFull := false
 	retries := 0
 	for {
-		res, err := c.reportInventory(ctx, inventory, reportFull)
+		resp, err := c.reportInventory(ctx, inventory, reportFull)
 		if err != nil {
 			clog.Errorf(ctx, "Error reporting inventory: %v", err)
-		}
-
-		if !res.GetReportFullInventory() {
-			break
 		} else {
-			reportFull = true
+			clog.Debugf(ctx, "ReportInventory response: \n%s", util.PrettyFmt(resp))
+			if !resp.GetReportFullInventory() {
+				break
+			} else {
+				reportFull = true
+			}
 		}
 
 		retries++
