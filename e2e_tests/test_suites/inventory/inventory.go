@@ -272,10 +272,10 @@ func inventoryTestCase(ctx context.Context, testSetup *inventoryTestSetup, tests
 		return
 	}
 
-	logger.Printf("Running TestCase '%s.%q'", gatherInventoryTest.Classname, gatherInventoryTest.Name)
+	logger.Printf("Running TestCase %q", gatherInventoryTest.Name)
 	ga, ok := runGatherInventoryTest(ctx, testSetup, gatherInventoryTest, &logwg)
 	gatherInventoryTest.Finish(tests)
-	logger.Printf("TestCase '%s.%q' finished", gatherInventoryTest.Classname, gatherInventoryTest.Name)
+	logger.Printf("TestCase %q finished", gatherInventoryTest.Name)
 	if !ok {
 		hostnameTest.WriteFailure("Setup Failure")
 		hostnameTest.Finish(tests)
@@ -298,10 +298,10 @@ func inventoryTestCase(ctx context.Context, testSetup *inventoryTestSetup, tests
 		} else if tc.FilterTestCase(regex) {
 			tc.Finish(tests)
 		} else {
-			logger.Printf("Running TestCase '%q'", tc.Name)
+			logger.Printf("Running TestCase %q", tc.Name)
 			f(ga, testSetup, tc)
 			tc.Finish(tests)
-			logger.Printf("TestCase '%q' finished in %fs", tc.Name, tc.Time)
+			logger.Printf("TestCase %q finished in %fs", tc.Name, tc.Time)
 		}
 	}
 	logwg.Wait()

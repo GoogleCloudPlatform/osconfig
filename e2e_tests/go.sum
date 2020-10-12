@@ -65,15 +65,11 @@ github.com/GoogleCloudPlatform/compute-image-tools/daisy v0.0.0-20200114232830-6
 github.com/GoogleCloudPlatform/compute-image-tools/daisy v0.0.0-20200214212030-cdab85f8f241/go.mod h1:6xFWwnAALibczYyaAbXDaQSRIyqZ+A/uzJeGcr3kvcQ=
 github.com/GoogleCloudPlatform/compute-image-tools/daisy v0.0.0-20200406182414-bf9021434372/go.mod h1:OMlTSl6FloIMDs+kZxW4B5fVlj4RudzYDvKEQ+sH15U=
 github.com/GoogleCloudPlatform/compute-image-tools/daisy v0.0.0-20200721213208-00ba2b996712/go.mod h1:OMlTSl6FloIMDs+kZxW4B5fVlj4RudzYDvKEQ+sH15U=
-github.com/GoogleCloudPlatform/compute-image-tools/daisy v0.0.0-20200723151410-725b43e42fe7 h1:p7Amym84L7kpxIJbxvpIObiCIQaS/JU6osl17T3O650=
-github.com/GoogleCloudPlatform/compute-image-tools/daisy v0.0.0-20200723151410-725b43e42fe7/go.mod h1:OMlTSl6FloIMDs+kZxW4B5fVlj4RudzYDvKEQ+sH15U=
 github.com/GoogleCloudPlatform/compute-image-tools/daisy v0.0.0-20200805192452-5b81051e3e71/go.mod h1:OMlTSl6FloIMDs+kZxW4B5fVlj4RudzYDvKEQ+sH15U=
 github.com/GoogleCloudPlatform/compute-image-tools/daisy v0.0.0-20200806162442-cbe93c2f2b04 h1:bREkuvb9ZJYMestC3GMfPGvYSDpPU52jf/234EqnX6A=
 github.com/GoogleCloudPlatform/compute-image-tools/daisy v0.0.0-20200806162442-cbe93c2f2b04/go.mod h1:OMlTSl6FloIMDs+kZxW4B5fVlj4RudzYDvKEQ+sH15U=
 github.com/GoogleCloudPlatform/compute-image-tools/go/e2e_test_utils v0.0.0-20200114232830-6d2d59acb179/go.mod h1:2hxlZPfWalIdOXnzbPATwW+Rs7FMMNWD5QnHDE49QZA=
 github.com/GoogleCloudPlatform/compute-image-tools/go/e2e_test_utils v0.0.0-20200128181915-c0775e429077/go.mod h1:2hxlZPfWalIdOXnzbPATwW+Rs7FMMNWD5QnHDE49QZA=
-github.com/GoogleCloudPlatform/compute-image-tools/go/e2e_test_utils v0.0.0-20200723151410-725b43e42fe7 h1:blSsMaIlRTW28RgXBwY39PVP+ku071KtvNwg1npfU9Q=
-github.com/GoogleCloudPlatform/compute-image-tools/go/e2e_test_utils v0.0.0-20200723151410-725b43e42fe7/go.mod h1:2hxlZPfWalIdOXnzbPATwW+Rs7FMMNWD5QnHDE49QZA=
 github.com/GoogleCloudPlatform/compute-image-tools/go/e2e_test_utils v0.0.0-20200806162442-cbe93c2f2b04 h1:yLzl1dXe8RaxfD1DsYaMVEH2MTCK4xx2CzVsh8Nn/pM=
 github.com/GoogleCloudPlatform/compute-image-tools/go/e2e_test_utils v0.0.0-20200806162442-cbe93c2f2b04/go.mod h1:93wnO6RFVF68ebG+Lfz/o4ial0dnufRnFznlvp8KUdM=
 github.com/GoogleCloudPlatform/compute-image-tools/mocks v0.0.0-20200206014411-426b6301f679/go.mod h1:zDumkSJOQQ31fB0OWcg5h5zlVhU92LvYNXkpGQh2jz8=
@@ -85,8 +81,6 @@ github.com/GoogleCloudPlatform/osconfig v0.0.0-20200113163233-44035fcbfdd9/go.mo
 github.com/GoogleCloudPlatform/osconfig v0.0.0-20200115000133-a7c6fc334759/go.mod h1:nljBbLz4lHbiK1P6TwNhW0tanjfrRMYgtvLnLTIxygk=
 github.com/GoogleCloudPlatform/osconfig v0.0.0-20200211005319-080372593330/go.mod h1:nT1RIv+FL9qTdvhWYUd85m6Vpcy2fi7ZpLwS6Yuflb0=
 github.com/GoogleCloudPlatform/osconfig v0.0.0-20200721210327-c9ab1b6aeb02/go.mod h1:nfw/IdEPsQueLEhAFL9anXqtORP0hQoCF0P1sd+X398=
-github.com/GoogleCloudPlatform/osconfig v0.0.0-20200722232728-c3c97bc79cc2 h1:JItMdOwmNT8U18WqkKJfdDOIdjVws+J6xuEGiPrfDME=
-github.com/GoogleCloudPlatform/osconfig v0.0.0-20200722232728-c3c97bc79cc2/go.mod h1:ydaYKK5Rf5EzdjmlxUe8m7/kcvP9LO65N9w0YGAgJv8=
 github.com/GoogleCloudPlatform/osconfig v0.0.0-20200805223003-f44a6489e0f4 h1:BrwCk13QXvcAFJns0/FQkeQQ65Ed3SVWxSIr1o2+YFs=
 github.com/GoogleCloudPlatform/osconfig v0.0.0-20200805223003-f44a6489e0f4/go.mod h1:sgtF91LRn9rYWV9OTLSW7ZSAxXctyKWx7tNTNKk4+hA=
 github.com/GoogleCloudPlatform/osconfig/e2e_tests v0.0.0-20200128231920-2ddeb2407498/go.mod h1:YHx1ltdJOZNKtDNUBBIwzyiq4Kh4EwQWm1NOcMEU/OA=
@@ -369,8 +363,6 @@ golang.org/x/sys v0.0.0-20200722175500-76b94024e4b6/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20200803210538-64077c9b5642/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200805065543-0cf7623e9dbd h1:wefLe/3g5tC0FcXw3NneLA5tHgbyouyZlfcSjNfOdgk=
 golang.org/x/sys v0.0.0-20200805065543-0cf7623e9dbd/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-golang.org/x/sys v0.0.0-20200806125547-5acd03effb82 h1:6cBnXxYO+CiRVrChvCosSv7magqTPbyAgz1M8iOv5wM=
-golang.org/x/sys v0.0.0-20200806125547-5acd03effb82/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/text v0.0.0-20170915032832-14c0d48ead0c/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
@@ -525,8 +517,6 @@ google.golang.org/genproto v0.0.0-20200729003335-053ba62fc06f/go.mod h1:FWY/as6D
 google.golang.org/genproto v0.0.0-20200804131852-c06518451d9c/go.mod h1:FWY/as6DDZQgahTzZj3fqbO1CbirC29ZNUFHwi0/+no=
 google.golang.org/genproto v0.0.0-20200804151602-45615f50871c h1:TQlznJ1HicL4W+4znnmEEyr2A6ncsbY9Il37TcoDWYY=
 google.golang.org/genproto v0.0.0-20200804151602-45615f50871c/go.mod h1:FWY/as6DDZQgahTzZj3fqbO1CbirC29ZNUFHwi0/+no=
-google.golang.org/genproto v0.0.0-20200806141610-86f49bd18e98 h1:LCO0fg4kb6WwkXQXRQQgUYsFeFb5taTX5WAx5O/Vt28=
-google.golang.org/genproto v0.0.0-20200806141610-86f49bd18e98/go.mod h1:FWY/as6DDZQgahTzZj3fqbO1CbirC29ZNUFHwi0/+no=
 google.golang.org/grpc v1.19.0/go.mod h1:mqu4LbDTu4XGKhr4mRzUsmM4RtVoemTSY81AxZiDr8c=
 google.golang.org/grpc v1.20.1/go.mod h1:10oTOabMzJvdu6/UiuZezV6QK5dSlG84ov/aaiqXj38=
 google.golang.org/grpc v1.21.1/go.mod h1:oYelfM1adQP15Ek0mdvEgi9Df8B9CZIaU1084ijfRaM=

@@ -21,6 +21,8 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"regexp"
+	"strings"
 	"time"
 
 	daisyCompute "github.com/GoogleCloudPlatform/compute-image-tools/daisy/compute"
@@ -100,6 +102,71 @@ func (i *Instance) AddMetadata(mdi ...*computeApi.MetadataItems) error {
 	}
 	resp.Metadata.Items = mdi
 	return i.client.SetInstanceMetadata(i.Project, i.Zone, i.Name, resp.Metadata)
+}
+
+// WaitForSerialOutput waits for all positive regex matches and reports error for any negative regex match on a serial port.
+func (i *Instance) WaitForSerialOutput(positiveRegexes []*regexp.Regexp, negativeRegexes []*regexp.Regexp, port int64, interval, timeout time.Duration) error {
+	var start int64
+	var errs int
+	matches := make([]bool, len(positiveRegexes))
+	tick := time.Tick(interval)
+	timedout := time.Tick(timeout)
+	for {
+		select {
+		case <-timedout:
+			var patterns []string
+			for _, regex := range positiveRegexes {
+				patterns = append(patterns, regex.String())
+			}
+			return fmt.Errorf("timed out waiting for regexes [%s]", strings.Join(patterns, ","))
+		case <-tick:
+			resp, err := i.client.GetSerialPortOutput(i.Project, i.Zone, i.Name, port, start)
+			if err != nil {
+				status, sErr := i.client.InstanceStatus(i.Project, i.Zone, i.Name)
+				if sErr != nil {
+					err = fmt.Errorf("%v, error getting InstanceStatus: %v", err, sErr)
+				} else {
+					err = fmt.Errorf("%v, InstanceStatus: %q", err, status)
+				}
+
+				// Wait until machine restarts to evaluate SerialOutput.
+				if isTerminal(status) {
+					continue
+				}
+
+				// Retry up to 3 times in a row on any error if we successfully got InstanceStatus.
+				if errs < 3 {
+					errs++
+					continue
+				}
+
+				return err
+			}
+			start = resp.Next
+			for _, ln := range strings.Split(resp.Contents, "\n") {
+				for _, regex := range negativeRegexes {
+					if regex.MatchString(ln) {
+						return fmt.Errorf("matched negative regexes [%s]", regex)
+					}
+				}
+				for i, regex := range positiveRegexes {
+					if regex.MatchString(ln) {
+						matches[i] = true
+					}
+				}
+				matched := 0
+				for _, match := range matches {
+					if match {
+						matched++
+					}
+				}
+				if matched == len(positiveRegexes) {
+					return nil
+				}
+			}
+			errs = 0
+		}
+	}
 }
 
 // RecordSerialOutput stores the serial output of an instance to GCS bucket
