@@ -43,15 +43,17 @@ func (r *OSPolicyResource) ManagedResources() *ManagedResources {
 }
 
 type resource interface {
-	validate() (*ManagedResources, error)
+	validate(context.Context) (*ManagedResources, error)
 	checkState(context.Context) (bool, error)
 	enforceState(context.Context) (bool, error)
+	cleanup(context.Context) error
 }
 
 // ManagedResources are the resources that an OSPolicyResource manages.
 type ManagedResources struct {
 	Packages     []ManagedPackage
 	Repositories []ManagedRepository
+	Files        []ManagedFile
 }
 
 // Validate validates this resource.
@@ -62,9 +64,10 @@ func (r *OSPolicyResource) Validate(ctx context.Context) error {
 		r.resource = resource(&packageResouce{ApplyConfigTask_Config_Resource_PackageResource: x.Pkg})
 	case *agentendpointpb.ApplyConfigTask_Config_Resource_Repository:
 		r.resource = resource(&repositoryResource{ApplyConfigTask_Config_Resource_RepositoryResource: x.Repository})
+	case *agentendpointpb.ApplyConfigTask_Config_Resource_File_:
+		r.resource = resource(&fileResource{ApplyConfigTask_Config_Resource_FileResource: x.File})
 		/*
 			case *agentendpointpb.ApplyConfigTask_Config_Resource_Exec:
-			case *agentendpointpb.ApplyConfigTask_Config_Resource_File_:
 			case *agentendpointpb.ApplyConfigTask_Config_Resource_Archive:
 			case *agentendpointpb.ApplyConfigTask_Config_Resource_Srvc:
 		*/
@@ -75,7 +78,7 @@ func (r *OSPolicyResource) Validate(ctx context.Context) error {
 	}
 
 	var err error
-	r.managedResources, err = r.validate()
+	r.managedResources, err = r.validate(ctx)
 	return err
 }
 
@@ -101,4 +104,12 @@ func (r *OSPolicyResource) EnforceState(ctx context.Context) error {
 	inDesiredState, err := r.enforceState(ctx)
 	r.inDesiredState = inDesiredState
 	return err
+}
+
+// Cleanup cleans up any temporary files that this resource may have created.
+func (r *OSPolicyResource) Cleanup(ctx context.Context) error {
+	if r.resource == nil {
+		return errors.New("Cleanup run before Validate")
+	}
+	return r.cleanup(ctx)
 }

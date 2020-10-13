@@ -69,6 +69,7 @@ type resourceIface interface {
 	Validate(context.Context) error
 	CheckState(context.Context) error
 	EnforceState(context.Context) error
+	Cleanup(context.Context) error
 	InDesiredState() bool
 	ManagedResources() *config.ManagedResources
 }
@@ -450,9 +451,28 @@ func (c *configTask) generateBaseResults() {
 	}
 }
 
+func (c *configTask) cleanup(ctx context.Context) {
+	for _, a := range c.Task.GetConfig().GetConfigAssignments() {
+		ctx = clog.WithLabels(ctx, map[string]string{"config_assignment": a.GetConfigAssignment()})
+		assgnmnt := c.assignments[a.GetConfigAssignment()]
+		for _, osPolicy := range a.GetPolicies() {
+			ctx = clog.WithLabels(ctx, map[string]string{"policy_id": osPolicy.GetId()})
+			plcy := assgnmnt.policies[osPolicy.GetId()]
+			for _, configResource := range osPolicy.GetResources() {
+				ctx = clog.WithLabels(ctx, map[string]string{"resource_id": configResource.GetId()})
+				res := plcy.resources[configResource.GetId()]
+				if err := res.Cleanup(ctx); err != nil {
+					clog.Warningf(ctx, "Error running resource cleanup:%v", err)
+				}
+			}
+		}
+	}
+}
+
 func (c *configTask) run(ctx context.Context) error {
 	clog.Infof(ctx, "Beginning apply config task.")
 	c.StartedAt = time.Now()
+
 	rcsErrMsg := "Error reporting continuing state"
 	if err := c.reportContinuingState(ctx, agentendpointpb.ApplyConfigTaskProgress_STARTED); err != nil {
 		return c.handleErrorState(ctx, rcsErrMsg, err)
@@ -471,6 +491,7 @@ func (c *configTask) run(ctx context.Context) error {
 		return c.handleErrorState(ctx, rcsErrMsg, err)
 	}
 	c.validation(ctx)
+	defer c.cleanup(ctx)
 
 	if err := c.reportContinuingState(ctx, agentendpointpb.ApplyConfigTaskProgress_APPLYING_CONFIG); err != nil {
 		return c.handleErrorState(ctx, rcsErrMsg, err)

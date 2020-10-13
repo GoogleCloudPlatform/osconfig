@@ -17,8 +17,6 @@ package config
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -76,12 +74,6 @@ type ManagedRepository struct {
 	RepoFilePath     string
 	RepoFileContents []byte
 	RepoChecksum     string
-}
-
-func checksum(r io.Reader) string {
-	hash := sha256.New()
-	io.Copy(hash, r)
-	return hex.EncodeToString(hash.Sum(nil))
 }
 
 func aptRepoContents(repo *agentendpointpb.ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository) []byte {
@@ -221,7 +213,7 @@ func fetchGPGKey(key string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (r *repositoryResource) validate() (*ManagedResources, error) {
+func (r *repositoryResource) validate(ctx context.Context) (*ManagedResources, error) {
 	var filePath string
 	switch r.GetRepository().(type) {
 	case *agentendpointpb.ApplyConfigTask_Config_Resource_RepositoryResource_Apt:
@@ -261,7 +253,7 @@ func (r *repositoryResource) validate() (*ManagedResources, error) {
 
 	case *agentendpointpb.ApplyConfigTask_Config_Resource_RepositoryResource_Zypper:
 		if !packages.ZypperExists {
-			return nil, errors.New("cannot manage yum repository because yum does not exist on the system")
+			return nil, errors.New("cannot manage zypper repository because zypper does not exist on the system")
 		}
 		r.managedRepository.Zypper = &ZypperRepository{RepositoryResource: r.GetZypper()}
 		r.managedRepository.RepoFileContents = zypperRepoContents(r.GetZypper())
@@ -318,4 +310,8 @@ func (r *repositoryResource) enforceState(ctx context.Context) (inDesiredState b
 		return false, err
 	}
 	return true, nil
+}
+
+func (r *repositoryResource) cleanup(ctx context.Context) error {
+	return nil
 }

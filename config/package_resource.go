@@ -22,8 +22,9 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
-	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
+
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
 type packageResouce struct {
@@ -85,7 +86,7 @@ type ManagedPackage struct {
 	RPM    *RPMPackage
 }
 
-func (p *packageResouce) validate() (*ManagedResources, error) {
+func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error) {
 	switch p.GetSystemPackage().(type) {
 	case *agentendpointpb.ApplyConfigTask_Config_Resource_PackageResource_Apt:
 		pr := p.GetApt()
@@ -359,4 +360,8 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 	}
 
 	return true, nil
+}
+
+func (p *packageResouce) cleanup(ctx context.Context) error {
+	return nil
 }
