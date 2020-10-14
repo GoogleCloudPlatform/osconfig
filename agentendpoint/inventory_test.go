@@ -300,7 +300,7 @@ func generateInventory(shortName string) *agentendpointpb.Inventory {
 	}
 }
 
-func decodePackages(str string) packages.Packages {
+func decodePackages(str string) *packages.Packages {
 	decoded, _ := base64.StdEncoding.DecodeString(str)
 	zr, _ := gzip.NewReader(bytes.NewReader(decoded))
 	var buf bytes.Buffer
@@ -309,7 +309,7 @@ func decodePackages(str string) packages.Packages {
 
 	var pkgs packages.Packages
 	json.Unmarshal(buf.Bytes(), &pkgs)
-	return pkgs
+	return &pkgs
 }
 
 func TestWrite(t *testing.T) {
@@ -319,6 +319,7 @@ func TestWrite(t *testing.T) {
 		ShortName:     "ShortName",
 		Architecture:  "Architecture",
 		KernelVersion: "KernelVersion",
+		KernelRelease: "KernelRelease",
 		Version:       "Version",
 		InstalledPackages: &packages.Packages{
 			Yum: []packages.PkgInfo{{Name: "Name", Arch: "Arch", Version: "Version"}},
@@ -328,17 +329,20 @@ func TestWrite(t *testing.T) {
 		PackageUpdates: &packages.Packages{
 			Apt: []packages.PkgInfo{{Name: "Name", Arch: "Arch", Version: "Version"}},
 		},
+		OSConfigAgentVersion: "OSConfigAgentVersion",
+		LastUpdated:          "LastUpdated",
 	}
 
 	want := map[string]bool{
-		"Hostname":          false,
-		"LongName":          false,
-		"ShortName":         false,
-		"Architecture":      false,
-		"KernelVersion":     false,
-		"Version":           false,
-		"InstalledPackages": false,
-		"PackageUpdates":    false,
+		"Hostname":             false,
+		"LongName":             false,
+		"ShortName":            false,
+		"Architecture":         false,
+		"KernelVersion":        false,
+		"Version":              false,
+		"InstalledPackages":    false,
+		"PackageUpdates":       false,
+		"OSConfigAgentVersion": false,
 	}
 
 	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -375,6 +379,11 @@ func TestWrite(t *testing.T) {
 				t.Errorf("did not get expected KernelVersion, got: %q, want: %q", buf.String(), inv.KernelVersion)
 			}
 			want["KernelVersion"] = true
+		case "/KernelRelease":
+			if buf.String() != inv.KernelRelease {
+				t.Errorf("did not get expected KernelRelease, got: %q, want: %q", buf.String(), inv.KernelRelease)
+			}
+			want["KernelRelease"] = true
 		case "/Version":
 			if buf.String() != inv.Version {
 				t.Errorf("did not get expected Version, got: %q, want: %q", buf.String(), inv.Version)
@@ -392,6 +401,16 @@ func TestWrite(t *testing.T) {
 				t.Errorf("did not get expected PackageUpdates, got: %+v, want: %+v", got, inv.PackageUpdates)
 			}
 			want["PackageUpdates"] = true
+		case "/OSConfigAgentVersion":
+			if buf.String() != inv.OSConfigAgentVersion {
+				t.Errorf("did not get expected OSConfigAgentVersion, got: %q, want: %q", buf.String(), inv.OSConfigAgentVersion)
+			}
+			want["OSConfigAgentVersion"] = true
+		case "/LastUpdated":
+			if buf.String() != inv.LastUpdated {
+				t.Errorf("did not get expected LastUpdated, got: %q, want: %q", buf.String(), inv.LastUpdated)
+			}
+			want["LastUpdated"] = true
 		default:
 			w.WriteHeader(500)
 			fmt.Fprintln(w, "URL and Method not recognized:", r.Method, url)
