@@ -83,7 +83,7 @@ func generateInventoryState(shortName string) *inventory.InstanceInventory {
 		KernelVersion:        "KernelVersion",
 		KernelRelease:        "KernelRelease",
 		OSConfigAgentVersion: "OSConfigAgentVersion",
-		InstalledPackages: packages.Packages{
+		InstalledPackages: &packages.Packages{
 			Yum:           []packages.PkgInfo{{Name: "YumInstalledPkg", Arch: "Arch", Version: "Version"}},
 			Rpm:           []packages.PkgInfo{{Name: "RpmInstalledPkg", Arch: "Arch", Version: "Version"}},
 			Apt:           []packages.PkgInfo{{Name: "AptInstalledPkg", Arch: "Arch", Version: "Version"}},
@@ -106,7 +106,7 @@ func generateInventoryState(shortName string) *inventory.InstanceInventory {
 				LastDeploymentChangeTime: time.Date(2020, time.November, 10, 23, 0, 0, 0, time.UTC)}},
 			QFE: []packages.QFEPackage{{Caption: "QFEInstalled", Description: "Description", HotFixID: "HotFixID", InstalledOn: "9/1/2020"}},
 		},
-		PackageUpdates: packages.Packages{
+		PackageUpdates: &packages.Packages{
 			Yum:           []packages.PkgInfo{{Name: "YumPkgUpdate", Arch: "Arch", Version: "Version"}},
 			Rpm:           []packages.PkgInfo{{Name: "RpmPkgUpdate", Arch: "Arch", Version: "Version"}},
 			Apt:           []packages.PkgInfo{{Name: "AptPkgUpdate", Arch: "Arch", Version: "Version"}},
@@ -320,12 +320,12 @@ func TestWrite(t *testing.T) {
 		Architecture:  "Architecture",
 		KernelVersion: "KernelVersion",
 		Version:       "Version",
-		InstalledPackages: packages.Packages{
+		InstalledPackages: &packages.Packages{
 			Yum: []packages.PkgInfo{{Name: "Name", Arch: "Arch", Version: "Version"}},
 			WUA: []packages.WUAPackage{{Title: "Title"}},
 			QFE: []packages.QFEPackage{{HotFixID: "HotFixID"}},
 		},
-		PackageUpdates: packages.Packages{
+		PackageUpdates: &packages.Packages{
 			Apt: []packages.PkgInfo{{Name: "Name", Arch: "Arch", Version: "Version"}},
 		},
 	}
