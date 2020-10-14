@@ -48,7 +48,7 @@ func wuaUpdates(ctx context.Context, query string) ([]WUAPackage, error) {
 
 // GetPackageUpdates gets available package updates GooGet as well as any
 // available updates from Windows Update Agent.
-func GetPackageUpdates(ctx context.Context) (Packages, error) {
+func GetPackageUpdates(ctx context.Context) (*Packages, error) {
 	var pkgs Packages
 	var errs []string
 
@@ -75,12 +75,12 @@ func GetPackageUpdates(ctx context.Context) (Packages, error) {
 	if len(errs) != 0 {
 		err = errors.New(strings.Join(errs, "\n"))
 	}
-	return pkgs, err
+	return &pkgs, err
 }
 
 // GetInstalledPackages gets all installed GooGet packages and Windows updates.
 // Windows updates are read from Windows Update Agent and Win32_QuickFixEngineering.
-func GetInstalledPackages(ctx context.Context) (Packages, error) {
+func GetInstalledPackages(ctx context.Context) (*Packages, error) {
 	var pkgs Packages
 	var errs []string
 
@@ -115,5 +115,5 @@ func GetInstalledPackages(ctx context.Context) (Packages, error) {
 	if len(errs) != 0 {
 		err = errors.New(strings.Join(errs, "\n"))
 	}
-	return pkgs, err
+	return &pkgs, err
 }

@@ -100,8 +100,11 @@ func formatInventory(ctx context.Context, state *inventory.InstanceInventory) *a
 	return &agentendpointpb.Inventory{OsInfo: osInfo, InstalledPackages: installedPackages, AvailablePackages: availablePackages}
 }
 
-func formatPackages(ctx context.Context, packages packages.Packages, shortName string) []*agentendpointpb.Inventory_SoftwarePackage {
+func formatPackages(ctx context.Context, packages *packages.Packages, shortName string) []*agentendpointpb.Inventory_SoftwarePackage {
 	var softwarePackages []*agentendpointpb.Inventory_SoftwarePackage
+	if packages == nil {
+		return softwarePackages
+	}
 	if packages.Apt != nil {
 		for _, pkg := range packages.Apt {
 			softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{

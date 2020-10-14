@@ -226,6 +226,7 @@ func runServiceLoop(ctx context.Context) {
 					logger.Errorf(err.Error())
 				}
 				client.ReportInventory(ctx)
+				client.Close()
 			})
 		}
 

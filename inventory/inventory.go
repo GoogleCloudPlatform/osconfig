@@ -36,8 +36,8 @@ type InstanceInventory struct {
 	KernelVersion        string
 	KernelRelease        string
 	OSConfigAgentVersion string
-	InstalledPackages    packages.Packages
-	PackageUpdates       packages.Packages
+	InstalledPackages    *packages.Packages
+	PackageUpdates       *packages.Packages
 	LastUpdated          string
 }
 
