@@ -390,14 +390,30 @@ func WatchConfig(ctx context.Context) error {
 	loopTicker := time.NewTicker(5 * time.Second)
 	eTag := lEtag.get()
 	webErrorCount := 0
+	unmarshalErrorCount := 0
 	for {
 		md, eTag, webError = getMetadata(fmt.Sprintf("?recursive=true&alt=json&wait_for_change=true&last_etag=%s&timeout_sec=%d", lEtag.get(), osConfigMetadataPollTimeout))
 		if webError == nil && eTag != lEtag.get() {
-			lEtag.set(eTag)
 			var metadataConfig metadataJSON
 			if err := json.Unmarshal(md, &metadataConfig); err != nil {
-				return err
+				// Try up to three times (with 5s sleep) to get and unmarshal metadata.
+				// Most unmarshal errors are transient read issues with the metadata server
+				// so we should retry without logging the error.
+				if unmarshalErrorCount >= 3 {
+					return err
+				}
+				unmarshalErrorCount++
+				select {
+				case <-timeout.C:
+					return err
+				case <-ctx.Done():
+					return nil
+				case <-loopTicker.C:
+					continue
+				}
 			}
+			unmarshalErrorCount = 0
+			lEtag.set(eTag)
 
 			newAgentConfig := createConfigFromMetadata(metadataConfig)
 

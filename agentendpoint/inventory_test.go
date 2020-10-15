@@ -83,7 +83,7 @@ func generateInventoryState(shortName string) *inventory.InstanceInventory {
 		KernelVersion:        "KernelVersion",
 		KernelRelease:        "KernelRelease",
 		OSConfigAgentVersion: "OSConfigAgentVersion",
-		InstalledPackages: packages.Packages{
+		InstalledPackages: &packages.Packages{
 			Yum:           []packages.PkgInfo{{Name: "YumInstalledPkg", Arch: "Arch", Version: "Version"}},
 			Rpm:           []packages.PkgInfo{{Name: "RpmInstalledPkg", Arch: "Arch", Version: "Version"}},
 			Apt:           []packages.PkgInfo{{Name: "AptInstalledPkg", Arch: "Arch", Version: "Version"}},
@@ -106,7 +106,7 @@ func generateInventoryState(shortName string) *inventory.InstanceInventory {
 				LastDeploymentChangeTime: time.Date(2020, time.November, 10, 23, 0, 0, 0, time.UTC)}},
 			QFE: []packages.QFEPackage{{Caption: "QFEInstalled", Description: "Description", HotFixID: "HotFixID", InstalledOn: "9/1/2020"}},
 		},
-		PackageUpdates: packages.Packages{
+		PackageUpdates: &packages.Packages{
 			Yum:           []packages.PkgInfo{{Name: "YumPkgUpdate", Arch: "Arch", Version: "Version"}},
 			Rpm:           []packages.PkgInfo{{Name: "RpmPkgUpdate", Arch: "Arch", Version: "Version"}},
 			Apt:           []packages.PkgInfo{{Name: "AptPkgUpdate", Arch: "Arch", Version: "Version"}},
@@ -300,7 +300,7 @@ func generateInventory(shortName string) *agentendpointpb.Inventory {
 	}
 }
 
-func decodePackages(str string) packages.Packages {
+func decodePackages(str string) *packages.Packages {
 	decoded, _ := base64.StdEncoding.DecodeString(str)
 	zr, _ := gzip.NewReader(bytes.NewReader(decoded))
 	var buf bytes.Buffer
@@ -309,7 +309,7 @@ func decodePackages(str string) packages.Packages {
 
 	var pkgs packages.Packages
 	json.Unmarshal(buf.Bytes(), &pkgs)
-	return pkgs
+	return &pkgs
 }
 
 func TestWrite(t *testing.T) {
@@ -319,26 +319,30 @@ func TestWrite(t *testing.T) {
 		ShortName:     "ShortName",
 		Architecture:  "Architecture",
 		KernelVersion: "KernelVersion",
+		KernelRelease: "KernelRelease",
 		Version:       "Version",
-		InstalledPackages: packages.Packages{
+		InstalledPackages: &packages.Packages{
 			Yum: []packages.PkgInfo{{Name: "Name", Arch: "Arch", Version: "Version"}},
 			WUA: []packages.WUAPackage{{Title: "Title"}},
 			QFE: []packages.QFEPackage{{HotFixID: "HotFixID"}},
 		},
-		PackageUpdates: packages.Packages{
+		PackageUpdates: &packages.Packages{
 			Apt: []packages.PkgInfo{{Name: "Name", Arch: "Arch", Version: "Version"}},
 		},
+		OSConfigAgentVersion: "OSConfigAgentVersion",
+		LastUpdated:          "LastUpdated",
 	}
 
 	want := map[string]bool{
-		"Hostname":          false,
-		"LongName":          false,
-		"ShortName":         false,
-		"Architecture":      false,
-		"KernelVersion":     false,
-		"Version":           false,
-		"InstalledPackages": false,
-		"PackageUpdates":    false,
+		"Hostname":             false,
+		"LongName":             false,
+		"ShortName":            false,
+		"Architecture":         false,
+		"KernelVersion":        false,
+		"Version":              false,
+		"InstalledPackages":    false,
+		"PackageUpdates":       false,
+		"OSConfigAgentVersion": false,
 	}
 
 	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -375,6 +379,11 @@ func TestWrite(t *testing.T) {
 				t.Errorf("did not get expected KernelVersion, got: %q, want: %q", buf.String(), inv.KernelVersion)
 			}
 			want["KernelVersion"] = true
+		case "/KernelRelease":
+			if buf.String() != inv.KernelRelease {
+				t.Errorf("did not get expected KernelRelease, got: %q, want: %q", buf.String(), inv.KernelRelease)
+			}
+			want["KernelRelease"] = true
 		case "/Version":
 			if buf.String() != inv.Version {
 				t.Errorf("did not get expected Version, got: %q, want: %q", buf.String(), inv.Version)
@@ -392,6 +401,16 @@ func TestWrite(t *testing.T) {
 				t.Errorf("did not get expected PackageUpdates, got: %+v, want: %+v", got, inv.PackageUpdates)
 			}
 			want["PackageUpdates"] = true
+		case "/OSConfigAgentVersion":
+			if buf.String() != inv.OSConfigAgentVersion {
+				t.Errorf("did not get expected OSConfigAgentVersion, got: %q, want: %q", buf.String(), inv.OSConfigAgentVersion)
+			}
+			want["OSConfigAgentVersion"] = true
+		case "/LastUpdated":
+			if buf.String() != inv.LastUpdated {
+				t.Errorf("did not get expected LastUpdated, got: %q, want: %q", buf.String(), inv.LastUpdated)
+			}
+			want["LastUpdated"] = true
 		default:
 			w.WriteHeader(500)
 			fmt.Fprintln(w, "URL and Method not recognized:", r.Method, url)

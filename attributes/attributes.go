@@ -38,6 +38,7 @@ func PostAttribute(url string, value io.Reader) error {
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		b, err := ioutil.ReadAll(resp.Body)
 		responseErr := fmt.Sprintf(`received status code %q for request "%s %s"`, resp.Status, req.Method, req.URL.String())
