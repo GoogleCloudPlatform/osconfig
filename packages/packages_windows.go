@@ -26,7 +26,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
-// In order to work around memmory issues with the WUA library we spawn a
+// In order to work around memory issues with the WUA library we spawn a
 // new process for these inventory queries.
 func wuaUpdates(ctx context.Context, query string) ([]WUAPackage, error) {
 	exe, err := os.Executable()
