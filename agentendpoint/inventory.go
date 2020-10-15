@@ -256,7 +256,7 @@ func formatWUAPackage(pkg packages.WUAPackage) *agentendpointpb.Inventory_Softwa
 func formatQFEPackage(ctx context.Context, pkg packages.QFEPackage) *agentendpointpb.Inventory_SoftwarePackage_QfePackage {
 	installedTime, err := time.Parse("1/2/2006", pkg.InstalledOn)
 	if err != nil {
-		clog.Errorf(ctx, "Error parsing QFE InstalledOn date: %v", err)
+		clog.Warningf(ctx, "Error parsing QFE InstalledOn date: %v", err)
 	}
 
 	return &agentendpointpb.Inventory_SoftwarePackage_QfePackage{
