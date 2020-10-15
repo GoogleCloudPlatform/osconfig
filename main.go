@@ -226,6 +226,7 @@ func runServiceLoop(ctx context.Context) {
 					logger.Errorf(err.Error())
 				}
 				client.ReportInventory(ctx)
+				client.Close()
 			})
 		}
 
@@ -258,6 +259,15 @@ func main() {
 	}
 
 	switch action := flag.Arg(0); action {
+	// wuaupdates just runs the packages.WUAUpdates function and returns it's output
+	// as JSON on stdout. This avoids memory issues with the WUA api since this is
+	// called often for Windows inventory runs.
+	case "wuaupdates":
+		if err := wuaUpdates(flag.Arg(1)); err != nil {
+			fmt.Fprint(os.Stderr, err)
+			os.Exit(1)
+		}
+		os.Exit(0)
 	case "", "run":
 		runService(ctx)
 	default:

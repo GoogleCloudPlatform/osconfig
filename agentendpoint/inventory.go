@@ -47,10 +47,13 @@ func write(ctx context.Context, state *inventory.InstanceInventory, url string) 
 			if err := attributes.PostAttribute(u, strings.NewReader(f.String())); err != nil {
 				clog.Errorf(ctx, "postAttribute error: %v", err)
 			}
-		case reflect.Struct:
-			clog.Debugf(ctx, "postAttributeCompressed %s: %+v", u, f)
-			if err := attributes.PostAttributeCompressed(u, f.Interface()); err != nil {
-				clog.Errorf(ctx, "postAttributeCompressed error: %v", err)
+		case reflect.Ptr:
+			switch reflect.Indirect(f).Kind() {
+			case reflect.Struct:
+				clog.Debugf(ctx, "postAttributeCompressed %s: %+v", u, f)
+				if err := attributes.PostAttributeCompressed(u, f.Interface()); err != nil {
+					clog.Errorf(ctx, "postAttributeCompressed error: %v", err)
+				}
 			}
 		}
 	}
@@ -101,8 +104,11 @@ func formatInventory(ctx context.Context, state *inventory.InstanceInventory) *a
 	return &agentendpointpb.Inventory{OsInfo: osInfo, InstalledPackages: installedPackages, AvailablePackages: availablePackages}
 }
 
-func formatPackages(ctx context.Context, packages packages.Packages, shortName string) []*agentendpointpb.Inventory_SoftwarePackage {
+func formatPackages(ctx context.Context, packages *packages.Packages, shortName string) []*agentendpointpb.Inventory_SoftwarePackage {
 	var softwarePackages []*agentendpointpb.Inventory_SoftwarePackage
+	if packages == nil {
+		return softwarePackages
+	}
 	if packages.Apt != nil {
 		for _, pkg := range packages.Apt {
 			softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
@@ -251,7 +257,7 @@ func formatWUAPackage(pkg packages.WUAPackage) *agentendpointpb.Inventory_Softwa
 func formatQFEPackage(ctx context.Context, pkg packages.QFEPackage) *agentendpointpb.Inventory_SoftwarePackage_QfePackage {
 	installedTime, err := time.Parse("1/2/2006", pkg.InstalledOn)
 	if err != nil {
-		clog.Errorf(ctx, "Error parsing QFE InstalledOn date: %v", err)
+		clog.Warningf(ctx, "Error parsing QFE InstalledOn date: %v", err)
 	}
 
 	return &agentendpointpb.Inventory_SoftwarePackage_QfePackage{
