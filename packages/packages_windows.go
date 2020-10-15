@@ -63,23 +63,14 @@ func GetPackageUpdates(ctx context.Context) (*Packages, error) {
 	}
 
 	clog.Debugf(ctx, "Searching for available WUA updates.")
-	if wua, err := WUAUpdates("IsInstalled=0"); err != nil {
+
+	if wua, err := wuaUpdates(ctx, "IsInstalled=0"); err != nil {
 		msg := fmt.Sprintf("error listing installed Windows updates: %v", err)
 		clog.Debugf(ctx, "Error: %s", msg)
 		errs = append(errs, msg)
 	} else {
 		pkgs.WUA = wua
 	}
-
-	/*
-		if wua, err := wuaUpdates(ctx, "IsInstalled=0"); err != nil {
-			msg := fmt.Sprintf("error listing installed Windows updates: %v", err)
-			clog.Debugf(ctx, "Error: %s", msg)
-			errs = append(errs, msg)
-		} else {
-			pkgs.WUA = wua
-		}
-	*/
 
 	var err error
 	if len(errs) != 0 {
@@ -105,23 +96,14 @@ func GetInstalledPackages(ctx context.Context) (*Packages, error) {
 	}
 
 	clog.Debugf(ctx, "Searching for installed WUA updates.")
-	if wua, err := WUAUpdates("IsInstalled=1"); err != nil {
+
+	if wua, err := wuaUpdates(ctx, "IsInstalled=1"); err != nil {
 		msg := fmt.Sprintf("error listing installed Windows updates: %v", err)
 		clog.Debugf(ctx, "Error: %s", msg)
 		errs = append(errs, msg)
 	} else {
 		pkgs.WUA = wua
 	}
-
-	/*
-		if wua, err := wuaUpdates(ctx, "IsInstalled=1"); err != nil {
-			msg := fmt.Sprintf("error listing installed Windows updates: %v", err)
-			clog.Debugf(ctx, "Error: %s", msg)
-			errs = append(errs, msg)
-		} else {
-			pkgs.WUA = wua
-		}
-	*/
 
 	if qfe, err := QuickFixEngineering(ctx); err != nil {
 		msg := fmt.Sprintf("error listing installed QuickFixEngineering updates: %v", err)
