@@ -46,12 +46,11 @@ import (
 const apiRetrySec = 600
 
 var (
-	errServerCancel       = errors.New("task canceled by server")
-	errServiceNotEnabled  = errors.New("service is not enabled for this project")
-	errServiceUnavailable = errors.New("Unavailable")
-	errResourceExhausted  = errors.New("ResourceExhausted")
-	taskStateFile         = agentconfig.TaskStateFile()
-	sameStateTimeWindow   = -5 * time.Second
+	errServerCancel      = errors.New("task canceled by server")
+	errServiceNotEnabled = errors.New("service is not enabled for this project")
+	errResourceExhausted = errors.New("ResourceExhausted")
+	taskStateFile        = agentconfig.TaskStateFile()
+	sameStateTimeWindow  = -5 * time.Second
 )
 
 // Client is a an agentendpoint client.
@@ -316,9 +315,6 @@ func (c *Client) waitForTask(ctx context.Context) error {
 	}
 	if s, ok := status.FromError(err); ok {
 		switch s.Code() {
-		case codes.Unavailable:
-			clog.Warningf(ctx, "Stream connection error, will reconnect: %v", err)
-			return errServiceUnavailable
 		case codes.PermissionDenied:
 			// Service is not enabled for this project.
 			return errServiceNotEnabled
@@ -326,7 +322,6 @@ func (c *Client) waitForTask(ctx context.Context) error {
 			return errResourceExhausted
 		}
 	}
-	// TODO: Add more error checking (handle more API erros vs non API errors) and backoff where appropriate.
 	return err
 }
 
