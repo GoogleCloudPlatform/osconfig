@@ -43,7 +43,7 @@ func init() {
 
 func parseInstalledRPMPackages(data []byte) []PkgInfo {
 	/*
-	   foo x86_64 0:1.2.3-4
+	   foo x86_64 1.2.3-4
 	   bar noarch 2:1.2.3-4
 	   ...
 	*/
