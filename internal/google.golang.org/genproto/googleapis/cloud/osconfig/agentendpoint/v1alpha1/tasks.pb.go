@@ -346,171 +346,171 @@ func (ExecStepTaskOutput_State) EnumDescriptor() ([]byte, []int) {
 	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{6, 0}
 }
 
-type ApplyConfigTask_Config_OSPolicy_Mode int32
+type ApplyConfigTask_OSPolicy_Mode int32
 
 const (
-	ApplyConfigTask_Config_OSPolicy_MODE_UNSPECIFIED ApplyConfigTask_Config_OSPolicy_Mode = 0
-	ApplyConfigTask_Config_OSPolicy_VALIDATION       ApplyConfigTask_Config_OSPolicy_Mode = 1
-	ApplyConfigTask_Config_OSPolicy_ENFORCEMENT      ApplyConfigTask_Config_OSPolicy_Mode = 2
+	ApplyConfigTask_OSPolicy_MODE_UNSPECIFIED ApplyConfigTask_OSPolicy_Mode = 0
+	ApplyConfigTask_OSPolicy_VALIDATION       ApplyConfigTask_OSPolicy_Mode = 1
+	ApplyConfigTask_OSPolicy_ENFORCEMENT      ApplyConfigTask_OSPolicy_Mode = 2
 )
 
-// Enum value maps for ApplyConfigTask_Config_OSPolicy_Mode.
+// Enum value maps for ApplyConfigTask_OSPolicy_Mode.
 var (
-	ApplyConfigTask_Config_OSPolicy_Mode_name = map[int32]string{
+	ApplyConfigTask_OSPolicy_Mode_name = map[int32]string{
 		0: "MODE_UNSPECIFIED",
 		1: "VALIDATION",
 		2: "ENFORCEMENT",
 	}
-	ApplyConfigTask_Config_OSPolicy_Mode_value = map[string]int32{
+	ApplyConfigTask_OSPolicy_Mode_value = map[string]int32{
 		"MODE_UNSPECIFIED": 0,
 		"VALIDATION":       1,
 		"ENFORCEMENT":      2,
 	}
 )
 
-func (x ApplyConfigTask_Config_OSPolicy_Mode) Enum() *ApplyConfigTask_Config_OSPolicy_Mode {
-	p := new(ApplyConfigTask_Config_OSPolicy_Mode)
+func (x ApplyConfigTask_OSPolicy_Mode) Enum() *ApplyConfigTask_OSPolicy_Mode {
+	p := new(ApplyConfigTask_OSPolicy_Mode)
 	*p = x
 	return p
 }
 
-func (x ApplyConfigTask_Config_OSPolicy_Mode) String() string {
+func (x ApplyConfigTask_OSPolicy_Mode) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (ApplyConfigTask_Config_OSPolicy_Mode) Descriptor() protoreflect.EnumDescriptor {
+func (ApplyConfigTask_OSPolicy_Mode) Descriptor() protoreflect.EnumDescriptor {
 	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_enumTypes[6].Descriptor()
 }
 
-func (ApplyConfigTask_Config_OSPolicy_Mode) Type() protoreflect.EnumType {
+func (ApplyConfigTask_OSPolicy_Mode) Type() protoreflect.EnumType {
 	return &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_enumTypes[6]
 }
 
-func (x ApplyConfigTask_Config_OSPolicy_Mode) Number() protoreflect.EnumNumber {
+func (x ApplyConfigTask_OSPolicy_Mode) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_OSPolicy_Mode.Descriptor instead.
-func (ApplyConfigTask_Config_OSPolicy_Mode) EnumDescriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 1, 0}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Mode.Descriptor instead.
+func (ApplyConfigTask_OSPolicy_Mode) EnumDescriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0}
 }
 
-type ApplyConfigTask_Config_Resource_PackageResource_DesiredState int32
+type ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState int32
 
 const (
-	ApplyConfigTask_Config_Resource_PackageResource_DESIRED_STATE_UNSPECIFIED ApplyConfigTask_Config_Resource_PackageResource_DesiredState = 0
-	ApplyConfigTask_Config_Resource_PackageResource_INSTALLED                 ApplyConfigTask_Config_Resource_PackageResource_DesiredState = 1
-	ApplyConfigTask_Config_Resource_PackageResource_REMOVED                   ApplyConfigTask_Config_Resource_PackageResource_DesiredState = 2
+	ApplyConfigTask_OSPolicy_Resource_PackageResource_DESIRED_STATE_UNSPECIFIED ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState = 0
+	ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED                 ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState = 1
+	ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED                   ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState = 2
 )
 
-// Enum value maps for ApplyConfigTask_Config_Resource_PackageResource_DesiredState.
+// Enum value maps for ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState.
 var (
-	ApplyConfigTask_Config_Resource_PackageResource_DesiredState_name = map[int32]string{
+	ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState_name = map[int32]string{
 		0: "DESIRED_STATE_UNSPECIFIED",
 		1: "INSTALLED",
 		2: "REMOVED",
 	}
-	ApplyConfigTask_Config_Resource_PackageResource_DesiredState_value = map[string]int32{
+	ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState_value = map[string]int32{
 		"DESIRED_STATE_UNSPECIFIED": 0,
 		"INSTALLED":                 1,
 		"REMOVED":                   2,
 	}
 )
 
-func (x ApplyConfigTask_Config_Resource_PackageResource_DesiredState) Enum() *ApplyConfigTask_Config_Resource_PackageResource_DesiredState {
-	p := new(ApplyConfigTask_Config_Resource_PackageResource_DesiredState)
+func (x ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState) Enum() *ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState {
+	p := new(ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState)
 	*p = x
 	return p
 }
 
-func (x ApplyConfigTask_Config_Resource_PackageResource_DesiredState) String() string {
+func (x ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (ApplyConfigTask_Config_Resource_PackageResource_DesiredState) Descriptor() protoreflect.EnumDescriptor {
+func (ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState) Descriptor() protoreflect.EnumDescriptor {
 	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_enumTypes[7].Descriptor()
 }
 
-func (ApplyConfigTask_Config_Resource_PackageResource_DesiredState) Type() protoreflect.EnumType {
+func (ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState) Type() protoreflect.EnumType {
 	return &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_enumTypes[7]
 }
 
-func (x ApplyConfigTask_Config_Resource_PackageResource_DesiredState) Number() protoreflect.EnumNumber {
+func (x ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_PackageResource_DesiredState.Descriptor instead.
-func (ApplyConfigTask_Config_Resource_PackageResource_DesiredState) EnumDescriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 1, 0}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState.Descriptor instead.
+func (ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState) EnumDescriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 1, 0}
 }
 
-type ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ArchiveType int32
+type ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ArchiveType int32
 
 const (
-	ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ARCHIVE_TYPE_UNSPECIFIED ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ArchiveType = 0
-	ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_DEB                      ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ArchiveType = 1
-	ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_DEB_SRC                  ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ArchiveType = 2
+	ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ARCHIVE_TYPE_UNSPECIFIED ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ArchiveType = 0
+	ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_DEB                      ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ArchiveType = 1
+	ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_DEB_SRC                  ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ArchiveType = 2
 )
 
-// Enum value maps for ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ArchiveType.
+// Enum value maps for ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ArchiveType.
 var (
-	ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ArchiveType_name = map[int32]string{
+	ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ArchiveType_name = map[int32]string{
 		0: "ARCHIVE_TYPE_UNSPECIFIED",
 		1: "DEB",
 		2: "DEB_SRC",
 	}
-	ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ArchiveType_value = map[string]int32{
+	ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ArchiveType_value = map[string]int32{
 		"ARCHIVE_TYPE_UNSPECIFIED": 0,
 		"DEB":                      1,
 		"DEB_SRC":                  2,
 	}
 )
 
-func (x ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ArchiveType) Enum() *ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ArchiveType {
-	p := new(ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ArchiveType)
+func (x ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ArchiveType) Enum() *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ArchiveType {
+	p := new(ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ArchiveType)
 	*p = x
 	return p
 }
 
-func (x ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ArchiveType) String() string {
+func (x ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ArchiveType) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ArchiveType) Descriptor() protoreflect.EnumDescriptor {
+func (ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ArchiveType) Descriptor() protoreflect.EnumDescriptor {
 	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_enumTypes[8].Descriptor()
 }
 
-func (ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ArchiveType) Type() protoreflect.EnumType {
+func (ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ArchiveType) Type() protoreflect.EnumType {
 	return &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_enumTypes[8]
 }
 
-func (x ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ArchiveType) Number() protoreflect.EnumNumber {
+func (x ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ArchiveType) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ArchiveType.Descriptor instead.
-func (ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ArchiveType) EnumDescriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 2, 0, 0}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ArchiveType.Descriptor instead.
+func (ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ArchiveType) EnumDescriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 2, 0, 0}
 }
 
-type ApplyConfigTask_Config_Resource_ExecResource_Exec_Interpreter int32
+type ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Interpreter int32
 
 const (
-	ApplyConfigTask_Config_Resource_ExecResource_Exec_INTERPRETER_UNSPECIFIED ApplyConfigTask_Config_Resource_ExecResource_Exec_Interpreter = 0
-	ApplyConfigTask_Config_Resource_ExecResource_Exec_NONE                    ApplyConfigTask_Config_Resource_ExecResource_Exec_Interpreter = 1
-	ApplyConfigTask_Config_Resource_ExecResource_Exec_SHELL                   ApplyConfigTask_Config_Resource_ExecResource_Exec_Interpreter = 2
-	ApplyConfigTask_Config_Resource_ExecResource_Exec_POWERSHELL              ApplyConfigTask_Config_Resource_ExecResource_Exec_Interpreter = 3
+	ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_INTERPRETER_UNSPECIFIED ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Interpreter = 0
+	ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_NONE                    ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Interpreter = 1
+	ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_SHELL                   ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Interpreter = 2
+	ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_POWERSHELL              ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Interpreter = 3
 )
 
-// Enum value maps for ApplyConfigTask_Config_Resource_ExecResource_Exec_Interpreter.
+// Enum value maps for ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Interpreter.
 var (
-	ApplyConfigTask_Config_Resource_ExecResource_Exec_Interpreter_name = map[int32]string{
+	ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Interpreter_name = map[int32]string{
 		0: "INTERPRETER_UNSPECIFIED",
 		1: "NONE",
 		2: "SHELL",
 		3: "POWERSHELL",
 	}
-	ApplyConfigTask_Config_Resource_ExecResource_Exec_Interpreter_value = map[string]int32{
+	ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Interpreter_value = map[string]int32{
 		"INTERPRETER_UNSPECIFIED": 0,
 		"NONE":                    1,
 		"SHELL":                   2,
@@ -518,51 +518,51 @@ var (
 	}
 )
 
-func (x ApplyConfigTask_Config_Resource_ExecResource_Exec_Interpreter) Enum() *ApplyConfigTask_Config_Resource_ExecResource_Exec_Interpreter {
-	p := new(ApplyConfigTask_Config_Resource_ExecResource_Exec_Interpreter)
+func (x ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Interpreter) Enum() *ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Interpreter {
+	p := new(ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Interpreter)
 	*p = x
 	return p
 }
 
-func (x ApplyConfigTask_Config_Resource_ExecResource_Exec_Interpreter) String() string {
+func (x ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Interpreter) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (ApplyConfigTask_Config_Resource_ExecResource_Exec_Interpreter) Descriptor() protoreflect.EnumDescriptor {
+func (ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Interpreter) Descriptor() protoreflect.EnumDescriptor {
 	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_enumTypes[9].Descriptor()
 }
 
-func (ApplyConfigTask_Config_Resource_ExecResource_Exec_Interpreter) Type() protoreflect.EnumType {
+func (ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Interpreter) Type() protoreflect.EnumType {
 	return &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_enumTypes[9]
 }
 
-func (x ApplyConfigTask_Config_Resource_ExecResource_Exec_Interpreter) Number() protoreflect.EnumNumber {
+func (x ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Interpreter) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_ExecResource_Exec_Interpreter.Descriptor instead.
-func (ApplyConfigTask_Config_Resource_ExecResource_Exec_Interpreter) EnumDescriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 3, 0, 0}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Interpreter.Descriptor instead.
+func (ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Interpreter) EnumDescriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 3, 0, 0}
 }
 
-type ApplyConfigTask_Config_Resource_FileResource_DesiredState int32
+type ApplyConfigTask_OSPolicy_Resource_FileResource_DesiredState int32
 
 const (
-	ApplyConfigTask_Config_Resource_FileResource_DESIRED_STATE_UNSPECIFIED ApplyConfigTask_Config_Resource_FileResource_DesiredState = 0
-	ApplyConfigTask_Config_Resource_FileResource_PRESENT                   ApplyConfigTask_Config_Resource_FileResource_DesiredState = 1
-	ApplyConfigTask_Config_Resource_FileResource_ABSENT                    ApplyConfigTask_Config_Resource_FileResource_DesiredState = 2
-	ApplyConfigTask_Config_Resource_FileResource_CONTENTS_MATCH            ApplyConfigTask_Config_Resource_FileResource_DesiredState = 3
+	ApplyConfigTask_OSPolicy_Resource_FileResource_DESIRED_STATE_UNSPECIFIED ApplyConfigTask_OSPolicy_Resource_FileResource_DesiredState = 0
+	ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT                   ApplyConfigTask_OSPolicy_Resource_FileResource_DesiredState = 1
+	ApplyConfigTask_OSPolicy_Resource_FileResource_ABSENT                    ApplyConfigTask_OSPolicy_Resource_FileResource_DesiredState = 2
+	ApplyConfigTask_OSPolicy_Resource_FileResource_CONTENTS_MATCH            ApplyConfigTask_OSPolicy_Resource_FileResource_DesiredState = 3
 )
 
-// Enum value maps for ApplyConfigTask_Config_Resource_FileResource_DesiredState.
+// Enum value maps for ApplyConfigTask_OSPolicy_Resource_FileResource_DesiredState.
 var (
-	ApplyConfigTask_Config_Resource_FileResource_DesiredState_name = map[int32]string{
+	ApplyConfigTask_OSPolicy_Resource_FileResource_DesiredState_name = map[int32]string{
 		0: "DESIRED_STATE_UNSPECIFIED",
 		1: "PRESENT",
 		2: "ABSENT",
 		3: "CONTENTS_MATCH",
 	}
-	ApplyConfigTask_Config_Resource_FileResource_DesiredState_value = map[string]int32{
+	ApplyConfigTask_OSPolicy_Resource_FileResource_DesiredState_value = map[string]int32{
 		"DESIRED_STATE_UNSPECIFIED": 0,
 		"PRESENT":                   1,
 		"ABSENT":                    2,
@@ -570,48 +570,48 @@ var (
 	}
 )
 
-func (x ApplyConfigTask_Config_Resource_FileResource_DesiredState) Enum() *ApplyConfigTask_Config_Resource_FileResource_DesiredState {
-	p := new(ApplyConfigTask_Config_Resource_FileResource_DesiredState)
+func (x ApplyConfigTask_OSPolicy_Resource_FileResource_DesiredState) Enum() *ApplyConfigTask_OSPolicy_Resource_FileResource_DesiredState {
+	p := new(ApplyConfigTask_OSPolicy_Resource_FileResource_DesiredState)
 	*p = x
 	return p
 }
 
-func (x ApplyConfigTask_Config_Resource_FileResource_DesiredState) String() string {
+func (x ApplyConfigTask_OSPolicy_Resource_FileResource_DesiredState) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (ApplyConfigTask_Config_Resource_FileResource_DesiredState) Descriptor() protoreflect.EnumDescriptor {
+func (ApplyConfigTask_OSPolicy_Resource_FileResource_DesiredState) Descriptor() protoreflect.EnumDescriptor {
 	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_enumTypes[10].Descriptor()
 }
 
-func (ApplyConfigTask_Config_Resource_FileResource_DesiredState) Type() protoreflect.EnumType {
+func (ApplyConfigTask_OSPolicy_Resource_FileResource_DesiredState) Type() protoreflect.EnumType {
 	return &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_enumTypes[10]
 }
 
-func (x ApplyConfigTask_Config_Resource_FileResource_DesiredState) Number() protoreflect.EnumNumber {
+func (x ApplyConfigTask_OSPolicy_Resource_FileResource_DesiredState) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_FileResource_DesiredState.Descriptor instead.
-func (ApplyConfigTask_Config_Resource_FileResource_DesiredState) EnumDescriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 4, 0}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_FileResource_DesiredState.Descriptor instead.
+func (ApplyConfigTask_OSPolicy_Resource_FileResource_DesiredState) EnumDescriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 4, 0}
 }
 
-type ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType int32
+type ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType int32
 
 const (
-	ApplyConfigTask_Config_Resource_ExtractArchiveResource_ARCHIVE_TYPE_UNSPECIFIED ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType = 0
-	ApplyConfigTask_Config_Resource_ExtractArchiveResource_TAR                      ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType = 1
-	ApplyConfigTask_Config_Resource_ExtractArchiveResource_TAR_GZIP                 ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType = 2
-	ApplyConfigTask_Config_Resource_ExtractArchiveResource_TAR_BZIP                 ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType = 3
-	ApplyConfigTask_Config_Resource_ExtractArchiveResource_TAR_LZMA                 ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType = 4
-	ApplyConfigTask_Config_Resource_ExtractArchiveResource_TAR_XZ                   ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType = 5
-	ApplyConfigTask_Config_Resource_ExtractArchiveResource_ZIP                      ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType = 11
+	ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ARCHIVE_TYPE_UNSPECIFIED ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType = 0
+	ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_TAR                      ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType = 1
+	ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_TAR_GZIP                 ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType = 2
+	ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_TAR_BZIP                 ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType = 3
+	ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_TAR_LZMA                 ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType = 4
+	ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_TAR_XZ                   ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType = 5
+	ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ZIP                      ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType = 11
 )
 
-// Enum value maps for ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType.
+// Enum value maps for ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType.
 var (
-	ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType_name = map[int32]string{
+	ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType_name = map[int32]string{
 		0:  "ARCHIVE_TYPE_UNSPECIFIED",
 		1:  "TAR",
 		2:  "TAR_GZIP",
@@ -620,7 +620,7 @@ var (
 		5:  "TAR_XZ",
 		11: "ZIP",
 	}
-	ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType_value = map[string]int32{
+	ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType_value = map[string]int32{
 		"ARCHIVE_TYPE_UNSPECIFIED": 0,
 		"TAR":                      1,
 		"TAR_GZIP":                 2,
@@ -631,31 +631,31 @@ var (
 	}
 )
 
-func (x ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType) Enum() *ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType {
-	p := new(ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType)
+func (x ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType) Enum() *ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType {
+	p := new(ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType)
 	*p = x
 	return p
 }
 
-func (x ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType) String() string {
+func (x ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType) Descriptor() protoreflect.EnumDescriptor {
+func (ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType) Descriptor() protoreflect.EnumDescriptor {
 	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_enumTypes[11].Descriptor()
 }
 
-func (ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType) Type() protoreflect.EnumType {
+func (ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType) Type() protoreflect.EnumType {
 	return &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_enumTypes[11]
 }
 
-func (x ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType) Number() protoreflect.EnumNumber {
+func (x ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType.Descriptor instead.
-func (ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType) EnumDescriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 5, 0}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType.Descriptor instead.
+func (ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType) EnumDescriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 5, 0}
 }
 
 type ApplyConfigTaskProgress_State int32
@@ -759,84 +759,78 @@ func (ApplyConfigTaskOutput_State) EnumDescriptor() ([]byte, []int) {
 	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 0}
 }
 
-type ApplyConfigTaskOutput_ResourceResult_Validation_Outcome int32
+type ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_Outcome int32
 
 const (
-	ApplyConfigTaskOutput_ResourceResult_Validation_OUTCOME_UNSPECIFIED               ApplyConfigTaskOutput_ResourceResult_Validation_Outcome = 0
-	ApplyConfigTaskOutput_ResourceResult_Validation_OK                                ApplyConfigTaskOutput_ResourceResult_Validation_Outcome = 1
-	ApplyConfigTaskOutput_ResourceResult_Validation_RESOURCE_TYPE_UNSUPPORTED         ApplyConfigTaskOutput_ResourceResult_Validation_Outcome = 2
-	ApplyConfigTaskOutput_ResourceResult_Validation_RESOURCE_PAYLOAD_CONVERSION_ERROR ApplyConfigTaskOutput_ResourceResult_Validation_Outcome = 3
-	ApplyConfigTaskOutput_ResourceResult_Validation_SKIPPED                           ApplyConfigTaskOutput_ResourceResult_Validation_Outcome = 4
-	ApplyConfigTaskOutput_ResourceResult_Validation_CONFLICT                          ApplyConfigTaskOutput_ResourceResult_Validation_Outcome = 5
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_OUTCOME_UNSPECIFIED ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_Outcome = 0
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_OK                  ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_Outcome = 1
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_ERROR               ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_Outcome = 2
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_CONFLICT            ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_Outcome = 3
 )
 
-// Enum value maps for ApplyConfigTaskOutput_ResourceResult_Validation_Outcome.
+// Enum value maps for ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_Outcome.
 var (
-	ApplyConfigTaskOutput_ResourceResult_Validation_Outcome_name = map[int32]string{
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_Outcome_name = map[int32]string{
 		0: "OUTCOME_UNSPECIFIED",
 		1: "OK",
-		2: "RESOURCE_TYPE_UNSUPPORTED",
-		3: "RESOURCE_PAYLOAD_CONVERSION_ERROR",
-		4: "SKIPPED",
-		5: "CONFLICT",
+		2: "ERROR",
+		3: "CONFLICT",
 	}
-	ApplyConfigTaskOutput_ResourceResult_Validation_Outcome_value = map[string]int32{
-		"OUTCOME_UNSPECIFIED":               0,
-		"OK":                                1,
-		"RESOURCE_TYPE_UNSUPPORTED":         2,
-		"RESOURCE_PAYLOAD_CONVERSION_ERROR": 3,
-		"SKIPPED":                           4,
-		"CONFLICT":                          5,
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_Outcome_value = map[string]int32{
+		"OUTCOME_UNSPECIFIED": 0,
+		"OK":                  1,
+		"ERROR":               2,
+		"CONFLICT":            3,
 	}
 )
 
-func (x ApplyConfigTaskOutput_ResourceResult_Validation_Outcome) Enum() *ApplyConfigTaskOutput_ResourceResult_Validation_Outcome {
-	p := new(ApplyConfigTaskOutput_ResourceResult_Validation_Outcome)
+func (x ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_Outcome) Enum() *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_Outcome {
+	p := new(ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_Outcome)
 	*p = x
 	return p
 }
 
-func (x ApplyConfigTaskOutput_ResourceResult_Validation_Outcome) String() string {
+func (x ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_Outcome) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (ApplyConfigTaskOutput_ResourceResult_Validation_Outcome) Descriptor() protoreflect.EnumDescriptor {
+func (ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_Outcome) Descriptor() protoreflect.EnumDescriptor {
 	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_enumTypes[14].Descriptor()
 }
 
-func (ApplyConfigTaskOutput_ResourceResult_Validation_Outcome) Type() protoreflect.EnumType {
+func (ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_Outcome) Type() protoreflect.EnumType {
 	return &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_enumTypes[14]
 }
 
-func (x ApplyConfigTaskOutput_ResourceResult_Validation_Outcome) Number() protoreflect.EnumNumber {
+func (x ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_Outcome) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use ApplyConfigTaskOutput_ResourceResult_Validation_Outcome.Descriptor instead.
-func (ApplyConfigTaskOutput_ResourceResult_Validation_Outcome) EnumDescriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 5, 1, 0}
+// Deprecated: Use ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_Outcome.Descriptor instead.
+func (ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_Outcome) EnumDescriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 0, 0, 1, 0}
 }
 
-type ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_Outcome int32
+type ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_Outcome int32
 
 const (
-	ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_OUTCOME_UNSPECIFIED  ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_Outcome = 0
-	ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_IN_DESIRED_STATE     ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_Outcome = 1
-	ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_NOT_IN_DESIRED_STATE ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_Outcome = 2
-	ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_ERROR                ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_Outcome = 3
-	ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_SKIPPED              ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_Outcome = 4
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_OUTCOME_UNSPECIFIED  ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_Outcome = 0
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_IN_DESIRED_STATE     ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_Outcome = 1
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_NOT_IN_DESIRED_STATE ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_Outcome = 2
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_ERROR                ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_Outcome = 3
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_SKIPPED              ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_Outcome = 4
 )
 
-// Enum value maps for ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_Outcome.
+// Enum value maps for ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_Outcome.
 var (
-	ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_Outcome_name = map[int32]string{
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_Outcome_name = map[int32]string{
 		0: "OUTCOME_UNSPECIFIED",
 		1: "IN_DESIRED_STATE",
 		2: "NOT_IN_DESIRED_STATE",
 		3: "ERROR",
 		4: "SKIPPED",
 	}
-	ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_Outcome_value = map[string]int32{
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_Outcome_value = map[string]int32{
 		"OUTCOME_UNSPECIFIED":  0,
 		"IN_DESIRED_STATE":     1,
 		"NOT_IN_DESIRED_STATE": 2,
@@ -845,100 +839,100 @@ var (
 	}
 )
 
-func (x ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_Outcome) Enum() *ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_Outcome {
-	p := new(ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_Outcome)
+func (x ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_Outcome) Enum() *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_Outcome {
+	p := new(ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_Outcome)
 	*p = x
 	return p
 }
 
-func (x ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_Outcome) String() string {
+func (x ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_Outcome) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_Outcome) Descriptor() protoreflect.EnumDescriptor {
+func (ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_Outcome) Descriptor() protoreflect.EnumDescriptor {
 	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_enumTypes[15].Descriptor()
 }
 
-func (ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_Outcome) Type() protoreflect.EnumType {
+func (ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_Outcome) Type() protoreflect.EnumType {
 	return &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_enumTypes[15]
 }
 
-func (x ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_Outcome) Number() protoreflect.EnumNumber {
+func (x ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_Outcome) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_Outcome.Descriptor instead.
-func (ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_Outcome) EnumDescriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 5, 2, 0}
+// Deprecated: Use ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_Outcome.Descriptor instead.
+func (ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_Outcome) EnumDescriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 0, 0, 2, 0}
 }
 
-type ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_Outcome int32
+type ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_Outcome int32
 
 const (
-	ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_OUTCOME_UNSPECIFIED ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_Outcome = 0
-	ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_SUCCESS             ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_Outcome = 1
-	ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_ERROR               ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_Outcome = 2
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_OUTCOME_UNSPECIFIED ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_Outcome = 0
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_SUCCESS             ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_Outcome = 1
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_ERROR               ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_Outcome = 2
 )
 
-// Enum value maps for ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_Outcome.
+// Enum value maps for ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_Outcome.
 var (
-	ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_Outcome_name = map[int32]string{
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_Outcome_name = map[int32]string{
 		0: "OUTCOME_UNSPECIFIED",
 		1: "SUCCESS",
 		2: "ERROR",
 	}
-	ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_Outcome_value = map[string]int32{
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_Outcome_value = map[string]int32{
 		"OUTCOME_UNSPECIFIED": 0,
 		"SUCCESS":             1,
 		"ERROR":               2,
 	}
 )
 
-func (x ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_Outcome) Enum() *ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_Outcome {
-	p := new(ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_Outcome)
+func (x ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_Outcome) Enum() *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_Outcome {
+	p := new(ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_Outcome)
 	*p = x
 	return p
 }
 
-func (x ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_Outcome) String() string {
+func (x ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_Outcome) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_Outcome) Descriptor() protoreflect.EnumDescriptor {
+func (ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_Outcome) Descriptor() protoreflect.EnumDescriptor {
 	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_enumTypes[16].Descriptor()
 }
 
-func (ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_Outcome) Type() protoreflect.EnumType {
+func (ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_Outcome) Type() protoreflect.EnumType {
 	return &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_enumTypes[16]
 }
 
-func (x ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_Outcome) Number() protoreflect.EnumNumber {
+func (x ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_Outcome) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_Outcome.Descriptor instead.
-func (ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_Outcome) EnumDescriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 5, 3, 0}
+// Deprecated: Use ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_Outcome.Descriptor instead.
+func (ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_Outcome) EnumDescriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 0, 0, 3, 0}
 }
 
-type ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_Outcome int32
+type ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_Outcome int32
 
 const (
-	ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_OUTCOME_UNSPECIFIED  ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_Outcome = 0
-	ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_IN_DESIRED_STATE     ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_Outcome = 1
-	ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_NOT_IN_DESIRED_STATE ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_Outcome = 2
-	ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_ERROR                ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_Outcome = 3
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_OUTCOME_UNSPECIFIED  ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_Outcome = 0
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_IN_DESIRED_STATE     ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_Outcome = 1
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_NOT_IN_DESIRED_STATE ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_Outcome = 2
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_ERROR                ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_Outcome = 3
 )
 
-// Enum value maps for ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_Outcome.
+// Enum value maps for ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_Outcome.
 var (
-	ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_Outcome_name = map[int32]string{
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_Outcome_name = map[int32]string{
 		0: "OUTCOME_UNSPECIFIED",
 		1: "IN_DESIRED_STATE",
 		2: "NOT_IN_DESIRED_STATE",
 		3: "ERROR",
 	}
-	ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_Outcome_value = map[string]int32{
+	ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_Outcome_value = map[string]int32{
 		"OUTCOME_UNSPECIFIED":  0,
 		"IN_DESIRED_STATE":     1,
 		"NOT_IN_DESIRED_STATE": 2,
@@ -946,31 +940,31 @@ var (
 	}
 )
 
-func (x ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_Outcome) Enum() *ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_Outcome {
-	p := new(ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_Outcome)
+func (x ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_Outcome) Enum() *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_Outcome {
+	p := new(ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_Outcome)
 	*p = x
 	return p
 }
 
-func (x ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_Outcome) String() string {
+func (x ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_Outcome) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_Outcome) Descriptor() protoreflect.EnumDescriptor {
+func (ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_Outcome) Descriptor() protoreflect.EnumDescriptor {
 	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_enumTypes[17].Descriptor()
 }
 
-func (ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_Outcome) Type() protoreflect.EnumType {
+func (ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_Outcome) Type() protoreflect.EnumType {
 	return &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_enumTypes[17]
 }
 
-func (x ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_Outcome) Number() protoreflect.EnumNumber {
+func (x ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_Outcome) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_Outcome.Descriptor instead.
-func (ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_Outcome) EnumDescriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 5, 4, 0}
+// Deprecated: Use ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_Outcome.Descriptor instead.
+func (ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_Outcome) EnumDescriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 0, 0, 4, 0}
 }
 
 type Task struct {
@@ -1402,7 +1396,7 @@ type ApplyConfigTask struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Config *ApplyConfigTask_Config `protobuf:"bytes,1,opt,name=config,proto3" json:"config,omitempty"`
+	OsPolicies []*ApplyConfigTask_OSPolicy `protobuf:"bytes,1,rep,name=os_policies,json=osPolicies,proto3" json:"os_policies,omitempty"`
 }
 
 func (x *ApplyConfigTask) Reset() {
@@ -1437,9 +1431,9 @@ func (*ApplyConfigTask) Descriptor() ([]byte, []int) {
 	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *ApplyConfigTask) GetConfig() *ApplyConfigTask_Config {
+func (x *ApplyConfigTask) GetOsPolicies() []*ApplyConfigTask_OSPolicy {
 	if x != nil {
-		return x.Config
+		return x.OsPolicies
 	}
 	return nil
 }
@@ -1496,8 +1490,8 @@ type ApplyConfigTaskOutput struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	State                   ApplyConfigTaskOutput_State                    `protobuf:"varint,1,opt,name=state,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput_State" json:"state,omitempty"`
-	ConfigAssignmentResults *ApplyConfigTaskOutput_ConfigAssignmentResults `protobuf:"bytes,2,opt,name=config_assignment_results,json=configAssignmentResults,proto3" json:"config_assignment_results,omitempty"`
+	State           ApplyConfigTaskOutput_State             `protobuf:"varint,1,opt,name=state,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput_State" json:"state,omitempty"`
+	OsPolicyResults []*ApplyConfigTaskOutput_OSPolicyResult `protobuf:"bytes,2,rep,name=os_policy_results,json=osPolicyResults,proto3" json:"os_policy_results,omitempty"`
 }
 
 func (x *ApplyConfigTaskOutput) Reset() {
@@ -1539,23 +1533,26 @@ func (x *ApplyConfigTaskOutput) GetState() ApplyConfigTaskOutput_State {
 	return ApplyConfigTaskOutput_STATE_UNSPECIFIED
 }
 
-func (x *ApplyConfigTaskOutput) GetConfigAssignmentResults() *ApplyConfigTaskOutput_ConfigAssignmentResults {
+func (x *ApplyConfigTaskOutput) GetOsPolicyResults() []*ApplyConfigTaskOutput_OSPolicyResult {
 	if x != nil {
-		return x.ConfigAssignmentResults
+		return x.OsPolicyResults
 	}
 	return nil
 }
 
-type ApplyConfigTask_Config struct {
+type ApplyConfigTask_OSPolicy struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ConfigAssignments []*ApplyConfigTask_Config_ConfigAssignment `protobuf:"bytes,1,rep,name=config_assignments,json=configAssignments,proto3" json:"config_assignments,omitempty"`
+	Id                       string                               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Mode                     ApplyConfigTask_OSPolicy_Mode        `protobuf:"varint,2,opt,name=mode,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask_OSPolicy_Mode" json:"mode,omitempty"`
+	SourceOsPolicyAssignment string                               `protobuf:"bytes,3,opt,name=source_os_policy_assignment,json=sourceOsPolicyAssignment,proto3" json:"source_os_policy_assignment,omitempty"`
+	Resources                []*ApplyConfigTask_OSPolicy_Resource `protobuf:"bytes,4,rep,name=resources,proto3" json:"resources,omitempty"`
 }
 
-func (x *ApplyConfigTask_Config) Reset() {
-	*x = ApplyConfigTask_Config{}
+func (x *ApplyConfigTask_OSPolicy) Reset() {
+	*x = ApplyConfigTask_OSPolicy{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1563,13 +1560,13 @@ func (x *ApplyConfigTask_Config) Reset() {
 	}
 }
 
-func (x *ApplyConfigTask_Config) String() string {
+func (x *ApplyConfigTask_OSPolicy) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1581,29 +1578,57 @@ func (x *ApplyConfigTask_Config) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config) Descriptor() ([]byte, []int) {
+// Deprecated: Use ApplyConfigTask_OSPolicy.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy) Descriptor() ([]byte, []int) {
 	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0}
 }
 
-func (x *ApplyConfigTask_Config) GetConfigAssignments() []*ApplyConfigTask_Config_ConfigAssignment {
+func (x *ApplyConfigTask_OSPolicy) GetId() string {
 	if x != nil {
-		return x.ConfigAssignments
+		return x.Id
+	}
+	return ""
+}
+
+func (x *ApplyConfigTask_OSPolicy) GetMode() ApplyConfigTask_OSPolicy_Mode {
+	if x != nil {
+		return x.Mode
+	}
+	return ApplyConfigTask_OSPolicy_MODE_UNSPECIFIED
+}
+
+func (x *ApplyConfigTask_OSPolicy) GetSourceOsPolicyAssignment() string {
+	if x != nil {
+		return x.SourceOsPolicyAssignment
+	}
+	return ""
+}
+
+func (x *ApplyConfigTask_OSPolicy) GetResources() []*ApplyConfigTask_OSPolicy_Resource {
+	if x != nil {
+		return x.Resources
 	}
 	return nil
 }
 
-type ApplyConfigTask_Config_ConfigAssignment struct {
+type ApplyConfigTask_OSPolicy_Resource struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ConfigAssignment string                             `protobuf:"bytes,1,opt,name=config_assignment,json=configAssignment,proto3" json:"config_assignment,omitempty"`
-	Policies         []*ApplyConfigTask_Config_OSPolicy `protobuf:"bytes,2,rep,name=policies,proto3" json:"policies,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Types that are assignable to ResourceType:
+	//	*ApplyConfigTask_OSPolicy_Resource_Pkg
+	//	*ApplyConfigTask_OSPolicy_Resource_Repository
+	//	*ApplyConfigTask_OSPolicy_Resource_Exec
+	//	*ApplyConfigTask_OSPolicy_Resource_File_
+	//	*ApplyConfigTask_OSPolicy_Resource_Archive
+	//	*ApplyConfigTask_OSPolicy_Resource_Srvc
+	ResourceType isApplyConfigTask_OSPolicy_Resource_ResourceType `protobuf_oneof:"resource_type"`
 }
 
-func (x *ApplyConfigTask_Config_ConfigAssignment) Reset() {
-	*x = ApplyConfigTask_Config_ConfigAssignment{}
+func (x *ApplyConfigTask_OSPolicy_Resource) Reset() {
+	*x = ApplyConfigTask_OSPolicy_Resource{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1611,13 +1636,13 @@ func (x *ApplyConfigTask_Config_ConfigAssignment) Reset() {
 	}
 }
 
-func (x *ApplyConfigTask_Config_ConfigAssignment) String() string {
+func (x *ApplyConfigTask_OSPolicy_Resource) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config_ConfigAssignment) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy_Resource) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config_ConfigAssignment) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy_Resource) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1629,37 +1654,124 @@ func (x *ApplyConfigTask_Config_ConfigAssignment) ProtoReflect() protoreflect.Me
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_ConfigAssignment.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_ConfigAssignment) Descriptor() ([]byte, []int) {
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy_Resource) Descriptor() ([]byte, []int) {
 	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0}
 }
 
-func (x *ApplyConfigTask_Config_ConfigAssignment) GetConfigAssignment() string {
+func (x *ApplyConfigTask_OSPolicy_Resource) GetId() string {
 	if x != nil {
-		return x.ConfigAssignment
+		return x.Id
 	}
 	return ""
 }
 
-func (x *ApplyConfigTask_Config_ConfigAssignment) GetPolicies() []*ApplyConfigTask_Config_OSPolicy {
-	if x != nil {
-		return x.Policies
+func (m *ApplyConfigTask_OSPolicy_Resource) GetResourceType() isApplyConfigTask_OSPolicy_Resource_ResourceType {
+	if m != nil {
+		return m.ResourceType
 	}
 	return nil
 }
 
-type ApplyConfigTask_Config_OSPolicy struct {
+func (x *ApplyConfigTask_OSPolicy_Resource) GetPkg() *ApplyConfigTask_OSPolicy_Resource_PackageResource {
+	if x, ok := x.GetResourceType().(*ApplyConfigTask_OSPolicy_Resource_Pkg); ok {
+		return x.Pkg
+	}
+	return nil
+}
+
+func (x *ApplyConfigTask_OSPolicy_Resource) GetRepository() *ApplyConfigTask_OSPolicy_Resource_RepositoryResource {
+	if x, ok := x.GetResourceType().(*ApplyConfigTask_OSPolicy_Resource_Repository); ok {
+		return x.Repository
+	}
+	return nil
+}
+
+func (x *ApplyConfigTask_OSPolicy_Resource) GetExec() *ApplyConfigTask_OSPolicy_Resource_ExecResource {
+	if x, ok := x.GetResourceType().(*ApplyConfigTask_OSPolicy_Resource_Exec); ok {
+		return x.Exec
+	}
+	return nil
+}
+
+func (x *ApplyConfigTask_OSPolicy_Resource) GetFile() *ApplyConfigTask_OSPolicy_Resource_FileResource {
+	if x, ok := x.GetResourceType().(*ApplyConfigTask_OSPolicy_Resource_File_); ok {
+		return x.File
+	}
+	return nil
+}
+
+func (x *ApplyConfigTask_OSPolicy_Resource) GetArchive() *ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource {
+	if x, ok := x.GetResourceType().(*ApplyConfigTask_OSPolicy_Resource_Archive); ok {
+		return x.Archive
+	}
+	return nil
+}
+
+func (x *ApplyConfigTask_OSPolicy_Resource) GetSrvc() *ApplyConfigTask_OSPolicy_Resource_ServiceResource {
+	if x, ok := x.GetResourceType().(*ApplyConfigTask_OSPolicy_Resource_Srvc); ok {
+		return x.Srvc
+	}
+	return nil
+}
+
+type isApplyConfigTask_OSPolicy_Resource_ResourceType interface {
+	isApplyConfigTask_OSPolicy_Resource_ResourceType()
+}
+
+type ApplyConfigTask_OSPolicy_Resource_Pkg struct {
+	Pkg *ApplyConfigTask_OSPolicy_Resource_PackageResource `protobuf:"bytes,2,opt,name=pkg,proto3,oneof"`
+}
+
+type ApplyConfigTask_OSPolicy_Resource_Repository struct {
+	Repository *ApplyConfigTask_OSPolicy_Resource_RepositoryResource `protobuf:"bytes,3,opt,name=repository,proto3,oneof"`
+}
+
+type ApplyConfigTask_OSPolicy_Resource_Exec struct {
+	Exec *ApplyConfigTask_OSPolicy_Resource_ExecResource `protobuf:"bytes,4,opt,name=exec,proto3,oneof"`
+}
+
+type ApplyConfigTask_OSPolicy_Resource_File_ struct {
+	File *ApplyConfigTask_OSPolicy_Resource_FileResource `protobuf:"bytes,5,opt,name=file,proto3,oneof"`
+}
+
+type ApplyConfigTask_OSPolicy_Resource_Archive struct {
+	Archive *ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource `protobuf:"bytes,6,opt,name=archive,proto3,oneof"`
+}
+
+type ApplyConfigTask_OSPolicy_Resource_Srvc struct {
+	Srvc *ApplyConfigTask_OSPolicy_Resource_ServiceResource `protobuf:"bytes,7,opt,name=srvc,proto3,oneof"`
+}
+
+func (*ApplyConfigTask_OSPolicy_Resource_Pkg) isApplyConfigTask_OSPolicy_Resource_ResourceType() {}
+
+func (*ApplyConfigTask_OSPolicy_Resource_Repository) isApplyConfigTask_OSPolicy_Resource_ResourceType() {
+}
+
+func (*ApplyConfigTask_OSPolicy_Resource_Exec) isApplyConfigTask_OSPolicy_Resource_ResourceType() {}
+
+func (*ApplyConfigTask_OSPolicy_Resource_File_) isApplyConfigTask_OSPolicy_Resource_ResourceType() {}
+
+func (*ApplyConfigTask_OSPolicy_Resource_Archive) isApplyConfigTask_OSPolicy_Resource_ResourceType() {
+}
+
+func (*ApplyConfigTask_OSPolicy_Resource_Srvc) isApplyConfigTask_OSPolicy_Resource_ResourceType() {}
+
+type ApplyConfigTask_OSPolicy_Resource_File struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id        string                               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Mode      ApplyConfigTask_Config_OSPolicy_Mode `protobuf:"varint,2,opt,name=mode,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask_Config_OSPolicy_Mode" json:"mode,omitempty"`
-	Resources []*ApplyConfigTask_Config_Resource   `protobuf:"bytes,3,rep,name=resources,proto3" json:"resources,omitempty"`
+	// Types that are assignable to File:
+	//	*ApplyConfigTask_OSPolicy_Resource_File_Remote_
+	//	*ApplyConfigTask_OSPolicy_Resource_File_Gcs_
+	//	*ApplyConfigTask_OSPolicy_Resource_File_LocalPath
+	File          isApplyConfigTask_OSPolicy_Resource_File_File `protobuf_oneof:"file"`
+	AllowInsecure bool                                          `protobuf:"varint,4,opt,name=allow_insecure,json=allowInsecure,proto3" json:"allow_insecure,omitempty"`
 }
 
-func (x *ApplyConfigTask_Config_OSPolicy) Reset() {
-	*x = ApplyConfigTask_Config_OSPolicy{}
+func (x *ApplyConfigTask_OSPolicy_Resource_File) Reset() {
+	*x = ApplyConfigTask_OSPolicy_Resource_File{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1667,13 +1779,13 @@ func (x *ApplyConfigTask_Config_OSPolicy) Reset() {
 	}
 }
 
-func (x *ApplyConfigTask_Config_OSPolicy) String() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_File) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config_OSPolicy) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy_Resource_File) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config_OSPolicy) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy_Resource_File) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1685,50 +1797,89 @@ func (x *ApplyConfigTask_Config_OSPolicy) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_OSPolicy.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_OSPolicy) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 1}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_File.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy_Resource_File) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 0}
 }
 
-func (x *ApplyConfigTask_Config_OSPolicy) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *ApplyConfigTask_Config_OSPolicy) GetMode() ApplyConfigTask_Config_OSPolicy_Mode {
-	if x != nil {
-		return x.Mode
-	}
-	return ApplyConfigTask_Config_OSPolicy_MODE_UNSPECIFIED
-}
-
-func (x *ApplyConfigTask_Config_OSPolicy) GetResources() []*ApplyConfigTask_Config_Resource {
-	if x != nil {
-		return x.Resources
+func (m *ApplyConfigTask_OSPolicy_Resource_File) GetFile() isApplyConfigTask_OSPolicy_Resource_File_File {
+	if m != nil {
+		return m.File
 	}
 	return nil
 }
 
-type ApplyConfigTask_Config_Resource struct {
+func (x *ApplyConfigTask_OSPolicy_Resource_File) GetRemote() *ApplyConfigTask_OSPolicy_Resource_File_Remote {
+	if x, ok := x.GetFile().(*ApplyConfigTask_OSPolicy_Resource_File_Remote_); ok {
+		return x.Remote
+	}
+	return nil
+}
+
+func (x *ApplyConfigTask_OSPolicy_Resource_File) GetGcs() *ApplyConfigTask_OSPolicy_Resource_File_Gcs {
+	if x, ok := x.GetFile().(*ApplyConfigTask_OSPolicy_Resource_File_Gcs_); ok {
+		return x.Gcs
+	}
+	return nil
+}
+
+func (x *ApplyConfigTask_OSPolicy_Resource_File) GetLocalPath() string {
+	if x, ok := x.GetFile().(*ApplyConfigTask_OSPolicy_Resource_File_LocalPath); ok {
+		return x.LocalPath
+	}
+	return ""
+}
+
+func (x *ApplyConfigTask_OSPolicy_Resource_File) GetAllowInsecure() bool {
+	if x != nil {
+		return x.AllowInsecure
+	}
+	return false
+}
+
+type isApplyConfigTask_OSPolicy_Resource_File_File interface {
+	isApplyConfigTask_OSPolicy_Resource_File_File()
+}
+
+type ApplyConfigTask_OSPolicy_Resource_File_Remote_ struct {
+	Remote *ApplyConfigTask_OSPolicy_Resource_File_Remote `protobuf:"bytes,1,opt,name=remote,proto3,oneof"`
+}
+
+type ApplyConfigTask_OSPolicy_Resource_File_Gcs_ struct {
+	Gcs *ApplyConfigTask_OSPolicy_Resource_File_Gcs `protobuf:"bytes,2,opt,name=gcs,proto3,oneof"`
+}
+
+type ApplyConfigTask_OSPolicy_Resource_File_LocalPath struct {
+	LocalPath string `protobuf:"bytes,3,opt,name=local_path,json=localPath,proto3,oneof"`
+}
+
+func (*ApplyConfigTask_OSPolicy_Resource_File_Remote_) isApplyConfigTask_OSPolicy_Resource_File_File() {
+}
+
+func (*ApplyConfigTask_OSPolicy_Resource_File_Gcs_) isApplyConfigTask_OSPolicy_Resource_File_File() {}
+
+func (*ApplyConfigTask_OSPolicy_Resource_File_LocalPath) isApplyConfigTask_OSPolicy_Resource_File_File() {
+}
+
+type ApplyConfigTask_OSPolicy_Resource_PackageResource struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// Types that are assignable to ResourceType:
-	//	*ApplyConfigTask_Config_Resource_Pkg
-	//	*ApplyConfigTask_Config_Resource_Repository
-	//	*ApplyConfigTask_Config_Resource_Exec
-	//	*ApplyConfigTask_Config_Resource_File_
-	//	*ApplyConfigTask_Config_Resource_Archive
-	//	*ApplyConfigTask_Config_Resource_Srvc
-	ResourceType isApplyConfigTask_Config_Resource_ResourceType `protobuf_oneof:"resource_type"`
+	DesiredState ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState `protobuf:"varint,1,opt,name=desired_state,json=desiredState,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState" json:"desired_state,omitempty"`
+	// Types that are assignable to SystemPackage:
+	//	*ApplyConfigTask_OSPolicy_Resource_PackageResource_Apt
+	//	*ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb_
+	//	*ApplyConfigTask_OSPolicy_Resource_PackageResource_Yum
+	//	*ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper_
+	//	*ApplyConfigTask_OSPolicy_Resource_PackageResource_Rpm
+	//	*ApplyConfigTask_OSPolicy_Resource_PackageResource_Googet
+	//	*ApplyConfigTask_OSPolicy_Resource_PackageResource_Msi
+	SystemPackage isApplyConfigTask_OSPolicy_Resource_PackageResource_SystemPackage `protobuf_oneof:"system_package"`
 }
 
-func (x *ApplyConfigTask_Config_Resource) Reset() {
-	*x = ApplyConfigTask_Config_Resource{}
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource) Reset() {
+	*x = ApplyConfigTask_OSPolicy_Resource_PackageResource{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1736,13 +1887,13 @@ func (x *ApplyConfigTask_Config_Resource) Reset() {
 	}
 }
 
-func (x *ApplyConfigTask_Config_Resource) String() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config_Resource) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config_Resource) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1754,122 +1905,142 @@ func (x *ApplyConfigTask_Config_Resource) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_Resource) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_PackageResource.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 1}
 }
 
-func (x *ApplyConfigTask_Config_Resource) GetId() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource) GetDesiredState() ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState {
 	if x != nil {
-		return x.Id
+		return x.DesiredState
 	}
-	return ""
+	return ApplyConfigTask_OSPolicy_Resource_PackageResource_DESIRED_STATE_UNSPECIFIED
 }
 
-func (m *ApplyConfigTask_Config_Resource) GetResourceType() isApplyConfigTask_Config_Resource_ResourceType {
+func (m *ApplyConfigTask_OSPolicy_Resource_PackageResource) GetSystemPackage() isApplyConfigTask_OSPolicy_Resource_PackageResource_SystemPackage {
 	if m != nil {
-		return m.ResourceType
+		return m.SystemPackage
 	}
 	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource) GetPkg() *ApplyConfigTask_Config_Resource_PackageResource {
-	if x, ok := x.GetResourceType().(*ApplyConfigTask_Config_Resource_Pkg); ok {
-		return x.Pkg
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource) GetApt() *ApplyConfigTask_OSPolicy_Resource_PackageResource_APT {
+	if x, ok := x.GetSystemPackage().(*ApplyConfigTask_OSPolicy_Resource_PackageResource_Apt); ok {
+		return x.Apt
 	}
 	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource) GetRepository() *ApplyConfigTask_Config_Resource_RepositoryResource {
-	if x, ok := x.GetResourceType().(*ApplyConfigTask_Config_Resource_Repository); ok {
-		return x.Repository
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource) GetDeb() *ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb {
+	if x, ok := x.GetSystemPackage().(*ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb_); ok {
+		return x.Deb
 	}
 	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource) GetExec() *ApplyConfigTask_Config_Resource_ExecResource {
-	if x, ok := x.GetResourceType().(*ApplyConfigTask_Config_Resource_Exec); ok {
-		return x.Exec
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource) GetYum() *ApplyConfigTask_OSPolicy_Resource_PackageResource_YUM {
+	if x, ok := x.GetSystemPackage().(*ApplyConfigTask_OSPolicy_Resource_PackageResource_Yum); ok {
+		return x.Yum
 	}
 	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource) GetFile() *ApplyConfigTask_Config_Resource_FileResource {
-	if x, ok := x.GetResourceType().(*ApplyConfigTask_Config_Resource_File_); ok {
-		return x.File
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource) GetZypper() *ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper {
+	if x, ok := x.GetSystemPackage().(*ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper_); ok {
+		return x.Zypper
 	}
 	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource) GetArchive() *ApplyConfigTask_Config_Resource_ExtractArchiveResource {
-	if x, ok := x.GetResourceType().(*ApplyConfigTask_Config_Resource_Archive); ok {
-		return x.Archive
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource) GetRpm() *ApplyConfigTask_OSPolicy_Resource_PackageResource_RPM {
+	if x, ok := x.GetSystemPackage().(*ApplyConfigTask_OSPolicy_Resource_PackageResource_Rpm); ok {
+		return x.Rpm
 	}
 	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource) GetSrvc() *ApplyConfigTask_Config_Resource_ServiceResource {
-	if x, ok := x.GetResourceType().(*ApplyConfigTask_Config_Resource_Srvc); ok {
-		return x.Srvc
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource) GetGooget() *ApplyConfigTask_OSPolicy_Resource_PackageResource_GooGet {
+	if x, ok := x.GetSystemPackage().(*ApplyConfigTask_OSPolicy_Resource_PackageResource_Googet); ok {
+		return x.Googet
 	}
 	return nil
 }
 
-type isApplyConfigTask_Config_Resource_ResourceType interface {
-	isApplyConfigTask_Config_Resource_ResourceType()
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource) GetMsi() *ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI {
+	if x, ok := x.GetSystemPackage().(*ApplyConfigTask_OSPolicy_Resource_PackageResource_Msi); ok {
+		return x.Msi
+	}
+	return nil
 }
 
-type ApplyConfigTask_Config_Resource_Pkg struct {
-	Pkg *ApplyConfigTask_Config_Resource_PackageResource `protobuf:"bytes,2,opt,name=pkg,proto3,oneof"`
+type isApplyConfigTask_OSPolicy_Resource_PackageResource_SystemPackage interface {
+	isApplyConfigTask_OSPolicy_Resource_PackageResource_SystemPackage()
 }
 
-type ApplyConfigTask_Config_Resource_Repository struct {
-	Repository *ApplyConfigTask_Config_Resource_RepositoryResource `protobuf:"bytes,3,opt,name=repository,proto3,oneof"`
+type ApplyConfigTask_OSPolicy_Resource_PackageResource_Apt struct {
+	Apt *ApplyConfigTask_OSPolicy_Resource_PackageResource_APT `protobuf:"bytes,2,opt,name=apt,proto3,oneof"`
 }
 
-type ApplyConfigTask_Config_Resource_Exec struct {
-	Exec *ApplyConfigTask_Config_Resource_ExecResource `protobuf:"bytes,4,opt,name=exec,proto3,oneof"`
+type ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb_ struct {
+	Deb *ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb `protobuf:"bytes,3,opt,name=deb,proto3,oneof"`
 }
 
-type ApplyConfigTask_Config_Resource_File_ struct {
-	File *ApplyConfigTask_Config_Resource_FileResource `protobuf:"bytes,5,opt,name=file,proto3,oneof"`
+type ApplyConfigTask_OSPolicy_Resource_PackageResource_Yum struct {
+	Yum *ApplyConfigTask_OSPolicy_Resource_PackageResource_YUM `protobuf:"bytes,4,opt,name=yum,proto3,oneof"`
 }
 
-type ApplyConfigTask_Config_Resource_Archive struct {
-	Archive *ApplyConfigTask_Config_Resource_ExtractArchiveResource `protobuf:"bytes,6,opt,name=archive,proto3,oneof"`
+type ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper_ struct {
+	Zypper *ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper `protobuf:"bytes,5,opt,name=zypper,proto3,oneof"`
 }
 
-type ApplyConfigTask_Config_Resource_Srvc struct {
-	Srvc *ApplyConfigTask_Config_Resource_ServiceResource `protobuf:"bytes,7,opt,name=srvc,proto3,oneof"`
+type ApplyConfigTask_OSPolicy_Resource_PackageResource_Rpm struct {
+	Rpm *ApplyConfigTask_OSPolicy_Resource_PackageResource_RPM `protobuf:"bytes,6,opt,name=rpm,proto3,oneof"`
 }
 
-func (*ApplyConfigTask_Config_Resource_Pkg) isApplyConfigTask_Config_Resource_ResourceType() {}
+type ApplyConfigTask_OSPolicy_Resource_PackageResource_Googet struct {
+	Googet *ApplyConfigTask_OSPolicy_Resource_PackageResource_GooGet `protobuf:"bytes,7,opt,name=googet,proto3,oneof"`
+}
 
-func (*ApplyConfigTask_Config_Resource_Repository) isApplyConfigTask_Config_Resource_ResourceType() {}
+type ApplyConfigTask_OSPolicy_Resource_PackageResource_Msi struct {
+	Msi *ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI `protobuf:"bytes,8,opt,name=msi,proto3,oneof"`
+}
 
-func (*ApplyConfigTask_Config_Resource_Exec) isApplyConfigTask_Config_Resource_ResourceType() {}
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource_Apt) isApplyConfigTask_OSPolicy_Resource_PackageResource_SystemPackage() {
+}
 
-func (*ApplyConfigTask_Config_Resource_File_) isApplyConfigTask_Config_Resource_ResourceType() {}
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb_) isApplyConfigTask_OSPolicy_Resource_PackageResource_SystemPackage() {
+}
 
-func (*ApplyConfigTask_Config_Resource_Archive) isApplyConfigTask_Config_Resource_ResourceType() {}
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource_Yum) isApplyConfigTask_OSPolicy_Resource_PackageResource_SystemPackage() {
+}
 
-func (*ApplyConfigTask_Config_Resource_Srvc) isApplyConfigTask_Config_Resource_ResourceType() {}
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper_) isApplyConfigTask_OSPolicy_Resource_PackageResource_SystemPackage() {
+}
 
-type ApplyConfigTask_Config_Resource_File struct {
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource_Rpm) isApplyConfigTask_OSPolicy_Resource_PackageResource_SystemPackage() {
+}
+
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource_Googet) isApplyConfigTask_OSPolicy_Resource_PackageResource_SystemPackage() {
+}
+
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource_Msi) isApplyConfigTask_OSPolicy_Resource_PackageResource_SystemPackage() {
+}
+
+type ApplyConfigTask_OSPolicy_Resource_RepositoryResource struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Types that are assignable to File:
-	//	*ApplyConfigTask_Config_Resource_File_Remote_
-	//	*ApplyConfigTask_Config_Resource_File_Gcs_
-	//	*ApplyConfigTask_Config_Resource_File_LocalPath
-	File          isApplyConfigTask_Config_Resource_File_File `protobuf_oneof:"file"`
-	AllowInsecure bool                                        `protobuf:"varint,4,opt,name=allow_insecure,json=allowInsecure,proto3" json:"allow_insecure,omitempty"`
+	// Types that are assignable to Repository:
+	//	*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Apt
+	//	*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Yum
+	//	*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Zypper
+	//	*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Goo
+	Repository isApplyConfigTask_OSPolicy_Resource_RepositoryResource_Repository `protobuf_oneof:"repository"`
 }
 
-func (x *ApplyConfigTask_Config_Resource_File) Reset() {
-	*x = ApplyConfigTask_Config_Resource_File{}
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource) Reset() {
+	*x = ApplyConfigTask_OSPolicy_Resource_RepositoryResource{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1877,13 +2048,13 @@ func (x *ApplyConfigTask_Config_Resource_File) Reset() {
 	}
 }
 
-func (x *ApplyConfigTask_Config_Resource_File) String() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config_Resource_File) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy_Resource_RepositoryResource) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config_Resource_File) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1895,88 +2066,89 @@ func (x *ApplyConfigTask_Config_Resource_File) ProtoReflect() protoreflect.Messa
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_File.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_Resource_File) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 0}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_RepositoryResource.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy_Resource_RepositoryResource) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 2}
 }
 
-func (m *ApplyConfigTask_Config_Resource_File) GetFile() isApplyConfigTask_Config_Resource_File_File {
+func (m *ApplyConfigTask_OSPolicy_Resource_RepositoryResource) GetRepository() isApplyConfigTask_OSPolicy_Resource_RepositoryResource_Repository {
 	if m != nil {
-		return m.File
+		return m.Repository
 	}
 	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource_File) GetRemote() *ApplyConfigTask_Config_Resource_File_Remote {
-	if x, ok := x.GetFile().(*ApplyConfigTask_Config_Resource_File_Remote_); ok {
-		return x.Remote
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource) GetApt() *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository {
+	if x, ok := x.GetRepository().(*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Apt); ok {
+		return x.Apt
 	}
 	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource_File) GetGcs() *ApplyConfigTask_Config_Resource_File_Gcs {
-	if x, ok := x.GetFile().(*ApplyConfigTask_Config_Resource_File_Gcs_); ok {
-		return x.Gcs
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource) GetYum() *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_YumRepository {
+	if x, ok := x.GetRepository().(*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Yum); ok {
+		return x.Yum
 	}
 	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource_File) GetLocalPath() string {
-	if x, ok := x.GetFile().(*ApplyConfigTask_Config_Resource_File_LocalPath); ok {
-		return x.LocalPath
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource) GetZypper() *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_ZypperRepository {
+	if x, ok := x.GetRepository().(*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Zypper); ok {
+		return x.Zypper
 	}
-	return ""
+	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource_File) GetAllowInsecure() bool {
-	if x != nil {
-		return x.AllowInsecure
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource) GetGoo() *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_GooRepository {
+	if x, ok := x.GetRepository().(*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Goo); ok {
+		return x.Goo
 	}
-	return false
+	return nil
 }
 
-type isApplyConfigTask_Config_Resource_File_File interface {
-	isApplyConfigTask_Config_Resource_File_File()
+type isApplyConfigTask_OSPolicy_Resource_RepositoryResource_Repository interface {
+	isApplyConfigTask_OSPolicy_Resource_RepositoryResource_Repository()
 }
 
-type ApplyConfigTask_Config_Resource_File_Remote_ struct {
-	Remote *ApplyConfigTask_Config_Resource_File_Remote `protobuf:"bytes,1,opt,name=remote,proto3,oneof"`
+type ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Apt struct {
+	Apt *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository `protobuf:"bytes,1,opt,name=apt,proto3,oneof"`
 }
 
-type ApplyConfigTask_Config_Resource_File_Gcs_ struct {
-	Gcs *ApplyConfigTask_Config_Resource_File_Gcs `protobuf:"bytes,2,opt,name=gcs,proto3,oneof"`
+type ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Yum struct {
+	Yum *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_YumRepository `protobuf:"bytes,2,opt,name=yum,proto3,oneof"`
 }
 
-type ApplyConfigTask_Config_Resource_File_LocalPath struct {
-	LocalPath string `protobuf:"bytes,3,opt,name=local_path,json=localPath,proto3,oneof"`
+type ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Zypper struct {
+	Zypper *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_ZypperRepository `protobuf:"bytes,3,opt,name=zypper,proto3,oneof"`
 }
 
-func (*ApplyConfigTask_Config_Resource_File_Remote_) isApplyConfigTask_Config_Resource_File_File() {}
-
-func (*ApplyConfigTask_Config_Resource_File_Gcs_) isApplyConfigTask_Config_Resource_File_File() {}
-
-func (*ApplyConfigTask_Config_Resource_File_LocalPath) isApplyConfigTask_Config_Resource_File_File() {
+type ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Goo struct {
+	Goo *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_GooRepository `protobuf:"bytes,4,opt,name=goo,proto3,oneof"`
 }
 
-type ApplyConfigTask_Config_Resource_PackageResource struct {
+func (*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Apt) isApplyConfigTask_OSPolicy_Resource_RepositoryResource_Repository() {
+}
+
+func (*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Yum) isApplyConfigTask_OSPolicy_Resource_RepositoryResource_Repository() {
+}
+
+func (*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Zypper) isApplyConfigTask_OSPolicy_Resource_RepositoryResource_Repository() {
+}
+
+func (*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Goo) isApplyConfigTask_OSPolicy_Resource_RepositoryResource_Repository() {
+}
+
+type ApplyConfigTask_OSPolicy_Resource_ExecResource struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	DesiredState ApplyConfigTask_Config_Resource_PackageResource_DesiredState `protobuf:"varint,1,opt,name=desired_state,json=desiredState,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask_Config_Resource_PackageResource_DesiredState" json:"desired_state,omitempty"`
-	// Types that are assignable to SystemPackage:
-	//	*ApplyConfigTask_Config_Resource_PackageResource_Apt
-	//	*ApplyConfigTask_Config_Resource_PackageResource_Deb_
-	//	*ApplyConfigTask_Config_Resource_PackageResource_Yum
-	//	*ApplyConfigTask_Config_Resource_PackageResource_Zypper_
-	//	*ApplyConfigTask_Config_Resource_PackageResource_Rpm
-	//	*ApplyConfigTask_Config_Resource_PackageResource_Googet
-	//	*ApplyConfigTask_Config_Resource_PackageResource_Msi
-	SystemPackage isApplyConfigTask_Config_Resource_PackageResource_SystemPackage `protobuf_oneof:"system_package"`
+	Validate *ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec `protobuf:"bytes,1,opt,name=validate,proto3" json:"validate,omitempty"`
+	Enforce  *ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec `protobuf:"bytes,2,opt,name=enforce,proto3" json:"enforce,omitempty"`
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource) Reset() {
-	*x = ApplyConfigTask_Config_Resource_PackageResource{}
+func (x *ApplyConfigTask_OSPolicy_Resource_ExecResource) Reset() {
+	*x = ApplyConfigTask_OSPolicy_Resource_ExecResource{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1984,13 +2156,13 @@ func (x *ApplyConfigTask_Config_Resource_PackageResource) Reset() {
 	}
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource) String() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_ExecResource) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config_Resource_PackageResource) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy_Resource_ExecResource) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy_Resource_ExecResource) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2002,142 +2174,41 @@ func (x *ApplyConfigTask_Config_Resource_PackageResource) ProtoReflect() protore
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_PackageResource.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_Resource_PackageResource) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 1}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_ExecResource.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy_Resource_ExecResource) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 3}
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource) GetDesiredState() ApplyConfigTask_Config_Resource_PackageResource_DesiredState {
+func (x *ApplyConfigTask_OSPolicy_Resource_ExecResource) GetValidate() *ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec {
 	if x != nil {
-		return x.DesiredState
-	}
-	return ApplyConfigTask_Config_Resource_PackageResource_DESIRED_STATE_UNSPECIFIED
-}
-
-func (m *ApplyConfigTask_Config_Resource_PackageResource) GetSystemPackage() isApplyConfigTask_Config_Resource_PackageResource_SystemPackage {
-	if m != nil {
-		return m.SystemPackage
+		return x.Validate
 	}
 	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource) GetApt() *ApplyConfigTask_Config_Resource_PackageResource_APT {
-	if x, ok := x.GetSystemPackage().(*ApplyConfigTask_Config_Resource_PackageResource_Apt); ok {
-		return x.Apt
+func (x *ApplyConfigTask_OSPolicy_Resource_ExecResource) GetEnforce() *ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec {
+	if x != nil {
+		return x.Enforce
 	}
 	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource) GetDeb() *ApplyConfigTask_Config_Resource_PackageResource_Deb {
-	if x, ok := x.GetSystemPackage().(*ApplyConfigTask_Config_Resource_PackageResource_Deb_); ok {
-		return x.Deb
-	}
-	return nil
-}
-
-func (x *ApplyConfigTask_Config_Resource_PackageResource) GetYum() *ApplyConfigTask_Config_Resource_PackageResource_YUM {
-	if x, ok := x.GetSystemPackage().(*ApplyConfigTask_Config_Resource_PackageResource_Yum); ok {
-		return x.Yum
-	}
-	return nil
-}
-
-func (x *ApplyConfigTask_Config_Resource_PackageResource) GetZypper() *ApplyConfigTask_Config_Resource_PackageResource_Zypper {
-	if x, ok := x.GetSystemPackage().(*ApplyConfigTask_Config_Resource_PackageResource_Zypper_); ok {
-		return x.Zypper
-	}
-	return nil
-}
-
-func (x *ApplyConfigTask_Config_Resource_PackageResource) GetRpm() *ApplyConfigTask_Config_Resource_PackageResource_RPM {
-	if x, ok := x.GetSystemPackage().(*ApplyConfigTask_Config_Resource_PackageResource_Rpm); ok {
-		return x.Rpm
-	}
-	return nil
-}
-
-func (x *ApplyConfigTask_Config_Resource_PackageResource) GetGooget() *ApplyConfigTask_Config_Resource_PackageResource_GooGet {
-	if x, ok := x.GetSystemPackage().(*ApplyConfigTask_Config_Resource_PackageResource_Googet); ok {
-		return x.Googet
-	}
-	return nil
-}
-
-func (x *ApplyConfigTask_Config_Resource_PackageResource) GetMsi() *ApplyConfigTask_Config_Resource_PackageResource_MSI {
-	if x, ok := x.GetSystemPackage().(*ApplyConfigTask_Config_Resource_PackageResource_Msi); ok {
-		return x.Msi
-	}
-	return nil
-}
-
-type isApplyConfigTask_Config_Resource_PackageResource_SystemPackage interface {
-	isApplyConfigTask_Config_Resource_PackageResource_SystemPackage()
-}
-
-type ApplyConfigTask_Config_Resource_PackageResource_Apt struct {
-	Apt *ApplyConfigTask_Config_Resource_PackageResource_APT `protobuf:"bytes,2,opt,name=apt,proto3,oneof"`
-}
-
-type ApplyConfigTask_Config_Resource_PackageResource_Deb_ struct {
-	Deb *ApplyConfigTask_Config_Resource_PackageResource_Deb `protobuf:"bytes,3,opt,name=deb,proto3,oneof"`
-}
-
-type ApplyConfigTask_Config_Resource_PackageResource_Yum struct {
-	Yum *ApplyConfigTask_Config_Resource_PackageResource_YUM `protobuf:"bytes,4,opt,name=yum,proto3,oneof"`
-}
-
-type ApplyConfigTask_Config_Resource_PackageResource_Zypper_ struct {
-	Zypper *ApplyConfigTask_Config_Resource_PackageResource_Zypper `protobuf:"bytes,5,opt,name=zypper,proto3,oneof"`
-}
-
-type ApplyConfigTask_Config_Resource_PackageResource_Rpm struct {
-	Rpm *ApplyConfigTask_Config_Resource_PackageResource_RPM `protobuf:"bytes,6,opt,name=rpm,proto3,oneof"`
-}
-
-type ApplyConfigTask_Config_Resource_PackageResource_Googet struct {
-	Googet *ApplyConfigTask_Config_Resource_PackageResource_GooGet `protobuf:"bytes,7,opt,name=googet,proto3,oneof"`
-}
-
-type ApplyConfigTask_Config_Resource_PackageResource_Msi struct {
-	Msi *ApplyConfigTask_Config_Resource_PackageResource_MSI `protobuf:"bytes,8,opt,name=msi,proto3,oneof"`
-}
-
-func (*ApplyConfigTask_Config_Resource_PackageResource_Apt) isApplyConfigTask_Config_Resource_PackageResource_SystemPackage() {
-}
-
-func (*ApplyConfigTask_Config_Resource_PackageResource_Deb_) isApplyConfigTask_Config_Resource_PackageResource_SystemPackage() {
-}
-
-func (*ApplyConfigTask_Config_Resource_PackageResource_Yum) isApplyConfigTask_Config_Resource_PackageResource_SystemPackage() {
-}
-
-func (*ApplyConfigTask_Config_Resource_PackageResource_Zypper_) isApplyConfigTask_Config_Resource_PackageResource_SystemPackage() {
-}
-
-func (*ApplyConfigTask_Config_Resource_PackageResource_Rpm) isApplyConfigTask_Config_Resource_PackageResource_SystemPackage() {
-}
-
-func (*ApplyConfigTask_Config_Resource_PackageResource_Googet) isApplyConfigTask_Config_Resource_PackageResource_SystemPackage() {
-}
-
-func (*ApplyConfigTask_Config_Resource_PackageResource_Msi) isApplyConfigTask_Config_Resource_PackageResource_SystemPackage() {
-}
-
-type ApplyConfigTask_Config_Resource_RepositoryResource struct {
+type ApplyConfigTask_OSPolicy_Resource_FileResource struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Types that are assignable to Repository:
-	//	*ApplyConfigTask_Config_Resource_RepositoryResource_Apt
-	//	*ApplyConfigTask_Config_Resource_RepositoryResource_Yum
-	//	*ApplyConfigTask_Config_Resource_RepositoryResource_Zypper
-	//	*ApplyConfigTask_Config_Resource_RepositoryResource_Goo
-	Repository isApplyConfigTask_Config_Resource_RepositoryResource_Repository `protobuf_oneof:"repository"`
+	// Types that are assignable to Source:
+	//	*ApplyConfigTask_OSPolicy_Resource_FileResource_File
+	//	*ApplyConfigTask_OSPolicy_Resource_FileResource_Content
+	Source      isApplyConfigTask_OSPolicy_Resource_FileResource_Source     `protobuf_oneof:"source"`
+	Path        string                                                      `protobuf:"bytes,3,opt,name=path,proto3" json:"path,omitempty"`
+	State       ApplyConfigTask_OSPolicy_Resource_FileResource_DesiredState `protobuf:"varint,4,opt,name=state,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask_OSPolicy_Resource_FileResource_DesiredState" json:"state,omitempty"`
+	Permissions string                                                      `protobuf:"bytes,5,opt,name=permissions,proto3" json:"permissions,omitempty"`
 }
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource) Reset() {
-	*x = ApplyConfigTask_Config_Resource_RepositoryResource{}
+func (x *ApplyConfigTask_OSPolicy_Resource_FileResource) Reset() {
+	*x = ApplyConfigTask_OSPolicy_Resource_FileResource{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2145,13 +2216,13 @@ func (x *ApplyConfigTask_Config_Resource_RepositoryResource) Reset() {
 	}
 }
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource) String() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_FileResource) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config_Resource_RepositoryResource) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy_Resource_FileResource) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy_Resource_FileResource) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2163,89 +2234,85 @@ func (x *ApplyConfigTask_Config_Resource_RepositoryResource) ProtoReflect() prot
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_RepositoryResource.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_Resource_RepositoryResource) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 2}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_FileResource.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy_Resource_FileResource) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 4}
 }
 
-func (m *ApplyConfigTask_Config_Resource_RepositoryResource) GetRepository() isApplyConfigTask_Config_Resource_RepositoryResource_Repository {
+func (m *ApplyConfigTask_OSPolicy_Resource_FileResource) GetSource() isApplyConfigTask_OSPolicy_Resource_FileResource_Source {
 	if m != nil {
-		return m.Repository
+		return m.Source
 	}
 	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource) GetApt() *ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository {
-	if x, ok := x.GetRepository().(*ApplyConfigTask_Config_Resource_RepositoryResource_Apt); ok {
-		return x.Apt
+func (x *ApplyConfigTask_OSPolicy_Resource_FileResource) GetFile() *ApplyConfigTask_OSPolicy_Resource_File {
+	if x, ok := x.GetSource().(*ApplyConfigTask_OSPolicy_Resource_FileResource_File); ok {
+		return x.File
 	}
 	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource) GetYum() *ApplyConfigTask_Config_Resource_RepositoryResource_YumRepository {
-	if x, ok := x.GetRepository().(*ApplyConfigTask_Config_Resource_RepositoryResource_Yum); ok {
-		return x.Yum
+func (x *ApplyConfigTask_OSPolicy_Resource_FileResource) GetContent() string {
+	if x, ok := x.GetSource().(*ApplyConfigTask_OSPolicy_Resource_FileResource_Content); ok {
+		return x.Content
 	}
-	return nil
+	return ""
 }
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource) GetZypper() *ApplyConfigTask_Config_Resource_RepositoryResource_ZypperRepository {
-	if x, ok := x.GetRepository().(*ApplyConfigTask_Config_Resource_RepositoryResource_Zypper); ok {
-		return x.Zypper
+func (x *ApplyConfigTask_OSPolicy_Resource_FileResource) GetPath() string {
+	if x != nil {
+		return x.Path
 	}
-	return nil
+	return ""
 }
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource) GetGoo() *ApplyConfigTask_Config_Resource_RepositoryResource_GooRepository {
-	if x, ok := x.GetRepository().(*ApplyConfigTask_Config_Resource_RepositoryResource_Goo); ok {
-		return x.Goo
+func (x *ApplyConfigTask_OSPolicy_Resource_FileResource) GetState() ApplyConfigTask_OSPolicy_Resource_FileResource_DesiredState {
+	if x != nil {
+		return x.State
 	}
-	return nil
+	return ApplyConfigTask_OSPolicy_Resource_FileResource_DESIRED_STATE_UNSPECIFIED
 }
 
-type isApplyConfigTask_Config_Resource_RepositoryResource_Repository interface {
-	isApplyConfigTask_Config_Resource_RepositoryResource_Repository()
+func (x *ApplyConfigTask_OSPolicy_Resource_FileResource) GetPermissions() string {
+	if x != nil {
+		return x.Permissions
+	}
+	return ""
 }
 
-type ApplyConfigTask_Config_Resource_RepositoryResource_Apt struct {
-	Apt *ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository `protobuf:"bytes,1,opt,name=apt,proto3,oneof"`
+type isApplyConfigTask_OSPolicy_Resource_FileResource_Source interface {
+	isApplyConfigTask_OSPolicy_Resource_FileResource_Source()
 }
 
-type ApplyConfigTask_Config_Resource_RepositoryResource_Yum struct {
-	Yum *ApplyConfigTask_Config_Resource_RepositoryResource_YumRepository `protobuf:"bytes,2,opt,name=yum,proto3,oneof"`
+type ApplyConfigTask_OSPolicy_Resource_FileResource_File struct {
+	File *ApplyConfigTask_OSPolicy_Resource_File `protobuf:"bytes,1,opt,name=file,proto3,oneof"`
 }
 
-type ApplyConfigTask_Config_Resource_RepositoryResource_Zypper struct {
-	Zypper *ApplyConfigTask_Config_Resource_RepositoryResource_ZypperRepository `protobuf:"bytes,3,opt,name=zypper,proto3,oneof"`
+type ApplyConfigTask_OSPolicy_Resource_FileResource_Content struct {
+	Content string `protobuf:"bytes,2,opt,name=content,proto3,oneof"`
 }
 
-type ApplyConfigTask_Config_Resource_RepositoryResource_Goo struct {
-	Goo *ApplyConfigTask_Config_Resource_RepositoryResource_GooRepository `protobuf:"bytes,4,opt,name=goo,proto3,oneof"`
+func (*ApplyConfigTask_OSPolicy_Resource_FileResource_File) isApplyConfigTask_OSPolicy_Resource_FileResource_Source() {
 }
 
-func (*ApplyConfigTask_Config_Resource_RepositoryResource_Apt) isApplyConfigTask_Config_Resource_RepositoryResource_Repository() {
+func (*ApplyConfigTask_OSPolicy_Resource_FileResource_Content) isApplyConfigTask_OSPolicy_Resource_FileResource_Source() {
 }
 
-func (*ApplyConfigTask_Config_Resource_RepositoryResource_Yum) isApplyConfigTask_Config_Resource_RepositoryResource_Repository() {
-}
-
-func (*ApplyConfigTask_Config_Resource_RepositoryResource_Zypper) isApplyConfigTask_Config_Resource_RepositoryResource_Repository() {
-}
-
-func (*ApplyConfigTask_Config_Resource_RepositoryResource_Goo) isApplyConfigTask_Config_Resource_RepositoryResource_Repository() {
-}
-
-type ApplyConfigTask_Config_Resource_ExecResource struct {
+type ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Validate *ApplyConfigTask_Config_Resource_ExecResource_Exec `protobuf:"bytes,1,opt,name=validate,proto3" json:"validate,omitempty"`
-	Enforce  *ApplyConfigTask_Config_Resource_ExecResource_Exec `protobuf:"bytes,2,opt,name=enforce,proto3" json:"enforce,omitempty"`
+	Source      *ApplyConfigTask_OSPolicy_Resource_File                              `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
+	Destination string                                                               `protobuf:"bytes,2,opt,name=destination,proto3" json:"destination,omitempty"`
+	Type        ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType `protobuf:"varint,3,opt,name=type,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType" json:"type,omitempty"`
+	Creates     string                                                               `protobuf:"bytes,4,opt,name=creates,proto3" json:"creates,omitempty"`
+	Overwrite   bool                                                                 `protobuf:"varint,5,opt,name=overwrite,proto3" json:"overwrite,omitempty"`
 }
 
-func (x *ApplyConfigTask_Config_Resource_ExecResource) Reset() {
-	*x = ApplyConfigTask_Config_Resource_ExecResource{}
+func (x *ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource) Reset() {
+	*x = ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2253,13 +2320,13 @@ func (x *ApplyConfigTask_Config_Resource_ExecResource) Reset() {
 	}
 }
 
-func (x *ApplyConfigTask_Config_Resource_ExecResource) String() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config_Resource_ExecResource) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config_Resource_ExecResource) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2271,41 +2338,54 @@ func (x *ApplyConfigTask_Config_Resource_ExecResource) ProtoReflect() protorefle
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_ExecResource.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_Resource_ExecResource) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 3}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 5}
 }
 
-func (x *ApplyConfigTask_Config_Resource_ExecResource) GetValidate() *ApplyConfigTask_Config_Resource_ExecResource_Exec {
+func (x *ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource) GetSource() *ApplyConfigTask_OSPolicy_Resource_File {
 	if x != nil {
-		return x.Validate
+		return x.Source
 	}
 	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource_ExecResource) GetEnforce() *ApplyConfigTask_Config_Resource_ExecResource_Exec {
+func (x *ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource) GetDestination() string {
 	if x != nil {
-		return x.Enforce
+		return x.Destination
 	}
-	return nil
+	return ""
 }
 
-type ApplyConfigTask_Config_Resource_FileResource struct {
+func (x *ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource) GetType() ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType {
+	if x != nil {
+		return x.Type
+	}
+	return ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ARCHIVE_TYPE_UNSPECIFIED
+}
+
+func (x *ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource) GetCreates() string {
+	if x != nil {
+		return x.Creates
+	}
+	return ""
+}
+
+func (x *ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource) GetOverwrite() bool {
+	if x != nil {
+		return x.Overwrite
+	}
+	return false
+}
+
+type ApplyConfigTask_OSPolicy_Resource_ServiceResource struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
-
-	// Types that are assignable to Source:
-	//	*ApplyConfigTask_Config_Resource_FileResource_File
-	//	*ApplyConfigTask_Config_Resource_FileResource_Content
-	Source      isApplyConfigTask_Config_Resource_FileResource_Source     `protobuf_oneof:"source"`
-	Path        string                                                    `protobuf:"bytes,3,opt,name=path,proto3" json:"path,omitempty"`
-	State       ApplyConfigTask_Config_Resource_FileResource_DesiredState `protobuf:"varint,4,opt,name=state,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask_Config_Resource_FileResource_DesiredState" json:"state,omitempty"`
-	Permissions string                                                    `protobuf:"bytes,5,opt,name=permissions,proto3" json:"permissions,omitempty"`
 }
 
-func (x *ApplyConfigTask_Config_Resource_FileResource) Reset() {
-	*x = ApplyConfigTask_Config_Resource_FileResource{}
+func (x *ApplyConfigTask_OSPolicy_Resource_ServiceResource) Reset() {
+	*x = ApplyConfigTask_OSPolicy_Resource_ServiceResource{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2313,13 +2393,13 @@ func (x *ApplyConfigTask_Config_Resource_FileResource) Reset() {
 	}
 }
 
-func (x *ApplyConfigTask_Config_Resource_FileResource) String() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_ServiceResource) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config_Resource_FileResource) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy_Resource_ServiceResource) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config_Resource_FileResource) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy_Resource_ServiceResource) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2331,85 +2411,22 @@ func (x *ApplyConfigTask_Config_Resource_FileResource) ProtoReflect() protorefle
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_FileResource.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_Resource_FileResource) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 4}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_ServiceResource.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy_Resource_ServiceResource) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 6}
 }
 
-func (m *ApplyConfigTask_Config_Resource_FileResource) GetSource() isApplyConfigTask_Config_Resource_FileResource_Source {
-	if m != nil {
-		return m.Source
-	}
-	return nil
-}
-
-func (x *ApplyConfigTask_Config_Resource_FileResource) GetFile() *ApplyConfigTask_Config_Resource_File {
-	if x, ok := x.GetSource().(*ApplyConfigTask_Config_Resource_FileResource_File); ok {
-		return x.File
-	}
-	return nil
-}
-
-func (x *ApplyConfigTask_Config_Resource_FileResource) GetContent() string {
-	if x, ok := x.GetSource().(*ApplyConfigTask_Config_Resource_FileResource_Content); ok {
-		return x.Content
-	}
-	return ""
-}
-
-func (x *ApplyConfigTask_Config_Resource_FileResource) GetPath() string {
-	if x != nil {
-		return x.Path
-	}
-	return ""
-}
-
-func (x *ApplyConfigTask_Config_Resource_FileResource) GetState() ApplyConfigTask_Config_Resource_FileResource_DesiredState {
-	if x != nil {
-		return x.State
-	}
-	return ApplyConfigTask_Config_Resource_FileResource_DESIRED_STATE_UNSPECIFIED
-}
-
-func (x *ApplyConfigTask_Config_Resource_FileResource) GetPermissions() string {
-	if x != nil {
-		return x.Permissions
-	}
-	return ""
-}
-
-type isApplyConfigTask_Config_Resource_FileResource_Source interface {
-	isApplyConfigTask_Config_Resource_FileResource_Source()
-}
-
-type ApplyConfigTask_Config_Resource_FileResource_File struct {
-	File *ApplyConfigTask_Config_Resource_File `protobuf:"bytes,1,opt,name=file,proto3,oneof"`
-}
-
-type ApplyConfigTask_Config_Resource_FileResource_Content struct {
-	Content string `protobuf:"bytes,2,opt,name=content,proto3,oneof"`
-}
-
-func (*ApplyConfigTask_Config_Resource_FileResource_File) isApplyConfigTask_Config_Resource_FileResource_Source() {
-}
-
-func (*ApplyConfigTask_Config_Resource_FileResource_Content) isApplyConfigTask_Config_Resource_FileResource_Source() {
-}
-
-type ApplyConfigTask_Config_Resource_ExtractArchiveResource struct {
+type ApplyConfigTask_OSPolicy_Resource_File_Remote struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Source      *ApplyConfigTask_Config_Resource_File                              `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
-	Destination string                                                             `protobuf:"bytes,2,opt,name=destination,proto3" json:"destination,omitempty"`
-	Type        ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType `protobuf:"varint,3,opt,name=type,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType" json:"type,omitempty"`
-	Creates     string                                                             `protobuf:"bytes,4,opt,name=creates,proto3" json:"creates,omitempty"`
-	Overwrite   bool                                                               `protobuf:"varint,5,opt,name=overwrite,proto3" json:"overwrite,omitempty"`
+	Uri            string `protobuf:"bytes,1,opt,name=uri,proto3" json:"uri,omitempty"`
+	Sha256Checksum string `protobuf:"bytes,2,opt,name=sha256_checksum,json=sha256Checksum,proto3" json:"sha256_checksum,omitempty"`
 }
 
-func (x *ApplyConfigTask_Config_Resource_ExtractArchiveResource) Reset() {
-	*x = ApplyConfigTask_Config_Resource_ExtractArchiveResource{}
+func (x *ApplyConfigTask_OSPolicy_Resource_File_Remote) Reset() {
+	*x = ApplyConfigTask_OSPolicy_Resource_File_Remote{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2417,13 +2434,13 @@ func (x *ApplyConfigTask_Config_Resource_ExtractArchiveResource) Reset() {
 	}
 }
 
-func (x *ApplyConfigTask_Config_Resource_ExtractArchiveResource) String() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_File_Remote) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config_Resource_ExtractArchiveResource) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy_Resource_File_Remote) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config_Resource_ExtractArchiveResource) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy_Resource_File_Remote) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2435,54 +2452,37 @@ func (x *ApplyConfigTask_Config_Resource_ExtractArchiveResource) ProtoReflect() 
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_ExtractArchiveResource.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_Resource_ExtractArchiveResource) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 5}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_File_Remote.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy_Resource_File_Remote) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 0, 0}
 }
 
-func (x *ApplyConfigTask_Config_Resource_ExtractArchiveResource) GetSource() *ApplyConfigTask_Config_Resource_File {
+func (x *ApplyConfigTask_OSPolicy_Resource_File_Remote) GetUri() string {
 	if x != nil {
-		return x.Source
-	}
-	return nil
-}
-
-func (x *ApplyConfigTask_Config_Resource_ExtractArchiveResource) GetDestination() string {
-	if x != nil {
-		return x.Destination
+		return x.Uri
 	}
 	return ""
 }
 
-func (x *ApplyConfigTask_Config_Resource_ExtractArchiveResource) GetType() ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType {
+func (x *ApplyConfigTask_OSPolicy_Resource_File_Remote) GetSha256Checksum() string {
 	if x != nil {
-		return x.Type
-	}
-	return ApplyConfigTask_Config_Resource_ExtractArchiveResource_ARCHIVE_TYPE_UNSPECIFIED
-}
-
-func (x *ApplyConfigTask_Config_Resource_ExtractArchiveResource) GetCreates() string {
-	if x != nil {
-		return x.Creates
+		return x.Sha256Checksum
 	}
 	return ""
 }
 
-func (x *ApplyConfigTask_Config_Resource_ExtractArchiveResource) GetOverwrite() bool {
-	if x != nil {
-		return x.Overwrite
-	}
-	return false
-}
-
-type ApplyConfigTask_Config_Resource_ServiceResource struct {
+type ApplyConfigTask_OSPolicy_Resource_File_Gcs struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
+
+	Bucket     string `protobuf:"bytes,1,opt,name=bucket,proto3" json:"bucket,omitempty"`
+	Object     string `protobuf:"bytes,2,opt,name=object,proto3" json:"object,omitempty"`
+	Generation int64  `protobuf:"varint,3,opt,name=generation,proto3" json:"generation,omitempty"`
 }
 
-func (x *ApplyConfigTask_Config_Resource_ServiceResource) Reset() {
-	*x = ApplyConfigTask_Config_Resource_ServiceResource{}
+func (x *ApplyConfigTask_OSPolicy_Resource_File_Gcs) Reset() {
+	*x = ApplyConfigTask_OSPolicy_Resource_File_Gcs{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2490,13 +2490,13 @@ func (x *ApplyConfigTask_Config_Resource_ServiceResource) Reset() {
 	}
 }
 
-func (x *ApplyConfigTask_Config_Resource_ServiceResource) String() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_File_Gcs) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config_Resource_ServiceResource) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy_Resource_File_Gcs) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config_Resource_ServiceResource) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy_Resource_File_Gcs) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2508,22 +2508,43 @@ func (x *ApplyConfigTask_Config_Resource_ServiceResource) ProtoReflect() protore
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_ServiceResource.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_Resource_ServiceResource) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 6}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_File_Gcs.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy_Resource_File_Gcs) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 0, 1}
 }
 
-type ApplyConfigTask_Config_Resource_File_Remote struct {
+func (x *ApplyConfigTask_OSPolicy_Resource_File_Gcs) GetBucket() string {
+	if x != nil {
+		return x.Bucket
+	}
+	return ""
+}
+
+func (x *ApplyConfigTask_OSPolicy_Resource_File_Gcs) GetObject() string {
+	if x != nil {
+		return x.Object
+	}
+	return ""
+}
+
+func (x *ApplyConfigTask_OSPolicy_Resource_File_Gcs) GetGeneration() int64 {
+	if x != nil {
+		return x.Generation
+	}
+	return 0
+}
+
+type ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Uri            string `protobuf:"bytes,1,opt,name=uri,proto3" json:"uri,omitempty"`
-	Sha256Checksum string `protobuf:"bytes,2,opt,name=sha256_checksum,json=sha256Checksum,proto3" json:"sha256_checksum,omitempty"`
+	Source   *ApplyConfigTask_OSPolicy_Resource_File `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
+	PullDeps bool                                    `protobuf:"varint,2,opt,name=pull_deps,json=pullDeps,proto3" json:"pull_deps,omitempty"`
 }
 
-func (x *ApplyConfigTask_Config_Resource_File_Remote) Reset() {
-	*x = ApplyConfigTask_Config_Resource_File_Remote{}
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb) Reset() {
+	*x = ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2531,13 +2552,13 @@ func (x *ApplyConfigTask_Config_Resource_File_Remote) Reset() {
 	}
 }
 
-func (x *ApplyConfigTask_Config_Resource_File_Remote) String() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config_Resource_File_Remote) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config_Resource_File_Remote) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2549,37 +2570,35 @@ func (x *ApplyConfigTask_Config_Resource_File_Remote) ProtoReflect() protoreflec
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_File_Remote.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_Resource_File_Remote) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 0, 0}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 1, 0}
 }
 
-func (x *ApplyConfigTask_Config_Resource_File_Remote) GetUri() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb) GetSource() *ApplyConfigTask_OSPolicy_Resource_File {
 	if x != nil {
-		return x.Uri
+		return x.Source
 	}
-	return ""
+	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource_File_Remote) GetSha256Checksum() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb) GetPullDeps() bool {
 	if x != nil {
-		return x.Sha256Checksum
+		return x.PullDeps
 	}
-	return ""
+	return false
 }
 
-type ApplyConfigTask_Config_Resource_File_Gcs struct {
+type ApplyConfigTask_OSPolicy_Resource_PackageResource_APT struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Bucket     string `protobuf:"bytes,1,opt,name=bucket,proto3" json:"bucket,omitempty"`
-	Object     string `protobuf:"bytes,2,opt,name=object,proto3" json:"object,omitempty"`
-	Generation int64  `protobuf:"varint,3,opt,name=generation,proto3" json:"generation,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 }
 
-func (x *ApplyConfigTask_Config_Resource_File_Gcs) Reset() {
-	*x = ApplyConfigTask_Config_Resource_File_Gcs{}
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_APT) Reset() {
+	*x = ApplyConfigTask_OSPolicy_Resource_PackageResource_APT{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2587,13 +2606,13 @@ func (x *ApplyConfigTask_Config_Resource_File_Gcs) Reset() {
 	}
 }
 
-func (x *ApplyConfigTask_Config_Resource_File_Gcs) String() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_APT) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config_Resource_File_Gcs) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource_APT) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config_Resource_File_Gcs) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_APT) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2605,43 +2624,29 @@ func (x *ApplyConfigTask_Config_Resource_File_Gcs) ProtoReflect() protoreflect.M
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_File_Gcs.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_Resource_File_Gcs) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 0, 1}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_PackageResource_APT.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource_APT) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 1, 1}
 }
 
-func (x *ApplyConfigTask_Config_Resource_File_Gcs) GetBucket() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_APT) GetName() string {
 	if x != nil {
-		return x.Bucket
+		return x.Name
 	}
 	return ""
 }
 
-func (x *ApplyConfigTask_Config_Resource_File_Gcs) GetObject() string {
-	if x != nil {
-		return x.Object
-	}
-	return ""
-}
-
-func (x *ApplyConfigTask_Config_Resource_File_Gcs) GetGeneration() int64 {
-	if x != nil {
-		return x.Generation
-	}
-	return 0
-}
-
-type ApplyConfigTask_Config_Resource_PackageResource_Deb struct {
+type ApplyConfigTask_OSPolicy_Resource_PackageResource_RPM struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Source   *ApplyConfigTask_Config_Resource_File `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
-	PullDeps bool                                  `protobuf:"varint,2,opt,name=pull_deps,json=pullDeps,proto3" json:"pull_deps,omitempty"`
+	Source   *ApplyConfigTask_OSPolicy_Resource_File `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
+	PullDeps bool                                    `protobuf:"varint,2,opt,name=pull_deps,json=pullDeps,proto3" json:"pull_deps,omitempty"`
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_Deb) Reset() {
-	*x = ApplyConfigTask_Config_Resource_PackageResource_Deb{}
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_RPM) Reset() {
+	*x = ApplyConfigTask_OSPolicy_Resource_PackageResource_RPM{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[24]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2649,13 +2654,13 @@ func (x *ApplyConfigTask_Config_Resource_PackageResource_Deb) Reset() {
 	}
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_Deb) String() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_RPM) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config_Resource_PackageResource_Deb) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource_RPM) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_Deb) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_RPM) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[24]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2667,26 +2672,26 @@ func (x *ApplyConfigTask_Config_Resource_PackageResource_Deb) ProtoReflect() pro
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_PackageResource_Deb.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_Resource_PackageResource_Deb) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 1, 0}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_PackageResource_RPM.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource_RPM) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 1, 2}
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_Deb) GetSource() *ApplyConfigTask_Config_Resource_File {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_RPM) GetSource() *ApplyConfigTask_OSPolicy_Resource_File {
 	if x != nil {
 		return x.Source
 	}
 	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_Deb) GetPullDeps() bool {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_RPM) GetPullDeps() bool {
 	if x != nil {
 		return x.PullDeps
 	}
 	return false
 }
 
-type ApplyConfigTask_Config_Resource_PackageResource_APT struct {
+type ApplyConfigTask_OSPolicy_Resource_PackageResource_YUM struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -2694,8 +2699,8 @@ type ApplyConfigTask_Config_Resource_PackageResource_APT struct {
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_APT) Reset() {
-	*x = ApplyConfigTask_Config_Resource_PackageResource_APT{}
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_YUM) Reset() {
+	*x = ApplyConfigTask_OSPolicy_Resource_PackageResource_YUM{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[25]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2703,13 +2708,13 @@ func (x *ApplyConfigTask_Config_Resource_PackageResource_APT) Reset() {
 	}
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_APT) String() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_YUM) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config_Resource_PackageResource_APT) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource_YUM) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_APT) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_YUM) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[25]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2721,29 +2726,28 @@ func (x *ApplyConfigTask_Config_Resource_PackageResource_APT) ProtoReflect() pro
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_PackageResource_APT.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_Resource_PackageResource_APT) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 1, 1}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_PackageResource_YUM.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource_YUM) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 1, 3}
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_APT) GetName() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_YUM) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-type ApplyConfigTask_Config_Resource_PackageResource_RPM struct {
+type ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Source   *ApplyConfigTask_Config_Resource_File `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
-	PullDeps bool                                  `protobuf:"varint,2,opt,name=pull_deps,json=pullDeps,proto3" json:"pull_deps,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_RPM) Reset() {
-	*x = ApplyConfigTask_Config_Resource_PackageResource_RPM{}
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper) Reset() {
+	*x = ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[26]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2751,13 +2755,13 @@ func (x *ApplyConfigTask_Config_Resource_PackageResource_RPM) Reset() {
 	}
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_RPM) String() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config_Resource_PackageResource_RPM) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_RPM) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[26]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2769,26 +2773,19 @@ func (x *ApplyConfigTask_Config_Resource_PackageResource_RPM) ProtoReflect() pro
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_PackageResource_RPM.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_Resource_PackageResource_RPM) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 1, 2}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 1, 4}
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_RPM) GetSource() *ApplyConfigTask_Config_Resource_File {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper) GetName() string {
 	if x != nil {
-		return x.Source
+		return x.Name
 	}
-	return nil
+	return ""
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_RPM) GetPullDeps() bool {
-	if x != nil {
-		return x.PullDeps
-	}
-	return false
-}
-
-type ApplyConfigTask_Config_Resource_PackageResource_YUM struct {
+type ApplyConfigTask_OSPolicy_Resource_PackageResource_GooGet struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -2796,8 +2793,8 @@ type ApplyConfigTask_Config_Resource_PackageResource_YUM struct {
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_YUM) Reset() {
-	*x = ApplyConfigTask_Config_Resource_PackageResource_YUM{}
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_GooGet) Reset() {
+	*x = ApplyConfigTask_OSPolicy_Resource_PackageResource_GooGet{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[27]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2805,13 +2802,13 @@ func (x *ApplyConfigTask_Config_Resource_PackageResource_YUM) Reset() {
 	}
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_YUM) String() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_GooGet) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config_Resource_PackageResource_YUM) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource_GooGet) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_YUM) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_GooGet) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[27]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2823,28 +2820,30 @@ func (x *ApplyConfigTask_Config_Resource_PackageResource_YUM) ProtoReflect() pro
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_PackageResource_YUM.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_Resource_PackageResource_YUM) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 1, 3}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_PackageResource_GooGet.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource_GooGet) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 1, 5}
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_YUM) GetName() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_GooGet) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-type ApplyConfigTask_Config_Resource_PackageResource_Zypper struct {
+type ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Source              *ApplyConfigTask_OSPolicy_Resource_File `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
+	Flags               []string                                `protobuf:"bytes,2,rep,name=flags,proto3" json:"flags,omitempty"`
+	AllowedSuccessCodes []int32                                 `protobuf:"varint,3,rep,packed,name=allowed_success_codes,json=allowedSuccessCodes,proto3" json:"allowed_success_codes,omitempty"`
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_Zypper) Reset() {
-	*x = ApplyConfigTask_Config_Resource_PackageResource_Zypper{}
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI) Reset() {
+	*x = ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2852,13 +2851,13 @@ func (x *ApplyConfigTask_Config_Resource_PackageResource_Zypper) Reset() {
 	}
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_Zypper) String() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config_Resource_PackageResource_Zypper) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_Zypper) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2870,28 +2869,46 @@ func (x *ApplyConfigTask_Config_Resource_PackageResource_Zypper) ProtoReflect() 
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_PackageResource_Zypper.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_Resource_PackageResource_Zypper) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 1, 4}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 1, 6}
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_Zypper) GetName() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI) GetSource() *ApplyConfigTask_OSPolicy_Resource_File {
 	if x != nil {
-		return x.Name
+		return x.Source
 	}
-	return ""
+	return nil
 }
 
-type ApplyConfigTask_Config_Resource_PackageResource_GooGet struct {
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI) GetFlags() []string {
+	if x != nil {
+		return x.Flags
+	}
+	return nil
+}
+
+func (x *ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI) GetAllowedSuccessCodes() []int32 {
+	if x != nil {
+		return x.AllowedSuccessCodes
+	}
+	return nil
+}
+
+type ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	ArchiveType  ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ArchiveType `protobuf:"varint,1,opt,name=archive_type,json=archiveType,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ArchiveType" json:"archive_type,omitempty"`
+	Uri          string                                                                         `protobuf:"bytes,2,opt,name=uri,proto3" json:"uri,omitempty"`
+	Distribution string                                                                         `protobuf:"bytes,3,opt,name=distribution,proto3" json:"distribution,omitempty"`
+	Components   []string                                                                       `protobuf:"bytes,4,rep,name=components,proto3" json:"components,omitempty"`
+	GpgKey       string                                                                         `protobuf:"bytes,5,opt,name=gpg_key,json=gpgKey,proto3" json:"gpg_key,omitempty"`
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_GooGet) Reset() {
-	*x = ApplyConfigTask_Config_Resource_PackageResource_GooGet{}
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository) Reset() {
+	*x = ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[29]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2899,13 +2916,13 @@ func (x *ApplyConfigTask_Config_Resource_PackageResource_GooGet) Reset() {
 	}
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_GooGet) String() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config_Resource_PackageResource_GooGet) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_GooGet) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[29]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2917,30 +2934,59 @@ func (x *ApplyConfigTask_Config_Resource_PackageResource_GooGet) ProtoReflect() 
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_PackageResource_GooGet.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_Resource_PackageResource_GooGet) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 1, 5}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 2, 0}
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_GooGet) GetName() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository) GetArchiveType() ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ArchiveType {
 	if x != nil {
-		return x.Name
+		return x.ArchiveType
+	}
+	return ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ARCHIVE_TYPE_UNSPECIFIED
+}
+
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository) GetUri() string {
+	if x != nil {
+		return x.Uri
 	}
 	return ""
 }
 
-type ApplyConfigTask_Config_Resource_PackageResource_MSI struct {
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository) GetDistribution() string {
+	if x != nil {
+		return x.Distribution
+	}
+	return ""
+}
+
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository) GetComponents() []string {
+	if x != nil {
+		return x.Components
+	}
+	return nil
+}
+
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository) GetGpgKey() string {
+	if x != nil {
+		return x.GpgKey
+	}
+	return ""
+}
+
+type ApplyConfigTask_OSPolicy_Resource_RepositoryResource_YumRepository struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Source              *ApplyConfigTask_Config_Resource_File `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
-	Flags               []string                              `protobuf:"bytes,2,rep,name=flags,proto3" json:"flags,omitempty"`
-	AllowedSuccessCodes []int32                               `protobuf:"varint,3,rep,packed,name=allowed_success_codes,json=allowedSuccessCodes,proto3" json:"allowed_success_codes,omitempty"`
+	Id          string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	DisplayName string   `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	BaseUrl     string   `protobuf:"bytes,3,opt,name=base_url,json=baseUrl,proto3" json:"base_url,omitempty"`
+	GpgKeys     []string `protobuf:"bytes,4,rep,name=gpg_keys,json=gpgKeys,proto3" json:"gpg_keys,omitempty"`
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_MSI) Reset() {
-	*x = ApplyConfigTask_Config_Resource_PackageResource_MSI{}
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_YumRepository) Reset() {
+	*x = ApplyConfigTask_OSPolicy_Resource_RepositoryResource_YumRepository{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[30]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2948,13 +2994,13 @@ func (x *ApplyConfigTask_Config_Resource_PackageResource_MSI) Reset() {
 	}
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_MSI) String() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_YumRepository) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config_Resource_PackageResource_MSI) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_YumRepository) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_MSI) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_YumRepository) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[30]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2966,46 +3012,52 @@ func (x *ApplyConfigTask_Config_Resource_PackageResource_MSI) ProtoReflect() pro
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_PackageResource_MSI.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_Resource_PackageResource_MSI) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 1, 6}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_RepositoryResource_YumRepository.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_YumRepository) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 2, 1}
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_MSI) GetSource() *ApplyConfigTask_Config_Resource_File {
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_YumRepository) GetId() string {
 	if x != nil {
-		return x.Source
+		return x.Id
+	}
+	return ""
+}
+
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_YumRepository) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_YumRepository) GetBaseUrl() string {
+	if x != nil {
+		return x.BaseUrl
+	}
+	return ""
+}
+
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_YumRepository) GetGpgKeys() []string {
+	if x != nil {
+		return x.GpgKeys
 	}
 	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource_PackageResource_MSI) GetFlags() []string {
-	if x != nil {
-		return x.Flags
-	}
-	return nil
-}
-
-func (x *ApplyConfigTask_Config_Resource_PackageResource_MSI) GetAllowedSuccessCodes() []int32 {
-	if x != nil {
-		return x.AllowedSuccessCodes
-	}
-	return nil
-}
-
-type ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository struct {
+type ApplyConfigTask_OSPolicy_Resource_RepositoryResource_ZypperRepository struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ArchiveType  ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ArchiveType `protobuf:"varint,1,opt,name=archive_type,json=archiveType,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ArchiveType" json:"archive_type,omitempty"`
-	Uri          string                                                                       `protobuf:"bytes,2,opt,name=uri,proto3" json:"uri,omitempty"`
-	Distribution string                                                                       `protobuf:"bytes,3,opt,name=distribution,proto3" json:"distribution,omitempty"`
-	Components   []string                                                                     `protobuf:"bytes,4,rep,name=components,proto3" json:"components,omitempty"`
-	GpgKey       string                                                                       `protobuf:"bytes,5,opt,name=gpg_key,json=gpgKey,proto3" json:"gpg_key,omitempty"`
+	Id          string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	DisplayName string   `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	BaseUrl     string   `protobuf:"bytes,3,opt,name=base_url,json=baseUrl,proto3" json:"base_url,omitempty"`
+	GpgKeys     []string `protobuf:"bytes,4,rep,name=gpg_keys,json=gpgKeys,proto3" json:"gpg_keys,omitempty"`
 }
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository) Reset() {
-	*x = ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository{}
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_ZypperRepository) Reset() {
+	*x = ApplyConfigTask_OSPolicy_Resource_RepositoryResource_ZypperRepository{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[31]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3013,13 +3065,13 @@ func (x *ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository) Reset
 	}
 }
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository) String() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_ZypperRepository) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_ZypperRepository) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_ZypperRepository) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[31]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3031,59 +3083,50 @@ func (x *ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository) Proto
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 2, 0}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_RepositoryResource_ZypperRepository.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_ZypperRepository) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 2, 2}
 }
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository) GetArchiveType() ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ArchiveType {
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_ZypperRepository) GetId() string {
 	if x != nil {
-		return x.ArchiveType
-	}
-	return ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ARCHIVE_TYPE_UNSPECIFIED
-}
-
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository) GetUri() string {
-	if x != nil {
-		return x.Uri
+		return x.Id
 	}
 	return ""
 }
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository) GetDistribution() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_ZypperRepository) GetDisplayName() string {
 	if x != nil {
-		return x.Distribution
+		return x.DisplayName
 	}
 	return ""
 }
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository) GetComponents() []string {
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_ZypperRepository) GetBaseUrl() string {
 	if x != nil {
-		return x.Components
+		return x.BaseUrl
+	}
+	return ""
+}
+
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_ZypperRepository) GetGpgKeys() []string {
+	if x != nil {
+		return x.GpgKeys
 	}
 	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository) GetGpgKey() string {
-	if x != nil {
-		return x.GpgKey
-	}
-	return ""
-}
-
-type ApplyConfigTask_Config_Resource_RepositoryResource_YumRepository struct {
+type ApplyConfigTask_OSPolicy_Resource_RepositoryResource_GooRepository struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	DisplayName string   `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
-	BaseUrl     string   `protobuf:"bytes,3,opt,name=base_url,json=baseUrl,proto3" json:"base_url,omitempty"`
-	GpgKeys     []string `protobuf:"bytes,4,rep,name=gpg_keys,json=gpgKeys,proto3" json:"gpg_keys,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Url  string `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
 }
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_YumRepository) Reset() {
-	*x = ApplyConfigTask_Config_Resource_RepositoryResource_YumRepository{}
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_GooRepository) Reset() {
+	*x = ApplyConfigTask_OSPolicy_Resource_RepositoryResource_GooRepository{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[32]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3091,13 +3134,13 @@ func (x *ApplyConfigTask_Config_Resource_RepositoryResource_YumRepository) Reset
 	}
 }
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_YumRepository) String() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_GooRepository) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config_Resource_RepositoryResource_YumRepository) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_GooRepository) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_YumRepository) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_GooRepository) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[32]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3109,52 +3152,41 @@ func (x *ApplyConfigTask_Config_Resource_RepositoryResource_YumRepository) Proto
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_RepositoryResource_YumRepository.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_Resource_RepositoryResource_YumRepository) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 2, 1}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_RepositoryResource_GooRepository.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_GooRepository) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 2, 3}
 }
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_YumRepository) GetId() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_GooRepository) GetName() string {
 	if x != nil {
-		return x.Id
+		return x.Name
 	}
 	return ""
 }
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_YumRepository) GetDisplayName() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_RepositoryResource_GooRepository) GetUrl() string {
 	if x != nil {
-		return x.DisplayName
+		return x.Url
 	}
 	return ""
 }
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_YumRepository) GetBaseUrl() string {
-	if x != nil {
-		return x.BaseUrl
-	}
-	return ""
-}
-
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_YumRepository) GetGpgKeys() []string {
-	if x != nil {
-		return x.GpgKeys
-	}
-	return nil
-}
-
-type ApplyConfigTask_Config_Resource_RepositoryResource_ZypperRepository struct {
+type ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id          string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	DisplayName string   `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
-	BaseUrl     string   `protobuf:"bytes,3,opt,name=base_url,json=baseUrl,proto3" json:"base_url,omitempty"`
-	GpgKeys     []string `protobuf:"bytes,4,rep,name=gpg_keys,json=gpgKeys,proto3" json:"gpg_keys,omitempty"`
+	// Types that are assignable to Source:
+	//	*ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_File
+	//	*ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Script
+	Source              isApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Source    `protobuf_oneof:"source"`
+	Args                []string                                                        `protobuf:"bytes,3,rep,name=args,proto3" json:"args,omitempty"`
+	AllowedSuccessCodes []int32                                                         `protobuf:"varint,4,rep,packed,name=allowed_success_codes,json=allowedSuccessCodes,proto3" json:"allowed_success_codes,omitempty"`
+	Interpreter         ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Interpreter `protobuf:"varint,5,opt,name=interpreter,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Interpreter" json:"interpreter,omitempty"`
 }
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_ZypperRepository) Reset() {
-	*x = ApplyConfigTask_Config_Resource_RepositoryResource_ZypperRepository{}
+func (x *ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec) Reset() {
+	*x = ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[33]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3162,13 +3194,13 @@ func (x *ApplyConfigTask_Config_Resource_RepositoryResource_ZypperRepository) Re
 	}
 }
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_ZypperRepository) String() string {
+func (x *ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTask_Config_Resource_RepositoryResource_ZypperRepository) ProtoMessage() {}
+func (*ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec) ProtoMessage() {}
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_ZypperRepository) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[33]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3180,367 +3212,69 @@ func (x *ApplyConfigTask_Config_Resource_RepositoryResource_ZypperRepository) Pr
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTask_Config_Resource_RepositoryResource_ZypperRepository.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_Resource_RepositoryResource_ZypperRepository) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 2, 2}
+// Deprecated: Use ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 0, 3, 0}
 }
 
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_ZypperRepository) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_ZypperRepository) GetDisplayName() string {
-	if x != nil {
-		return x.DisplayName
-	}
-	return ""
-}
-
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_ZypperRepository) GetBaseUrl() string {
-	if x != nil {
-		return x.BaseUrl
-	}
-	return ""
-}
-
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_ZypperRepository) GetGpgKeys() []string {
-	if x != nil {
-		return x.GpgKeys
-	}
-	return nil
-}
-
-type ApplyConfigTask_Config_Resource_RepositoryResource_GooRepository struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Url  string `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
-}
-
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_GooRepository) Reset() {
-	*x = ApplyConfigTask_Config_Resource_RepositoryResource_GooRepository{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[34]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_GooRepository) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ApplyConfigTask_Config_Resource_RepositoryResource_GooRepository) ProtoMessage() {}
-
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_GooRepository) ProtoReflect() protoreflect.Message {
-	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[34]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ApplyConfigTask_Config_Resource_RepositoryResource_GooRepository.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_Resource_RepositoryResource_GooRepository) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 2, 3}
-}
-
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_GooRepository) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *ApplyConfigTask_Config_Resource_RepositoryResource_GooRepository) GetUrl() string {
-	if x != nil {
-		return x.Url
-	}
-	return ""
-}
-
-type ApplyConfigTask_Config_Resource_ExecResource_Exec struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// Types that are assignable to Source:
-	//	*ApplyConfigTask_Config_Resource_ExecResource_Exec_File
-	//	*ApplyConfigTask_Config_Resource_ExecResource_Exec_Script
-	Source              isApplyConfigTask_Config_Resource_ExecResource_Exec_Source    `protobuf_oneof:"source"`
-	Args                []string                                                      `protobuf:"bytes,3,rep,name=args,proto3" json:"args,omitempty"`
-	AllowedSuccessCodes []int32                                                       `protobuf:"varint,4,rep,packed,name=allowed_success_codes,json=allowedSuccessCodes,proto3" json:"allowed_success_codes,omitempty"`
-	Interpreter         ApplyConfigTask_Config_Resource_ExecResource_Exec_Interpreter `protobuf:"varint,5,opt,name=interpreter,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask_Config_Resource_ExecResource_Exec_Interpreter" json:"interpreter,omitempty"`
-}
-
-func (x *ApplyConfigTask_Config_Resource_ExecResource_Exec) Reset() {
-	*x = ApplyConfigTask_Config_Resource_ExecResource_Exec{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[35]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ApplyConfigTask_Config_Resource_ExecResource_Exec) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ApplyConfigTask_Config_Resource_ExecResource_Exec) ProtoMessage() {}
-
-func (x *ApplyConfigTask_Config_Resource_ExecResource_Exec) ProtoReflect() protoreflect.Message {
-	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[35]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ApplyConfigTask_Config_Resource_ExecResource_Exec.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTask_Config_Resource_ExecResource_Exec) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{7, 0, 2, 3, 0}
-}
-
-func (m *ApplyConfigTask_Config_Resource_ExecResource_Exec) GetSource() isApplyConfigTask_Config_Resource_ExecResource_Exec_Source {
+func (m *ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec) GetSource() isApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Source {
 	if m != nil {
 		return m.Source
 	}
 	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource_ExecResource_Exec) GetFile() *ApplyConfigTask_Config_Resource_File {
-	if x, ok := x.GetSource().(*ApplyConfigTask_Config_Resource_ExecResource_Exec_File); ok {
+func (x *ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec) GetFile() *ApplyConfigTask_OSPolicy_Resource_File {
+	if x, ok := x.GetSource().(*ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_File); ok {
 		return x.File
 	}
 	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource_ExecResource_Exec) GetScript() string {
-	if x, ok := x.GetSource().(*ApplyConfigTask_Config_Resource_ExecResource_Exec_Script); ok {
+func (x *ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec) GetScript() string {
+	if x, ok := x.GetSource().(*ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Script); ok {
 		return x.Script
 	}
 	return ""
 }
 
-func (x *ApplyConfigTask_Config_Resource_ExecResource_Exec) GetArgs() []string {
+func (x *ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec) GetArgs() []string {
 	if x != nil {
 		return x.Args
 	}
 	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource_ExecResource_Exec) GetAllowedSuccessCodes() []int32 {
+func (x *ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec) GetAllowedSuccessCodes() []int32 {
 	if x != nil {
 		return x.AllowedSuccessCodes
 	}
 	return nil
 }
 
-func (x *ApplyConfigTask_Config_Resource_ExecResource_Exec) GetInterpreter() ApplyConfigTask_Config_Resource_ExecResource_Exec_Interpreter {
+func (x *ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec) GetInterpreter() ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Interpreter {
 	if x != nil {
 		return x.Interpreter
 	}
-	return ApplyConfigTask_Config_Resource_ExecResource_Exec_INTERPRETER_UNSPECIFIED
+	return ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_INTERPRETER_UNSPECIFIED
 }
 
-type isApplyConfigTask_Config_Resource_ExecResource_Exec_Source interface {
-	isApplyConfigTask_Config_Resource_ExecResource_Exec_Source()
+type isApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Source interface {
+	isApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Source()
 }
 
-type ApplyConfigTask_Config_Resource_ExecResource_Exec_File struct {
-	File *ApplyConfigTask_Config_Resource_File `protobuf:"bytes,1,opt,name=file,proto3,oneof"`
+type ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_File struct {
+	File *ApplyConfigTask_OSPolicy_Resource_File `protobuf:"bytes,1,opt,name=file,proto3,oneof"`
 }
 
-type ApplyConfigTask_Config_Resource_ExecResource_Exec_Script struct {
+type ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Script struct {
 	Script string `protobuf:"bytes,2,opt,name=script,proto3,oneof"`
 }
 
-func (*ApplyConfigTask_Config_Resource_ExecResource_Exec_File) isApplyConfigTask_Config_Resource_ExecResource_Exec_Source() {
+func (*ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_File) isApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Source() {
 }
 
-func (*ApplyConfigTask_Config_Resource_ExecResource_Exec_Script) isApplyConfigTask_Config_Resource_ExecResource_Exec_Source() {
-}
-
-type ApplyConfigTaskOutput_ConfigAssignmentResults struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Results []*ApplyConfigTaskOutput_ConfigAssignmentResult `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
-}
-
-func (x *ApplyConfigTaskOutput_ConfigAssignmentResults) Reset() {
-	*x = ApplyConfigTaskOutput_ConfigAssignmentResults{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[36]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ApplyConfigTaskOutput_ConfigAssignmentResults) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ApplyConfigTaskOutput_ConfigAssignmentResults) ProtoMessage() {}
-
-func (x *ApplyConfigTaskOutput_ConfigAssignmentResults) ProtoReflect() protoreflect.Message {
-	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[36]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ApplyConfigTaskOutput_ConfigAssignmentResults.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTaskOutput_ConfigAssignmentResults) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 0}
-}
-
-func (x *ApplyConfigTaskOutput_ConfigAssignmentResults) GetResults() []*ApplyConfigTaskOutput_ConfigAssignmentResult {
-	if x != nil {
-		return x.Results
-	}
-	return nil
-}
-
-type ApplyConfigTaskOutput_ConfigAssignmentResult struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	ConfigAssignment string `protobuf:"bytes,1,opt,name=config_assignment,json=configAssignment,proto3" json:"config_assignment,omitempty"`
-	// Types that are assignable to Result:
-	//	*ApplyConfigTaskOutput_ConfigAssignmentResult_OsPolicyResults
-	Result isApplyConfigTaskOutput_ConfigAssignmentResult_Result `protobuf_oneof:"result"`
-}
-
-func (x *ApplyConfigTaskOutput_ConfigAssignmentResult) Reset() {
-	*x = ApplyConfigTaskOutput_ConfigAssignmentResult{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[37]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ApplyConfigTaskOutput_ConfigAssignmentResult) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ApplyConfigTaskOutput_ConfigAssignmentResult) ProtoMessage() {}
-
-func (x *ApplyConfigTaskOutput_ConfigAssignmentResult) ProtoReflect() protoreflect.Message {
-	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[37]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ApplyConfigTaskOutput_ConfigAssignmentResult.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTaskOutput_ConfigAssignmentResult) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 1}
-}
-
-func (x *ApplyConfigTaskOutput_ConfigAssignmentResult) GetConfigAssignment() string {
-	if x != nil {
-		return x.ConfigAssignment
-	}
-	return ""
-}
-
-func (m *ApplyConfigTaskOutput_ConfigAssignmentResult) GetResult() isApplyConfigTaskOutput_ConfigAssignmentResult_Result {
-	if m != nil {
-		return m.Result
-	}
-	return nil
-}
-
-func (x *ApplyConfigTaskOutput_ConfigAssignmentResult) GetOsPolicyResults() *ApplyConfigTaskOutput_OSPolicyResults {
-	if x, ok := x.GetResult().(*ApplyConfigTaskOutput_ConfigAssignmentResult_OsPolicyResults); ok {
-		return x.OsPolicyResults
-	}
-	return nil
-}
-
-type isApplyConfigTaskOutput_ConfigAssignmentResult_Result interface {
-	isApplyConfigTaskOutput_ConfigAssignmentResult_Result()
-}
-
-type ApplyConfigTaskOutput_ConfigAssignmentResult_OsPolicyResults struct {
-	OsPolicyResults *ApplyConfigTaskOutput_OSPolicyResults `protobuf:"bytes,2,opt,name=os_policy_results,json=osPolicyResults,proto3,oneof"`
-}
-
-func (*ApplyConfigTaskOutput_ConfigAssignmentResult_OsPolicyResults) isApplyConfigTaskOutput_ConfigAssignmentResult_Result() {
-}
-
-type ApplyConfigTaskOutput_OSPolicyResults struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Results []*ApplyConfigTaskOutput_OSPolicyResult `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
-}
-
-func (x *ApplyConfigTaskOutput_OSPolicyResults) Reset() {
-	*x = ApplyConfigTaskOutput_OSPolicyResults{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[38]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ApplyConfigTaskOutput_OSPolicyResults) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ApplyConfigTaskOutput_OSPolicyResults) ProtoMessage() {}
-
-func (x *ApplyConfigTaskOutput_OSPolicyResults) ProtoReflect() protoreflect.Message {
-	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[38]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ApplyConfigTaskOutput_OSPolicyResults.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTaskOutput_OSPolicyResults) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 2}
-}
-
-func (x *ApplyConfigTaskOutput_OSPolicyResults) GetResults() []*ApplyConfigTaskOutput_OSPolicyResult {
-	if x != nil {
-		return x.Results
-	}
-	return nil
+func (*ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Script) isApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Source() {
 }
 
 type ApplyConfigTaskOutput_OSPolicyResult struct {
@@ -3548,16 +3282,15 @@ type ApplyConfigTaskOutput_OSPolicyResult struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// Types that are assignable to Result:
-	//	*ApplyConfigTaskOutput_OSPolicyResult_ResourceResults
-	Result isApplyConfigTaskOutput_OSPolicyResult_Result `protobuf_oneof:"result"`
+	Id                       string                                                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	SourceOsPolicyAssignment string                                                 `protobuf:"bytes,2,opt,name=source_os_policy_assignment,json=sourceOsPolicyAssignment,proto3" json:"source_os_policy_assignment,omitempty"`
+	ResourceResults          []*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult `protobuf:"bytes,3,rep,name=resource_results,json=resourceResults,proto3" json:"resource_results,omitempty"`
 }
 
 func (x *ApplyConfigTaskOutput_OSPolicyResult) Reset() {
 	*x = ApplyConfigTaskOutput_OSPolicyResult{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[39]
+		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[34]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3570,7 +3303,7 @@ func (x *ApplyConfigTaskOutput_OSPolicyResult) String() string {
 func (*ApplyConfigTaskOutput_OSPolicyResult) ProtoMessage() {}
 
 func (x *ApplyConfigTaskOutput_OSPolicyResult) ProtoReflect() protoreflect.Message {
-	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[39]
+	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[34]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3583,7 +3316,7 @@ func (x *ApplyConfigTaskOutput_OSPolicyResult) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use ApplyConfigTaskOutput_OSPolicyResult.ProtoReflect.Descriptor instead.
 func (*ApplyConfigTaskOutput_OSPolicyResult) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 3}
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 0}
 }
 
 func (x *ApplyConfigTaskOutput_OSPolicyResult) GetId() string {
@@ -3593,41 +3326,346 @@ func (x *ApplyConfigTaskOutput_OSPolicyResult) GetId() string {
 	return ""
 }
 
-func (m *ApplyConfigTaskOutput_OSPolicyResult) GetResult() isApplyConfigTaskOutput_OSPolicyResult_Result {
-	if m != nil {
-		return m.Result
+func (x *ApplyConfigTaskOutput_OSPolicyResult) GetSourceOsPolicyAssignment() string {
+	if x != nil {
+		return x.SourceOsPolicyAssignment
 	}
-	return nil
+	return ""
 }
 
-func (x *ApplyConfigTaskOutput_OSPolicyResult) GetResourceResults() *ApplyConfigTaskOutput_ResourceResults {
-	if x, ok := x.GetResult().(*ApplyConfigTaskOutput_OSPolicyResult_ResourceResults); ok {
+func (x *ApplyConfigTaskOutput_OSPolicyResult) GetResourceResults() []*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult {
+	if x != nil {
 		return x.ResourceResults
 	}
 	return nil
 }
 
-type isApplyConfigTaskOutput_OSPolicyResult_Result interface {
-	isApplyConfigTaskOutput_OSPolicyResult_Result()
-}
-
-type ApplyConfigTaskOutput_OSPolicyResult_ResourceResults struct {
-	ResourceResults *ApplyConfigTaskOutput_ResourceResults `protobuf:"bytes,2,opt,name=resource_results,json=resourceResults,proto3,oneof"`
-}
-
-func (*ApplyConfigTaskOutput_OSPolicyResult_ResourceResults) isApplyConfigTaskOutput_OSPolicyResult_Result() {
-}
-
-type ApplyConfigTaskOutput_ResourceResults struct {
+type ApplyConfigTaskOutput_OSPolicyResult_ResourceResult struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Results []*ApplyConfigTaskOutput_ResourceResult `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
+	Id             string                                                               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ExecutionSteps []*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep `protobuf:"bytes,2,rep,name=execution_steps,json=executionSteps,proto3" json:"execution_steps,omitempty"`
 }
 
-func (x *ApplyConfigTaskOutput_ResourceResults) Reset() {
-	*x = ApplyConfigTaskOutput_ResourceResults{}
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult) Reset() {
+	*x = ApplyConfigTaskOutput_OSPolicyResult_ResourceResult{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[35]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult) ProtoMessage() {}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult) ProtoReflect() protoreflect.Message {
+	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[35]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApplyConfigTaskOutput_OSPolicyResult_ResourceResult.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 0, 0}
+}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult) GetExecutionSteps() []*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep {
+	if x != nil {
+		return x.ExecutionSteps
+	}
+	return nil
+}
+
+type ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Types that are assignable to Step:
+	//	*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_Validation
+	//	*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_DesiredStateCheck
+	//	*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_DesiredStateEnforcement
+	//	*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_DesiredStateCheckPostEnforcement
+	Step   isApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_Step `protobuf_oneof:"step"`
+	ErrMsg string                                                                   `protobuf:"bytes,5,opt,name=err_msg,json=errMsg,proto3" json:"err_msg,omitempty"`
+}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep) Reset() {
+	*x = ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[36]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep) ProtoMessage() {}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep) ProtoReflect() protoreflect.Message {
+	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[36]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 0, 0, 0}
+}
+
+func (m *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep) GetStep() isApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_Step {
+	if m != nil {
+		return m.Step
+	}
+	return nil
+}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep) GetValidation() *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation {
+	if x, ok := x.GetStep().(*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_Validation); ok {
+		return x.Validation
+	}
+	return nil
+}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep) GetDesiredStateCheck() *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck {
+	if x, ok := x.GetStep().(*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_DesiredStateCheck); ok {
+		return x.DesiredStateCheck
+	}
+	return nil
+}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep) GetDesiredStateEnforcement() *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement {
+	if x, ok := x.GetStep().(*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_DesiredStateEnforcement); ok {
+		return x.DesiredStateEnforcement
+	}
+	return nil
+}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep) GetDesiredStateCheckPostEnforcement() *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement {
+	if x, ok := x.GetStep().(*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_DesiredStateCheckPostEnforcement); ok {
+		return x.DesiredStateCheckPostEnforcement
+	}
+	return nil
+}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep) GetErrMsg() string {
+	if x != nil {
+		return x.ErrMsg
+	}
+	return ""
+}
+
+type isApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_Step interface {
+	isApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_Step()
+}
+
+type ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_Validation struct {
+	Validation *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation `protobuf:"bytes,1,opt,name=validation,proto3,oneof"`
+}
+
+type ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_DesiredStateCheck struct {
+	DesiredStateCheck *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck `protobuf:"bytes,2,opt,name=desired_state_check,json=desiredStateCheck,proto3,oneof"`
+}
+
+type ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_DesiredStateEnforcement struct {
+	DesiredStateEnforcement *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement `protobuf:"bytes,3,opt,name=desired_state_enforcement,json=desiredStateEnforcement,proto3,oneof"`
+}
+
+type ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_DesiredStateCheckPostEnforcement struct {
+	DesiredStateCheckPostEnforcement *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement `protobuf:"bytes,4,opt,name=desired_state_check_post_enforcement,json=desiredStateCheckPostEnforcement,proto3,oneof"`
+}
+
+func (*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_Validation) isApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_Step() {
+}
+
+func (*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_DesiredStateCheck) isApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_Step() {
+}
+
+func (*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_DesiredStateEnforcement) isApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_Step() {
+}
+
+func (*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_DesiredStateCheckPostEnforcement) isApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_Step() {
+}
+
+type ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Outcome ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_Outcome `protobuf:"varint,1,opt,name=outcome,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_Outcome" json:"outcome,omitempty"`
+}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation) Reset() {
+	*x = ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[37]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation) ProtoMessage() {}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation) ProtoReflect() protoreflect.Message {
+	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[37]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 0, 0, 1}
+}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation) GetOutcome() ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_Outcome {
+	if x != nil {
+		return x.Outcome
+	}
+	return ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_OUTCOME_UNSPECIFIED
+}
+
+type ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Outcome ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_Outcome `protobuf:"varint,1,opt,name=outcome,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_Outcome" json:"outcome,omitempty"`
+}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck) Reset() {
+	*x = ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[38]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck) ProtoMessage() {}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck) ProtoReflect() protoreflect.Message {
+	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[38]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 0, 0, 2}
+}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck) GetOutcome() ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_Outcome {
+	if x != nil {
+		return x.Outcome
+	}
+	return ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_OUTCOME_UNSPECIFIED
+}
+
+type ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Outcome ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_Outcome `protobuf:"varint,1,opt,name=outcome,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_Outcome" json:"outcome,omitempty"`
+}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement) Reset() {
+	*x = ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[39]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement) ProtoMessage() {}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement) ProtoReflect() protoreflect.Message {
+	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[39]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 0, 0, 3}
+}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement) GetOutcome() ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_Outcome {
+	if x != nil {
+		return x.Outcome
+	}
+	return ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_OUTCOME_UNSPECIFIED
+}
+
+type ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Outcome ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_Outcome `protobuf:"varint,1,opt,name=outcome,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_Outcome" json:"outcome,omitempty"`
+}
+
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement) Reset() {
+	*x = ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[40]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3635,13 +3673,14 @@ func (x *ApplyConfigTaskOutput_ResourceResults) Reset() {
 	}
 }
 
-func (x *ApplyConfigTaskOutput_ResourceResults) String() string {
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ApplyConfigTaskOutput_ResourceResults) ProtoMessage() {}
+func (*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement) ProtoMessage() {
+}
 
-func (x *ApplyConfigTaskOutput_ResourceResults) ProtoReflect() protoreflect.Message {
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement) ProtoReflect() protoreflect.Message {
 	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[40]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3653,379 +3692,16 @@ func (x *ApplyConfigTaskOutput_ResourceResults) ProtoReflect() protoreflect.Mess
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ApplyConfigTaskOutput_ResourceResults.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTaskOutput_ResourceResults) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 4}
+// Deprecated: Use ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement.ProtoReflect.Descriptor instead.
+func (*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement) Descriptor() ([]byte, []int) {
+	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 0, 0, 4}
 }
 
-func (x *ApplyConfigTaskOutput_ResourceResults) GetResults() []*ApplyConfigTaskOutput_ResourceResult {
-	if x != nil {
-		return x.Results
-	}
-	return nil
-}
-
-type ApplyConfigTaskOutput_ResourceResult struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Id             string                                                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	ExecutionSteps []*ApplyConfigTaskOutput_ResourceResult_ExcecutionStep `protobuf:"bytes,2,rep,name=execution_steps,json=executionSteps,proto3" json:"execution_steps,omitempty"`
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult) Reset() {
-	*x = ApplyConfigTaskOutput_ResourceResult{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[41]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ApplyConfigTaskOutput_ResourceResult) ProtoMessage() {}
-
-func (x *ApplyConfigTaskOutput_ResourceResult) ProtoReflect() protoreflect.Message {
-	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[41]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ApplyConfigTaskOutput_ResourceResult.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTaskOutput_ResourceResult) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 5}
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult) GetExecutionSteps() []*ApplyConfigTaskOutput_ResourceResult_ExcecutionStep {
-	if x != nil {
-		return x.ExecutionSteps
-	}
-	return nil
-}
-
-type ApplyConfigTaskOutput_ResourceResult_ExcecutionStep struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// Types that are assignable to Step:
-	//	*ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_Validation
-	//	*ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_CheckDesiredState
-	//	*ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_EnforceDesiredState
-	//	*ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_CheckDesiredStatePostEnforcement
-	Step   isApplyConfigTaskOutput_ResourceResult_ExcecutionStep_Step `protobuf_oneof:"step"`
-	ErrMsg string                                                     `protobuf:"bytes,5,opt,name=err_msg,json=errMsg,proto3" json:"err_msg,omitempty"`
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_ExcecutionStep) Reset() {
-	*x = ApplyConfigTaskOutput_ResourceResult_ExcecutionStep{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[42]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_ExcecutionStep) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ApplyConfigTaskOutput_ResourceResult_ExcecutionStep) ProtoMessage() {}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_ExcecutionStep) ProtoReflect() protoreflect.Message {
-	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[42]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ApplyConfigTaskOutput_ResourceResult_ExcecutionStep.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTaskOutput_ResourceResult_ExcecutionStep) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 5, 0}
-}
-
-func (m *ApplyConfigTaskOutput_ResourceResult_ExcecutionStep) GetStep() isApplyConfigTaskOutput_ResourceResult_ExcecutionStep_Step {
-	if m != nil {
-		return m.Step
-	}
-	return nil
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_ExcecutionStep) GetValidation() *ApplyConfigTaskOutput_ResourceResult_Validation {
-	if x, ok := x.GetStep().(*ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_Validation); ok {
-		return x.Validation
-	}
-	return nil
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_ExcecutionStep) GetCheckDesiredState() *ApplyConfigTaskOutput_ResourceResult_CheckDesiredState {
-	if x, ok := x.GetStep().(*ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_CheckDesiredState); ok {
-		return x.CheckDesiredState
-	}
-	return nil
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_ExcecutionStep) GetEnforceDesiredState() *ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState {
-	if x, ok := x.GetStep().(*ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_EnforceDesiredState); ok {
-		return x.EnforceDesiredState
-	}
-	return nil
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_ExcecutionStep) GetCheckDesiredStatePostEnforcement() *ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement {
-	if x, ok := x.GetStep().(*ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_CheckDesiredStatePostEnforcement); ok {
-		return x.CheckDesiredStatePostEnforcement
-	}
-	return nil
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_ExcecutionStep) GetErrMsg() string {
-	if x != nil {
-		return x.ErrMsg
-	}
-	return ""
-}
-
-type isApplyConfigTaskOutput_ResourceResult_ExcecutionStep_Step interface {
-	isApplyConfigTaskOutput_ResourceResult_ExcecutionStep_Step()
-}
-
-type ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_Validation struct {
-	Validation *ApplyConfigTaskOutput_ResourceResult_Validation `protobuf:"bytes,1,opt,name=validation,proto3,oneof"`
-}
-
-type ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_CheckDesiredState struct {
-	CheckDesiredState *ApplyConfigTaskOutput_ResourceResult_CheckDesiredState `protobuf:"bytes,2,opt,name=check_desired_state,json=checkDesiredState,proto3,oneof"`
-}
-
-type ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_EnforceDesiredState struct {
-	EnforceDesiredState *ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState `protobuf:"bytes,3,opt,name=enforce_desired_state,json=enforceDesiredState,proto3,oneof"`
-}
-
-type ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_CheckDesiredStatePostEnforcement struct {
-	CheckDesiredStatePostEnforcement *ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement `protobuf:"bytes,4,opt,name=check_desired_state_post_enforcement,json=checkDesiredStatePostEnforcement,proto3,oneof"`
-}
-
-func (*ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_Validation) isApplyConfigTaskOutput_ResourceResult_ExcecutionStep_Step() {
-}
-
-func (*ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_CheckDesiredState) isApplyConfigTaskOutput_ResourceResult_ExcecutionStep_Step() {
-}
-
-func (*ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_EnforceDesiredState) isApplyConfigTaskOutput_ResourceResult_ExcecutionStep_Step() {
-}
-
-func (*ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_CheckDesiredStatePostEnforcement) isApplyConfigTaskOutput_ResourceResult_ExcecutionStep_Step() {
-}
-
-type ApplyConfigTaskOutput_ResourceResult_Validation struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Outcome ApplyConfigTaskOutput_ResourceResult_Validation_Outcome `protobuf:"varint,1,opt,name=outcome,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput_ResourceResult_Validation_Outcome" json:"outcome,omitempty"`
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_Validation) Reset() {
-	*x = ApplyConfigTaskOutput_ResourceResult_Validation{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[43]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_Validation) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ApplyConfigTaskOutput_ResourceResult_Validation) ProtoMessage() {}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_Validation) ProtoReflect() protoreflect.Message {
-	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[43]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ApplyConfigTaskOutput_ResourceResult_Validation.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTaskOutput_ResourceResult_Validation) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 5, 1}
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_Validation) GetOutcome() ApplyConfigTaskOutput_ResourceResult_Validation_Outcome {
+func (x *ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement) GetOutcome() ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_Outcome {
 	if x != nil {
 		return x.Outcome
 	}
-	return ApplyConfigTaskOutput_ResourceResult_Validation_OUTCOME_UNSPECIFIED
-}
-
-type ApplyConfigTaskOutput_ResourceResult_CheckDesiredState struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Outcome ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_Outcome `protobuf:"varint,1,opt,name=outcome,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_Outcome" json:"outcome,omitempty"`
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_CheckDesiredState) Reset() {
-	*x = ApplyConfigTaskOutput_ResourceResult_CheckDesiredState{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[44]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_CheckDesiredState) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ApplyConfigTaskOutput_ResourceResult_CheckDesiredState) ProtoMessage() {}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_CheckDesiredState) ProtoReflect() protoreflect.Message {
-	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[44]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ApplyConfigTaskOutput_ResourceResult_CheckDesiredState.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTaskOutput_ResourceResult_CheckDesiredState) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 5, 2}
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_CheckDesiredState) GetOutcome() ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_Outcome {
-	if x != nil {
-		return x.Outcome
-	}
-	return ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_OUTCOME_UNSPECIFIED
-}
-
-type ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Outcome ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_Outcome `protobuf:"varint,1,opt,name=outcome,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_Outcome" json:"outcome,omitempty"`
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState) Reset() {
-	*x = ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[45]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState) ProtoMessage() {}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState) ProtoReflect() protoreflect.Message {
-	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[45]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 5, 3}
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState) GetOutcome() ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_Outcome {
-	if x != nil {
-		return x.Outcome
-	}
-	return ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_OUTCOME_UNSPECIFIED
-}
-
-type ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Outcome ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_Outcome `protobuf:"varint,1,opt,name=outcome,proto3,enum=google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_Outcome" json:"outcome,omitempty"`
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement) Reset() {
-	*x = ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[46]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement) ProtoMessage() {}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement) ProtoReflect() protoreflect.Message {
-	mi := &file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[46]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement.ProtoReflect.Descriptor instead.
-func (*ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement) Descriptor() ([]byte, []int) {
-	return file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP(), []int{9, 5, 4}
-}
-
-func (x *ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement) GetOutcome() ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_Outcome {
-	if x != nil {
-		return x.Outcome
-	}
-	return ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_OUTCOME_UNSPECIFIED
+	return ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_OUTCOME_UNSPECIFIED
 }
 
 var File_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto protoreflect.FileDescriptor
@@ -4160,657 +3836,615 @@ var file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDesc = []by
 	0x45, 0x44, 0x10, 0x00, 0x12, 0x0d, 0x0a, 0x09, 0x43, 0x4f, 0x4d, 0x50, 0x4c, 0x45, 0x54, 0x45,
 	0x44, 0x10, 0x01, 0x12, 0x0d, 0x0a, 0x09, 0x54, 0x49, 0x4d, 0x45, 0x44, 0x5f, 0x4f, 0x55, 0x54,
 	0x10, 0x02, 0x12, 0x0d, 0x0a, 0x09, 0x43, 0x41, 0x4e, 0x43, 0x45, 0x4c, 0x4c, 0x45, 0x44, 0x10,
-	0x03, 0x22, 0xe2, 0x34, 0x0a, 0x0f, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69,
-	0x67, 0x54, 0x61, 0x73, 0x6b, 0x12, 0x5c, 0x0a, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x44, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63,
-	0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67,
-	0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c,
-	0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67,
-	0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x52, 0x06, 0x63, 0x6f, 0x6e,
-	0x66, 0x69, 0x67, 0x1a, 0xf0, 0x33, 0x0a, 0x06, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x84,
-	0x01, 0x0a, 0x12, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x5f, 0x61, 0x73, 0x73, 0x69, 0x67, 0x6e,
-	0x6d, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x55, 0x2e, 0x67, 0x6f,
-	0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e,
-	0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e,
-	0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79,
-	0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69,
-	0x67, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65,
-	0x6e, 0x74, 0x52, 0x11, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e,
-	0x6d, 0x65, 0x6e, 0x74, 0x73, 0x1a, 0xd9, 0x01, 0x0a, 0x10, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67,
-	0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x5a, 0x0a, 0x11, 0x63, 0x6f,
-	0x6e, 0x66, 0x69, 0x67, 0x5f, 0x61, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x2d, 0xfa, 0x41, 0x2a, 0x0a, 0x28, 0x6f, 0x73, 0x63, 0x6f,
-	0x6e, 0x66, 0x69, 0x67, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x61, 0x70, 0x69, 0x73, 0x2e,
-	0x63, 0x6f, 0x6d, 0x2f, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e,
-	0x6d, 0x65, 0x6e, 0x74, 0x52, 0x10, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x41, 0x73, 0x73, 0x69,
-	0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x69, 0x0a, 0x08, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x69,
-	0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x4d, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c,
-	0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67,
-	0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76,
-	0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e,
-	0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x4f,
-	0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x08, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65,
-	0x73, 0x1a, 0xae, 0x02, 0x0a, 0x08, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x12, 0x0e,
-	0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x66,
-	0x0a, 0x04, 0x6d, 0x6f, 0x64, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x52, 0x2e, 0x67,
-	0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f,
-	0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69,
-	0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c,
-	0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66,
-	0x69, 0x67, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x4d, 0x6f, 0x64, 0x65,
-	0x52, 0x04, 0x6d, 0x6f, 0x64, 0x65, 0x12, 0x6b, 0x0a, 0x09, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72,
-	0x63, 0x65, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x4d, 0x2e, 0x67, 0x6f, 0x6f, 0x67,
-	0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69,
-	0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e,
-	0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f,
-	0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e,
-	0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x09, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72,
-	0x63, 0x65, 0x73, 0x22, 0x3d, 0x0a, 0x04, 0x4d, 0x6f, 0x64, 0x65, 0x12, 0x14, 0x0a, 0x10, 0x4d,
-	0x4f, 0x44, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10,
-	0x00, 0x12, 0x0e, 0x0a, 0x0a, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x41, 0x54, 0x49, 0x4f, 0x4e, 0x10,
-	0x01, 0x12, 0x0f, 0x0a, 0x0b, 0x45, 0x4e, 0x46, 0x4f, 0x52, 0x43, 0x45, 0x4d, 0x45, 0x4e, 0x54,
-	0x10, 0x02, 0x1a, 0xd1, 0x2e, 0x0a, 0x08, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12,
-	0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12,
-	0x71, 0x0a, 0x03, 0x70, 0x6b, 0x67, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x5d, 0x2e, 0x67,
-	0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f,
-	0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69,
-	0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c,
-	0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66,
-	0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x50, 0x61, 0x63, 0x6b,
-	0x61, 0x67, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x48, 0x00, 0x52, 0x03, 0x70,
-	0x6b, 0x67, 0x12, 0x82, 0x01, 0x0a, 0x0a, 0x72, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72,
-	0x79, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x60, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65,
-	0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e,
-	0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31,
-	0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66,
-	0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x65,
-	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72,
-	0x79, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x48, 0x00, 0x52, 0x0a, 0x72, 0x65, 0x70,
-	0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x12, 0x70, 0x0a, 0x04, 0x65, 0x78, 0x65, 0x63, 0x18,
-	0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x5a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63,
-	0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67,
-	0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c,
-	0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67,
-	0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f,
-	0x75, 0x72, 0x63, 0x65, 0x2e, 0x45, 0x78, 0x65, 0x63, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63,
-	0x65, 0x48, 0x00, 0x52, 0x04, 0x65, 0x78, 0x65, 0x63, 0x12, 0x70, 0x0a, 0x04, 0x66, 0x69, 0x6c,
-	0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x5a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65,
-	0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e,
-	0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31,
-	0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66,
-	0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x65,
-	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x75,
-	0x72, 0x63, 0x65, 0x48, 0x00, 0x52, 0x04, 0x66, 0x69, 0x6c, 0x65, 0x12, 0x80, 0x01, 0x0a, 0x07,
-	0x61, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x64, 0x2e,
-	0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63,
-	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f,
-	0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70,
-	0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e,
-	0x66, 0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x45, 0x78, 0x74,
-	0x72, 0x61, 0x63, 0x74, 0x41, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x75,
-	0x72, 0x63, 0x65, 0x48, 0x00, 0x52, 0x07, 0x61, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x12, 0x73,
-	0x0a, 0x04, 0x73, 0x72, 0x76, 0x63, 0x18, 0x07, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x5d, 0x2e, 0x67,
-	0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f,
-	0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69,
-	0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c,
-	0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66,
-	0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x53, 0x65, 0x72, 0x76,
-	0x69, 0x63, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x48, 0x00, 0x52, 0x04, 0x73,
-	0x72, 0x76, 0x63, 0x1a, 0xe2, 0x03, 0x0a, 0x04, 0x46, 0x69, 0x6c, 0x65, 0x12, 0x73, 0x0a, 0x06,
-	0x72, 0x65, 0x6d, 0x6f, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x59, 0x2e, 0x67,
-	0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f,
-	0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69,
-	0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c,
-	0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66,
-	0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x46, 0x69, 0x6c, 0x65,
-	0x2e, 0x52, 0x65, 0x6d, 0x6f, 0x74, 0x65, 0x48, 0x00, 0x52, 0x06, 0x72, 0x65, 0x6d, 0x6f, 0x74,
-	0x65, 0x12, 0x6a, 0x0a, 0x03, 0x67, 0x63, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x56,
-	0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73,
-	0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70,
-	0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70,
-	0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f,
-	0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x46, 0x69,
-	0x6c, 0x65, 0x2e, 0x47, 0x63, 0x73, 0x48, 0x00, 0x52, 0x03, 0x67, 0x63, 0x73, 0x12, 0x1f, 0x0a,
-	0x0a, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x5f, 0x70, 0x61, 0x74, 0x68, 0x18, 0x03, 0x20, 0x01, 0x28,
-	0x09, 0x48, 0x00, 0x52, 0x09, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x50, 0x61, 0x74, 0x68, 0x12, 0x25,
-	0x0a, 0x0e, 0x61, 0x6c, 0x6c, 0x6f, 0x77, 0x5f, 0x69, 0x6e, 0x73, 0x65, 0x63, 0x75, 0x72, 0x65,
-	0x18, 0x04, 0x20, 0x01, 0x28, 0x08, 0x52, 0x0d, 0x61, 0x6c, 0x6c, 0x6f, 0x77, 0x49, 0x6e, 0x73,
-	0x65, 0x63, 0x75, 0x72, 0x65, 0x1a, 0x48, 0x0a, 0x06, 0x52, 0x65, 0x6d, 0x6f, 0x74, 0x65, 0x12,
-	0x15, 0x0a, 0x03, 0x75, 0x72, 0x69, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41,
-	0x02, 0x52, 0x03, 0x75, 0x72, 0x69, 0x12, 0x27, 0x0a, 0x0f, 0x73, 0x68, 0x61, 0x32, 0x35, 0x36,
-	0x5f, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x73, 0x75, 0x6d, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x0e, 0x73, 0x68, 0x61, 0x32, 0x35, 0x36, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x73, 0x75, 0x6d, 0x1a,
-	0x5f, 0x0a, 0x03, 0x47, 0x63, 0x73, 0x12, 0x1b, 0x0a, 0x06, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x06, 0x62, 0x75, 0x63,
-	0x6b, 0x65, 0x74, 0x12, 0x1b, 0x0a, 0x06, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x06, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74,
-	0x12, 0x1e, 0x0a, 0x0a, 0x67, 0x65, 0x6e, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x03,
-	0x20, 0x01, 0x28, 0x03, 0x52, 0x0a, 0x67, 0x65, 0x6e, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e,
-	0x42, 0x06, 0x0a, 0x04, 0x66, 0x69, 0x6c, 0x65, 0x1a, 0xcd, 0x0d, 0x0a, 0x0f, 0x50, 0x61, 0x63,
-	0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x94, 0x01, 0x0a,
-	0x0d, 0x64, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x5f, 0x73, 0x74, 0x61, 0x74, 0x65, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x0e, 0x32, 0x6a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c,
-	0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65,
-	0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70,
-	0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54,
-	0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75,
-	0x72, 0x63, 0x65, 0x2e, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x75,
-	0x72, 0x63, 0x65, 0x2e, 0x44, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65,
-	0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x0c, 0x64, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74,
-	0x61, 0x74, 0x65, 0x12, 0x75, 0x0a, 0x03, 0x61, 0x70, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x61, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e,
-	0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e,
-	0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e,
-	0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e,
-	0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e,
-	0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e,
-	0x41, 0x50, 0x54, 0x48, 0x00, 0x52, 0x03, 0x61, 0x70, 0x74, 0x12, 0x75, 0x0a, 0x03, 0x64, 0x65,
-	0x62, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x61, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65,
-	0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e,
-	0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31,
-	0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66,
-	0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x65,
-	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65,
-	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x44, 0x65, 0x62, 0x48, 0x00, 0x52, 0x03, 0x64, 0x65,
-	0x62, 0x12, 0x75, 0x0a, 0x03, 0x79, 0x75, 0x6d, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x61,
-	0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73,
-	0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70,
-	0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70,
-	0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f,
-	0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x50, 0x61,
-	0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x59, 0x55,
-	0x4d, 0x48, 0x00, 0x52, 0x03, 0x79, 0x75, 0x6d, 0x12, 0x7e, 0x0a, 0x06, 0x7a, 0x79, 0x70, 0x70,
-	0x65, 0x72, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x64, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c,
-	0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67,
-	0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76,
-	0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e,
-	0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52,
-	0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52,
-	0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x5a, 0x79, 0x70, 0x70, 0x65, 0x72, 0x48, 0x00,
-	0x52, 0x06, 0x7a, 0x79, 0x70, 0x70, 0x65, 0x72, 0x12, 0x75, 0x0a, 0x03, 0x72, 0x70, 0x6d, 0x18,
-	0x06, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x61, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63,
-	0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67,
-	0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c,
-	0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67,
-	0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f,
-	0x75, 0x72, 0x63, 0x65, 0x2e, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x73, 0x6f,
-	0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x50, 0x4d, 0x48, 0x00, 0x52, 0x03, 0x72, 0x70, 0x6d, 0x12,
-	0x7e, 0x0a, 0x06, 0x67, 0x6f, 0x6f, 0x67, 0x65, 0x74, 0x18, 0x07, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x64, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f,
-	0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64,
-	0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41,
-	0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43,
-	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x50,
-	0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x47,
-	0x6f, 0x6f, 0x47, 0x65, 0x74, 0x48, 0x00, 0x52, 0x06, 0x67, 0x6f, 0x6f, 0x67, 0x65, 0x74, 0x12,
-	0x75, 0x0a, 0x03, 0x6d, 0x73, 0x69, 0x18, 0x08, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x61, 0x2e, 0x67,
-	0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f,
-	0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69,
-	0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c,
-	0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66,
-	0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x50, 0x61, 0x63, 0x6b,
-	0x61, 0x67, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x4d, 0x53, 0x49, 0x48,
-	0x00, 0x52, 0x03, 0x6d, 0x73, 0x69, 0x1a, 0x93, 0x01, 0x0a, 0x03, 0x44, 0x65, 0x62, 0x12, 0x6f,
-	0x0a, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x52,
-	0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73,
-	0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70,
-	0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70,
-	0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f,
-	0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x46, 0x69,
-	0x6c, 0x65, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12,
-	0x1b, 0x0a, 0x09, 0x70, 0x75, 0x6c, 0x6c, 0x5f, 0x64, 0x65, 0x70, 0x73, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x08, 0x52, 0x08, 0x70, 0x75, 0x6c, 0x6c, 0x44, 0x65, 0x70, 0x73, 0x1a, 0x1e, 0x0a, 0x03,
-	0x41, 0x50, 0x54, 0x12, 0x17, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x09, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x1a, 0x93, 0x01, 0x0a,
-	0x03, 0x52, 0x50, 0x4d, 0x12, 0x6f, 0x0a, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x0b, 0x32, 0x52, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c,
-	0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65,
-	0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70,
-	0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54,
-	0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75,
-	0x72, 0x63, 0x65, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x06, 0x73,
-	0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x70, 0x75, 0x6c, 0x6c, 0x5f, 0x64, 0x65,
-	0x70, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x08, 0x70, 0x75, 0x6c, 0x6c, 0x44, 0x65,
-	0x70, 0x73, 0x1a, 0x1e, 0x0a, 0x03, 0x59, 0x55, 0x4d, 0x12, 0x17, 0x0a, 0x04, 0x6e, 0x61, 0x6d,
-	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x04, 0x6e, 0x61,
-	0x6d, 0x65, 0x1a, 0x21, 0x0a, 0x06, 0x5a, 0x79, 0x70, 0x70, 0x65, 0x72, 0x12, 0x17, 0x0a, 0x04,
-	0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52,
-	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x1a, 0x21, 0x0a, 0x06, 0x47, 0x6f, 0x6f, 0x47, 0x65, 0x74, 0x12,
-	0x17, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0,
-	0x41, 0x02, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x1a, 0xc0, 0x01, 0x0a, 0x03, 0x4d, 0x53, 0x49,
-	0x12, 0x6f, 0x0a, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x52, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e,
-	0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e,
-	0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e,
-	0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e,
-	0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e,
-	0x46, 0x69, 0x6c, 0x65, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63,
-	0x65, 0x12, 0x14, 0x0a, 0x05, 0x66, 0x6c, 0x61, 0x67, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x09,
-	0x52, 0x05, 0x66, 0x6c, 0x61, 0x67, 0x73, 0x12, 0x32, 0x0a, 0x15, 0x61, 0x6c, 0x6c, 0x6f, 0x77,
-	0x65, 0x64, 0x5f, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x5f, 0x63, 0x6f, 0x64, 0x65, 0x73,
-	0x18, 0x03, 0x20, 0x03, 0x28, 0x05, 0x52, 0x13, 0x61, 0x6c, 0x6c, 0x6f, 0x77, 0x65, 0x64, 0x53,
-	0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x43, 0x6f, 0x64, 0x65, 0x73, 0x22, 0x49, 0x0a, 0x0c, 0x44,
-	0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x1d, 0x0a, 0x19, 0x44,
-	0x45, 0x53, 0x49, 0x52, 0x45, 0x44, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x45, 0x5f, 0x55, 0x4e, 0x53,
-	0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x0d, 0x0a, 0x09, 0x49, 0x4e,
-	0x53, 0x54, 0x41, 0x4c, 0x4c, 0x45, 0x44, 0x10, 0x01, 0x12, 0x0b, 0x0a, 0x07, 0x52, 0x45, 0x4d,
-	0x4f, 0x56, 0x45, 0x44, 0x10, 0x02, 0x42, 0x10, 0x0a, 0x0e, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d,
-	0x5f, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x1a, 0x85, 0x0a, 0x0a, 0x12, 0x52, 0x65, 0x70,
-	0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12,
-	0x82, 0x01, 0x0a, 0x03, 0x61, 0x70, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x6e, 0x2e,
-	0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63,
-	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f,
-	0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70,
-	0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e,
-	0x66, 0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x70,
-	0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e,
-	0x41, 0x70, 0x74, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x48, 0x00, 0x52,
-	0x03, 0x61, 0x70, 0x74, 0x12, 0x82, 0x01, 0x0a, 0x03, 0x79, 0x75, 0x6d, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x0b, 0x32, 0x6e, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75,
-	0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74,
-	0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61,
-	0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73,
-	0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63,
-	0x65, 0x2e, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x52, 0x65, 0x73, 0x6f,
-	0x75, 0x72, 0x63, 0x65, 0x2e, 0x59, 0x75, 0x6d, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f,
-	0x72, 0x79, 0x48, 0x00, 0x52, 0x03, 0x79, 0x75, 0x6d, 0x12, 0x8b, 0x01, 0x0a, 0x06, 0x7a, 0x79,
-	0x70, 0x70, 0x65, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x71, 0x2e, 0x67, 0x6f, 0x6f,
+	0x03, 0x22, 0xac, 0x33, 0x0a, 0x0f, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69,
+	0x67, 0x54, 0x61, 0x73, 0x6b, 0x12, 0x67, 0x0a, 0x0b, 0x6f, 0x73, 0x5f, 0x70, 0x6f, 0x6c, 0x69,
+	0x63, 0x69, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x46, 0x2e, 0x67, 0x6f, 0x6f,
 	0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66,
 	0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74,
 	0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43,
-	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67,
-	0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69,
-	0x74, 0x6f, 0x72, 0x79, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x5a, 0x79, 0x70,
-	0x70, 0x65, 0x72, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x48, 0x00, 0x52,
-	0x06, 0x7a, 0x79, 0x70, 0x70, 0x65, 0x72, 0x12, 0x82, 0x01, 0x0a, 0x03, 0x67, 0x6f, 0x6f, 0x18,
-	0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x6e, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63,
-	0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67,
-	0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c,
-	0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67,
-	0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f,
-	0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x52,
-	0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x47, 0x6f, 0x6f, 0x52, 0x65, 0x70, 0x6f, 0x73,
-	0x69, 0x74, 0x6f, 0x72, 0x79, 0x48, 0x00, 0x52, 0x03, 0x67, 0x6f, 0x6f, 0x1a, 0xf5, 0x02, 0x0a,
-	0x0d, 0x41, 0x70, 0x74, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x12, 0xa2,
-	0x01, 0x0a, 0x0c, 0x61, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x7a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63,
-	0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67,
-	0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c,
-	0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67,
-	0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f,
-	0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x52,
-	0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x41, 0x70, 0x74, 0x52, 0x65, 0x70, 0x6f, 0x73,
-	0x69, 0x74, 0x6f, 0x72, 0x79, 0x2e, 0x41, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x54, 0x79, 0x70,
-	0x65, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x0b, 0x61, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x54,
-	0x79, 0x70, 0x65, 0x12, 0x15, 0x0a, 0x03, 0x75, 0x72, 0x69, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
-	0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x03, 0x75, 0x72, 0x69, 0x12, 0x27, 0x0a, 0x0c, 0x64, 0x69,
-	0x73, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09,
-	0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x0c, 0x64, 0x69, 0x73, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74,
-	0x69, 0x6f, 0x6e, 0x12, 0x23, 0x0a, 0x0a, 0x63, 0x6f, 0x6d, 0x70, 0x6f, 0x6e, 0x65, 0x6e, 0x74,
-	0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x0a, 0x63, 0x6f,
-	0x6d, 0x70, 0x6f, 0x6e, 0x65, 0x6e, 0x74, 0x73, 0x12, 0x17, 0x0a, 0x07, 0x67, 0x70, 0x67, 0x5f,
-	0x6b, 0x65, 0x79, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x67, 0x70, 0x67, 0x4b, 0x65,
-	0x79, 0x22, 0x41, 0x0a, 0x0b, 0x41, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x54, 0x79, 0x70, 0x65,
-	0x12, 0x1c, 0x0a, 0x18, 0x41, 0x52, 0x43, 0x48, 0x49, 0x56, 0x45, 0x5f, 0x54, 0x59, 0x50, 0x45,
-	0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x07,
-	0x0a, 0x03, 0x44, 0x45, 0x42, 0x10, 0x01, 0x12, 0x0b, 0x0a, 0x07, 0x44, 0x45, 0x42, 0x5f, 0x53,
-	0x52, 0x43, 0x10, 0x02, 0x1a, 0x82, 0x01, 0x0a, 0x0d, 0x59, 0x75, 0x6d, 0x52, 0x65, 0x70, 0x6f,
-	0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x12, 0x13, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x02, 0x69, 0x64, 0x12, 0x21, 0x0a, 0x0c, 0x64,
-	0x69, 0x73, 0x70, 0x6c, 0x61, 0x79, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x0b, 0x64, 0x69, 0x73, 0x70, 0x6c, 0x61, 0x79, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x1e,
-	0x0a, 0x08, 0x62, 0x61, 0x73, 0x65, 0x5f, 0x75, 0x72, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09,
-	0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x07, 0x62, 0x61, 0x73, 0x65, 0x55, 0x72, 0x6c, 0x12, 0x19,
-	0x0a, 0x08, 0x67, 0x70, 0x67, 0x5f, 0x6b, 0x65, 0x79, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x09,
-	0x52, 0x07, 0x67, 0x70, 0x67, 0x4b, 0x65, 0x79, 0x73, 0x1a, 0x85, 0x01, 0x0a, 0x10, 0x5a, 0x79,
-	0x70, 0x70, 0x65, 0x72, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x12, 0x13,
-	0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52,
-	0x02, 0x69, 0x64, 0x12, 0x21, 0x0a, 0x0c, 0x64, 0x69, 0x73, 0x70, 0x6c, 0x61, 0x79, 0x5f, 0x6e,
-	0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x69, 0x73, 0x70, 0x6c,
-	0x61, 0x79, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x1e, 0x0a, 0x08, 0x62, 0x61, 0x73, 0x65, 0x5f, 0x75,
-	0x72, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x07, 0x62,
-	0x61, 0x73, 0x65, 0x55, 0x72, 0x6c, 0x12, 0x19, 0x0a, 0x08, 0x67, 0x70, 0x67, 0x5f, 0x6b, 0x65,
-	0x79, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x09, 0x52, 0x07, 0x67, 0x70, 0x67, 0x4b, 0x65, 0x79,
-	0x73, 0x1a, 0x3f, 0x0a, 0x0d, 0x47, 0x6f, 0x6f, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f,
-	0x72, 0x79, 0x12, 0x17, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
-	0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x15, 0x0a, 0x03, 0x75,
-	0x72, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x03, 0x75,
-	0x72, 0x6c, 0x42, 0x0c, 0x0a, 0x0a, 0x72, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79,
-	0x1a, 0xd1, 0x05, 0x0a, 0x0c, 0x45, 0x78, 0x65, 0x63, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63,
-	0x65, 0x12, 0x80, 0x01, 0x0a, 0x08, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x65, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x0b, 0x32, 0x5f, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c,
-	0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65,
-	0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70,
-	0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54,
-	0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75,
-	0x72, 0x63, 0x65, 0x2e, 0x45, 0x78, 0x65, 0x63, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
-	0x2e, 0x45, 0x78, 0x65, 0x63, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x08, 0x76, 0x61, 0x6c, 0x69,
-	0x64, 0x61, 0x74, 0x65, 0x12, 0x79, 0x0a, 0x07, 0x65, 0x6e, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x18,
+	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69,
+	0x63, 0x79, 0x52, 0x0a, 0x6f, 0x73, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65, 0x73, 0x1a, 0xaf,
+	0x32, 0x0a, 0x08, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x12, 0x0e, 0x0a, 0x02, 0x69,
+	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x5f, 0x0a, 0x04, 0x6d,
+	0x6f, 0x64, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x4b, 0x2e, 0x67, 0x6f, 0x6f, 0x67,
+	0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69,
+	0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e,
+	0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f,
+	0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63,
+	0x79, 0x2e, 0x4d, 0x6f, 0x64, 0x65, 0x52, 0x04, 0x6d, 0x6f, 0x64, 0x65, 0x12, 0x6e, 0x0a, 0x1b,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x6f, 0x73, 0x5f, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79,
+	0x5f, 0x61, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x09, 0x42, 0x2f, 0xfa, 0x41, 0x2c, 0x0a, 0x2a, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67,
+	0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x61, 0x70, 0x69, 0x73, 0x2e, 0x63, 0x6f, 0x6d, 0x2f,
+	0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65,
+	0x6e, 0x74, 0x52, 0x18, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x4f, 0x73, 0x50, 0x6f, 0x6c, 0x69,
+	0x63, 0x79, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x6d, 0x0a, 0x09,
+	0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x0b, 0x32,
+	0x4f, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f,
+	0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64,
+	0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41,
+	0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f,
+	0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x52, 0x09, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x1a, 0x93, 0x2f, 0x0a, 0x08,
+	0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x73, 0x0a, 0x03, 0x70, 0x6b, 0x67, 0x18,
 	0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x5f, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63,
 	0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67,
 	0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c,
 	0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67,
-	0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f,
-	0x75, 0x72, 0x63, 0x65, 0x2e, 0x45, 0x78, 0x65, 0x63, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63,
-	0x65, 0x2e, 0x45, 0x78, 0x65, 0x63, 0x52, 0x07, 0x65, 0x6e, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x1a,
-	0xc2, 0x03, 0x0a, 0x04, 0x45, 0x78, 0x65, 0x63, 0x12, 0x68, 0x0a, 0x04, 0x66, 0x69, 0x6c, 0x65,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x52, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e,
+	0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x48, 0x00, 0x52, 0x03, 0x70, 0x6b, 0x67, 0x12, 0x84, 0x01,
+	0x0a, 0x0a, 0x72, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x18, 0x03, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x62, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75,
+	0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74,
+	0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61,
+	0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73,
+	0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75,
+	0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x52, 0x65,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x48, 0x00, 0x52, 0x0a, 0x72, 0x65, 0x70, 0x6f, 0x73, 0x69,
+	0x74, 0x6f, 0x72, 0x79, 0x12, 0x72, 0x0a, 0x04, 0x65, 0x78, 0x65, 0x63, 0x18, 0x04, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x5c, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75,
+	0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74,
+	0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61,
+	0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73,
+	0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75,
+	0x72, 0x63, 0x65, 0x2e, 0x45, 0x78, 0x65, 0x63, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x48, 0x00, 0x52, 0x04, 0x65, 0x78, 0x65, 0x63, 0x12, 0x72, 0x0a, 0x04, 0x66, 0x69, 0x6c, 0x65,
+	0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x5c, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e,
 	0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61,
 	0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61,
 	0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69,
-	0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x65, 0x73,
-	0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x48, 0x00, 0x52, 0x04, 0x66, 0x69,
-	0x6c, 0x65, 0x12, 0x18, 0x0a, 0x06, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x09, 0x48, 0x00, 0x52, 0x06, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x12, 0x12, 0x0a, 0x04,
-	0x61, 0x72, 0x67, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x09, 0x52, 0x04, 0x61, 0x72, 0x67, 0x73,
-	0x12, 0x32, 0x0a, 0x15, 0x61, 0x6c, 0x6c, 0x6f, 0x77, 0x65, 0x64, 0x5f, 0x73, 0x75, 0x63, 0x63,
-	0x65, 0x73, 0x73, 0x5f, 0x63, 0x6f, 0x64, 0x65, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x05, 0x52,
-	0x13, 0x61, 0x6c, 0x6c, 0x6f, 0x77, 0x65, 0x64, 0x53, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x43,
-	0x6f, 0x64, 0x65, 0x73, 0x12, 0x92, 0x01, 0x0a, 0x0b, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x70, 0x72,
-	0x65, 0x74, 0x65, 0x72, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x6b, 0x2e, 0x67, 0x6f, 0x6f,
-	0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66,
-	0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74,
-	0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43,
-	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67,
-	0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x45, 0x78, 0x65, 0x63, 0x52, 0x65,
-	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x45, 0x78, 0x65, 0x63, 0x2e, 0x49, 0x6e, 0x74, 0x65,
-	0x72, 0x70, 0x72, 0x65, 0x74, 0x65, 0x72, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x0b, 0x69, 0x6e,
-	0x74, 0x65, 0x72, 0x70, 0x72, 0x65, 0x74, 0x65, 0x72, 0x22, 0x4f, 0x0a, 0x0b, 0x49, 0x6e, 0x74,
-	0x65, 0x72, 0x70, 0x72, 0x65, 0x74, 0x65, 0x72, 0x12, 0x1b, 0x0a, 0x17, 0x49, 0x4e, 0x54, 0x45,
-	0x52, 0x50, 0x52, 0x45, 0x54, 0x45, 0x52, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46,
-	0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x08, 0x0a, 0x04, 0x4e, 0x4f, 0x4e, 0x45, 0x10, 0x01, 0x12,
-	0x09, 0x0a, 0x05, 0x53, 0x48, 0x45, 0x4c, 0x4c, 0x10, 0x02, 0x12, 0x0e, 0x0a, 0x0a, 0x50, 0x4f,
-	0x57, 0x45, 0x52, 0x53, 0x48, 0x45, 0x4c, 0x4c, 0x10, 0x03, 0x42, 0x08, 0x0a, 0x06, 0x73, 0x6f,
-	0x75, 0x72, 0x63, 0x65, 0x1a, 0xba, 0x03, 0x0a, 0x0c, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x65, 0x73,
-	0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x68, 0x0a, 0x04, 0x66, 0x69, 0x6c, 0x65, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x0b, 0x32, 0x52, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f,
-	0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e,
-	0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68,
-	0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61,
-	0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72,
-	0x63, 0x65, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x48, 0x00, 0x52, 0x04, 0x66, 0x69, 0x6c, 0x65, 0x12,
-	0x1a, 0x0a, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
-	0x48, 0x00, 0x52, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x12, 0x17, 0x0a, 0x04, 0x70,
-	0x61, 0x74, 0x68, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x04,
-	0x70, 0x61, 0x74, 0x68, 0x12, 0x82, 0x01, 0x0a, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x18, 0x04,
-	0x20, 0x01, 0x28, 0x0e, 0x32, 0x67, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c,
-	0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65,
-	0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70,
-	0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54,
-	0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75,
-	0x72, 0x63, 0x65, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
-	0x2e, 0x44, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x42, 0x03, 0xe0,
-	0x41, 0x02, 0x52, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x12, 0x20, 0x0a, 0x0b, 0x70, 0x65, 0x72,
-	0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b,
-	0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0x5a, 0x0a, 0x0c, 0x44,
-	0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x1d, 0x0a, 0x19, 0x44,
-	0x45, 0x53, 0x49, 0x52, 0x45, 0x44, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x45, 0x5f, 0x55, 0x4e, 0x53,
-	0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x0b, 0x0a, 0x07, 0x50, 0x52,
-	0x45, 0x53, 0x45, 0x4e, 0x54, 0x10, 0x01, 0x12, 0x0a, 0x0a, 0x06, 0x41, 0x42, 0x53, 0x45, 0x4e,
-	0x54, 0x10, 0x02, 0x12, 0x12, 0x0a, 0x0e, 0x43, 0x4f, 0x4e, 0x54, 0x45, 0x4e, 0x54, 0x53, 0x5f,
-	0x4d, 0x41, 0x54, 0x43, 0x48, 0x10, 0x03, 0x42, 0x08, 0x0a, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63,
-	0x65, 0x1a, 0xee, 0x03, 0x0a, 0x16, 0x45, 0x78, 0x74, 0x72, 0x61, 0x63, 0x74, 0x41, 0x72, 0x63,
-	0x68, 0x69, 0x76, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x6f, 0x0a, 0x06,
-	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x52, 0x2e, 0x67,
-	0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f,
-	0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69,
-	0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c,
-	0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66,
-	0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x46, 0x69, 0x6c, 0x65,
-	0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x25, 0x0a,
-	0x0b, 0x64, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x61,
-	0x74, 0x69, 0x6f, 0x6e, 0x12, 0x89, 0x01, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x03, 0x20,
-	0x01, 0x28, 0x0e, 0x32, 0x70, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f,
-	0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e,
-	0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68,
-	0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61,
-	0x73, 0x6b, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72,
-	0x63, 0x65, 0x2e, 0x45, 0x78, 0x74, 0x72, 0x61, 0x63, 0x74, 0x41, 0x72, 0x63, 0x68, 0x69, 0x76,
-	0x65, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x41, 0x72, 0x63, 0x68, 0x69, 0x76,
-	0x65, 0x54, 0x79, 0x70, 0x65, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65,
-	0x12, 0x1d, 0x0a, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28,
-	0x09, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x73, 0x12,
-	0x1c, 0x0a, 0x09, 0x6f, 0x76, 0x65, 0x72, 0x77, 0x72, 0x69, 0x74, 0x65, 0x18, 0x05, 0x20, 0x01,
-	0x28, 0x08, 0x52, 0x09, 0x6f, 0x76, 0x65, 0x72, 0x77, 0x72, 0x69, 0x74, 0x65, 0x22, 0x73, 0x0a,
-	0x0b, 0x41, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x54, 0x79, 0x70, 0x65, 0x12, 0x1c, 0x0a, 0x18,
-	0x41, 0x52, 0x43, 0x48, 0x49, 0x56, 0x45, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x55, 0x4e, 0x53,
-	0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x07, 0x0a, 0x03, 0x54, 0x41,
-	0x52, 0x10, 0x01, 0x12, 0x0c, 0x0a, 0x08, 0x54, 0x41, 0x52, 0x5f, 0x47, 0x5a, 0x49, 0x50, 0x10,
-	0x02, 0x12, 0x0c, 0x0a, 0x08, 0x54, 0x41, 0x52, 0x5f, 0x42, 0x5a, 0x49, 0x50, 0x10, 0x03, 0x12,
-	0x0c, 0x0a, 0x08, 0x54, 0x41, 0x52, 0x5f, 0x4c, 0x5a, 0x4d, 0x41, 0x10, 0x04, 0x12, 0x0a, 0x0a,
-	0x06, 0x54, 0x41, 0x52, 0x5f, 0x58, 0x5a, 0x10, 0x05, 0x12, 0x07, 0x0a, 0x03, 0x5a, 0x49, 0x50,
-	0x10, 0x0b, 0x1a, 0x11, 0x0a, 0x0f, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x52, 0x65, 0x73,
-	0x6f, 0x75, 0x72, 0x63, 0x65, 0x42, 0x0f, 0x0a, 0x0d, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63,
-	0x65, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x22, 0xbe, 0x01, 0x0a, 0x17, 0x41, 0x70, 0x70, 0x6c, 0x79,
-	0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65,
-	0x73, 0x73, 0x12, 0x61, 0x0a, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x0e, 0x32, 0x4b, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64,
-	0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65,
-	0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31,
-	0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b,
-	0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x65, 0x52, 0x05,
-	0x73, 0x74, 0x61, 0x74, 0x65, 0x22, 0x40, 0x0a, 0x05, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x15,
-	0x0a, 0x11, 0x53, 0x54, 0x41, 0x54, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46,
-	0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x0b, 0x0a, 0x07, 0x53, 0x54, 0x41, 0x52, 0x54, 0x45, 0x44,
-	0x10, 0x01, 0x12, 0x13, 0x0a, 0x0f, 0x41, 0x50, 0x50, 0x4c, 0x59, 0x49, 0x4e, 0x47, 0x5f, 0x43,
-	0x4f, 0x4e, 0x46, 0x49, 0x47, 0x10, 0x02, 0x22, 0xb3, 0x18, 0x0a, 0x15, 0x41, 0x70, 0x70, 0x6c,
-	0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f, 0x75, 0x74, 0x70, 0x75,
-	0x74, 0x12, 0x64, 0x0a, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e,
-	0x32, 0x49, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e,
-	0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e,
-	0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e,
-	0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f,
-	0x75, 0x74, 0x70, 0x75, 0x74, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x65, 0x42, 0x03, 0xe0, 0x41, 0x02,
-	0x52, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x12, 0x97, 0x01, 0x0a, 0x19, 0x63, 0x6f, 0x6e, 0x66,
-	0x69, 0x67, 0x5f, 0x61, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x72, 0x65,
-	0x73, 0x75, 0x6c, 0x74, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x5b, 0x2e, 0x67, 0x6f,
-	0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e,
-	0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e,
-	0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79,
-	0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74,
-	0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e,
-	0x74, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x52, 0x17, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67,
-	0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74,
-	0x73, 0x1a, 0x8f, 0x01, 0x0a, 0x17, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x41, 0x73, 0x73, 0x69,
-	0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x12, 0x74, 0x0a,
-	0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x5a,
+	0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52,
+	0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x6f,
+	0x75, 0x72, 0x63, 0x65, 0x48, 0x00, 0x52, 0x04, 0x66, 0x69, 0x6c, 0x65, 0x12, 0x82, 0x01, 0x0a,
+	0x07, 0x61, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x66,
 	0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73,
 	0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70,
 	0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70,
-	0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f, 0x75, 0x74,
-	0x70, 0x75, 0x74, 0x2e, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e,
-	0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x52, 0x07, 0x72, 0x65, 0x73, 0x75,
-	0x6c, 0x74, 0x73, 0x1a, 0x82, 0x02, 0x0a, 0x16, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x41, 0x73,
-	0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x12, 0x5a,
-	0x0a, 0x11, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x5f, 0x61, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d,
-	0x65, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x2d, 0xfa, 0x41, 0x2a, 0x0a, 0x28,
-	0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x61,
-	0x70, 0x69, 0x73, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x41, 0x73,
-	0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x10, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67,
-	0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x81, 0x01, 0x0a, 0x11, 0x6f,
-	0x73, 0x5f, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x5f, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x53, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e,
+	0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53,
+	0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e,
+	0x45, 0x78, 0x74, 0x72, 0x61, 0x63, 0x74, 0x41, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x52, 0x65,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x48, 0x00, 0x52, 0x07, 0x61, 0x72, 0x63, 0x68, 0x69, 0x76,
+	0x65, 0x12, 0x75, 0x0a, 0x04, 0x73, 0x72, 0x76, 0x63, 0x18, 0x07, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x5f, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f,
+	0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64,
+	0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41,
+	0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f,
+	0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x2e, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x48, 0x00, 0x52, 0x04, 0x73, 0x72, 0x76, 0x63, 0x1a, 0xe6, 0x03, 0x0a, 0x04, 0x46, 0x69, 0x6c,
+	0x65, 0x12, 0x75, 0x0a, 0x06, 0x72, 0x65, 0x6d, 0x6f, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x5b, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64,
+	0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65,
+	0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31,
+	0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b,
+	0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72,
+	0x63, 0x65, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x2e, 0x52, 0x65, 0x6d, 0x6f, 0x74, 0x65, 0x48, 0x00,
+	0x52, 0x06, 0x72, 0x65, 0x6d, 0x6f, 0x74, 0x65, 0x12, 0x6c, 0x0a, 0x03, 0x67, 0x63, 0x73, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x58, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63,
+	0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67,
+	0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c,
+	0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67,
+	0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x2e, 0x47, 0x63, 0x73, 0x48,
+	0x00, 0x52, 0x03, 0x67, 0x63, 0x73, 0x12, 0x1f, 0x0a, 0x0a, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x5f,
+	0x70, 0x61, 0x74, 0x68, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x09, 0x6c, 0x6f,
+	0x63, 0x61, 0x6c, 0x50, 0x61, 0x74, 0x68, 0x12, 0x25, 0x0a, 0x0e, 0x61, 0x6c, 0x6c, 0x6f, 0x77,
+	0x5f, 0x69, 0x6e, 0x73, 0x65, 0x63, 0x75, 0x72, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x08, 0x52,
+	0x0d, 0x61, 0x6c, 0x6c, 0x6f, 0x77, 0x49, 0x6e, 0x73, 0x65, 0x63, 0x75, 0x72, 0x65, 0x1a, 0x48,
+	0x0a, 0x06, 0x52, 0x65, 0x6d, 0x6f, 0x74, 0x65, 0x12, 0x15, 0x0a, 0x03, 0x75, 0x72, 0x69, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x03, 0x75, 0x72, 0x69, 0x12,
+	0x27, 0x0a, 0x0f, 0x73, 0x68, 0x61, 0x32, 0x35, 0x36, 0x5f, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x73,
+	0x75, 0x6d, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x73, 0x68, 0x61, 0x32, 0x35, 0x36,
+	0x43, 0x68, 0x65, 0x63, 0x6b, 0x73, 0x75, 0x6d, 0x1a, 0x5f, 0x0a, 0x03, 0x47, 0x63, 0x73, 0x12,
+	0x1b, 0x0a, 0x06, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42,
+	0x03, 0xe0, 0x41, 0x02, 0x52, 0x06, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x12, 0x1b, 0x0a, 0x06,
+	0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41,
+	0x02, 0x52, 0x06, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x12, 0x1e, 0x0a, 0x0a, 0x67, 0x65, 0x6e,
+	0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x03, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0a, 0x67,
+	0x65, 0x6e, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x06, 0x0a, 0x04, 0x66, 0x69, 0x6c,
+	0x65, 0x1a, 0xe5, 0x0d, 0x0a, 0x0f, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x73,
+	0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x96, 0x01, 0x0a, 0x0d, 0x64, 0x65, 0x73, 0x69, 0x72, 0x65,
+	0x64, 0x5f, 0x73, 0x74, 0x61, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x6c, 0x2e,
+	0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63,
+	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f,
+	0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70,
+	0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53, 0x50,
+	0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x50,
+	0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x44,
+	0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x42, 0x03, 0xe0, 0x41, 0x02,
+	0x52, 0x0c, 0x64, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x77,
+	0x0a, 0x03, 0x61, 0x70, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x63, 0x2e, 0x67, 0x6f,
+	0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e,
+	0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e,
+	0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79,
+	0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c,
+	0x69, 0x63, 0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x50, 0x61, 0x63,
+	0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x41, 0x50, 0x54,
+	0x48, 0x00, 0x52, 0x03, 0x61, 0x70, 0x74, 0x12, 0x77, 0x0a, 0x03, 0x64, 0x65, 0x62, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x63, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c,
+	0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65,
+	0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70,
+	0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54,
+	0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65, 0x73,
+	0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x73,
+	0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x44, 0x65, 0x62, 0x48, 0x00, 0x52, 0x03, 0x64, 0x65, 0x62,
+	0x12, 0x77, 0x0a, 0x03, 0x79, 0x75, 0x6d, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x63, 0x2e,
+	0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63,
+	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f,
+	0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70,
+	0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53, 0x50,
+	0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x50,
+	0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x59,
+	0x55, 0x4d, 0x48, 0x00, 0x52, 0x03, 0x79, 0x75, 0x6d, 0x12, 0x80, 0x01, 0x0a, 0x06, 0x7a, 0x79,
+	0x70, 0x70, 0x65, 0x72, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x66, 0x2e, 0x67, 0x6f, 0x6f,
+	0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66,
+	0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74,
+	0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43,
+	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69,
+	0x63, 0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x50, 0x61, 0x63, 0x6b,
+	0x61, 0x67, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x5a, 0x79, 0x70, 0x70,
+	0x65, 0x72, 0x48, 0x00, 0x52, 0x06, 0x7a, 0x79, 0x70, 0x70, 0x65, 0x72, 0x12, 0x77, 0x0a, 0x03,
+	0x72, 0x70, 0x6d, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x63, 0x2e, 0x67, 0x6f, 0x6f, 0x67,
+	0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69,
+	0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e,
+	0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f,
+	0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63,
+	0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x50, 0x61, 0x63, 0x6b, 0x61,
+	0x67, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x50, 0x4d, 0x48, 0x00,
+	0x52, 0x03, 0x72, 0x70, 0x6d, 0x12, 0x80, 0x01, 0x0a, 0x06, 0x67, 0x6f, 0x6f, 0x67, 0x65, 0x74,
+	0x18, 0x07, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x66, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e,
 	0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61,
 	0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61,
 	0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69,
-	0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x2e, 0x4f, 0x53, 0x50, 0x6f,
-	0x6c, 0x69, 0x63, 0x79, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x48, 0x00, 0x52, 0x0f, 0x6f,
-	0x73, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x42, 0x08,
-	0x0a, 0x06, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x1a, 0x7f, 0x0a, 0x0f, 0x4f, 0x53, 0x50, 0x6f,
-	0x6c, 0x69, 0x63, 0x79, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x12, 0x6c, 0x0a, 0x07, 0x72,
-	0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x52, 0x2e, 0x67,
+	0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52,
+	0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52,
+	0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x47, 0x6f, 0x6f, 0x47, 0x65, 0x74, 0x48, 0x00,
+	0x52, 0x06, 0x67, 0x6f, 0x6f, 0x67, 0x65, 0x74, 0x12, 0x77, 0x0a, 0x03, 0x6d, 0x73, 0x69, 0x18,
+	0x08, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x63, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63,
+	0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67,
+	0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c,
+	0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67,
+	0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x52, 0x65,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x4d, 0x53, 0x49, 0x48, 0x00, 0x52, 0x03, 0x6d, 0x73,
+	0x69, 0x1a, 0x95, 0x01, 0x0a, 0x03, 0x44, 0x65, 0x62, 0x12, 0x71, 0x0a, 0x06, 0x73, 0x6f, 0x75,
+	0x72, 0x63, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x54, 0x2e, 0x67, 0x6f, 0x6f, 0x67,
+	0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69,
+	0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e,
+	0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f,
+	0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63,
+	0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x42,
+	0x03, 0xe0, 0x41, 0x02, 0x52, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x1b, 0x0a, 0x09,
+	0x70, 0x75, 0x6c, 0x6c, 0x5f, 0x64, 0x65, 0x70, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52,
+	0x08, 0x70, 0x75, 0x6c, 0x6c, 0x44, 0x65, 0x70, 0x73, 0x1a, 0x1e, 0x0a, 0x03, 0x41, 0x50, 0x54,
+	0x12, 0x17, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03,
+	0xe0, 0x41, 0x02, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x1a, 0x95, 0x01, 0x0a, 0x03, 0x52, 0x50,
+	0x4d, 0x12, 0x71, 0x0a, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x54, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64,
+	0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65,
+	0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31,
+	0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b,
+	0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72,
+	0x63, 0x65, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x06, 0x73, 0x6f,
+	0x75, 0x72, 0x63, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x70, 0x75, 0x6c, 0x6c, 0x5f, 0x64, 0x65, 0x70,
+	0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x08, 0x70, 0x75, 0x6c, 0x6c, 0x44, 0x65, 0x70,
+	0x73, 0x1a, 0x1e, 0x0a, 0x03, 0x59, 0x55, 0x4d, 0x12, 0x17, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x04, 0x6e, 0x61, 0x6d,
+	0x65, 0x1a, 0x21, 0x0a, 0x06, 0x5a, 0x79, 0x70, 0x70, 0x65, 0x72, 0x12, 0x17, 0x0a, 0x04, 0x6e,
+	0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x04,
+	0x6e, 0x61, 0x6d, 0x65, 0x1a, 0x21, 0x0a, 0x06, 0x47, 0x6f, 0x6f, 0x47, 0x65, 0x74, 0x12, 0x17,
+	0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41,
+	0x02, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x1a, 0xc2, 0x01, 0x0a, 0x03, 0x4d, 0x53, 0x49, 0x12,
+	0x71, 0x0a, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x54, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f,
+	0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64,
+	0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41,
+	0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f,
+	0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x2e, 0x46, 0x69, 0x6c, 0x65, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x06, 0x73, 0x6f, 0x75, 0x72,
+	0x63, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x66, 0x6c, 0x61, 0x67, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28,
+	0x09, 0x52, 0x05, 0x66, 0x6c, 0x61, 0x67, 0x73, 0x12, 0x32, 0x0a, 0x15, 0x61, 0x6c, 0x6c, 0x6f,
+	0x77, 0x65, 0x64, 0x5f, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x5f, 0x63, 0x6f, 0x64, 0x65,
+	0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x05, 0x52, 0x13, 0x61, 0x6c, 0x6c, 0x6f, 0x77, 0x65, 0x64,
+	0x53, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x43, 0x6f, 0x64, 0x65, 0x73, 0x22, 0x49, 0x0a, 0x0c,
+	0x44, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x1d, 0x0a, 0x19,
+	0x44, 0x45, 0x53, 0x49, 0x52, 0x45, 0x44, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x45, 0x5f, 0x55, 0x4e,
+	0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x0d, 0x0a, 0x09, 0x49,
+	0x4e, 0x53, 0x54, 0x41, 0x4c, 0x4c, 0x45, 0x44, 0x10, 0x01, 0x12, 0x0b, 0x0a, 0x07, 0x52, 0x45,
+	0x4d, 0x4f, 0x56, 0x45, 0x44, 0x10, 0x02, 0x42, 0x10, 0x0a, 0x0e, 0x73, 0x79, 0x73, 0x74, 0x65,
+	0x6d, 0x5f, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x1a, 0x8f, 0x0a, 0x0a, 0x12, 0x52, 0x65,
+	0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x12, 0x84, 0x01, 0x0a, 0x03, 0x61, 0x70, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x70,
+	0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73,
+	0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70,
+	0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70,
+	0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53,
+	0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e,
+	0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72,
+	0x63, 0x65, 0x2e, 0x41, 0x70, 0x74, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79,
+	0x48, 0x00, 0x52, 0x03, 0x61, 0x70, 0x74, 0x12, 0x84, 0x01, 0x0a, 0x03, 0x79, 0x75, 0x6d, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x70, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63,
+	0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67,
+	0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c,
+	0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67,
+	0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72,
+	0x79, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x59, 0x75, 0x6d, 0x52, 0x65, 0x70,
+	0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x48, 0x00, 0x52, 0x03, 0x79, 0x75, 0x6d, 0x12, 0x8d,
+	0x01, 0x0a, 0x06, 0x7a, 0x79, 0x70, 0x70, 0x65, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x73, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f,
+	0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64,
+	0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41,
+	0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f,
+	0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x2e, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x52, 0x65, 0x73, 0x6f, 0x75,
+	0x72, 0x63, 0x65, 0x2e, 0x5a, 0x79, 0x70, 0x70, 0x65, 0x72, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69,
+	0x74, 0x6f, 0x72, 0x79, 0x48, 0x00, 0x52, 0x06, 0x7a, 0x79, 0x70, 0x70, 0x65, 0x72, 0x12, 0x84,
+	0x01, 0x0a, 0x03, 0x67, 0x6f, 0x6f, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x70, 0x2e, 0x67,
+	0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f,
+	0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69,
+	0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c,
+	0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f,
+	0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65,
+	0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x2e, 0x47, 0x6f, 0x6f, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x48, 0x00,
+	0x52, 0x03, 0x67, 0x6f, 0x6f, 0x1a, 0xf7, 0x02, 0x0a, 0x0d, 0x41, 0x70, 0x74, 0x52, 0x65, 0x70,
+	0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x12, 0xa4, 0x01, 0x0a, 0x0c, 0x61, 0x72, 0x63, 0x68,
+	0x69, 0x76, 0x65, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x7c,
+	0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73,
+	0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70,
+	0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70,
+	0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53,
+	0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e,
+	0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72,
+	0x63, 0x65, 0x2e, 0x41, 0x70, 0x74, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79,
+	0x2e, 0x41, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x54, 0x79, 0x70, 0x65, 0x42, 0x03, 0xe0, 0x41,
+	0x02, 0x52, 0x0b, 0x61, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x54, 0x79, 0x70, 0x65, 0x12, 0x15,
+	0x0a, 0x03, 0x75, 0x72, 0x69, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02,
+	0x52, 0x03, 0x75, 0x72, 0x69, 0x12, 0x27, 0x0a, 0x0c, 0x64, 0x69, 0x73, 0x74, 0x72, 0x69, 0x62,
+	0x75, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02,
+	0x52, 0x0c, 0x64, 0x69, 0x73, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x23,
+	0x0a, 0x0a, 0x63, 0x6f, 0x6d, 0x70, 0x6f, 0x6e, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x04, 0x20, 0x03,
+	0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x0a, 0x63, 0x6f, 0x6d, 0x70, 0x6f, 0x6e, 0x65,
+	0x6e, 0x74, 0x73, 0x12, 0x17, 0x0a, 0x07, 0x67, 0x70, 0x67, 0x5f, 0x6b, 0x65, 0x79, 0x18, 0x05,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x67, 0x70, 0x67, 0x4b, 0x65, 0x79, 0x22, 0x41, 0x0a, 0x0b,
+	0x41, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x54, 0x79, 0x70, 0x65, 0x12, 0x1c, 0x0a, 0x18, 0x41,
+	0x52, 0x43, 0x48, 0x49, 0x56, 0x45, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50,
+	0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x07, 0x0a, 0x03, 0x44, 0x45, 0x42,
+	0x10, 0x01, 0x12, 0x0b, 0x0a, 0x07, 0x44, 0x45, 0x42, 0x5f, 0x53, 0x52, 0x43, 0x10, 0x02, 0x1a,
+	0x82, 0x01, 0x0a, 0x0d, 0x59, 0x75, 0x6d, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72,
+	0x79, 0x12, 0x13, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0,
+	0x41, 0x02, 0x52, 0x02, 0x69, 0x64, 0x12, 0x21, 0x0a, 0x0c, 0x64, 0x69, 0x73, 0x70, 0x6c, 0x61,
+	0x79, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x69,
+	0x73, 0x70, 0x6c, 0x61, 0x79, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x1e, 0x0a, 0x08, 0x62, 0x61, 0x73,
+	0x65, 0x5f, 0x75, 0x72, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02,
+	0x52, 0x07, 0x62, 0x61, 0x73, 0x65, 0x55, 0x72, 0x6c, 0x12, 0x19, 0x0a, 0x08, 0x67, 0x70, 0x67,
+	0x5f, 0x6b, 0x65, 0x79, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x09, 0x52, 0x07, 0x67, 0x70, 0x67,
+	0x4b, 0x65, 0x79, 0x73, 0x1a, 0x85, 0x01, 0x0a, 0x10, 0x5a, 0x79, 0x70, 0x70, 0x65, 0x72, 0x52,
+	0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x12, 0x13, 0x0a, 0x02, 0x69, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x02, 0x69, 0x64, 0x12, 0x21,
+	0x0a, 0x0c, 0x64, 0x69, 0x73, 0x70, 0x6c, 0x61, 0x79, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x69, 0x73, 0x70, 0x6c, 0x61, 0x79, 0x4e, 0x61, 0x6d,
+	0x65, 0x12, 0x1e, 0x0a, 0x08, 0x62, 0x61, 0x73, 0x65, 0x5f, 0x75, 0x72, 0x6c, 0x18, 0x03, 0x20,
+	0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x07, 0x62, 0x61, 0x73, 0x65, 0x55, 0x72,
+	0x6c, 0x12, 0x19, 0x0a, 0x08, 0x67, 0x70, 0x67, 0x5f, 0x6b, 0x65, 0x79, 0x73, 0x18, 0x04, 0x20,
+	0x03, 0x28, 0x09, 0x52, 0x07, 0x67, 0x70, 0x67, 0x4b, 0x65, 0x79, 0x73, 0x1a, 0x3f, 0x0a, 0x0d,
+	0x47, 0x6f, 0x6f, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x12, 0x17, 0x0a,
+	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02,
+	0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x15, 0x0a, 0x03, 0x75, 0x72, 0x6c, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x03, 0x75, 0x72, 0x6c, 0x42, 0x0c, 0x0a,
+	0x0a, 0x72, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x1a, 0xd9, 0x05, 0x0a, 0x0c,
+	0x45, 0x78, 0x65, 0x63, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x82, 0x01, 0x0a,
+	0x08, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x61, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f,
+	0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64,
+	0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41,
+	0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f,
+	0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x2e, 0x45, 0x78, 0x65, 0x63, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x45, 0x78,
+	0x65, 0x63, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x08, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74,
+	0x65, 0x12, 0x7b, 0x0a, 0x07, 0x65, 0x6e, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x61, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75,
+	0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74,
+	0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61,
+	0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73,
+	0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75,
+	0x72, 0x63, 0x65, 0x2e, 0x45, 0x78, 0x65, 0x63, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x2e, 0x45, 0x78, 0x65, 0x63, 0x52, 0x07, 0x65, 0x6e, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x1a, 0xc6,
+	0x03, 0x0a, 0x04, 0x45, 0x78, 0x65, 0x63, 0x12, 0x6a, 0x0a, 0x04, 0x66, 0x69, 0x6c, 0x65, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x54, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63,
+	0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67,
+	0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c,
+	0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67,
+	0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x48, 0x00, 0x52, 0x04, 0x66,
+	0x69, 0x6c, 0x65, 0x12, 0x18, 0x0a, 0x06, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x06, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x12, 0x12, 0x0a,
+	0x04, 0x61, 0x72, 0x67, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x09, 0x52, 0x04, 0x61, 0x72, 0x67,
+	0x73, 0x12, 0x32, 0x0a, 0x15, 0x61, 0x6c, 0x6c, 0x6f, 0x77, 0x65, 0x64, 0x5f, 0x73, 0x75, 0x63,
+	0x63, 0x65, 0x73, 0x73, 0x5f, 0x63, 0x6f, 0x64, 0x65, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x05,
+	0x52, 0x13, 0x61, 0x6c, 0x6c, 0x6f, 0x77, 0x65, 0x64, 0x53, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73,
+	0x43, 0x6f, 0x64, 0x65, 0x73, 0x12, 0x94, 0x01, 0x0a, 0x0b, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x70,
+	0x72, 0x65, 0x74, 0x65, 0x72, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x6d, 0x2e, 0x67, 0x6f,
+	0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e,
+	0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e,
+	0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79,
+	0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c,
+	0x69, 0x63, 0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x45, 0x78, 0x65,
+	0x63, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x45, 0x78, 0x65, 0x63, 0x2e, 0x49,
+	0x6e, 0x74, 0x65, 0x72, 0x70, 0x72, 0x65, 0x74, 0x65, 0x72, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52,
+	0x0b, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x70, 0x72, 0x65, 0x74, 0x65, 0x72, 0x22, 0x4f, 0x0a, 0x0b,
+	0x49, 0x6e, 0x74, 0x65, 0x72, 0x70, 0x72, 0x65, 0x74, 0x65, 0x72, 0x12, 0x1b, 0x0a, 0x17, 0x49,
+	0x4e, 0x54, 0x45, 0x52, 0x50, 0x52, 0x45, 0x54, 0x45, 0x52, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45,
+	0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x08, 0x0a, 0x04, 0x4e, 0x4f, 0x4e, 0x45,
+	0x10, 0x01, 0x12, 0x09, 0x0a, 0x05, 0x53, 0x48, 0x45, 0x4c, 0x4c, 0x10, 0x02, 0x12, 0x0e, 0x0a,
+	0x0a, 0x50, 0x4f, 0x57, 0x45, 0x52, 0x53, 0x48, 0x45, 0x4c, 0x4c, 0x10, 0x03, 0x42, 0x08, 0x0a,
+	0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x1a, 0xbe, 0x03, 0x0a, 0x0c, 0x46, 0x69, 0x6c, 0x65,
+	0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x6a, 0x0a, 0x04, 0x66, 0x69, 0x6c, 0x65,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x54, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e,
+	0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61,
+	0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61,
+	0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69,
+	0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52,
+	0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x48, 0x00, 0x52, 0x04,
+	0x66, 0x69, 0x6c, 0x65, 0x12, 0x1a, 0x0a, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74,
+	0x12, 0x17, 0x0a, 0x04, 0x70, 0x61, 0x74, 0x68, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03,
+	0xe0, 0x41, 0x02, 0x52, 0x04, 0x70, 0x61, 0x74, 0x68, 0x12, 0x84, 0x01, 0x0a, 0x05, 0x73, 0x74,
+	0x61, 0x74, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x69, 0x2e, 0x67, 0x6f, 0x6f, 0x67,
+	0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69,
+	0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e,
+	0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f,
+	0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63,
+	0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x52,
+	0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x44, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53,
+	0x74, 0x61, 0x74, 0x65, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65,
+	0x12, 0x20, 0x0a, 0x0b, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x18,
+	0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f,
+	0x6e, 0x73, 0x22, 0x5a, 0x0a, 0x0c, 0x44, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61,
+	0x74, 0x65, 0x12, 0x1d, 0x0a, 0x19, 0x44, 0x45, 0x53, 0x49, 0x52, 0x45, 0x44, 0x5f, 0x53, 0x54,
+	0x41, 0x54, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10,
+	0x00, 0x12, 0x0b, 0x0a, 0x07, 0x50, 0x52, 0x45, 0x53, 0x45, 0x4e, 0x54, 0x10, 0x01, 0x12, 0x0a,
+	0x0a, 0x06, 0x41, 0x42, 0x53, 0x45, 0x4e, 0x54, 0x10, 0x02, 0x12, 0x12, 0x0a, 0x0e, 0x43, 0x4f,
+	0x4e, 0x54, 0x45, 0x4e, 0x54, 0x53, 0x5f, 0x4d, 0x41, 0x54, 0x43, 0x48, 0x10, 0x03, 0x42, 0x08,
+	0x0a, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x1a, 0xf2, 0x03, 0x0a, 0x16, 0x45, 0x78, 0x74,
+	0x72, 0x61, 0x63, 0x74, 0x41, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x75,
+	0x72, 0x63, 0x65, 0x12, 0x71, 0x0a, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x54, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f,
+	0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e,
+	0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68,
+	0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61,
+	0x73, 0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f,
+	0x75, 0x72, 0x63, 0x65, 0x2e, 0x46, 0x69, 0x6c, 0x65, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x06,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x25, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x74, 0x69, 0x6e,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41, 0x02,
+	0x52, 0x0b, 0x64, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x8b, 0x01,
+	0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x72, 0x2e, 0x67,
+	0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f,
+	0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69,
+	0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c,
+	0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x2e, 0x4f, 0x53, 0x50, 0x6f,
+	0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x45, 0x78,
+	0x74, 0x72, 0x61, 0x63, 0x74, 0x41, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x52, 0x65, 0x73, 0x6f,
+	0x75, 0x72, 0x63, 0x65, 0x2e, 0x41, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x54, 0x79, 0x70, 0x65,
+	0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x1d, 0x0a, 0x07, 0x63,
+	0x72, 0x65, 0x61, 0x74, 0x65, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0, 0x41,
+	0x02, 0x52, 0x07, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x73, 0x12, 0x1c, 0x0a, 0x09, 0x6f, 0x76,
+	0x65, 0x72, 0x77, 0x72, 0x69, 0x74, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x08, 0x52, 0x09, 0x6f,
+	0x76, 0x65, 0x72, 0x77, 0x72, 0x69, 0x74, 0x65, 0x22, 0x73, 0x0a, 0x0b, 0x41, 0x72, 0x63, 0x68,
+	0x69, 0x76, 0x65, 0x54, 0x79, 0x70, 0x65, 0x12, 0x1c, 0x0a, 0x18, 0x41, 0x52, 0x43, 0x48, 0x49,
+	0x56, 0x45, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46,
+	0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x07, 0x0a, 0x03, 0x54, 0x41, 0x52, 0x10, 0x01, 0x12, 0x0c,
+	0x0a, 0x08, 0x54, 0x41, 0x52, 0x5f, 0x47, 0x5a, 0x49, 0x50, 0x10, 0x02, 0x12, 0x0c, 0x0a, 0x08,
+	0x54, 0x41, 0x52, 0x5f, 0x42, 0x5a, 0x49, 0x50, 0x10, 0x03, 0x12, 0x0c, 0x0a, 0x08, 0x54, 0x41,
+	0x52, 0x5f, 0x4c, 0x5a, 0x4d, 0x41, 0x10, 0x04, 0x12, 0x0a, 0x0a, 0x06, 0x54, 0x41, 0x52, 0x5f,
+	0x58, 0x5a, 0x10, 0x05, 0x12, 0x07, 0x0a, 0x03, 0x5a, 0x49, 0x50, 0x10, 0x0b, 0x1a, 0x11, 0x0a,
+	0x0f, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x42, 0x0f, 0x0a, 0x0d, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x74, 0x79, 0x70,
+	0x65, 0x22, 0x3d, 0x0a, 0x04, 0x4d, 0x6f, 0x64, 0x65, 0x12, 0x14, 0x0a, 0x10, 0x4d, 0x4f, 0x44,
+	0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12,
+	0x0e, 0x0a, 0x0a, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x41, 0x54, 0x49, 0x4f, 0x4e, 0x10, 0x01, 0x12,
+	0x0f, 0x0a, 0x0b, 0x45, 0x4e, 0x46, 0x4f, 0x52, 0x43, 0x45, 0x4d, 0x45, 0x4e, 0x54, 0x10, 0x02,
+	0x22, 0xbe, 0x01, 0x0a, 0x17, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67,
+	0x54, 0x61, 0x73, 0x6b, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x12, 0x61, 0x0a, 0x05,
+	0x73, 0x74, 0x61, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x4b, 0x2e, 0x67, 0x6f,
+	0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e,
+	0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e,
+	0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79,
+	0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65,
+	0x73, 0x73, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x65, 0x52, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x22,
+	0x40, 0x0a, 0x05, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x15, 0x0a, 0x11, 0x53, 0x54, 0x41, 0x54,
+	0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12,
+	0x0b, 0x0a, 0x07, 0x53, 0x54, 0x41, 0x52, 0x54, 0x45, 0x44, 0x10, 0x01, 0x12, 0x13, 0x0a, 0x0f,
+	0x41, 0x50, 0x50, 0x4c, 0x59, 0x49, 0x4e, 0x47, 0x5f, 0x43, 0x4f, 0x4e, 0x46, 0x49, 0x47, 0x10,
+	0x02, 0x22, 0xc7, 0x14, 0x0a, 0x15, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69,
+	0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x12, 0x64, 0x0a, 0x05, 0x73,
+	0x74, 0x61, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x49, 0x2e, 0x67, 0x6f, 0x6f,
+	0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66,
+	0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74,
+	0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43,
+	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x2e,
+	0x53, 0x74, 0x61, 0x74, 0x65, 0x42, 0x03, 0xe0, 0x41, 0x02, 0x52, 0x05, 0x73, 0x74, 0x61, 0x74,
+	0x65, 0x12, 0x7e, 0x0a, 0x11, 0x6f, 0x73, 0x5f, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x5f, 0x72,
+	0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x52, 0x2e, 0x67,
 	0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f,
 	0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69,
 	0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c,
 	0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f, 0x75, 0x74, 0x70, 0x75,
 	0x74, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74,
-	0x52, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x1a, 0xad, 0x01, 0x0a, 0x0e, 0x4f, 0x53,
-	0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x12, 0x0e, 0x0a, 0x02,
-	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x80, 0x01, 0x0a,
-	0x10, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74,
-	0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x53, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65,
-	0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e,
-	0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31,
-	0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66,
-	0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x2e, 0x52, 0x65, 0x73,
-	0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x48, 0x00, 0x52, 0x0f,
-	0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x42,
-	0x08, 0x0a, 0x06, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x1a, 0x7f, 0x0a, 0x0f, 0x52, 0x65, 0x73,
-	0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x12, 0x6c, 0x0a, 0x07,
-	0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x52, 0x2e,
-	0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63,
-	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f,
-	0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70,
-	0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f, 0x75, 0x74, 0x70,
-	0x75, 0x74, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x65, 0x73, 0x75, 0x6c,
-	0x74, 0x52, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x1a, 0x86, 0x0f, 0x0a, 0x0e, 0x52,
-	0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x12, 0x0e, 0x0a,
-	0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x8a, 0x01,
-	0x0a, 0x0f, 0x65, 0x78, 0x65, 0x63, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x73, 0x74, 0x65, 0x70,
-	0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x61, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65,
-	0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e,
-	0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31,
-	0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66,
-	0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x2e, 0x52, 0x65, 0x73,
-	0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x2e, 0x45, 0x78, 0x63, 0x65,
-	0x63, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x74, 0x65, 0x70, 0x52, 0x0e, 0x65, 0x78, 0x65, 0x63,
-	0x75, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x74, 0x65, 0x70, 0x73, 0x1a, 0xb2, 0x05, 0x0a, 0x0e, 0x45,
-	0x78, 0x63, 0x65, 0x63, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x74, 0x65, 0x70, 0x12, 0x7f, 0x0a,
-	0x0a, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x0b, 0x32, 0x5d, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64,
-	0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65,
-	0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31,
-	0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b,
-	0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52,
-	0x65, 0x73, 0x75, 0x6c, 0x74, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e,
-	0x48, 0x00, 0x52, 0x0a, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x96,
-	0x01, 0x0a, 0x13, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x5f, 0x64, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64,
-	0x5f, 0x73, 0x74, 0x61, 0x74, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x64, 0x2e, 0x67,
+	0x52, 0x0f, 0x6f, 0x73, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74,
+	0x73, 0x1a, 0xfd, 0x11, 0x0a, 0x0e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x65,
+	0x73, 0x75, 0x6c, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x02, 0x69, 0x64, 0x12, 0x6e, 0x0a, 0x1b, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x6f,
+	0x73, 0x5f, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x5f, 0x61, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d,
+	0x65, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x42, 0x2f, 0xfa, 0x41, 0x2c, 0x0a, 0x2a,
+	0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x61,
+	0x70, 0x69, 0x73, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79,
+	0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x18, 0x73, 0x6f, 0x75, 0x72,
+	0x63, 0x65, 0x4f, 0x73, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e,
+	0x6d, 0x65, 0x6e, 0x74, 0x12, 0x8c, 0x01, 0x0a, 0x10, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63,
+	0x65, 0x5f, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32,
+	0x61, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f,
+	0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64,
+	0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41,
+	0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f, 0x75,
+	0x74, 0x70, 0x75, 0x74, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x65, 0x73,
+	0x75, 0x6c, 0x74, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x65, 0x73, 0x75,
+	0x6c, 0x74, 0x52, 0x0f, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x65, 0x73, 0x75,
+	0x6c, 0x74, 0x73, 0x1a, 0xdb, 0x0f, 0x0a, 0x0e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x98, 0x01, 0x0a, 0x0f, 0x65, 0x78, 0x65, 0x63, 0x75,
+	0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x73, 0x74, 0x65, 0x70, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b,
+	0x32, 0x6f, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e,
+	0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e,
+	0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e,
+	0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f,
+	0x75, 0x74, 0x70, 0x75, 0x74, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x65,
+	0x73, 0x75, 0x6c, 0x74, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x65, 0x73,
+	0x75, 0x6c, 0x74, 0x2e, 0x45, 0x78, 0x65, 0x63, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x74, 0x65,
+	0x70, 0x52, 0x0e, 0x65, 0x78, 0x65, 0x63, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x74, 0x65, 0x70,
+	0x73, 0x1a, 0xfb, 0x05, 0x0a, 0x0d, 0x45, 0x78, 0x65, 0x63, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x53,
+	0x74, 0x65, 0x70, 0x12, 0x8e, 0x01, 0x0a, 0x0a, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x6c, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c,
+	0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67,
+	0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76,
+	0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e,
+	0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x2e, 0x4f, 0x53,
+	0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x2e, 0x52, 0x65, 0x73,
+	0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x2e, 0x56, 0x61, 0x6c, 0x69,
+	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x48, 0x00, 0x52, 0x0a, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x12, 0xa5, 0x01, 0x0a, 0x13, 0x64, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64,
+	0x5f, 0x73, 0x74, 0x61, 0x74, 0x65, 0x5f, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x73, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75,
+	0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74,
+	0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61,
+	0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73,
+	0x6b, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79,
+	0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52,
+	0x65, 0x73, 0x75, 0x6c, 0x74, 0x2e, 0x44, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61,
+	0x74, 0x65, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x48, 0x00, 0x52, 0x11, 0x64, 0x65, 0x73, 0x69, 0x72,
+	0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x12, 0xb7, 0x01, 0x0a,
+	0x19, 0x64, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x5f, 0x73, 0x74, 0x61, 0x74, 0x65, 0x5f, 0x65,
+	0x6e, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x79, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e,
+	0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e,
+	0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e,
+	0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f,
+	0x75, 0x74, 0x70, 0x75, 0x74, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x65,
+	0x73, 0x75, 0x6c, 0x74, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x65, 0x73,
+	0x75, 0x6c, 0x74, 0x2e, 0x44, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65,
+	0x45, 0x6e, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x48, 0x00, 0x52, 0x17, 0x64,
+	0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x45, 0x6e, 0x66, 0x6f, 0x72,
+	0x63, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0xd5, 0x01, 0x0a, 0x24, 0x64, 0x65, 0x73, 0x69, 0x72,
+	0x65, 0x64, 0x5f, 0x73, 0x74, 0x61, 0x74, 0x65, 0x5f, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x5f, 0x70,
+	0x6f, 0x73, 0x74, 0x5f, 0x65, 0x6e, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x18,
+	0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x82, 0x01, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e,
+	0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61,
+	0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61,
+	0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69,
+	0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x2e, 0x4f, 0x53, 0x50, 0x6f,
+	0x6c, 0x69, 0x63, 0x79, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75,
+	0x72, 0x63, 0x65, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x2e, 0x44, 0x65, 0x73, 0x69, 0x72, 0x65,
+	0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x50, 0x6f, 0x73, 0x74, 0x45,
+	0x6e, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x48, 0x00, 0x52, 0x20, 0x64, 0x65,
+	0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x50,
+	0x6f, 0x73, 0x74, 0x45, 0x6e, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x17,
+	0x0a, 0x07, 0x65, 0x72, 0x72, 0x5f, 0x6d, 0x73, 0x67, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x06, 0x65, 0x72, 0x72, 0x4d, 0x73, 0x67, 0x42, 0x06, 0x0a, 0x04, 0x73, 0x74, 0x65, 0x70, 0x1a,
+	0xe2, 0x01, 0x0a, 0x0a, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x8e,
+	0x01, 0x0a, 0x07, 0x6f, 0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e,
+	0x32, 0x74, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e,
+	0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e,
+	0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e,
+	0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f,
+	0x75, 0x74, 0x70, 0x75, 0x74, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x65,
+	0x73, 0x75, 0x6c, 0x74, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x65, 0x73,
+	0x75, 0x6c, 0x74, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4f,
+	0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x52, 0x07, 0x6f, 0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x22,
+	0x43, 0x0a, 0x07, 0x4f, 0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x12, 0x17, 0x0a, 0x13, 0x4f, 0x55,
+	0x54, 0x43, 0x4f, 0x4d, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45,
+	0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02, 0x4f, 0x4b, 0x10, 0x01, 0x12, 0x09, 0x0a, 0x05, 0x45,
+	0x52, 0x52, 0x4f, 0x52, 0x10, 0x02, 0x12, 0x0c, 0x0a, 0x08, 0x43, 0x4f, 0x4e, 0x46, 0x4c, 0x49,
+	0x43, 0x54, 0x10, 0x03, 0x1a, 0x97, 0x02, 0x0a, 0x11, 0x44, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64,
+	0x53, 0x74, 0x61, 0x74, 0x65, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x12, 0x95, 0x01, 0x0a, 0x07, 0x6f,
+	0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x7b, 0x2e, 0x67,
 	0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f,
 	0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69,
 	0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c,
 	0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f, 0x75, 0x74, 0x70, 0x75,
+	0x74, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74,
+	0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x2e,
+	0x44, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x43, 0x68, 0x65, 0x63,
+	0x6b, 0x2e, 0x4f, 0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x52, 0x07, 0x6f, 0x75, 0x74, 0x63, 0x6f,
+	0x6d, 0x65, 0x22, 0x6a, 0x0a, 0x07, 0x4f, 0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x12, 0x17, 0x0a,
+	0x13, 0x4f, 0x55, 0x54, 0x43, 0x4f, 0x4d, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49,
+	0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x14, 0x0a, 0x10, 0x49, 0x4e, 0x5f, 0x44, 0x45, 0x53,
+	0x49, 0x52, 0x45, 0x44, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x45, 0x10, 0x01, 0x12, 0x18, 0x0a, 0x14,
+	0x4e, 0x4f, 0x54, 0x5f, 0x49, 0x4e, 0x5f, 0x44, 0x45, 0x53, 0x49, 0x52, 0x45, 0x44, 0x5f, 0x53,
+	0x54, 0x41, 0x54, 0x45, 0x10, 0x02, 0x12, 0x09, 0x0a, 0x05, 0x45, 0x52, 0x52, 0x4f, 0x52, 0x10,
+	0x03, 0x12, 0x0b, 0x0a, 0x07, 0x53, 0x4b, 0x49, 0x50, 0x50, 0x45, 0x44, 0x10, 0x04, 0x1a, 0xf4,
+	0x01, 0x0a, 0x17, 0x44, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x45,
+	0x6e, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x9c, 0x01, 0x0a, 0x07, 0x6f,
+	0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x81, 0x01, 0x2e,
+	0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63,
+	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f,
+	0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70,
+	0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f, 0x75, 0x74, 0x70,
+	0x75, 0x74, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x65, 0x73, 0x75, 0x6c,
 	0x74, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74,
-	0x2e, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x44, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61,
-	0x74, 0x65, 0x48, 0x00, 0x52, 0x11, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x44, 0x65, 0x73, 0x69, 0x72,
-	0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x9c, 0x01, 0x0a, 0x15, 0x65, 0x6e, 0x66, 0x6f,
-	0x72, 0x63, 0x65, 0x5f, 0x64, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x5f, 0x73, 0x74, 0x61, 0x74,
-	0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x66, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65,
-	0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e,
-	0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31,
-	0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66,
-	0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x2e, 0x52, 0x65, 0x73,
-	0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x2e, 0x45, 0x6e, 0x66, 0x6f,
-	0x72, 0x63, 0x65, 0x44, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x48,
-	0x00, 0x52, 0x13, 0x65, 0x6e, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x44, 0x65, 0x73, 0x69, 0x72, 0x65,
-	0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0xc5, 0x01, 0x0a, 0x24, 0x63, 0x68, 0x65, 0x63, 0x6b,
-	0x5f, 0x64, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x5f, 0x73, 0x74, 0x61, 0x74, 0x65, 0x5f, 0x70,
-	0x6f, 0x73, 0x74, 0x5f, 0x65, 0x6e, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x18,
-	0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x73, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63,
-	0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67,
-	0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c,
-	0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67,
-	0x54, 0x61, 0x73, 0x6b, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75,
-	0x72, 0x63, 0x65, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x2e, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x44,
-	0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x50, 0x6f, 0x73, 0x74, 0x45,
-	0x6e, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x48, 0x00, 0x52, 0x20, 0x63, 0x68,
-	0x65, 0x63, 0x6b, 0x44, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x50,
-	0x6f, 0x73, 0x74, 0x45, 0x6e, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x17,
-	0x0a, 0x07, 0x65, 0x72, 0x72, 0x5f, 0x6d, 0x73, 0x67, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x06, 0x65, 0x72, 0x72, 0x4d, 0x73, 0x67, 0x42, 0x06, 0x0a, 0x04, 0x73, 0x74, 0x65, 0x70, 0x1a,
-	0x9b, 0x02, 0x0a, 0x0a, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x7f,
-	0x0a, 0x07, 0x6f, 0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32,
-	0x65, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f,
+	0x2e, 0x44, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x45, 0x6e, 0x66,
+	0x6f, 0x72, 0x63, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x2e, 0x4f, 0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65,
+	0x52, 0x07, 0x6f, 0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x22, 0x3a, 0x0a, 0x07, 0x4f, 0x75, 0x74,
+	0x63, 0x6f, 0x6d, 0x65, 0x12, 0x17, 0x0a, 0x13, 0x4f, 0x55, 0x54, 0x43, 0x4f, 0x4d, 0x45, 0x5f,
+	0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x0b, 0x0a,
+	0x07, 0x53, 0x55, 0x43, 0x43, 0x45, 0x53, 0x53, 0x10, 0x01, 0x12, 0x09, 0x0a, 0x05, 0x45, 0x52,
+	0x52, 0x4f, 0x52, 0x10, 0x02, 0x1a, 0xa9, 0x02, 0x0a, 0x20, 0x44, 0x65, 0x73, 0x69, 0x72, 0x65,
+	0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x50, 0x6f, 0x73, 0x74, 0x45,
+	0x6e, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0xa5, 0x01, 0x0a, 0x07, 0x6f,
+	0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x8a, 0x01, 0x2e,
+	0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63,
+	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f,
+	0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70,
+	0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f, 0x75, 0x74, 0x70,
+	0x75, 0x74, 0x2e, 0x4f, 0x53, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x65, 0x73, 0x75, 0x6c,
+	0x74, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74,
+	0x2e, 0x44, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x43, 0x68, 0x65,
+	0x63, 0x6b, 0x50, 0x6f, 0x73, 0x74, 0x45, 0x6e, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x6d, 0x65, 0x6e,
+	0x74, 0x2e, 0x4f, 0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x52, 0x07, 0x6f, 0x75, 0x74, 0x63, 0x6f,
+	0x6d, 0x65, 0x22, 0x5d, 0x0a, 0x07, 0x4f, 0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x12, 0x17, 0x0a,
+	0x13, 0x4f, 0x55, 0x54, 0x43, 0x4f, 0x4d, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49,
+	0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x14, 0x0a, 0x10, 0x49, 0x4e, 0x5f, 0x44, 0x45, 0x53,
+	0x49, 0x52, 0x45, 0x44, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x45, 0x10, 0x01, 0x12, 0x18, 0x0a, 0x14,
+	0x4e, 0x4f, 0x54, 0x5f, 0x49, 0x4e, 0x5f, 0x44, 0x45, 0x53, 0x49, 0x52, 0x45, 0x44, 0x5f, 0x53,
+	0x54, 0x41, 0x54, 0x45, 0x10, 0x02, 0x12, 0x09, 0x0a, 0x05, 0x45, 0x52, 0x52, 0x4f, 0x52, 0x10,
+	0x03, 0x22, 0x48, 0x0a, 0x05, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x15, 0x0a, 0x11, 0x53, 0x54,
+	0x41, 0x54, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10,
+	0x00, 0x12, 0x0d, 0x0a, 0x09, 0x53, 0x55, 0x43, 0x43, 0x45, 0x45, 0x44, 0x45, 0x44, 0x10, 0x01,
+	0x12, 0x0a, 0x0a, 0x06, 0x46, 0x41, 0x49, 0x4c, 0x45, 0x44, 0x10, 0x02, 0x12, 0x0d, 0x0a, 0x09,
+	0x43, 0x41, 0x4e, 0x43, 0x45, 0x4c, 0x4c, 0x45, 0x44, 0x10, 0x03, 0x2a, 0x47, 0x0a, 0x0d, 0x54,
+	0x61, 0x73, 0x6b, 0x44, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69, 0x76, 0x65, 0x12, 0x1e, 0x0a, 0x1a,
+	0x54, 0x41, 0x53, 0x4b, 0x5f, 0x44, 0x49, 0x52, 0x45, 0x43, 0x54, 0x49, 0x56, 0x45, 0x5f, 0x55,
+	0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x0c, 0x0a, 0x08,
+	0x43, 0x4f, 0x4e, 0x54, 0x49, 0x4e, 0x55, 0x45, 0x10, 0x01, 0x12, 0x08, 0x0a, 0x04, 0x53, 0x54,
+	0x4f, 0x50, 0x10, 0x02, 0x2a, 0x63, 0x0a, 0x08, 0x54, 0x61, 0x73, 0x6b, 0x54, 0x79, 0x70, 0x65,
+	0x12, 0x19, 0x0a, 0x15, 0x54, 0x41, 0x53, 0x4b, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x55, 0x4e,
+	0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x11, 0x0a, 0x0d, 0x41,
+	0x50, 0x50, 0x4c, 0x59, 0x5f, 0x50, 0x41, 0x54, 0x43, 0x48, 0x45, 0x53, 0x10, 0x01, 0x12, 0x12,
+	0x0a, 0x0e, 0x45, 0x58, 0x45, 0x43, 0x5f, 0x53, 0x54, 0x45, 0x50, 0x5f, 0x54, 0x41, 0x53, 0x4b,
+	0x10, 0x02, 0x12, 0x15, 0x0a, 0x11, 0x41, 0x50, 0x50, 0x4c, 0x59, 0x5f, 0x43, 0x4f, 0x4e, 0x46,
+	0x49, 0x47, 0x5f, 0x54, 0x41, 0x53, 0x4b, 0x10, 0x03, 0x42, 0x94, 0x01, 0x0a, 0x30, 0x63, 0x6f,
+	0x6d, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f,
 	0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64,
-	0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41,
-	0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f, 0x75,
-	0x74, 0x70, 0x75, 0x74, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x65, 0x73,
-	0x75, 0x6c, 0x74, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4f,
-	0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x52, 0x07, 0x6f, 0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x22,
-	0x8b, 0x01, 0x0a, 0x07, 0x4f, 0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x12, 0x17, 0x0a, 0x13, 0x4f,
-	0x55, 0x54, 0x43, 0x4f, 0x4d, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49,
-	0x45, 0x44, 0x10, 0x00, 0x12, 0x06, 0x0a, 0x02, 0x4f, 0x4b, 0x10, 0x01, 0x12, 0x1d, 0x0a, 0x19,
-	0x52, 0x45, 0x53, 0x4f, 0x55, 0x52, 0x43, 0x45, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x55, 0x4e,
-	0x53, 0x55, 0x50, 0x50, 0x4f, 0x52, 0x54, 0x45, 0x44, 0x10, 0x02, 0x12, 0x25, 0x0a, 0x21, 0x52,
-	0x45, 0x53, 0x4f, 0x55, 0x52, 0x43, 0x45, 0x5f, 0x50, 0x41, 0x59, 0x4c, 0x4f, 0x41, 0x44, 0x5f,
-	0x43, 0x4f, 0x4e, 0x56, 0x45, 0x52, 0x53, 0x49, 0x4f, 0x4e, 0x5f, 0x45, 0x52, 0x52, 0x4f, 0x52,
-	0x10, 0x03, 0x12, 0x0b, 0x0a, 0x07, 0x53, 0x4b, 0x49, 0x50, 0x50, 0x45, 0x44, 0x10, 0x04, 0x12,
-	0x0c, 0x0a, 0x08, 0x43, 0x4f, 0x4e, 0x46, 0x4c, 0x49, 0x43, 0x54, 0x10, 0x05, 0x1a, 0x88, 0x02,
-	0x0a, 0x11, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x44, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74,
-	0x61, 0x74, 0x65, 0x12, 0x86, 0x01, 0x0a, 0x07, 0x6f, 0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x6c, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63,
-	0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67,
-	0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c,
-	0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67,
-	0x54, 0x61, 0x73, 0x6b, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75,
-	0x72, 0x63, 0x65, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x2e, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x44,
-	0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x2e, 0x4f, 0x75, 0x74, 0x63,
-	0x6f, 0x6d, 0x65, 0x52, 0x07, 0x6f, 0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x22, 0x6a, 0x0a, 0x07,
-	0x4f, 0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x12, 0x17, 0x0a, 0x13, 0x4f, 0x55, 0x54, 0x43, 0x4f,
-	0x4d, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00,
-	0x12, 0x14, 0x0a, 0x10, 0x49, 0x4e, 0x5f, 0x44, 0x45, 0x53, 0x49, 0x52, 0x45, 0x44, 0x5f, 0x53,
-	0x54, 0x41, 0x54, 0x45, 0x10, 0x01, 0x12, 0x18, 0x0a, 0x14, 0x4e, 0x4f, 0x54, 0x5f, 0x49, 0x4e,
-	0x5f, 0x44, 0x45, 0x53, 0x49, 0x52, 0x45, 0x44, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x45, 0x10, 0x02,
-	0x12, 0x09, 0x0a, 0x05, 0x45, 0x52, 0x52, 0x4f, 0x52, 0x10, 0x03, 0x12, 0x0b, 0x0a, 0x07, 0x53,
-	0x4b, 0x49, 0x50, 0x50, 0x45, 0x44, 0x10, 0x04, 0x1a, 0xdc, 0x01, 0x0a, 0x13, 0x45, 0x6e, 0x66,
-	0x6f, 0x72, 0x63, 0x65, 0x44, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65,
-	0x12, 0x88, 0x01, 0x0a, 0x07, 0x6f, 0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x0e, 0x32, 0x6e, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75,
-	0x64, 0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74,
-	0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61,
-	0x31, 0x2e, 0x41, 0x70, 0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73,
-	0x6b, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
-	0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x2e, 0x45, 0x6e, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x44, 0x65,
-	0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x2e, 0x4f, 0x75, 0x74, 0x63, 0x6f,
-	0x6d, 0x65, 0x52, 0x07, 0x6f, 0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x22, 0x3a, 0x0a, 0x07, 0x4f,
-	0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x12, 0x17, 0x0a, 0x13, 0x4f, 0x55, 0x54, 0x43, 0x4f, 0x4d,
-	0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12,
-	0x0b, 0x0a, 0x07, 0x53, 0x55, 0x43, 0x43, 0x45, 0x53, 0x53, 0x10, 0x01, 0x12, 0x09, 0x0a, 0x05,
-	0x45, 0x52, 0x52, 0x4f, 0x52, 0x10, 0x02, 0x1a, 0x99, 0x02, 0x0a, 0x20, 0x43, 0x68, 0x65, 0x63,
-	0x6b, 0x44, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x50, 0x6f, 0x73,
-	0x74, 0x45, 0x6e, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x95, 0x01, 0x0a,
-	0x07, 0x6f, 0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x7b,
-	0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x6f, 0x73,
-	0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70,
-	0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x41, 0x70,
-	0x70, 0x6c, 0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x54, 0x61, 0x73, 0x6b, 0x4f, 0x75, 0x74,
-	0x70, 0x75, 0x74, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x65, 0x73, 0x75,
-	0x6c, 0x74, 0x2e, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x44, 0x65, 0x73, 0x69, 0x72, 0x65, 0x64, 0x53,
-	0x74, 0x61, 0x74, 0x65, 0x50, 0x6f, 0x73, 0x74, 0x45, 0x6e, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x6d,
-	0x65, 0x6e, 0x74, 0x2e, 0x4f, 0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x52, 0x07, 0x6f, 0x75, 0x74,
-	0x63, 0x6f, 0x6d, 0x65, 0x22, 0x5d, 0x0a, 0x07, 0x4f, 0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x12,
-	0x17, 0x0a, 0x13, 0x4f, 0x55, 0x54, 0x43, 0x4f, 0x4d, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45,
-	0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x14, 0x0a, 0x10, 0x49, 0x4e, 0x5f, 0x44,
-	0x45, 0x53, 0x49, 0x52, 0x45, 0x44, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x45, 0x10, 0x01, 0x12, 0x18,
-	0x0a, 0x14, 0x4e, 0x4f, 0x54, 0x5f, 0x49, 0x4e, 0x5f, 0x44, 0x45, 0x53, 0x49, 0x52, 0x45, 0x44,
-	0x5f, 0x53, 0x54, 0x41, 0x54, 0x45, 0x10, 0x02, 0x12, 0x09, 0x0a, 0x05, 0x45, 0x52, 0x52, 0x4f,
-	0x52, 0x10, 0x03, 0x22, 0x48, 0x0a, 0x05, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x15, 0x0a, 0x11,
-	0x53, 0x54, 0x41, 0x54, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45,
-	0x44, 0x10, 0x00, 0x12, 0x0d, 0x0a, 0x09, 0x53, 0x55, 0x43, 0x43, 0x45, 0x45, 0x44, 0x45, 0x44,
-	0x10, 0x01, 0x12, 0x0a, 0x0a, 0x06, 0x46, 0x41, 0x49, 0x4c, 0x45, 0x44, 0x10, 0x02, 0x12, 0x0d,
-	0x0a, 0x09, 0x43, 0x41, 0x4e, 0x43, 0x45, 0x4c, 0x4c, 0x45, 0x44, 0x10, 0x03, 0x2a, 0x47, 0x0a,
-	0x0d, 0x54, 0x61, 0x73, 0x6b, 0x44, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69, 0x76, 0x65, 0x12, 0x1e,
-	0x0a, 0x1a, 0x54, 0x41, 0x53, 0x4b, 0x5f, 0x44, 0x49, 0x52, 0x45, 0x43, 0x54, 0x49, 0x56, 0x45,
-	0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x0c,
-	0x0a, 0x08, 0x43, 0x4f, 0x4e, 0x54, 0x49, 0x4e, 0x55, 0x45, 0x10, 0x01, 0x12, 0x08, 0x0a, 0x04,
-	0x53, 0x54, 0x4f, 0x50, 0x10, 0x02, 0x2a, 0x63, 0x0a, 0x08, 0x54, 0x61, 0x73, 0x6b, 0x54, 0x79,
-	0x70, 0x65, 0x12, 0x19, 0x0a, 0x15, 0x54, 0x41, 0x53, 0x4b, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f,
-	0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x11, 0x0a,
-	0x0d, 0x41, 0x50, 0x50, 0x4c, 0x59, 0x5f, 0x50, 0x41, 0x54, 0x43, 0x48, 0x45, 0x53, 0x10, 0x01,
-	0x12, 0x12, 0x0a, 0x0e, 0x45, 0x58, 0x45, 0x43, 0x5f, 0x53, 0x54, 0x45, 0x50, 0x5f, 0x54, 0x41,
-	0x53, 0x4b, 0x10, 0x02, 0x12, 0x15, 0x0a, 0x11, 0x41, 0x50, 0x50, 0x4c, 0x59, 0x5f, 0x43, 0x4f,
-	0x4e, 0x46, 0x49, 0x47, 0x5f, 0x54, 0x41, 0x53, 0x4b, 0x10, 0x03, 0x42, 0x94, 0x01, 0x0a, 0x30,
-	0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64,
-	0x2e, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65,
-	0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31,
-	0x42, 0x05, 0x54, 0x61, 0x73, 0x6b, 0x73, 0x5a, 0x59, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e,
-	0x67, 0x6f, 0x6c, 0x61, 0x6e, 0x67, 0x2e, 0x6f, 0x72, 0x67, 0x2f, 0x67, 0x65, 0x6e, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x2f, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x61, 0x70, 0x69, 0x73, 0x2f, 0x63,
-	0x6c, 0x6f, 0x75, 0x64, 0x2f, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2f, 0x61, 0x67,
-	0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2f, 0x76, 0x31, 0x61, 0x6c,
-	0x70, 0x68, 0x61, 0x31, 0x3b, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69,
-	0x6e, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x42, 0x05,
+	0x54, 0x61, 0x73, 0x6b, 0x73, 0x5a, 0x59, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x67, 0x6f,
+	0x6c, 0x61, 0x6e, 0x67, 0x2e, 0x6f, 0x72, 0x67, 0x2f, 0x67, 0x65, 0x6e, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x2f, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x61, 0x70, 0x69, 0x73, 0x2f, 0x63, 0x6c, 0x6f,
+	0x75, 0x64, 0x2f, 0x6f, 0x73, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2f, 0x61, 0x67, 0x65, 0x6e,
+	0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2f, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68,
+	0x61, 0x31, 0x3b, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74,
+	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -4826,75 +4460,69 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDescGZIP()
 }
 
 var file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_enumTypes = make([]protoimpl.EnumInfo, 18)
-var file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes = make([]protoimpl.MessageInfo, 47)
+var file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes = make([]protoimpl.MessageInfo, 41)
 var file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_goTypes = []interface{}{
-	(TaskDirective)(0),                                                // 0: google.cloud.osconfig.agentendpoint.v1alpha1.TaskDirective
-	(TaskType)(0),                                                     // 1: google.cloud.osconfig.agentendpoint.v1alpha1.TaskType
-	(ApplyPatchesTaskProgress_State)(0),                               // 2: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyPatchesTaskProgress.State
-	(ApplyPatchesTaskOutput_State)(0),                                 // 3: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyPatchesTaskOutput.State
-	(ExecStepTaskProgress_State)(0),                                   // 4: google.cloud.osconfig.agentendpoint.v1alpha1.ExecStepTaskProgress.State
-	(ExecStepTaskOutput_State)(0),                                     // 5: google.cloud.osconfig.agentendpoint.v1alpha1.ExecStepTaskOutput.State
-	(ApplyConfigTask_Config_OSPolicy_Mode)(0),                         // 6: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.OSPolicy.Mode
-	(ApplyConfigTask_Config_Resource_PackageResource_DesiredState)(0), // 7: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.DesiredState
-	(ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ArchiveType)(0),  // 8: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.RepositoryResource.AptRepository.ArchiveType
-	(ApplyConfigTask_Config_Resource_ExecResource_Exec_Interpreter)(0),                 // 9: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.ExecResource.Exec.Interpreter
-	(ApplyConfigTask_Config_Resource_FileResource_DesiredState)(0),                     // 10: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.FileResource.DesiredState
-	(ApplyConfigTask_Config_Resource_ExtractArchiveResource_ArchiveType)(0),            // 11: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.ExtractArchiveResource.ArchiveType
-	(ApplyConfigTaskProgress_State)(0),                                                 // 12: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskProgress.State
-	(ApplyConfigTaskOutput_State)(0),                                                   // 13: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.State
-	(ApplyConfigTaskOutput_ResourceResult_Validation_Outcome)(0),                       // 14: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.Validation.Outcome
-	(ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_Outcome)(0),                // 15: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.CheckDesiredState.Outcome
-	(ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_Outcome)(0),              // 16: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.EnforceDesiredState.Outcome
-	(ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_Outcome)(0), // 17: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.CheckDesiredStatePostEnforcement.Outcome
-	(*Task)(nil),                                                                  // 18: google.cloud.osconfig.agentendpoint.v1alpha1.Task
-	(*ApplyPatchesTask)(nil),                                                      // 19: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyPatchesTask
-	(*ApplyPatchesTaskProgress)(nil),                                              // 20: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyPatchesTaskProgress
-	(*ApplyPatchesTaskOutput)(nil),                                                // 21: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyPatchesTaskOutput
-	(*ExecStepTask)(nil),                                                          // 22: google.cloud.osconfig.agentendpoint.v1alpha1.ExecStepTask
-	(*ExecStepTaskProgress)(nil),                                                  // 23: google.cloud.osconfig.agentendpoint.v1alpha1.ExecStepTaskProgress
-	(*ExecStepTaskOutput)(nil),                                                    // 24: google.cloud.osconfig.agentendpoint.v1alpha1.ExecStepTaskOutput
-	(*ApplyConfigTask)(nil),                                                       // 25: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask
-	(*ApplyConfigTaskProgress)(nil),                                               // 26: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskProgress
-	(*ApplyConfigTaskOutput)(nil),                                                 // 27: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput
-	nil,                                                                           // 28: google.cloud.osconfig.agentendpoint.v1alpha1.Task.ServiceLabelsEntry
-	(*ApplyConfigTask_Config)(nil),                                                // 29: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config
-	(*ApplyConfigTask_Config_ConfigAssignment)(nil),                               // 30: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.ConfigAssignment
-	(*ApplyConfigTask_Config_OSPolicy)(nil),                                       // 31: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.OSPolicy
-	(*ApplyConfigTask_Config_Resource)(nil),                                       // 32: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource
-	(*ApplyConfigTask_Config_Resource_File)(nil),                                  // 33: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.File
-	(*ApplyConfigTask_Config_Resource_PackageResource)(nil),                       // 34: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource
-	(*ApplyConfigTask_Config_Resource_RepositoryResource)(nil),                    // 35: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.RepositoryResource
-	(*ApplyConfigTask_Config_Resource_ExecResource)(nil),                          // 36: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.ExecResource
-	(*ApplyConfigTask_Config_Resource_FileResource)(nil),                          // 37: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.FileResource
-	(*ApplyConfigTask_Config_Resource_ExtractArchiveResource)(nil),                // 38: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.ExtractArchiveResource
-	(*ApplyConfigTask_Config_Resource_ServiceResource)(nil),                       // 39: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.ServiceResource
-	(*ApplyConfigTask_Config_Resource_File_Remote)(nil),                           // 40: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.File.Remote
-	(*ApplyConfigTask_Config_Resource_File_Gcs)(nil),                              // 41: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.File.Gcs
-	(*ApplyConfigTask_Config_Resource_PackageResource_Deb)(nil),                   // 42: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.Deb
-	(*ApplyConfigTask_Config_Resource_PackageResource_APT)(nil),                   // 43: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.APT
-	(*ApplyConfigTask_Config_Resource_PackageResource_RPM)(nil),                   // 44: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.RPM
-	(*ApplyConfigTask_Config_Resource_PackageResource_YUM)(nil),                   // 45: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.YUM
-	(*ApplyConfigTask_Config_Resource_PackageResource_Zypper)(nil),                // 46: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.Zypper
-	(*ApplyConfigTask_Config_Resource_PackageResource_GooGet)(nil),                // 47: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.GooGet
-	(*ApplyConfigTask_Config_Resource_PackageResource_MSI)(nil),                   // 48: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.MSI
-	(*ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository)(nil),      // 49: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.RepositoryResource.AptRepository
-	(*ApplyConfigTask_Config_Resource_RepositoryResource_YumRepository)(nil),      // 50: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.RepositoryResource.YumRepository
-	(*ApplyConfigTask_Config_Resource_RepositoryResource_ZypperRepository)(nil),   // 51: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.RepositoryResource.ZypperRepository
-	(*ApplyConfigTask_Config_Resource_RepositoryResource_GooRepository)(nil),      // 52: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.RepositoryResource.GooRepository
-	(*ApplyConfigTask_Config_Resource_ExecResource_Exec)(nil),                     // 53: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.ExecResource.Exec
-	(*ApplyConfigTaskOutput_ConfigAssignmentResults)(nil),                         // 54: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ConfigAssignmentResults
-	(*ApplyConfigTaskOutput_ConfigAssignmentResult)(nil),                          // 55: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ConfigAssignmentResult
-	(*ApplyConfigTaskOutput_OSPolicyResults)(nil),                                 // 56: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResults
-	(*ApplyConfigTaskOutput_OSPolicyResult)(nil),                                  // 57: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult
-	(*ApplyConfigTaskOutput_ResourceResults)(nil),                                 // 58: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResults
-	(*ApplyConfigTaskOutput_ResourceResult)(nil),                                  // 59: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult
-	(*ApplyConfigTaskOutput_ResourceResult_ExcecutionStep)(nil),                   // 60: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.ExcecutionStep
-	(*ApplyConfigTaskOutput_ResourceResult_Validation)(nil),                       // 61: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.Validation
-	(*ApplyConfigTaskOutput_ResourceResult_CheckDesiredState)(nil),                // 62: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.CheckDesiredState
-	(*ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState)(nil),              // 63: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.EnforceDesiredState
-	(*ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement)(nil), // 64: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.CheckDesiredStatePostEnforcement
-	(*PatchConfig)(nil),                                                           // 65: google.cloud.osconfig.agentendpoint.v1alpha1.PatchConfig
-	(*ExecStep)(nil),                                                              // 66: google.cloud.osconfig.agentendpoint.v1alpha1.ExecStep
+	(TaskDirective)(0),                  // 0: google.cloud.osconfig.agentendpoint.v1alpha1.TaskDirective
+	(TaskType)(0),                       // 1: google.cloud.osconfig.agentendpoint.v1alpha1.TaskType
+	(ApplyPatchesTaskProgress_State)(0), // 2: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyPatchesTaskProgress.State
+	(ApplyPatchesTaskOutput_State)(0),   // 3: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyPatchesTaskOutput.State
+	(ExecStepTaskProgress_State)(0),     // 4: google.cloud.osconfig.agentendpoint.v1alpha1.ExecStepTaskProgress.State
+	(ExecStepTaskOutput_State)(0),       // 5: google.cloud.osconfig.agentendpoint.v1alpha1.ExecStepTaskOutput.State
+	(ApplyConfigTask_OSPolicy_Mode)(0),  // 6: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Mode
+	(ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState)(0),                               // 7: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.DesiredState
+	(ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ArchiveType)(0),               // 8: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.RepositoryResource.AptRepository.ArchiveType
+	(ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Interpreter)(0),                              // 9: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.ExecResource.Exec.Interpreter
+	(ApplyConfigTask_OSPolicy_Resource_FileResource_DesiredState)(0),                                  // 10: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.FileResource.DesiredState
+	(ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource_ArchiveType)(0),                         // 11: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.ExtractArchiveResource.ArchiveType
+	(ApplyConfigTaskProgress_State)(0),                                                                // 12: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskProgress.State
+	(ApplyConfigTaskOutput_State)(0),                                                                  // 13: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.State
+	(ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_Outcome)(0),                       // 14: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.Validation.Outcome
+	(ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_Outcome)(0),                // 15: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.DesiredStateCheck.Outcome
+	(ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_Outcome)(0),          // 16: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.DesiredStateEnforcement.Outcome
+	(ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_Outcome)(0), // 17: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.DesiredStateCheckPostEnforcement.Outcome
+	(*Task)(nil),                                                                                 // 18: google.cloud.osconfig.agentendpoint.v1alpha1.Task
+	(*ApplyPatchesTask)(nil),                                                                     // 19: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyPatchesTask
+	(*ApplyPatchesTaskProgress)(nil),                                                             // 20: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyPatchesTaskProgress
+	(*ApplyPatchesTaskOutput)(nil),                                                               // 21: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyPatchesTaskOutput
+	(*ExecStepTask)(nil),                                                                         // 22: google.cloud.osconfig.agentendpoint.v1alpha1.ExecStepTask
+	(*ExecStepTaskProgress)(nil),                                                                 // 23: google.cloud.osconfig.agentendpoint.v1alpha1.ExecStepTaskProgress
+	(*ExecStepTaskOutput)(nil),                                                                   // 24: google.cloud.osconfig.agentendpoint.v1alpha1.ExecStepTaskOutput
+	(*ApplyConfigTask)(nil),                                                                      // 25: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask
+	(*ApplyConfigTaskProgress)(nil),                                                              // 26: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskProgress
+	(*ApplyConfigTaskOutput)(nil),                                                                // 27: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput
+	nil,                                                                                          // 28: google.cloud.osconfig.agentendpoint.v1alpha1.Task.ServiceLabelsEntry
+	(*ApplyConfigTask_OSPolicy)(nil),                                                             // 29: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy
+	(*ApplyConfigTask_OSPolicy_Resource)(nil),                                                    // 30: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource
+	(*ApplyConfigTask_OSPolicy_Resource_File)(nil),                                               // 31: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.File
+	(*ApplyConfigTask_OSPolicy_Resource_PackageResource)(nil),                                    // 32: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource
+	(*ApplyConfigTask_OSPolicy_Resource_RepositoryResource)(nil),                                 // 33: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.RepositoryResource
+	(*ApplyConfigTask_OSPolicy_Resource_ExecResource)(nil),                                       // 34: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.ExecResource
+	(*ApplyConfigTask_OSPolicy_Resource_FileResource)(nil),                                       // 35: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.FileResource
+	(*ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource)(nil),                             // 36: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.ExtractArchiveResource
+	(*ApplyConfigTask_OSPolicy_Resource_ServiceResource)(nil),                                    // 37: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.ServiceResource
+	(*ApplyConfigTask_OSPolicy_Resource_File_Remote)(nil),                                        // 38: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.File.Remote
+	(*ApplyConfigTask_OSPolicy_Resource_File_Gcs)(nil),                                           // 39: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.File.Gcs
+	(*ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb)(nil),                                // 40: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.Deb
+	(*ApplyConfigTask_OSPolicy_Resource_PackageResource_APT)(nil),                                // 41: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.APT
+	(*ApplyConfigTask_OSPolicy_Resource_PackageResource_RPM)(nil),                                // 42: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.RPM
+	(*ApplyConfigTask_OSPolicy_Resource_PackageResource_YUM)(nil),                                // 43: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.YUM
+	(*ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper)(nil),                             // 44: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.Zypper
+	(*ApplyConfigTask_OSPolicy_Resource_PackageResource_GooGet)(nil),                             // 45: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.GooGet
+	(*ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI)(nil),                                // 46: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.MSI
+	(*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository)(nil),                   // 47: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.RepositoryResource.AptRepository
+	(*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_YumRepository)(nil),                   // 48: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.RepositoryResource.YumRepository
+	(*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_ZypperRepository)(nil),                // 49: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.RepositoryResource.ZypperRepository
+	(*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_GooRepository)(nil),                   // 50: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.RepositoryResource.GooRepository
+	(*ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec)(nil),                                  // 51: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.ExecResource.Exec
+	(*ApplyConfigTaskOutput_OSPolicyResult)(nil),                                                 // 52: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult
+	(*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult)(nil),                                  // 53: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult
+	(*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep)(nil),                    // 54: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.ExecutionStep
+	(*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation)(nil),                       // 55: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.Validation
+	(*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck)(nil),                // 56: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.DesiredStateCheck
+	(*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement)(nil),          // 57: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.DesiredStateEnforcement
+	(*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement)(nil), // 58: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.DesiredStateCheckPostEnforcement
+	(*PatchConfig)(nil),                                                                          // 59: google.cloud.osconfig.agentendpoint.v1alpha1.PatchConfig
+	(*ExecStep)(nil),                                                                             // 60: google.cloud.osconfig.agentendpoint.v1alpha1.ExecStep
 }
 var file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_depIdxs = []int32{
 	1,  // 0: google.cloud.osconfig.agentendpoint.v1alpha1.Task.task_type:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.TaskType
@@ -4903,71 +4531,65 @@ var file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_depIdxs = []in
 	22, // 3: google.cloud.osconfig.agentendpoint.v1alpha1.Task.exec_step_task:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ExecStepTask
 	25, // 4: google.cloud.osconfig.agentendpoint.v1alpha1.Task.apply_config_task:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask
 	28, // 5: google.cloud.osconfig.agentendpoint.v1alpha1.Task.service_labels:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.Task.ServiceLabelsEntry
-	65, // 6: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyPatchesTask.patch_config:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.PatchConfig
+	59, // 6: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyPatchesTask.patch_config:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.PatchConfig
 	2,  // 7: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyPatchesTaskProgress.state:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyPatchesTaskProgress.State
 	3,  // 8: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyPatchesTaskOutput.state:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyPatchesTaskOutput.State
-	66, // 9: google.cloud.osconfig.agentendpoint.v1alpha1.ExecStepTask.exec_step:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ExecStep
+	60, // 9: google.cloud.osconfig.agentendpoint.v1alpha1.ExecStepTask.exec_step:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ExecStep
 	4,  // 10: google.cloud.osconfig.agentendpoint.v1alpha1.ExecStepTaskProgress.state:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ExecStepTaskProgress.State
 	5,  // 11: google.cloud.osconfig.agentendpoint.v1alpha1.ExecStepTaskOutput.state:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ExecStepTaskOutput.State
-	29, // 12: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.config:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config
+	29, // 12: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.os_policies:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy
 	12, // 13: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskProgress.state:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskProgress.State
 	13, // 14: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.state:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.State
-	54, // 15: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.config_assignment_results:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ConfigAssignmentResults
-	30, // 16: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.config_assignments:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.ConfigAssignment
-	31, // 17: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.ConfigAssignment.policies:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.OSPolicy
-	6,  // 18: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.OSPolicy.mode:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.OSPolicy.Mode
-	32, // 19: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.OSPolicy.resources:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource
-	34, // 20: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.pkg:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource
-	35, // 21: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.repository:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.RepositoryResource
-	36, // 22: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.exec:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.ExecResource
-	37, // 23: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.file:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.FileResource
-	38, // 24: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.archive:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.ExtractArchiveResource
-	39, // 25: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.srvc:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.ServiceResource
-	40, // 26: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.File.remote:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.File.Remote
-	41, // 27: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.File.gcs:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.File.Gcs
-	7,  // 28: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.desired_state:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.DesiredState
-	43, // 29: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.apt:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.APT
-	42, // 30: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.deb:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.Deb
-	45, // 31: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.yum:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.YUM
-	46, // 32: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.zypper:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.Zypper
-	44, // 33: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.rpm:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.RPM
-	47, // 34: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.googet:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.GooGet
-	48, // 35: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.msi:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.MSI
-	49, // 36: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.RepositoryResource.apt:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.RepositoryResource.AptRepository
-	50, // 37: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.RepositoryResource.yum:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.RepositoryResource.YumRepository
-	51, // 38: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.RepositoryResource.zypper:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.RepositoryResource.ZypperRepository
-	52, // 39: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.RepositoryResource.goo:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.RepositoryResource.GooRepository
-	53, // 40: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.ExecResource.validate:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.ExecResource.Exec
-	53, // 41: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.ExecResource.enforce:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.ExecResource.Exec
-	33, // 42: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.FileResource.file:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.File
-	10, // 43: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.FileResource.state:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.FileResource.DesiredState
-	33, // 44: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.ExtractArchiveResource.source:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.File
-	11, // 45: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.ExtractArchiveResource.type:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.ExtractArchiveResource.ArchiveType
-	33, // 46: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.Deb.source:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.File
-	33, // 47: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.RPM.source:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.File
-	33, // 48: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.PackageResource.MSI.source:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.File
-	8,  // 49: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.RepositoryResource.AptRepository.archive_type:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.RepositoryResource.AptRepository.ArchiveType
-	33, // 50: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.ExecResource.Exec.file:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.File
-	9,  // 51: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.ExecResource.Exec.interpreter:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.Config.Resource.ExecResource.Exec.Interpreter
-	55, // 52: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ConfigAssignmentResults.results:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ConfigAssignmentResult
-	56, // 53: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ConfigAssignmentResult.os_policy_results:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResults
-	57, // 54: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResults.results:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult
-	58, // 55: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.resource_results:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResults
-	59, // 56: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResults.results:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult
-	60, // 57: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.execution_steps:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.ExcecutionStep
-	61, // 58: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.ExcecutionStep.validation:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.Validation
-	62, // 59: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.ExcecutionStep.check_desired_state:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.CheckDesiredState
-	63, // 60: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.ExcecutionStep.enforce_desired_state:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.EnforceDesiredState
-	64, // 61: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.ExcecutionStep.check_desired_state_post_enforcement:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.CheckDesiredStatePostEnforcement
-	14, // 62: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.Validation.outcome:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.Validation.Outcome
-	15, // 63: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.CheckDesiredState.outcome:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.CheckDesiredState.Outcome
-	16, // 64: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.EnforceDesiredState.outcome:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.EnforceDesiredState.Outcome
-	17, // 65: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.CheckDesiredStatePostEnforcement.outcome:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.ResourceResult.CheckDesiredStatePostEnforcement.Outcome
-	66, // [66:66] is the sub-list for method output_type
-	66, // [66:66] is the sub-list for method input_type
-	66, // [66:66] is the sub-list for extension type_name
-	66, // [66:66] is the sub-list for extension extendee
-	0,  // [0:66] is the sub-list for field type_name
+	52, // 15: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.os_policy_results:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult
+	6,  // 16: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.mode:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Mode
+	30, // 17: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.resources:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource
+	32, // 18: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.pkg:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource
+	33, // 19: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.repository:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.RepositoryResource
+	34, // 20: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.exec:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.ExecResource
+	35, // 21: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.file:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.FileResource
+	36, // 22: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.archive:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.ExtractArchiveResource
+	37, // 23: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.srvc:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.ServiceResource
+	38, // 24: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.File.remote:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.File.Remote
+	39, // 25: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.File.gcs:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.File.Gcs
+	7,  // 26: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.desired_state:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.DesiredState
+	41, // 27: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.apt:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.APT
+	40, // 28: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.deb:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.Deb
+	43, // 29: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.yum:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.YUM
+	44, // 30: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.zypper:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.Zypper
+	42, // 31: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.rpm:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.RPM
+	45, // 32: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.googet:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.GooGet
+	46, // 33: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.msi:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.MSI
+	47, // 34: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.RepositoryResource.apt:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.RepositoryResource.AptRepository
+	48, // 35: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.RepositoryResource.yum:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.RepositoryResource.YumRepository
+	49, // 36: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.RepositoryResource.zypper:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.RepositoryResource.ZypperRepository
+	50, // 37: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.RepositoryResource.goo:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.RepositoryResource.GooRepository
+	51, // 38: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.ExecResource.validate:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.ExecResource.Exec
+	51, // 39: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.ExecResource.enforce:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.ExecResource.Exec
+	31, // 40: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.FileResource.file:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.File
+	10, // 41: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.FileResource.state:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.FileResource.DesiredState
+	31, // 42: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.ExtractArchiveResource.source:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.File
+	11, // 43: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.ExtractArchiveResource.type:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.ExtractArchiveResource.ArchiveType
+	31, // 44: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.Deb.source:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.File
+	31, // 45: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.RPM.source:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.File
+	31, // 46: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.PackageResource.MSI.source:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.File
+	8,  // 47: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.RepositoryResource.AptRepository.archive_type:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.RepositoryResource.AptRepository.ArchiveType
+	31, // 48: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.ExecResource.Exec.file:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.File
+	9,  // 49: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.ExecResource.Exec.interpreter:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTask.OSPolicy.Resource.ExecResource.Exec.Interpreter
+	53, // 50: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.resource_results:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult
+	54, // 51: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.execution_steps:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.ExecutionStep
+	55, // 52: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.ExecutionStep.validation:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.Validation
+	56, // 53: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.ExecutionStep.desired_state_check:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.DesiredStateCheck
+	57, // 54: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.ExecutionStep.desired_state_enforcement:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.DesiredStateEnforcement
+	58, // 55: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.ExecutionStep.desired_state_check_post_enforcement:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.DesiredStateCheckPostEnforcement
+	14, // 56: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.Validation.outcome:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.Validation.Outcome
+	15, // 57: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.DesiredStateCheck.outcome:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.DesiredStateCheck.Outcome
+	16, // 58: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.DesiredStateEnforcement.outcome:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.DesiredStateEnforcement.Outcome
+	17, // 59: google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.DesiredStateCheckPostEnforcement.outcome:type_name -> google.cloud.osconfig.agentendpoint.v1alpha1.ApplyConfigTaskOutput.OSPolicyResult.ResourceResult.DesiredStateCheckPostEnforcement.Outcome
+	60, // [60:60] is the sub-list for method output_type
+	60, // [60:60] is the sub-list for method input_type
+	60, // [60:60] is the sub-list for extension type_name
+	60, // [60:60] is the sub-list for extension extendee
+	0,  // [0:60] is the sub-list for field type_name
 }
 
 func init() { file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() }
@@ -5098,7 +4720,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5110,7 +4732,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_ConfigAssignment); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy_Resource); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5122,7 +4744,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_OSPolicy); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy_Resource_File); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5134,7 +4756,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_Resource); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy_Resource_PackageResource); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5146,7 +4768,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_Resource_File); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy_Resource_RepositoryResource); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5158,7 +4780,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_Resource_PackageResource); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy_Resource_ExecResource); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5170,7 +4792,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_Resource_RepositoryResource); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy_Resource_FileResource); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5182,7 +4804,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_Resource_ExecResource); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy_Resource_ExtractArchiveResource); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5194,7 +4816,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_Resource_FileResource); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy_Resource_ServiceResource); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5206,7 +4828,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_Resource_ExtractArchiveResource); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy_Resource_File_Remote); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5218,7 +4840,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_Resource_ServiceResource); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy_Resource_File_Gcs); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5230,7 +4852,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_Resource_File_Remote); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5242,7 +4864,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_Resource_File_Gcs); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy_Resource_PackageResource_APT); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5254,7 +4876,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_Resource_PackageResource_Deb); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy_Resource_PackageResource_RPM); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5266,7 +4888,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_Resource_PackageResource_APT); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy_Resource_PackageResource_YUM); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5278,7 +4900,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_Resource_PackageResource_RPM); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5290,7 +4912,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_Resource_PackageResource_YUM); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy_Resource_PackageResource_GooGet); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5302,7 +4924,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_Resource_PackageResource_Zypper); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5314,7 +4936,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_Resource_PackageResource_GooGet); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5326,7 +4948,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_Resource_PackageResource_MSI); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_YumRepository); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5338,7 +4960,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_ZypperRepository); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5350,7 +4972,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_Resource_RepositoryResource_YumRepository); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_GooRepository); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5362,7 +4984,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_Resource_RepositoryResource_ZypperRepository); i {
+			switch v := v.(*ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5374,66 +4996,6 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			}
 		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_Resource_RepositoryResource_GooRepository); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTask_Config_Resource_ExecResource_Exec); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTaskOutput_ConfigAssignmentResults); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTaskOutput_ConfigAssignmentResult); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTaskOutput_OSPolicyResults); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ApplyConfigTaskOutput_OSPolicyResult); i {
 			case 0:
 				return &v.state
@@ -5445,80 +5007,68 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 				return nil
 			}
 		}
+		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[40].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTaskOutput_ResourceResults); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[41].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTaskOutput_ResourceResult); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[42].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTaskOutput_ResourceResult_ExcecutionStep); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[43].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTaskOutput_ResourceResult_Validation); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[44].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTaskOutput_ResourceResult_CheckDesiredState); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[45].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[46].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement); i {
+			switch v := v.(*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -5535,53 +5085,47 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 		(*Task_ExecStepTask)(nil),
 		(*Task_ApplyConfigTask)(nil),
 	}
+	file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[12].OneofWrappers = []interface{}{
+		(*ApplyConfigTask_OSPolicy_Resource_Pkg)(nil),
+		(*ApplyConfigTask_OSPolicy_Resource_Repository)(nil),
+		(*ApplyConfigTask_OSPolicy_Resource_Exec)(nil),
+		(*ApplyConfigTask_OSPolicy_Resource_File_)(nil),
+		(*ApplyConfigTask_OSPolicy_Resource_Archive)(nil),
+		(*ApplyConfigTask_OSPolicy_Resource_Srvc)(nil),
+	}
+	file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[13].OneofWrappers = []interface{}{
+		(*ApplyConfigTask_OSPolicy_Resource_File_Remote_)(nil),
+		(*ApplyConfigTask_OSPolicy_Resource_File_Gcs_)(nil),
+		(*ApplyConfigTask_OSPolicy_Resource_File_LocalPath)(nil),
+	}
 	file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[14].OneofWrappers = []interface{}{
-		(*ApplyConfigTask_Config_Resource_Pkg)(nil),
-		(*ApplyConfigTask_Config_Resource_Repository)(nil),
-		(*ApplyConfigTask_Config_Resource_Exec)(nil),
-		(*ApplyConfigTask_Config_Resource_File_)(nil),
-		(*ApplyConfigTask_Config_Resource_Archive)(nil),
-		(*ApplyConfigTask_Config_Resource_Srvc)(nil),
+		(*ApplyConfigTask_OSPolicy_Resource_PackageResource_Apt)(nil),
+		(*ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb_)(nil),
+		(*ApplyConfigTask_OSPolicy_Resource_PackageResource_Yum)(nil),
+		(*ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper_)(nil),
+		(*ApplyConfigTask_OSPolicy_Resource_PackageResource_Rpm)(nil),
+		(*ApplyConfigTask_OSPolicy_Resource_PackageResource_Googet)(nil),
+		(*ApplyConfigTask_OSPolicy_Resource_PackageResource_Msi)(nil),
 	}
 	file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[15].OneofWrappers = []interface{}{
-		(*ApplyConfigTask_Config_Resource_File_Remote_)(nil),
-		(*ApplyConfigTask_Config_Resource_File_Gcs_)(nil),
-		(*ApplyConfigTask_Config_Resource_File_LocalPath)(nil),
-	}
-	file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[16].OneofWrappers = []interface{}{
-		(*ApplyConfigTask_Config_Resource_PackageResource_Apt)(nil),
-		(*ApplyConfigTask_Config_Resource_PackageResource_Deb_)(nil),
-		(*ApplyConfigTask_Config_Resource_PackageResource_Yum)(nil),
-		(*ApplyConfigTask_Config_Resource_PackageResource_Zypper_)(nil),
-		(*ApplyConfigTask_Config_Resource_PackageResource_Rpm)(nil),
-		(*ApplyConfigTask_Config_Resource_PackageResource_Googet)(nil),
-		(*ApplyConfigTask_Config_Resource_PackageResource_Msi)(nil),
+		(*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Apt)(nil),
+		(*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Yum)(nil),
+		(*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Zypper)(nil),
+		(*ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Goo)(nil),
 	}
 	file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[17].OneofWrappers = []interface{}{
-		(*ApplyConfigTask_Config_Resource_RepositoryResource_Apt)(nil),
-		(*ApplyConfigTask_Config_Resource_RepositoryResource_Yum)(nil),
-		(*ApplyConfigTask_Config_Resource_RepositoryResource_Zypper)(nil),
-		(*ApplyConfigTask_Config_Resource_RepositoryResource_Goo)(nil),
+		(*ApplyConfigTask_OSPolicy_Resource_FileResource_File)(nil),
+		(*ApplyConfigTask_OSPolicy_Resource_FileResource_Content)(nil),
 	}
-	file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[19].OneofWrappers = []interface{}{
-		(*ApplyConfigTask_Config_Resource_FileResource_File)(nil),
-		(*ApplyConfigTask_Config_Resource_FileResource_Content)(nil),
+	file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[33].OneofWrappers = []interface{}{
+		(*ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_File)(nil),
+		(*ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Script)(nil),
 	}
-	file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[35].OneofWrappers = []interface{}{
-		(*ApplyConfigTask_Config_Resource_ExecResource_Exec_File)(nil),
-		(*ApplyConfigTask_Config_Resource_ExecResource_Exec_Script)(nil),
-	}
-	file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[37].OneofWrappers = []interface{}{
-		(*ApplyConfigTaskOutput_ConfigAssignmentResult_OsPolicyResults)(nil),
-	}
-	file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[39].OneofWrappers = []interface{}{
-		(*ApplyConfigTaskOutput_OSPolicyResult_ResourceResults)(nil),
-	}
-	file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[42].OneofWrappers = []interface{}{
-		(*ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_Validation)(nil),
-		(*ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_CheckDesiredState)(nil),
-		(*ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_EnforceDesiredState)(nil),
-		(*ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_CheckDesiredStatePostEnforcement)(nil),
+	file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_msgTypes[36].OneofWrappers = []interface{}{
+		(*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_Validation)(nil),
+		(*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_DesiredStateCheck)(nil),
+		(*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_DesiredStateEnforcement)(nil),
+		(*ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_DesiredStateCheckPostEnforcement)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -5589,7 +5133,7 @@ func file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_google_cloud_osconfig_agentendpoint_v1alpha1_tasks_proto_rawDesc,
 			NumEnums:      18,
-			NumMessages:   47,
+			NumMessages:   41,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

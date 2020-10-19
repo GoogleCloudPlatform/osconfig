@@ -35,13 +35,13 @@ func checksum(r io.Reader) string {
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
-func downloadFile(ctx context.Context, path string, file *agentendpointpb.ApplyConfigTask_Config_Resource_File) (string, error) {
+func downloadFile(ctx context.Context, path string, file *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File) (string, error) {
 	var reader io.ReadCloser
 	var err error
 	var wantChecksum string
 
 	switch file.GetFile().(type) {
-	case *agentendpointpb.ApplyConfigTask_Config_Resource_File_Gcs_:
+	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_Gcs_:
 		client, err := storage.NewClient(ctx)
 		if err != nil {
 			return "", fmt.Errorf("error creating gcs client: %v", err)
@@ -53,7 +53,7 @@ func downloadFile(ctx context.Context, path string, file *agentendpointpb.ApplyC
 			return "", err
 		}
 
-	case *agentendpointpb.ApplyConfigTask_Config_Resource_File_Remote_:
+	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_Remote_:
 		reader, err = external.FetchRemoteObjectHTTP(&http.Client{}, file.GetRemote().GetUri())
 		if err != nil {
 			return "", err

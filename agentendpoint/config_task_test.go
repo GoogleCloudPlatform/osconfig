@@ -100,74 +100,74 @@ func (*agentEndpointServiceConfigTestServer) ReportInventory(ctx context.Context
 	return nil, status.Errorf(codes.Unimplemented, "method ReportInventory not implemented")
 }
 
-func configOutputGen(msg string, st agentendpointpb.ApplyConfigTaskOutput_State, results *agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResults) *agentendpointpb.ReportTaskCompleteRequest {
+func configOutputGen(msg string, st agentendpointpb.ApplyConfigTaskOutput_State, results []*agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult) *agentendpointpb.ReportTaskCompleteRequest {
 	return &agentendpointpb.ReportTaskCompleteRequest{
 		TaskType:     agentendpointpb.TaskType_APPLY_CONFIG_TASK,
 		ErrorMessage: msg,
 		Output: &agentendpointpb.ReportTaskCompleteRequest_ApplyConfigTaskOutput{
-			ApplyConfigTaskOutput: &agentendpointpb.ApplyConfigTaskOutput{State: st, ConfigAssignmentResults: results},
+			ApplyConfigTaskOutput: &agentendpointpb.ApplyConfigTaskOutput{State: st, OsPolicyResults: results},
 		},
 		InstanceIdToken: testIDToken,
 	}
 }
 
-func genTestResource(id string) *agentendpointpb.ApplyConfigTask_Config_Resource {
-	return &agentendpointpb.ApplyConfigTask_Config_Resource{
+func genTestResource(id string) *agentendpointpb.ApplyConfigTask_OSPolicy_Resource {
+	return &agentendpointpb.ApplyConfigTask_OSPolicy_Resource{
 		Id: id,
 	}
 }
 
-func genTestResourceResult(id string, steps int) *agentendpointpb.ApplyConfigTaskOutput_ResourceResult {
+func genTestResourceResult(id string, steps int) *agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult {
 	// TODO: test various types of executions.
-	ret := &agentendpointpb.ApplyConfigTaskOutput_ResourceResult{
+	ret := &agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult{
 		Id:             id,
-		ExecutionSteps: make([]*agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep, 4),
+		ExecutionSteps: make([]*agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep, 4),
 	}
 
 	// Validation
 	if steps > 0 {
-		ret.ExecutionSteps[0] = &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep{
-			Step: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_Validation{
-				Validation: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_Validation{
-					Outcome: agentendpointpb.ApplyConfigTaskOutput_ResourceResult_Validation_OK,
+		ret.ExecutionSteps[0] = &agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep{
+			Step: &agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_Validation{
+				Validation: &agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation{
+					Outcome: agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_Validation_OK,
 				},
 			}}
 	}
 	// CheckDesiredState
 	if steps > 1 {
-		ret.ExecutionSteps[1] = &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep{
-			Step: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_CheckDesiredState{
-				CheckDesiredState: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredState{
-					Outcome: agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredState_NOT_IN_DESIRED_STATE,
+		ret.ExecutionSteps[1] = &agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep{
+			Step: &agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_DesiredStateCheck{
+				DesiredStateCheck: &agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck{
+					Outcome: agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheck_NOT_IN_DESIRED_STATE,
 				},
 			}}
 	}
 	// EnforceDesiredState
 	if steps > 2 {
-		ret.ExecutionSteps[2] = &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep{
-			Step: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_EnforceDesiredState{
-				EnforceDesiredState: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState{
-					Outcome: agentendpointpb.ApplyConfigTaskOutput_ResourceResult_EnforceDesiredState_SUCCESS,
+		ret.ExecutionSteps[2] = &agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep{
+			Step: &agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_DesiredStateEnforcement{
+				DesiredStateEnforcement: &agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement{
+					Outcome: agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateEnforcement_SUCCESS,
 				},
 			}}
 	}
 	// CheckDesiredStatePostEnforcement{
 	if steps > 3 {
-		ret.ExecutionSteps[3] = &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep{
-			Step: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_ExcecutionStep_CheckDesiredStatePostEnforcement{
-				CheckDesiredStatePostEnforcement: &agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement{
-					Outcome: agentendpointpb.ApplyConfigTaskOutput_ResourceResult_CheckDesiredStatePostEnforcement_NOT_IN_DESIRED_STATE,
+		ret.ExecutionSteps[3] = &agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep{
+			Step: &agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_ExecutionStep_DesiredStateCheckPostEnforcement{
+				DesiredStateCheckPostEnforcement: &agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement{
+					Outcome: agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult_DesiredStateCheckPostEnforcement_NOT_IN_DESIRED_STATE,
 				},
 			}}
 	}
 	return ret
 }
 
-func genTestPolicy(id string) *agentendpointpb.ApplyConfigTask_Config_OSPolicy {
-	return &agentendpointpb.ApplyConfigTask_Config_OSPolicy{
+func genTestPolicy(id string) *agentendpointpb.ApplyConfigTask_OSPolicy {
+	return &agentendpointpb.ApplyConfigTask_OSPolicy{
 		Id:   id,
-		Mode: agentendpointpb.ApplyConfigTask_Config_OSPolicy_ENFORCEMENT,
-		Resources: []*agentendpointpb.ApplyConfigTask_Config_Resource{
+		Mode: agentendpointpb.ApplyConfigTask_OSPolicy_ENFORCEMENT,
+		Resources: []*agentendpointpb.ApplyConfigTask_OSPolicy_Resource{
 			genTestResource("r1"),
 			genTestResource("r2"),
 		},
@@ -177,36 +177,9 @@ func genTestPolicy(id string) *agentendpointpb.ApplyConfigTask_Config_OSPolicy {
 func genTestPolicyResult(id string, steps int) *agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult {
 	return &agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult{
 		Id: id,
-		Result: &agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult_ResourceResults{
-			ResourceResults: &agentendpointpb.ApplyConfigTaskOutput_ResourceResults{
-				Results: []*agentendpointpb.ApplyConfigTaskOutput_ResourceResult{
-					genTestResourceResult("r1", steps),
-					genTestResourceResult("r2", steps),
-				},
-			},
-		},
-	}
-}
-
-func genTestAssignment(id string) *agentendpointpb.ApplyConfigTask_Config_ConfigAssignment {
-	return &agentendpointpb.ApplyConfigTask_Config_ConfigAssignment{
-		ConfigAssignment: id,
-		Policies: []*agentendpointpb.ApplyConfigTask_Config_OSPolicy{
-			genTestPolicy("p1"), genTestPolicy("p2"),
-		},
-	}
-}
-
-func genTestAssignmentResult(id string, steps int) *agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResult {
-	return &agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResult{
-		ConfigAssignment: id,
-		Result: &agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResult_OsPolicyResults{
-			OsPolicyResults: &agentendpointpb.ApplyConfigTaskOutput_OSPolicyResults{
-				Results: []*agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult{
-					genTestPolicyResult("p1", steps),
-					genTestPolicyResult("p2", steps),
-				},
-			},
+		ResourceResults: []*agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult_ResourceResult{
+			genTestResourceResult("r1", steps),
+			genTestResourceResult("r2", steps),
 		},
 	}
 }
@@ -214,21 +187,21 @@ func genTestAssignmentResult(id string, steps int) *agentendpointpb.ApplyConfigT
 func TestRunApplyConfig(t *testing.T) {
 	ctx := context.Background()
 	sameStateTimeWindow = 0
-	newResource = func(r *agentendpointpb.ApplyConfigTask_Config_Resource) resourceIface {
+	newResource = func(r *agentendpointpb.ApplyConfigTask_OSPolicy_Resource) resourceIface {
 		return resourceIface(&testResource{})
 	}
 
-	testConfig := &agentendpointpb.ApplyConfigTask_Config{
-		ConfigAssignments: []*agentendpointpb.ApplyConfigTask_Config_ConfigAssignment{
-			genTestAssignment("a1"),
-			genTestAssignment("a2"),
+	testConfig := &agentendpointpb.ApplyConfigTask{
+		OsPolicies: []*agentendpointpb.ApplyConfigTask_OSPolicy{
+			genTestPolicy("p1"),
+			genTestPolicy("p2"),
 		},
 	}
 
 	tests := []struct {
 		name              string
 		wantComReq        *agentendpointpb.ReportTaskCompleteRequest
-		step              *agentendpointpb.ApplyConfigTask_Config
+		step              *agentendpointpb.ApplyConfigTask
 		callsBeforeCancel int
 		callsBeforeErr    int
 	}{
@@ -237,26 +210,24 @@ func TestRunApplyConfig(t *testing.T) {
 		{
 			"InDesiredState",
 			configOutputGen("", agentendpointpb.ApplyConfigTaskOutput_SUCCEEDED,
-				&agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResults{
-					Results: []*agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResult{
-						genTestAssignmentResult("a1", 4),
-						genTestAssignmentResult("a2", 4),
-					},
+				[]*agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult{
+					genTestPolicyResult("p1", 4),
+					genTestPolicyResult("p2", 4),
 				},
 			),
 			testConfig,
 			5, 5,
 		},
 		{
-			"NilAssignments",
-			configOutputGen("", agentendpointpb.ApplyConfigTaskOutput_SUCCEEDED, &agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResults{}),
-			&agentendpointpb.ApplyConfigTask_Config{ConfigAssignments: nil},
+			"NilPolicies",
+			configOutputGen("", agentendpointpb.ApplyConfigTaskOutput_SUCCEEDED, []*agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult{}),
+			&agentendpointpb.ApplyConfigTask{OsPolicies: nil},
 			5, 5,
 		},
 		{
-			"NoAssignments",
-			configOutputGen("", agentendpointpb.ApplyConfigTaskOutput_SUCCEEDED, &agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResults{}),
-			&agentendpointpb.ApplyConfigTask_Config{ConfigAssignments: []*agentendpointpb.ApplyConfigTask_Config_ConfigAssignment{}},
+			"NoPolicies",
+			configOutputGen("", agentendpointpb.ApplyConfigTaskOutput_SUCCEEDED, []*agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult{}),
+			&agentendpointpb.ApplyConfigTask{OsPolicies: nil},
 			5, 5,
 		},
 
@@ -264,138 +235,44 @@ func TestRunApplyConfig(t *testing.T) {
 		{
 			"CancelSTARTED",
 			// No results generated.
-			configOutputGen(errServerCancel.Error(), agentendpointpb.ApplyConfigTaskOutput_CANCELLED, &agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResults{}),
+			configOutputGen(errServerCancel.Error(), agentendpointpb.ApplyConfigTaskOutput_CANCELLED, []*agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult{}),
 			testConfig,
 			0, 5,
-		},
-		{
-			"CancelVALIDATING",
-			// This generates results, but never populates.
-			configOutputGen(errServerCancel.Error(), agentendpointpb.ApplyConfigTaskOutput_CANCELLED,
-				&agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResults{
-					Results: []*agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResult{
-						genTestAssignmentResult("a1", 0),
-						genTestAssignmentResult("a2", 0),
-					},
-				},
-			),
-			testConfig,
-			1, 5,
-		},
-		{
-			"CancelCHECKING_DESIRED_STATE",
-			// Populates results up through VALIDATE only.
-			configOutputGen(errServerCancel.Error(), agentendpointpb.ApplyConfigTaskOutput_CANCELLED,
-				&agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResults{
-					Results: []*agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResult{
-						genTestAssignmentResult("a1", 1),
-						genTestAssignmentResult("a2", 1),
-					},
-				},
-			),
-			testConfig,
-			2, 5,
 		},
 		{
 			"CancelENFORCING_DESIRED_STATE",
 			// Populates results up through CHECKING_DESIRED_STATE only.
 			configOutputGen(errServerCancel.Error(), agentendpointpb.ApplyConfigTaskOutput_CANCELLED,
-				&agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResults{
-					Results: []*agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResult{
-						genTestAssignmentResult("a1", 2),
-						genTestAssignmentResult("a2", 2),
-					},
+				[]*agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult{
+					genTestPolicyResult("p1", 2),
+					genTestPolicyResult("p2", 2),
 				},
 			),
 			testConfig,
-			3, 5,
+			1, 5,
 		},
-		// Need to implement more steps before testing this case.
-		/*
-			{
-				"CancelCHECKING_DESIRED_STATE_POST_ENFORCEMENT",
-				// Populates results up through ENFORCING_DESIRED_STATE only.
-				configOutputGen(errServerCancel.Error(), agentendpointpb.ApplyConfigTaskOutput_CANCELLED,
-					&agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResults{
-						Results: []*agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResult{
-							genTestAssignmentResult("a1", 3),
-							genTestAssignmentResult("a2", 3),
-						},
-					},
-				),
-				testConfig,
-				4, 5,
-			},
-		*/
 
 		// Cases where task has task level error.
 		{
 			"ErrorSTARTED",
 			// No results
 			configOutputGen(`Error reporting continuing state: error reporting task progress STARTED: error calling ReportTaskProgress: code: "Unimplemented", message: "", details: []`, agentendpointpb.ApplyConfigTaskOutput_FAILED,
-				&agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResults{}),
+				[]*agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult{}),
 			testConfig, 5,
 			0,
-		},
-		{
-			"ErrorVALIDATING",
-			// This generates results, but never populates.
-			configOutputGen(`Error reporting continuing state: error reporting task progress APPLYING_CONFIG: error calling ReportTaskProgress: code: "Unimplemented", message: "", details: []`, agentendpointpb.ApplyConfigTaskOutput_FAILED,
-				&agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResults{
-					Results: []*agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResult{
-						genTestAssignmentResult("a1", 0),
-						genTestAssignmentResult("a2", 0),
-					},
-				},
-			),
-			testConfig, 5,
-			1,
-		},
-		{
-			"ErrorCHECKING_DESIRED_STATE",
-			// Populates results up through VALIDATE only.
-			configOutputGen(`Error reporting continuing state: error reporting task progress APPLYING_CONFIG: error calling ReportTaskProgress: code: "Unimplemented", message: "", details: []`, agentendpointpb.ApplyConfigTaskOutput_FAILED,
-				&agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResults{
-					Results: []*agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResult{
-						genTestAssignmentResult("a1", 1),
-						genTestAssignmentResult("a2", 1),
-					},
-				},
-			),
-			testConfig, 5,
-			2,
 		},
 		{
 			"ErrorENFORCING_DESIRED_STATE",
 			// Populates results up through CHECKING_DESIRED_STATE only.
 			configOutputGen(`Error reporting continuing state: error reporting task progress APPLYING_CONFIG: error calling ReportTaskProgress: code: "Unimplemented", message: "", details: []`, agentendpointpb.ApplyConfigTaskOutput_FAILED,
-				&agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResults{
-					Results: []*agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResult{
-						genTestAssignmentResult("a1", 2),
-						genTestAssignmentResult("a2", 2),
-					},
+				[]*agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult{
+					genTestPolicyResult("p1", 2),
+					genTestPolicyResult("p2", 2),
 				},
 			),
 			testConfig, 5,
-			3,
+			1,
 		},
-		// Need to implement more steps before testing this case.
-		/*
-			{
-				"ErrorCHECKING_DESIRED_STATE_POST_ENFORCEMENT",
-				// Populates results up through ENFORCING_DESIRED_STATE only.
-				configOutputGen(`Error reporting continuing state: error reporting task progress APPLYING_CONFIG: error calling ReportTaskProgress: code: "Unimplemented", message: "", details: []`, agentendpointpb.ApplyConfigTaskOutput_FAILED,
-					&agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResults{
-						Results: []*agentendpointpb.ApplyConfigTaskOutput_ConfigAssignmentResult{
-							genTestAssignmentResult("a1", 3),
-							genTestAssignmentResult("a2", 3),
-						},
-					},
-				),
-				testConfig,
-				5, 4,
-			},
-		*/
 	}
 
 	for _, tt := range tests {
@@ -410,7 +287,7 @@ func TestRunApplyConfig(t *testing.T) {
 			}
 			defer tc.close()
 
-			if err := tc.client.RunApplyConfig(ctx, &agentendpointpb.Task{TaskDetails: &agentendpointpb.Task_ApplyConfigTask{ApplyConfigTask: &agentendpointpb.ApplyConfigTask{Config: tt.step}}}); err != nil {
+			if err := tc.client.RunApplyConfig(ctx, &agentendpointpb.Task{TaskDetails: &agentendpointpb.Task_ApplyConfigTask{ApplyConfigTask: tt.step}}); err != nil {
 				t.Fatal(err)
 			}
 
