@@ -40,73 +40,73 @@ func TestFileResourceValidate(t *testing.T) {
 
 	var tests = []struct {
 		name   string
-		frpb   *agentendpointpb.ApplyConfigTask_Config_Resource_FileResource
+		frpb   *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource
 		wantMR ManagedFile
 	}{
 		{
 			"Absent",
-			&agentendpointpb.ApplyConfigTask_Config_Resource_FileResource{
+			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource{
 				Path:  "path",
-				State: agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_ABSENT,
+				State: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_ABSENT,
 			},
 			ManagedFile{
 				Path:  "path",
-				State: agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_ABSENT,
+				State: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_ABSENT,
 			},
 		},
 		{
 			"Present",
-			&agentendpointpb.ApplyConfigTask_Config_Resource_FileResource{
+			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource{
 				Path:  "path",
-				State: agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_PRESENT,
+				State: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT,
 			},
 			ManagedFile{
 				Path:       "path",
-				State:      agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_PRESENT,
+				State:      agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT,
 				Permisions: defaultFilePerms,
 			},
 		},
 		{
 			"ContentsMatch",
-			&agentendpointpb.ApplyConfigTask_Config_Resource_FileResource{
+			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource{
 				Path:  "path",
-				State: agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_CONTENTS_MATCH,
+				State: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_CONTENTS_MATCH,
 			},
 			ManagedFile{
 				Path:       "path",
-				State:      agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_CONTENTS_MATCH,
+				State:      agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_CONTENTS_MATCH,
 				Permisions: defaultFilePerms,
 			},
 		},
 		{
 			"Permissions",
-			&agentendpointpb.ApplyConfigTask_Config_Resource_FileResource{
+			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource{
 				Path:        "path",
-				State:       agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_PRESENT,
+				State:       agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT,
 				Permissions: "0777",
 			},
 			ManagedFile{
 				Path:       "path",
-				State:      agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_PRESENT,
+				State:      agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT,
 				Permisions: 0777,
 			},
 		},
 		{
 			"LocalPath",
-			&agentendpointpb.ApplyConfigTask_Config_Resource_FileResource{
+			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource{
 				Path: "path",
-				Source: &agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_File{
-					File: &agentendpointpb.ApplyConfigTask_Config_Resource_File{
-						File: &agentendpointpb.ApplyConfigTask_Config_Resource_File_LocalPath{
+				Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_File{
+					File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
+						File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{
 							LocalPath: tmpFile,
 						},
 					},
 				},
-				State: agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_PRESENT,
+				State: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT,
 			},
 			ManagedFile{
 				Path:       "path",
-				State:      agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_PRESENT,
+				State:      agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT,
 				Permisions: defaultFilePerms,
 				checksum:   "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
 				source:     tmpFile,
@@ -116,8 +116,8 @@ func TestFileResourceValidate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pr := &OSPolicyResource{
-				ApplyConfigTask_Config_Resource: &agentendpointpb.ApplyConfigTask_Config_Resource{
-					ResourceType: &agentendpointpb.ApplyConfigTask_Config_Resource_File_{
+				ApplyConfigTask_OSPolicy_Resource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource{
+					ResourceType: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_{
 						File: tt.frpb,
 					},
 				},
@@ -154,112 +154,112 @@ func TestFileResourceCheckState(t *testing.T) {
 
 	var tests = []struct {
 		name               string
-		frpb               *agentendpointpb.ApplyConfigTask_Config_Resource_FileResource
+		frpb               *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource
 		wantInDesiredState bool
 	}{
 		{
 			"AbsentAndAbsent",
-			&agentendpointpb.ApplyConfigTask_Config_Resource_FileResource{
+			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource{
 				Path:  filepath.Join(tmpDir, "dne"),
-				State: agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_ABSENT,
+				State: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_ABSENT,
 			},
 			true,
 		},
 		{
 			"AbsentAndPresent",
-			&agentendpointpb.ApplyConfigTask_Config_Resource_FileResource{
+			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource{
 				Path:  tmpFile,
-				State: agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_ABSENT,
+				State: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_ABSENT,
 			},
 			false,
 		},
 		{
 			"PresentAndAbsent",
-			&agentendpointpb.ApplyConfigTask_Config_Resource_FileResource{
+			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource{
 				Path: filepath.Join(tmpDir, "dne"),
-				Source: &agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_File{
-					File: &agentendpointpb.ApplyConfigTask_Config_Resource_File{
-						File: &agentendpointpb.ApplyConfigTask_Config_Resource_File_LocalPath{
+				Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_File{
+					File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
+						File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{
 							LocalPath: tmpFile,
 						},
 					},
 				},
-				State: agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_PRESENT,
+				State: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT,
 			},
 			false,
 		},
 		{
 			"PresentAndPresent",
-			&agentendpointpb.ApplyConfigTask_Config_Resource_FileResource{
+			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource{
 				Path:  tmpFile,
-				State: agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_PRESENT,
+				State: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT,
 			},
 			true,
 		},
 		{
 			"ContentsMatchLocalPath",
-			&agentendpointpb.ApplyConfigTask_Config_Resource_FileResource{
+			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource{
 				Path: tmpFile,
-				Source: &agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_File{
-					File: &agentendpointpb.ApplyConfigTask_Config_Resource_File{
-						File: &agentendpointpb.ApplyConfigTask_Config_Resource_File_LocalPath{
+				Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_File{
+					File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
+						File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{
 							LocalPath: tmpFile,
 						},
 					},
 				},
-				State: agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_CONTENTS_MATCH,
+				State: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_CONTENTS_MATCH,
 			},
 			true,
 		},
 		{
 			"ContentsDontMatchLocalPath",
-			&agentendpointpb.ApplyConfigTask_Config_Resource_FileResource{
+			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource{
 				Path: tmpFile2,
-				Source: &agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_File{
-					File: &agentendpointpb.ApplyConfigTask_Config_Resource_File{
-						File: &agentendpointpb.ApplyConfigTask_Config_Resource_File_LocalPath{
+				Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_File{
+					File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
+						File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{
 							LocalPath: tmpFile,
 						},
 					},
 				},
-				State: agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_CONTENTS_MATCH,
+				State: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_CONTENTS_MATCH,
 			},
 			false,
 		},
 		{
 			"ContentsDontMatchDNE",
-			&agentendpointpb.ApplyConfigTask_Config_Resource_FileResource{
+			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource{
 				Path: filepath.Join(tmpDir, "dne"),
-				Source: &agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_File{
-					File: &agentendpointpb.ApplyConfigTask_Config_Resource_File{
-						File: &agentendpointpb.ApplyConfigTask_Config_Resource_File_LocalPath{
+				Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_File{
+					File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
+						File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{
 							LocalPath: tmpFile,
 						},
 					},
 				},
-				State: agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_CONTENTS_MATCH,
+				State: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_CONTENTS_MATCH,
 			},
 			false,
 		},
 		{
 			"ContentMatchFromContent",
-			&agentendpointpb.ApplyConfigTask_Config_Resource_FileResource{
+			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource{
 				Path: tmpFile,
-				Source: &agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_Content{
+				Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_Content{
 					Content: "foo",
 				},
-				State: agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_CONTENTS_MATCH,
+				State: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_CONTENTS_MATCH,
 			},
 			true,
 		},
 		{
 			"ContentsDontMatchFromContent",
-			&agentendpointpb.ApplyConfigTask_Config_Resource_FileResource{
+			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource{
 				Path: tmpFile,
-				Source: &agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_Content{
+				Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_Content{
 					Content: "bar",
 				},
-				State: agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_CONTENTS_MATCH,
+				State: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_CONTENTS_MATCH,
 			},
 			false,
 		},
@@ -267,8 +267,8 @@ func TestFileResourceCheckState(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pr := &OSPolicyResource{
-				ApplyConfigTask_Config_Resource: &agentendpointpb.ApplyConfigTask_Config_Resource{
-					ResourceType: &agentendpointpb.ApplyConfigTask_Config_Resource_File_{
+				ApplyConfigTask_OSPolicy_Resource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource{
+					ResourceType: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_{
 						File: tt.frpb,
 					},
 				},
@@ -300,13 +300,13 @@ func TestFileResourceEnforceStateAbsent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	frpb := &agentendpointpb.ApplyConfigTask_Config_Resource_FileResource{
+	frpb := &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource{
 		Path:  tmpFile,
-		State: agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_ABSENT,
+		State: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_ABSENT,
 	}
 	pr := &OSPolicyResource{
-		ApplyConfigTask_Config_Resource: &agentendpointpb.ApplyConfigTask_Config_Resource{
-			ResourceType: &agentendpointpb.ApplyConfigTask_Config_Resource_File_{File: frpb},
+		ApplyConfigTask_OSPolicy_Resource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource{
+			ResourceType: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_{File: frpb},
 		},
 	}
 	if err := pr.Validate(ctx); err != nil {
@@ -335,20 +335,20 @@ func TestFileResourceEnforceStatePresent(t *testing.T) {
 	}
 	wantFile := filepath.Join(tmpDir, "bar")
 
-	frpb := &agentendpointpb.ApplyConfigTask_Config_Resource_FileResource{
+	frpb := &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource{
 		Path: wantFile,
-		Source: &agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_File{
-			File: &agentendpointpb.ApplyConfigTask_Config_Resource_File{
-				File: &agentendpointpb.ApplyConfigTask_Config_Resource_File_LocalPath{
+		Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_File{
+			File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
+				File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{
 					LocalPath: srcFile,
 				},
 			},
 		},
-		State: agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_PRESENT,
+		State: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT,
 	}
 	pr := &OSPolicyResource{
-		ApplyConfigTask_Config_Resource: &agentendpointpb.ApplyConfigTask_Config_Resource{
-			ResourceType: &agentendpointpb.ApplyConfigTask_Config_Resource_File_{File: frpb},
+		ApplyConfigTask_OSPolicy_Resource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource{
+			ResourceType: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_{File: frpb},
 		},
 	}
 	if err := pr.Validate(ctx); err != nil {

@@ -36,14 +36,14 @@ import (
 const aptGPGDir = "/etc/apt/trusted.gpg.d"
 
 type repositoryResource struct {
-	*agentendpointpb.ApplyConfigTask_Config_Resource_RepositoryResource
+	*agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource
 
 	managedRepository ManagedRepository
 }
 
 // AptRepository describes an apt repository resource.
 type AptRepository struct {
-	RepositoryResource *agentendpointpb.ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository
+	RepositoryResource *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository
 	GpgFilePath        string
 	GpgFileContents    []byte
 	GpgChecksum        string
@@ -51,17 +51,17 @@ type AptRepository struct {
 
 // GooGetRepository describes an googet repository resource.
 type GooGetRepository struct {
-	RepositoryResource *agentendpointpb.ApplyConfigTask_Config_Resource_RepositoryResource_GooRepository
+	RepositoryResource *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_GooRepository
 }
 
 // YumRepository describes an yum repository resource.
 type YumRepository struct {
-	RepositoryResource *agentendpointpb.ApplyConfigTask_Config_Resource_RepositoryResource_YumRepository
+	RepositoryResource *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_YumRepository
 }
 
 // ZypperRepository describes an zypper repository resource.
 type ZypperRepository struct {
-	RepositoryResource *agentendpointpb.ApplyConfigTask_Config_Resource_RepositoryResource_ZypperRepository
+	RepositoryResource *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_ZypperRepository
 }
 
 // ManagedRepository is the repository that this RepositoryResource manages.
@@ -76,10 +76,10 @@ type ManagedRepository struct {
 	RepoChecksum     string
 }
 
-func aptRepoContents(repo *agentendpointpb.ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository) []byte {
-	var debArchiveTypeMap = map[agentendpointpb.ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_ArchiveType]string{
-		agentendpointpb.ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_DEB:     "deb",
-		agentendpointpb.ApplyConfigTask_Config_Resource_RepositoryResource_AptRepository_DEB_SRC: "deb-src",
+func aptRepoContents(repo *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository) []byte {
+	var debArchiveTypeMap = map[agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_ArchiveType]string{
+		agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_DEB:     "deb",
+		agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_DEB_SRC: "deb-src",
 	}
 
 	/*
@@ -101,7 +101,7 @@ func aptRepoContents(repo *agentendpointpb.ApplyConfigTask_Config_Resource_Repos
 	return buf.Bytes()
 }
 
-func googetRepoContents(repo *agentendpointpb.ApplyConfigTask_Config_Resource_RepositoryResource_GooRepository) []byte {
+func googetRepoContents(repo *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_GooRepository) []byte {
 	/*
 		# Repo file managed by Google OSConfig agent
 		- name: repo1-name
@@ -115,7 +115,7 @@ func googetRepoContents(repo *agentendpointpb.ApplyConfigTask_Config_Resource_Re
 	return buf.Bytes()
 }
 
-func yumRepoContents(repo *agentendpointpb.ApplyConfigTask_Config_Resource_RepositoryResource_YumRepository) []byte {
+func yumRepoContents(repo *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_YumRepository) []byte {
 	/*
 		# Repo file managed by Google OSConfig agent
 		[Id]
@@ -146,7 +146,7 @@ func yumRepoContents(repo *agentendpointpb.ApplyConfigTask_Config_Resource_Repos
 	return buf.Bytes()
 }
 
-func zypperRepoContents(repo *agentendpointpb.ApplyConfigTask_Config_Resource_RepositoryResource_ZypperRepository) []byte {
+func zypperRepoContents(repo *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_ZypperRepository) []byte {
 	/*
 		# Repo file managed by Google OSConfig agent
 		[Id]
@@ -216,7 +216,7 @@ func fetchGPGKey(key string) ([]byte, error) {
 func (r *repositoryResource) validate(ctx context.Context) (*ManagedResources, error) {
 	var filePath string
 	switch r.GetRepository().(type) {
-	case *agentendpointpb.ApplyConfigTask_Config_Resource_RepositoryResource_Apt:
+	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Apt:
 		if !packages.AptExists {
 			return nil, errors.New("cannot manage Apt repository because apt-get does not exist on the system")
 		}
@@ -235,7 +235,7 @@ func (r *repositoryResource) validate(ctx context.Context) (*ManagedResources, e
 			r.managedRepository.Apt.GpgFilePath = filepath.Join(aptGPGDir, "osconfig_added_"+r.managedRepository.Apt.GpgChecksum+".gpg")
 		}
 
-	case *agentendpointpb.ApplyConfigTask_Config_Resource_RepositoryResource_Goo:
+	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Goo:
 		if !packages.GooGetExists {
 			return nil, errors.New("cannot manage googet repository because googet does not exist on the system")
 		}
@@ -243,7 +243,7 @@ func (r *repositoryResource) validate(ctx context.Context) (*ManagedResources, e
 		r.managedRepository.RepoFileContents = googetRepoContents(r.GetGoo())
 		filePath = filepath.Join(agentconfig.GooGetRepoDir(), "osconfig_managed_%s.repo")
 
-	case *agentendpointpb.ApplyConfigTask_Config_Resource_RepositoryResource_Yum:
+	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Yum:
 		if !packages.YumExists {
 			return nil, errors.New("cannot manage yum repository because yum does not exist on the system")
 		}
@@ -251,7 +251,7 @@ func (r *repositoryResource) validate(ctx context.Context) (*ManagedResources, e
 		r.managedRepository.RepoFileContents = yumRepoContents(r.GetYum())
 		filePath = filepath.Join(agentconfig.YumRepoDir(), "osconfig_managed_%s.repo")
 
-	case *agentendpointpb.ApplyConfigTask_Config_Resource_RepositoryResource_Zypper:
+	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Zypper:
 		if !packages.ZypperExists {
 			return nil, errors.New("cannot manage zypper repository because zypper does not exist on the system")
 		}

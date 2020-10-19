@@ -223,7 +223,7 @@ func (r *patchTask) run(ctx context.Context) (err error) {
 			return
 		}
 		r.complete(ctx)
-		if config.OSInventoryEnabled() {
+		if agentconfig.OSInventoryEnabled() {
 			go r.client.ReportInventory(ctx)
 		}
 	}()
