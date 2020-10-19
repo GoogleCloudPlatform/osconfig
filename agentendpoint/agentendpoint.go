@@ -315,10 +315,6 @@ func (c *Client) waitForTask(ctx context.Context) error {
 	}
 	if s, ok := status.FromError(err); ok {
 		switch s.Code() {
-		case codes.Unavailable:
-			// Something canceled the stream (could be deadline/timeout), we should reconnect.
-			clog.Debugf(ctx, "Stream canceled, will reconnect: %v", err)
-			return nil
 		case codes.PermissionDenied:
 			// Service is not enabled for this project.
 			return errServiceNotEnabled
@@ -326,7 +322,6 @@ func (c *Client) waitForTask(ctx context.Context) error {
 			return errResourceExhausted
 		}
 	}
-	// TODO: Add more error checking (handle more API erros vs non API errors) and backoff where appropriate.
 	return err
 }
 
@@ -349,7 +344,9 @@ func (c *Client) WaitForTaskNotification(ctx context.Context) {
 
 	clog.Debugf(ctx, "Setting up ReceiveTaskNotification stream watcher.")
 	go func() {
-		resourceExhausted := 1
+		var resourceExhausted int
+		var errs int
+		var sleep time.Duration
 		for {
 			select {
 			case <-ctx.Done():
@@ -373,16 +370,27 @@ func (c *Client) WaitForTaskNotification(ctx context.Context) {
 					c.Close()
 					return
 				}
-				clog.Errorf(ctx, "Error waiting for task: %v", err)
-				sleep := 5 * time.Second
+
 				if errors.Is(err, errResourceExhausted) {
-					sleep = retryutil.RetrySleep(resourceExhausted, 5)
 					resourceExhausted++
+					sleep = retryutil.RetrySleep(resourceExhausted, 5)
 				} else {
-					resourceExhausted = 1
+					// Retry any other errors with a modest backoff. Only retry up to 10
+					// times, at that point return, the client will be recreated during the next
+					// cycle.
+					errs++
+					clog.Warningf(ctx, "Error waiting for task (attempt %d of 10): %v", errs, err)
+					resourceExhausted = 0
+					if errs > 10 {
+						c.Close()
+						return
+					}
+					sleep = retryutil.RetrySleep(errs, 0)
 				}
 				time.Sleep(sleep)
+				continue
 			}
+			errs = 0
 		}
 	}()
 }
