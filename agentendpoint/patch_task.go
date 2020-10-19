@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	config "github.com/GoogleCloudPlatform/osconfig/agentconfig"
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/ospatch"
 	"google.golang.org/protobuf/encoding/protojson"

@@ -50,14 +50,10 @@ const (
 	// ReportURL is the guest attributes endpoint.
 	ReportURL = InstanceMetadata + "/guest-attributes"
 
-	googetRepoDir      = "C:/ProgramData/GooGet/repos"
-	googetRepoFilePath = googetRepoDir + "/google_osconfig_managed.repo"
-	zypperRepoDir      = "/etc/zypp/repos.d"
-	zypperRepoFilePath = zypperRepoDir + "/google_osconfig_managed.repo"
-	yumRepoDir         = "/etc/yum.repos.d"
-	yumRepoFilePath    = yumRepoDir + "/google_osconfig_managed.repo"
-	aptRepoDir         = "/etc/apt/sources.list.d"
-	aptRepoFilePath    = aptRepoDir + "/google_osconfig_managed.list"
+	googetRepoFilePath = "C:/ProgramData/GooGet/repos/google_osconfig_managed.repo"
+	zypperRepoFilePath = "/etc/zypp/repos.d/google_osconfig_managed.repo"
+	yumRepoFilePath    = "/etc/yum.repos.d/google_osconfig_managed.repo"
+	aptRepoFilePath    = "/etc/apt/sources.list.d/google_osconfig_managed.list"
 
 	prodEndpoint = "{zone}-osconfig.googleapis.com:443"
 
@@ -95,10 +91,10 @@ var (
 )
 
 type config struct {
-	osInventoryEnabled, guestPoliciesEnabled, taskNotificationEnabled, debugEnabled       bool
-	svcEndpoint, googetRepoFilePath, zypperRepoFilePath, yumRepoFilePath, aptRepoFilePath string
-	numericProjectID, osConfigPollInterval                                                int
-	projectID, instanceZone, instanceName, instanceID                                     string
+	osInventoryEnabled, guestPoliciesEnabled, taskNotificationEnabled, inventoryReportingEnabled, debugEnabled bool
+	svcEndpoint, googetRepoFilePath, zypperRepoFilePath, yumRepoFilePath, aptRepoFilePath                      string
+	numericProjectID, osConfigPollInterval                                                                     int
+	projectID, instanceZone, instanceName, instanceID                                                          string
 }
 
 func (c *config) parseFeatures(features string, enabled bool) {
@@ -111,6 +107,8 @@ func (c *config) parseFeatures(features string, enabled bool) {
 			c.guestPoliciesEnabled = enabled
 		case "osinventory":
 			c.osInventoryEnabled = enabled
+		case "inventoryreporting":
+			c.inventoryReportingEnabled = enabled
 		}
 	}
 }
@@ -392,14 +390,30 @@ func WatchConfig(ctx context.Context) error {
 	loopTicker := time.NewTicker(5 * time.Second)
 	eTag := lEtag.get()
 	webErrorCount := 0
+	unmarshalErrorCount := 0
 	for {
 		md, eTag, webError = getMetadata(fmt.Sprintf("?recursive=true&alt=json&wait_for_change=true&last_etag=%s&timeout_sec=%d", lEtag.get(), osConfigMetadataPollTimeout))
 		if webError == nil && eTag != lEtag.get() {
-			lEtag.set(eTag)
 			var metadataConfig metadataJSON
 			if err := json.Unmarshal(md, &metadataConfig); err != nil {
-				return err
+				// Try up to three times (with 5s sleep) to get and unmarshal metadata.
+				// Most unmarshal errors are transient read issues with the metadata server
+				// so we should retry without logging the error.
+				if unmarshalErrorCount >= 3 {
+					return err
+				}
+				unmarshalErrorCount++
+				select {
+				case <-timeout.C:
+					return err
+				case <-ctx.Done():
+					return nil
+				case <-loopTicker.C:
+					continue
+				}
 			}
+			unmarshalErrorCount = 0
+			lEtag.set(eTag)
 
 			newAgentConfig := createConfigFromMetadata(metadataConfig)
 
@@ -468,39 +482,19 @@ func SvcEndpoint() string {
 	return getAgentConfig().svcEndpoint
 }
 
-// ZypperRepoDir is the location of the zypper repo files.
-func ZypperRepoDir() string {
-	return zypperRepoDir
-}
-
 // ZypperRepoFilePath is the location where the zypper repo file will be created.
 func ZypperRepoFilePath() string {
 	return getAgentConfig().zypperRepoFilePath
 }
 
-// YumRepoDir is the location of the yum repo files.
-func YumRepoDir() string {
-	return yumRepoDir
-}
-
-// YumRepoFilePath is the location where the yum repo file will be created.
+// YumRepoFilePath is the location where the zypper repo file will be created.
 func YumRepoFilePath() string {
 	return getAgentConfig().yumRepoFilePath
 }
 
-// AptRepoDir is the location of the apt repo files.
-func AptRepoDir() string {
-	return aptRepoDir
-}
-
-// AptRepoFilePath is the location where the apt repo file will be created.
+// AptRepoFilePath is the location where the zypper repo file will be created.
 func AptRepoFilePath() string {
 	return getAgentConfig().aptRepoFilePath
-}
-
-// GooGetRepoDir is the location of the googet repo files.
-func GooGetRepoDir() string {
-	return googetRepoDir
 }
 
 // GooGetRepoFilePath is the location where the googet repo file will be created.
@@ -521,6 +515,11 @@ func GuestPoliciesEnabled() bool {
 // TaskNotificationEnabled indicates whether TaskNotification should be enabled.
 func TaskNotificationEnabled() bool {
 	return getAgentConfig().taskNotificationEnabled
+}
+
+// InventoryReportingEnabled indicates whether InventoryReporting should be enabled.
+func InventoryReportingEnabled() bool {
+	return getAgentConfig().inventoryReportingEnabled
 }
 
 // Instance is the URI of the instance the agent is running on.
