@@ -25,7 +25,7 @@ import (
 // OSPolicyResource is a single OSPolicy resource.
 type OSPolicyResource struct {
 	resource
-	*agentendpointpb.ApplyConfigTask_Config_Resource
+	*agentendpointpb.ApplyConfigTask_OSPolicy_Resource
 
 	managedResources *ManagedResources
 	inDesiredState   bool
@@ -60,12 +60,12 @@ type ManagedResources struct {
 // Validate must be called before other methods.
 func (r *OSPolicyResource) Validate(ctx context.Context) error {
 	switch x := r.GetResourceType().(type) {
-	case *agentendpointpb.ApplyConfigTask_Config_Resource_Pkg:
-		r.resource = resource(&packageResouce{ApplyConfigTask_Config_Resource_PackageResource: x.Pkg})
-	case *agentendpointpb.ApplyConfigTask_Config_Resource_Repository:
-		r.resource = resource(&repositoryResource{ApplyConfigTask_Config_Resource_RepositoryResource: x.Repository})
-	case *agentendpointpb.ApplyConfigTask_Config_Resource_File_:
-		r.resource = resource(&fileResource{ApplyConfigTask_Config_Resource_FileResource: x.File})
+	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_Pkg:
+		r.resource = resource(&packageResouce{ApplyConfigTask_OSPolicy_Resource_PackageResource: x.Pkg})
+	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_Repository:
+		r.resource = resource(&repositoryResource{ApplyConfigTask_OSPolicy_Resource_RepositoryResource: x.Repository})
+	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_:
+		r.resource = resource(&fileResource{ApplyConfigTask_OSPolicy_Resource_FileResource: x.File})
 		/*
 			case *agentendpointpb.ApplyConfigTask_Config_Resource_Exec:
 			case *agentendpointpb.ApplyConfigTask_Config_Resource_Archive:

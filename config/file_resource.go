@@ -32,7 +32,7 @@ import (
 const defaultFilePerms = 0644
 
 type fileResource struct {
-	*agentendpointpb.ApplyConfigTask_Config_Resource_FileResource
+	*agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource
 
 	managedFile ManagedFile
 }
@@ -40,7 +40,7 @@ type fileResource struct {
 // ManagedFile is the file that this FileResouce manages.
 type ManagedFile struct {
 	Path       string
-	State      agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_DesiredState
+	State      agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_DesiredState
 	Permisions os.FileMode
 
 	tempDir  string
@@ -62,7 +62,7 @@ func parsePermissions(s string) (os.FileMode, error) {
 
 func (f *fileResource) validate(ctx context.Context) (*ManagedResources, error) {
 	switch f.GetState() {
-	case agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_ABSENT, agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_PRESENT, agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_CONTENTS_MATCH:
+	case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_ABSENT, agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT, agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_CONTENTS_MATCH:
 		f.managedFile.State = f.GetState()
 	default:
 		return nil, fmt.Errorf("unrecognized DesiredState for FileResource: %q", f.GetState())
@@ -71,7 +71,7 @@ func (f *fileResource) validate(ctx context.Context) (*ManagedResources, error) 
 	f.managedFile.Path = f.GetPath()
 
 	// If desired state is absent, we can return now.
-	if f.GetState() == agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_ABSENT {
+	if f.GetState() == agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_ABSENT {
 		return &ManagedResources{Files: []ManagedFile{f.managedFile}}, nil
 	}
 
@@ -111,13 +111,13 @@ func (f *fileResource) download(ctx context.Context) error {
 	f.managedFile.source = tmpFile
 
 	switch f.GetSource().(type) {
-	case *agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_Content:
+	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_Content:
 		f.managedFile.checksum, err = util.WriteFile(strings.NewReader(f.GetContent()), "", tmpFile, 0644)
 		if err != nil {
 			return err
 		}
 
-	case *agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_File:
+	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_File:
 		f.managedFile.checksum, err = downloadFile(ctx, tmpFile, f.GetFile())
 		if err != nil {
 			return err
@@ -131,15 +131,15 @@ func (f *fileResource) download(ctx context.Context) error {
 
 func (f *fileResource) checkState(ctx context.Context) (inDesiredState bool, err error) {
 	switch f.managedFile.State {
-	case agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_ABSENT:
+	case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_ABSENT:
 		return !util.Exists(f.managedFile.Path), nil
-	case agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_PRESENT:
+	case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT:
 		// If the file is already present no need to downloaded it.
 		if util.Exists(f.managedFile.Path) {
 			return true, nil
 		}
 		return false, f.download(ctx)
-	case agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_CONTENTS_MATCH:
+	case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_CONTENTS_MATCH:
 		// TODO: check if permissons match.
 
 		if err := f.download(ctx); err != nil {
@@ -180,11 +180,11 @@ func copyFile(dst, src string, perms os.FileMode) (retErr error) {
 
 func (f *fileResource) enforceState(ctx context.Context) (inDesiredState bool, err error) {
 	switch f.managedFile.State {
-	case agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_ABSENT:
+	case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_ABSENT:
 		if err := os.Remove(f.managedFile.Path); err != nil {
 			return false, fmt.Errorf("error removing %q: %v", f.managedFile.Path, err)
 		}
-	case agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_PRESENT, agentendpointpb.ApplyConfigTask_Config_Resource_FileResource_CONTENTS_MATCH:
+	case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT, agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_CONTENTS_MATCH:
 		if err := copyFile(f.managedFile.Path, f.managedFile.source, f.managedFile.Permisions); err != nil {
 			return false, fmt.Errorf("error copying %q to %q: %v", f.managedFile.source, f.managedFile.Path, err)
 		}
