@@ -95,10 +95,10 @@ var (
 )
 
 type config struct {
-	osInventoryEnabled, guestPoliciesEnabled, taskNotificationEnabled, debugEnabled       bool
-	svcEndpoint, googetRepoFilePath, zypperRepoFilePath, yumRepoFilePath, aptRepoFilePath string
-	numericProjectID, osConfigPollInterval                                                int
-	projectID, instanceZone, instanceName, instanceID                                     string
+	osInventoryEnabled, guestPoliciesEnabled, taskNotificationEnabled, inventoryReportingEnabled, debugEnabled bool
+	svcEndpoint, googetRepoFilePath, zypperRepoFilePath, yumRepoFilePath, aptRepoFilePath                      string
+	numericProjectID, osConfigPollInterval                                                                     int
+	projectID, instanceZone, instanceName, instanceID                                                          string
 }
 
 func (c *config) parseFeatures(features string, enabled bool) {
@@ -111,6 +111,8 @@ func (c *config) parseFeatures(features string, enabled bool) {
 			c.guestPoliciesEnabled = enabled
 		case "osinventory":
 			c.osInventoryEnabled = enabled
+		case "inventoryreporting":
+			c.inventoryReportingEnabled = enabled
 		}
 	}
 }
@@ -392,14 +394,30 @@ func WatchConfig(ctx context.Context) error {
 	loopTicker := time.NewTicker(5 * time.Second)
 	eTag := lEtag.get()
 	webErrorCount := 0
+	unmarshalErrorCount := 0
 	for {
 		md, eTag, webError = getMetadata(fmt.Sprintf("?recursive=true&alt=json&wait_for_change=true&last_etag=%s&timeout_sec=%d", lEtag.get(), osConfigMetadataPollTimeout))
 		if webError == nil && eTag != lEtag.get() {
-			lEtag.set(eTag)
 			var metadataConfig metadataJSON
 			if err := json.Unmarshal(md, &metadataConfig); err != nil {
-				return err
+				// Try up to three times (with 5s sleep) to get and unmarshal metadata.
+				// Most unmarshal errors are transient read issues with the metadata server
+				// so we should retry without logging the error.
+				if unmarshalErrorCount >= 3 {
+					return err
+				}
+				unmarshalErrorCount++
+				select {
+				case <-timeout.C:
+					return err
+				case <-ctx.Done():
+					return nil
+				case <-loopTicker.C:
+					continue
+				}
 			}
+			unmarshalErrorCount = 0
+			lEtag.set(eTag)
 
 			newAgentConfig := createConfigFromMetadata(metadataConfig)
 
@@ -483,7 +501,7 @@ func YumRepoDir() string {
 	return yumRepoDir
 }
 
-// YumRepoFilePath is the location where the yum repo file will be created.
+// YumRepoFilePath is the location where the zypper repo file will be created.
 func YumRepoFilePath() string {
 	return getAgentConfig().yumRepoFilePath
 }
@@ -493,7 +511,7 @@ func AptRepoDir() string {
 	return aptRepoDir
 }
 
-// AptRepoFilePath is the location where the apt repo file will be created.
+// AptRepoFilePath is the location where the zypper repo file will be created.
 func AptRepoFilePath() string {
 	return getAgentConfig().aptRepoFilePath
 }
@@ -521,6 +539,11 @@ func GuestPoliciesEnabled() bool {
 // TaskNotificationEnabled indicates whether TaskNotification should be enabled.
 func TaskNotificationEnabled() bool {
 	return getAgentConfig().taskNotificationEnabled
+}
+
+// InventoryReportingEnabled indicates whether InventoryReporting should be enabled.
+func InventoryReportingEnabled() bool {
+	return getAgentConfig().inventoryReportingEnabled
 }
 
 // Instance is the URI of the instance the agent is running on.

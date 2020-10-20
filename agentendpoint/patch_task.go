@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	config "github.com/GoogleCloudPlatform/osconfig/agentconfig"
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/ospatch"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -223,7 +223,7 @@ func (r *patchTask) run(ctx context.Context) (err error) {
 			return
 		}
 		r.complete(ctx)
-		if config.OSInventoryEnabled() {
+		if agentconfig.OSInventoryEnabled() {
 			go r.client.ReportInventory(ctx)
 		}
 	}()

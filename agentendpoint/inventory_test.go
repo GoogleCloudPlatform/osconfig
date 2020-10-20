@@ -28,7 +28,6 @@ import (
 	"testing"
 	"time"
 
-	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"github.com/google/go-cmp/cmp"
@@ -36,6 +35,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
 type agentEndpointServiceInventoryTestServer struct {
@@ -142,33 +143,33 @@ func generateInventory(shortName string) *agentendpointpb.Inventory {
 		mappedRPMInstalledPkg = &agentendpointpb.Inventory_SoftwarePackage{
 			Details: &agentendpointpb.Inventory_SoftwarePackage_ZypperPackage{
 				ZypperPackage: &agentendpointpb.Inventory_VersionedPackage{
-					Name:         "RpmInstalledPkg",
+					PackageName:  "RpmInstalledPkg",
 					Architecture: "Arch",
 					Version:      "Version"}}}
 		mappedRPMPkgUpdate = &agentendpointpb.Inventory_SoftwarePackage{
 			Details: &agentendpointpb.Inventory_SoftwarePackage_ZypperPackage{
 				ZypperPackage: &agentendpointpb.Inventory_VersionedPackage{
-					Name:         "RpmPkgUpdate",
+					PackageName:  "RpmPkgUpdate",
 					Architecture: "Arch",
 					Version:      "Version"}}}
 	} else {
 		mappedRPMInstalledPkg = &agentendpointpb.Inventory_SoftwarePackage{
 			Details: &agentendpointpb.Inventory_SoftwarePackage_YumPackage{
 				YumPackage: &agentendpointpb.Inventory_VersionedPackage{
-					Name:         "RpmInstalledPkg",
+					PackageName:  "RpmInstalledPkg",
 					Architecture: "Arch",
 					Version:      "Version"}}}
 		mappedRPMPkgUpdate = &agentendpointpb.Inventory_SoftwarePackage{
 			Details: &agentendpointpb.Inventory_SoftwarePackage_YumPackage{
 				YumPackage: &agentendpointpb.Inventory_VersionedPackage{
-					Name:         "RpmPkgUpdate",
+					PackageName:  "RpmPkgUpdate",
 					Architecture: "Arch",
 					Version:      "Version"}}}
 	}
 
 	return &agentendpointpb.Inventory{
 		OsInfo: &agentendpointpb.Inventory_OsInfo{
-			HostName:             "Hostname",
+			Hostname:             "Hostname",
 			LongName:             "LongName",
 			ShortName:            shortName,
 			Version:              "Version",
@@ -181,34 +182,34 @@ func generateInventory(shortName string) *agentendpointpb.Inventory {
 			{
 				Details: &agentendpointpb.Inventory_SoftwarePackage_AptPackage{
 					AptPackage: &agentendpointpb.Inventory_VersionedPackage{
-						Name:         "AptInstalledPkg",
+						PackageName:  "AptInstalledPkg",
 						Architecture: "Arch",
 						Version:      "Version"}}},
 			{
 				Details: &agentendpointpb.Inventory_SoftwarePackage_GoogetPackage{
 					GoogetPackage: &agentendpointpb.Inventory_VersionedPackage{
-						Name:         "GooGetInstalledPkg",
+						PackageName:  "GooGetInstalledPkg",
 						Architecture: "Arch",
 						Version:      "Version"}}},
 			{
 				Details: &agentendpointpb.Inventory_SoftwarePackage_YumPackage{
 					YumPackage: &agentendpointpb.Inventory_VersionedPackage{
-						Name:         "YumInstalledPkg",
+						PackageName:  "YumInstalledPkg",
 						Architecture: "Arch",
 						Version:      "Version"}}},
 			{
 				Details: &agentendpointpb.Inventory_SoftwarePackage_ZypperPackage{
 					ZypperPackage: &agentendpointpb.Inventory_VersionedPackage{
-						Name:         "ZypperInstalledPkg",
+						PackageName:  "ZypperInstalledPkg",
 						Architecture: "Arch",
 						Version:      "Version"}}},
 			{
 				Details: &agentendpointpb.Inventory_SoftwarePackage_ZypperPatch{
 					ZypperPatch: &agentendpointpb.Inventory_ZypperPatch{
-						Name:     "ZypperInstalledPatch",
-						Category: "Category",
-						Severity: "Severity",
-						Summary:  "Summary"}}},
+						PatchName: "ZypperInstalledPatch",
+						Category:  "Category",
+						Severity:  "Severity",
+						Summary:   "Summary"}}},
 			{
 				Details: &agentendpointpb.Inventory_SoftwarePackage_WuaPackage{
 					WuaPackage: &agentendpointpb.Inventory_WindowsUpdatePackage{
@@ -218,7 +219,8 @@ func generateInventory(shortName string) *agentendpointpb.Inventory {
 							Id:   "CategoryID",
 							Name: "Category"}},
 						KbArticleIds:             []string{"KB"},
-						SupportUrls:              []string{"MoreInfoURL"},
+						SupportUrl:               "SupportURL",
+						MoreInfoUrls:             []string{"MoreInfoURL"},
 						UpdateId:                 "UpdateID",
 						RevisionNumber:           1,
 						LastDeploymentChangeTime: timestamppb.New(time.Date(2020, time.November, 10, 23, 0, 0, 0, time.UTC)),
@@ -229,11 +231,11 @@ func generateInventory(shortName string) *agentendpointpb.Inventory {
 						Caption:     "QFEInstalled",
 						Description: "Description",
 						HotFixId:    "HotFixID",
-						InstalledOn: timestamppb.New(time.Date(2020, time.September, 1, 0, 0, 0, 0, time.UTC))}}},
+						InstallTime: timestamppb.New(time.Date(2020, time.September, 1, 0, 0, 0, 0, time.UTC))}}},
 			{
 				Details: &agentendpointpb.Inventory_SoftwarePackage_AptPackage{
 					AptPackage: &agentendpointpb.Inventory_VersionedPackage{
-						Name:         "DebInstalledPkg",
+						PackageName:  "DebInstalledPkg",
 						Architecture: "Arch",
 						Version:      "Version"}}},
 			mappedRPMInstalledPkg,
@@ -242,34 +244,34 @@ func generateInventory(shortName string) *agentendpointpb.Inventory {
 			{
 				Details: &agentendpointpb.Inventory_SoftwarePackage_AptPackage{
 					AptPackage: &agentendpointpb.Inventory_VersionedPackage{
-						Name:         "AptPkgUpdate",
+						PackageName:  "AptPkgUpdate",
 						Architecture: "Arch",
 						Version:      "Version"}}},
 			{
 				Details: &agentendpointpb.Inventory_SoftwarePackage_GoogetPackage{
 					GoogetPackage: &agentendpointpb.Inventory_VersionedPackage{
-						Name:         "GooGetPkgUpdate",
+						PackageName:  "GooGetPkgUpdate",
 						Architecture: "Arch",
 						Version:      "Version"}}},
 			{
 				Details: &agentendpointpb.Inventory_SoftwarePackage_YumPackage{
 					YumPackage: &agentendpointpb.Inventory_VersionedPackage{
-						Name:         "YumPkgUpdate",
+						PackageName:  "YumPkgUpdate",
 						Architecture: "Arch",
 						Version:      "Version"}}},
 			{
 				Details: &agentendpointpb.Inventory_SoftwarePackage_ZypperPackage{
 					ZypperPackage: &agentendpointpb.Inventory_VersionedPackage{
-						Name:         "ZypperPkgUpdate",
+						PackageName:  "ZypperPkgUpdate",
 						Architecture: "Arch",
 						Version:      "Version"}}},
 			{
 				Details: &agentendpointpb.Inventory_SoftwarePackage_ZypperPatch{
 					ZypperPatch: &agentendpointpb.Inventory_ZypperPatch{
-						Name:     "ZypperPatchUpdate",
-						Category: "Category",
-						Severity: "Severity",
-						Summary:  "Summary"}}},
+						PatchName: "ZypperPatchUpdate",
+						Category:  "Category",
+						Severity:  "Severity",
+						Summary:   "Summary"}}},
 			{
 				Details: &agentendpointpb.Inventory_SoftwarePackage_WuaPackage{
 					WuaPackage: &agentendpointpb.Inventory_WindowsUpdatePackage{
@@ -279,7 +281,8 @@ func generateInventory(shortName string) *agentendpointpb.Inventory {
 							Id:   "CategoryID",
 							Name: "Category"}},
 						KbArticleIds:             []string{"KB"},
-						SupportUrls:              []string{"MoreInfoURL"},
+						SupportUrl:               "SupportURL",
+						MoreInfoUrls:             []string{"MoreInfoURL"},
 						UpdateId:                 "UpdateID",
 						RevisionNumber:           1,
 						LastDeploymentChangeTime: timestamppb.New(time.Time{})}}},
@@ -289,11 +292,11 @@ func generateInventory(shortName string) *agentendpointpb.Inventory {
 						Caption:     "QFEUpdate",
 						Description: "Description",
 						HotFixId:    "HotFixID",
-						InstalledOn: timestamppb.New(time.Time{})}}},
+						InstallTime: timestamppb.New(time.Time{})}}},
 			{
 				Details: &agentendpointpb.Inventory_SoftwarePackage_AptPackage{
 					AptPackage: &agentendpointpb.Inventory_VersionedPackage{
-						Name:         "DebPkgUpdate",
+						PackageName:  "DebPkgUpdate",
 						Architecture: "Arch",
 						Version:      "Version"}}},
 			mappedRPMPkgUpdate,
