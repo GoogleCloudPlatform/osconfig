@@ -17,6 +17,7 @@ package packages
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"runtime"
 
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
@@ -75,4 +76,18 @@ func InstalledRPMPackages(ctx context.Context) ([]PkgInfo, error) {
 func RPMInstall(ctx context.Context, path string) error {
 	_, err := run(ctx, rpm, append(rpmInstallArgs, path))
 	return err
+}
+
+// RPMPkgInfo gets PkgInfo from a rpm package.
+func RPMPkgInfo(ctx context.Context, path string) (*PkgInfo, error) {
+	out, err := run(ctx, rpmquery, []string{"--queryformat", "%{NAME} %{ARCH} %|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}", "-p", path})
+	if err != nil {
+		return nil, err
+	}
+
+	pkgs := parseInstalledRPMPackages(out)
+	if len(pkgs) != 1 {
+		return nil, fmt.Errorf("unexpected number of parsed rpm packages %d: %q", len(pkgs), out)
+	}
+	return &pkgs[0], nil
 }

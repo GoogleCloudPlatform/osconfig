@@ -30,7 +30,8 @@ import (
 
 var (
 	dpkg      string
-	dpkgquery string
+	dpkgQuery string
+	dpkgDeb   string
 	aptGet    string
 
 	dpkgInstallArgs   = []string{"--install"}
@@ -51,12 +52,13 @@ var (
 func init() {
 	if runtime.GOOS != "windows" {
 		dpkg = "/usr/bin/dpkg"
-		dpkgquery = "/usr/bin/dpkg-query"
+		dpkgQuery = "/usr/bin/dpkg-query"
+		dpkgDeb = "/usr/bin/dpkg-deb"
 		aptGet = "/usr/bin/apt-get"
 	}
 	AptExists = util.Exists(aptGet)
 	DpkgExists = util.Exists(dpkg)
-	DpkgQueryExists = util.Exists(dpkgquery)
+	DpkgQueryExists = util.Exists(dpkgQuery)
 }
 
 // AptUpgradeType is the apt upgrade type.
@@ -103,6 +105,65 @@ func dpkgRepair(ctx context.Context, out []byte) bool {
 	run(ctx, dpkg, dpkgRepairArgs)
 
 	return true
+}
+
+func parseDpkgDeb(data []byte) (*PkgInfo, error) {
+	/*
+	   new Debian package, version 2.0.
+	   size 6731954 bytes: control archive=2138 bytes.
+	       498 bytes,    12 lines      control
+	      3465 bytes,    31 lines      md5sums
+	      2793 bytes,    65 lines   *  postinst             #!/bin/sh
+	       938 bytes,    28 lines   *  postrm               #!/bin/sh
+	       216 bytes,     7 lines   *  prerm                #!/bin/sh
+	   Package: google-guest-agent
+	   Version: 1:1dummy-g1
+	   Architecture: amd64
+	   Maintainer: Google Cloud Team <gc-team@google.com>
+	   Installed-Size: 23279
+	   Depends: init-system-helpers (>= 1.18~)
+	   Conflicts: python-google-compute-engine, python3-google-compute-engine
+	   Section: misc
+	   Priority: optional
+	   Description: Google Compute Engine Guest Agent
+	    Contains the guest agent and metadata script runner binaries.
+	   Git: https://github.com/GoogleCloudPlatform/guest-agent/tree/c3d526e650c4e45ae3258c07836fd72f85fd9fc8
+	*/
+
+	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
+	var info *PkgInfo
+	for _, ln := range lines {
+		if info.Name != "" && info.Version != "" && info.Arch != "" {
+			break
+		}
+		fields := bytes.Fields(ln)
+		if bytes.Contains(fields[0], []byte("Package:")) {
+			info.Name = string(fields[1])
+			continue
+		}
+		if !bytes.Contains(fields[0], []byte("Version:")) {
+			info.Version = string(fields[1])
+			continue
+		}
+		if !bytes.Contains(fields[0], []byte("Architecture:")) {
+			info.Arch = osinfo.Architecture(string(fields[1]))
+			continue
+		}
+	}
+	if info.Name != "" && info.Version != "" && info.Arch != "" {
+		return nil, fmt.Errorf("could not parse dpkg-deb output: %q", data)
+	}
+	return info, nil
+}
+
+// DebPkgInfo gets PkgInfo from a deb package.
+func DebPkgInfo(ctx context.Context, path string) (*PkgInfo, error) {
+	out, err := run(ctx, dpkgDeb, []string{"-I", path})
+	if err != nil {
+		return nil, err
+	}
+
+	return parseDpkgDeb(out)
 }
 
 // InstallAptPackages installs apt packages.
@@ -244,7 +305,7 @@ func parseInstalledDebpackages(data []byte) []PkgInfo {
 
 // InstalledDebPackages queries for all installed deb packages.
 func InstalledDebPackages(ctx context.Context) ([]PkgInfo, error) {
-	out, err := run(ctx, dpkgquery, dpkgQueryArgs)
+	out, err := run(ctx, dpkgQuery, dpkgQueryArgs)
 	if err != nil {
 		return nil, err
 	}

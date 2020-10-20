@@ -95,6 +95,7 @@ func (f *fileResource) validate(ctx context.Context) (*ManagedResources, error) 
 	return &ManagedResources{Files: []ManagedFile{f.managedFile}}, nil
 }
 
+// TODO: use a persistent cache for downloaded files so we dont need to redownload them each time.
 func (f *fileResource) download(ctx context.Context) error {
 	// No need to download if source is a local file.
 	if f.GetFile().GetLocalPath() != "" {

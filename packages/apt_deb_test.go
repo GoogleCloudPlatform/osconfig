@@ -80,7 +80,7 @@ func TestInstalledDebPackages(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	expectedCmd := exec.Command(dpkgquery, dpkgQueryArgs...)
+	expectedCmd := exec.Command(dpkgQuery, dpkgQueryArgs...)
 	data := []byte("foo amd64 1.2.3-4")
 
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return(data, []byte("stderr"), nil).Times(1)
