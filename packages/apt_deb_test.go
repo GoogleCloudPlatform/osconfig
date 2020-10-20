@@ -177,3 +177,52 @@ func TestAptUpdates(t *testing.T) {
 		t.Errorf("did not get expected error")
 	}
 }
+func TestDebPkgInfo(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	runner = mockCommandRunner
+	testPkg := "test.deb"
+	expectedCmd := exec.Command(dpkgDeb, "-I", testPkg)
+	out := []byte(`new Debian package, version 2.0.
+	size 6731954 bytes: control archive=2138 bytes.
+		498 bytes,    12 lines      control
+	   3465 bytes,    31 lines      md5sums
+	   2793 bytes,    65 lines   *  postinst             #!/bin/sh
+		938 bytes,    28 lines   *  postrm               #!/bin/sh
+		216 bytes,     7 lines   *  prerm                #!/bin/sh
+	Package: google-guest-agent
+	Version: 1:1dummy-g1
+	Architecture: amd64
+	Maintainer: Google Cloud Team <gc-team@google.com>
+	Installed-Size: 23279
+	Depends: init-system-helpers (>= 1.18~)
+	Conflicts: python-google-compute-engine, python3-google-compute-engine
+	Section: misc
+	Priority: optional
+	Description: Google Compute Engine Guest Agent
+	 Contains the guest agent and metadata script runner binaries.
+	Git: https://github.com/GoogleCloudPlatform/guest-agent/tree/c3d526e650c4e45ae3258c07836fd72f85fd9fc8`)
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return(out, []byte("stderr"), nil).Times(1)
+	ret, err := DebPkgInfo(testCtx, testPkg)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	want := &PkgInfo{"google-guest-agent", "x86_64", "1:1dummy-g1"}
+	if !reflect.DeepEqual(ret, want) {
+		t.Errorf("DebPkgInfo() = %+v, want %+v", ret, want)
+	}
+
+	// Error output.
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), errors.New("bad error")).Times(1)
+	if _, err := DebPkgInfo(testCtx, testPkg); err == nil {
+		t.Errorf("did not get expected error")
+	}
+	// No package
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte(""), []byte("stderr"), nil).Times(1)
+	if _, err := DebPkgInfo(testCtx, testPkg); err == nil {
+		t.Errorf("did not get expected error")
+	}
+}

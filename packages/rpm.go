@@ -30,7 +30,9 @@ var (
 
 	rpmInstallArgs = []string{"--upgrade", "--replacepkgs", "-v"}
 	// %|EPOCH?{%{EPOCH}:}:{}| == if EPOCH then prepend "%{EPOCH}:" to version.
-	rpmqueryArgs = []string{"-a", "--queryformat", "%{NAME} %{ARCH} %|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\n"}
+	rpmqueryArgs          = []string{"--queryformat", "%{NAME} %{ARCH} %|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\n"}
+	rpmqueryInstalledArgs = append(rpmqueryArgs, "-a")
+	rpmqueryRPMArgs       = append(rpmqueryArgs, "-p")
 )
 
 func init() {
@@ -64,7 +66,7 @@ func parseInstalledRPMPackages(data []byte) []PkgInfo {
 
 // InstalledRPMPackages queries for all installed rpm packages.
 func InstalledRPMPackages(ctx context.Context) ([]PkgInfo, error) {
-	out, err := run(ctx, rpmquery, rpmqueryArgs)
+	out, err := run(ctx, rpmquery, rpmqueryInstalledArgs)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +82,7 @@ func RPMInstall(ctx context.Context, path string) error {
 
 // RPMPkgInfo gets PkgInfo from a rpm package.
 func RPMPkgInfo(ctx context.Context, path string) (*PkgInfo, error) {
-	out, err := run(ctx, rpmquery, []string{"--queryformat", "%{NAME} %{ARCH} %|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}", "-p", path})
+	out, err := run(ctx, rpmquery, append(rpmqueryRPMArgs, path))
 	if err != nil {
 		return nil, err
 	}

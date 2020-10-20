@@ -131,26 +131,29 @@ func parseDpkgDeb(data []byte) (*PkgInfo, error) {
 	*/
 
 	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
-	var info *PkgInfo
+	info := &PkgInfo{}
 	for _, ln := range lines {
 		if info.Name != "" && info.Version != "" && info.Arch != "" {
 			break
 		}
 		fields := bytes.Fields(ln)
+		if len(fields) != 2 {
+			continue
+		}
 		if bytes.Contains(fields[0], []byte("Package:")) {
 			info.Name = string(fields[1])
 			continue
 		}
-		if !bytes.Contains(fields[0], []byte("Version:")) {
+		if bytes.Contains(fields[0], []byte("Version:")) {
 			info.Version = string(fields[1])
 			continue
 		}
-		if !bytes.Contains(fields[0], []byte("Architecture:")) {
+		if bytes.Contains(fields[0], []byte("Architecture:")) {
 			info.Arch = osinfo.Architecture(string(fields[1]))
 			continue
 		}
 	}
-	if info.Name != "" && info.Version != "" && info.Arch != "" {
+	if info.Name == "" || info.Version == "" || info.Arch == "" {
 		return nil, fmt.Errorf("could not parse dpkg-deb output: %q", data)
 	}
 	return info, nil
