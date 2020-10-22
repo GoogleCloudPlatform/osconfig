@@ -244,10 +244,11 @@ func TestPackageResourceValidate(t *testing.T) {
 				wantMR = nil
 			}
 
-			if diff := cmp.Diff(pr.ManagedResources(), wantMR, protocmp.Transform(), cmp.AllowUnexported(ManagedPackage{})); diff != "" {
+			opts := []cmp.Option{protocmp.Transform(), cmp.AllowUnexported(ManagedPackage{}), cmp.AllowUnexported(DebPackage{}), cmp.AllowUnexported(RPMPackage{}), cmp.AllowUnexported(MSIPackage{})}
+			if diff := cmp.Diff(pr.ManagedResources(), wantMR, opts...); diff != "" {
 				t.Errorf("OSPolicyResource does not match expectation: (-got +want)\n%s", diff)
 			}
-			if diff := cmp.Diff(pr.resource.(*packageResouce).managedPackage, tt.wantMP, protocmp.Transform(), cmp.AllowUnexported(ManagedPackage{})); diff != "" {
+			if diff := cmp.Diff(pr.resource.(*packageResouce).managedPackage, tt.wantMP, opts...); diff != "" {
 				t.Errorf("packageResouce does not match expectation: (-got +want)\n%s", diff)
 			}
 		})
