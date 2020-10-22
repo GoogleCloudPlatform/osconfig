@@ -13,6 +13,7 @@ import (
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -46,10 +47,13 @@ func write(ctx context.Context, state *inventory.InstanceInventory, url string) 
 			if err := attributes.PostAttribute(u, strings.NewReader(f.String())); err != nil {
 				clog.Errorf(ctx, "postAttribute error: %v", err)
 			}
-		case reflect.Struct:
-			clog.Debugf(ctx, "postAttributeCompressed %s: %+v", u, f)
-			if err := attributes.PostAttributeCompressed(u, f.Interface()); err != nil {
-				clog.Errorf(ctx, "postAttributeCompressed error: %v", err)
+		case reflect.Ptr:
+			switch reflect.Indirect(f).Kind() {
+			case reflect.Struct:
+				clog.Debugf(ctx, "postAttributeCompressed %s: %+v", u, f)
+				if err := attributes.PostAttributeCompressed(u, f.Interface()); err != nil {
+					clog.Errorf(ctx, "postAttributeCompressed error: %v", err)
+				}
 			}
 		}
 	}
@@ -62,15 +66,16 @@ func (c *Client) report(ctx context.Context, state *inventory.InstanceInventory)
 	reportFull := false
 	retries := 0
 	for {
-		res, err := c.reportInventory(ctx, inventory, reportFull)
+		resp, err := c.reportInventory(ctx, inventory, reportFull)
 		if err != nil {
 			clog.Errorf(ctx, "Error reporting inventory: %v", err)
-		}
-
-		if !res.GetReportFullInventory() {
-			break
 		} else {
-			reportFull = true
+			clog.Debugf(ctx, "ReportInventory response: \n%s", util.PrettyFmt(resp))
+			if !resp.GetReportFullInventory() {
+				break
+			} else {
+				reportFull = true
+			}
 		}
 
 		retries++
@@ -99,8 +104,11 @@ func formatInventory(ctx context.Context, state *inventory.InstanceInventory) *a
 	return &agentendpointpb.Inventory{OsInfo: osInfo, InstalledPackages: installedPackages, AvailablePackages: availablePackages}
 }
 
-func formatPackages(ctx context.Context, packages packages.Packages, shortName string) []*agentendpointpb.Inventory_SoftwarePackage {
+func formatPackages(ctx context.Context, packages *packages.Packages, shortName string) []*agentendpointpb.Inventory_SoftwarePackage {
 	var softwarePackages []*agentendpointpb.Inventory_SoftwarePackage
+	if packages == nil {
+		return softwarePackages
+	}
 	if packages.Apt != nil {
 		for _, pkg := range packages.Apt {
 			softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
@@ -249,7 +257,7 @@ func formatWUAPackage(pkg packages.WUAPackage) *agentendpointpb.Inventory_Softwa
 func formatQFEPackage(ctx context.Context, pkg packages.QFEPackage) *agentendpointpb.Inventory_SoftwarePackage_QfePackage {
 	installedTime, err := time.Parse("1/2/2006", pkg.InstalledOn)
 	if err != nil {
-		clog.Errorf(ctx, "Error parsing QFE InstalledOn date: %v", err)
+		clog.Warningf(ctx, "Error parsing QFE InstalledOn date: %v", err)
 	}
 
 	return &agentendpointpb.Inventory_SoftwarePackage_QfePackage{

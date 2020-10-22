@@ -123,7 +123,6 @@ func newTestClient(ctx context.Context, srv agentendpointpb.AgentEndpointService
 
 type agentEndpointServiceTestServer struct {
 	streamClose             chan struct{}
-	unavailableError        chan struct{}
 	streamSend              chan struct{}
 	permissionError         chan struct{}
 	taskStart               bool
@@ -138,10 +137,9 @@ type agentEndpointServiceTestServer struct {
 
 func newAgentEndpointServiceTestServer() *agentEndpointServiceTestServer {
 	return &agentEndpointServiceTestServer{
-		streamClose:      make(chan struct{}, 1),
-		unavailableError: make(chan struct{}, 1),
-		streamSend:       make(chan struct{}, 1),
-		permissionError:  make(chan struct{}, 1),
+		streamClose:     make(chan struct{}, 1),
+		streamSend:      make(chan struct{}, 1),
+		permissionError: make(chan struct{}, 1),
 	}
 }
 
@@ -152,8 +150,6 @@ func (s *agentEndpointServiceTestServer) ReceiveTaskNotification(req *agentendpo
 			return nil
 		case <-s.streamSend:
 			srv.Send(&agentendpointpb.ReceiveTaskNotificationResponse{})
-		case <-s.unavailableError:
-			return status.Errorf(codes.Unavailable, "")
 		case <-s.permissionError:
 			return status.Errorf(codes.PermissionDenied, "")
 		}
@@ -271,12 +267,6 @@ func TestWaitForTaskErrors(t *testing.T) {
 	tc, err := newTestClient(ctx, srv)
 	if err != nil {
 		t.Fatal(err)
-	}
-
-	// No error from Unavailable error.
-	srv.unavailableError <- struct{}{}
-	if err := tc.client.waitForTask(ctx); err != nil {
-		t.Errorf("did not expect error from a server error: %v", err)
 	}
 
 	// errServiceNotEnabled from PermissionDenied error.
