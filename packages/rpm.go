@@ -17,6 +17,7 @@ package packages
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"runtime"
 
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
@@ -29,7 +30,9 @@ var (
 
 	rpmInstallArgs = []string{"--upgrade", "--replacepkgs", "-v"}
 	// %|EPOCH?{%{EPOCH}:}:{}| == if EPOCH then prepend "%{EPOCH}:" to version.
-	rpmqueryArgs = []string{"-a", "--queryformat", "%{NAME} %{ARCH} %|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\n"}
+	rpmqueryArgs          = []string{"--queryformat", "%{NAME} %{ARCH} %|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\n"}
+	rpmqueryInstalledArgs = append(rpmqueryArgs, "-a")
+	rpmqueryRPMArgs       = append(rpmqueryArgs, "-p")
 )
 
 func init() {
@@ -63,7 +66,7 @@ func parseInstalledRPMPackages(data []byte) []PkgInfo {
 
 // InstalledRPMPackages queries for all installed rpm packages.
 func InstalledRPMPackages(ctx context.Context) ([]PkgInfo, error) {
-	out, err := run(ctx, rpmquery, rpmqueryArgs)
+	out, err := run(ctx, rpmquery, rpmqueryInstalledArgs)
 	if err != nil {
 		return nil, err
 	}
@@ -75,4 +78,18 @@ func InstalledRPMPackages(ctx context.Context) ([]PkgInfo, error) {
 func RPMInstall(ctx context.Context, path string) error {
 	_, err := run(ctx, rpm, append(rpmInstallArgs, path))
 	return err
+}
+
+// RPMPkgInfo gets PkgInfo from a rpm package.
+func RPMPkgInfo(ctx context.Context, path string) (*PkgInfo, error) {
+	out, err := run(ctx, rpmquery, append(rpmqueryRPMArgs, path))
+	if err != nil {
+		return nil, err
+	}
+
+	pkgs := parseInstalledRPMPackages(out)
+	if len(pkgs) != 1 {
+		return nil, fmt.Errorf("unexpected number of parsed rpm packages %d: %q", len(pkgs), out)
+	}
+	return &pkgs[0], nil
 }

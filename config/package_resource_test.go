@@ -16,8 +16,10 @@ package config
 
 import (
 	"context"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -39,18 +41,6 @@ var (
 		DesiredState: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED,
 		SystemPackage: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Apt{
 			Apt: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_APT{Name: "foo"}}}
-	debInstalledPR = &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource{
-		DesiredState: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED,
-		SystemPackage: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb_{
-			Deb: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb{
-				Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
-					File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: "foo"}}}}}
-	debRemovedPR = &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource{
-		DesiredState: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED,
-		SystemPackage: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb_{
-			Deb: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb{
-				Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
-					File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: "foo"}}}}}
 	googetInstalledPR = &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource{
 		DesiredState: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED,
 		SystemPackage: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Googet{
@@ -59,18 +49,6 @@ var (
 		DesiredState: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED,
 		SystemPackage: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Googet{
 			Googet: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_GooGet{Name: "foo"}}}
-	msiInstalledPR = &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource{
-		DesiredState: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED,
-		SystemPackage: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Msi{
-			Msi: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI{
-				Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
-					File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: "foo"}}}}}
-	msiRemovedPR = &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource{
-		DesiredState: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED,
-		SystemPackage: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Msi{
-			Msi: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI{
-				Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
-					File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: "foo"}}}}}
 	yumInstalledPR = &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource{
 		DesiredState: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED,
 		SystemPackage: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Yum{
@@ -87,22 +65,19 @@ var (
 		DesiredState: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED,
 		SystemPackage: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper_{
 			Zypper: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper{Name: "foo"}}}
-	rpmInstalledPR = &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource{
-		DesiredState: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED,
-		SystemPackage: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Rpm{
-			Rpm: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_RPM{
-				Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
-					File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: "foo"}}}}}
-	rpmRemovedPR = &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource{
-		DesiredState: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED,
-		SystemPackage: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Rpm{
-			Rpm: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_RPM{
-				Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
-					File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: "foo"}}}}}
 )
 
 func TestPackageResourceValidate(t *testing.T) {
 	ctx := context.Background()
+	tmpDir, err := ioutil.TempDir("", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+	tmpFile := filepath.Join(tmpDir, "foo")
+	if err := ioutil.WriteFile(tmpFile, nil, 0644); err != nil {
+		t.Fatal(err)
+	}
 	var tests = []struct {
 		name    string
 		wantErr bool
@@ -134,22 +109,25 @@ func TestPackageResourceValidate(t *testing.T) {
 		{
 			"DebInstalled",
 			false,
-			debInstalledPR,
-			ManagedPackage{Deb: &DebPackage{
+			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource{
 				DesiredState: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED,
+				SystemPackage: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb_{
+					Deb: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb{
+						Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
+							File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: tmpFile}}}}},
+			ManagedPackage{Deb: &DebPackage{
 				PackageResource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb{
 					Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
-						File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: "foo"}}}}},
+						File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: tmpFile}}}}},
 		},
 		{
 			"DebRemoved",
-			false,
-			debRemovedPR,
-			ManagedPackage{Deb: &DebPackage{
-				DesiredState: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED,
-				PackageResource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb{
-					Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
-						File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: "foo"}}}}},
+			true,
+			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource{
+				DesiredState:  agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED,
+				SystemPackage: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb_{},
+			},
+			ManagedPackage{},
 		},
 		{
 			"GoGetInstalled",
@@ -170,22 +148,25 @@ func TestPackageResourceValidate(t *testing.T) {
 		{
 			"MSIInstalled",
 			false,
-			msiInstalledPR,
-			ManagedPackage{MSI: &MSIPackage{
+			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource{
 				DesiredState: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED,
+				SystemPackage: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Msi{
+					Msi: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI{
+						Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
+							File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: tmpFile}}}}},
+			ManagedPackage{MSI: &MSIPackage{
 				PackageResource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI{
 					Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
-						File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: "foo"}}}}},
+						File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: tmpFile}}}}},
 		},
 		{
 			"MSIRemoved",
-			false,
-			msiRemovedPR,
-			ManagedPackage{MSI: &MSIPackage{
-				DesiredState: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED,
-				PackageResource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI{
-					Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
-						File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: "foo"}}}}},
+			true,
+			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource{
+				DesiredState:  agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED,
+				SystemPackage: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Msi{},
+			},
+			ManagedPackage{},
 		},
 		{
 			"YumInstalled",
@@ -222,22 +203,25 @@ func TestPackageResourceValidate(t *testing.T) {
 		{
 			"RPMInstalled",
 			false,
-			rpmInstalledPR,
-			ManagedPackage{RPM: &RPMPackage{
+			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource{
 				DesiredState: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED,
+				SystemPackage: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Rpm{
+					Rpm: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_RPM{
+						Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
+							File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: tmpFile}}}}},
+			ManagedPackage{RPM: &RPMPackage{
 				PackageResource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_RPM{
 					Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
-						File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: "foo"}}}}},
+						File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: tmpFile}}}}},
 		},
 		{
 			"RPMRemoved",
-			false,
-			rpmRemovedPR,
-			ManagedPackage{RPM: &RPMPackage{
-				DesiredState: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED,
-				PackageResource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_RPM{
-					Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
-						File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: "foo"}}}}},
+			true,
+			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource{
+				DesiredState:  agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED,
+				SystemPackage: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Rpm{},
+			},
+			ManagedPackage{},
 		},
 	}
 	for _, tt := range tests {
@@ -260,10 +244,11 @@ func TestPackageResourceValidate(t *testing.T) {
 				wantMR = nil
 			}
 
-			if diff := cmp.Diff(pr.ManagedResources(), wantMR, protocmp.Transform()); diff != "" {
+			opts := []cmp.Option{protocmp.Transform(), cmp.AllowUnexported(ManagedPackage{}), cmp.AllowUnexported(DebPackage{}), cmp.AllowUnexported(RPMPackage{}), cmp.AllowUnexported(MSIPackage{})}
+			if diff := cmp.Diff(pr.ManagedResources(), wantMR, opts...); diff != "" {
 				t.Errorf("OSPolicyResource does not match expectation: (-got +want)\n%s", diff)
 			}
-			if diff := cmp.Diff(pr.resource.(*packageResouce).managedPackage, tt.wantMP, protocmp.Transform()); diff != "" {
+			if diff := cmp.Diff(pr.resource.(*packageResouce).managedPackage, tt.wantMP, opts...); diff != "" {
 				t.Errorf("packageResouce does not match expectation: (-got +want)\n%s", diff)
 			}
 		})

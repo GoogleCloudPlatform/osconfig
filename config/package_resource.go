@@ -18,11 +18,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
@@ -42,7 +46,7 @@ type AptPackage struct {
 // DebPackage describes a deb package resource.
 type DebPackage struct {
 	PackageResource *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb
-	DesiredState    agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState
+	name, localPath string
 }
 
 // GooGetPackage describes a googet package resource.
@@ -54,7 +58,7 @@ type GooGetPackage struct {
 // MSIPackage describes an msi package resource.
 type MSIPackage struct {
 	PackageResource *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI
-	DesiredState    agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState
+	localPath       string
 }
 
 // YumPackage describes a yum package resource.
@@ -72,7 +76,7 @@ type ZypperPackage struct {
 // RPMPackage describes an rpm package resource.
 type RPMPackage struct {
 	PackageResource *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_RPM
-	DesiredState    agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState
+	name, localPath string
 }
 
 // ManagedPackage is the package that this PackageResource manages.
@@ -84,6 +88,17 @@ type ManagedPackage struct {
 	Yum    *YumPackage
 	Zypper *ZypperPackage
 	RPM    *RPMPackage
+
+	tempDir string
+}
+
+func (p *packageResouce) validateFile(file *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File) error {
+	if file.GetLocalPath() != "" {
+		if !util.Exists(file.GetLocalPath()) {
+			return fmt.Errorf("%q does not exist", file.GetLocalPath())
+		}
+	}
+	return nil
 }
 
 func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error) {
@@ -101,8 +116,14 @@ func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error
 		if !packages.DpkgExists {
 			return nil, fmt.Errorf("cannot manage Deb package because dpkg does not exist on the system")
 		}
+		if p.GetDesiredState() != agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED {
+			return nil, fmt.Errorf("desired state of %q not applicable for deb package", p.GetDesiredState())
+		}
+		if err := p.validateFile(pr.GetSource()); err != nil {
+			return nil, err
+		}
 
-		p.managedPackage.Deb = &DebPackage{DesiredState: p.GetDesiredState(), PackageResource: pr}
+		p.managedPackage.Deb = &DebPackage{PackageResource: pr}
 
 	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Googet:
 		pr := p.GetGooget()
@@ -117,8 +138,14 @@ func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error
 		if !packages.MSIExecExists {
 			return nil, fmt.Errorf("cannot manage MSI package because msiexec does not exist on the system")
 		}
+		if p.GetDesiredState() != agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED {
+			return nil, fmt.Errorf("desired state of %q not applicable for MSI package", p.GetDesiredState())
+		}
+		if err := p.validateFile(pr.GetSource()); err != nil {
+			return nil, err
+		}
 
-		p.managedPackage.MSI = &MSIPackage{DesiredState: p.GetDesiredState(), PackageResource: pr}
+		p.managedPackage.MSI = &MSIPackage{PackageResource: pr}
 
 	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Yum:
 		pr := p.GetYum()
@@ -141,8 +168,14 @@ func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error
 		if !packages.RPMExists {
 			return nil, fmt.Errorf("cannot manage RPM package because rpm does not exist on the system")
 		}
+		if p.GetDesiredState() != agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED {
+			return nil, fmt.Errorf("desired state of %q not applicable for rpm package", p.GetDesiredState())
+		}
+		if err := p.validateFile(pr.GetSource()); err != nil {
+			return nil, err
+		}
 
-		p.managedPackage.RPM = &RPMPackage{DesiredState: p.GetDesiredState(), PackageResource: pr}
+		p.managedPackage.RPM = &RPMPackage{PackageResource: pr}
 
 	default:
 		return nil, fmt.Errorf("SystemPackage field not set or references unknown package manager: %v", p.GetSystemPackage())
@@ -221,6 +254,27 @@ func populateInstalledCache(ctx context.Context, mp ManagedPackage) error {
 	return nil
 }
 
+// TODO: use a persistent cache for downloaded files so we dont need to redownload them each time
+func (p *packageResouce) download(ctx context.Context, name string, file *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File) (string, error) {
+	var path string
+	switch {
+	case file.GetLocalPath() != "":
+		path = file.GetLocalPath()
+	default:
+		tmpDir, err := ioutil.TempDir("", "osconfig_package_resource_")
+		if err != nil {
+			return "", fmt.Errorf("failed to create temp dir: %s", err)
+		}
+		p.managedPackage.tempDir = tmpDir
+		path = filepath.Join(p.managedPackage.tempDir, name)
+		if _, err := downloadFile(ctx, path, file); err != nil {
+			return "", err
+		}
+	}
+
+	return path, nil
+}
+
 func (p *packageResouce) checkState(ctx context.Context) (inDesiredState bool, err error) {
 	if err := populateInstalledCache(ctx, p.managedPackage); err != nil {
 		return false, err
@@ -234,10 +288,19 @@ func (p *packageResouce) checkState(ctx context.Context) (inDesiredState bool, e
 		desiredState = p.managedPackage.Apt.DesiredState
 		_, pkgIns = aptInstalled.cache[p.managedPackage.Apt.PackageResource.GetName()]
 
-	// TODO: implement check for deb
 	case p.managedPackage.Deb != nil:
-		desiredState = p.managedPackage.Deb.DesiredState
-		return false, errors.New("deb not implemented")
+		desiredState = agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED
+		localPath, err := p.download(ctx, "pkg.deb", p.managedPackage.Deb.PackageResource.GetSource())
+		if err != nil {
+			return false, err
+		}
+		info, err := packages.DebPkgInfo(ctx, localPath)
+		if err != nil {
+			return false, err
+		}
+		p.managedPackage.Deb.name = info.Name
+		p.managedPackage.Deb.localPath = localPath
+		_, pkgIns = debInstalled.cache[info.Name]
 
 	case p.managedPackage.GooGet != nil:
 		desiredState = p.managedPackage.GooGet.DesiredState
@@ -245,7 +308,12 @@ func (p *packageResouce) checkState(ctx context.Context) (inDesiredState bool, e
 
 	// TODO: implement check for msi
 	case p.managedPackage.MSI != nil:
-		desiredState = p.managedPackage.MSI.DesiredState
+		desiredState = agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED
+		localPath, err := p.download(ctx, "pkg.msi", p.managedPackage.MSI.PackageResource.GetSource())
+		if err != nil {
+			return false, err
+		}
+		p.managedPackage.MSI.localPath = localPath
 		return false, errors.New("msi not implemented")
 
 	case p.managedPackage.Yum != nil:
@@ -256,10 +324,19 @@ func (p *packageResouce) checkState(ctx context.Context) (inDesiredState bool, e
 		desiredState = p.managedPackage.Zypper.DesiredState
 		_, pkgIns = zypperInstalled.cache[p.managedPackage.Zypper.PackageResource.GetName()]
 
-	// TODO: implement check for rpm
 	case p.managedPackage.RPM != nil:
-		desiredState = p.managedPackage.RPM.DesiredState
-		return false, errors.New("rpm not implemented")
+		desiredState = agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED
+		localPath, err := p.download(ctx, "pkg.rpm", p.managedPackage.RPM.PackageResource.GetSource())
+		if err != nil {
+			return false, err
+		}
+		info, err := packages.RPMPkgInfo(ctx, localPath)
+		if err != nil {
+			return false, err
+		}
+		p.managedPackage.RPM.name = info.Name
+		p.managedPackage.RPM.localPath = localPath
+		_, pkgIns = rpmInstalled.cache[info.Name]
 	}
 
 	switch desiredState {
@@ -304,10 +381,12 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 			enforcePackage.action, enforcePackage.actionFunc = removing, func() error { return packages.RemoveAptPackages(ctx, []string{enforcePackage.name}) }
 		}
 
-	// TODO: implement check for deb
 	case p.managedPackage.Deb != nil:
+		enforcePackage.name = p.managedPackage.Deb.name
 		enforcePackage.packageType = "deb"
 		enforcePackage.installedCache = debInstalled.cache
+		enforcePackage.action = installing
+		enforcePackage.actionFunc = func() error { return packages.DpkgInstall(ctx, p.managedPackage.Deb.localPath) }
 
 	case p.managedPackage.GooGet != nil:
 		enforcePackage.name = p.managedPackage.GooGet.PackageResource.GetName()
@@ -346,10 +425,12 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 			enforcePackage.action, enforcePackage.actionFunc = removing, func() error { return packages.RemoveZypperPackages(ctx, []string{enforcePackage.name}) }
 		}
 
-	// TODO: implement check for rpm
 	case p.managedPackage.RPM != nil:
+		enforcePackage.name = p.managedPackage.RPM.name
 		enforcePackage.packageType = "rpm"
 		enforcePackage.installedCache = rpmInstalled.cache
+		enforcePackage.action = installing
+		enforcePackage.actionFunc = func() error { return packages.RPMInstall(ctx, p.managedPackage.Deb.localPath) }
 	}
 
 	clog.Infof(ctx, "%s %s package %q", strings.Title(enforcePackage.action), enforcePackage.packageType, enforcePackage.name)
@@ -363,5 +444,8 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 }
 
 func (p *packageResouce) cleanup(ctx context.Context) error {
+	if p.managedPackage.tempDir != "" {
+		return os.RemoveAll(p.managedPackage.tempDir)
+	}
 	return nil
 }

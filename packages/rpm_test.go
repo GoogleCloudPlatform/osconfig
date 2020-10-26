@@ -51,7 +51,7 @@ func TestInstalledRPMPackages(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	expectedCmd := exec.Command(rpmquery, rpmqueryArgs...)
+	expectedCmd := exec.Command(rpmquery, rpmqueryInstalledArgs...)
 
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("foo x86_64 1.2.3-4"), []byte("stderr"), nil).Times(1)
 	ret, err := InstalledRPMPackages(testCtx)
@@ -66,6 +66,43 @@ func TestInstalledRPMPackages(t *testing.T) {
 
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), errors.New("bad error")).Times(1)
 	if _, err := InstalledRPMPackages(testCtx); err == nil {
+		t.Errorf("did not get expected error")
+	}
+}
+
+func TestRPMPkgInfo(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	runner = mockCommandRunner
+	testPkg := "test.rpm"
+	expectedCmd := exec.Command(rpmquery, append(rpmqueryRPMArgs, testPkg)...)
+
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("foo x86_64 1.2.3-4"), []byte("stderr"), nil).Times(1)
+	ret, err := RPMPkgInfo(testCtx, testPkg)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	want := &PkgInfo{"foo", "x86_64", "1.2.3-4"}
+	if !reflect.DeepEqual(ret, want) {
+		t.Errorf("RPMPkgInfo() = %v, want %v", ret, want)
+	}
+
+	// Error output.
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), errors.New("bad error")).Times(1)
+	if _, err := RPMPkgInfo(testCtx, testPkg); err == nil {
+		t.Errorf("did not get expected error")
+	}
+	// More than 1 package
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("foo x86_64 1.2.3-4\nbar noarch 1.0.0"), []byte("stderr"), nil).Times(1)
+	if _, err := RPMPkgInfo(testCtx, testPkg); err == nil {
+		t.Errorf("did not get expected error")
+	}
+	// No package
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte(""), []byte("stderr"), nil).Times(1)
+	if _, err := RPMPkgInfo(testCtx, testPkg); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }

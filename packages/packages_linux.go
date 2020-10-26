@@ -117,7 +117,7 @@ func GetInstalledPackages(ctx context.Context) (*Packages, error) {
 			pkgs.ZypperPatches = zypperPatches
 		}
 	}
-	if util.Exists(dpkgquery) {
+	if util.Exists(dpkgQuery) {
 		deb, err := InstalledDebPackages(ctx)
 		if err != nil {
 			msg := fmt.Sprintf("error listing installed deb packages: %v", err)
