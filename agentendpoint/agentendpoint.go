@@ -124,11 +124,12 @@ func (c *Client) reportInventory(ctx context.Context, inventory *agentendpointpb
 	io.Copy(hash, bytes.NewReader(b))
 
 	checksum := hex.EncodeToString(hash.Sum(nil))
-	req := &agentendpointpb.ReportInventoryRequest{InstanceIdToken: token, InventoryChecksum: checksum}
+	req := &agentendpointpb.ReportInventoryRequest{InventoryChecksum: checksum}
 	if reportFull {
-		req = &agentendpointpb.ReportInventoryRequest{InstanceIdToken: token, InventoryChecksum: checksum, Inventory: inventory}
+		req = &agentendpointpb.ReportInventoryRequest{InventoryChecksum: checksum, Inventory: inventory}
 	}
 	clog.Debugf(ctx, "Calling ReportInventory with request:\n%s", util.PrettyFmt(req))
+	req.InstanceIdToken = token
 
 	return c.raw.ReportInventory(ctx, req)
 }

@@ -84,7 +84,6 @@ func runInventoryReportingTest(ctx context.Context, testSetup *inventoryTestSetu
 	metadataItems = append(metadataItems, testSetup.startup)
 	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("enable-os-inventory", "true"))
 	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("osconfig-disabled-features", "tasks,guestpolicies"))
-	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("osconfig-enabled-prerelease-features", "inventoryreporting"))
 
 	testProjectConfig := testconfig.GetProject()
 	zone := testProjectConfig.AcquireZone()
