@@ -134,7 +134,8 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *guestP
 
 	var metadataItems []*computeApi.MetadataItems
 	metadataItems = append(metadataItems, testSetup.startup)
-	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("os-config-enabled-prerelease-features", "ospackage"))
+	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("enable-osconfig", "true"))
+	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("osconfig-disabled-features", "tasks,osinventory"))
 	testProjectConfig := testconfig.GetProject()
 	zone := testProjectConfig.AcquireZone()
 	defer testProjectConfig.ReleaseZone(zone)
@@ -167,6 +168,7 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *guestP
 			GuestPolicy:   testSetup.guestPolicy,
 		}
 
+		testCase.Logf("Creating GuestPolicy")
 		res, err := createGuestPolicy(ctx, client, req)
 		if err != nil {
 			testCase.WriteFailure("Error running CreateGuestPolicy: %s", utils.GetStatusFromError(err))
@@ -176,17 +178,20 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *guestP
 	}
 
 	if testSetup.mdPolicy != nil {
+		testCase.Logf("Creating Metadata Policy")
 		if err := inst.AddMetadata(testSetup.mdPolicy); err != nil {
 			testCase.WriteFailure("Error running AddMetadata: %s", utils.GetStatusFromError(err))
 			return
 		}
 	}
 
+	testCase.Logf("Restarting agent")
 	if err := inst.AddMetadata(compute.BuildInstanceMetadataItem("restart-agent", "true")); err != nil {
 		testCase.WriteFailure("Error running AddMetadata: %s", utils.GetStatusFromError(err))
 		return
 	}
 
+	testCase.Logf("Waiting for signal from GuestAttributes")
 	if _, err := inst.WaitForGuestAttributes(testSetup.queryPath, 10*time.Second, testSetup.assertTimeout); err != nil {
 		testCase.WriteFailure("error while asserting: %v", err)
 		return
