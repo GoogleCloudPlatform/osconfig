@@ -23,15 +23,11 @@ const (
 	maxRetries   = 5
 )
 
-// ReportInventory reports inventory to agent endpoint and writes it to guest attributes.
+// ReportInventory writes inventory to guest attributes and reports it to agent endpoint.
 func (c *Client) ReportInventory(ctx context.Context) {
 	state := inventory.Get(ctx)
 	write(ctx, state, inventoryURL)
-
-	// Only enable reporting feature if prerelease feature flag is set.
-	if agentconfig.InventoryReportingEnabled() {
-		c.report(ctx, state)
-	}
+	c.report(ctx, state)
 }
 
 func write(ctx context.Context, state *inventory.InstanceInventory, url string) {
