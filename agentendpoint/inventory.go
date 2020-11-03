@@ -97,7 +97,6 @@ func formatInventory(ctx context.Context, state *inventory.InstanceInventory) *a
 	installedPackages := formatPackages(ctx, state.InstalledPackages, state.ShortName)
 	availablePackages := formatPackages(ctx, state.PackageUpdates, state.ShortName)
 
-	clog.Debugf(ctx, "%v%v", osInfo, installedPackages)
 	return &agentendpointpb.Inventory{OsInfo: osInfo, InstalledPackages: installedPackages, AvailablePackages: availablePackages}
 }
 

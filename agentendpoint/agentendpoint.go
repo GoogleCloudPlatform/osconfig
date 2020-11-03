@@ -131,6 +131,10 @@ func (c *Client) reportInventory(ctx context.Context, inventory *agentendpointpb
 	clog.Debugf(ctx, "Calling ReportInventory with request:\n%s", util.PrettyFmt(req))
 	req.InstanceIdToken = token
 
+	// Additional logging for verifications in e2e tests.
+	payloadSummary := fmt.Sprintf("hostname %s, short name %s, %d installed packages, %d available packages", inventory.OsInfo.Hostname, inventory.OsInfo.ShortName, len(inventory.InstalledPackages), len(inventory.AvailablePackages))
+	clog.Debugf(ctx, "Calling ReportInventory with request containing %s", payloadSummary)
+
 	return c.raw.ReportInventory(ctx, req)
 }
 

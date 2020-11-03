@@ -110,7 +110,8 @@ func runInventoryReportingTest(ctx context.Context, testSetup *inventoryTestSetu
 		fmt.Sprintf(`.*"hostname":.*"%s".*`, testSetup.hostname),
 		fmt.Sprintf(`.*"short_name":.*"%s".*`, testSetup.shortName),
 		fmt.Sprintf(`.*(%s)+.*`, strings.Join(testSetup.packageType, "|")),
-		`.*ReportInventory response:.*"report_full_inventory".*(true|false)`,
+		`.*"report_full_inventory".*false.*`,
+		`.*"report_full_inventory".*true.*`,
 		`.*Finished task "Report OSInventory".*`,
 	}
 	positiveRegexes, err := compileRegex(positivePatterns)
