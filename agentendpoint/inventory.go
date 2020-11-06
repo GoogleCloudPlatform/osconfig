@@ -12,6 +12,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
+	"github.com/GoogleCloudPlatform/osconfig/retryutil"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -20,7 +21,6 @@ import (
 
 const (
 	inventoryURL = agentconfig.ReportURL + "/guestInventory"
-	maxRetries   = 5
 )
 
 // ReportInventory writes inventory to guest attributes and reports it to agent endpoint.
@@ -61,24 +61,28 @@ func (c *Client) report(ctx context.Context, state *inventory.InstanceInventory)
 	inventory := formatInventory(ctx, state)
 
 	reportFull := false
-	retries := 0
-	for {
-		resp, err := c.reportInventory(ctx, inventory, reportFull)
+	var res *agentendpointpb.ReportInventoryResponse
+	var err error
+	f := func() error {
+		res, err = c.reportInventory(ctx, inventory, reportFull)
 		if err != nil {
-			clog.Errorf(ctx, "Error reporting inventory: %v", err)
-		} else {
-			clog.Debugf(ctx, "ReportInventory response: \n%s", util.PrettyFmt(resp))
-			if !resp.GetReportFullInventory() {
-				break
-			} else {
-				reportFull = true
-			}
+			return err
 		}
+		clog.Debugf(ctx, "ReportInventory response:\n%s", util.PrettyFmt(res))
+		return nil
+	}
 
-		retries++
-		if retries >= maxRetries {
-			clog.Errorf(ctx, "Error reporting inventory: exceeded %d tries", maxRetries)
-			break
+	if err = retryutil.RetryAPICall(ctx, apiRetrySec*time.Second, "ReportInventory", f); err != nil {
+		clog.Errorf(ctx, "Error reporting inventory checksum: %v", err)
+		return
+	}
+
+	if res.GetReportFullInventory() {
+		reportFull = true
+
+		if err = retryutil.RetryAPICall(ctx, apiRetrySec*time.Second, "ReportInventory", f); err != nil {
+			clog.Errorf(ctx, "Error reporting full inventory: %v", err)
+			return
 		}
 	}
 }
