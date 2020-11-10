@@ -20,7 +20,6 @@ import (
 	"log"
 	"path"
 	"regexp"
-	"strings"
 	"sync"
 	"time"
 
@@ -106,12 +105,9 @@ func runInventoryReportingTest(ctx context.Context, testSetup *inventoryTestSetu
 
 	// Build regexes for verification.
 	positivePatterns := []string{
-		`.*Calling ReportInventory with request.*`,
-		fmt.Sprintf(`.*"hostname":.*"%s".*`, testSetup.hostname),
-		fmt.Sprintf(`.*"short_name":.*"%s".*`, testSetup.shortName),
-		fmt.Sprintf(`.*(%s)+.*`, strings.Join(testSetup.packageType, "|")),
-		`.*"report_full_inventory".*false.*`,
+		fmt.Sprintf(`.*Calling ReportInventory with request containing hostname %s, short name %s, [1-9]+[0-9]* installed packages, [0-9]+ available packages`, testSetup.hostname, testSetup.shortName),
 		`.*"report_full_inventory".*true.*`,
+		`.*"report_full_inventory".*false.*`,
 		`.*Finished task "Report OSInventory".*`,
 	}
 	positiveRegexes, err := compileRegex(positivePatterns)
