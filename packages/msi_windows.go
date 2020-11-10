@@ -65,9 +65,9 @@ func setUIMode() {
 func msiOpenPackageExW(szPackagePath string, dwOptions uint32) (uintptr, error) {
 	/*
 		UINT MsiOpenPackageExW(
-			LPCWSTR   szPackagePath,
-			DWORD     dwOptions,
-			MSIHANDLE *hProduct
+		  LPCWSTR   szPackagePath,
+		  DWORD     dwOptions,
+		  MSIHANDLE *hProduct
 		);
 	*/
 	var handle int32
@@ -94,7 +94,7 @@ func msiOpenPackageExW(szPackagePath string, dwOptions uint32) (uintptr, error) 
 func msiCloseHandle(handle uintptr) {
 	/*
 		UINT MsiCloseHandle(
-			MSIHANDLE hAny
+		  MSIHANDLE hAny
 		);
 	*/
 
@@ -105,10 +105,10 @@ func msiCloseHandle(handle uintptr) {
 func msiGetProductPropertyW(handle uintptr, szProperty string) (string, error) {
 	/*
 		UINT MsiGetProductPropertyW(
-			MSIHANDLE hProduct,
-			LPCSTR    szProperty,
-			LPSTR     lpValueBuf,
-			LPDWORD   pcchValueBuf
+		  MSIHANDLE hProduct,
+		  LPCSTR    szProperty,
+		  LPSTR     lpValueBuf,
+		  LPDWORD   pcchValueBuf
 		);
 	*/
 
@@ -145,7 +145,7 @@ const (
 func msiMsiQueryProductStateW(szProduct string) (msiInstallState, error) {
 	/*
 		INSTALLSTATE MsiQueryProductStateW(
-			LPCWSTR szProduct
+		  LPCWSTR szProduct
 		);
 	*/
 
