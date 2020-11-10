@@ -50,8 +50,8 @@ var (
 	PipExists bool
 	// GooGetExists indicates whether googet is installed.
 	GooGetExists bool
-	// MSIExecExists indicates whether msiexec is installed.
-	MSIExecExists bool
+	// MSIExists indicates whether MSIs can be installed.
+	MSIExists bool
 
 	noarch = osinfo.Architecture("noarch")
 

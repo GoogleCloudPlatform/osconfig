@@ -25,5 +25,5 @@ func init() {
 	packages.DpkgExists = true
 	packages.RPMExists = true
 	packages.ZypperExists = true
-	packages.MSIExecExists = true
+	packages.MSIExists = true
 }

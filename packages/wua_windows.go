@@ -37,14 +37,9 @@ type IUpdateSession struct {
 
 func NewUpdateSession() (*IUpdateSession, error) {
 	wuaSession.Lock()
-	if err := ole.CoInitializeEx(0, ole.COINIT_MULTITHREADED); err != nil {
-		e, ok := err.(*ole.OleError)
-		// S_OK and S_FALSE are both are Success codes.
-		// https://docs.microsoft.com/en-us/windows/win32/learnwin32/error-handling-in-com
-		if !ok || (e.Code() != S_OK && e.Code() != S_FALSE) {
-			wuaSession.Unlock()
-			return nil, fmt.Errorf(`ole.CoInitializeEx(0, ole.COINIT_MULTITHREADED): %v`, err)
-		}
+	if err := coInitializeEx(); err != nil {
+		wuaSession.Unlock()
+		return nil, err
 	}
 
 	s := &IUpdateSession{}

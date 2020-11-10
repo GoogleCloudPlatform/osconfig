@@ -16,7 +16,6 @@ package config
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -57,8 +56,8 @@ type GooGetPackage struct {
 
 // MSIPackage describes an msi package resource.
 type MSIPackage struct {
-	PackageResource *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI
-	localPath       string
+	PackageResource        *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI
+	productName, localPath string
 }
 
 // YumPackage describes a yum package resource.
@@ -135,7 +134,7 @@ func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error
 
 	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Msi:
 		pr := p.GetMsi()
-		if !packages.MSIExecExists {
+		if !packages.MSIExists {
 			return nil, fmt.Errorf("cannot manage MSI package because msiexec does not exist on the system")
 		}
 		if p.GetDesiredState() != agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED {
@@ -214,9 +213,9 @@ func populateInstalledCache(ctx context.Context, mp ManagedPackage) error {
 		cache = &gooInstalled
 		refreshFunc = packages.InstalledGooGetPackages
 
-	// TODO: implement msi functions
 	case mp.MSI != nil:
-		return errors.New("msi not implemented")
+		// We just query per each MSI.
+		return nil
 
 	// TODO: implement yum functions
 	case mp.Yum != nil:
@@ -306,15 +305,18 @@ func (p *packageResouce) checkState(ctx context.Context) (inDesiredState bool, e
 		desiredState = p.managedPackage.GooGet.DesiredState
 		_, pkgIns = gooInstalled.cache[p.managedPackage.GooGet.PackageResource.GetName()]
 
-	// TODO: implement check for msi
 	case p.managedPackage.MSI != nil:
 		desiredState = agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED
 		localPath, err := p.download(ctx, "pkg.msi", p.managedPackage.MSI.PackageResource.GetSource())
 		if err != nil {
 			return false, err
 		}
+
 		p.managedPackage.MSI.localPath = localPath
-		return false, errors.New("msi not implemented")
+		p.managedPackage.MSI.productName, pkgIns, err = packages.MSIInfo(localPath)
+		if err != nil {
+			return false, err
+		}
 
 	case p.managedPackage.Yum != nil:
 		desiredState = p.managedPackage.Yum.DesiredState
@@ -386,7 +388,11 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 		enforcePackage.packageType = "deb"
 		enforcePackage.installedCache = debInstalled.cache
 		enforcePackage.action = installing
-		enforcePackage.actionFunc = func() error { return packages.DpkgInstall(ctx, p.managedPackage.Deb.localPath) }
+		if p.GetDeb().GetPullDeps() {
+			enforcePackage.actionFunc = func() error { return packages.InstallAptPackages(ctx, []string{p.managedPackage.Deb.localPath}) }
+		} else {
+			enforcePackage.actionFunc = func() error { return packages.DpkgInstall(ctx, p.managedPackage.Deb.localPath) }
+		}
 
 	case p.managedPackage.GooGet != nil:
 		enforcePackage.name = p.managedPackage.GooGet.PackageResource.GetName()
@@ -399,9 +405,13 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 			enforcePackage.action, enforcePackage.actionFunc = removing, func() error { return packages.RemoveGooGetPackages(ctx, []string{enforcePackage.name}) }
 		}
 
-	// TODO: implement check for msi
 	case p.managedPackage.MSI != nil:
+		enforcePackage.name = p.managedPackage.MSI.productName
 		enforcePackage.packageType = "msi"
+		enforcePackage.action = installing
+		enforcePackage.actionFunc = func() error {
+			return packages.InstallMSIPackage(ctx, p.managedPackage.MSI.localPath, p.managedPackage.MSI.PackageResource.GetFlags())
+		}
 
 	case p.managedPackage.Yum != nil:
 		enforcePackage.name = p.managedPackage.Yum.PackageResource.GetName()
@@ -430,7 +440,18 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 		enforcePackage.packageType = "rpm"
 		enforcePackage.installedCache = rpmInstalled.cache
 		enforcePackage.action = installing
-		enforcePackage.actionFunc = func() error { return packages.RPMInstall(ctx, p.managedPackage.Deb.localPath) }
+		if p.GetRpm().GetPullDeps() {
+			switch {
+			case packages.YumExists:
+				enforcePackage.actionFunc = func() error { return packages.InstallYumPackages(ctx, []string{p.managedPackage.RPM.localPath}) }
+			case packages.ZypperExists:
+				enforcePackage.actionFunc = func() error { return packages.InstallZypperPackages(ctx, []string{p.managedPackage.RPM.localPath}) }
+			default:
+				return false, fmt.Errorf("cannot install rpm %q with 'PullDeps' option as neither yum or zypper exist on system", enforcePackage.name)
+			}
+		} else {
+			enforcePackage.actionFunc = func() error { return packages.RPMInstall(ctx, p.managedPackage.RPM.localPath) }
+		}
 	}
 
 	clog.Infof(ctx, "%s %s package %q", strings.Title(enforcePackage.action), enforcePackage.packageType, enforcePackage.name)
