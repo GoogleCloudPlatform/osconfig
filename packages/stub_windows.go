@@ -16,7 +16,9 @@
 
 package packages
 
-import "os/exec"
+import (
+	"os/exec"
+)
 
 func runWithPty(cmd *exec.Cmd) ([]byte, []byte, error) {
 	return nil, nil, nil

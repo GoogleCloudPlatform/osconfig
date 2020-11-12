@@ -24,7 +24,20 @@ import (
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/util"
+	ole "github.com/go-ole/go-ole"
 )
+
+func coInitializeEx() error {
+	if err := ole.CoInitializeEx(0, ole.COINIT_MULTITHREADED); err != nil {
+		e, ok := err.(*ole.OleError)
+		// S_OK and S_FALSE are both are Success codes.
+		// https://docs.microsoft.com/en-us/windows/win32/learnwin32/error-handling-in-com
+		if !ok || (e.Code() != S_OK && e.Code() != S_FALSE) {
+			return fmt.Errorf(`ole.CoInitializeEx(0, ole.COINIT_MULTITHREADED): %v`, err)
+		}
+	}
+	return nil
+}
 
 // In order to work around memory issues with the WUA library we spawn a
 // new process for these inventory queries.

@@ -343,10 +343,10 @@ func CreateComputeInstance(metadataitems []*api.MetadataItems, client daisyCompu
 		Name:        name,
 		MachineType: fmt.Sprintf("projects/%s/zones/%s/machineTypes/%s", projectID, zone, machineType),
 		NetworkInterfaces: []*api.NetworkInterface{
-			&api.NetworkInterface{
+			{
 				Subnetwork: fmt.Sprintf("projects/%s/regions/%s/subnetworks/default", projectID, zone[:len(zone)-2]),
 				AccessConfigs: []*api.AccessConfig{
-					&api.AccessConfig{
+					{
 						Type: "ONE_TO_ONE_NAT",
 					},
 				},
@@ -356,7 +356,7 @@ func CreateComputeInstance(metadataitems []*api.MetadataItems, client daisyCompu
 			Items: items,
 		},
 		Disks: []*api.AttachedDisk{
-			&api.AttachedDisk{
+			{
 				AutoDelete: true,
 				Boot:       true,
 				InitializeParams: &api.AttachedDiskInitializeParams{
@@ -366,7 +366,7 @@ func CreateComputeInstance(metadataitems []*api.MetadataItems, client daisyCompu
 			},
 		},
 		ServiceAccounts: []*api.ServiceAccount{
-			&api.ServiceAccount{
+			{
 				Email:  serviceAccountEmail,
 				Scopes: serviceAccountScopes,
 			},
