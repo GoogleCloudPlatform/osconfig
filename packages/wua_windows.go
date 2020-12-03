@@ -60,6 +60,7 @@ func NewUpdateSession() (*IUpdateSession, error) {
 		s.Close()
 		return nil, fmt.Errorf(`error creating Dispatch object from Microsoft.Update.Session connection: %v`, err)
 	}
+	defer unknown.Release()
 	s.IDispatch = disp
 
 	return s, nil
