@@ -13,6 +13,7 @@ require (
 	github.com/go-ole/go-ole v1.2.4
 	github.com/golang/mock v1.4.4
 	github.com/google/go-cmp v0.5.2
+	github.com/stretchr/testify v1.5.1 // indirect
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
 	github.com/ulikunitz/xz v0.5.8
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
