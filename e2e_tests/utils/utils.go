@@ -213,10 +213,12 @@ var OldSUSEImages = map[string]string{
 	"old/opensuse-leap": "projects/opensuse-cloud/global/images/opensuse-leap-15-1-v20190618",
 }
 
-// HeadEL6Images is a map of names to image paths for public EL6 image families.
+// HeadEL6Images is a map of names to image paths for public EL6 images, we use the last
+// published image here as EL6 is EOL.
+// TODO: Either remove support for el6 or move this to a deprected test suite.
 var HeadEL6Images = map[string]string{
-	"centos-cloud/centos-6": "projects/centos-cloud/global/images/family/centos-6",
-	"rhel-cloud/rhel-6":     "projects/rhel-cloud/global/images/family/rhel-6",
+	"centos-cloud/centos-6": "projects/centos-cloud/global/images/centos-6-v20201112",
+	"rhel-cloud/rhel-6":     "projects/rhel-cloud/global/images/rhel-6-v20201112",
 }
 
 // OldEL6Images is a map of names to image paths for old EL6 images.
