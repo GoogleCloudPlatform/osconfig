@@ -182,6 +182,13 @@ func formatPackages(ctx context.Context, packages *packages.Packages, shortName 
 			}
 		}
 	}
+	if packages.COS != nil {
+		for _, pkg := range packages.COS {
+			softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
+				Details: formatCOSPackage(pkg),
+			})
+		}
+	}
 	// Ignore Pip and Gem packages.
 
 	return softwarePackages
@@ -190,6 +197,15 @@ func formatPackages(ctx context.Context, packages *packages.Packages, shortName 
 func formatAptPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_AptPackage {
 	return &agentendpointpb.Inventory_SoftwarePackage_AptPackage{
 		AptPackage: &agentendpointpb.Inventory_VersionedPackage{
+			PackageName:  pkg.Name,
+			Architecture: pkg.Arch,
+			Version:      pkg.Version,
+		}}
+}
+
+func formatCOSPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_CosPackage {
+	return &agentendpointpb.Inventory_SoftwarePackage_CosPackage{
+		CosPackage: &agentendpointpb.Inventory_VersionedPackage{
 			PackageName:  pkg.Name,
 			Architecture: pkg.Arch,
 			Version:      pkg.Version,

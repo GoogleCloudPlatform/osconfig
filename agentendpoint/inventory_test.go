@@ -105,6 +105,7 @@ func generateInventoryState(shortName string) *inventory.InstanceInventory {
 				RevisionNumber:           1,
 				LastDeploymentChangeTime: time.Date(2020, time.November, 10, 23, 0, 0, 0, time.UTC)}},
 			QFE: []packages.QFEPackage{{Caption: "QFEInstalled", Description: "Description", HotFixID: "HotFixID", InstalledOn: "9/1/2020"}},
+			COS: []packages.PkgInfo{{Name: "CosInstalledPkg", Arch: "Arch", Version: "Version"}},
 		},
 		PackageUpdates: &packages.Packages{
 			Yum:           []packages.PkgInfo{{Name: "YumPkgUpdate", Arch: "Arch", Version: "Version"}},
@@ -128,6 +129,7 @@ func generateInventoryState(shortName string) *inventory.InstanceInventory {
 				RevisionNumber:           1,
 				LastDeploymentChangeTime: time.Time{}}},
 			QFE: []packages.QFEPackage{{Caption: "QFEUpdate", Description: "Description", HotFixID: "HotFixID", InstalledOn: "InvalidDate"}},
+			COS: []packages.PkgInfo{{Name: "CosInstalledPkg", Arch: "Arch", Version: "Version"}},
 		},
 	}
 }
@@ -235,6 +237,12 @@ func generateInventory(shortName string) *agentendpointpb.Inventory {
 						Architecture: "Arch",
 						Version:      "Version"}}},
 			mappedRPMInstalledPkg,
+			{
+				Details: &agentendpointpb.Inventory_SoftwarePackage_CosPackage{
+					CosPackage: &agentendpointpb.Inventory_VersionedPackage{
+						PackageName:  "CosInstalledPkg",
+						Architecture: "Arch",
+						Version:      "Version"}}},
 		},
 		AvailablePackages: []*agentendpointpb.Inventory_SoftwarePackage{
 			{
@@ -296,6 +304,12 @@ func generateInventory(shortName string) *agentendpointpb.Inventory {
 						Architecture: "Arch",
 						Version:      "Version"}}},
 			mappedRPMPkgUpdate,
+			{
+				Details: &agentendpointpb.Inventory_SoftwarePackage_CosPackage{
+					CosPackage: &agentendpointpb.Inventory_VersionedPackage{
+						PackageName:  "CosInstalledPkg",
+						Architecture: "Arch",
+						Version:      "Version"}}},
 		},
 	}
 }
