@@ -67,6 +67,12 @@ var (
 			Zypper: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper{Name: "foo"}}}
 )
 
+type fakeCommandRunner struct{}
+
+func (m *fakeCommandRunner) Run(_ context.Context, _ *exec.Cmd) ([]byte, []byte, error) {
+	return nil, nil, nil
+}
+
 func TestPackageResourceValidate(t *testing.T) {
 	ctx := context.Background()
 	tmpDir, err := ioutil.TempDir("", "")
@@ -78,17 +84,28 @@ func TestPackageResourceValidate(t *testing.T) {
 	if err := ioutil.WriteFile(tmpFile, nil, 0644); err != nil {
 		t.Fatal(err)
 	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	packages.SetCommandRunner(mockCommandRunner)
+
 	var tests = []struct {
-		name    string
-		wantErr bool
-		prpb    *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource
-		wantMP  ManagedPackage
+		name              string
+		wantErr           bool
+		prpb              *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource
+		wantMP            ManagedPackage
+		expectedCmd       *exec.Cmd
+		expectedCmdReturn []byte
 	}{
 		{
 			"Blank",
 			true,
 			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource{},
 			ManagedPackage{},
+			nil,
+			nil,
 		},
 		{
 			"AptInstalled",
@@ -97,6 +114,8 @@ func TestPackageResourceValidate(t *testing.T) {
 			ManagedPackage{Apt: &AptPackage{
 				DesiredState:    agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED,
 				PackageResource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_APT{Name: "foo"}}},
+			nil,
+			nil,
 		},
 		{
 			"AptRemoved",
@@ -105,6 +124,8 @@ func TestPackageResourceValidate(t *testing.T) {
 			ManagedPackage{Apt: &AptPackage{
 				DesiredState:    agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED,
 				PackageResource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_APT{Name: "foo"}}},
+			nil,
+			nil,
 		},
 		{
 			"DebInstalled",
@@ -116,18 +137,13 @@ func TestPackageResourceValidate(t *testing.T) {
 						Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
 							File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: tmpFile}}}}},
 			ManagedPackage{Deb: &DebPackage{
+				localPath: tmpFile,
+				name:      "foo",
 				PackageResource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb{
 					Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
 						File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: tmpFile}}}}},
-		},
-		{
-			"DebRemoved",
-			true,
-			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource{
-				DesiredState:  agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED,
-				SystemPackage: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb_{},
-			},
-			ManagedPackage{},
+			exec.Command("/usr/bin/dpkg-deb", "-I", tmpFile),
+			[]byte("Package: foo\nVersion: 1:1dummy-g1\nArchitecture: amd64"),
 		},
 		{
 			"GoGetInstalled",
@@ -136,6 +152,8 @@ func TestPackageResourceValidate(t *testing.T) {
 			ManagedPackage{GooGet: &GooGetPackage{
 				DesiredState:    agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED,
 				PackageResource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_GooGet{Name: "foo"}}},
+			nil,
+			nil,
 		},
 		{
 			"GooGetRemoved",
@@ -144,6 +162,8 @@ func TestPackageResourceValidate(t *testing.T) {
 			ManagedPackage{GooGet: &GooGetPackage{
 				DesiredState:    agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED,
 				PackageResource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_GooGet{Name: "foo"}}},
+			nil,
+			nil,
 		},
 		{
 			"MSIInstalled",
@@ -155,18 +175,12 @@ func TestPackageResourceValidate(t *testing.T) {
 						Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
 							File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: tmpFile}}}}},
 			ManagedPackage{MSI: &MSIPackage{
+				localPath: tmpFile,
 				PackageResource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI{
 					Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
 						File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: tmpFile}}}}},
-		},
-		{
-			"MSIRemoved",
-			true,
-			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource{
-				DesiredState:  agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED,
-				SystemPackage: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Msi{},
-			},
-			ManagedPackage{},
+			nil,
+			nil,
 		},
 		{
 			"YumInstalled",
@@ -175,6 +189,8 @@ func TestPackageResourceValidate(t *testing.T) {
 			ManagedPackage{Yum: &YumPackage{
 				DesiredState:    agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED,
 				PackageResource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_YUM{Name: "foo"}}},
+			nil,
+			nil,
 		},
 		{
 			"YumRemoved",
@@ -183,6 +199,8 @@ func TestPackageResourceValidate(t *testing.T) {
 			ManagedPackage{Yum: &YumPackage{
 				DesiredState:    agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED,
 				PackageResource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_YUM{Name: "foo"}}},
+			nil,
+			nil,
 		},
 		{
 			"ZypperInstalled",
@@ -191,6 +209,8 @@ func TestPackageResourceValidate(t *testing.T) {
 			ManagedPackage{Zypper: &ZypperPackage{
 				DesiredState:    agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED,
 				PackageResource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper{Name: "foo"}}},
+			nil,
+			nil,
 		},
 		{
 			"ZypperRemoved",
@@ -199,6 +219,8 @@ func TestPackageResourceValidate(t *testing.T) {
 			ManagedPackage{Zypper: &ZypperPackage{
 				DesiredState:    agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED,
 				PackageResource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper{Name: "foo"}}},
+			nil,
+			nil,
 		},
 		{
 			"RPMInstalled",
@@ -210,18 +232,13 @@ func TestPackageResourceValidate(t *testing.T) {
 						Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
 							File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: tmpFile}}}}},
 			ManagedPackage{RPM: &RPMPackage{
+				localPath: tmpFile,
+				name:      "foo",
 				PackageResource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_RPM{
 					Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
 						File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{LocalPath: tmpFile}}}}},
-		},
-		{
-			"RPMRemoved",
-			true,
-			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource{
-				DesiredState:  agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED,
-				SystemPackage: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Rpm{},
-			},
-			ManagedPackage{},
+			exec.Command("/usr/bin/rpmquery", "--queryformat", "%{NAME} %{ARCH} %|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\n", "-p", tmpFile),
+			[]byte("foo x86_64 1.2.3-4"),
 		},
 	}
 	for _, tt := range tests {
@@ -231,6 +248,11 @@ func TestPackageResourceValidate(t *testing.T) {
 					ResourceType: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_Pkg{Pkg: tt.prpb},
 				},
 			}
+
+			if tt.expectedCmd != nil {
+				mockCommandRunner.EXPECT().Run(ctx, tt.expectedCmd).Return(tt.expectedCmdReturn, nil, nil)
+			}
+
 			err := pr.Validate(ctx)
 			if err != nil && !tt.wantErr {
 				t.Fatalf("Unexpected error: %v", err)
@@ -368,6 +390,12 @@ func TestPackageResourceCheckState(t *testing.T) {
 
 func TestPackageResourceEnforceState(t *testing.T) {
 	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	packages.SetCommandRunner(mockCommandRunner)
+
 	var tests = []struct {
 		name        string
 		prpb        *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource
@@ -442,11 +470,6 @@ func TestPackageResourceEnforceState(t *testing.T) {
 				t.Fatalf("Unexpected Validate error: %v", err)
 			}
 
-			mockCtrl := gomock.NewController(t)
-			defer mockCtrl.Finish()
-
-			mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
-			packages.SetCommandRunner(mockCommandRunner)
 			mockCommandRunner.EXPECT().Run(ctx, tt.expectedCmd)
 
 			if err := pr.EnforceState(ctx); err != nil {

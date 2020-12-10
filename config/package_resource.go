@@ -121,8 +121,16 @@ func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error
 		if err := p.validateFile(pr.GetSource()); err != nil {
 			return nil, err
 		}
+		localPath, err := p.download(ctx, "pkg.deb", p.GetDeb().GetSource())
+		if err != nil {
+			return nil, err
+		}
+		info, err := packages.DebPkgInfo(ctx, localPath)
+		if err != nil {
+			return nil, err
+		}
 
-		p.managedPackage.Deb = &DebPackage{PackageResource: pr}
+		p.managedPackage.Deb = &DebPackage{PackageResource: pr, localPath: localPath, name: info.Name}
 
 	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Googet:
 		pr := p.GetGooget()
@@ -143,8 +151,12 @@ func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error
 		if err := p.validateFile(pr.GetSource()); err != nil {
 			return nil, err
 		}
+		localPath, err := p.download(ctx, "pkg.msi", p.GetMsi().GetSource())
+		if err != nil {
+			return nil, err
+		}
 
-		p.managedPackage.MSI = &MSIPackage{PackageResource: pr}
+		p.managedPackage.MSI = &MSIPackage{PackageResource: pr, localPath: localPath}
 
 	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Yum:
 		pr := p.GetYum()
@@ -173,8 +185,16 @@ func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error
 		if err := p.validateFile(pr.GetSource()); err != nil {
 			return nil, err
 		}
+		localPath, err := p.download(ctx, "pkg.rpm", p.GetRpm().GetSource())
+		if err != nil {
+			return nil, err
+		}
+		info, err := packages.RPMPkgInfo(ctx, localPath)
+		if err != nil {
+			return nil, err
+		}
 
-		p.managedPackage.RPM = &RPMPackage{PackageResource: pr}
+		p.managedPackage.RPM = &RPMPackage{PackageResource: pr, localPath: localPath, name: info.Name}
 
 	default:
 		return nil, fmt.Errorf("SystemPackage field not set or references unknown package manager: %v", p.GetSystemPackage())
@@ -289,17 +309,7 @@ func (p *packageResouce) checkState(ctx context.Context) (inDesiredState bool, e
 
 	case p.managedPackage.Deb != nil:
 		desiredState = agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED
-		localPath, err := p.download(ctx, "pkg.deb", p.managedPackage.Deb.PackageResource.GetSource())
-		if err != nil {
-			return false, err
-		}
-		info, err := packages.DebPkgInfo(ctx, localPath)
-		if err != nil {
-			return false, err
-		}
-		p.managedPackage.Deb.name = info.Name
-		p.managedPackage.Deb.localPath = localPath
-		_, pkgIns = debInstalled.cache[info.Name]
+		_, pkgIns = debInstalled.cache[p.managedPackage.Deb.name]
 
 	case p.managedPackage.GooGet != nil:
 		desiredState = p.managedPackage.GooGet.DesiredState
@@ -307,13 +317,7 @@ func (p *packageResouce) checkState(ctx context.Context) (inDesiredState bool, e
 
 	case p.managedPackage.MSI != nil:
 		desiredState = agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED
-		localPath, err := p.download(ctx, "pkg.msi", p.managedPackage.MSI.PackageResource.GetSource())
-		if err != nil {
-			return false, err
-		}
-
-		p.managedPackage.MSI.localPath = localPath
-		p.managedPackage.MSI.productName, pkgIns, err = packages.MSIInfo(localPath)
+		p.managedPackage.MSI.productName, pkgIns, err = packages.MSIInfo(p.managedPackage.MSI.localPath)
 		if err != nil {
 			return false, err
 		}
@@ -328,17 +332,7 @@ func (p *packageResouce) checkState(ctx context.Context) (inDesiredState bool, e
 
 	case p.managedPackage.RPM != nil:
 		desiredState = agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED
-		localPath, err := p.download(ctx, "pkg.rpm", p.managedPackage.RPM.PackageResource.GetSource())
-		if err != nil {
-			return false, err
-		}
-		info, err := packages.RPMPkgInfo(ctx, localPath)
-		if err != nil {
-			return false, err
-		}
-		p.managedPackage.RPM.name = info.Name
-		p.managedPackage.RPM.localPath = localPath
-		_, pkgIns = rpmInstalled.cache[info.Name]
+		_, pkgIns = rpmInstalled.cache[p.managedPackage.RPM.name]
 	}
 
 	switch desiredState {
