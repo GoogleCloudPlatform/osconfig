@@ -46,22 +46,22 @@ func TestFileResourceValidate(t *testing.T) {
 		{
 			"Absent",
 			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource{
-				Path:  "path",
+				Path:  tmpFile,
 				State: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_ABSENT,
 			},
 			ManagedFile{
-				Path:  "path",
+				Path:  tmpFile,
 				State: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_ABSENT,
 			},
 		},
 		{
 			"Present",
 			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource{
-				Path:  "path",
+				Path:  tmpFile,
 				State: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT,
 			},
 			ManagedFile{
-				Path:       "path",
+				Path:       tmpFile,
 				State:      agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT,
 				Permisions: defaultFilePerms,
 			},
@@ -69,11 +69,20 @@ func TestFileResourceValidate(t *testing.T) {
 		{
 			"ContentsMatch",
 			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource{
-				Path:  "path",
+				Path: tmpFile,
+				Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_File{
+					File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
+						File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{
+							LocalPath: tmpFile,
+						},
+					},
+				},
 				State: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_CONTENTS_MATCH,
 			},
 			ManagedFile{
-				Path:       "path",
+				Path:       tmpFile,
+				source:     tmpFile,
+				checksum:   "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
 				State:      agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_CONTENTS_MATCH,
 				Permisions: defaultFilePerms,
 			},
@@ -81,12 +90,12 @@ func TestFileResourceValidate(t *testing.T) {
 		{
 			"Permissions",
 			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource{
-				Path:        "path",
+				Path:        tmpFile,
 				State:       agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT,
 				Permissions: "0777",
 			},
 			ManagedFile{
-				Path:       "path",
+				Path:       tmpFile,
 				State:      agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT,
 				Permisions: 0777,
 			},
@@ -94,7 +103,7 @@ func TestFileResourceValidate(t *testing.T) {
 		{
 			"LocalPath",
 			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource{
-				Path: "path",
+				Path: tmpFile,
 				Source: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_File{
 					File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File{
 						File: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File_LocalPath{
@@ -105,7 +114,7 @@ func TestFileResourceValidate(t *testing.T) {
 				State: agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT,
 			},
 			ManagedFile{
-				Path:       "path",
+				Path:       tmpFile,
 				State:      agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT,
 				Permisions: defaultFilePerms,
 				checksum:   "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",

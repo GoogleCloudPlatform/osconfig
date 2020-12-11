@@ -60,41 +60,6 @@ func parsePermissions(s string) (os.FileMode, error) {
 	return os.FileMode(i), nil
 }
 
-func (f *fileResource) validate(ctx context.Context) (*ManagedResources, error) {
-	switch f.GetState() {
-	case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_ABSENT, agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT, agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_CONTENTS_MATCH:
-		f.managedFile.State = f.GetState()
-	default:
-		return nil, fmt.Errorf("unrecognized DesiredState for FileResource: %q", f.GetState())
-	}
-
-	f.managedFile.Path = f.GetPath()
-
-	// If desired state is absent, we can return now.
-	if f.GetState() == agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_ABSENT {
-		return &ManagedResources{Files: []ManagedFile{f.managedFile}}, nil
-	}
-
-	perms, err := parsePermissions(f.GetPermissions())
-	if err != nil {
-		return nil, fmt.Errorf("can't parse permissions %q: %v", f.GetPermissions(), err)
-	}
-	f.managedFile.Permisions = perms
-
-	// LocalPath is a special case, get checksum now, others we take care of in checkState.
-	if f.GetFile().GetLocalPath() != "" {
-		f.managedFile.source = f.GetFile().GetLocalPath()
-		file, err := os.Open(f.GetFile().GetLocalPath())
-		if err != nil {
-			return nil, err
-		}
-		f.managedFile.checksum = checksum(file)
-		file.Close()
-	}
-
-	return &ManagedResources{Files: []ManagedFile{f.managedFile}}, nil
-}
-
 // TODO: use a persistent cache for downloaded files so we dont need to redownload them each time.
 func (f *fileResource) download(ctx context.Context) error {
 	// No need to download if source is a local file.
@@ -130,28 +95,68 @@ func (f *fileResource) download(ctx context.Context) error {
 	return nil
 }
 
+func (f *fileResource) validate(ctx context.Context) (*ManagedResources, error) {
+	switch f.GetState() {
+	case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_ABSENT, agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT, agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_CONTENTS_MATCH:
+		f.managedFile.State = f.GetState()
+	default:
+		return nil, fmt.Errorf("unrecognized DesiredState for FileResource: %q", f.GetState())
+	}
+
+	f.managedFile.Path = f.GetPath()
+
+	// If desired state is absent, we can return now.
+	if f.GetState() == agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_ABSENT {
+		return &ManagedResources{Files: []ManagedFile{f.managedFile}}, nil
+	}
+
+	perms, err := parsePermissions(f.GetPermissions())
+	if err != nil {
+		return nil, fmt.Errorf("can't parse permissions %q: %v", f.GetPermissions(), err)
+	}
+	f.managedFile.Permisions = perms
+
+	if f.GetFile().GetLocalPath() != "" {
+		f.managedFile.source = f.GetFile().GetLocalPath()
+		file, err := os.Open(f.GetFile().GetLocalPath())
+		if err != nil {
+			return nil, err
+		}
+		f.managedFile.checksum = checksum(file)
+		file.Close()
+	}
+
+	switch f.managedFile.State {
+	case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_ABSENT:
+	case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT:
+		// If the file is already present no need to downloaded it.
+		if !util.Exists(f.managedFile.Path) {
+			if err := f.download(ctx); err != nil {
+				return nil, err
+			}
+		}
+	case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_CONTENTS_MATCH:
+		if err := f.download(ctx); err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("unrecognized DesiredState for FileResource: %q", f.managedFile.State)
+	}
+
+	return &ManagedResources{Files: []ManagedFile{f.managedFile}}, nil
+}
+
 func (f *fileResource) checkState(ctx context.Context) (inDesiredState bool, err error) {
 	switch f.managedFile.State {
 	case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_ABSENT:
 		return !util.Exists(f.managedFile.Path), nil
 	case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT:
-		// If the file is already present no need to downloaded it.
-		if util.Exists(f.managedFile.Path) {
-			return true, nil
-		}
-		return false, f.download(ctx)
+		return util.Exists(f.managedFile.Path), nil
 	case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_CONTENTS_MATCH:
-		// TODO: check if permissons match.
-
-		if err := f.download(ctx); err != nil {
-			return false, err
-		}
-
+		return contentsMatch(f.managedFile.Path, f.managedFile.checksum)
 	default:
 		return false, fmt.Errorf("unrecognized DesiredState for FileResource: %q", f.managedFile.State)
 	}
-
-	return contentsMatch(f.managedFile.Path, f.managedFile.checksum)
 }
 
 func copyFile(dst, src string, perms os.FileMode) (retErr error) {
@@ -186,6 +191,12 @@ func (f *fileResource) enforceState(ctx context.Context) (inDesiredState bool, e
 			return false, fmt.Errorf("error removing %q: %v", f.managedFile.Path, err)
 		}
 	case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_PRESENT, agentendpointpb.ApplyConfigTask_OSPolicy_Resource_FileResource_CONTENTS_MATCH:
+		// Download now if for some reason we got this point and have not.
+		if f.managedFile.source == "" {
+			if err := f.download(ctx); err != nil {
+				return false, err
+			}
+		}
 		if err := copyFile(f.managedFile.Path, f.managedFile.source, f.managedFile.Permisions); err != nil {
 			return false, fmt.Errorf("error copying %q to %q: %v", f.managedFile.source, f.managedFile.Path, err)
 		}
