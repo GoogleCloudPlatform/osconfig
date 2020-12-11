@@ -150,6 +150,10 @@ func (e *execResource) run(ctx context.Context, name string, execR *agentendpoin
 
 func (e *execResource) checkState(ctx context.Context) (inDesiredState bool, err error) {
 	// For validate we expect an exit code of 100 for "correct state" and 101 for "incorrect state".
+	// 100 was chosen over 0 (and 101 vs 1) because we want an explicit indicator of
+	// "correct" vs "incorrect" state and errors. Also Powershell will always exit 0 unless "exit"
+	// is explicitly called.
+	// A code of -1 indicates some other error, so we just return err.
 	stdout, stderr, code, err := e.run(ctx, e.validatePath, e.GetValidate())
 	switch code {
 	case -1:
@@ -165,6 +169,9 @@ func (e *execResource) checkState(ctx context.Context) (inDesiredState bool, err
 
 func (e *execResource) enforceState(ctx context.Context) (inDesiredState bool, err error) {
 	// For enforce we expect an exit code of 100 for "success" and anything positive code is a failure".
+	// 100 was chosen over 0 because we want an explicit indicator of "sucess" vs errors.
+	// Also Powershell will always exit 0 unless "exit" is explicitly called.
+	// A code of -1 indicates some other error, so we just return err.
 	stdout, stderr, code, err := e.run(ctx, e.enforcePath, e.GetEnforce())
 	switch code {
 	case -1:
@@ -172,7 +179,7 @@ func (e *execResource) enforceState(ctx context.Context) (inDesiredState bool, e
 	case 100:
 		return true, nil
 	default:
-		return false, fmt.Errorf("unexpected return code from validate: %d, stdout: %s, stderr: %s", code, stdout, stderr)
+		return false, fmt.Errorf("unexpected return code from enforce: %d, stdout: %s, stderr: %s", code, stdout, stderr)
 	}
 }
 
