@@ -217,14 +217,12 @@ var OldSUSEImages = map[string]string{
 // published image here as EL6 is EOL.
 // TODO: Either remove support for el6 or move this to a deprected test suite.
 var HeadEL6Images = map[string]string{
-	"centos-cloud/centos-6": "projects/centos-cloud/global/images/centos-6-v20201112",
-	"rhel-cloud/rhel-6":     "projects/rhel-cloud/global/images/rhel-6-v20201112",
+	"rhel-cloud/rhel-6": "projects/rhel-cloud/global/images/rhel-6-v20201112",
 }
 
 // OldEL6Images is a map of names to image paths for old EL6 images.
 var OldEL6Images = map[string]string{
-	"old/centos-6": "projects/centos-cloud/global/images/centos-6-v20191014",
-	"old/rhel-6":   "projects/rhel-cloud/global/images/rhel-6-v20191014",
+	"old/rhel-6": "projects/rhel-cloud/global/images/rhel-6-v20191014",
 }
 
 // HeadEL7Images is a map of names to image paths for public EL7 image families.
@@ -274,7 +272,6 @@ var HeadWindowsImages = map[string]string{
 	"windows-cloud/windows-2016-core":    "projects/windows-cloud/global/images/family/windows-2016-core",
 	"windows-cloud/windows-2019":         "projects/windows-cloud/global/images/family/windows-2019",
 	"windows-cloud/windows-2019-core":    "projects/windows-cloud/global/images/family/windows-2019-core",
-	"windows-cloud/windows-1903-core":    "projects/windows-cloud/global/images/family/windows-1903-core",
 	"windows-cloud/windows-1909-core":    "projects/windows-cloud/global/images/family/windows-1909-core",
 	"windows-cloud/windows-2004-core":    "projects/windows-cloud/global/images/family/windows-2004-core",
 }
