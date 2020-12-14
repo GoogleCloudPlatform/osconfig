@@ -184,6 +184,7 @@ var HeadAptImages = map[string]string{
 	// Ubuntu images.
 	"ubuntu-os-cloud/ubuntu-1604-lts": "projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts",
 	"ubuntu-os-cloud/ubuntu-1804-lts": "projects/ubuntu-os-cloud/global/images/family/ubuntu-1804-lts",
+	"ubuntu-os-cloud/ubuntu-2004-lts": "projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts",
 }
 
 // OldAptImages is a map of names to image paths for old images that use APT.
@@ -195,6 +196,7 @@ var OldAptImages = map[string]string{
 	// Ubuntu images.
 	"old/ubuntu-1604-lts": "projects/ubuntu-os-cloud/global/images/ubuntu-1604-xenial-v20191005",
 	"old/ubuntu-1804-lts": "projects/ubuntu-os-cloud/global/images/ubuntu-1804-bionic-v20191002",
+	"old/ubuntu-2004-lts": "projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20200506",
 }
 
 // HeadSUSEImages is a map of names to image paths for public SUSE images.
