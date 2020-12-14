@@ -203,6 +203,7 @@ func runServiceLoop(ctx context.Context) {
 
 	// Runs functions that need to run on a set interval.
 	ticker := time.NewTicker(agentconfig.SvcPollInterval())
+	defer ticker.Stop()
 	for {
 		if _, err := os.Stat(agentconfig.RestartFile()); err == nil {
 			clog.Infof(ctx, "Restart required marker file exists, beginning agent shutdown, waiting for tasks to complete.")
