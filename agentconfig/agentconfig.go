@@ -384,8 +384,10 @@ func WatchConfig(ctx context.Context) error {
 	var webError error
 	// Max watch time, after this WatchConfig will return.
 	timeout := time.NewTicker(osConfigWatchConfigTimeout)
+	defer timeout.Stop()
 	// Min watch loop time.
 	loopTicker := time.NewTicker(5 * time.Second)
+	defer loopTicker.Stop()
 	eTag := lEtag.get()
 	webErrorCount := 0
 	unmarshalErrorCount := 0
