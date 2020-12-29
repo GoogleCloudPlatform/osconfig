@@ -299,6 +299,7 @@ func (c *Client) loadTaskFromState(ctx context.Context) error {
 	}
 	if st != nil && st.PatchTask != nil {
 		st.PatchTask.client = c
+		st.PatchTask.state = st
 		tasker.Enqueue(ctx, "PatchRun", func() {
 			st.PatchTask.run(ctx)
 		})
