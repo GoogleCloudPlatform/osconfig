@@ -23,7 +23,10 @@ import (
 
 type taskState struct {
 	PatchTask *patchTask `json:",omitempty"`
-	ExecTask  *execTask  `json:",omitempty"`
+	// Reboots during ExecTask is not supported.
+	ExecTask *execTask `json:",omitempty"`
+
+	Labels map[string]string `json:",omitempty"`
 }
 
 func (s *taskState) save(path string) error {

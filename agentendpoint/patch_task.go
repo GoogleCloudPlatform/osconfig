@@ -43,17 +43,20 @@ type patchTask struct {
 	client *Client
 
 	lastProgressState map[agentendpointpb.ApplyPatchesTaskProgress_State]time.Time
+	state             *taskState
 
 	TaskID      string
 	Task        *applyPatchesTask
 	StartedAt   time.Time `json:",omitempty"`
 	PatchStep   patchStep `json:",omitempty"`
 	RebootCount int
-	// TODO add Attempts and track number of retries with backoff, jitter, etc.
+
+	// TODO: add Attempts and track number of retries with backoff, jitter, etc.
 }
 
 func (r *patchTask) saveState() error {
-	return (&taskState{PatchTask: r}).save(taskStateFile)
+	r.state.PatchTask = r
+	return r.state.save(taskStateFile)
 }
 
 func (r *patchTask) complete(ctx context.Context) {
@@ -213,6 +216,7 @@ func (r *patchTask) rebootIfNeeded(ctx context.Context, prePatch bool) error {
 }
 
 func (r *patchTask) run(ctx context.Context) (err error) {
+	ctx = clog.WithLabels(ctx, r.state.Labels)
 	clog.Infof(ctx, "Beginning patch task")
 	defer func() {
 		// This should not happen but the WUA libraries are complicated and
@@ -283,8 +287,8 @@ func (r *patchTask) run(ctx context.Context) (err error) {
 
 // RunApplyPatches runs a apply patches task.
 func (c *Client) RunApplyPatches(ctx context.Context, task *agentendpointpb.Task) error {
-	ctx = clog.WithLabels(ctx, task.GetServiceLabels())
 	r := &patchTask{
+		state:  &taskState{Labels: task.GetServiceLabels()},
 		TaskID: task.GetTaskId(),
 		client: c,
 		Task:   &applyPatchesTask{task.GetApplyPatchesTask()},

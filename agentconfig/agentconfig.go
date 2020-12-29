@@ -71,7 +71,6 @@ const (
 
 	osConfigPollIntervalDefault = 10
 	osConfigMetadataPollTimeout = 60
-	osConfigWatchConfigTimeout  = 10 * time.Minute
 )
 
 var (
@@ -88,6 +87,8 @@ var (
 	// These are matched server side to what tasks this agent can
 	// perform.
 	capabilities = []string{"PATCH_GA", "GUEST_POLICY_BETA"}
+
+	osConfigWatchConfigTimeout = 10 * time.Minute
 )
 
 type config struct {
@@ -383,8 +384,7 @@ func WatchConfig(ctx context.Context) error {
 	var md []byte
 	var webError error
 	// Max watch time, after this WatchConfig will return.
-	timeout := time.NewTicker(osConfigWatchConfigTimeout)
-	defer timeout.Stop()
+	timeout := time.After(osConfigWatchConfigTimeout)
 	// Min watch loop time.
 	loopTicker := time.NewTicker(5 * time.Second)
 	defer loopTicker.Stop()
@@ -404,7 +404,7 @@ func WatchConfig(ctx context.Context) error {
 				}
 				unmarshalErrorCount++
 				select {
-				case <-timeout.C:
+				case <-timeout:
 					return err
 				case <-ctx.Done():
 					return nil
@@ -436,7 +436,7 @@ func WatchConfig(ctx context.Context) error {
 		}
 
 		select {
-		case <-timeout.C:
+		case <-timeout:
 			return webError
 		case <-ctx.Done():
 			return nil

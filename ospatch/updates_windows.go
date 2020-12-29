@@ -19,6 +19,7 @@ package ospatch
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
@@ -68,12 +69,18 @@ func SystemRebootRequired(ctx context.Context) (bool, error) {
 	return false, nil
 }
 
-func checkFilters(ctx context.Context, updt *packages.IUpdate, kbExcludes, classFilter, exclusive_patches []string) (bool, error) {
+func checkFilters(ctx context.Context, updt *packages.IUpdate, kbExcludes, classFilter, exclusive_patches []string) (ok bool, err error) {
 	title, err := updt.GetProperty("Title")
 	if err != nil {
 		return false, fmt.Errorf(`updt.GetProperty("Title"): %v`, err)
 	}
 	defer title.Clear()
+
+	defer func() {
+		if ok == true {
+			clog.Debugf(ctx, "Update %q not excluded by any filters.", title.ToString())
+		}
+	}()
 
 	kbArticleIDsRaw, err := updt.GetProperty("KBArticleIDs")
 	if err != nil {
@@ -118,8 +125,9 @@ func checkFilters(ctx context.Context, updt *packages.IUpdate, kbExcludes, class
 			}
 			defer kbRaw.Clear()
 			for _, e := range kbExcludes {
-				if e == kbRaw.ToString() {
-					clog.Debugf(ctx, "Update %s (%s) matched exclude filter", title.ToString(), kbRaw.ToString())
+				// kbArticleIDs is just the IDs, but users are used to using the KB prefix.
+				if strings.TrimLeft(e, "KkBb") == kbRaw.ToString() {
+					clog.Debugf(ctx, "Update %q (%s) matched exclude filter", title.ToString(), kbRaw.ToString())
 					return false, nil
 				}
 			}
@@ -167,14 +175,16 @@ func checkFilters(ctx context.Context, updt *packages.IUpdate, kbExcludes, class
 		}
 	}
 
-	clog.Debugf(ctx, "Update %s not found in classification filter", title.ToString())
+	clog.Debugf(ctx, "Update %q not found in classification filter", title.ToString())
 	return false, nil
 }
 
 // GetWUAUpdates gets WUA updates based on optional classFilter and kbExcludes.
-func GetWUAUpdates(ctx context.Context, session *packages.IUpdateSession, classFilter, kbExcludes, exclusive_patches []string) (*packages.IUpdateCollection, error) {
+func GetWUAUpdates(ctx context.Context, session *packages.IUpdateSession, classFilter, kbExcludes, exclusivePatches []string) (*packages.IUpdateCollection, error) {
 	// Search for all not installed updates but filter out ones that will be installed after a reboot.
-	updts, err := session.GetWUAUpdateCollection("IsInstalled=0 AND RebootRequired=0")
+	filter := "IsInstalled=0 AND RebootRequired=0"
+	clog.Debugf(ctx, "Searching for WUA updates with query %q", filter)
+	updts, err := session.GetWUAUpdateCollection(filter)
 	if err != nil {
 		return nil, fmt.Errorf("GetWUAUpdateCollection error: %v", err)
 	}
@@ -187,19 +197,21 @@ func GetWUAUpdates(ctx context.Context, session *packages.IUpdateSession, classF
 	if err != nil {
 		return nil, err
 	}
+	clog.Debugf(ctx, "Found %d total updates avaiable (pre filter).", count)
 
 	newUpdts, err := packages.NewUpdateCollection()
 	if err != nil {
 		return nil, err
 	}
 
+	clog.Debugf(ctx, "Using filters: Excludes: %q, Classifications: %q, ExclusivePatches: %q", kbExcludes, classFilter, exclusivePatches)
 	for i := 0; i < int(count); i++ {
 		updt, err := updts.Item(i)
 		if err != nil {
 			return nil, err
 		}
 
-		ok, err := checkFilters(ctx, updt, kbExcludes, classFilter, exclusive_patches)
+		ok, err := checkFilters(ctx, updt, kbExcludes, classFilter, exclusivePatches)
 		if err != nil {
 			return nil, err
 		}

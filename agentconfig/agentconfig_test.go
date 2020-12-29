@@ -25,6 +25,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestWatchConfig(t *testing.T) {
@@ -157,7 +158,7 @@ func TestSetConfigDefaultValues(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Etag", "sample-etag")
 		// we always get zone value in instance metadata.
-		fmt.Fprintln(w, `{ "instance": {"zone": "fake-zone"}}`)
+		fmt.Fprintln(w, `{"instance": {"zone": "fake-zone"}}`)
 	}))
 	defer ts.Close()
 
@@ -253,6 +254,8 @@ func TestSetConfigError(t *testing.T) {
 	if err := os.Setenv("GCE_METADATA_HOST", strings.Trim(ts.URL, "http://")); err != nil {
 		t.Fatalf("Error running os.Setenv: %v", err)
 	}
+
+	osConfigWatchConfigTimeout = 1 * time.Millisecond
 
 	if err := WatchConfig(context.Background()); err == nil || !strings.Contains(err.Error(), "unexpected end of JSON input") {
 		t.Errorf("Unexpected output %+v", err)
