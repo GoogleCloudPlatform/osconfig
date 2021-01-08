@@ -205,10 +205,10 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *g
 		Packages:   osconfigserver.BuildPackagePolicy(nil, nil, []string{packageName}),
 		Assignment: &osconfigpb.Assignment{InstanceNamePrefixes: []string{instanceName}},
 		PackageRepositories: []*osconfigpb.PackageRepository{
-			&osconfigpb.PackageRepository{Repository: osconfigserver.BuildAptRepository(osconfigpb.AptRepository_DEB, aptTestRepoBaseURL, osconfigTestRepo, aptRaptureGpgKey, []string{"main"})},
-			&osconfigpb.PackageRepository{Repository: osconfigserver.BuildYumRepository(osconfigTestRepo, "Google OSConfig Agent Test Repository", yumTestRepoBaseURL, yumRaptureGpgKeys)},
-			&osconfigpb.PackageRepository{Repository: osconfigserver.BuildZypperRepository(osconfigTestRepo, "Google OSConfig Agent Test Repository", yumTestRepoBaseURL, yumRaptureGpgKeys)},
-			&osconfigpb.PackageRepository{Repository: osconfigserver.BuildGooRepository("Google OSConfig Agent Test Repository", gooTestRepoURL)},
+			{Repository: osconfigserver.BuildAptRepository(osconfigpb.AptRepository_DEB, aptTestRepoBaseURL, osconfigTestRepo, aptRaptureGpgKey, []string{"main"})},
+			{Repository: osconfigserver.BuildYumRepository(osconfigTestRepo, "Google OSConfig Agent Test Repository", yumTestRepoBaseURL, yumRaptureGpgKeys)},
+			{Repository: osconfigserver.BuildZypperRepository(osconfigTestRepo, "Google OSConfig Agent Test Repository", yumTestRepoBaseURL, yumRaptureGpgKeys)},
+			{Repository: osconfigserver.BuildGooRepository("Google OSConfig Agent Test Repository", gooTestRepoURL)},
 		},
 	}
 	ss := getStartupScript(name, pkgManager, packageName)
@@ -332,7 +332,7 @@ func buildRecipeStepsTestSetup(name, image, pkgManager, key string) *guestPolicy
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
 	artifacts := []*osconfigpb.SoftwareRecipe_Artifact{
-		&osconfigpb.SoftwareRecipe_Artifact{
+		{
 			AllowInsecure: true,
 			Id:            "copy-test",
 			Artifact: &osconfigpb.SoftwareRecipe_Artifact_Remote_{
@@ -341,7 +341,7 @@ func buildRecipeStepsTestSetup(name, image, pkgManager, key string) *guestPolicy
 				},
 			},
 		},
-		&osconfigpb.SoftwareRecipe_Artifact{
+		{
 			AllowInsecure: true,
 			Id:            "exec-test-sh",
 			Artifact: &osconfigpb.SoftwareRecipe_Artifact_Gcs_{
@@ -351,7 +351,7 @@ func buildRecipeStepsTestSetup(name, image, pkgManager, key string) *guestPolicy
 				},
 			},
 		},
-		&osconfigpb.SoftwareRecipe_Artifact{
+		{
 			AllowInsecure: true,
 			Id:            "exec-test-cmd",
 			Artifact: &osconfigpb.SoftwareRecipe_Artifact_Gcs_{
@@ -361,7 +361,7 @@ func buildRecipeStepsTestSetup(name, image, pkgManager, key string) *guestPolicy
 				},
 			},
 		},
-		&osconfigpb.SoftwareRecipe_Artifact{
+		{
 			AllowInsecure: true,
 			Id:            "tar-test",
 			Artifact: &osconfigpb.SoftwareRecipe_Artifact_Gcs_{
@@ -371,7 +371,7 @@ func buildRecipeStepsTestSetup(name, image, pkgManager, key string) *guestPolicy
 				},
 			},
 		},
-		&osconfigpb.SoftwareRecipe_Artifact{
+		{
 			AllowInsecure: true,
 			Id:            "zip-test",
 			Artifact: &osconfigpb.SoftwareRecipe_Artifact_Gcs_{
@@ -381,7 +381,7 @@ func buildRecipeStepsTestSetup(name, image, pkgManager, key string) *guestPolicy
 				},
 			},
 		},
-		&osconfigpb.SoftwareRecipe_Artifact{
+		{
 			AllowInsecure: true,
 			Id:            "dpkg-test",
 			Artifact: &osconfigpb.SoftwareRecipe_Artifact_Gcs_{
@@ -391,7 +391,7 @@ func buildRecipeStepsTestSetup(name, image, pkgManager, key string) *guestPolicy
 				},
 			},
 		},
-		&osconfigpb.SoftwareRecipe_Artifact{
+		{
 			AllowInsecure: true,
 			Id:            "rpm-test",
 			Artifact: &osconfigpb.SoftwareRecipe_Artifact_Gcs_{
@@ -420,20 +420,20 @@ func buildRecipeStepsTestSetup(name, image, pkgManager, key string) *guestPolicy
 		Recipes: []*osconfigpb.SoftwareRecipe{
 			osconfigserver.BuildSoftwareRecipe(recipeName, "", artifacts,
 				[]*osconfigpb.SoftwareRecipe_Step{
-					&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_ScriptRun{
+					{Step: &osconfigpb.SoftwareRecipe_Step_ScriptRun{
 						ScriptRun: &osconfigpb.SoftwareRecipe_Step_RunScript{
 							Script:      "echo 'hello world' > /tmp/osconfig-SoftwareRecipe_Step_RunScript_SHELL",
 							Interpreter: osconfigpb.SoftwareRecipe_Step_RunScript_SHELL,
 						},
 					}},
 
-					&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_FileCopy{
+					{Step: &osconfigpb.SoftwareRecipe_Step_FileCopy{
 						FileCopy: &osconfigpb.SoftwareRecipe_Step_CopyFile{ArtifactId: "copy-test", Destination: "/tmp/osconfig-copy-test"},
 					}},
-					&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_ArchiveExtraction{
+					{Step: &osconfigpb.SoftwareRecipe_Step_ArchiveExtraction{
 						ArchiveExtraction: &osconfigpb.SoftwareRecipe_Step_ExtractArchive{ArtifactId: "tar-test", Destination: "/tmp/tar-test", Type: osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_GZIP},
 					}},
-					&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_ArchiveExtraction{
+					{Step: &osconfigpb.SoftwareRecipe_Step_ArchiveExtraction{
 						ArchiveExtraction: &osconfigpb.SoftwareRecipe_Step_ExtractArchive{ArtifactId: "zip-test", Destination: "/tmp/zip-test", Type: osconfigpb.SoftwareRecipe_Step_ExtractArchive_ZIP},
 					}},
 				},
@@ -458,28 +458,28 @@ func buildRecipeStepsTestSetup(name, image, pkgManager, key string) *guestPolicy
 			Recipes: []*osconfigpb.SoftwareRecipe{
 				osconfigserver.BuildSoftwareRecipe(recipeName, "", artifacts,
 					[]*osconfigpb.SoftwareRecipe_Step{
-						&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_ScriptRun{
+						{Step: &osconfigpb.SoftwareRecipe_Step_ScriptRun{
 							ScriptRun: &osconfigpb.SoftwareRecipe_Step_RunScript{
 								Script:      "echo 'hello world' > c:\\osconfig-SoftwareRecipe_Step_RunScript_POWERSHELL",
 								Interpreter: osconfigpb.SoftwareRecipe_Step_RunScript_POWERSHELL,
 							},
 						}},
-						&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_ScriptRun{
+						{Step: &osconfigpb.SoftwareRecipe_Step_ScriptRun{
 							ScriptRun: &osconfigpb.SoftwareRecipe_Step_RunScript{
 								Script:      "echo 'hello world' > c:\\osconfig-SoftwareRecipe_Step_RunScript_SHELL",
 								Interpreter: osconfigpb.SoftwareRecipe_Step_RunScript_SHELL,
 							},
 						}},
-						&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_FileExec{
+						{Step: &osconfigpb.SoftwareRecipe_Step_FileExec{
 							FileExec: &osconfigpb.SoftwareRecipe_Step_ExecFile{LocationType: &osconfigpb.SoftwareRecipe_Step_ExecFile_ArtifactId{ArtifactId: "exec-test-cmd"}},
 						}},
-						&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_FileCopy{
+						{Step: &osconfigpb.SoftwareRecipe_Step_FileCopy{
 							FileCopy: &osconfigpb.SoftwareRecipe_Step_CopyFile{ArtifactId: "copy-test", Destination: "c:\\osconfig-copy-test"},
 						}},
-						&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_ArchiveExtraction{
+						{Step: &osconfigpb.SoftwareRecipe_Step_ArchiveExtraction{
 							ArchiveExtraction: &osconfigpb.SoftwareRecipe_Step_ExtractArchive{ArtifactId: "tar-test", Destination: "c:\\tar-test", Type: osconfigpb.SoftwareRecipe_Step_ExtractArchive_TAR_GZIP},
 						}},
-						&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_ArchiveExtraction{
+						{Step: &osconfigpb.SoftwareRecipe_Step_ArchiveExtraction{
 							ArchiveExtraction: &osconfigpb.SoftwareRecipe_Step_ExtractArchive{ArtifactId: "zip-test", Destination: "c:\\zip-test", Type: osconfigpb.SoftwareRecipe_Step_ExtractArchive_ZIP},
 						}},
 					},
