@@ -315,6 +315,8 @@ while ($true) {
 	var script string
 	key := "startup-script"
 	switch pkgManager {
+	case "cos":
+		script = fmt.Sprintf("%s\n%s\n%s", utils.CurlPost, waitForRestartLinux, scriptLinux)
 	case "apt":
 		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigDeb(), waitForRestartLinux, scriptLinux)
 	case "yum":
@@ -335,14 +337,8 @@ while ($true) {
 }
 
 func getRecipeStepsStartupScript(image, recipeName, pkgManager string) *computeApi.MetadataItems {
-	scriptLinux := fmt.Sprintf(`
+	scriptLinux := `
 while [[ ! -f /tmp/osconfig-SoftwareRecipe_Step_RunScript_SHELL ]]; do
-  sleep 1
-done
-while [[ ! -f /tmp/osconfig-SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED ]]; do
-  sleep 1
-done
-while [[ ! -f /tmp/osconfig-exec-test ]]; do
   sleep 1
 done
 while [[ ! -f /tmp/osconfig-copy-test ]]; do
@@ -354,6 +350,18 @@ done
 while [[ ! -f /tmp/zip-test/zip/test.txt ]]; do
   sleep 1
 done
+`
+	if pkgManager != "cos" {
+		scriptLinux = scriptLinux + `
+while [[ ! -f /tmp/osconfig-SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED ]]; do
+  sleep 1
+done
+while [[ ! -f /tmp/osconfig-exec-test ]]; do
+  sleep 1
+done
+    `
+	}
+	scriptLinux = scriptLinux + fmt.Sprintf(`
 while true; do
   isinstalled=$(grep '{"Name":"%[1]s","Version":\[0],"InstallTime":[0-9]*,"Success":true}' /var/lib/google/osconfig_recipedb)
   if [[ -n $isinstalled ]]; then
@@ -400,6 +408,8 @@ while ($true) {
 	var script string
 	key := "startup-script"
 	switch pkgManager {
+	case "cos":
+		script = fmt.Sprintf("%s\n%s\n%s", utils.CurlPost, waitForRestartLinux, scriptLinux)
 	case "apt":
 		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigDeb(), waitForRestartLinux, scriptLinux)
 	case "yum":
@@ -409,7 +419,6 @@ while ($true) {
 	case "googet":
 		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigGooGet(), waitForRestartWin, scriptWin)
 		key = "windows-startup-script-ps1"
-
 	default:
 		fmt.Printf("invalid package manager: %s", pkgManager)
 	}

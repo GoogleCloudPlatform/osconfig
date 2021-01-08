@@ -31,50 +31,50 @@ import (
 )
 
 type packageResouce struct {
-	*agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource
+	*agentendpointpb.OSPolicy_Resource_PackageResource
 
 	managedPackage ManagedPackage
 }
 
 // AptPackage describes an apt package resource.
 type AptPackage struct {
-	PackageResource *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_APT
-	DesiredState    agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState
+	PackageResource *agentendpointpb.OSPolicy_Resource_PackageResource_APT
+	DesiredState    agentendpointpb.OSPolicy_Resource_PackageResource_DesiredState
 }
 
 // DebPackage describes a deb package resource.
 type DebPackage struct {
-	PackageResource *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb
+	PackageResource *agentendpointpb.OSPolicy_Resource_PackageResource_Deb
 	name, localPath string
 }
 
 // GooGetPackage describes a googet package resource.
 type GooGetPackage struct {
-	PackageResource *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_GooGet
-	DesiredState    agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState
+	PackageResource *agentendpointpb.OSPolicy_Resource_PackageResource_GooGet
+	DesiredState    agentendpointpb.OSPolicy_Resource_PackageResource_DesiredState
 }
 
 // MSIPackage describes an msi package resource.
 type MSIPackage struct {
-	PackageResource        *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_MSI
+	PackageResource        *agentendpointpb.OSPolicy_Resource_PackageResource_MSI
 	productName, localPath string
 }
 
 // YumPackage describes a yum package resource.
 type YumPackage struct {
-	PackageResource *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_YUM
-	DesiredState    agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState
+	PackageResource *agentendpointpb.OSPolicy_Resource_PackageResource_YUM
+	DesiredState    agentendpointpb.OSPolicy_Resource_PackageResource_DesiredState
 }
 
 // ZypperPackage describes a zypper package resource.
 type ZypperPackage struct {
-	PackageResource *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper
-	DesiredState    agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState
+	PackageResource *agentendpointpb.OSPolicy_Resource_PackageResource_Zypper
+	DesiredState    agentendpointpb.OSPolicy_Resource_PackageResource_DesiredState
 }
 
 // RPMPackage describes an rpm package resource.
 type RPMPackage struct {
-	PackageResource *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_RPM
+	PackageResource *agentendpointpb.OSPolicy_Resource_PackageResource_RPM
 	name, localPath string
 }
 
@@ -91,7 +91,7 @@ type ManagedPackage struct {
 	tempDir string
 }
 
-func (p *packageResouce) validateFile(file *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File) error {
+func (p *packageResouce) validateFile(file *agentendpointpb.OSPolicy_Resource_File) error {
 	if file.GetLocalPath() != "" {
 		if !util.Exists(file.GetLocalPath()) {
 			return fmt.Errorf("%q does not exist", file.GetLocalPath())
@@ -102,7 +102,7 @@ func (p *packageResouce) validateFile(file *agentendpointpb.ApplyConfigTask_OSPo
 
 func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error) {
 	switch p.GetSystemPackage().(type) {
-	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Apt:
+	case *agentendpointpb.OSPolicy_Resource_PackageResource_Apt:
 		pr := p.GetApt()
 		if !packages.AptExists {
 			return nil, fmt.Errorf("cannot manage Apt package %q because apt-get does not exist on the system", pr.GetName())
@@ -110,12 +110,12 @@ func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error
 
 		p.managedPackage.Apt = &AptPackage{DesiredState: p.GetDesiredState(), PackageResource: pr}
 
-	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Deb_:
+	case *agentendpointpb.OSPolicy_Resource_PackageResource_Deb_:
 		pr := p.GetDeb()
 		if !packages.DpkgExists {
 			return nil, fmt.Errorf("cannot manage Deb package because dpkg does not exist on the system")
 		}
-		if p.GetDesiredState() != agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED {
+		if p.GetDesiredState() != agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED {
 			return nil, fmt.Errorf("desired state of %q not applicable for deb package", p.GetDesiredState())
 		}
 		if err := p.validateFile(pr.GetSource()); err != nil {
@@ -132,7 +132,7 @@ func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error
 
 		p.managedPackage.Deb = &DebPackage{PackageResource: pr, localPath: localPath, name: info.Name}
 
-	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Googet:
+	case *agentendpointpb.OSPolicy_Resource_PackageResource_Googet:
 		pr := p.GetGooget()
 		if !packages.GooGetExists {
 			return nil, fmt.Errorf("cannot manage GooGet package %q because googet does not exist on the system", pr.GetName())
@@ -140,12 +140,12 @@ func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error
 
 		p.managedPackage.GooGet = &GooGetPackage{DesiredState: p.GetDesiredState(), PackageResource: pr}
 
-	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Msi:
+	case *agentendpointpb.OSPolicy_Resource_PackageResource_Msi:
 		pr := p.GetMsi()
 		if !packages.MSIExists {
 			return nil, fmt.Errorf("cannot manage MSI package because msiexec does not exist on the system")
 		}
-		if p.GetDesiredState() != agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED {
+		if p.GetDesiredState() != agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED {
 			return nil, fmt.Errorf("desired state of %q not applicable for MSI package", p.GetDesiredState())
 		}
 		if err := p.validateFile(pr.GetSource()); err != nil {
@@ -158,7 +158,7 @@ func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error
 
 		p.managedPackage.MSI = &MSIPackage{PackageResource: pr, localPath: localPath}
 
-	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Yum:
+	case *agentendpointpb.OSPolicy_Resource_PackageResource_Yum:
 		pr := p.GetYum()
 		if !packages.YumExists {
 			return nil, fmt.Errorf("cannot manage Yum package %q because yum does not exist on the system", pr.GetName())
@@ -166,7 +166,7 @@ func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error
 
 		p.managedPackage.Yum = &YumPackage{DesiredState: p.GetDesiredState(), PackageResource: pr}
 
-	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Zypper_:
+	case *agentendpointpb.OSPolicy_Resource_PackageResource_Zypper_:
 		pr := p.GetZypper()
 		if !packages.ZypperExists {
 			return nil, fmt.Errorf("cannot manage Zypper package %q because zypper does not exist on the system", pr.GetName())
@@ -174,12 +174,12 @@ func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error
 
 		p.managedPackage.Zypper = &ZypperPackage{DesiredState: p.GetDesiredState(), PackageResource: pr}
 
-	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_Rpm:
+	case *agentendpointpb.OSPolicy_Resource_PackageResource_Rpm:
 		pr := p.GetRpm()
 		if !packages.RPMExists {
 			return nil, fmt.Errorf("cannot manage RPM package because rpm does not exist on the system")
 		}
-		if p.GetDesiredState() != agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED {
+		if p.GetDesiredState() != agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED {
 			return nil, fmt.Errorf("desired state of %q not applicable for rpm package", p.GetDesiredState())
 		}
 		if err := p.validateFile(pr.GetSource()); err != nil {
@@ -274,7 +274,7 @@ func populateInstalledCache(ctx context.Context, mp ManagedPackage) error {
 }
 
 // TODO: use a persistent cache for downloaded files so we dont need to redownload them each time
-func (p *packageResouce) download(ctx context.Context, name string, file *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_File) (string, error) {
+func (p *packageResouce) download(ctx context.Context, name string, file *agentendpointpb.OSPolicy_Resource_File) (string, error) {
 	var path string
 	switch {
 	case file.GetLocalPath() != "":
@@ -299,7 +299,7 @@ func (p *packageResouce) checkState(ctx context.Context) (inDesiredState bool, e
 		return false, err
 	}
 
-	var desiredState agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_DesiredState
+	var desiredState agentendpointpb.OSPolicy_Resource_PackageResource_DesiredState
 	var pkgIns bool
 
 	switch {
@@ -308,7 +308,7 @@ func (p *packageResouce) checkState(ctx context.Context) (inDesiredState bool, e
 		_, pkgIns = aptInstalled.cache[p.managedPackage.Apt.PackageResource.GetName()]
 
 	case p.managedPackage.Deb != nil:
-		desiredState = agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED
+		desiredState = agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED
 		_, pkgIns = debInstalled.cache[p.managedPackage.Deb.name]
 
 	case p.managedPackage.GooGet != nil:
@@ -316,7 +316,7 @@ func (p *packageResouce) checkState(ctx context.Context) (inDesiredState bool, e
 		_, pkgIns = gooInstalled.cache[p.managedPackage.GooGet.PackageResource.GetName()]
 
 	case p.managedPackage.MSI != nil:
-		desiredState = agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED
+		desiredState = agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED
 		p.managedPackage.MSI.productName, pkgIns, err = packages.MSIInfo(p.managedPackage.MSI.localPath)
 		if err != nil {
 			return false, err
@@ -331,16 +331,16 @@ func (p *packageResouce) checkState(ctx context.Context) (inDesiredState bool, e
 		_, pkgIns = zypperInstalled.cache[p.managedPackage.Zypper.PackageResource.GetName()]
 
 	case p.managedPackage.RPM != nil:
-		desiredState = agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED
+		desiredState = agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED
 		_, pkgIns = rpmInstalled.cache[p.managedPackage.RPM.name]
 	}
 
 	switch desiredState {
-	case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED:
+	case agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED:
 		if pkgIns {
 			return true, nil
 		}
-	case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED:
+	case agentendpointpb.OSPolicy_Resource_PackageResource_REMOVED:
 		if !pkgIns {
 			return true, nil
 		}
@@ -371,9 +371,9 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 		enforcePackage.packageType = "apt"
 		enforcePackage.installedCache = aptInstalled.cache
 		switch p.managedPackage.Apt.DesiredState {
-		case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED:
+		case agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED:
 			enforcePackage.action, enforcePackage.actionFunc = installing, func() error { return packages.InstallAptPackages(ctx, []string{enforcePackage.name}) }
-		case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED:
+		case agentendpointpb.OSPolicy_Resource_PackageResource_REMOVED:
 			enforcePackage.action, enforcePackage.actionFunc = removing, func() error { return packages.RemoveAptPackages(ctx, []string{enforcePackage.name}) }
 		}
 
@@ -393,9 +393,9 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 		enforcePackage.packageType = "googet"
 		enforcePackage.installedCache = gooInstalled.cache
 		switch p.managedPackage.GooGet.DesiredState {
-		case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED:
+		case agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED:
 			enforcePackage.action, enforcePackage.actionFunc = installing, func() error { return packages.InstallGooGetPackages(ctx, []string{enforcePackage.name}) }
-		case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED:
+		case agentendpointpb.OSPolicy_Resource_PackageResource_REMOVED:
 			enforcePackage.action, enforcePackage.actionFunc = removing, func() error { return packages.RemoveGooGetPackages(ctx, []string{enforcePackage.name}) }
 		}
 
@@ -404,7 +404,7 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 		enforcePackage.packageType = "msi"
 		enforcePackage.action = installing
 		enforcePackage.actionFunc = func() error {
-			return packages.InstallMSIPackage(ctx, p.managedPackage.MSI.localPath, p.managedPackage.MSI.PackageResource.GetFlags())
+			return packages.InstallMSIPackage(ctx, p.managedPackage.MSI.localPath, p.managedPackage.MSI.PackageResource.GetProperties())
 		}
 
 	case p.managedPackage.Yum != nil:
@@ -412,9 +412,9 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 		enforcePackage.packageType = "yum"
 		enforcePackage.installedCache = yumInstalled.cache
 		switch p.managedPackage.Yum.DesiredState {
-		case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED:
+		case agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED:
 			enforcePackage.action, enforcePackage.actionFunc = installing, func() error { return packages.InstallYumPackages(ctx, []string{enforcePackage.name}) }
-		case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED:
+		case agentendpointpb.OSPolicy_Resource_PackageResource_REMOVED:
 			enforcePackage.action, enforcePackage.actionFunc = removing, func() error { return packages.RemoveYumPackages(ctx, []string{enforcePackage.name}) }
 		}
 
@@ -423,9 +423,9 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 		enforcePackage.packageType = "zypper"
 		enforcePackage.installedCache = zypperInstalled.cache
 		switch p.managedPackage.Zypper.DesiredState {
-		case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_INSTALLED:
+		case agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED:
 			enforcePackage.action, enforcePackage.actionFunc = installing, func() error { return packages.InstallZypperPackages(ctx, []string{enforcePackage.name}) }
-		case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_PackageResource_REMOVED:
+		case agentendpointpb.OSPolicy_Resource_PackageResource_REMOVED:
 			enforcePackage.action, enforcePackage.actionFunc = removing, func() error { return packages.RemoveZypperPackages(ctx, []string{enforcePackage.name}) }
 		}
 

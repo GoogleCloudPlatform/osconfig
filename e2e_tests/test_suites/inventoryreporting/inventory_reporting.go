@@ -20,7 +20,10 @@ import (
 	"log"
 	"path"
 	"regexp"
+<<<<<<< HEAD
 	"strings"
+=======
+>>>>>>> upstream/master
 	"sync"
 	"time"
 
@@ -84,7 +87,10 @@ func runInventoryReportingTest(ctx context.Context, testSetup *inventoryTestSetu
 	metadataItems = append(metadataItems, testSetup.startup)
 	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("enable-os-inventory", "true"))
 	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("osconfig-disabled-features", "tasks,guestpolicies"))
+<<<<<<< HEAD
 	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("osconfig-enabled-prerelease-features", "inventoryreporting"))
+=======
+>>>>>>> upstream/master
 
 	testProjectConfig := testconfig.GetProject()
 	zone := testProjectConfig.AcquireZone()
@@ -107,10 +113,16 @@ func runInventoryReportingTest(ctx context.Context, testSetup *inventoryTestSetu
 
 	// Build regexes for verification.
 	positivePatterns := []string{
+<<<<<<< HEAD
 		`.*Calling ReportInventory with request.*`,
 		fmt.Sprintf(`.*"hostname":.*"%s".*`, testSetup.hostname),
 		fmt.Sprintf(`.*"short_name":.*"%s".*`, testSetup.shortName),
 		fmt.Sprintf(`.*(%s)+.*`, strings.Join(testSetup.packageType, "|")),
+=======
+		fmt.Sprintf(`.*Calling ReportInventory with request containing hostname %s, short name %s, [1-9]+[0-9]* installed packages, [0-9]+ available packages`, testSetup.hostname, testSetup.shortName),
+		`.*"report_full_inventory".*true.*`,
+		`.*"report_full_inventory".*false.*`,
+>>>>>>> upstream/master
 		`.*Finished task "Report OSInventory".*`,
 	}
 	positiveRegexes, err := compileRegex(positivePatterns)

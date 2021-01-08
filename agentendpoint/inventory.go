@@ -13,24 +13,20 @@ import (
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
+	"github.com/GoogleCloudPlatform/osconfig/retryutil"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
 	inventoryURL = agentconfig.ReportURL + "/guestInventory"
-	maxRetries   = 5
 )
 
-// ReportInventory reports inventory to agent endpoint and writes it to guest attributes.
+// ReportInventory writes inventory to guest attributes and reports it to agent endpoint.
 func (c *Client) ReportInventory(ctx context.Context) {
 	state := inventory.Get(ctx)
 	write(ctx, state, inventoryURL)
-
-	// Only enable reporting feature if prerelease feature flag is set.
-	if agentconfig.InventoryReportingEnabled() {
-		c.report(ctx, state)
-	}
+	c.report(ctx, state)
 }
 
 func write(ctx context.Context, state *inventory.InstanceInventory, url string) {
@@ -64,24 +60,28 @@ func (c *Client) report(ctx context.Context, state *inventory.InstanceInventory)
 	inventory := formatInventory(ctx, state)
 
 	reportFull := false
-	retries := 0
-	for {
-		resp, err := c.reportInventory(ctx, inventory, reportFull)
+	var res *agentendpointpb.ReportInventoryResponse
+	var err error
+	f := func() error {
+		res, err = c.reportInventory(ctx, inventory, reportFull)
 		if err != nil {
-			clog.Errorf(ctx, "Error reporting inventory: %v", err)
-		} else {
-			clog.Debugf(ctx, "ReportInventory response: \n%s", util.PrettyFmt(resp))
-			if !resp.GetReportFullInventory() {
-				break
-			} else {
-				reportFull = true
-			}
+			return err
 		}
+		clog.Debugf(ctx, "ReportInventory response:\n%s", util.PrettyFmt(res))
+		return nil
+	}
 
-		retries++
-		if retries >= maxRetries {
-			clog.Errorf(ctx, "Error reporting inventory: exceeded %d tries", maxRetries)
-			break
+	if err = retryutil.RetryAPICall(ctx, apiRetrySec*time.Second, "ReportInventory", f); err != nil {
+		clog.Errorf(ctx, "Error reporting inventory checksum: %v", err)
+		return
+	}
+
+	if res.GetReportFullInventory() {
+		reportFull = true
+
+		if err = retryutil.RetryAPICall(ctx, apiRetrySec*time.Second, "ReportInventory", f); err != nil {
+			clog.Errorf(ctx, "Error reporting full inventory: %v", err)
+			return
 		}
 	}
 }
@@ -100,7 +100,6 @@ func formatInventory(ctx context.Context, state *inventory.InstanceInventory) *a
 	installedPackages := formatPackages(ctx, state.InstalledPackages, state.ShortName)
 	availablePackages := formatPackages(ctx, state.PackageUpdates, state.ShortName)
 
-	clog.Debugf(ctx, "%v%v", osInfo, installedPackages)
 	return &agentendpointpb.Inventory{OsInfo: osInfo, InstalledPackages: installedPackages, AvailablePackages: availablePackages}
 }
 
@@ -182,6 +181,13 @@ func formatPackages(ctx context.Context, packages *packages.Packages, shortName 
 			}
 		}
 	}
+	if packages.COS != nil {
+		for _, pkg := range packages.COS {
+			softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
+				Details: formatCOSPackage(pkg),
+			})
+		}
+	}
 	// Ignore Pip and Gem packages.
 
 	return softwarePackages
@@ -190,6 +196,15 @@ func formatPackages(ctx context.Context, packages *packages.Packages, shortName 
 func formatAptPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_AptPackage {
 	return &agentendpointpb.Inventory_SoftwarePackage_AptPackage{
 		AptPackage: &agentendpointpb.Inventory_VersionedPackage{
+			PackageName:  pkg.Name,
+			Architecture: pkg.Arch,
+			Version:      pkg.Version,
+		}}
+}
+
+func formatCOSPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_CosPackage {
+	return &agentendpointpb.Inventory_SoftwarePackage_CosPackage{
+		CosPackage: &agentendpointpb.Inventory_VersionedPackage{
 			PackageName:  pkg.Name,
 			Architecture: pkg.Arch,
 			Version:      pkg.Version,

@@ -124,11 +124,16 @@ func (c *Client) reportInventory(ctx context.Context, inventory *agentendpointpb
 	io.Copy(hash, bytes.NewReader(b))
 
 	checksum := hex.EncodeToString(hash.Sum(nil))
-	req := &agentendpointpb.ReportInventoryRequest{InstanceIdToken: token, InventoryChecksum: checksum}
+	req := &agentendpointpb.ReportInventoryRequest{InventoryChecksum: checksum}
 	if reportFull {
-		req = &agentendpointpb.ReportInventoryRequest{InstanceIdToken: token, InventoryChecksum: checksum, Inventory: inventory}
+		req = &agentendpointpb.ReportInventoryRequest{InventoryChecksum: checksum, Inventory: inventory}
 	}
 	clog.Debugf(ctx, "Calling ReportInventory with request:\n%s", util.PrettyFmt(req))
+	req.InstanceIdToken = token
+
+	// Additional logging for verifications in e2e tests.
+	payloadSummary := fmt.Sprintf("hostname %s, short name %s, %d installed packages, %d available packages", inventory.OsInfo.Hostname, inventory.OsInfo.ShortName, len(inventory.InstalledPackages), len(inventory.AvailablePackages))
+	clog.Debugf(ctx, "Calling ReportInventory with request containing %s", payloadSummary)
 
 	return c.raw.ReportInventory(ctx, req)
 }
@@ -298,6 +303,7 @@ func (c *Client) loadTaskFromState(ctx context.Context) error {
 	}
 	if st != nil && st.PatchTask != nil {
 		st.PatchTask.client = c
+		st.PatchTask.state = st
 		tasker.Enqueue(ctx, "PatchRun", func() {
 			st.PatchTask.run(ctx)
 		})

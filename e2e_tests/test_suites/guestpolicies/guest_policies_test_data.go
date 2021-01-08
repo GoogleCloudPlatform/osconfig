@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/compute"
+	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/config"
 	osconfigserver "github.com/GoogleCloudPlatform/osconfig/e2e_tests/osconfig_server"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
 	"github.com/golang/protobuf/jsonpb"
@@ -245,6 +246,12 @@ func addRecipeInstallTest(key string) []*guestPolicyTestSetup {
 	for name, image := range utils.HeadWindowsImages {
 		recipeTestSetup = append(recipeTestSetup, buildRecipeInstallTestSetup(name, image, "googet", key))
 	}
+	// This ensures we only run cos tests on the "head image" tests.
+	if config.AgentRepo() == "" {
+		for name, image := range utils.HeadCOSImages {
+			recipeTestSetup = append(recipeTestSetup, buildRecipeInstallTestSetup(name, image, "cos", key))
+		}
+	}
 	return recipeTestSetup
 }
 
@@ -261,6 +268,12 @@ func addMetadataPolicyTest(key string) []*guestPolicyTestSetup {
 	}
 	for name, image := range utils.HeadWindowsImages {
 		policyTestSetup = append(policyTestSetup, buildMetadataPolicyTestSetup(name, image, "googet", key))
+	}
+	// This ensures we only run cos tests on the "head image" tests.
+	if config.AgentRepo() == "" {
+		for name, image := range utils.HeadCOSImages {
+			policyTestSetup = append(policyTestSetup, buildMetadataPolicyTestSetup(name, image, "cos", key))
+		}
 	}
 	return policyTestSetup
 }
@@ -298,6 +311,12 @@ func addRecipeStepsTest(key string) []*guestPolicyTestSetup {
 	}
 	for name, image := range utils.HeadWindowsImages {
 		recipeTestSetup = append(recipeTestSetup, buildRecipeStepsTestSetup(name, image, "googet", key))
+	}
+	// This ensures we only run cos tests on the "head image" tests.
+	if config.AgentRepo() == "" {
+		for name, image := range utils.HeadCOSImages {
+			recipeTestSetup = append(recipeTestSetup, buildRecipeStepsTestSetup(name, image, "cos", key))
+		}
 	}
 	return recipeTestSetup
 }
@@ -403,19 +422,11 @@ func buildRecipeStepsTestSetup(name, image, pkgManager, key string) *guestPolicy
 				[]*osconfigpb.SoftwareRecipe_Step{
 					&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_ScriptRun{
 						ScriptRun: &osconfigpb.SoftwareRecipe_Step_RunScript{
-							Script:      "#!/bin/sh\necho 'hello world' > /tmp/osconfig-SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED",
-							Interpreter: osconfigpb.SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED,
-						},
-					}},
-					&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_ScriptRun{
-						ScriptRun: &osconfigpb.SoftwareRecipe_Step_RunScript{
 							Script:      "echo 'hello world' > /tmp/osconfig-SoftwareRecipe_Step_RunScript_SHELL",
 							Interpreter: osconfigpb.SoftwareRecipe_Step_RunScript_SHELL,
 						},
 					}},
-					&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_FileExec{
-						FileExec: &osconfigpb.SoftwareRecipe_Step_ExecFile{LocationType: &osconfigpb.SoftwareRecipe_Step_ExecFile_ArtifactId{ArtifactId: "exec-test-sh"}},
-					}},
+
 					&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_FileCopy{
 						FileCopy: &osconfigpb.SoftwareRecipe_Step_CopyFile{ArtifactId: "copy-test", Destination: "/tmp/osconfig-copy-test"},
 					}},
@@ -425,10 +436,20 @@ func buildRecipeStepsTestSetup(name, image, pkgManager, key string) *guestPolicy
 					&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_ArchiveExtraction{
 						ArchiveExtraction: &osconfigpb.SoftwareRecipe_Step_ExtractArchive{ArtifactId: "zip-test", Destination: "/tmp/zip-test", Type: osconfigpb.SoftwareRecipe_Step_ExtractArchive_ZIP},
 					}},
-					pkgTest,
 				},
 			),
 		},
+	}
+	// COS can not create files with the executable bit set on the root partition.
+	if pkgManager != "cos" {
+		gp.Recipes[0].InstallSteps = append(gp.Recipes[0].InstallSteps, &osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_ScriptRun{
+			ScriptRun: &osconfigpb.SoftwareRecipe_Step_RunScript{
+				Script:      "#!/bin/sh\necho 'hello world' > /tmp/osconfig-SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED",
+				Interpreter: osconfigpb.SoftwareRecipe_Step_RunScript_INTERPRETER_UNSPECIFIED,
+			},
+		}}, &osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_FileExec{
+			FileExec: &osconfigpb.SoftwareRecipe_Step_ExecFile{LocationType: &osconfigpb.SoftwareRecipe_Step_ExecFile_ArtifactId{ArtifactId: "exec-test-sh"}},
+		}}, pkgTest)
 	}
 
 	if pkgManager == "googet" {

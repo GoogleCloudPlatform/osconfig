@@ -75,7 +75,6 @@ const (
 
 	osConfigPollIntervalDefault = 10
 	osConfigMetadataPollTimeout = 60
-	osConfigWatchConfigTimeout  = 10 * time.Minute
 )
 
 var (
@@ -92,13 +91,15 @@ var (
 	// These are matched server side to what tasks this agent can
 	// perform.
 	capabilities = []string{"PATCH_GA", "GUEST_POLICY_BETA"}
+
+	osConfigWatchConfigTimeout = 10 * time.Minute
 )
 
 type config struct {
-	osInventoryEnabled, guestPoliciesEnabled, taskNotificationEnabled, inventoryReportingEnabled, debugEnabled bool
-	svcEndpoint, googetRepoFilePath, zypperRepoFilePath, yumRepoFilePath, aptRepoFilePath                      string
-	numericProjectID, osConfigPollInterval                                                                     int
-	projectID, instanceZone, instanceName, instanceID                                                          string
+	osInventoryEnabled, guestPoliciesEnabled, taskNotificationEnabled, debugEnabled       bool
+	svcEndpoint, googetRepoFilePath, zypperRepoFilePath, yumRepoFilePath, aptRepoFilePath string
+	numericProjectID, osConfigPollInterval                                                int
+	projectID, instanceZone, instanceName, instanceID                                     string
 }
 
 func (c *config) parseFeatures(features string, enabled bool) {
@@ -111,8 +112,6 @@ func (c *config) parseFeatures(features string, enabled bool) {
 			c.guestPoliciesEnabled = enabled
 		case "osinventory":
 			c.osInventoryEnabled = enabled
-		case "inventoryreporting":
-			c.inventoryReportingEnabled = enabled
 		}
 	}
 }
@@ -389,9 +388,10 @@ func WatchConfig(ctx context.Context) error {
 	var md []byte
 	var webError error
 	// Max watch time, after this WatchConfig will return.
-	timeout := time.NewTicker(osConfigWatchConfigTimeout)
+	timeout := time.After(osConfigWatchConfigTimeout)
 	// Min watch loop time.
 	loopTicker := time.NewTicker(5 * time.Second)
+	defer loopTicker.Stop()
 	eTag := lEtag.get()
 	webErrorCount := 0
 	unmarshalErrorCount := 0
@@ -408,7 +408,7 @@ func WatchConfig(ctx context.Context) error {
 				}
 				unmarshalErrorCount++
 				select {
-				case <-timeout.C:
+				case <-timeout:
 					return err
 				case <-ctx.Done():
 					return nil
@@ -440,7 +440,7 @@ func WatchConfig(ctx context.Context) error {
 		}
 
 		select {
-		case <-timeout.C:
+		case <-timeout:
 			return webError
 		case <-ctx.Done():
 			return nil
@@ -539,11 +539,6 @@ func GuestPoliciesEnabled() bool {
 // TaskNotificationEnabled indicates whether TaskNotification should be enabled.
 func TaskNotificationEnabled() bool {
 	return getAgentConfig().taskNotificationEnabled
-}
-
-// InventoryReportingEnabled indicates whether InventoryReporting should be enabled.
-func InventoryReportingEnabled() bool {
-	return getAgentConfig().inventoryReportingEnabled
 }
 
 // Instance is the URI of the instance the agent is running on.

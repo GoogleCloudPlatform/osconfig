@@ -151,6 +151,16 @@ func (e *execTask) run(ctx context.Context) error {
 		stepConfig = e.Task.GetExecStep().GetWindowsExecStepConfig()
 	}
 
+	if stepConfig == nil {
+		// The given ExecTask does not apply to this OS.
+		return e.reportCompletedState(ctx, "", &agentendpointpb.ReportTaskCompleteRequest_ExecStepTaskOutput{
+			ExecStepTaskOutput: &agentendpointpb.ExecStepTaskOutput{
+				State:    agentendpointpb.ExecStepTaskOutput_COMPLETED,
+				ExitCode: 0,
+			},
+		})
+	}
+
 	localPath := stepConfig.GetLocalPath()
 	if gcsObject := stepConfig.GetGcsObject(); gcsObject != nil {
 		var err error

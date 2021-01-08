@@ -28,14 +28,21 @@ import (
 )
 
 var (
-	testPatchTaskStateString = "{\"PatchTask\":{\"TaskID\":\"foo\",\"Task\":{\"patchConfig\":{\"apt\":{\"type\":\"DIST\",\"excludes\":[\"foo\",\"bar\"],\"exclusivePackages\":[\"foo\",\"bar\"]},\"windowsUpdate\":{\"classifications\":[\"CRITICAL\",\"SECURITY\"],\"excludes\":[\"foo\",\"bar\"],\"exclusivePatches\":[\"foo\",\"bar\"]}}},\"StartedAt\":\"0001-01-01T00:00:00Z\",\"RebootCount\":0}}"
-	testPatchTaskState       = &taskState{PatchTask: &patchTask{TaskID: "foo", Task: &applyPatchesTask{
-		// This is not exhaustive but it's a good test for having multiple settings.
-		&agentendpointpb.ApplyPatchesTask{PatchConfig: &agentendpointpb.PatchConfig{
-			Apt:           &agentendpointpb.AptSettings{Type: agentendpointpb.AptSettings_DIST, Excludes: []string{"foo", "bar"}, ExclusivePackages: []string{"foo", "bar"}},
-			WindowsUpdate: &agentendpointpb.WindowsUpdateSettings{Classifications: []agentendpointpb.WindowsUpdateSettings_Classification{agentendpointpb.WindowsUpdateSettings_CRITICAL, agentendpointpb.WindowsUpdateSettings_SECURITY}, Excludes: []string{"foo", "bar"}, ExclusivePatches: []string{"foo", "bar"}},
-		}},
-	}}}
+	testPatchTaskStateString = "{\"PatchTask\":{\"TaskID\":\"foo\",\"Task\":{\"patchConfig\":{\"apt\":{\"type\":\"DIST\",\"excludes\":[\"foo\",\"bar\"],\"exclusivePackages\":[\"foo\",\"bar\"]},\"windowsUpdate\":{\"classifications\":[\"CRITICAL\",\"SECURITY\"],\"excludes\":[\"foo\",\"bar\"],\"exclusivePatches\":[\"foo\",\"bar\"]}}},\"StartedAt\":\"0001-01-01T00:00:00Z\",\"RebootCount\":0},\"Labels\":{\"foo\":\"bar\"}}"
+	testPatchTaskState       = &taskState{
+		Labels: map[string]string{"foo": "bar"},
+		PatchTask: &patchTask{
+			TaskID: "foo", Task: &applyPatchesTask{
+				// This is not exhaustive but it's a good test for having multiple settings.
+				&agentendpointpb.ApplyPatchesTask{
+					PatchConfig: &agentendpointpb.PatchConfig{
+						Apt:           &agentendpointpb.AptSettings{Type: agentendpointpb.AptSettings_DIST, Excludes: []string{"foo", "bar"}, ExclusivePackages: []string{"foo", "bar"}},
+						WindowsUpdate: &agentendpointpb.WindowsUpdateSettings{Classifications: []agentendpointpb.WindowsUpdateSettings_Classification{agentendpointpb.WindowsUpdateSettings_CRITICAL, agentendpointpb.WindowsUpdateSettings_SECURITY}, Excludes: []string{"foo", "bar"}, ExclusivePatches: []string{"foo", "bar"}},
+					},
+				},
+			},
+		},
+	}
 )
 
 func TestLoadState(t *testing.T) {
@@ -51,6 +58,7 @@ func TestLoadState(t *testing.T) {
 		t.Errorf("no state file: unexpected error: %v", err)
 	}
 
+	// We don't test execTask as reboots during that task type is not supported.
 	var tests = []struct {
 		name    string
 		state   []byte
@@ -75,12 +83,6 @@ func TestLoadState(t *testing.T) {
 			false,
 			testPatchTaskState,
 		},
-		{
-			"ExecTask",
-			[]byte(`{"ExecTask": {"TaskID": "foo"}}`),
-			false,
-			&taskState{ExecTask: &execTask{TaskID: "foo"}},
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -95,8 +97,9 @@ func TestLoadState(t *testing.T) {
 			if err == nil && tt.wantErr {
 				t.Fatalf("expected error")
 			}
-			if diff := cmp.Diff(tt.want, st, cmpopts.IgnoreFields(execTask{}, "Task"), cmpopts.IgnoreUnexported(execTask{}, patchTask{}), protocmp.Transform()); diff != "" {
-				t.Errorf("patchWindow does not match expectation: (-got +want)\n%s", diff)
+
+			if diff := cmp.Diff(tt.want, st, cmpopts.IgnoreUnexported(patchTask{}), protocmp.Transform()); diff != "" {
+				t.Errorf("State does not match expectation: (-got +want)\n%s", diff)
 			}
 		})
 	}
@@ -152,5 +155,27 @@ func TestStateSave(t *testing.T) {
 		if string(got) != tt.want {
 			t.Errorf("%s:\ngot:\n%q\nwant:\n%q", tt.desc, got, tt.want)
 		}
+	}
+}
+
+func TestSaveLoadState(t *testing.T) {
+	td, err := ioutil.TempDir(os.TempDir(), "")
+	if err != nil {
+		t.Fatalf("error creating temp dir: %v", err)
+	}
+	defer os.RemoveAll(td)
+	testState := filepath.Join(td, "testState")
+
+	if err := testPatchTaskState.save(testState); err != nil {
+		t.Errorf("Unexpected save error: %v", err)
+	}
+
+	st, err := loadState(testState)
+	if err != nil {
+		t.Fatalf("Unexpected load error: %v", err)
+	}
+
+	if diff := cmp.Diff(testPatchTaskState, st, cmpopts.IgnoreUnexported(patchTask{}), protocmp.Transform()); diff != "" {
+		t.Errorf("State does not match expectation: (-got +want)\n%s", diff)
 	}
 }
