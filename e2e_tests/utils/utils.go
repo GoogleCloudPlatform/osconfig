@@ -184,6 +184,7 @@ var HeadAptImages = map[string]string{
 	// Ubuntu images.
 	"ubuntu-os-cloud/ubuntu-1604-lts": "projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts",
 	"ubuntu-os-cloud/ubuntu-1804-lts": "projects/ubuntu-os-cloud/global/images/family/ubuntu-1804-lts",
+	"ubuntu-os-cloud/ubuntu-2004-lts": "projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts",
 }
 
 // OldAptImages is a map of names to image paths for old images that use APT.
@@ -195,6 +196,7 @@ var OldAptImages = map[string]string{
 	// Ubuntu images.
 	"old/ubuntu-1604-lts": "projects/ubuntu-os-cloud/global/images/ubuntu-1604-xenial-v20191005",
 	"old/ubuntu-1804-lts": "projects/ubuntu-os-cloud/global/images/ubuntu-1804-bionic-v20191002",
+	"old/ubuntu-2004-lts": "projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20200506",
 }
 
 // HeadSUSEImages is a map of names to image paths for public SUSE images.
@@ -213,16 +215,16 @@ var OldSUSEImages = map[string]string{
 	"old/opensuse-leap": "projects/opensuse-cloud/global/images/opensuse-leap-15-1-v20190618",
 }
 
-// HeadEL6Images is a map of names to image paths for public EL6 image families.
+// HeadEL6Images is a map of names to image paths for public EL6 images, we use the last
+// published image here as EL6 is EOL.
+// TODO: Either remove support for el6 or move this to a deprected test suite.
 var HeadEL6Images = map[string]string{
-	"centos-cloud/centos-6": "projects/centos-cloud/global/images/family/centos-6",
-	"rhel-cloud/rhel-6":     "projects/rhel-cloud/global/images/family/rhel-6",
+	"rhel-cloud/rhel-6": "projects/rhel-cloud/global/images/rhel-6-v20201112",
 }
 
 // OldEL6Images is a map of names to image paths for old EL6 images.
 var OldEL6Images = map[string]string{
-	"old/centos-6": "projects/centos-cloud/global/images/centos-6-v20191014",
-	"old/rhel-6":   "projects/rhel-cloud/global/images/rhel-6-v20191014",
+	"old/rhel-6": "projects/rhel-cloud/global/images/rhel-6-v20191014",
 }
 
 // HeadEL7Images is a map of names to image paths for public EL7 image families.
@@ -272,9 +274,8 @@ var HeadWindowsImages = map[string]string{
 	"windows-cloud/windows-2016-core":    "projects/windows-cloud/global/images/family/windows-2016-core",
 	"windows-cloud/windows-2019":         "projects/windows-cloud/global/images/family/windows-2019",
 	"windows-cloud/windows-2019-core":    "projects/windows-cloud/global/images/family/windows-2019-core",
-	"windows-cloud/windows-1809-core":    "projects/windows-cloud/global/images/family/windows-1809-core",
-	"windows-cloud/windows-1903-core":    "projects/windows-cloud/global/images/family/windows-1903-core",
 	"windows-cloud/windows-1909-core":    "projects/windows-cloud/global/images/family/windows-1909-core",
+	"windows-cloud/windows-2004-core":    "projects/windows-cloud/global/images/family/windows-2004-core",
 }
 
 // OldWindowsImages is a map of names to image paths for old Windows images.
@@ -285,9 +286,6 @@ var OldWindowsImages = map[string]string{
 	"old/windows-2016-core":    "projects/windows-cloud/global/images/windows-server-2016-dc-core-v20191008",
 	"old/windows-2019":         "projects/windows-cloud/global/images/windows-server-2019-dc-v20191008",
 	"old/windows-2019-core":    "projects/windows-cloud/global/images/windows-server-2019-dc-core-v20191008",
-	"old/windows-1809-core":    "projects/windows-cloud/global/images/windows-server-1809-dc-core-v20191008",
-	"old/windows-1903-core":    "projects/windows-cloud/global/images/windows-server-1903-dc-core-v20191008",
-	"old/windows-1909-core":    "projects/windows-cloud/global/images/windows-server-1909-dc-core-v20191210",
 }
 
 // HeadCOSImages is a map of names to image paths for public COS image families.

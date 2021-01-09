@@ -27,23 +27,23 @@ import (
 )
 
 var (
-	aptRepositoryResource = &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository{
-		ArchiveType:  agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_AptRepository_DEB,
+	aptRepositoryResource = &agentendpointpb.OSPolicy_Resource_RepositoryResource_AptRepository{
+		ArchiveType:  agentendpointpb.OSPolicy_Resource_RepositoryResource_AptRepository_DEB,
 		Uri:          "uri",
 		Distribution: "distribution",
 		Components:   []string{"c1", "c2"},
 	}
-	gooRepositoryResource = &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_GooRepository{
+	gooRepositoryResource = &agentendpointpb.OSPolicy_Resource_RepositoryResource_GooRepository{
 		Name: "name",
 		Url:  "url",
 	}
-	yumRepositoryResource = &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_YumRepository{
+	yumRepositoryResource = &agentendpointpb.OSPolicy_Resource_RepositoryResource_YumRepository{
 		Id:          "id",
 		DisplayName: "displayname",
 		BaseUrl:     "baseurl",
 		GpgKeys:     []string{"key1", "key2"},
 	}
-	zypperRepositoryResource = &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_ZypperRepository{
+	zypperRepositoryResource = &agentendpointpb.OSPolicy_Resource_RepositoryResource_ZypperRepository{
 		Id:          "id",
 		DisplayName: "displayname",
 		BaseUrl:     "baseurl",
@@ -55,13 +55,13 @@ func TestRepositoryResourceValidate(t *testing.T) {
 	ctx := context.Background()
 	var tests = []struct {
 		name   string
-		rrpb   *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource
+		rrpb   *agentendpointpb.OSPolicy_Resource_RepositoryResource
 		wantMR ManagedRepository
 	}{
 		{
 			"Apt",
-			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource{
-				Repository: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Apt{
+			&agentendpointpb.OSPolicy_Resource_RepositoryResource{
+				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Apt{
 					Apt: aptRepositoryResource,
 				},
 			},
@@ -76,8 +76,8 @@ func TestRepositoryResourceValidate(t *testing.T) {
 		},
 		{
 			"GooGet",
-			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource{
-				Repository: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Goo{
+			&agentendpointpb.OSPolicy_Resource_RepositoryResource{
+				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Goo{
 					Goo: gooRepositoryResource,
 				},
 			},
@@ -91,8 +91,8 @@ func TestRepositoryResourceValidate(t *testing.T) {
 		},
 		{
 			"Yum",
-			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource{
-				Repository: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Yum{
+			&agentendpointpb.OSPolicy_Resource_RepositoryResource{
+				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Yum{
 					Yum: yumRepositoryResource,
 				},
 			},
@@ -107,8 +107,8 @@ func TestRepositoryResourceValidate(t *testing.T) {
 		},
 		{
 			"Zypper",
-			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource{
-				Repository: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Zypper{
+			&agentendpointpb.OSPolicy_Resource_RepositoryResource{
+				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Zypper{
 					Zypper: zypperRepositoryResource,
 				},
 			},
@@ -125,8 +125,8 @@ func TestRepositoryResourceValidate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pr := &OSPolicyResource{
-				ApplyConfigTask_OSPolicy_Resource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource{
-					ResourceType: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_Repository{Repository: tt.rrpb},
+				OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
+					ResourceType: &agentendpointpb.OSPolicy_Resource_Repository{Repository: tt.rrpb},
 				},
 			}
 			if err := pr.Validate(ctx); err != nil {
@@ -147,14 +147,14 @@ func TestRepositoryResourceCheckState(t *testing.T) {
 	ctx := context.Background()
 	var tests = []struct {
 		name               string
-		rrpb               *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource
+		rrpb               *agentendpointpb.OSPolicy_Resource_RepositoryResource
 		contents           []byte
 		wantInDesiredState bool
 	}{
 		{
 			"Matches",
-			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource{
-				Repository: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Apt{
+			&agentendpointpb.OSPolicy_Resource_RepositoryResource{
+				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Apt{
 					Apt: aptRepositoryResource,
 				},
 			},
@@ -163,8 +163,8 @@ func TestRepositoryResourceCheckState(t *testing.T) {
 		},
 		{
 			"DoesNotMatch",
-			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource{
-				Repository: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Apt{
+			&agentendpointpb.OSPolicy_Resource_RepositoryResource{
+				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Apt{
 					Apt: aptRepositoryResource,
 				},
 			},
@@ -173,8 +173,8 @@ func TestRepositoryResourceCheckState(t *testing.T) {
 		},
 		{
 			"NoRepoFile",
-			&agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource{
-				Repository: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Apt{
+			&agentendpointpb.OSPolicy_Resource_RepositoryResource{
+				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Apt{
 					Apt: aptRepositoryResource,
 				},
 			},
@@ -185,8 +185,8 @@ func TestRepositoryResourceCheckState(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pr := &OSPolicyResource{
-				ApplyConfigTask_OSPolicy_Resource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource{
-					ResourceType: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_Repository{Repository: tt.rrpb},
+				OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
+					ResourceType: &agentendpointpb.OSPolicy_Resource_Repository{Repository: tt.rrpb},
 				},
 			}
 			if err := pr.Validate(ctx); err != nil {
@@ -231,8 +231,8 @@ func TestRepositoryResourceEnforceState(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rrpb := &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource{
-		Repository: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_RepositoryResource_Apt{
+	rrpb := &agentendpointpb.OSPolicy_Resource_RepositoryResource{
+		Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Apt{
 			Apt: aptRepositoryResource,
 		},
 	}
@@ -252,8 +252,8 @@ func TestRepositoryResourceEnforceState(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			pr := &OSPolicyResource{
-				ApplyConfigTask_OSPolicy_Resource: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource{
-					ResourceType: &agentendpointpb.ApplyConfigTask_OSPolicy_Resource_Repository{Repository: rrpb},
+				OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
+					ResourceType: &agentendpointpb.OSPolicy_Resource_Repository{Repository: rrpb},
 				},
 			}
 			if err := pr.Validate(ctx); err != nil {

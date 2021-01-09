@@ -33,13 +33,13 @@ import (
 var runner = util.CommandRunner(&util.DefaultRunner{})
 
 type execResource struct {
-	*agentendpointpb.ApplyConfigTask_OSPolicy_Resource_ExecResource
+	*agentendpointpb.OSPolicy_Resource_ExecResource
 
 	validatePath, enforcePath, tempDir string
 }
 
 // TODO: use a persistent cache for downloaded files so we dont need to redownload them each time
-func (e *execResource) download(ctx context.Context, execR *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec) (string, error) {
+func (e *execResource) download(ctx context.Context, execR *agentendpointpb.OSPolicy_Resource_ExecResource_Exec) (string, error) {
 	tmpDir, err := ioutil.TempDir(e.tempDir, "")
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp dir: %s", err)
@@ -47,21 +47,21 @@ func (e *execResource) download(ctx context.Context, execR *agentendpointpb.Appl
 	// File extensions are impoprtant on Windows.
 	var name string
 	switch execR.GetSource().(type) {
-	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_Script:
+	case *agentendpointpb.OSPolicy_Resource_ExecResource_Exec_Script:
 		switch execR.GetInterpreter() {
-		case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_NONE:
+		case agentendpointpb.OSPolicy_Resource_ExecResource_Exec_NONE:
 			if runtime.GOOS == "windows" {
 				name = filepath.Join(tmpDir, "script.cmd")
 			} else {
 				name = filepath.Join(tmpDir, "script")
 			}
-		case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_SHELL:
+		case agentendpointpb.OSPolicy_Resource_ExecResource_Exec_SHELL:
 			if runtime.GOOS == "windows" {
 				name = filepath.Join(tmpDir, "script.cmd")
 			} else {
 				name = filepath.Join(tmpDir, "script.sh")
 			}
-		case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_POWERSHELL:
+		case agentendpointpb.OSPolicy_Resource_ExecResource_Exec_POWERSHELL:
 			name = filepath.Join(tmpDir, "script.ps1")
 		default:
 			return "", fmt.Errorf("unsupported interpreter %q", execR.GetInterpreter())
@@ -72,7 +72,7 @@ func (e *execResource) download(ctx context.Context, execR *agentendpointpb.Appl
 			return "", err
 		}
 
-	case *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_File:
+	case *agentendpointpb.OSPolicy_Resource_ExecResource_Exec_File:
 		if execR.GetFile().GetLocalPath() != "" {
 			return execR.GetFile().GetLocalPath(), nil
 		}
@@ -115,20 +115,20 @@ func (e *execResource) validate(ctx context.Context) (*ManagedResources, error) 
 	return nil, nil
 }
 
-func (e *execResource) run(ctx context.Context, name string, execR *agentendpointpb.ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec) ([]byte, []byte, int, error) {
+func (e *execResource) run(ctx context.Context, name string, execR *agentendpointpb.OSPolicy_Resource_ExecResource_Exec) ([]byte, []byte, int, error) {
 	var cmd string
 	var args []string
 	switch execR.GetInterpreter() {
-	case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_NONE:
+	case agentendpointpb.OSPolicy_Resource_ExecResource_Exec_NONE:
 		cmd = name
-	case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_SHELL:
+	case agentendpointpb.OSPolicy_Resource_ExecResource_Exec_SHELL:
 		if runtime.GOOS == "windows" {
 			cmd = name
 		} else {
 			args = append([]string{name})
 			cmd = "/bin/sh"
 		}
-	case agentendpointpb.ApplyConfigTask_OSPolicy_Resource_ExecResource_Exec_POWERSHELL:
+	case agentendpointpb.OSPolicy_Resource_ExecResource_Exec_POWERSHELL:
 		if runtime.GOOS != "windows" {
 			return nil, nil, 0, fmt.Errorf("interpreter %q can only be used on Windows systems", execR.GetInterpreter())
 		}
