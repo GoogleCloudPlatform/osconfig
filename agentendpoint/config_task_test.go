@@ -19,12 +19,12 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"github.com/GoogleCloudPlatform/osconfig/config"
 	agentendpointpb "github.com/GoogleCloudPlatform/osconfig/internal/google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1alpha1"
 )
 
@@ -146,6 +146,7 @@ func genTestResourceCompliance(id string, steps int, inDesiredState bool) *agent
 	// Validation
 	if steps > 0 {
 		outcome := agentendpointpb.OSPolicyResourceConfigStep_FAILED
+		state := agentendpointpb.OSPolicyComplianceState_UNKNOWN
 		if steps > 1 {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
 		}
@@ -153,21 +154,28 @@ func genTestResourceCompliance(id string, steps int, inDesiredState bool) *agent
 			Type:    agentendpointpb.OSPolicyResourceConfigStep_VALIDATION,
 			Outcome: outcome,
 		}
+		ret.State = state
 	}
-	// CheckDesiredState
+	// DesiredStateCheck
 	if steps > 1 {
-		outcome := agentendpointpb.OSPolicyResourceConfigStep_FAILED
-		if inDesiredState {
-			outcome = agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
+		outcome := agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
+		state := agentendpointpb.OSPolicyComplianceState_NON_COMPLIANT
+		if steps == 2 && !inDesiredState {
+			outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
+			state = agentendpointpb.OSPolicyComplianceState_UNKNOWN
+		} else if inDesiredState {
+			state = agentendpointpb.OSPolicyComplianceState_COMPLIANT
 		}
 		ret.ConfigSteps[1] = &agentendpointpb.OSPolicyResourceConfigStep{
 			Type:    agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
 			Outcome: outcome,
 		}
+		ret.State = state
 	}
 	// EnforceDesiredState
 	if steps > 2 {
 		outcome := agentendpointpb.OSPolicyResourceConfigStep_FAILED
+		state := agentendpointpb.OSPolicyComplianceState_UNKNOWN
 		if steps > 3 {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
 		}
@@ -175,17 +183,23 @@ func genTestResourceCompliance(id string, steps int, inDesiredState bool) *agent
 			Type:    agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
 			Outcome: outcome,
 		}
+		ret.State = state
 	}
-	// CheckDesiredStatePostEnforcement{
+	// DesiredStateCheckPostEnforcement{
 	if steps > 3 {
-		outcome := agentendpointpb.OSPolicyResourceConfigStep_FAILED
-		if steps > 4 {
-			outcome = agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
+		outcome := agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
+		state := agentendpointpb.OSPolicyComplianceState_NON_COMPLIANT
+		if steps == 4 {
+			outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
+			state = agentendpointpb.OSPolicyComplianceState_UNKNOWN
+		} else {
+			state = agentendpointpb.OSPolicyComplianceState_COMPLIANT
 		}
 		ret.ConfigSteps[3] = &agentendpointpb.OSPolicyResourceConfigStep{
 			Type:    agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
 			Outcome: outcome,
 		}
+		ret.State = state
 	}
 	return ret
 }
@@ -232,7 +246,6 @@ func TestRunApplyConfig(t *testing.T) {
 		stepsBeforeErr      int
 		startInDesiredState bool
 	}{
-
 		// Normal cases:
 		{
 			"InDesiredState",

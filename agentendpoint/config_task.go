@@ -137,6 +137,7 @@ func validateConfigResource(ctx context.Context, plcy *policy, policyMR *config.
 	resource := plcy.resources[configResource.GetId()]
 
 	outcome := agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
+	state := agentendpointpb.OSPolicyComplianceState_UNKNOWN
 	if err := resource.Validate(ctx); err != nil {
 		outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 		plcy.hasError = true
@@ -154,6 +155,7 @@ func validateConfigResource(ctx context.Context, plcy *policy, policyMR *config.
 		Type:    agentendpointpb.OSPolicyResourceConfigStep_VALIDATION,
 		Outcome: outcome,
 	}
+	rCompliance.State = state
 }
 
 func (c *configTask) validation(ctx context.Context) {
@@ -189,21 +191,23 @@ func checkConfigResourceState(ctx context.Context, plcy *policy, rCompliance *ag
 	res := plcy.resources[configResource.GetId()]
 
 	outcome := agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
+	state := agentendpointpb.OSPolicyComplianceState_UNKNOWN
 	err := res.CheckState(ctx)
 	if err != nil {
 		outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 		plcy.hasError = true
 		clog.Errorf(ctx, "Error running desired state check: %v", err)
-	}
-
-	if !res.InDesiredState() {
-		outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
+	} else if res.InDesiredState() {
+		state = agentendpointpb.OSPolicyComplianceState_COMPLIANT
+	} else {
+		state = agentendpointpb.OSPolicyComplianceState_NON_COMPLIANT
 	}
 
 	rCompliance.GetConfigSteps()[checkDesiredStateStepIndex] = &agentendpointpb.OSPolicyResourceConfigStep{
 		Type:    agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
 		Outcome: outcome,
 	}
+	rCompliance.State = state
 }
 
 func (c *configTask) checkState(ctx context.Context) {
@@ -269,6 +273,9 @@ func enforceConfigResourceState(ctx context.Context, plcy *policy, rCompliance *
 		Type:    agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
 		Outcome: outcome,
 	}
+	// Resource is always in an unknown state after enforcement is run.
+	// A COMPLIANT state will only happen after a post check.
+	rCompliance.State = agentendpointpb.OSPolicyComplianceState_UNKNOWN
 	return true
 }
 
@@ -306,23 +313,23 @@ func postCheckConfigResourceState(ctx context.Context, plcy *policy, rCompliance
 	res := plcy.resources[configResource.GetId()]
 
 	outcome := agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
-	errMsg := ""
+	state := agentendpointpb.OSPolicyComplianceState_UNKNOWN
 	err := res.CheckState(ctx)
 	if err != nil {
 		outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 		plcy.hasError = true
-		errMsg = fmt.Sprintf("Error running desired state check: %v", err)
-		clog.Errorf(ctx, errMsg)
-	}
-
-	if !res.InDesiredState() {
-		outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
+		clog.Errorf(ctx, "Error running post config desired state check: %v", err)
+	} else if res.InDesiredState() {
+		state = agentendpointpb.OSPolicyComplianceState_COMPLIANT
+	} else {
+		state = agentendpointpb.OSPolicyComplianceState_NON_COMPLIANT
 	}
 
 	rCompliance.GetConfigSteps()[postCheckDesiredStateStepIndex] = &agentendpointpb.OSPolicyResourceConfigStep{
 		Type:    agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
 		Outcome: outcome,
 	}
+	rCompliance.State = state
 }
 
 func (c *configTask) postCheckState(ctx context.Context) {
