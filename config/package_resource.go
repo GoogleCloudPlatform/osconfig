@@ -208,12 +208,14 @@ type packageCache struct {
 	refreshed time.Time
 }
 
-var aptInstalled packageCache
-var debInstalled packageCache
-var gooInstalled packageCache
-var yumInstalled packageCache
-var zypperInstalled packageCache
-var rpmInstalled packageCache
+var (
+	aptInstalled    = &packageCache{}
+	debInstalled    = &packageCache{}
+	gooInstalled    = &packageCache{}
+	yumInstalled    = &packageCache{}
+	zypperInstalled = &packageCache{}
+	rpmInstalled    = &packageCache{}
+)
 
 func populateInstalledCache(ctx context.Context, mp ManagedPackage) error {
 	var cache *packageCache
@@ -222,15 +224,15 @@ func populateInstalledCache(ctx context.Context, mp ManagedPackage) error {
 	switch {
 	// TODO: implement apt functions
 	case mp.Apt != nil:
-		cache = &aptInstalled
+		cache = aptInstalled
 		refreshFunc = packages.InstalledDebPackages
 
 	case mp.Deb != nil:
-		cache = &debInstalled
+		cache = debInstalled
 		refreshFunc = packages.InstalledDebPackages
 
 	case mp.GooGet != nil:
-		cache = &gooInstalled
+		cache = gooInstalled
 		refreshFunc = packages.InstalledGooGetPackages
 
 	case mp.MSI != nil:
@@ -239,16 +241,16 @@ func populateInstalledCache(ctx context.Context, mp ManagedPackage) error {
 
 	// TODO: implement yum functions
 	case mp.Yum != nil:
-		cache = &yumInstalled
+		cache = yumInstalled
 		refreshFunc = packages.InstalledRPMPackages
 
 	// TODO: implement zypper functions
 	case mp.Zypper != nil:
-		cache = &zypperInstalled
+		cache = zypperInstalled
 		refreshFunc = packages.InstalledRPMPackages
 
 	case mp.RPM != nil:
-		cache = &rpmInstalled
+		cache = rpmInstalled
 		refreshFunc = packages.InstalledRPMPackages
 	default:
 		return fmt.Errorf("unknown or unpopulated ManagedPackage package type: %+v", mp)
