@@ -208,12 +208,14 @@ type packageCache struct {
 	refreshed time.Time
 }
 
-var aptInstalled packageCache
-var debInstalled packageCache
-var gooInstalled packageCache
-var yumInstalled packageCache
-var zypperInstalled packageCache
-var rpmInstalled packageCache
+var (
+	aptInstalled    = &packageCache{}
+	debInstalled    = &packageCache{}
+	gooInstalled    = &packageCache{}
+	yumInstalled    = &packageCache{}
+	zypperInstalled = &packageCache{}
+	rpmInstalled    = &packageCache{}
+)
 
 func populateInstalledCache(ctx context.Context, mp ManagedPackage) error {
 	var cache *packageCache
@@ -222,15 +224,15 @@ func populateInstalledCache(ctx context.Context, mp ManagedPackage) error {
 	switch {
 	// TODO: implement apt functions
 	case mp.Apt != nil:
-		cache = &aptInstalled
+		cache = aptInstalled
 		refreshFunc = packages.InstalledDebPackages
 
 	case mp.Deb != nil:
-		cache = &debInstalled
+		cache = debInstalled
 		refreshFunc = packages.InstalledDebPackages
 
 	case mp.GooGet != nil:
-		cache = &gooInstalled
+		cache = gooInstalled
 		refreshFunc = packages.InstalledGooGetPackages
 
 	case mp.MSI != nil:
@@ -239,16 +241,16 @@ func populateInstalledCache(ctx context.Context, mp ManagedPackage) error {
 
 	// TODO: implement yum functions
 	case mp.Yum != nil:
-		cache = &yumInstalled
+		cache = yumInstalled
 		refreshFunc = packages.InstalledRPMPackages
 
 	// TODO: implement zypper functions
 	case mp.Zypper != nil:
-		cache = &zypperInstalled
+		cache = zypperInstalled
 		refreshFunc = packages.InstalledRPMPackages
 
 	case mp.RPM != nil:
-		cache = &rpmInstalled
+		cache = rpmInstalled
 		refreshFunc = packages.InstalledRPMPackages
 	default:
 		return fmt.Errorf("unknown or unpopulated ManagedPackage package type: %+v", mp)
@@ -361,7 +363,7 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 			action         string
 			packageType    string
 			actionFunc     func() error
-			installedCache map[string]struct{}
+			installedCache *packageCache
 		}
 	)
 
@@ -369,7 +371,7 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 	case p.managedPackage.Apt != nil:
 		enforcePackage.name = p.managedPackage.Apt.PackageResource.GetName()
 		enforcePackage.packageType = "apt"
-		enforcePackage.installedCache = aptInstalled.cache
+		enforcePackage.installedCache = aptInstalled
 		switch p.managedPackage.Apt.DesiredState {
 		case agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED:
 			enforcePackage.action, enforcePackage.actionFunc = installing, func() error { return packages.InstallAptPackages(ctx, []string{enforcePackage.name}) }
@@ -380,7 +382,7 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 	case p.managedPackage.Deb != nil:
 		enforcePackage.name = p.managedPackage.Deb.name
 		enforcePackage.packageType = "deb"
-		enforcePackage.installedCache = debInstalled.cache
+		enforcePackage.installedCache = debInstalled
 		enforcePackage.action = installing
 		if p.GetDeb().GetPullDeps() {
 			enforcePackage.actionFunc = func() error { return packages.InstallAptPackages(ctx, []string{p.managedPackage.Deb.localPath}) }
@@ -391,7 +393,7 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 	case p.managedPackage.GooGet != nil:
 		enforcePackage.name = p.managedPackage.GooGet.PackageResource.GetName()
 		enforcePackage.packageType = "googet"
-		enforcePackage.installedCache = gooInstalled.cache
+		enforcePackage.installedCache = gooInstalled
 		switch p.managedPackage.GooGet.DesiredState {
 		case agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED:
 			enforcePackage.action, enforcePackage.actionFunc = installing, func() error { return packages.InstallGooGetPackages(ctx, []string{enforcePackage.name}) }
@@ -410,7 +412,7 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 	case p.managedPackage.Yum != nil:
 		enforcePackage.name = p.managedPackage.Yum.PackageResource.GetName()
 		enforcePackage.packageType = "yum"
-		enforcePackage.installedCache = yumInstalled.cache
+		enforcePackage.installedCache = yumInstalled
 		switch p.managedPackage.Yum.DesiredState {
 		case agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED:
 			enforcePackage.action, enforcePackage.actionFunc = installing, func() error { return packages.InstallYumPackages(ctx, []string{enforcePackage.name}) }
@@ -421,7 +423,7 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 	case p.managedPackage.Zypper != nil:
 		enforcePackage.name = p.managedPackage.Zypper.PackageResource.GetName()
 		enforcePackage.packageType = "zypper"
-		enforcePackage.installedCache = zypperInstalled.cache
+		enforcePackage.installedCache = zypperInstalled
 		switch p.managedPackage.Zypper.DesiredState {
 		case agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED:
 			enforcePackage.action, enforcePackage.actionFunc = installing, func() error { return packages.InstallZypperPackages(ctx, []string{enforcePackage.name}) }
@@ -432,7 +434,7 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 	case p.managedPackage.RPM != nil:
 		enforcePackage.name = p.managedPackage.RPM.name
 		enforcePackage.packageType = "rpm"
-		enforcePackage.installedCache = rpmInstalled.cache
+		enforcePackage.installedCache = rpmInstalled
 		enforcePackage.action = installing
 		if p.GetRpm().GetPullDeps() {
 			switch {
@@ -450,7 +452,7 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 
 	clog.Infof(ctx, "%s %s package %q", strings.Title(enforcePackage.action), enforcePackage.packageType, enforcePackage.name)
 	// Reset the cache as we are taking action.
-	enforcePackage.installedCache = nil
+	enforcePackage.installedCache.cache = nil
 	if err := enforcePackage.actionFunc(); err != nil {
 		return false, fmt.Errorf("error %s %s package %q", enforcePackage.action, enforcePackage.packageType, enforcePackage.name)
 	}
