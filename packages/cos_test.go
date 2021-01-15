@@ -12,7 +12,8 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-// +build linux,!s390x,!ppc64le,!ppc64
+// +build linux
+// +build 386 amd64
 
 package packages
 

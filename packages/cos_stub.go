@@ -12,10 +12,9 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-// Stub for s390x ppc64le ppc64 linux builds.
+// Stub for linux builds.
 
-// +build linux
-// +build s390x ppc64le ppc64
+// +build linux,!386,!amd64
 
 package packages
 
