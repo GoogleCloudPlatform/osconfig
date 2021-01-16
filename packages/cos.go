@@ -12,9 +12,10 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-// Only build for linux but not s390x ppc64le ppc64.
+// Only build for linux but not on unsupported architectures.
 
-// +build linux,!s390x,!ppc64le,!ppc64
+// +build linux
+// +build 386 amd64
 
 package packages
 
