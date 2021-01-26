@@ -222,6 +222,7 @@ func AptUpdates(ctx context.Context, opts ...AptGetUpgradeOption) ([]PkgInfo, er
 	return parseAptUpdates(ctx, out, aptOpts.showNew), nil
 }
 
+// AptUpdate runs apt-get update.
 func AptUpdate(ctx context.Context) ([]byte, error) {
 	return run(ctx, aptGet, aptGetUpdateArgs)
 }
