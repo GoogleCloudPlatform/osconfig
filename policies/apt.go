@@ -153,6 +153,10 @@ func aptChanges(ctx context.Context, aptInstalled, aptRemoved, aptUpdated []*age
 	changes := getNecessaryChanges(installed, updates, aptInstalled, aptRemoved, aptUpdated)
 
 	if changes.packagesToInstall != nil {
+		// run apt-get update to update to latest changes.
+		if _, err := packages.AptUpdate(ctx); err != nil {
+			clog.Errorf(ctx, "Error running apt-get update")
+		}
 		clog.Infof(ctx, "Installing packages %s", changes.packagesToInstall)
 		if err := packages.InstallAptPackages(ctx, changes.packagesToInstall); err != nil {
 			clog.Errorf(ctx, "Error installing apt packages: %v", err)
