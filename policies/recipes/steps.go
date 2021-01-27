@@ -468,7 +468,7 @@ func stepRunScript(ctx context.Context, step *agentendpointpb.SoftwareRecipe_Ste
 		extension = extensionMap[step.Interpreter]
 	}
 	scriptPath := filepath.Join(stepDir, "recipe_script_source"+extension)
-	if err := writeScript(scriptPath, step.Script); err != nil {
+	if err := util.AtomicWrite(scriptPath, []byte(step.Script), 0755); err != nil {
 		return err
 	}
 
@@ -494,24 +494,6 @@ func stepRunScript(ctx context.Context, step *agentendpointpb.SoftwareRecipe_Ste
 		return fmt.Errorf("unsupported interpreter %q", step.Interpreter)
 	}
 	return executeCommand(ctx, cmd, args, stepDir, runEnvs, step.AllowedExitCodes)
-}
-
-func writeScript(path, contents string) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	if _, err := f.WriteString(contents); err != nil {
-		f.Close()
-		return err
-	}
-	if err := f.Chmod(0755); err != nil {
-		return err
-	}
-	if err := f.Close(); err != nil {
-		return err
-	}
-	return nil
 }
 
 func executeCommand(ctx context.Context, cmd string, args []string, workDir string, runEnvs []string, allowedExitCodes []int32) error {
