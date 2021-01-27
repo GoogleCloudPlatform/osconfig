@@ -83,7 +83,7 @@ func fetchArtifact(ctx context.Context, artifact *agentendpointpb.SoftwareRecipe
 	}
 
 	localPath := getStoragePath(directory, artifact.Id, extension)
-	if err := external.DownloadStream(reader, checksum, localPath, 0600); err != nil {
+	if err := external.DownloadStream(reader, checksum, localPath, 0644); err != nil {
 		return "", fmt.Errorf("Error downloading stream: %v", err)
 	}
 

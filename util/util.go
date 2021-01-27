@@ -18,6 +18,8 @@ package util
 import (
 	"bytes"
 	"context"
+	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -93,4 +95,22 @@ func (r *DefaultRunner) Run(ctx context.Context, cmd *exec.Cmd) ([]byte, []byte,
 	err := cmd.Run()
 	clog.Debugf(ctx, "%s %q output:\n%s", cmd.Path, cmd.Args[1:], strings.ReplaceAll(stdout.String(), "\n", "\n "))
 	return stdout.Bytes(), stderr.Bytes(), err
+}
+
+// AtomicWrite attempts to atomically write a file.
+func AtomicWrite(path string, content []byte, mode os.FileMode) error {
+	tmp, err := ioutil.TempFile(filepath.Dir(path), filepath.Base(path)+".tmp*")
+	if err != nil {
+		return fmt.Errorf("unable to create temp file: %v", err)
+	}
+	if _, err = tmp.Write(content); err != nil {
+		return err
+	}
+	if err := tmp.Chmod(mode); err != nil {
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmp.Name(), path)
 }
