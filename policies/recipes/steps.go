@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -66,7 +67,9 @@ func stepCopyFile(step *agentendpointpb.SoftwareRecipe_Step_CopyFile, artifacts 
 		if !step.Overwrite {
 			return fmt.Errorf("file already exists at path %q and Overwrite = false", step.Destination)
 		}
-		os.Chmod(dest, permissions)
+		if err := os.Chmod(dest, permissions); err != nil {
+			return err
+		}
 	}
 
 	artifact := step.GetArtifactId()
@@ -80,18 +83,26 @@ func stepCopyFile(step *agentendpointpb.SoftwareRecipe_Step_CopyFile, artifacts 
 		return err
 	}
 	defer reader.Close()
-	writer, err := os.OpenFile(dest, os.O_TRUNC|os.O_WRONLY|os.O_CREATE, permissions)
-	if err != nil {
-		return err
-	}
-	defer writer.Close()
 
-	_, err = io.Copy(writer, reader)
+	tmp, err := ioutil.TempFile(filepath.Base(dest), ".tmp*")
 	if err != nil {
 		return err
 	}
 
-	return nil
+	if _, err = io.Copy(tmp, reader); err != nil {
+		tmp.Close()
+		return err
+	}
+
+	if err := tmp.Chmod(permissions); err != nil {
+		return err
+	}
+
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+
+	return os.Rename(tmp.Name(), dest)
 }
 
 func parsePermissions(s string) (os.FileMode, error) {
@@ -437,8 +448,8 @@ func stepExecFile(ctx context.Context, step *agentendpointpb.SoftwareRecipe_Step
 			return fmt.Errorf("%q not found in artifact map", artifact)
 		}
 
-		err := os.Chmod(path, 0700)
-		if err != nil {
+		// By default artifacts are created with 0644
+		if err := os.Chmod(path, 0755); err != nil {
 			return fmt.Errorf("error setting execute permissions on artifact %s: %v", step.GetArtifactId(), err)
 		}
 	case step.GetLocalPath() != "":
@@ -494,10 +505,10 @@ func writeScript(path, contents string) error {
 		f.Close()
 		return err
 	}
-	if err := f.Close(); err != nil {
+	if err := f.Chmod(0755); err != nil {
 		return err
 	}
-	if err := os.Chmod(path, 0755); err != nil {
+	if err := f.Close(); err != nil {
 		return err
 	}
 	return nil

@@ -31,6 +31,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/policies/recipes"
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
@@ -217,28 +218,20 @@ func checksum(r io.Reader) hash.Hash {
 }
 
 func writeIfChanged(ctx context.Context, content []byte, path string) error {
-	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
-	if err != nil {
+	file, err := os.Open(path)
+	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
-
-	reader := bytes.NewReader(content)
-	h1 := checksum(reader)
-	h2 := checksum(file)
-	if bytes.Equal(h1.Sum(nil), h2.Sum(nil)) {
+	if !os.IsNotExist(err) {
+		reader := bytes.NewReader(content)
+		h1 := checksum(reader)
+		h2 := checksum(file)
 		file.Close()
-		return nil
+		if bytes.Equal(h1.Sum(nil), h2.Sum(nil)) {
+			return nil
+		}
 	}
 
 	clog.Infof(ctx, "Writing repo file %s with updated contents", path)
-	if err := file.Truncate(0); err != nil {
-		file.Close()
-		return err
-	}
-	if _, err := file.WriteAt(content, 0); err != nil {
-		file.Close()
-		return err
-	}
-
-	return file.Close()
+	return util.AtomicWrite(path, content, 0644)
 }

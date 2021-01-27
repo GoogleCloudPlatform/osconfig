@@ -32,8 +32,7 @@ func runService(ctx context.Context) {
 func obtainLock() {
 	lockFile := "/run/lock/osconfig_agent.lock"
 
-	err := os.MkdirAll(filepath.Dir(lockFile), 0755)
-	if err != nil && !os.IsExist(err) {
+	if err := os.Mkdir(filepath.Dir(lockFile), 1777); err != nil {
 		logger.Fatalf("Cannot obtain agent lock: %v", err)
 	}
 

@@ -44,6 +44,7 @@ var (
 	aptGetFullUpgradeCmd = "full-upgrade"
 	aptGetDistUpgradeCmd = "dist-upgrade"
 	aptGetUpgradableArgs = []string{"--just-print", "-qq"}
+	allowDowngradesArg   = "--allow-downgrades"
 
 	dpkgErr = []byte("dpkg --configure -a")
 )
@@ -72,8 +73,9 @@ const (
 )
 
 type aptGetUpgradeOpts struct {
-	upgradeType AptUpgradeType
-	showNew     bool
+	upgradeType     AptUpgradeType
+	showNew         bool
+	allowDowngrades bool
 }
 
 // AptGetUpgradeOption is an option for apt-get upgrade.
@@ -90,6 +92,13 @@ func AptGetUpgradeType(upgradeType AptUpgradeType) AptGetUpgradeOption {
 func AptGetUpgradeShowNew(showNew bool) AptGetUpgradeOption {
 	return func(args *aptGetUpgradeOpts) {
 		args.showNew = showNew
+	}
+}
+
+// AptGetUpgradeAllowDowngrades returns a AptGetUpgradeOption that specifies AllowDowngrades.
+func AptGetUpgradeAllowDowngrades(allowDowngrades bool) AptGetUpgradeOption {
+	return func(args *aptGetUpgradeOpts) {
+		args.allowDowngrades = allowDowngrades
 	}
 }
 
@@ -190,8 +199,9 @@ func parseAptUpdates(ctx context.Context, data []byte, showNew bool) []PkgInfo {
 // apt-get [dist-|full-]upgrade.
 func AptUpdates(ctx context.Context, opts ...AptGetUpgradeOption) ([]PkgInfo, error) {
 	aptOpts := &aptGetUpgradeOpts{
-		upgradeType: AptGetUpgrade,
-		showNew:     false,
+		upgradeType:     AptGetUpgrade,
+		showNew:         false,
+		allowDowngrades: false,
 	}
 
 	for _, opt := range opts {
