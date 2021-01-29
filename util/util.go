@@ -98,12 +98,22 @@ func (r *DefaultRunner) Run(ctx context.Context, cmd *exec.Cmd) ([]byte, []byte,
 }
 
 // AtomicWrite attempts to atomically write a file.
-func AtomicWrite(path string, content []byte, mode os.FileMode) error {
+func AtomicWrite(path string, content []byte, mode os.FileMode) (err error) {
 	tmp, err := ioutil.TempFile(filepath.Dir(path), filepath.Base(path)+".tmp*")
 	if err != nil {
 		return fmt.Errorf("unable to create temp file: %v", err)
 	}
-	if _, err = tmp.Write(content); err != nil {
+
+	tmpName := tmp.Name()
+	// Make sure we cleanup on any errors.
+	defer func() {
+		if err != nil {
+			tmp.Close()
+			os.Remove(tmpName)
+		}
+	}()
+
+	if _, err := tmp.Write(content); err != nil {
 		return err
 	}
 	if err := tmp.Chmod(mode); err != nil {
@@ -112,5 +122,5 @@ func AtomicWrite(path string, content []byte, mode os.FileMode) error {
 	if err := tmp.Close(); err != nil {
 		return err
 	}
-	return os.Rename(tmp.Name(), path)
+	return os.Rename(tmpName, path)
 }
