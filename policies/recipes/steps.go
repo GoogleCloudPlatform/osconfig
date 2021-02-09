@@ -84,7 +84,7 @@ func stepCopyFile(step *agentendpointpb.SoftwareRecipe_Step_CopyFile, artifacts 
 	}
 	defer reader.Close()
 
-	tmp, err := ioutil.TempFile(filepath.Base(dest), ".tmp*")
+	tmp, err := ioutil.TempFile(filepath.Dir(dest), filepath.Base(dest)+".tmp*")
 	if err != nil {
 		return err
 	}
