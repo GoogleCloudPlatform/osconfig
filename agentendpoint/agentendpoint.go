@@ -233,6 +233,10 @@ func (c *Client) runTask(ctx context.Context) {
 			if err := c.RunExecStep(ctx, task); err != nil {
 				clog.Errorf(ctx, "Error running TaskType_EXEC_STEP_TASK: %v", err)
 			}
+		case agentendpointpb.TaskType_APPLY_CONFIG_TASK:
+			if err := c.RunApplyConfig(ctx, task); err != nil {
+				clog.Errorf(ctx, "Error running TaskType_APPLY_CONFIG_TASK: %v", err)
+			}
 		default:
 			clog.Errorf(ctx, "Unknown task type: %v", task.GetTaskType())
 		}
@@ -321,10 +325,6 @@ func (c *Client) waitForTask(ctx context.Context) error {
 	}
 	if s, ok := status.FromError(err); ok {
 		switch s.Code() {
-		case codes.Unavailable:
-			// Something canceled the stream (could be deadline/timeout), we should reconnect.
-			clog.Debugf(ctx, "Stream canceled, will reconnect: %v", err)
-			return nil
 		case codes.PermissionDenied:
 			// Service is not enabled for this project.
 			return errServiceNotEnabled

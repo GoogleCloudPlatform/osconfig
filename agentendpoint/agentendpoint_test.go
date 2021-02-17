@@ -131,6 +131,7 @@ type agentEndpointServiceTestServer struct {
 	applyConfigTaskProgress bool
 	execTaskComplete        bool
 	patchTaskComplete       bool
+	applyConfigTaskComplete bool
 	runTaskIDs              []string
 }
 
@@ -160,12 +161,14 @@ func (s *agentEndpointServiceTestServer) StartNextTask(ctx context.Context, req 
 	// After all tasks complete, we return nothing signalling the end to tasks.
 	s.taskStart = true
 	switch {
-	case s.execTaskComplete && s.patchTaskComplete:
+	case s.applyConfigTaskComplete && s.execTaskComplete && s.patchTaskComplete:
 		return &agentendpointpb.StartNextTaskResponse{}, nil
 	case !s.execTaskComplete:
 		return &agentendpointpb.StartNextTaskResponse{Task: &agentendpointpb.Task{TaskType: agentendpointpb.TaskType_EXEC_STEP_TASK, TaskId: "TaskType_EXEC_STEP_TASK"}}, nil
 	case !s.patchTaskComplete:
 		return &agentendpointpb.StartNextTaskResponse{Task: &agentendpointpb.Task{TaskType: agentendpointpb.TaskType_APPLY_PATCHES, TaskId: "TaskType_APPLY_PATCHES"}}, nil
+	case !s.applyConfigTaskComplete:
+		return &agentendpointpb.StartNextTaskResponse{Task: &agentendpointpb.Task{TaskType: agentendpointpb.TaskType_APPLY_CONFIG_TASK, TaskId: "TaskType_APPLY_CONFIG_TASK"}}, nil
 	default:
 		return &agentendpointpb.StartNextTaskResponse{}, status.Errorf(codes.Unimplemented, "unexpected start next task")
 	}
@@ -178,6 +181,8 @@ func (s *agentEndpointServiceTestServer) ReportTaskProgress(ctx context.Context,
 		s.execTaskProgress = true
 	case agentendpointpb.TaskType_APPLY_PATCHES:
 		s.patchTaskProgress = true
+	case agentendpointpb.TaskType_APPLY_CONFIG_TASK:
+		s.applyConfigTaskProgress = true
 	default:
 		return &agentendpointpb.ReportTaskProgressResponse{}, status.Errorf(codes.Unimplemented, "task type %q not implemented", req.GetTaskType())
 	}
@@ -192,10 +197,12 @@ func (s *agentEndpointServiceTestServer) ReportTaskComplete(ctx context.Context,
 		s.execTaskComplete = true
 	case agentendpointpb.TaskType_APPLY_PATCHES:
 		s.patchTaskComplete = true
+	case agentendpointpb.TaskType_APPLY_CONFIG_TASK:
+		s.applyConfigTaskComplete = true
 	default:
 		return &agentendpointpb.ReportTaskCompleteResponse{}, status.Errorf(codes.Unimplemented, "task type %q not implemented", req.GetTaskType())
 	}
-	if s.execTaskComplete && s.patchTaskComplete {
+	if s.execTaskComplete && s.patchTaskComplete && s.applyConfigTaskComplete {
 		s.streamClose <- struct{}{}
 	}
 	return &agentendpointpb.ReportTaskCompleteResponse{}, nil
@@ -241,6 +248,12 @@ func TestWaitForTask(t *testing.T) {
 	}
 	if !srv.patchTaskComplete {
 		t.Error("expected ReportTaskComplete for TaskType_APPLY_PATCHES to have been called")
+	}
+	if !srv.applyConfigTaskProgress {
+		t.Error("expected ReportTaskProgress for TaskType_APPLY_CONFIG_TASK to have been called")
+	}
+	if !srv.applyConfigTaskComplete {
+		t.Error("expected ReportTaskComplete for TaskType_APPLY_CONFIG_TASK to have been called")
 	}
 }
 
@@ -309,6 +322,7 @@ func TestLoadPatchTaskFromState(t *testing.T) {
 	}
 
 	srv.execTaskComplete = true
+	srv.applyConfigTaskComplete = true
 	// Launch another patch task, this should run AFTER the task loaded from state file
 	if err := tc.client.waitForTask(ctx); err != nil {
 		t.Errorf("did not expect error from a closed stream: %v", err)

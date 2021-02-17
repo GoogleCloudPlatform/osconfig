@@ -12,12 +12,18 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-// +build !linux
+// +build !windows
 
 package packages
 
-import "os/exec"
+import "context"
 
-func runWithPty(cmd *exec.Cmd) ([]byte, []byte, error) {
-	return nil, nil, nil
+// InstallMSIPackage is a linux stub function.
+func InstallMSIPackage(_ context.Context, _ string, _ []string) error {
+	return nil
+}
+
+// MSIInfo is a linux stub function.
+func MSIInfo(_ string) (string, bool, error) {
+	return "", false, nil
 }
