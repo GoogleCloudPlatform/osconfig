@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -84,17 +83,13 @@ func stepCopyFile(step *agentendpointpb.SoftwareRecipe_Step_CopyFile, artifacts 
 	}
 	defer reader.Close()
 
-	tmp, err := ioutil.TempFile(filepath.Dir(dest), filepath.Base(dest)+".tmp*")
+	tmp, err := util.TempFile(filepath.Dir(dest), filepath.Base(dest), permissions)
 	if err != nil {
 		return err
 	}
 
 	if _, err = io.Copy(tmp, reader); err != nil {
 		tmp.Close()
-		return err
-	}
-
-	if err := tmp.Chmod(permissions); err != nil {
 		return err
 	}
 

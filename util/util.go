@@ -19,12 +19,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -97,9 +99,17 @@ func (r *DefaultRunner) Run(ctx context.Context, cmd *exec.Cmd) ([]byte, []byte,
 	return stdout.Bytes(), stderr.Bytes(), err
 }
 
+// TempFile is a little bit like ioutil.TempFile but takes FileMode in
+// order to work nicely on Windows where File.Chmod is not supported.
+func TempFile(dir string, pattern string, mode os.FileMode) (f *os.File, err error) {
+	r := strconv.Itoa(rand.New(rand.NewSource(time.Now().UnixNano())).Intn(99999))
+	name := filepath.Join(dir, pattern+r+".tmp")
+	return os.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_EXCL, mode)
+}
+
 // AtomicWrite attempts to atomically write a file.
 func AtomicWrite(path string, content []byte, mode os.FileMode) (err error) {
-	tmp, err := ioutil.TempFile(filepath.Dir(path), filepath.Base(path)+".tmp*")
+	tmp, err := TempFile(filepath.Dir(path), filepath.Base(path), mode)
 	if err != nil {
 		return fmt.Errorf("unable to create temp file: %v", err)
 	}
@@ -114,9 +124,6 @@ func AtomicWrite(path string, content []byte, mode os.FileMode) (err error) {
 	}()
 
 	if _, err := tmp.Write(content); err != nil {
-		return err
-	}
-	if err := tmp.Chmod(mode); err != nil {
 		return err
 	}
 	if err := tmp.Close(); err != nil {
