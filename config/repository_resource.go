@@ -27,6 +27,7 @@ import (
 
 	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/armor"
 	"golang.org/x/crypto/openpgp/packet"
@@ -307,7 +308,7 @@ func (r *repositoryResource) enforceState(ctx context.Context) (inDesiredState b
 	if err := os.MkdirAll(filepath.Dir(r.managedRepository.RepoFilePath), 0755); err != nil {
 		return false, err
 	}
-	if err := ioutil.WriteFile(r.managedRepository.RepoFilePath, r.managedRepository.RepoFileContents, 0644); err != nil {
+	if err := util.AtomicWrite(r.managedRepository.RepoFilePath, r.managedRepository.RepoFileContents, 0644); err != nil {
 		return false, err
 	}
 	return true, nil

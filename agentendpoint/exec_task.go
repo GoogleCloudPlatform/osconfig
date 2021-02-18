@@ -73,7 +73,7 @@ func getGCSObject(ctx context.Context, bkt, obj string, gen int64) (string, erro
 	clog.Debugf(ctx, "Fetched GCS object bucket %s object %s generation number %d", bkt, obj, gen)
 
 	localPath := filepath.Join(os.TempDir(), path.Base(obj))
-	if _, err := util.WriteFile(reader, "", localPath, 0755); err != nil {
+	if _, err := util.AtomicWriteFileStream(reader, "", localPath, 0755); err != nil {
 		return "", fmt.Errorf("error downloading GCS object: %s", err)
 	}
 
