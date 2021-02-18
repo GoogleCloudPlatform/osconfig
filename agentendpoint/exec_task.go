@@ -28,6 +28,7 @@ import (
 	"cloud.google.com/go/storage"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/external"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
 )
@@ -64,7 +65,7 @@ func getGCSObject(ctx context.Context, bkt, obj string, gen int64) (string, erro
 	if err != nil {
 		return "", fmt.Errorf("error creating gcs client: %v", err)
 	}
-	reader, err := external.FetchGCSObject(ctx, cl, obj, bkt, gen)
+	reader, err := external.FetchGCSObject(ctx, cl, bkt, obj, gen)
 	if err != nil {
 		return "", fmt.Errorf("error fetching GCS object: %v", err)
 	}
@@ -72,7 +73,7 @@ func getGCSObject(ctx context.Context, bkt, obj string, gen int64) (string, erro
 	clog.Debugf(ctx, "Fetched GCS object bucket %s object %s generation number %d", bkt, obj, gen)
 
 	localPath := filepath.Join(os.TempDir(), path.Base(obj))
-	if err := external.DownloadStream(reader, "", localPath, 0755); err != nil {
+	if _, err := util.WriteFile(reader, "", localPath, 0755); err != nil {
 		return "", fmt.Errorf("error downloading GCS object: %s", err)
 	}
 

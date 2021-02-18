@@ -18,7 +18,10 @@ package util
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -77,6 +80,29 @@ func Exists(name string) bool {
 		return false
 	}
 	return true
+}
+
+// WriteFile writes data from the provided reader to the localPath checking the checksum if provided.
+func WriteFile(r io.Reader, checksum, localPath string, mode os.FileMode) (string, error) {
+	localPath, err := NormPath(localPath)
+	if err != nil {
+		return "", err
+	}
+	file, err := os.OpenFile(localPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, mode)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	hasher := sha256.New()
+	if _, err = io.Copy(io.MultiWriter(file, hasher), r); err != nil {
+		return "", err
+	}
+	computed := hex.EncodeToString(hasher.Sum(nil))
+	if checksum != "" && !strings.EqualFold(checksum, computed) {
+		return "", fmt.Errorf("got %q for checksum, expected %q", computed, checksum)
+	}
+	return computed, nil
 }
 
 // CommandRunner will execute the commands and return the results of that

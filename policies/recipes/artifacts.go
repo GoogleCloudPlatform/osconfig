@@ -26,6 +26,7 @@ import (
 	"cloud.google.com/go/storage"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/external"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
@@ -59,7 +60,7 @@ func fetchArtifact(ctx context.Context, artifact *agentendpointpb.SoftwareRecipe
 		if err != nil {
 			return "", fmt.Errorf("error creating gcs client: %v", err)
 		}
-		reader, err = getGCSArtifact(ctx, cl, gcs.Object, gcs.Bucket, gcs.Generation)
+		reader, err = external.FetchGCSObject(ctx, cl, gcs.Bucket, gcs.Object, gcs.Generation)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q from GCS: %v", artifact.Id, err)
 		}
@@ -83,19 +84,11 @@ func fetchArtifact(ctx context.Context, artifact *agentendpointpb.SoftwareRecipe
 	}
 
 	localPath := getStoragePath(directory, artifact.Id, extension)
-	if err := external.DownloadStream(reader, checksum, localPath, 0644); err != nil {
+	if _, err := util.WriteFile(reader, checksum, localPath, 0600); err != nil {
 		return "", fmt.Errorf("Error downloading stream: %v", err)
 	}
 
 	return localPath, nil
-}
-
-func getGCSArtifact(ctx context.Context, cl *storage.Client, object, bucket string, generation int64) (io.ReadCloser, error) {
-	reader, err := external.FetchGCSObject(ctx, cl, object, bucket, generation)
-	if err != nil {
-		return nil, err
-	}
-	return reader, nil
 }
 
 func getHTTPArtifact(client *http.Client, uri url.URL) (io.ReadCloser, error) {
