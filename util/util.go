@@ -82,27 +82,43 @@ func Exists(name string) bool {
 	return true
 }
 
-// WriteFile writes data from the provided reader to the localPath checking the checksum if provided.
-func WriteFile(r io.Reader, checksum, localPath string, mode os.FileMode) (string, error) {
-	localPath, err := NormPath(localPath)
+// AtomicWriteFileStream attempts to atomically write data from the provided reader to the path
+// checking the checksum if provided.
+func AtomicWriteFileStream(r io.Reader, checksum, path string, mode os.FileMode) (string, error) {
+	path, err := NormPath(path)
 	if err != nil {
 		return "", err
 	}
-	file, err := os.OpenFile(localPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, mode)
+
+	tmp, err := TempFile(filepath.Dir(path), filepath.Base(path), mode)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("unable to create temp file: %v", err)
 	}
-	defer file.Close()
+
+	tmpName := tmp.Name()
+	// Make sure we cleanup on any errors.
+	defer func() {
+		if err != nil {
+			tmp.Close()
+			os.Remove(tmpName)
+		}
+	}()
 
 	hasher := sha256.New()
-	if _, err = io.Copy(io.MultiWriter(file, hasher), r); err != nil {
+	if _, err = io.Copy(io.MultiWriter(tmp, hasher), r); err != nil {
 		return "", err
 	}
+
 	computed := hex.EncodeToString(hasher.Sum(nil))
 	if checksum != "" && !strings.EqualFold(checksum, computed) {
 		return "", fmt.Errorf("got %q for checksum, expected %q", computed, checksum)
 	}
-	return computed, nil
+
+	if err := tmp.Close(); err != nil {
+		return "", err
+	}
+
+	return computed, os.Rename(tmpName, path)
 }
 
 // CommandRunner will execute the commands and return the results of that
@@ -135,6 +151,11 @@ func TempFile(dir string, pattern string, mode os.FileMode) (f *os.File, err err
 
 // AtomicWrite attempts to atomically write a file.
 func AtomicWrite(path string, content []byte, mode os.FileMode) (err error) {
+	path, err = NormPath(path)
+	if err != nil {
+		return err
+	}
+
 	tmp, err := TempFile(filepath.Dir(path), filepath.Base(path), mode)
 	if err != nil {
 		return fmt.Errorf("unable to create temp file: %v", err)

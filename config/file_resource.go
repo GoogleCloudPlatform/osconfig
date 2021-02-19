@@ -78,7 +78,7 @@ func (f *fileResource) download(ctx context.Context) error {
 
 	switch f.GetSource().(type) {
 	case *agentendpointpb.OSPolicy_Resource_FileResource_Content:
-		f.managedFile.checksum, err = util.WriteFile(strings.NewReader(f.GetContent()), "", tmpFile, 0644)
+		f.managedFile.checksum, err = util.AtomicWriteFileStream(strings.NewReader(f.GetContent()), "", tmpFile, 0644)
 		if err != nil {
 			return err
 		}

@@ -83,21 +83,9 @@ func stepCopyFile(step *agentendpointpb.SoftwareRecipe_Step_CopyFile, artifacts 
 	}
 	defer reader.Close()
 
-	tmp, err := util.TempFile(filepath.Dir(dest), filepath.Base(dest), permissions)
-	if err != nil {
-		return err
-	}
+	_, err = util.AtomicWriteFileStream(reader, "", dest, permissions)
 
-	if _, err = io.Copy(tmp, reader); err != nil {
-		tmp.Close()
-		return err
-	}
-
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-
-	return os.Rename(tmp.Name(), dest)
+	return err
 }
 
 func parsePermissions(s string) (os.FileMode, error) {

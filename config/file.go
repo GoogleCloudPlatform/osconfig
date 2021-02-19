@@ -64,5 +64,5 @@ func downloadFile(ctx context.Context, path string, file *agentendpointpb.OSPoli
 		return "", fmt.Errorf("unknown remote File type: %+v", file.GetType())
 	}
 	defer reader.Close()
-	return util.WriteFile(reader, wantChecksum, path, 0644)
+	return util.AtomicWriteFileStream(reader, wantChecksum, path, 0644)
 }

@@ -67,7 +67,7 @@ func (e *execResource) download(ctx context.Context, execR *agentendpointpb.OSPo
 			return "", fmt.Errorf("unsupported interpreter %q", execR.GetInterpreter())
 		}
 		name := filepath.Join(tmpDir, "")
-		_, err := util.WriteFile(strings.NewReader(execR.GetScript()), "", name, 0644)
+		_, err := util.AtomicWriteFileStream(strings.NewReader(execR.GetScript()), "", name, 0644)
 		if err != nil {
 			return "", err
 		}

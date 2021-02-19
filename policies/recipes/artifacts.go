@@ -84,7 +84,7 @@ func fetchArtifact(ctx context.Context, artifact *agentendpointpb.SoftwareRecipe
 	}
 
 	localPath := getStoragePath(directory, artifact.Id, extension)
-	if _, err := util.WriteFile(reader, checksum, localPath, 0600); err != nil {
+	if _, err := util.AtomicWriteFileStream(reader, checksum, localPath, 0600); err != nil {
 		return "", fmt.Errorf("Error downloading stream: %v", err)
 	}
 
