@@ -15,10 +15,10 @@
 package recipes
 
 import (
+	"context"
 	"net/url"
 	"strings"
 	"testing"
-	"context"
 )
 
 func TestFetchArtifacts_http_InvalidURL(t *testing.T) {
