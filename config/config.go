@@ -18,9 +18,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"runtime"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
 )
+
+var goos = runtime.GOOS
 
 // OSPolicyResource is a single OSPolicy resource.
 type OSPolicyResource struct {
@@ -66,11 +69,9 @@ func (r *OSPolicyResource) Validate(ctx context.Context) error {
 		r.resource = resource(&repositoryResource{OSPolicy_Resource_RepositoryResource: x.Repository})
 	case *agentendpointpb.OSPolicy_Resource_File_:
 		r.resource = resource(&fileResource{OSPolicy_Resource_FileResource: x.File})
-		/*
-			case *agentendpointpb.ApplyConfigTask_Config_Resource_Exec:
-			case *agentendpointpb.ApplyConfigTask_Config_Resource_Archive:
-			case *agentendpointpb.ApplyConfigTask_Config_Resource_Srvc:
-		*/
+	case *agentendpointpb.OSPolicy_Resource_Exec:
+		r.resource = resource(&execResource{OSPolicy_Resource_ExecResource: x.Exec})
+
 	case nil:
 		return errors.New("ResourceType field not set")
 	default:

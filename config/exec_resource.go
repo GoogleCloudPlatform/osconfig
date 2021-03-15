@@ -22,7 +22,6 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/util"
@@ -44,31 +43,31 @@ func (e *execResource) download(ctx context.Context, execR *agentendpointpb.OSPo
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp dir: %s", err)
 	}
+
 	// File extensions are impoprtant on Windows.
 	var name string
 	switch execR.GetSource().(type) {
 	case *agentendpointpb.OSPolicy_Resource_ExecResource_Exec_Script:
 		switch execR.GetInterpreter() {
 		case agentendpointpb.OSPolicy_Resource_ExecResource_Exec_NONE:
-			if runtime.GOOS == "windows" {
-				name = filepath.Join(tmpDir, "script.cmd")
+			if goos == "windows" {
+				name = "script.cmd"
 			} else {
-				name = filepath.Join(tmpDir, "script")
+				name = "script"
 			}
 		case agentendpointpb.OSPolicy_Resource_ExecResource_Exec_SHELL:
-			if runtime.GOOS == "windows" {
-				name = filepath.Join(tmpDir, "script.cmd")
+			if goos == "windows" {
+				name = "script.cmd"
 			} else {
-				name = filepath.Join(tmpDir, "script.sh")
+				name = "script.sh"
 			}
 		case agentendpointpb.OSPolicy_Resource_ExecResource_Exec_POWERSHELL:
-			name = filepath.Join(tmpDir, "script.ps1")
+			name = "script.ps1"
 		default:
 			return "", fmt.Errorf("unsupported interpreter %q", execR.GetInterpreter())
 		}
-		name := filepath.Join(tmpDir, "")
-		_, err := util.AtomicWriteFileStream(strings.NewReader(execR.GetScript()), "", name, 0644)
-		if err != nil {
+		name = filepath.Join(tmpDir, name)
+		if _, err := util.AtomicWriteFileStream(strings.NewReader(execR.GetScript()), "", name, 0644); err != nil {
 			return "", err
 		}
 
@@ -122,14 +121,14 @@ func (e *execResource) run(ctx context.Context, name string, execR *agentendpoin
 	case agentendpointpb.OSPolicy_Resource_ExecResource_Exec_NONE:
 		cmd = name
 	case agentendpointpb.OSPolicy_Resource_ExecResource_Exec_SHELL:
-		if runtime.GOOS == "windows" {
+		if goos == "windows" {
 			cmd = name
 		} else {
 			args = append([]string{name})
 			cmd = "/bin/sh"
 		}
 	case agentendpointpb.OSPolicy_Resource_ExecResource_Exec_POWERSHELL:
-		if runtime.GOOS != "windows" {
+		if goos != "windows" {
 			return nil, nil, 0, fmt.Errorf("interpreter %q can only be used on Windows systems", execR.GetInterpreter())
 		}
 		args = append([]string{"-File", name})
