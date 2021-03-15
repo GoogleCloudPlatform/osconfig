@@ -187,9 +187,9 @@ var HeadAptImages = map[string]string{
 	"ubuntu-os-cloud/ubuntu-2004-lts": "projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts",
 
 	// Proposed Ubuntu images.
-	"ubuntu-os-cloud-image-proposed/ubuntu-1604-lts": "projects/ubuntu-os-cloud-image-proposed/global/images/family/ubuntu-1604-lts-guest",
-	"ubuntu-os-cloud-image-proposed/ubuntu-1804-lts": "projects/ubuntu-os-cloud-image-proposed/global/images/family/ubuntu-1804-lts-guest",
-	"ubuntu-os-cloud-image-proposed/ubuntu-2004-lts": "projects/ubuntu-os-cloud-image-proposed/global/images/family/ubuntu-2004-lts-guest",
+	"ubuntu-os-cloud-image-proposed/ubuntu-1604-lts": "projects/ubuntu-os-cloud-image-proposed/global/images/family/ubuntu-1604-lts",
+	"ubuntu-os-cloud-image-proposed/ubuntu-1804-lts": "projects/ubuntu-os-cloud-image-proposed/global/images/family/ubuntu-1804-lts",
+	"ubuntu-os-cloud-image-proposed/ubuntu-2004-lts": "projects/ubuntu-os-cloud-image-proposed/global/images/family/ubuntu-2004-lts",
 }
 
 // OldAptImages is a map of names to image paths for old images that use APT.
