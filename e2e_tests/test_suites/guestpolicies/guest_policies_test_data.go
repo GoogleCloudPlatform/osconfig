@@ -420,14 +420,14 @@ func buildRecipeStepsTestSetup(name, image, pkgManager, key string) *guestPolicy
 		Recipes: []*osconfigpb.SoftwareRecipe{
 			osconfigserver.BuildSoftwareRecipe(recipeName, "", artifacts,
 				[]*osconfigpb.SoftwareRecipe_Step{
-					&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_ScriptRun{
+					{Step: &osconfigpb.SoftwareRecipe_Step_ScriptRun{
 						ScriptRun: &osconfigpb.SoftwareRecipe_Step_RunScript{
 							Script:      "echo 'hello world' > /tmp/osconfig-SoftwareRecipe_Step_RunScript_SHELL",
 							Interpreter: osconfigpb.SoftwareRecipe_Step_RunScript_SHELL,
 						},
 					}},
 
-					&osconfigpb.SoftwareRecipe_Step{Step: &osconfigpb.SoftwareRecipe_Step_FileCopy{
+					{Step: &osconfigpb.SoftwareRecipe_Step_FileCopy{
 						FileCopy: &osconfigpb.SoftwareRecipe_Step_CopyFile{ArtifactId: "copy-test", Destination: "/tmp/osconfig-copy-test"},
 					}},
 					{Step: &osconfigpb.SoftwareRecipe_Step_ArchiveExtraction{

@@ -15,6 +15,7 @@
 package recipes
 
 import (
+	"context"
 	"net/url"
 	"strings"
 	"testing"
@@ -23,7 +24,7 @@ import (
 func TestFetchArtifacts_http_InvalidURL(t *testing.T) {
 	uri := "ftp://google.com/agent.deb"
 	u, err := url.Parse(uri)
-	_, err = getHTTPArtifact(nil, *u)
+	_, err = getHTTPArtifact(context.Background(), nil, *u)
 	if err == nil || !strings.Contains(err.Error(), "unsupported protocol scheme") {
 		t.Errorf("expected error (unsupported protocol); got(%v)", err)
 	}

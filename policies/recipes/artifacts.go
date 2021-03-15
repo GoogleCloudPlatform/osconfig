@@ -74,7 +74,7 @@ func fetchArtifact(ctx context.Context, artifact *agentendpointpb.SoftwareRecipe
 		extension = path.Ext(uri.Path)
 		checksum = remote.Checksum
 		cl := &http.Client{}
-		reader, err = getHTTPArtifact(cl, *uri)
+		reader, err = getHTTPArtifact(ctx, cl, *uri)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q: %v", artifact.Id, err)
 		}
@@ -91,11 +91,11 @@ func fetchArtifact(ctx context.Context, artifact *agentendpointpb.SoftwareRecipe
 	return localPath, nil
 }
 
-func getHTTPArtifact(client *http.Client, uri url.URL) (io.ReadCloser, error) {
+func getHTTPArtifact(ctx context.Context, client *http.Client, uri url.URL) (io.ReadCloser, error) {
 	if !isSupportedURL(uri) {
 		return nil, fmt.Errorf("error, unsupported protocol scheme %s", uri.Scheme)
 	}
-	reader, err := external.FetchRemoteObjectHTTP(client, uri.String())
+	reader, err := external.FetchRemoteObjectHTTP(ctx, client, uri.String())
 	if err != nil {
 		return nil, err
 	}

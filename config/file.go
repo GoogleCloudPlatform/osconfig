@@ -54,7 +54,7 @@ func downloadFile(ctx context.Context, path string, file *agentendpointpb.OSPoli
 		}
 
 	case *agentendpointpb.OSPolicy_Resource_File_Remote_:
-		reader, err = external.FetchRemoteObjectHTTP(&http.Client{}, file.GetRemote().GetUri())
+		reader, err = external.FetchRemoteObjectHTTP(ctx, &http.Client{}, file.GetRemote().GetUri())
 		if err != nil {
 			return "", err
 		}
