@@ -165,7 +165,7 @@ func (c *configTask) validation(ctx context.Context) {
 	// Validate each resouce and populate results and internal assignment state.
 	c.policies = map[string]*policy{}
 	for i, osPolicy := range c.Task.GetOsPolicies() {
-		ctx = clog.WithLabels(ctx, map[string]string{"config_assignment": osPolicy.GetOsPolicyAssignment(), "policy_id": osPolicy.GetId()})
+		ctx = clog.WithLabels(ctx, map[string]string{"os_policy_assignment": osPolicy.GetOsPolicyAssignment(), "os_policy_id": osPolicy.GetId()})
 		pResult := c.results[i]
 		plcy := &policy{resources: map[string]resourceIface{}}
 		c.policies[osPolicy.GetId()] = plcy

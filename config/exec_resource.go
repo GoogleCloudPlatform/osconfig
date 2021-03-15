@@ -46,6 +46,7 @@ func (e *execResource) download(ctx context.Context, execR *agentendpointpb.OSPo
 
 	// File extensions are impoprtant on Windows.
 	var name string
+	perms := os.FileMode(0644)
 	switch execR.GetSource().(type) {
 	case *agentendpointpb.OSPolicy_Resource_ExecResource_Exec_Script:
 		switch execR.GetInterpreter() {
@@ -55,6 +56,7 @@ func (e *execResource) download(ctx context.Context, execR *agentendpointpb.OSPo
 			} else {
 				name = "script"
 			}
+			perms = os.FileMode(0755)
 		case agentendpointpb.OSPolicy_Resource_ExecResource_Exec_SHELL:
 			if goos == "windows" {
 				name = "script.cmd"
@@ -67,7 +69,7 @@ func (e *execResource) download(ctx context.Context, execR *agentendpointpb.OSPo
 			return "", fmt.Errorf("unsupported interpreter %q", execR.GetInterpreter())
 		}
 		name = filepath.Join(tmpDir, name)
-		if _, err := util.AtomicWriteFileStream(strings.NewReader(execR.GetScript()), "", name, 0644); err != nil {
+		if _, err := util.AtomicWriteFileStream(strings.NewReader(execR.GetScript()), "", name, perms); err != nil {
 			return "", err
 		}
 

@@ -22,10 +22,12 @@ import (
 	"net/http"
 
 	"cloud.google.com/go/storage"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 )
 
 // FetchGCSObject fetches data from GCS bucket
 func FetchGCSObject(ctx context.Context, client *storage.Client, bucket, object string, generation int64) (io.ReadCloser, error) {
+	clog.Debugf(ctx, "Fetching GCS object: '%s/%s', generation: '%d", bucket, object, generation)
 	oh := client.Bucket(bucket).Object(object)
 	if generation != 0 {
 		oh = oh.Generation(generation)
@@ -35,7 +37,8 @@ func FetchGCSObject(ctx context.Context, client *storage.Client, bucket, object 
 }
 
 // FetchRemoteObjectHTTP fetches data from remote location
-func FetchRemoteObjectHTTP(client *http.Client, url string) (io.ReadCloser, error) {
+func FetchRemoteObjectHTTP(ctx context.Context, client *http.Client, url string) (io.ReadCloser, error) {
+	clog.Debugf(ctx, "Fetching remote object: '%s'", url)
 	resp, err := client.Get(url)
 	if err != nil {
 		return nil, err
