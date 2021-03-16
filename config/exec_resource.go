@@ -140,8 +140,9 @@ func (e *execResource) run(ctx context.Context, name string, execR *agentendpoin
 	}
 
 	stdout, stderr, err := runner.Run(ctx, exec.Command(cmd, args...))
-	code := -1
+	code := 0
 	if err != nil {
+		code = -1
 		if v, ok := err.(*exec.ExitError); ok {
 			code = v.ExitCode()
 		}
