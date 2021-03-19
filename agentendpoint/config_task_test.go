@@ -136,7 +136,6 @@ func genTestResourceCompliance(id string, steps int, inDesiredState bool) *agent
 	// TODO: test various types of executions.
 	ret := &agentendpointpb.OSPolicyResourceCompliance{
 		OsPolicyResourceId: id,
-		ConfigSteps:        make([]*agentendpointpb.OSPolicyResourceConfigStep, 4),
 	}
 
 	// Validation
@@ -146,10 +145,10 @@ func genTestResourceCompliance(id string, steps int, inDesiredState bool) *agent
 		if steps > 1 {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
 		}
-		ret.ConfigSteps[0] = &agentendpointpb.OSPolicyResourceConfigStep{
+		ret.ConfigSteps = append(ret.GetConfigSteps(), &agentendpointpb.OSPolicyResourceConfigStep{
 			Type:    agentendpointpb.OSPolicyResourceConfigStep_VALIDATION,
 			Outcome: outcome,
-		}
+		})
 		ret.State = state
 	}
 	// DesiredStateCheck
@@ -162,10 +161,10 @@ func genTestResourceCompliance(id string, steps int, inDesiredState bool) *agent
 		} else if inDesiredState {
 			state = agentendpointpb.OSPolicyComplianceState_COMPLIANT
 		}
-		ret.ConfigSteps[1] = &agentendpointpb.OSPolicyResourceConfigStep{
+		ret.ConfigSteps = append(ret.GetConfigSteps(), &agentendpointpb.OSPolicyResourceConfigStep{
 			Type:    agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
 			Outcome: outcome,
-		}
+		})
 		ret.State = state
 	}
 	// EnforceDesiredState
@@ -175,10 +174,10 @@ func genTestResourceCompliance(id string, steps int, inDesiredState bool) *agent
 		if steps > 3 {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
 		}
-		ret.ConfigSteps[2] = &agentendpointpb.OSPolicyResourceConfigStep{
+		ret.ConfigSteps = append(ret.GetConfigSteps(), &agentendpointpb.OSPolicyResourceConfigStep{
 			Type:    agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
 			Outcome: outcome,
-		}
+		})
 		ret.State = state
 	}
 	// DesiredStateCheckPostEnforcement{
@@ -191,10 +190,10 @@ func genTestResourceCompliance(id string, steps int, inDesiredState bool) *agent
 		} else {
 			state = agentendpointpb.OSPolicyComplianceState_COMPLIANT
 		}
-		ret.ConfigSteps[3] = &agentendpointpb.OSPolicyResourceConfigStep{
+		ret.ConfigSteps = append(ret.GetConfigSteps(), &agentendpointpb.OSPolicyResourceConfigStep{
 			Type:    agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
 			Outcome: outcome,
-		}
+		})
 		ret.State = state
 	}
 	return ret
