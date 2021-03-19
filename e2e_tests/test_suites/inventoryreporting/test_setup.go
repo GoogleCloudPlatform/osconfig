@@ -81,7 +81,7 @@ var (
 	}
 
 	cosSetup = &inventoryTestSetup{
-		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.CurlPost),
+		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.CosSetup),
 		machineType: "e2-standard-2",
 		timeout:     5 * time.Minute,
 	}
