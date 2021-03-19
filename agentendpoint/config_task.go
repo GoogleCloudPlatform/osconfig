@@ -175,7 +175,7 @@ func checkConfigResourceState(ctx context.Context, plcy *policy, rCompliance *ag
 	rCompliance.State = state
 }
 
-func enforceConfigResourceState(ctx context.Context, plcy *policy, rCompliance *agentendpointpb.OSPolicyResourceCompliance, configResource *agentendpointpb.OSPolicy_Resource) bool {
+func enforceConfigResourceState(ctx context.Context, plcy *policy, rCompliance *agentendpointpb.OSPolicyResourceCompliance, configResource *agentendpointpb.OSPolicy_Resource) (enforcementActionTaken bool) {
 	ctx = clog.WithLabels(ctx, map[string]string{"resource_id": configResource.GetId()})
 	res := plcy.resources[configResource.GetId()]
 	// Only enforce resources that need it.
@@ -303,7 +303,7 @@ func (c *configTask) run(ctx context.Context) error {
 
 	c.policies = map[string]*policy{}
 	for i, osPolicy := range c.Task.GetOsPolicies() {
-		ctx = clog.WithLabels(ctx, map[string]string{"config_assignment": osPolicy.GetOsPolicyAssignment(), "policy_id": osPolicy.GetId()})
+		ctx = clog.WithLabels(ctx, map[string]string{"os_policy_assignment": osPolicy.GetOsPolicyAssignment(), "os_policy_id": osPolicy.GetId()})
 		clog.Debugf(ctx, "Executing policy:\n%s", util.PrettyFmt(osPolicy))
 
 		pResult := c.results[i]
@@ -321,7 +321,7 @@ func (c *configTask) run(ctx context.Context) error {
 			if plcy.hasError {
 				break
 			}
-			if enforceConfigResourceState(ctx, plcy, rCompliance, configResource) {
+			if enforcementActionTaken := enforceConfigResourceState(ctx, plcy, rCompliance, configResource); enforcementActionTaken {
 				// On any change we trigger post check.
 				c.postCheckRequired = true
 			}
