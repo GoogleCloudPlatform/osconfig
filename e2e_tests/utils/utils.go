@@ -56,6 +56,14 @@ sleep 5
 done
 systemctl start google-osconfig-agent` + CurlPost
 
+	CosSetup = `
+sleep 10
+sed -i 's/^#ForwardToConsole=no/ForwardToConsole=yes/' /etc/systemd/journald.conf
+sed -i 's/^#MaxLevelConsole=info/MaxLevelConsole=debug/' /etc/systemd/journald.conf
+MaxLevelConsole=debug
+systemctl force-reload systemd-journald
+systemctl restart google-osconfig-agent` + CurlPost
+
 	// CurlPost indicates agent is installed.
 	CurlPost = `
 uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/osconfig_tests/install_done

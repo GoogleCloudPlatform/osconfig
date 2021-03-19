@@ -20,6 +20,7 @@ import (
 	"log"
 	"path"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -106,9 +107,13 @@ func runInventoryReportingTest(ctx context.Context, testSetup *inventoryTestSetu
 	// Build regexes for verification.
 	positivePatterns := []string{
 		fmt.Sprintf(`.*Calling ReportInventory with request containing hostname %s, short name %s, [1-9]+[0-9]* installed packages, [0-9]+ available packages`, testSetup.hostname, testSetup.shortName),
-		`.*"report_full_inventory".*true.*`,
 		`.*"report_full_inventory".*false.*`,
 		`.*Finished task "Report OSInventory".*`,
+	}
+	// Because COS does not output debug agent log to serial by default and we have to manually set
+	// that up on boot the agent will report full inventory before we can see the output.
+	if !strings.Contains(testSetup.image, "cos") {
+		positivePatterns = append(positivePatterns, `.*"report_full_inventory".*true.*`)
 	}
 	positiveRegexes, err := compileRegex(positivePatterns)
 	if err != nil {
