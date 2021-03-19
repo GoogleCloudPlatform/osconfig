@@ -56,6 +56,7 @@ sleep 5
 done
 systemctl start google-osconfig-agent` + CurlPost
 
+	// CosSetup sets up serial logging on COS.
 	CosSetup = `
 sleep 10
 sed -i 's/^#ForwardToConsole=no/ForwardToConsole=yes/' /etc/systemd/journald.conf
