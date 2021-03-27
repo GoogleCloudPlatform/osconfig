@@ -69,6 +69,7 @@ func NewClient(ctx context.Context) (*Client, error) {
 		option.WithoutAuthentication(), // Do not use oauth.
 		option.WithGRPCDialOption(grpc.WithTransportCredentials(credentials.NewTLS(nil))), // Because we disabled Auth we need to specifically enable TLS.
 		option.WithEndpoint(agentconfig.SvcEndpoint()),
+		option.WithUserAgent("Google OS Config Agent/" + agentconfig.Version()),
 	}
 	clog.Debugf(ctx, "Creating new agentendpoint client.")
 	c, err := agentendpoint.NewClient(ctx, opts...)
