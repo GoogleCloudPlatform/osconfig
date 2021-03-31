@@ -501,7 +501,7 @@ func YumRepoDir() string {
 	return yumRepoDir
 }
 
-// YumRepoFilePath is the location where the zypper repo file will be created.
+// YumRepoFilePath is the location where the yum repo file will be created.
 func YumRepoFilePath() string {
 	return getAgentConfig().yumRepoFilePath
 }
@@ -511,7 +511,7 @@ func AptRepoDir() string {
 	return aptRepoDir
 }
 
-// AptRepoFilePath is the location where the zypper repo file will be created.
+// AptRepoFilePath is the location where the apt repo file will be created.
 func AptRepoFilePath() string {
 	return getAgentConfig().aptRepoFilePath
 }
