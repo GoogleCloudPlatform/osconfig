@@ -72,7 +72,7 @@ func TestRepositoryResourceValidate(t *testing.T) {
 				},
 				RepoChecksum:     "8faacd43b230b08e7a1da7b670bf6f90fcc59ade1a5e7179a0ccffc9aa3d7cdf",
 				RepoFileContents: []byte("# Repo file managed by Google OSConfig agent\ndeb uri distribution c1 c2\n"),
-				RepoFilePath:     "/etc/apt/sources.list.d/osconfig_managed_8faacd43b2.repo",
+				RepoFilePath:     "/etc/apt/sources.list.d/osconfig_managed_8faacd43b2.list",
 			},
 		},
 		{
@@ -101,9 +101,9 @@ func TestRepositoryResourceValidate(t *testing.T) {
 				Yum: &YumRepository{
 					RepositoryResource: yumRepositoryResource,
 				},
-				RepoChecksum:     "9eddc09d15a4e9b515068cffb2e0640dab010ccd9cb0eeb63b8c455e06696656",
-				RepoFileContents: []byte("# Repo file managed by Google OSConfig agent\n[id]\nname=displayname\nbaseurl=baseurl\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=1\ngpgkey=key1\n       key2\n"),
-				RepoFilePath:     "/etc/yum.repos.d/osconfig_managed_9eddc09d15.repo",
+				RepoChecksum:     "c588551e69834e5f2f4d825324b2add5df3064af7d5d68021e83a308c6f62048",
+				RepoFileContents: []byte("# Repo file managed by Google OSConfig agent\n[id]\nname=displayname\nbaseurl=baseurl\nenabled=1\ngpgcheck=1\ngpgkey=key1\n       key2\n"),
+				RepoFilePath:     "/etc/yum.repos.d/osconfig_managed_c588551e69.repo",
 			},
 		},
 		{
@@ -117,9 +117,9 @@ func TestRepositoryResourceValidate(t *testing.T) {
 				Zypper: &ZypperRepository{
 					RepositoryResource: zypperRepositoryResource,
 				},
-				RepoChecksum:     "9eddc09d15a4e9b515068cffb2e0640dab010ccd9cb0eeb63b8c455e06696656",
-				RepoFileContents: []byte("# Repo file managed by Google OSConfig agent\n[id]\nname=displayname\nbaseurl=baseurl\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=1\ngpgkey=key1\n       key2\n"),
-				RepoFilePath:     "/etc/zypp/repos.d/osconfig_managed_9eddc09d15.repo",
+				RepoChecksum:     "c588551e69834e5f2f4d825324b2add5df3064af7d5d68021e83a308c6f62048",
+				RepoFileContents: []byte("# Repo file managed by Google OSConfig agent\n[id]\nname=displayname\nbaseurl=baseurl\nenabled=1\ngpgcheck=1\ngpgkey=key1\n       key2\n"),
+				RepoFilePath:     "/etc/zypp/repos.d/osconfig_managed_c588551e69.repo",
 			},
 		},
 	}

@@ -125,7 +125,6 @@ func yumRepoContents(repo *agentendpointpb.OSPolicy_Resource_RepositoryResource_
 		baseurl=https://repo-url
 		enabled=1
 		gpgcheck=1
-		repo_gpgcheck=1
 		gpgkey=http://repo-url/gpg1
 		       http://repo-url/gpg2
 	*/
@@ -138,7 +137,7 @@ func yumRepoContents(repo *agentendpointpb.OSPolicy_Resource_RepositoryResource_
 		buf.WriteString(fmt.Sprintf("name=%s\n", repo.DisplayName))
 	}
 	buf.WriteString(fmt.Sprintf("baseurl=%s\n", repo.BaseUrl))
-	buf.WriteString("enabled=1\ngpgcheck=1\nrepo_gpgcheck=1\n")
+	buf.WriteString("enabled=1\ngpgcheck=1\n")
 	if len(repo.GpgKeys) > 0 {
 		buf.WriteString(fmt.Sprintf("gpgkey=%s\n", repo.GpgKeys[0]))
 		for _, k := range repo.GpgKeys[1:] {
@@ -156,7 +155,6 @@ func zypperRepoContents(repo *agentendpointpb.OSPolicy_Resource_RepositoryResour
 		baseurl=https://repo-url
 		enabled=1
 		gpgcheck=1
-		repo_gpgcheck=1
 		gpgkey=http://repo-url/gpg1
 		       http://repo-url/gpg2
 	*/
@@ -169,7 +167,7 @@ func zypperRepoContents(repo *agentendpointpb.OSPolicy_Resource_RepositoryResour
 		buf.WriteString(fmt.Sprintf("name=%s\n", repo.DisplayName))
 	}
 	buf.WriteString(fmt.Sprintf("baseurl=%s\n", repo.BaseUrl))
-	buf.WriteString("enabled=1\ngpgcheck=1\nrepo_gpgcheck=1\n")
+	buf.WriteString("enabled=1\ngpgcheck=1\n")
 	if len(repo.GpgKeys) > 0 {
 		buf.WriteString(fmt.Sprintf("gpgkey=%s\n", repo.GpgKeys[0]))
 		for _, k := range repo.GpgKeys[1:] {
@@ -225,7 +223,7 @@ func (r *repositoryResource) validate(ctx context.Context) (*ManagedResources, e
 		gpgkey := r.GetApt().GetGpgKey()
 		r.managedRepository.Apt = &AptRepository{RepositoryResource: r.GetApt()}
 		r.managedRepository.RepoFileContents = aptRepoContents(r.GetApt())
-		filePath = filepath.Join(agentconfig.AptRepoDir(), "osconfig_managed_%s.repo")
+		filePath = filepath.Join(agentconfig.AptRepoDir(), "osconfig_managed_%s.list")
 		if gpgkey != "" {
 			keyContents, err := fetchGPGKey(gpgkey)
 			if err != nil {
