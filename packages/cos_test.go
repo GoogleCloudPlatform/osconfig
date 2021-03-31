@@ -39,9 +39,9 @@ func TestParseInstalledCOSPackages(t *testing.T) {
 		return "x86_64", nil
 	}
 
-	pkg0 := cos.Package{Category: "dev-util", Name: "foo-x", Version: "1.2.3", Revision: 4}
-	expect0 := PkgInfo{"dev-util/foo-x", "x86_64", "1.2.3-r4"}
-	pkg1 := cos.Package{Category: "app-admin", Name: "bar", Version: "0.1", Revision: 0}
+	pkg0 := cos.Package{Category: "dev-util", Name: "foo-x", Version: "1.2.3", EbuildVersion: "someversion"}
+	expect0 := PkgInfo{"dev-util/foo-x", "x86_64", "1.2.3"}
+	pkg1 := cos.Package{Category: "app-admin", Name: "bar", Version: "0.1"}
 	expect1 := PkgInfo{"app-admin/bar", "x86_64", "0.1"}
 
 	pkgInfo := cos.PackageInfo{InstalledPackages: []cos.Package{pkg0, pkg1}}
@@ -63,19 +63,18 @@ func TestInstalledCOSPackages(t *testing.T) {
         {
             "category": "app-arch",
             "name": "gzip",
-            "version": "1.9"
+            "version": "1.9",
+			"ebuildverison": "someotherversion"
         },
         {
             "category": "dev-libs",
             "name": "popt",
-            "version": "1.16",
-            "revision": "2"
+            "version": "1.16"
         },
         {
             "category": "app-emulation",
             "name": "docker-credential-helpers",
-            "version": "0.6.3",
-            "revision": "1"
+            "version": "0.6.3"
         },
         {
             "category": "_not.real-category1+",
@@ -85,8 +84,7 @@ func TestInstalledCOSPackages(t *testing.T) {
         {
             "category": "_not.real-category1+",
             "name": "_not-real_package2",
-            "version": "12.34.56.78",
-            "revision": "26"
+            "version": "12.34.56.78"
         },
         {
             "category": "_not.real-category1+",
@@ -96,14 +94,12 @@ func TestInstalledCOSPackages(t *testing.T) {
         {
             "category": "_not.real-category1+",
             "name": "_not-real_package4",
-            "version": "12.34.56.78_rc3",
-            "revision": "26"
+            "version": "12.34.56.78_rc3"
         },
         {
             "category": "_not.real-category1+",
             "name": "_not-real_package5",
-            "version": "12.34.56.78_pre2_rc3",
-            "revision": "26"
+            "version": "12.34.56.78_pre2_rc3"
         },
         {
             "category": "_not.real-category2+",
@@ -113,8 +109,7 @@ func TestInstalledCOSPackages(t *testing.T) {
         {
             "category": "_not.real-category2+",
             "name": "_not-real_package2",
-            "version": "12.34.56.78q",
-            "revision": "26"
+            "version": "12.34.56.78q"
         },
         {
             "category": "_not.real-category2+",
@@ -124,14 +119,12 @@ func TestInstalledCOSPackages(t *testing.T) {
         {
             "category": "_not.real-category2+",
             "name": "_not-real_package4",
-            "version": "12.34.56.78q_rc3",
-            "revision": "26"
+            "version": "12.34.56.78q_rc3"
         },
         {
             "category": "_not.real-category2+",
             "name": "_not-real_package5",
-            "version": "12.34.56.78q_pre2_rc3",
-            "revision": "26"
+            "version": "12.34.56.78q_pre2_rc3"
         }
     ]
 }`
@@ -152,18 +145,18 @@ func TestInstalledCOSPackages(t *testing.T) {
 
 	expected := []PkgInfo{
 		{"app-arch/gzip", "x86_64", "1.9"},
-		{"dev-libs/popt", "x86_64", "1.16-r2"},
-		{"app-emulation/docker-credential-helpers", "x86_64", "0.6.3-r1"},
+		{"dev-libs/popt", "x86_64", "1.16"},
+		{"app-emulation/docker-credential-helpers", "x86_64", "0.6.3"},
 		{"_not.real-category1+/_not-real_package1", "x86_64", "12.34.56.78"},
-		{"_not.real-category1+/_not-real_package2", "x86_64", "12.34.56.78-r26"},
+		{"_not.real-category1+/_not-real_package2", "x86_64", "12.34.56.78"},
 		{"_not.real-category1+/_not-real_package3", "x86_64", "12.34.56.78_rc3"},
-		{"_not.real-category1+/_not-real_package4", "x86_64", "12.34.56.78_rc3-r26"},
-		{"_not.real-category1+/_not-real_package5", "x86_64", "12.34.56.78_pre2_rc3-r26"},
+		{"_not.real-category1+/_not-real_package4", "x86_64", "12.34.56.78_rc3"},
+		{"_not.real-category1+/_not-real_package5", "x86_64", "12.34.56.78_pre2_rc3"},
 		{"_not.real-category2+/_not-real_package1", "x86_64", "12.34.56.78q"},
-		{"_not.real-category2+/_not-real_package2", "x86_64", "12.34.56.78q-r26"},
+		{"_not.real-category2+/_not-real_package2", "x86_64", "12.34.56.78q"},
 		{"_not.real-category2+/_not-real_package3", "x86_64", "12.34.56.78q_rc3"},
-		{"_not.real-category2+/_not-real_package4", "x86_64", "12.34.56.78q_rc3-r26"},
-		{"_not.real-category2+/_not-real_package5", "x86_64", "12.34.56.78q_pre2_rc3-r26"},
+		{"_not.real-category2+/_not-real_package4", "x86_64", "12.34.56.78q_rc3"},
+		{"_not.real-category2+/_not-real_package5", "x86_64", "12.34.56.78q_pre2_rc3"},
 	}
 
 	readMachineArch = func() (string, error) {

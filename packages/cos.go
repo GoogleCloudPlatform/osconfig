@@ -21,7 +21,6 @@ package packages
 
 import (
 	"fmt"
-	"strconv"
 
 	"cos.googlesource.com/cos/tools.git/src/pkg/cos"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
@@ -49,9 +48,6 @@ func parseInstalledCOSPackages(cosPkgInfo cos.PackageInfo) ([]PkgInfo, error) {
 	for _, pkg := range cosPkgInfo.InstalledPackages {
 		name := pkg.Category + "/" + pkg.Name
 		version := pkg.Version
-		if pkg.Revision != 0 {
-			version += "-r" + strconv.Itoa(pkg.Revision)
-		}
 		pkgs = append(pkgs, PkgInfo{Name: name, Arch: arch, Version: version})
 	}
 	return pkgs, nil

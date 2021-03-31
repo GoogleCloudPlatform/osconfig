@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go v0.77.0
 	cloud.google.com/go/logging v1.1.2 // indirect
 	cloud.google.com/go/storage v1.12.0
-	cos.googlesource.com/cos/tools.git v0.0.0-20201007223835-69bef9e73b80
+	cos.googlesource.com/cos/tools.git v0.0.0-20210329212435-a349a79f950d
 	github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20200113214433-6cbb518174d4
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d
 	github.com/go-ole/go-ole v1.2.4

@@ -51,6 +51,8 @@ cloud.google.com/go/storage v1.12.0 h1:4y3gHptW1EHVtcPAVE0eBBlFuGqEejTTG3KdIE0lU
 cloud.google.com/go/storage v1.12.0/go.mod h1:fFLk2dp2oAhDz8QFKwqrjdJvxSp/W2g7nillojlL5Ho=
 cos.googlesource.com/cos/tools.git v0.0.0-20201007223835-69bef9e73b80 h1:mgjd6oHmTodFOwSQTaMhmyFEKjWwUEzhLHS0wcdKNTY=
 cos.googlesource.com/cos/tools.git v0.0.0-20201007223835-69bef9e73b80/go.mod h1:Pfpj07EYThBloAdKk2PFZSwilXsARB2V4tSF1gisIh4=
+cos.googlesource.com/cos/tools.git v0.0.0-20210329212435-a349a79f950d h1:qj1jlxRkQblujpwNPW4BOEWmGkrWP+Y5ADIoSKBxO5s=
+cos.googlesource.com/cos/tools.git v0.0.0-20210329212435-a349a79f950d/go.mod h1:1TJafpZtNmYwNzCwoWQRHfBDl59dxO6l/YW88HezBuk=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
@@ -58,6 +60,7 @@ github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20200113214433-6cbb518174
 github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20200113214433-6cbb518174d4/go.mod h1:YWYrZjvs/qwZhDmsDnTaMXcno5Y0MYPN7rhMarLiUmI=
 github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d h1:G0m3OIz70MZUWq3EgK3CesDbo8upS2Vm9/P3FtgI+Jk=
 github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d/go.mod h1:3eOhrUMpNV+6aFIbp5/iudMxNCF27Vw2OZgy4xEx0Fg=
+github.com/andygrunwald/go-gerrit v0.0.0-20201231163137-46815e48bfe0/go.mod h1:soxaYLbAFToS0OelBriItCts/mtUZOuLBkCk1Xv4ZSo=
 github.com/beevik/etree v1.1.0 h1:T0xke/WvNtMoCqgzPhkX2r4rjY3GDZFi+FjpRZY2Jbs=
 github.com/beevik/etree v1.1.0/go.mod h1:r8Aw8JqVegEf0w2fDnATrX9VpkMcyFeM0FhwO62wh+A=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
@@ -126,6 +129,7 @@ github.com/google/go-cmp v0.5.1/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/
 github.com/google/go-cmp v0.5.2/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/google/go-cmp v0.5.4 h1:L8R9j+yAqZuZjsqh/z+F1NCffTKKLShY6zXTItVIZ8M=
 github.com/google/go-cmp v0.5.4/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
+github.com/google/go-querystring v1.0.0/go.mod h1:odCYkC5MyYFN7vkCjXpyrEuKhc/BUO6wN/zVPAxq5ck=
 github.com/google/martian v2.1.0+incompatible h1:/CP5g8u/VJHijgedC/Legn3BAbAaWPgecwXBIDzw5no=
 github.com/google/martian v2.1.0+incompatible/go.mod h1:9I4somxYTbIHy5NJKHRl3wXiIaQGbYVAs8BPL6v8lEs=
 github.com/google/martian/v3 v3.0.0/go.mod h1:y5Zk1BBys9G+gd6Jrk0W3cC1+ELVxBWuIGO+w/tUAp0=
