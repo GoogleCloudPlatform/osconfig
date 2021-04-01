@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -93,6 +94,8 @@ var (
 	capabilities = []string{"PATCH_GA", "GUEST_POLICY_BETA"}
 
 	osConfigWatchConfigTimeout = 10 * time.Minute
+
+	missingSA = regexp.MustCompile(`service-accounts.*not defined`)
 )
 
 type config struct {
@@ -581,6 +584,9 @@ type idToken struct {
 func (t *idToken) get() error {
 	data, err := metadata.Get(IdentityTokenPath)
 	if err != nil {
+		if missingSA.MatchString(err.Error()) {
+			clog.Errorf(context.Background(), "Agent failed to initialize because no service account has been attached to this VM instance.")
+		}
 		return fmt.Errorf("error getting token from metadata: %w", err)
 	}
 
