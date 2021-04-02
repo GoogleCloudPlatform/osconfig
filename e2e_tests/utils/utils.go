@@ -84,7 +84,6 @@ name=Google OSConfig Agent Repository
 baseurl=https://packages.cloud.google.com/yum/repos/google-osconfig-agent-%s-%s
 enabled=1
 gpgcheck=%d
-repo_gpgcheck=1
 gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
 	   https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 EOM`
@@ -96,7 +95,6 @@ name=Google OSConfig Agent Repository
 baseurl=https://packages.cloud.google.com/yum/repos/google-osconfig-agent-%s-%s
 enabled=1
 gpgcheck=%d
-repo_gpgcheck=1
 gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
 	   https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 EOM`
