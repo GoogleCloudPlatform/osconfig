@@ -52,6 +52,7 @@ const (
 
 type osPolicyTestSetup struct {
 	image                string
+	imageName            string
 	osPolicyAssignmentID string
 	instanceName         string
 	testName             string
@@ -62,9 +63,10 @@ type osPolicyTestSetup struct {
 	assertTimeout        time.Duration
 }
 
-func newOsPolicyTestSetup(image, instanceName, testName, queryPath, machineType string, ospa *osconfigpb.OSPolicyAssignment, startup *computeApi.MetadataItems, assertTimeout time.Duration) *osPolicyTestSetup {
+func newOsPolicyTestSetup(image, imageName, instanceName, testName, queryPath, machineType string, ospa *osconfigpb.OSPolicyAssignment, startup *computeApi.MetadataItems, assertTimeout time.Duration) *osPolicyTestSetup {
 	return &osPolicyTestSetup{
 		image:                image,
+		imageName:            imageName,
 		osPolicyAssignmentID: instanceName,
 		instanceName:         instanceName,
 		osPolicyAssignment:   ospa,
@@ -96,7 +98,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 	tests := make(chan *junitxml.TestCase)
 	for _, setup := range testSetup {
 		wg.Add(1)
-		go packageManagementTestCase(ctx, setup, tests, &wg, logger, testCaseRegex)
+		go testCase(ctx, setup, tests, &wg, logger, testCaseRegex)
 	}
 
 	go func() {
@@ -189,7 +191,7 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPoli
 	}
 }
 
-func packageManagementTestCase(ctx context.Context, testSetup *osPolicyTestSetup, tests chan *junitxml.TestCase, wg *sync.WaitGroup, logger *log.Logger, regex *regexp.Regexp) {
+func testCase(ctx context.Context, testSetup *osPolicyTestSetup, tests chan *junitxml.TestCase, wg *sync.WaitGroup, logger *log.Logger, regex *regexp.Regexp) {
 	defer wg.Done()
 
 	tc, err := getTestCaseFromTestSetUp(testSetup)
@@ -213,11 +215,11 @@ func getTestCaseFromTestSetUp(testSetup *osPolicyTestSetup) (*junitxml.TestCase,
 
 	switch testSetup.testName {
 	case packageInstallFunction:
-		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Package installation] [%s]", path.Base(testSetup.image)))
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Package installation] [%s]", testSetup.imageName))
 	case packageRemovalFunction:
-		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Package removal] [%s]", path.Base(testSetup.image)))
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Package removal] [%s]", testSetup.imageName))
 	case packageInstallFromNewRepoFunction:
-		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Add a new package from new repository] [%s]", path.Base(testSetup.image)))
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Add a new package from new repository] [%s]", testSetup.imageName))
 	default:
 		return nil, fmt.Errorf("unknown test function name: %s", testSetup.testName)
 	}

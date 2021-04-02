@@ -58,6 +58,7 @@ const (
 
 type guestPolicyTestSetup struct {
 	image         string
+	imageName     string
 	guestPolicyID string
 	instanceName  string
 	testName      string
@@ -69,9 +70,10 @@ type guestPolicyTestSetup struct {
 	assertTimeout time.Duration
 }
 
-func newGuestPolicyTestSetup(image, instanceName, testName, queryPath, machineType string, gp *osconfigpb.GuestPolicy, startup *computeApi.MetadataItems, assertTimeout time.Duration) *guestPolicyTestSetup {
+func newGuestPolicyTestSetup(image, imageName, instanceName, testName, queryPath, machineType string, gp *osconfigpb.GuestPolicy, startup *computeApi.MetadataItems, assertTimeout time.Duration) *guestPolicyTestSetup {
 	return &guestPolicyTestSetup{
 		image:         image,
+		imageName:     imageName,
 		guestPolicyID: instanceName,
 		instanceName:  instanceName,
 		guestPolicy:   gp,
@@ -222,21 +224,21 @@ func getTestCaseFromTestSetUp(testSetup *guestPolicyTestSetup) (*junitxml.TestCa
 
 	switch testSetup.testName {
 	case packageInstallFunction:
-		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Package installation] [%s]", path.Base(testSetup.image)))
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Package installation] [%s]", testSetup.imageName))
 	case packageRemovalFunction:
-		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Package removal] [%s]", path.Base(testSetup.image)))
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Package removal] [%s]", testSetup.imageName))
 	case packageInstallFromNewRepoFunction:
-		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Add a new package from new repository] [%s]", path.Base(testSetup.image)))
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Add a new package from new repository] [%s]", testSetup.imageName))
 	case packageUpdateFunction:
-		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Package update] [%s]", path.Base(testSetup.image)))
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Package update] [%s]", testSetup.imageName))
 	case packageNoUpdateFunction:
-		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Package install doesn't update] [%s]", path.Base(testSetup.image)))
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Package install doesn't update] [%s]", testSetup.imageName))
 	case recipeInstallFunction:
-		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Recipe installation] [%s]", path.Base(testSetup.image)))
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Recipe installation] [%s]", testSetup.imageName))
 	case recipeStepsFunction:
-		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Recipe steps] [%s]", path.Base(testSetup.image)))
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Recipe steps] [%s]", testSetup.imageName))
 	case metadataPolicyFunction:
-		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Metadata policy] [%s]", path.Base(testSetup.image)))
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Metadata policy] [%s]", testSetup.imageName))
 	default:
 		return nil, fmt.Errorf("unknown test function name: %s", testSetup.testName)
 	}

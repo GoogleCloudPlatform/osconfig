@@ -46,6 +46,7 @@ start -q -n google-osconfig-agent  # required for EL6` + CurlPost
 	zypperInstallAgent = `
 sleep 10
 systemctl stop google-osconfig-agent
+zypper -n remove google-osconfig-agent
 while ! zypper -n -i --no-gpg-checks install google-osconfig-agent; do
 if [[ n -gt 2 ]]; then
   # Zypper repos are flaky, we retry 3 times then just continue, the agent may be installed fine.

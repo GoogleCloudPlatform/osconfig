@@ -63,7 +63,7 @@ func buildPkgInstallTestSetup(name, image, pkgManager, key string) *guestPolicyT
 		Assignment: &osconfigpb.Assignment{InstanceNamePrefixes: []string{instanceName}},
 	}
 	ss := getStartupScript(name, pkgManager, packageName)
-	return newGuestPolicyTestSetup(image, instanceName, testName, packageInstalled, machineType, gp, ss, assertTimeout)
+	return newGuestPolicyTestSetup(image, name, instanceName, testName, packageInstalled, machineType, gp, ss, assertTimeout)
 }
 
 func addPackageInstallTest(key string) []*guestPolicyTestSetup {
@@ -98,7 +98,7 @@ func buildPkgUpdateTestSetup(name, image, pkgManager, key string) *guestPolicyTe
 		Assignment: &osconfigpb.Assignment{InstanceNamePrefixes: []string{instanceName}},
 	}
 	ss := getUpdateStartupScript(name, pkgManager)
-	return newGuestPolicyTestSetup(image, instanceName, testName, packageNotInstalled, machineType, gp, ss, assertTimeout)
+	return newGuestPolicyTestSetup(image, name, instanceName, testName, packageNotInstalled, machineType, gp, ss, assertTimeout)
 }
 
 func addPackageUpdateTest(key string) []*guestPolicyTestSetup {
@@ -134,7 +134,7 @@ func buildPkgDoesNotUpdateTestSetup(name, image, pkgManager, key string) *guestP
 		Assignment: &osconfigpb.Assignment{InstanceNamePrefixes: []string{instanceName}},
 	}
 	ss := getUpdateStartupScript(name, pkgManager)
-	return newGuestPolicyTestSetup(image, instanceName, testName, packageInstalled, machineType, gp, ss, assertTimeout)
+	return newGuestPolicyTestSetup(image, name, instanceName, testName, packageInstalled, machineType, gp, ss, assertTimeout)
 }
 
 func addPackageDoesNotUpdateTest(key string) []*guestPolicyTestSetup {
@@ -170,7 +170,7 @@ func buildPkgRemoveTestSetup(name, image, pkgManager, key string) *guestPolicyTe
 		Assignment: &osconfigpb.Assignment{InstanceNamePrefixes: []string{instanceName}},
 	}
 	ss := getStartupScript(name, pkgManager, packageName)
-	return newGuestPolicyTestSetup(image, instanceName, testName, packageNotInstalled, machineType, gp, ss, assertTimeout)
+	return newGuestPolicyTestSetup(image, name, instanceName, testName, packageNotInstalled, machineType, gp, ss, assertTimeout)
 }
 
 func addPackageRemovalTest(key string) []*guestPolicyTestSetup {
@@ -212,7 +212,7 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *g
 		},
 	}
 	ss := getStartupScript(name, pkgManager, packageName)
-	return newGuestPolicyTestSetup(image, instanceName, testName, packageInstalled, machineType, gp, ss, assertTimeout)
+	return newGuestPolicyTestSetup(image, name, instanceName, testName, packageInstalled, machineType, gp, ss, assertTimeout)
 }
 
 func addPackageInstallFromNewRepoTest(key string) []*guestPolicyTestSetup {
@@ -295,7 +295,7 @@ func buildRecipeInstallTestSetup(name, image, pkgManager, key string) *guestPoli
 		},
 	}
 	ss := getRecipeInstallStartupScript(name, recipeName, pkgManager)
-	return newGuestPolicyTestSetup(image, instanceName, testName, packageInstalled, machineType, gp, ss, assertTimeout)
+	return newGuestPolicyTestSetup(image, name, instanceName, testName, packageInstalled, machineType, gp, ss, assertTimeout)
 }
 
 func addRecipeStepsTest(key string) []*guestPolicyTestSetup {
@@ -489,7 +489,7 @@ func buildRecipeStepsTestSetup(name, image, pkgManager, key string) *guestPolicy
 	}
 
 	ss := getRecipeStepsStartupScript(name, recipeName, pkgManager)
-	return newGuestPolicyTestSetup(image, instanceName, testName, packageInstalled, machineType, gp, ss, assertTimeout)
+	return newGuestPolicyTestSetup(image, name, instanceName, testName, packageInstalled, machineType, gp, ss, assertTimeout)
 }
 
 func buildMetadataPolicyTestSetup(name, image, pkgManager, key string) *guestPolicyTestSetup {
@@ -504,7 +504,7 @@ func buildMetadataPolicyTestSetup(name, image, pkgManager, key string) *guestPol
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
 
 	ss := getRecipeInstallStartupScript(name, recipeName, pkgManager)
-	ts := newGuestPolicyTestSetup(image, instanceName, testName, packageInstalled, machineType, nil, ss, assertTimeout)
+	ts := newGuestPolicyTestSetup(image, name, instanceName, testName, packageInstalled, machineType, nil, ss, assertTimeout)
 
 	marshaler := jsonpb.Marshaler{}
 	recipeString, err := marshaler.MarshalToString(osconfigserver.BuildSoftwareRecipe(recipeName, "", nil, nil))
