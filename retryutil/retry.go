@@ -17,11 +17,13 @@ package retryutil
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"math/rand"
 	"time"
 
+	"cloud.google.com/go/compute/metadata"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -83,6 +85,10 @@ func RetryAPICall(ctx context.Context, maxRetryTime time.Duration, name string, 
 			case codes.ResourceExhausted:
 				extra = 10
 			default:
+				var ndr *metadata.NotDefinedError
+				if errors.As(err, &ndr) {
+					return fmt.Errorf("no service account set for instance")
+				}
 				return err
 			}
 		} else {
