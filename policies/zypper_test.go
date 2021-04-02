@@ -57,7 +57,7 @@ func TestZypperRepositories(t *testing.T) {
 			[]*agentendpointpb.ZypperRepository{
 				{BaseUrl: "http://repo1-url/", Id: "id"},
 			},
-			"# Repo file managed by Google OSConfig agent\n\n[id]\nname=id\nbaseurl=http://repo1-url/\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=1\n",
+			"# Repo file managed by Google OSConfig agent\n\n[id]\nname=id\nbaseurl=http://repo1-url/\nenabled=1\ngpgcheck=1\n",
 		},
 		{
 			"2 repos",
@@ -65,7 +65,7 @@ func TestZypperRepositories(t *testing.T) {
 				{BaseUrl: "http://repo1-url/", Id: "id1", DisplayName: "displayName1", GpgKeys: []string{"https://url/key"}},
 				{BaseUrl: "http://repo1-url/", Id: "id2", DisplayName: "displayName2", GpgKeys: []string{"https://url/key1", "https://url/key2"}},
 			},
-			"# Repo file managed by Google OSConfig agent\n\n[id1]\nname=displayName1\nbaseurl=http://repo1-url/\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=1\ngpgkey=https://url/key\n\n[id2]\nname=displayName2\nbaseurl=http://repo1-url/\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=1\ngpgkey=https://url/key1\n       https://url/key2\n",
+			"# Repo file managed by Google OSConfig agent\n\n[id1]\nname=displayName1\nbaseurl=http://repo1-url/\nenabled=1\ngpgcheck=1\ngpgkey=https://url/key\n\n[id2]\nname=displayName2\nbaseurl=http://repo1-url/\nenabled=1\ngpgcheck=1\ngpgkey=https://url/key1\n       https://url/key2\n",
 		},
 	}
 

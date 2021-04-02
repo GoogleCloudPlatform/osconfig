@@ -29,6 +29,7 @@ import (
 
 var (
 	yumInstallAgent = `
+sed -i 's/repo_gpgcheck=1/repo_gpgcheck=0/g' /etc/yum.repos.d/google-cloud.repo
 sleep 10
 systemctl stop google-osconfig-agent
 stop -q -n google-osconfig-agent  # required for EL6
