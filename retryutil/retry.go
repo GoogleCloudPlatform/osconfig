@@ -87,7 +87,7 @@ func RetryAPICall(ctx context.Context, maxRetryTime time.Duration, name string, 
 			default:
 				var ndr *metadata.NotDefinedError
 				if errors.As(err, &ndr) {
-					return fmt.Errorf("No service account set for instance.")
+					return fmt.Errorf("no service account set for instance")
 				}
 				return err
 			}
