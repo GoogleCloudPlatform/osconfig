@@ -134,7 +134,7 @@ func createOSPolicyAssignment(ctx context.Context, client *osconfigZonalV1alpha.
 			return nil, fmt.Errorf("error running GetOSPolicyAssignment: %s", utils.GetStatusFromError(err))
 		}
 		switch ospa.GetRolloutState() {
-		case osconfigpb.OSPolicyAssignment_IN_PROGRESS, osconfigpb.OSPolicyAssignment_CANCELLED:
+		case osconfigpb.OSPolicyAssignment_SUCCEEDED, osconfigpb.OSPolicyAssignment_CANCELLED:
 			return ospa, nil
 		}
 		time.Sleep(10 * time.Second)
