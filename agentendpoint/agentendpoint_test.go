@@ -46,6 +46,10 @@ import (
 
 var testIDToken string
 
+func init() {
+	osPoliciesEnabled = true
+}
+
 func TestMain(m *testing.M) {
 	cs := &jws.ClaimSet{
 		Exp: time.Now().Add(1 * time.Hour).Unix(),
