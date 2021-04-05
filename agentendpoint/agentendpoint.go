@@ -51,6 +51,7 @@ var (
 	errResourceExhausted = errors.New("ResourceExhausted")
 	taskStateFile        = agentconfig.TaskStateFile()
 	sameStateTimeWindow  = -5 * time.Second
+	osPoliciesEnabled    = false
 )
 
 // Client is a an agentendpoint client.
@@ -234,7 +235,7 @@ func (c *Client) runTask(ctx context.Context) {
 				clog.Errorf(ctx, "Error running TaskType_EXEC_STEP_TASK: %v", err)
 			}
 		case agentendpointpb.TaskType_APPLY_CONFIG_TASK:
-			if agentconfig.OSPoliciesEnabled() {
+			if agentconfig.OSPoliciesEnabled() || osPoliciesEnabled {
 				if err := c.RunApplyConfig(ctx, task); err != nil {
 					clog.Errorf(ctx, "Error running TaskType_APPLY_CONFIG_TASK: %v", err)
 				}
