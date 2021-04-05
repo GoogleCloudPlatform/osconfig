@@ -146,6 +146,7 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPoli
 	metadataItems = append(metadataItems, testSetup.startup)
 	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("enable-osconfig", "true"))
 	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("osconfig-disabled-features", "guestpolicies"))
+	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("osconfig-enabled-prerelease-features", "ospolicies"))
 	testProjectConfig := testconfig.GetProject()
 	zone := testProjectConfig.AcquireZone()
 	defer testProjectConfig.ReleaseZone(zone)
