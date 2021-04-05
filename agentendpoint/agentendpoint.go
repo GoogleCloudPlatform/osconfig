@@ -225,6 +225,7 @@ func (c *Client) runTask(ctx context.Context) {
 		}
 
 		clog.Debugf(ctx, "Received task: %s.", task.GetTaskType())
+		ctx = clog.WithLabels(ctx, map[string]string{"task_type": task.GetTaskType().String()})
 		switch task.GetTaskType() {
 		case agentendpointpb.TaskType_APPLY_PATCHES:
 			if err := c.RunApplyPatches(ctx, task); err != nil {
