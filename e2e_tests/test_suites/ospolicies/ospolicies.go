@@ -121,18 +121,26 @@ func createOSPolicyAssignment(ctx context.Context, client *osconfigZonalV1alpha.
 	defer gpMx.Unlock()
 	op, err := client.CreateOSPolicyAssignment(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error running CreateOSPolicyAssignment: %s", utils.GetStatusFromError(err))
 	}
 	//return op.Wait(ctx)
 	_ = op
 
+	time.Sleep(30 * time.Second)
 	getReq := &osconfigpb.GetOSPolicyAssignmentRequest{Name: fmt.Sprintf("%s/osPolicyAssignments/%s", req.GetParent(), req.GetOsPolicyAssignmentId())}
-	ospa, err := client.GetOSPolicyAssignment(ctx, getReq)
-	if err != nil {
-		return nil, err
+	for i := 0; i < 20; i++ {
+		ospa, err := client.GetOSPolicyAssignment(ctx, getReq)
+		if err != nil {
+			return nil, fmt.Errorf("error running GetOSPolicyAssignment: %s", utils.GetStatusFromError(err))
+		}
+		switch ospa.GetRolloutState() {
+		case osconfigpb.OSPolicyAssignment_IN_PROGRESS, osconfigpb.OSPolicyAssignment_CANCELLED:
+			return ospa, nil
+		}
+		time.Sleep(10 * time.Second)
 	}
 
-	return ospa, nil
+	return nil, fmt.Errorf("timed out waiting for rollout to finish")
 }
 
 func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPolicyTestSetup, logger *log.Logger) {
@@ -180,7 +188,7 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPoli
 	testCase.Logf("Creating OSPolicyAssignment")
 	ospa, err := createOSPolicyAssignment(ctx, client, req)
 	if err != nil {
-		testCase.WriteFailure("Error running CreateOSPolicyAssignment: %s", utils.GetStatusFromError(err))
+		testCase.WriteFailure("Error running createOSPolicyAssignment: %s", err)
 		return
 	}
 	defer cleanupOSPolicyAssignment(ctx, testCase, ospa.GetName())

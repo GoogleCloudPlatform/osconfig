@@ -69,11 +69,16 @@ systemctl restart google-osconfig-agent` + CurlPost
 
 	// CurlPost indicates agent is installed.
 	CurlPost = `
+uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/guestInventory/LastUpdated
+curl -X DELETE $uri -H "Metadata-Flavor: Google"
+
 uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/osconfig_tests/install_done
 curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
 `
 
 	windowsPost = `
+$uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/guestInventory/LastUpdated'
+Invoke-RestMethod -Method DELETE -Uri $uri -Headers @{"Metadata-Flavor" = "Google"}
 Start-Sleep 10
 $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/osconfig_tests/install_done'
 Invoke-RestMethod -Method PUT -Uri $uri -Headers @{"Metadata-Flavor" = "Google"} -Body 1

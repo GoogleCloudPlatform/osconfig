@@ -91,7 +91,7 @@ func runGatherInventoryTest(ctx context.Context, testSetup *inventoryTestSetup, 
 	metadataItems = append(metadataItems, testSetup.startup)
 	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("enable-osconfig", "true"))
 	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("osconfig-disabled-features", "tasks,guestpolicies"))
-	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("osconfig-poll-interval", "30s"))
+	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("osconfig-poll-interval", "1"))
 
 	testProjectConfig := testconfig.GetProject()
 	zone := testProjectConfig.AcquireZone()
