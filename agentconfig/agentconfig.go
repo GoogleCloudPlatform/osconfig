@@ -94,6 +94,15 @@ var (
 	capabilities = []string{"PATCH_GA", "GUEST_POLICY_BETA"}
 
 	osConfigWatchConfigTimeout = 10 * time.Minute
+
+	defaultClient = &http.Client{
+		Transport: &http.Transport{
+			Dial: (&net.Dialer{
+				Timeout:   2 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).Dial,
+		},
+	}
 )
 
 type config struct {
@@ -366,7 +375,7 @@ func getMetadata(suffix string) ([]byte, string, error) {
 		return nil, "", err
 	}
 	req.Header.Add("Metadata-Flavor", "Google")
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := defaultClient.Do(req)
 	if err != nil {
 		return nil, "", err
 	}
