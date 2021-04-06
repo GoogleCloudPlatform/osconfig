@@ -664,6 +664,7 @@ func RestartFile() string {
 	return restartFileLinux
 }
 
+// User agent string for creating http/grpc clients.
 func UserAgent() string {
 	return "google-osconfig-agent/" + Version()
 }
