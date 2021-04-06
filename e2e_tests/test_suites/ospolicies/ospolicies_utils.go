@@ -33,7 +33,7 @@ var (
 	}
 )
 
-func getStartupScript(image, pkgManager, packageName string) *computeApi.MetadataItems {
+func getStartupScriptPackages(image, pkgManager, packageName string) *computeApi.MetadataItems {
 	var ss, key string
 
 	switch pkgManager {
@@ -85,9 +85,9 @@ googet addrepo test https://packages.cloud.google.com/yuck/repos/osconfig-agent-
 while(1) {
   $installed_packages = googet installed
   if ($installed_packages -like "*%s*") {
-	  $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s'
+    $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s'
   } else {
-	  $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s'
+    $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s'
   }
   Invoke-RestMethod -Method PUT -Uri $uri -Headers @{"Metadata-Flavor" = "Google"} -Body 1
   sleep 5
@@ -102,7 +102,7 @@ zypper -n remove %[2]s
 while true; do
   isinstalled=$(/usr/bin/rpmquery -a %[2]s)
   if [[ $isinstalled =~ ^%[2]s-* ]]; then
-	  uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s
+    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s
   else
   	uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s
   fi
@@ -111,6 +111,125 @@ while true; do
 done`
 		ss = fmt.Sprintf(ss, utils.InstallOSConfigSUSE(), packageName, packageInstalled, packageNotInstalled)
 		key = "startup-script"
+
+	default:
+		fmt.Printf("Invalid package manager: %s", pkgManager)
+	}
+
+	return &computeApi.MetadataItems{
+		Key:   key,
+		Value: &ss,
+	}
+}
+
+func getStartupScriptFileDNE(image, pkgManager, filePath string) *computeApi.MetadataItems {
+	var ss, key string
+
+	linux := `
+touch %[1]s
+%[2]s
+echo "Checking for %[1]s"
+while [[ -f %[1]s ]]; do
+  echo "%[1]s exists"
+  sleep 5
+done
+echo "%[1]s DNE"
+uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[3]s
+curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"`
+
+	switch pkgManager {
+	case "apt":
+		ss = fmt.Sprintf(linux, filePath, utils.InstallOSConfigDeb(), fileDNE)
+		key = "startup-script"
+
+	case "yum":
+		ss = fmt.Sprintf(linux, filePath, yumStartupScripts[path.Base(image)], fileDNE)
+		key = "startup-script"
+
+	case "zypper":
+		ss = fmt.Sprintf(linux, filePath, utils.InstallOSConfigSUSE(), fileDNE)
+		key = "startup-script"
+
+	case "googet":
+		ss = `
+New-Item -ItemType File -Path %[1]s
+%[2]s
+Write-Host "Checking for %[1]s"
+while ( ! (Test-Path %[1]s) ) {
+	Write-Host "%[1]s exists"
+  sleep 5
+}
+$uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[3]s'
+Invoke-RestMethod -Method PUT -Uri $uri -Headers @{"Metadata-Flavor" = "Google"} -Body 1`
+		ss = fmt.Sprintf(ss, filePath, utils.InstallOSConfigGooGet(), fileDNE)
+		key = "windows-startup-script-ps1"
+
+	default:
+		fmt.Printf("Invalid package manager: %s", pkgManager)
+	}
+
+	return &computeApi.MetadataItems{
+		Key:   key,
+		Value: &ss,
+	}
+}
+
+func getStartupScriptFileExists(image, pkgManager string, paths []string) *computeApi.MetadataItems {
+	var ss, key string
+
+	linux := `
+echo "Checking for %[1]s"
+while [[ ! -f %[1]s ]]; do
+  echo "%[1]s DNE"
+  sleep 5
+done
+echo "%[1]s exists"`
+
+	linuxEnd := fmt.Sprintf(`
+uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s
+curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"`, fileExists)
+
+	switch pkgManager {
+	case "apt":
+		ss = utils.InstallOSConfigDeb()
+		for _, p := range paths {
+			ss += fmt.Sprintf(linux, p)
+		}
+		ss += linuxEnd
+		key = "startup-script"
+
+	case "yum":
+		ss = yumStartupScripts[path.Base(image)]
+		for _, p := range paths {
+			ss += fmt.Sprintf(linux, p)
+		}
+		ss += linuxEnd
+		key = "startup-script"
+
+	case "zypper":
+		ss = utils.InstallOSConfigSUSE()
+		for _, p := range paths {
+			ss += fmt.Sprintf(linux, p)
+		}
+		ss += linuxEnd
+		key = "startup-script"
+
+	case "googet":
+		windows := `
+Write-Host "Checking for %[1]s"
+while ( ! (Test-Path %[1]s) ) {
+  Write-Host "%[1]s DNE"
+  sleep 5
+}
+Write-Host "%[1]s exists"`
+		ss = utils.InstallOSConfigGooGet()
+		for _, p := range paths {
+			ss += fmt.Sprintf(windows, p)
+		}
+		ss += fmt.Sprintf(`
+$uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s'
+Invoke-RestMethod -Method PUT -Uri $uri -Headers @{"Metadata-Flavor" = "Google"} -Body 1`, fileExists)
+		key = "windows-startup-script-ps1"
 
 	default:
 		fmt.Printf("Invalid package manager: %s", pkgManager)
