@@ -58,6 +58,8 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20200113214433-6cbb518174d4 h1:n38UnKhQmPxZ9+PTKW38D0TJAmdiElHMlTM0uT2LACg=
 github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20200113214433-6cbb518174d4/go.mod h1:YWYrZjvs/qwZhDmsDnTaMXcno5Y0MYPN7rhMarLiUmI=
+github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20210406211301-f238c1e3c0e3 h1:MrPnMapanWS675w6XbrdhHvRnoP5c0nzvLbwhTZnRZw=
+github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20210406211301-f238c1e3c0e3/go.mod h1:3F/urXs15KEI7RBGoOsK9/jCCJPBKHxyZH/Nzc7uldo=
 github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d h1:G0m3OIz70MZUWq3EgK3CesDbo8upS2Vm9/P3FtgI+Jk=
 github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d/go.mod h1:3eOhrUMpNV+6aFIbp5/iudMxNCF27Vw2OZgy4xEx0Fg=
 github.com/andygrunwald/go-gerrit v0.0.0-20201231163137-46815e48bfe0/go.mod h1:soxaYLbAFToS0OelBriItCts/mtUZOuLBkCk1Xv4ZSo=

@@ -663,3 +663,7 @@ func RestartFile() string {
 
 	return restartFileLinux
 }
+
+func UserAgent() string {
+	return "google-osconfig-agent/" + Version()
+}

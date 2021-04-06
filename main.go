@@ -86,7 +86,7 @@ func registerAgent(ctx context.Context) {
 
 func run(ctx context.Context) {
 	// Setup logging.
-	opts := logger.LogOpts{LoggerName: "OSConfigAgent"}
+	opts := logger.LogOpts{LoggerName: "OSConfigAgent", UserAgent: agentconfig.UserAgent()}
 	if agentconfig.Stdout() {
 		opts.Writers = []io.Writer{os.Stdout}
 	}
