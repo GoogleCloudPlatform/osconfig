@@ -48,6 +48,8 @@ const (
 	packageRemovalFunction            = "pkgremoval"
 	packageInstallFromNewRepoFunction = "pkgfromnewrepo"
 	recipeInstallFunction             = "recipeinstall"
+	fileAbsentFunction                = "fileabsent"
+	filePresentFunction               = "filepresent"
 )
 
 type osPolicyTestSetup struct {
@@ -229,6 +231,10 @@ func getTestCaseFromTestSetUp(testSetup *osPolicyTestSetup) (*junitxml.TestCase,
 		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Package removal] [%s]", testSetup.imageName))
 	case packageInstallFromNewRepoFunction:
 		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Add a new package from new repository] [%s]", testSetup.imageName))
+	case fileAbsentFunction:
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Enforce file DNE] [%s]", testSetup.imageName))
+	case filePresentFunction:
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Enforce file Present] [%s]", testSetup.imageName))
 	default:
 		return nil, fmt.Errorf("unknown test function name: %s", testSetup.testName)
 	}
