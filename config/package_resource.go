@@ -374,7 +374,12 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 		enforcePackage.installedCache = aptInstalled
 		switch p.managedPackage.Apt.DesiredState {
 		case agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED:
-			enforcePackage.action, enforcePackage.actionFunc = installing, func() error { return packages.InstallAptPackages(ctx, []string{enforcePackage.name}) }
+			enforcePackage.action, enforcePackage.actionFunc = installing, func() error {
+				if _, err := packages.AptUpdate(ctx); err != nil {
+					return err
+				}
+				return packages.InstallAptPackages(ctx, []string{enforcePackage.name})
+			}
 		case agentendpointpb.OSPolicy_Resource_PackageResource_REMOVED:
 			enforcePackage.action, enforcePackage.actionFunc = removing, func() error { return packages.RemoveAptPackages(ctx, []string{enforcePackage.name}) }
 		}

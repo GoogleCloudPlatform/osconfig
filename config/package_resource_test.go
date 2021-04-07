@@ -400,67 +400,68 @@ func TestPackageResourceEnforceState(t *testing.T) {
 		name         string
 		prpb         *agentendpointpb.OSPolicy_Resource_PackageResource
 		cachePointer *packageCache
-		expectedCmd  *exec.Cmd
+		expectedCmds []*exec.Cmd
 	}{
 		{
 			"AptInstalled",
 			aptInstalledPR,
 			aptInstalled,
-			func() *exec.Cmd {
-				cmd := exec.Command("/usr/bin/apt-get", "install", "-y", "foo")
-				cmd.Env = append(os.Environ(),
+			func() []*exec.Cmd {
+				cmd1 := exec.Command("/usr/bin/apt-get", "update")
+				cmd2 := exec.Command("/usr/bin/apt-get", "install", "-y", "foo")
+				cmd2.Env = append(os.Environ(),
 					"DEBIAN_FRONTEND=noninteractive",
 				)
-				return cmd
+				return []*exec.Cmd{cmd1, cmd2}
 			}(),
 		},
 		{
 			"AptRemoved",
 			aptRemovedPR,
 			aptInstalled,
-			func() *exec.Cmd {
-				cmd := exec.Command("/usr/bin/apt-get", "remove", "-y", "foo")
-				cmd.Env = append(os.Environ(),
+			func() []*exec.Cmd {
+				cmd1 := exec.Command("/usr/bin/apt-get", "remove", "-y", "foo")
+				cmd1.Env = append(os.Environ(),
 					"DEBIAN_FRONTEND=noninteractive",
 				)
-				return cmd
+				return []*exec.Cmd{cmd1}
 			}(),
 		},
 		{
 			"GooGetInstalled",
 			googetInstalledPR,
 			gooInstalled,
-			exec.Command("googet.exe", "-noconfirm", "install", "foo"),
+			[]*exec.Cmd{exec.Command("googet.exe", "-noconfirm", "install", "foo")},
 		},
 		{
 			"GooGetRemoved",
 			googetRemovedPR,
 			gooInstalled,
-			exec.Command("googet.exe", "-noconfirm", "remove", "foo"),
+			[]*exec.Cmd{exec.Command("googet.exe", "-noconfirm", "remove", "foo")},
 		},
 		{
 			"YumInstalled",
 			yumInstalledPR,
 			yumInstalled,
-			exec.Command("/usr/bin/yum", "install", "--assumeyes", "foo"),
+			[]*exec.Cmd{exec.Command("/usr/bin/yum", "install", "--assumeyes", "foo")},
 		},
 		{
 			"YumRemoved",
 			yumRemovedPR,
 			yumInstalled,
-			exec.Command("/usr/bin/yum", "remove", "--assumeyes", "foo"),
+			[]*exec.Cmd{exec.Command("/usr/bin/yum", "remove", "--assumeyes", "foo")},
 		},
 		{
 			"ZypperInstalled",
 			zypperInstalledPR,
 			zypperInstalled,
-			exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "foo"),
+			[]*exec.Cmd{exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "foo")},
 		},
 		{
 			"ZypperRemoved",
 			zypperRemovedPR,
 			zypperInstalled,
-			exec.Command("/usr/bin/zypper", "--non-interactive", "remove", "foo"),
+			[]*exec.Cmd{exec.Command("/usr/bin/zypper", "--non-interactive", "remove", "foo")},
 		},
 	}
 
@@ -481,7 +482,9 @@ func TestPackageResourceEnforceState(t *testing.T) {
 
 			tt.cachePointer.cache = map[string]struct{}{"foo": {}}
 
-			mockCommandRunner.EXPECT().Run(ctx, tt.expectedCmd)
+			for _, expectedCmd := range tt.expectedCmds {
+				mockCommandRunner.EXPECT().Run(ctx, expectedCmd)
+			}
 
 			if err := pr.EnforceState(ctx); err != nil {
 				t.Fatalf("Unexpected error: %v", err)
