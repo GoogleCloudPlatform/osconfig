@@ -126,6 +126,7 @@ func detectPolicyConflicts(proposed, current *config.ManagedResources) error {
 
 func validateConfigResource(ctx context.Context, plcy *policy, policyMR *config.ManagedResources, rCompliance *agentendpointpb.OSPolicyResourceCompliance, configResource *agentendpointpb.OSPolicy_Resource) {
 	ctx = clog.WithLabels(ctx, map[string]string{"resource_id": configResource.GetId()})
+	clog.Debugf(ctx, "Running step 'validate' on resource %q.", configResource.GetId())
 	plcy.resources[configResource.GetId()] = newResource(configResource)
 	resource := plcy.resources[configResource.GetId()]
 
@@ -153,6 +154,7 @@ func validateConfigResource(ctx context.Context, plcy *policy, policyMR *config.
 
 func checkConfigResourceState(ctx context.Context, plcy *policy, rCompliance *agentendpointpb.OSPolicyResourceCompliance, configResource *agentendpointpb.OSPolicy_Resource) {
 	ctx = clog.WithLabels(ctx, map[string]string{"resource_id": configResource.GetId()})
+	clog.Debugf(ctx, "Running step 'check state' on resource %q.", configResource.GetId())
 	res := plcy.resources[configResource.GetId()]
 
 	outcome := agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
@@ -177,10 +179,11 @@ func checkConfigResourceState(ctx context.Context, plcy *policy, rCompliance *ag
 
 func enforceConfigResourceState(ctx context.Context, plcy *policy, rCompliance *agentendpointpb.OSPolicyResourceCompliance, configResource *agentendpointpb.OSPolicy_Resource) (enforcementActionTaken bool) {
 	ctx = clog.WithLabels(ctx, map[string]string{"resource_id": configResource.GetId()})
+	clog.Debugf(ctx, "Running step 'enforce state' on resource %q.", configResource.GetId())
 	res := plcy.resources[configResource.GetId()]
 	// Only enforce resources that need it.
 	if res.InDesiredState() {
-		clog.Debugf(ctx, "No enforcement required.")
+		clog.Debugf(ctx, "No enforcement required for %q.", configResource.GetId())
 		return false
 	}
 
@@ -270,7 +273,10 @@ func (c *configTask) cleanup(ctx context.Context) {
 		plcy := c.policies[osPolicy.GetId()]
 		for _, configResource := range osPolicy.GetResources() {
 			ctx = clog.WithLabels(ctx, map[string]string{"resource_id": configResource.GetId()})
-			res := plcy.resources[configResource.GetId()]
+			res, ok := plcy.resources[configResource.GetId()]
+			if !ok || res == nil {
+				continue
+			}
 			if err := res.Cleanup(ctx); err != nil {
 				clog.Warningf(ctx, "Error running resource cleanup:%v", err)
 			}

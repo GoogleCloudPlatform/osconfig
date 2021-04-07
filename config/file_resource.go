@@ -181,7 +181,7 @@ func copyFile(dst, src string, perms os.FileMode) (retErr error) {
 		return err
 	}
 
-	return writer.Chmod(perms)
+	return nil
 }
 
 func (f *fileResource) enforceState(ctx context.Context) (inDesiredState bool, err error) {
