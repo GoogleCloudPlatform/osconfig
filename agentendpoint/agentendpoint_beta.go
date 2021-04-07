@@ -48,6 +48,7 @@ func NewBetaClient(ctx context.Context) (*BetaClient, error) {
 		option.WithoutAuthentication(), // Do not use oauth.
 		option.WithGRPCDialOption(grpc.WithTransportCredentials(credentials.NewTLS(nil))), // Because we disabled Auth we need to specifically enable TLS.
 		option.WithEndpoint(agentconfig.SvcEndpoint()),
+		option.WithUserAgent(agentconfig.UserAgent()),
 	}
 	clog.Debugf(ctx, "Creating new agentendpoint beta client.")
 	c, err := agentendpoint.NewClient(ctx, opts...)
