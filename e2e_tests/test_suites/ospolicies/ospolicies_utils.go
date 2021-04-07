@@ -33,13 +33,102 @@ var (
 	}
 )
 
-func getStartupScriptPackages(image, pkgManager, packageName string) *computeApi.MetadataItems {
+func getStartupScriptPackageInstall(image, pkgManager, packageName string) *computeApi.MetadataItems {
 	var ss, key string
 
 	switch pkgManager {
 	case "apt":
 		ss = `
 apt-get -y remove %[2]s
+%[1]s
+while true; do
+  isinstalled=$(/usr/bin/dpkg-query -s %s)
+  if [[ $isinstalled =~ "Status: install ok installed" ]]; then
+    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s
+  else
+    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s
+  fi
+  curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
+  sleep 10
+done`
+
+		ss = fmt.Sprintf(ss, utils.InstallOSConfigDeb(), packageName, packageInstalled, packageNotInstalled)
+		key = "startup-script"
+
+	case "yum":
+		ss = `
+while ! yum -y remove %[2]s; do
+  if [[ n -gt 5 ]]; then
+    exit 1
+  fi
+  n=$[$n+1]
+  sleep 10
+done
+%[1]s
+while true; do
+  isinstalled=$(/usr/bin/rpmquery -a %[2]s)
+  if [[ $isinstalled =~ ^%[2]s-* ]]; then
+    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s
+  else
+    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s
+  fi
+  curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
+  sleep 10
+done`
+		ss = fmt.Sprintf(ss, yumStartupScripts[path.Base(image)], packageName, packageInstalled, packageNotInstalled)
+		key = "startup-script"
+
+	case "googet":
+		ss = `
+googet addrepo test https://packages.cloud.google.com/yuck/repos/osconfig-agent-test-repository
+%s
+while(1) {
+  $installed_packages = googet installed
+  if ($installed_packages -like "*%s*") {
+    $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s'
+  } else {
+    $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s'
+  }
+  Invoke-RestMethod -Method PUT -Uri $uri -Headers @{"Metadata-Flavor" = "Google"} -Body 1
+  sleep 10
+}`
+		ss = fmt.Sprintf(ss, utils.InstallOSConfigGooGet(), packageName, packageInstalled, packageNotInstalled)
+		key = "windows-startup-script-ps1"
+
+	case "zypper":
+		ss = `
+zypper -n remove %[2]s
+%[1]s
+while true; do
+  isinstalled=$(/usr/bin/rpmquery -a %[2]s)
+  if [[ $isinstalled =~ ^%[2]s-* ]]; then
+    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s
+  else
+  	uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s
+  fi
+  curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
+  sleep 10
+done`
+		ss = fmt.Sprintf(ss, utils.InstallOSConfigSUSE(), packageName, packageInstalled, packageNotInstalled)
+		key = "startup-script"
+
+	default:
+		fmt.Printf("Invalid package manager: %s", pkgManager)
+	}
+
+	return &computeApi.MetadataItems{
+		Key:   key,
+		Value: &ss,
+	}
+}
+
+func getStartupScriptPackageRemove(image, pkgManager, packageName string) *computeApi.MetadataItems {
+	var ss, key string
+
+	switch pkgManager {
+	case "apt":
+		ss = `
+apt-get -y install %[2]s
 %[1]s
 while true; do
   isinstalled=$(/usr/bin/dpkg-query -s %s)
@@ -57,7 +146,7 @@ done`
 
 	case "yum":
 		ss = `
-while ! yum -y remove %[3]s; do
+while ! yum -y install %[2]s; do
   if [[ n -gt 5 ]]; then
     exit 1
   fi
@@ -97,7 +186,7 @@ while(1) {
 
 	case "zypper":
 		ss = `
-zypper -n remove %[2]s
+zypper -n install %[2]s
 %[1]s
 while true; do
   isinstalled=$(/usr/bin/rpmquery -a %[2]s)
@@ -181,7 +270,7 @@ func getStartupScriptFileExists(image, pkgManager string, paths []string) *compu
 echo "Checking for %[1]s"
 while [[ ! -f %[1]s ]]; do
   echo "%[1]s DNE"
-  sleep 5
+  sleep 10
 done
 echo "%[1]s exists"`
 
@@ -219,7 +308,7 @@ curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"`, fileExists)
 Write-Host "Checking for %[1]s"
 while ( ! (Test-Path %[1]s) ) {
   Write-Host "%[1]s DNE"
-  sleep 5
+  sleep 10
 }
 Write-Host "%[1]s exists"`
 		ss = utils.InstallOSConfigGooGet()

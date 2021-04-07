@@ -9,6 +9,7 @@ require (
 	github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20210218230930-56f7230ae26d
 	github.com/GoogleCloudPlatform/osconfig v0.0.0-20210319194316-1c34f5593716 // indirect
 	github.com/golang/protobuf v1.5.2
+	github.com/google/go-cmp v0.5.5 // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5 // indirect
 	github.com/kylelemons/godebug v1.1.0
 	google.golang.org/api v0.43.0
