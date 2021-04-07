@@ -32,8 +32,10 @@ import (
 	osconfigZonalV1alpha "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/cloud.google.com/go/osconfig/apiv1alpha"
 	testconfig "github.com/GoogleCloudPlatform/osconfig/e2e_tests/test_config"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
+	"github.com/google/go-cmp/cmp"
 	"github.com/kylelemons/godebug/pretty"
 	computeApi "google.golang.org/api/compute/v1"
+	"google.golang.org/protobuf/testing/protocmp"
 
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
 )
@@ -63,9 +65,10 @@ type osPolicyTestSetup struct {
 	machineType          string
 	queryPath            string
 	assertTimeout        time.Duration
+	wantCompliances      []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance
 }
 
-func newOsPolicyTestSetup(image, imageName, instanceName, testName, queryPath, machineType string, ospa *osconfigpb.OSPolicyAssignment, startup *computeApi.MetadataItems, assertTimeout time.Duration) *osPolicyTestSetup {
+func newOsPolicyTestSetup(image, imageName, instanceName, testName, queryPath, machineType string, ospa *osconfigpb.OSPolicyAssignment, startup *computeApi.MetadataItems, assertTimeout time.Duration, wantCompliances []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance) *osPolicyTestSetup {
 	return &osPolicyTestSetup{
 		image:                image,
 		imageName:            imageName,
@@ -77,6 +80,7 @@ func newOsPolicyTestSetup(image, imageName, instanceName, testName, queryPath, m
 		queryPath:            queryPath,
 		assertTimeout:        assertTimeout,
 		startup:              startup,
+		wantCompliances:      wantCompliances,
 	}
 }
 
@@ -157,6 +161,7 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPoli
 	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("enable-osconfig", "true"))
 	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("osconfig-disabled-features", "guestpolicies"))
 	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("osconfig-enabled-prerelease-features", "ospolicies"))
+	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("osconfig-poll-interval", "1"))
 	testProjectConfig := testconfig.GetProject()
 	zone := testProjectConfig.AcquireZone()
 	defer testProjectConfig.ReleaseZone(zone)
@@ -174,6 +179,9 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPoli
 		testCase.WriteFailure("Error waiting for osconfig agent install: %v", err)
 		return
 	}
+
+	// Wait for inventory to get reported.
+	time.Sleep(3 * time.Minute)
 
 	client, err := gcpclients.GetOsConfigClientV1Alpha()
 	if err != nil {
@@ -195,9 +203,25 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPoli
 	}
 	defer cleanupOSPolicyAssignment(ctx, testCase, ospa.GetName())
 
-	testCase.Logf("Waiting for signal from GuestAttributes")
+	// Check that the compliance output meets expectations.
+	compReq := &osconfigpb.GetInstanceOSPoliciesComplianceRequest{Name: fmt.Sprintf("projects/%s/locations/%s/instanceOSPoliciesCompliances/%d", testProjectConfig.TestProjectID, zone, inst.Id)}
+	compliance, err := client.GetInstanceOSPoliciesCompliance(ctx, compReq)
+	if err != nil {
+		testCase.WriteFailure("Error running GetInstanceOSPoliciesCompliance: %s", err)
+		return
+	}
+	if diff := cmp.Diff(testSetup.wantCompliances, compliance.OsPolicyCompliances, protocmp.Transform(), cmp.FilterPath(func(p cmp.Path) bool {
+		if p.Last().String() == `["os_policy_assignment"]` {
+			return true
+		}
+		return false
+	}, cmp.Ignore())); diff != "" {
+		testCase.WriteFailure("Did not get expected OsPolicyCompliances (-want +got):\n%s", diff)
+		return
+	}
+
 	if _, err := inst.WaitForGuestAttributes(testSetup.queryPath, 10*time.Second, testSetup.assertTimeout); err != nil {
-		testCase.WriteFailure("error while asserting: %v", err)
+		testCase.WriteFailure("Error while asserting: %v", err)
 		return
 	}
 }

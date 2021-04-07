@@ -17,6 +17,7 @@ package ospolicies
 import (
 	"fmt"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
@@ -168,8 +169,52 @@ func buildPkgInstallTestSetup(name, image, pkgManager, key string) *osPolicyTest
 			},
 		},
 	}
-	ss := getStartupScriptPackages(name, pkgManager, packageName)
-	return newOsPolicyTestSetup(image, name, instanceName, testName, packageInstalled, machineType, ospa, ss, assertTimeout)
+
+	var os string
+	switch {
+	case strings.Contains(image, "debian"):
+		os = "debian"
+	case strings.Contains(image, "windows"):
+		os = "windows"
+	case strings.Contains(image, "rhel"):
+		os = "rhel"
+	case strings.Contains(image, "centos"):
+		os = "centos"
+	case strings.Contains(image, "sles"):
+		os = "sles"
+	}
+	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+		{
+			OsPolicyId: "install-packages",
+			State:      osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyResourceCompliance{
+				{
+					OsPolicyResourceId: "install-" + os,
+					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+					},
+					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+			},
+		},
+	}
+	ss := getStartupScriptPackageInstall(name, pkgManager, packageName)
+	return newOsPolicyTestSetup(image, name, instanceName, testName, packageInstalled, machineType, ospa, ss, assertTimeout, wantCompliances)
 }
 
 func addPackageInstallTest(key string) []*osPolicyTestSetup {
@@ -315,8 +360,52 @@ func buildPkgRemoveTestSetup(name, image, pkgManager, key string) *osPolicyTestS
 			},
 		},
 	}
-	ss := getStartupScriptPackages(name, pkgManager, packageName)
-	return newOsPolicyTestSetup(image, name, instanceName, testName, packageNotInstalled, machineType, ospa, ss, assertTimeout)
+
+	var os string
+	switch {
+	case strings.Contains(image, "debian"):
+		os = "debian"
+	case strings.Contains(image, "windows"):
+		os = "windows"
+	case strings.Contains(image, "rhel"):
+		os = "rhel"
+	case strings.Contains(image, "centos"):
+		os = "centos"
+	case strings.Contains(image, "sles"):
+		os = "sles"
+	}
+	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+		{
+			OsPolicyId: "remove-packages",
+			State:      osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyResourceCompliance{
+				{
+					OsPolicyResourceId: "remove-" + os,
+					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+					},
+					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+			},
+		},
+	}
+	ss := getStartupScriptPackageRemove(name, pkgManager, packageName)
+	return newOsPolicyTestSetup(image, name, instanceName, testName, packageNotInstalled, machineType, ospa, ss, assertTimeout, wantCompliances)
 }
 
 func addPackageRemovalTest(key string) []*osPolicyTestSetup {
@@ -365,7 +454,7 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *o
 						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "debian"},
 						Resources: []*osconfigpb.OSPolicy_Resource{
 							{
-								Id: "install-debian-repo",
+								Id: "install-repo-debian",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Repository{
 									Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource{
 										Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource_Apt{
@@ -381,7 +470,7 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *o
 								},
 							},
 							{
-								Id: "install-debian-package",
+								Id: "install-package-debian",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
 									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
 										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
@@ -397,7 +486,7 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *o
 						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "ubuntu"},
 						Resources: []*osconfigpb.OSPolicy_Resource{
 							{
-								Id: "install-ubuntu-repo",
+								Id: "install-repo-ubuntu",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Repository{
 									Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource{
 										Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource_Apt{
@@ -413,7 +502,7 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *o
 								},
 							},
 							{
-								Id: "install-ubuntu-package",
+								Id: "install-package-ubuntu",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
 									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
 										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
@@ -429,7 +518,7 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *o
 						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "rhel"},
 						Resources: []*osconfigpb.OSPolicy_Resource{
 							{
-								Id: "install-rhel-repo",
+								Id: "install-repo-rhel",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Repository{
 									Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource{
 										Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource_Yum{
@@ -444,7 +533,7 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *o
 								},
 							},
 							{
-								Id: "install-rhel-package",
+								Id: "install-package-rhel",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
 									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
 										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
@@ -460,7 +549,7 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *o
 						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "centos"},
 						Resources: []*osconfigpb.OSPolicy_Resource{
 							{
-								Id: "install-centos-repo",
+								Id: "install-repo-centos",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Repository{
 									Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource{
 										Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource_Yum{
@@ -475,7 +564,7 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *o
 								},
 							},
 							{
-								Id: "install-centos-package",
+								Id: "install-package-centos",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
 									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
 										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
@@ -491,7 +580,7 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *o
 						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "sles"},
 						Resources: []*osconfigpb.OSPolicy_Resource{
 							{
-								Id: "install-sles-repo",
+								Id: "install-repo-sles",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Repository{
 									Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource{
 										Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource_Zypper{
@@ -506,7 +595,7 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *o
 								},
 							},
 							{
-								Id: "install-sles-package",
+								Id: "install-package-sles",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
 									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
 										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
@@ -522,7 +611,7 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *o
 						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "windows"},
 						Resources: []*osconfigpb.OSPolicy_Resource{
 							{
-								Id: "install-windows-repo",
+								Id: "install-windows-repo-windows",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Repository{
 									Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource{
 										Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource_Goo{
@@ -535,7 +624,7 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *o
 								},
 							},
 							{
-								Id: "install-windows-package",
+								Id: "install-package-windows",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
 									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
 										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
@@ -551,8 +640,73 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *o
 			},
 		},
 	}
-	ss := getStartupScriptPackages(name, pkgManager, packageName)
-	return newOsPolicyTestSetup(image, name, instanceName, testName, packageNotInstalled, machineType, ospa, ss, assertTimeout)
+	var os string
+	switch {
+	case strings.Contains(image, "debian"):
+		os = "debian"
+	case strings.Contains(image, "windows"):
+		os = "windows"
+	case strings.Contains(image, "rhel"):
+		os = "rhel"
+	case strings.Contains(image, "centos"):
+		os = "centos"
+	case strings.Contains(image, "sles"):
+		os = "sles"
+	}
+	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+		{
+			OsPolicyId: "install-packages-from-repo",
+			State:      osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyResourceCompliance{
+				{
+					OsPolicyResourceId: "install-repo-" + os,
+					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+					},
+					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+				{
+					OsPolicyResourceId: "install-package-" + os,
+					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+					},
+					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+			},
+		},
+	}
+	ss := getStartupScriptPackageInstall(name, pkgManager, packageName)
+	return newOsPolicyTestSetup(image, name, instanceName, testName, packageNotInstalled, machineType, ospa, ss, assertTimeout, wantCompliances)
 }
 
 func addPackageInstallFromNewRepoTest(key string) []*osPolicyTestSetup {
@@ -600,9 +754,8 @@ func buildFileRemoveTestSetup(name, image, pkgManager, key string) *osPolicyTest
 								Id: "remove-files",
 								ResourceType: &osconfigpb.OSPolicy_Resource_File_{
 									File: &osconfigpb.OSPolicy_Resource_FileResource{
-										State:  osconfigpb.OSPolicy_Resource_FileResource_ABSENT,
-										Path:   filePath,
-										Source: &osconfigpb.OSPolicy_Resource_FileResource_Content{Content: "something"},
+										State: osconfigpb.OSPolicy_Resource_FileResource_ABSENT,
+										Path:  filePath,
 									},
 								},
 							},
@@ -612,8 +765,38 @@ func buildFileRemoveTestSetup(name, image, pkgManager, key string) *osPolicyTest
 			},
 		},
 	}
+	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+		{
+			OsPolicyId: "remove-files",
+			State:      osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyResourceCompliance{
+				{
+					OsPolicyResourceId: "remove-files",
+					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+					},
+					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+			},
+		},
+	}
 	ss := getStartupScriptFileDNE(name, pkgManager, filePath)
-	return newOsPolicyTestSetup(image, name, instanceName, testName, fileDNE, machineType, ospa, ss, assertTimeout)
+	return newOsPolicyTestSetup(image, name, instanceName, testName, fileDNE, machineType, ospa, ss, assertTimeout, wantCompliances)
 }
 
 func addFileRemovalTest(key string) []*osPolicyTestSetup {
@@ -637,7 +820,7 @@ func buildFilePresentTestSetup(name, image, pkgManager, key string) *osPolicyTes
 	assertTimeout := 180 * time.Second
 	testName := filePresentFunction
 	machineType := "e2-standard-2"
-	filePaths := []string{"/from_content", "/from_gcs", "/from_uri"}
+	filePaths := []string{"/from_content", "/from_gcs", "/from_uri", "/from_local"}
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
 	ospa := &osconfigpb.OSPolicyAssignment{
@@ -706,14 +889,126 @@ func buildFilePresentTestSetup(name, image, pkgManager, key string) *osPolicyTes
 									},
 								},
 							},
+							{
+								Id: "file-present-from-local",
+								ResourceType: &osconfigpb.OSPolicy_Resource_File_{
+									File: &osconfigpb.OSPolicy_Resource_FileResource{
+										State: osconfigpb.OSPolicy_Resource_FileResource_PRESENT,
+										Path:  filePaths[3],
+										Source: &osconfigpb.OSPolicy_Resource_FileResource_File{
+											File: &osconfigpb.OSPolicy_Resource_File{
+												Type: &osconfigpb.OSPolicy_Resource_File_LocalPath{
+													LocalPath: filePaths[0],
+												},
+											},
+										},
+									},
+								},
+							},
 						},
 					},
 				},
 			},
 		},
 	}
+	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+		{
+			OsPolicyId: "files-present",
+			State:      osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyResourceCompliance{
+				{
+					OsPolicyResourceId: "file-present-from-content",
+					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+					},
+					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+				{
+					OsPolicyResourceId: "file-present-from-gcs",
+					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+					},
+					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+				{
+					OsPolicyResourceId: "file-present-from-uri",
+					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+					},
+					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+				{
+					OsPolicyResourceId: "file-present-from-local",
+					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+					},
+					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+			},
+		},
+	}
 	ss := getStartupScriptFileExists(name, pkgManager, filePaths)
-	return newOsPolicyTestSetup(image, name, instanceName, testName, fileExists, machineType, ospa, ss, assertTimeout)
+	return newOsPolicyTestSetup(image, name, instanceName, testName, fileExists, machineType, ospa, ss, assertTimeout, wantCompliances)
 }
 
 func addFilePresentTest(key string) []*osPolicyTestSetup {
