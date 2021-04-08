@@ -243,7 +243,10 @@ func (c *configTask) postCheckState(ctx context.Context) {
 	for i, osPolicy := range c.Task.GetOsPolicies() {
 		ctx = clog.WithLabels(ctx, map[string]string{"config_assignment": osPolicy.GetOsPolicyAssignment(), "policy_id": osPolicy.GetId()})
 		plcy, ok := c.policies[osPolicy.GetId()]
+		// This should not happen in the normal code flow since we only run postCheckState after
+		// all policies have been evaluated.
 		if !ok {
+			clog.Errorf(ctx, "Unexpected Error: policy entry for %q is empty.", osPolicy.GetId())
 			continue
 		}
 		// Skip state check if this policy already has an error from a previous step.
@@ -254,13 +257,17 @@ func (c *configTask) postCheckState(ctx context.Context) {
 		pResult := c.results[i]
 		for i, configResource := range osPolicy.GetResources() {
 			res, ok := plcy.resources[configResource.GetId()]
+			// This should not happen in the normal code flow since we only run after
+			// all resources have gone through at least the first two steps.
 			if !ok || res == nil {
+				clog.Errorf(ctx, "Unexpected Error: resource entry %q for policy %q is empty.", configResource.GetId(), osPolicy.GetId())
 				continue
 			}
 			rCompliance := pResult.GetOsPolicyResourceCompliances()[i]
 			postCheckConfigResourceState(ctx, plcy, rCompliance, configResource)
 		}
 	}
+	return
 }
 
 func (c *configTask) generateBaseResults() {
@@ -361,11 +368,14 @@ func (c *configTask) run(ctx context.Context) error {
 func (c *configTask) markPostCheckRequired() {
 	for _, osPolicy := range c.Task.GetOsPolicies() {
 		plcy, ok := c.policies[osPolicy.GetId()]
+		// This policy entry may not have been created yet by the loop in run().
+		// We take no further actions for policies that are in an error state.
 		if !ok || plcy.hasError {
 			continue
 		}
 		for _, configResource := range osPolicy.GetResources() {
 			res, ok := plcy.resources[configResource.GetId()]
+			// This resource entry may not have been created yet is this polciy is in mid-run.
 			if !ok || res == nil {
 				continue
 			}
