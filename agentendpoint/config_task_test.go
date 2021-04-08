@@ -222,8 +222,8 @@ func TestRunApplyConfig(t *testing.T) {
 	ctx := context.Background()
 	sameStateTimeWindow = 0
 	res := &testResource{}
-	newResource = func(r *agentendpointpb.OSPolicy_Resource) resourceIface {
-		return resourceIface(res)
+	newResource = func(r *agentendpointpb.OSPolicy_Resource) *resource {
+		return &resource{resourceIface: resourceIface(res)}
 	}
 
 	testConfig := &agentendpointpb.ApplyConfigTask{

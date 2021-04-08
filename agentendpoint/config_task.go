@@ -26,8 +26,8 @@ import (
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
 )
 
-var newResource = func(r *agentendpointpb.OSPolicy_Resource) resourceIface {
-	return resourceIface(&config.OSPolicyResource{OSPolicy_Resource: r})
+var newResource = func(r *agentendpointpb.OSPolicy_Resource) *resource {
+	return &resource{resourceIface: resourceIface(&config.OSPolicyResource{OSPolicy_Resource: r})}
 }
 
 type configTask struct {
@@ -40,9 +40,8 @@ type configTask struct {
 	StartedAt time.Time `json:",omitempty"`
 
 	// ApplyConfigTaskOutput result
-	results           []*agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult
-	postCheckRequired bool
-	policies          map[string]*policy
+	results  []*agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult
+	policies map[string]*policy
 }
 
 type applyConfigTask struct {
@@ -50,8 +49,13 @@ type applyConfigTask struct {
 }
 
 type policy struct {
-	resources map[string]resourceIface
+	resources map[string]*resource
 	hasError  bool
+}
+
+type resource struct {
+	resourceIface
+	needsPostCheck bool
 }
 
 type resourceIface interface {
@@ -127,19 +131,18 @@ func detectPolicyConflicts(proposed, current *config.ManagedResources) error {
 func validateConfigResource(ctx context.Context, plcy *policy, policyMR *config.ManagedResources, rCompliance *agentendpointpb.OSPolicyResourceCompliance, configResource *agentendpointpb.OSPolicy_Resource) {
 	ctx = clog.WithLabels(ctx, map[string]string{"resource_id": configResource.GetId()})
 	clog.Debugf(ctx, "Running step 'validate' on resource %q.", configResource.GetId())
-	plcy.resources[configResource.GetId()] = newResource(configResource)
-	resource := plcy.resources[configResource.GetId()]
+	res := plcy.resources[configResource.GetId()]
 
 	outcome := agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
 	state := agentendpointpb.OSPolicyComplianceState_UNKNOWN
-	if err := resource.Validate(ctx); err != nil {
+	if err := res.Validate(ctx); err != nil {
 		outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 		plcy.hasError = true
 		clog.Errorf(ctx, "Error validating resource: %v", err)
 	}
 
 	// Detect any resource conflicts within this policy.
-	if err := detectPolicyConflicts(resource.ManagedResources(), policyMR); err != nil {
+	if err := detectPolicyConflicts(res.ManagedResources(), policyMR); err != nil {
 		outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 		plcy.hasError = true
 		clog.Errorf(ctx, "Resource conflict in policy: %v", err)
@@ -207,7 +210,12 @@ func enforceConfigResourceState(ctx context.Context, plcy *policy, rCompliance *
 
 func postCheckConfigResourceState(ctx context.Context, plcy *policy, rCompliance *agentendpointpb.OSPolicyResourceCompliance, configResource *agentendpointpb.OSPolicy_Resource) {
 	ctx = clog.WithLabels(ctx, map[string]string{"resource_id": configResource.GetId()})
+	clog.Debugf(ctx, "Running step 'check state post enforcement' on resource %q.", configResource.GetId())
 	res := plcy.resources[configResource.GetId()]
+	if !res.needsPostCheck {
+		clog.Debugf(ctx, "No post check required for %q.", configResource.GetId())
+		return
+	}
 
 	outcome := agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
 	state := agentendpointpb.OSPolicyComplianceState_UNKNOWN
@@ -234,16 +242,21 @@ func (c *configTask) postCheckState(ctx context.Context) {
 	// No prepopulate run for post check as we will always check every resource.
 	for i, osPolicy := range c.Task.GetOsPolicies() {
 		ctx = clog.WithLabels(ctx, map[string]string{"config_assignment": osPolicy.GetOsPolicyAssignment(), "policy_id": osPolicy.GetId()})
-		plcy := c.policies[osPolicy.GetId()]
-
+		plcy, ok := c.policies[osPolicy.GetId()]
+		if !ok {
+			continue
+		}
 		// Skip state check if this policy already has an error from a previous step.
 		if plcy.hasError {
 			clog.Debugf(ctx, "Policy has error, skipping post check.")
 			continue
 		}
-
 		pResult := c.results[i]
 		for i, configResource := range osPolicy.GetResources() {
+			res, ok := plcy.resources[configResource.GetId()]
+			if !ok || res == nil {
+				continue
+			}
 			rCompliance := pResult.GetOsPolicyResourceCompliances()[i]
 			postCheckConfigResourceState(ctx, plcy, rCompliance, configResource)
 		}
@@ -313,12 +326,13 @@ func (c *configTask) run(ctx context.Context) error {
 		clog.Debugf(ctx, "Executing policy:\n%s", util.PrettyFmt(osPolicy))
 
 		pResult := c.results[i]
-		plcy := &policy{resources: map[string]resourceIface{}}
+		plcy := &policy{resources: map[string]*resource{}}
 		c.policies[osPolicy.GetId()] = plcy
 		var policyMR *config.ManagedResources
 
 		for i, configResource := range osPolicy.GetResources() {
 			rCompliance := pResult.GetOsPolicyResourceCompliances()[i]
+			plcy.resources[configResource.GetId()] = newResource(configResource)
 			validateConfigResource(ctx, plcy, policyMR, rCompliance, configResource)
 			if plcy.hasError {
 				break
@@ -328,8 +342,8 @@ func (c *configTask) run(ctx context.Context) error {
 				break
 			}
 			if enforcementActionTaken := enforceConfigResourceState(ctx, plcy, rCompliance, configResource); enforcementActionTaken {
-				// On any change we trigger post check.
-				c.postCheckRequired = true
+				// On any change we trigger post check for all previous resouces.
+				c.markPostCheckRequired()
 			}
 			if plcy.hasError {
 				break
@@ -337,11 +351,27 @@ func (c *configTask) run(ctx context.Context) error {
 		}
 	}
 
-	if c.postCheckRequired {
-		c.postCheckState(ctx)
-	}
+	// Run any post checks that we need to.
+	c.postCheckState(ctx)
 
 	return c.reportCompletedState(ctx, "", agentendpointpb.ApplyConfigTaskOutput_SUCCEEDED)
+}
+
+// Mark all resources that have already completed as "needs post check".
+func (c *configTask) markPostCheckRequired() {
+	for _, osPolicy := range c.Task.GetOsPolicies() {
+		plcy, ok := c.policies[osPolicy.GetId()]
+		if !ok || plcy.hasError {
+			continue
+		}
+		for _, configResource := range osPolicy.GetResources() {
+			res, ok := plcy.resources[configResource.GetId()]
+			if !ok || res == nil {
+				continue
+			}
+			res.needsPostCheck = true
+		}
+	}
 }
 
 // RunApplyConfig runs an apply config task.
