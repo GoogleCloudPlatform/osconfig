@@ -43,15 +43,104 @@ var (
 	yumRaptureGpgKeys = []string{"https://packages.cloud.google.com/yum/doc/yum-key.gpg", "https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg"}
 )
 
-func buildPkgInstallTestSetup(name, image, pkgManager, key string) *osPolicyTestSetup {
+var wantPackageCompliances = []*osconfigpb.OSPolicyResourceCompliance{
+	{
+		OsPolicyResourceId: "install-package",
+		ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+		},
+		State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+	},
+	{
+		OsPolicyResourceId: "remove-package",
+		ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+		},
+		State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+	},
+}
+
+var wantRepositoryCompliances = []*osconfigpb.OSPolicyResourceCompliance{
+	{
+		OsPolicyResourceId: "install-repo",
+		ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+		},
+		State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+	},
+	{
+		OsPolicyResourceId: "install-package",
+		ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+		},
+		State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+	},
+}
+
+func buildAptTestSetup(name, image, key string) *osPolicyTestSetup {
 	assertTimeout := 120 * time.Second
-	testName := packageInstallFunction
-	packageName := "ed"
-	machineType := "e2-standard-2"
-	if pkgManager == "googet" {
-		packageName = "cowsay"
-		machineType = "e2-standard-4"
-	}
+	testName := packageResourceApt
+	machineType := "e2-medium"
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
 	ospa := &osconfigpb.OSPolicyAssignment{
@@ -66,99 +155,29 @@ func buildPkgInstallTestSetup(name, image, pkgManager, key string) *osPolicyTest
 		},
 		OsPolicies: []*osconfigpb.OSPolicy{
 			{
-				Id:   "install-packages",
+				Id:   testName,
 				Mode: osconfigpb.OSPolicy_ENFORCEMENT,
 				ResourceGroups: []*osconfigpb.OSPolicy_ResourceGroup{
 					{
-						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "debian"},
 						Resources: []*osconfigpb.OSPolicy_Resource{
 							{
-								Id: "install-debian",
+								Id: "install-package",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
 									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
 										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
 										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Apt{
-											Apt: &osconfigpb.OSPolicy_Resource_PackageResource_APT{Name: packageName},
+											Apt: &osconfigpb.OSPolicy_Resource_PackageResource_APT{Name: "ed"},
 										},
 									},
 								},
 							},
-						},
-					},
-					{
-						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "ubuntu"},
-						Resources: []*osconfigpb.OSPolicy_Resource{
 							{
-								Id: "install-ubuntu",
+								Id: "remove-package",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
 									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
-										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
+										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_REMOVED,
 										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Apt{
-											Apt: &osconfigpb.OSPolicy_Resource_PackageResource_APT{Name: packageName},
-										},
-									},
-								},
-							},
-						},
-					},
-					{
-						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "rhel"},
-						Resources: []*osconfigpb.OSPolicy_Resource{
-							{
-								Id: "install-rhel",
-								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
-									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
-										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
-										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Yum{
-											Yum: &osconfigpb.OSPolicy_Resource_PackageResource_YUM{Name: packageName},
-										},
-									},
-								},
-							},
-						},
-					},
-					{
-						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "centos"},
-						Resources: []*osconfigpb.OSPolicy_Resource{
-							{
-								Id: "install-centos",
-								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
-									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
-										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
-										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Yum{
-											Yum: &osconfigpb.OSPolicy_Resource_PackageResource_YUM{Name: packageName},
-										},
-									},
-								},
-							},
-						},
-					},
-					{
-						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "sles"},
-						Resources: []*osconfigpb.OSPolicy_Resource{
-							{
-								Id: "install-sles",
-								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
-									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
-										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
-										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Zypper_{
-											Zypper: &osconfigpb.OSPolicy_Resource_PackageResource_Zypper{Name: packageName},
-										},
-									},
-								},
-							},
-						},
-					},
-					{
-						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "windows"},
-						Resources: []*osconfigpb.OSPolicy_Resource{
-							{
-								Id: "install-windows",
-								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
-									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
-										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
-										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Googet{
-											Googet: &osconfigpb.OSPolicy_Resource_PackageResource_GooGet{Name: packageName},
+											Apt: &osconfigpb.OSPolicy_Resource_PackageResource_APT{Name: "vim"},
 										},
 									},
 								},
@@ -168,81 +187,22 @@ func buildPkgInstallTestSetup(name, image, pkgManager, key string) *osPolicyTest
 				},
 			},
 		},
-	}
-
-	var os string
-	switch {
-	case strings.Contains(image, "debian"):
-		os = "debian"
-	case strings.Contains(image, "windows"):
-		os = "windows"
-	case strings.Contains(image, "rhel"):
-		os = "rhel"
-	case strings.Contains(image, "centos"):
-		os = "centos"
-	case strings.Contains(image, "sles"):
-		os = "sles"
 	}
 	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
 		{
-			OsPolicyId: "install-packages",
-			State:      osconfigpb.OSPolicyComplianceState_COMPLIANT,
-			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyResourceCompliance{
-				{
-					OsPolicyResourceId: "install-" + os,
-					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
-						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
-						},
-						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
-						},
-						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
-						},
-						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
-						},
-					},
-					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
-				},
-			},
+			OsPolicyId:                  testName,
+			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			OsPolicyResourceCompliances: wantPackageCompliances,
 		},
 	}
-	ss := getStartupScriptPackageInstall(name, pkgManager, packageName)
-	return newOsPolicyTestSetup(image, name, instanceName, testName, packageInstalled, machineType, ospa, ss, assertTimeout, wantCompliances)
+	ss := getStartupScriptPackage(name, "apt")
+	return newOsPolicyTestSetup(image, name, instanceName, testName, []string{packageInstalled, packageNotInstalled}, machineType, ospa, ss, assertTimeout, wantCompliances)
 }
 
-func addPackageInstallTest(key string) []*osPolicyTestSetup {
-	var pkgTestSetup []*osPolicyTestSetup
-	for name, image := range utils.HeadAptImages {
-		pkgTestSetup = append(pkgTestSetup, buildPkgInstallTestSetup(name, image, "apt", key))
-	}
-	for name, image := range utils.HeadELImages {
-		pkgTestSetup = append(pkgTestSetup, buildPkgInstallTestSetup(name, image, "yum", key))
-	}
-	for name, image := range utils.HeadSUSEImages {
-		pkgTestSetup = append(pkgTestSetup, buildPkgInstallTestSetup(name, image, "zypper", key))
-	}
-	for name, image := range utils.HeadWindowsImages {
-		pkgTestSetup = append(pkgTestSetup, buildPkgInstallTestSetup(name, image, "googet", key))
-	}
-	return pkgTestSetup
-}
-
-func buildPkgRemoveTestSetup(name, image, pkgManager, key string) *osPolicyTestSetup {
-	assertTimeout := 180 * time.Second
-	testName := packageRemovalFunction
-	packageName := "vim"
-	machineType := "e2-standard-2"
-	if pkgManager == "googet" {
-		packageName = "certgen"
-		machineType = "e2-standard-4"
-	}
+func buildYumTestSetup(name, image, key string) *osPolicyTestSetup {
+	assertTimeout := 120 * time.Second
+	testName := packageResourceYum
+	machineType := "e2-medium"
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
 	ospa := &osconfigpb.OSPolicyAssignment{
@@ -257,99 +217,153 @@ func buildPkgRemoveTestSetup(name, image, pkgManager, key string) *osPolicyTestS
 		},
 		OsPolicies: []*osconfigpb.OSPolicy{
 			{
-				Id:   "remove-packages",
+				Id:   testName,
 				Mode: osconfigpb.OSPolicy_ENFORCEMENT,
 				ResourceGroups: []*osconfigpb.OSPolicy_ResourceGroup{
 					{
-						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "debian"},
 						Resources: []*osconfigpb.OSPolicy_Resource{
 							{
-								Id: "remove-debian",
+								Id: "install-package",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
 									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
-										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_REMOVED,
-										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Apt{
-											Apt: &osconfigpb.OSPolicy_Resource_PackageResource_APT{Name: packageName},
+										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
+										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Yum{
+											Yum: &osconfigpb.OSPolicy_Resource_PackageResource_YUM{Name: "ed"},
 										},
 									},
 								},
 							},
-						},
-					},
-					{
-						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "ubuntu"},
-						Resources: []*osconfigpb.OSPolicy_Resource{
 							{
-								Id: "remove-ubuntu",
-								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
-									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
-										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_REMOVED,
-										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Apt{
-											Apt: &osconfigpb.OSPolicy_Resource_PackageResource_APT{Name: packageName},
-										},
-									},
-								},
-							},
-						},
-					},
-					{
-						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "rhel"},
-						Resources: []*osconfigpb.OSPolicy_Resource{
-							{
-								Id: "remove-rhel",
+								Id: "remove-package",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
 									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
 										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_REMOVED,
 										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Yum{
-											Yum: &osconfigpb.OSPolicy_Resource_PackageResource_YUM{Name: packageName},
+											Yum: &osconfigpb.OSPolicy_Resource_PackageResource_YUM{Name: "nano"},
 										},
 									},
 								},
 							},
 						},
 					},
+				},
+			},
+		},
+	}
+	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+		{
+			OsPolicyId:                  testName,
+			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			OsPolicyResourceCompliances: wantPackageCompliances,
+		},
+	}
+	ss := getStartupScriptPackage(name, "yum")
+	return newOsPolicyTestSetup(image, name, instanceName, testName, []string{packageInstalled, packageNotInstalled}, machineType, ospa, ss, assertTimeout, wantCompliances)
+}
+
+func buildZypperTestSetup(name, image, key string) *osPolicyTestSetup {
+	assertTimeout := 120 * time.Second
+	testName := packageResourceZypper
+	machineType := "e2-medium"
+
+	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
+	ospa := &osconfigpb.OSPolicyAssignment{
+		InstanceFilter: &osconfigpb.OSPolicyAssignment_InstanceFilter{
+			InclusionLabels: []*osconfigpb.OSPolicyAssignment_LabelSet{{
+				Labels: map[string]string{"name": instanceName}},
+			},
+		},
+		Rollout: &osconfigpb.OSPolicyAssignment_Rollout{
+			DisruptionBudget: &osconfigpb.FixedOrPercent{Mode: &osconfigpb.FixedOrPercent_Percent{Percent: 100}},
+			MinWaitDuration:  &durationpb.Duration{Seconds: 0},
+		},
+		OsPolicies: []*osconfigpb.OSPolicy{
+			{
+				Id:   testName,
+				Mode: osconfigpb.OSPolicy_ENFORCEMENT,
+				ResourceGroups: []*osconfigpb.OSPolicy_ResourceGroup{
 					{
-						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "centos"},
 						Resources: []*osconfigpb.OSPolicy_Resource{
 							{
-								Id: "remove-centos",
+								Id: "install-package",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
 									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
-										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_REMOVED,
-										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Yum{
-											Yum: &osconfigpb.OSPolicy_Resource_PackageResource_YUM{Name: packageName},
+										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
+										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Zypper_{
+											Zypper: &osconfigpb.OSPolicy_Resource_PackageResource_Zypper{Name: "ed"},
 										},
 									},
 								},
 							},
-						},
-					},
-					{
-						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "sles"},
-						Resources: []*osconfigpb.OSPolicy_Resource{
 							{
-								Id: "remove-sles",
+								Id: "remove-package",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
 									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
 										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_REMOVED,
 										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Zypper_{
-											Zypper: &osconfigpb.OSPolicy_Resource_PackageResource_Zypper{Name: packageName},
+											Zypper: &osconfigpb.OSPolicy_Resource_PackageResource_Zypper{Name: "vim"},
 										},
 									},
 								},
 							},
 						},
 					},
+				},
+			},
+		},
+	}
+	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+		{
+			OsPolicyId:                  testName,
+			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			OsPolicyResourceCompliances: wantPackageCompliances,
+		},
+	}
+	ss := getStartupScriptPackage(name, "zypper")
+	return newOsPolicyTestSetup(image, name, instanceName, testName, []string{packageInstalled, packageNotInstalled}, machineType, ospa, ss, assertTimeout, wantCompliances)
+}
+
+func buildGooGetTestSetup(name, image, key string) *osPolicyTestSetup {
+	assertTimeout := 120 * time.Second
+	testName := packageResourceGoo
+	machineType := "e2-standard-2"
+
+	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
+	ospa := &osconfigpb.OSPolicyAssignment{
+		InstanceFilter: &osconfigpb.OSPolicyAssignment_InstanceFilter{
+			InclusionLabels: []*osconfigpb.OSPolicyAssignment_LabelSet{{
+				Labels: map[string]string{"name": instanceName}},
+			},
+		},
+		Rollout: &osconfigpb.OSPolicyAssignment_Rollout{
+			DisruptionBudget: &osconfigpb.FixedOrPercent{Mode: &osconfigpb.FixedOrPercent_Percent{Percent: 100}},
+			MinWaitDuration:  &durationpb.Duration{Seconds: 0},
+		},
+		OsPolicies: []*osconfigpb.OSPolicy{
+			{
+				Id:   testName,
+				Mode: osconfigpb.OSPolicy_ENFORCEMENT,
+				ResourceGroups: []*osconfigpb.OSPolicy_ResourceGroup{
 					{
-						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "windows"},
 						Resources: []*osconfigpb.OSPolicy_Resource{
 							{
-								Id: "remove-windows",
+								Id: "install-package",
+								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
+									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
+										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
+										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Googet{
+											Googet: &osconfigpb.OSPolicy_Resource_PackageResource_GooGet{Name: "cowsay"},
+										},
+									},
+								},
+							},
+							{
+								Id: "remove-package",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
 									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
 										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_REMOVED,
 										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Googet{
-											Googet: &osconfigpb.OSPolicy_Resource_PackageResource_GooGet{Name: packageName},
+											Googet: &osconfigpb.OSPolicy_Resource_PackageResource_GooGet{Name: "certgen"},
 										},
 									},
 								},
@@ -360,79 +374,39 @@ func buildPkgRemoveTestSetup(name, image, pkgManager, key string) *osPolicyTestS
 			},
 		},
 	}
-
-	var os string
-	switch {
-	case strings.Contains(image, "debian"):
-		os = "debian"
-	case strings.Contains(image, "windows"):
-		os = "windows"
-	case strings.Contains(image, "rhel"):
-		os = "rhel"
-	case strings.Contains(image, "centos"):
-		os = "centos"
-	case strings.Contains(image, "sles"):
-		os = "sles"
-	}
 	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
 		{
-			OsPolicyId: "remove-packages",
-			State:      osconfigpb.OSPolicyComplianceState_COMPLIANT,
-			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyResourceCompliance{
-				{
-					OsPolicyResourceId: "remove-" + os,
-					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
-						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
-						},
-						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
-						},
-						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
-						},
-						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
-						},
-					},
-					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
-				},
-			},
+			OsPolicyId:                  testName,
+			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			OsPolicyResourceCompliances: wantPackageCompliances,
 		},
 	}
-	ss := getStartupScriptPackageRemove(name, pkgManager, packageName)
-	return newOsPolicyTestSetup(image, name, instanceName, testName, packageNotInstalled, machineType, ospa, ss, assertTimeout, wantCompliances)
+	ss := getStartupScriptPackage(name, "googet")
+	return newOsPolicyTestSetup(image, name, instanceName, testName, []string{packageInstalled, packageNotInstalled}, machineType, ospa, ss, assertTimeout, wantCompliances)
 }
 
-func addPackageRemovalTest(key string) []*osPolicyTestSetup {
+func addPackageResourceTests(key string) []*osPolicyTestSetup {
 	var pkgTestSetup []*osPolicyTestSetup
 	for name, image := range utils.HeadAptImages {
-		pkgTestSetup = append(pkgTestSetup, buildPkgRemoveTestSetup(name, image, "apt", key))
+		pkgTestSetup = append(pkgTestSetup, buildAptTestSetup(name, image, key))
 	}
 	for name, image := range utils.HeadELImages {
-		pkgTestSetup = append(pkgTestSetup, buildPkgRemoveTestSetup(name, image, "yum", key))
+		pkgTestSetup = append(pkgTestSetup, buildYumTestSetup(name, image, key))
 	}
 	for name, image := range utils.HeadSUSEImages {
-		pkgTestSetup = append(pkgTestSetup, buildPkgRemoveTestSetup(name, image, "zypper", key))
+		pkgTestSetup = append(pkgTestSetup, buildZypperTestSetup(name, image, key))
 	}
 	for name, image := range utils.HeadWindowsImages {
-		pkgTestSetup = append(pkgTestSetup, buildPkgRemoveTestSetup(name, image, "googet", key))
+		pkgTestSetup = append(pkgTestSetup, buildGooGetTestSetup(name, image, key))
 	}
 	return pkgTestSetup
 }
 
-func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *osPolicyTestSetup {
+func buildAptRepositoryResourceTest(name, image, key string) *osPolicyTestSetup {
 	assertTimeout := 120 * time.Second
 	packageName := "osconfig-agent-test"
-	testName := packageInstallFromNewRepoFunction
-	machineType := "e2-standard-2"
-	if pkgManager == "googet" {
-		machineType = "e2-standard-4"
-	}
+	testName := repositoryResourceApt
+	machineType := "e2-medium"
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
 	ospa := &osconfigpb.OSPolicyAssignment{
@@ -447,14 +421,13 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *o
 		},
 		OsPolicies: []*osconfigpb.OSPolicy{
 			{
-				Id:   "install-packages-from-repo",
+				Id:   testName,
 				Mode: osconfigpb.OSPolicy_ENFORCEMENT,
 				ResourceGroups: []*osconfigpb.OSPolicy_ResourceGroup{
 					{
-						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "debian"},
 						Resources: []*osconfigpb.OSPolicy_Resource{
 							{
-								Id: "install-repo-debian",
+								Id: "install-repo",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Repository{
 									Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource{
 										Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource_Apt{
@@ -470,7 +443,7 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *o
 								},
 							},
 							{
-								Id: "install-package-debian",
+								Id: "install-package",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
 									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
 										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
@@ -482,43 +455,47 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *o
 							},
 						},
 					},
+				},
+			},
+		},
+	}
+	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+		{
+			OsPolicyId:                  testName,
+			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			OsPolicyResourceCompliances: wantRepositoryCompliances,
+		},
+	}
+	ss := getStartupScriptRepo(name, "apt", packageName)
+	return newOsPolicyTestSetup(image, name, instanceName, testName, []string{packageInstalled}, machineType, ospa, ss, assertTimeout, wantCompliances)
+}
+
+func buildYumRepositoryResourceTest(name, image, key string) *osPolicyTestSetup {
+	assertTimeout := 120 * time.Second
+	packageName := "osconfig-agent-test"
+	testName := repositoryResourceYum
+	machineType := "e2-medium"
+
+	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
+	ospa := &osconfigpb.OSPolicyAssignment{
+		InstanceFilter: &osconfigpb.OSPolicyAssignment_InstanceFilter{
+			InclusionLabels: []*osconfigpb.OSPolicyAssignment_LabelSet{{
+				Labels: map[string]string{"name": instanceName}},
+			},
+		},
+		Rollout: &osconfigpb.OSPolicyAssignment_Rollout{
+			DisruptionBudget: &osconfigpb.FixedOrPercent{Mode: &osconfigpb.FixedOrPercent_Percent{Percent: 100}},
+			MinWaitDuration:  &durationpb.Duration{Seconds: 0},
+		},
+		OsPolicies: []*osconfigpb.OSPolicy{
+			{
+				Id:   testName,
+				Mode: osconfigpb.OSPolicy_ENFORCEMENT,
+				ResourceGroups: []*osconfigpb.OSPolicy_ResourceGroup{
 					{
-						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "ubuntu"},
 						Resources: []*osconfigpb.OSPolicy_Resource{
 							{
-								Id: "install-repo-ubuntu",
-								ResourceType: &osconfigpb.OSPolicy_Resource_Repository{
-									Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource{
-										Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource_Apt{
-											Apt: &osconfigpb.OSPolicy_Resource_RepositoryResource_AptRepository{
-												ArchiveType:  osconfigpb.OSPolicy_Resource_RepositoryResource_AptRepository_DEB,
-												Uri:          aptTestRepoBaseURL,
-												Distribution: osconfigTestRepo,
-												Components:   []string{"main"},
-												GpgKey:       aptRaptureGpgKey,
-											},
-										},
-									},
-								},
-							},
-							{
-								Id: "install-package-ubuntu",
-								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
-									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
-										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
-										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Apt{
-											Apt: &osconfigpb.OSPolicy_Resource_PackageResource_APT{Name: packageName},
-										},
-									},
-								},
-							},
-						},
-					},
-					{
-						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "rhel"},
-						Resources: []*osconfigpb.OSPolicy_Resource{
-							{
-								Id: "install-repo-rhel",
+								Id: "install-repo",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Repository{
 									Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource{
 										Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource_Yum{
@@ -533,7 +510,7 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *o
 								},
 							},
 							{
-								Id: "install-package-rhel",
+								Id: "install-package",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
 									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
 										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
@@ -545,42 +522,47 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *o
 							},
 						},
 					},
+				},
+			},
+		},
+	}
+	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+		{
+			OsPolicyId:                  testName,
+			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			OsPolicyResourceCompliances: wantRepositoryCompliances,
+		},
+	}
+	ss := getStartupScriptRepo(name, "yum", packageName)
+	return newOsPolicyTestSetup(image, name, instanceName, testName, []string{packageInstalled}, machineType, ospa, ss, assertTimeout, wantCompliances)
+}
+
+func buildZypperRepositoryResourceTest(name, image, key string) *osPolicyTestSetup {
+	assertTimeout := 120 * time.Second
+	packageName := "osconfig-agent-test"
+	testName := repositoryResourceZypper
+	machineType := "e2-medium"
+
+	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
+	ospa := &osconfigpb.OSPolicyAssignment{
+		InstanceFilter: &osconfigpb.OSPolicyAssignment_InstanceFilter{
+			InclusionLabels: []*osconfigpb.OSPolicyAssignment_LabelSet{{
+				Labels: map[string]string{"name": instanceName}},
+			},
+		},
+		Rollout: &osconfigpb.OSPolicyAssignment_Rollout{
+			DisruptionBudget: &osconfigpb.FixedOrPercent{Mode: &osconfigpb.FixedOrPercent_Percent{Percent: 100}},
+			MinWaitDuration:  &durationpb.Duration{Seconds: 0},
+		},
+		OsPolicies: []*osconfigpb.OSPolicy{
+			{
+				Id:   testName,
+				Mode: osconfigpb.OSPolicy_ENFORCEMENT,
+				ResourceGroups: []*osconfigpb.OSPolicy_ResourceGroup{
 					{
-						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "centos"},
 						Resources: []*osconfigpb.OSPolicy_Resource{
 							{
-								Id: "install-repo-centos",
-								ResourceType: &osconfigpb.OSPolicy_Resource_Repository{
-									Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource{
-										Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource_Yum{
-											Yum: &osconfigpb.OSPolicy_Resource_RepositoryResource_YumRepository{
-												Id:          osconfigTestRepo,
-												DisplayName: "Google OSConfig Agent Test Repository",
-												BaseUrl:     yumTestRepoBaseURL,
-												GpgKeys:     yumRaptureGpgKeys,
-											},
-										},
-									},
-								},
-							},
-							{
-								Id: "install-package-centos",
-								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
-									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
-										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
-										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Yum{
-											Yum: &osconfigpb.OSPolicy_Resource_PackageResource_YUM{Name: packageName},
-										},
-									},
-								},
-							},
-						},
-					},
-					{
-						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "sles"},
-						Resources: []*osconfigpb.OSPolicy_Resource{
-							{
-								Id: "install-repo-sles",
+								Id: "install-repo",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Repository{
 									Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource{
 										Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource_Zypper{
@@ -595,7 +577,7 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *o
 								},
 							},
 							{
-								Id: "install-package-sles",
+								Id: "install-package",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
 									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
 										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
@@ -607,11 +589,47 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *o
 							},
 						},
 					},
+				},
+			},
+		},
+	}
+	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+		{
+			OsPolicyId:                  testName,
+			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			OsPolicyResourceCompliances: wantRepositoryCompliances,
+		},
+	}
+	ss := getStartupScriptRepo(name, "yum", packageName)
+	return newOsPolicyTestSetup(image, name, instanceName, testName, []string{packageInstalled}, machineType, ospa, ss, assertTimeout, wantCompliances)
+}
+
+func buildGoogetRepositoryResourceTest(name, image, key string) *osPolicyTestSetup {
+	assertTimeout := 120 * time.Second
+	packageName := "osconfig-agent-test"
+	testName := repositoryResourceGoo
+	machineType := "e2-standard-2"
+
+	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
+	ospa := &osconfigpb.OSPolicyAssignment{
+		InstanceFilter: &osconfigpb.OSPolicyAssignment_InstanceFilter{
+			InclusionLabels: []*osconfigpb.OSPolicyAssignment_LabelSet{{
+				Labels: map[string]string{"name": instanceName}},
+			},
+		},
+		Rollout: &osconfigpb.OSPolicyAssignment_Rollout{
+			DisruptionBudget: &osconfigpb.FixedOrPercent{Mode: &osconfigpb.FixedOrPercent_Percent{Percent: 100}},
+			MinWaitDuration:  &durationpb.Duration{Seconds: 0},
+		},
+		OsPolicies: []*osconfigpb.OSPolicy{
+			{
+				Id:   testName,
+				Mode: osconfigpb.OSPolicy_ENFORCEMENT,
+				ResourceGroups: []*osconfigpb.OSPolicy_ResourceGroup{
 					{
-						OsFilter: &osconfigpb.OSPolicy_OSFilter{OsShortName: "windows"},
 						Resources: []*osconfigpb.OSPolicy_Resource{
 							{
-								Id: "install-windows-repo-windows",
+								Id: "install-repo",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Repository{
 									Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource{
 										Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource_Goo{
@@ -624,7 +642,7 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *o
 								},
 							},
 							{
-								Id: "install-package-windows",
+								Id: "install-package",
 								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
 									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
 										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
@@ -640,97 +658,43 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *o
 			},
 		},
 	}
-	var os string
-	switch {
-	case strings.Contains(image, "debian"):
-		os = "debian"
-	case strings.Contains(image, "windows"):
-		os = "windows"
-	case strings.Contains(image, "rhel"):
-		os = "rhel"
-	case strings.Contains(image, "centos"):
-		os = "centos"
-	case strings.Contains(image, "sles"):
-		os = "sles"
-	}
 	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
 		{
-			OsPolicyId: "install-packages-from-repo",
-			State:      osconfigpb.OSPolicyComplianceState_COMPLIANT,
-			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyResourceCompliance{
-				{
-					OsPolicyResourceId: "install-repo-" + os,
-					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
-						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
-						},
-						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
-						},
-						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
-						},
-						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
-						},
-					},
-					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
-				},
-				{
-					OsPolicyResourceId: "install-package-" + os,
-					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
-						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
-						},
-						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
-						},
-						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
-						},
-						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
-						},
-					},
-					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
-				},
-			},
+			OsPolicyId:                  testName,
+			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			OsPolicyResourceCompliances: wantRepositoryCompliances,
 		},
 	}
-	ss := getStartupScriptPackageInstall(name, pkgManager, packageName)
-	return newOsPolicyTestSetup(image, name, instanceName, testName, packageNotInstalled, machineType, ospa, ss, assertTimeout, wantCompliances)
+	ss := getStartupScriptRepo(name, "yum", packageName)
+	return newOsPolicyTestSetup(image, name, instanceName, testName, []string{packageInstalled}, machineType, ospa, ss, assertTimeout, wantCompliances)
 }
 
-func addPackageInstallFromNewRepoTest(key string) []*osPolicyTestSetup {
+func addRepositoryResourceTests(key string) []*osPolicyTestSetup {
 	var pkgTestSetup []*osPolicyTestSetup
 	for name, image := range utils.HeadAptImages {
-		pkgTestSetup = append(pkgTestSetup, buildPkgInstallFromNewRepoTestSetup(name, image, "apt", key))
+		pkgTestSetup = append(pkgTestSetup, buildAptRepositoryResourceTest(name, image, key))
 	}
 	for name, image := range utils.HeadELImages {
-		pkgTestSetup = append(pkgTestSetup, buildPkgInstallFromNewRepoTestSetup(name, image, "yum", key))
+		pkgTestSetup = append(pkgTestSetup, buildYumRepositoryResourceTest(name, image, key))
 	}
 	for name, image := range utils.HeadSUSEImages {
-		pkgTestSetup = append(pkgTestSetup, buildPkgInstallFromNewRepoTestSetup(name, image, "zypper", key))
+		pkgTestSetup = append(pkgTestSetup, buildZypperRepositoryResourceTest(name, image, key))
 	}
 	for name, image := range utils.HeadWindowsImages {
-		pkgTestSetup = append(pkgTestSetup, buildPkgInstallFromNewRepoTestSetup(name, image, "googet", key))
+		pkgTestSetup = append(pkgTestSetup, buildGoogetRepositoryResourceTest(name, image, key))
 	}
 	return pkgTestSetup
 }
 
 func buildFileRemoveTestSetup(name, image, pkgManager, key string) *osPolicyTestSetup {
 	assertTimeout := 180 * time.Second
-	testName := fileAbsentFunction
-	machineType := "e2-standard-2"
-	filePath := "/enforce_absent"
+	testName := fileResource
+	machineType := "e2-medium"
+	if strings.Contains(image, "windows") {
+		machineType = "e2-standard-2"
+	}
+	dnePath := "/enforce_absent"
+	wantPaths := []string{"/from_content", "/from_gcs", "/from_uri", "/from_local"}
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
 	ospa := &osconfigpb.OSPolicyAssignment{
@@ -745,17 +709,17 @@ func buildFileRemoveTestSetup(name, image, pkgManager, key string) *osPolicyTest
 		},
 		OsPolicies: []*osconfigpb.OSPolicy{
 			{
-				Id:   "remove-files",
+				Id:   "files-absent",
 				Mode: osconfigpb.OSPolicy_ENFORCEMENT,
 				ResourceGroups: []*osconfigpb.OSPolicy_ResourceGroup{
 					{
 						Resources: []*osconfigpb.OSPolicy_Resource{
 							{
-								Id: "remove-files",
+								Id: "file-absent",
 								ResourceType: &osconfigpb.OSPolicy_Resource_File_{
 									File: &osconfigpb.OSPolicy_Resource_FileResource{
 										State: osconfigpb.OSPolicy_Resource_FileResource_ABSENT,
-										Path:  filePath,
+										Path:  dnePath,
 									},
 								},
 							},
@@ -763,77 +727,6 @@ func buildFileRemoveTestSetup(name, image, pkgManager, key string) *osPolicyTest
 					},
 				},
 			},
-		},
-	}
-	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
-		{
-			OsPolicyId: "remove-files",
-			State:      osconfigpb.OSPolicyComplianceState_COMPLIANT,
-			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyResourceCompliance{
-				{
-					OsPolicyResourceId: "remove-files",
-					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
-						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
-						},
-						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
-						},
-						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
-						},
-						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
-						},
-					},
-					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
-				},
-			},
-		},
-	}
-	ss := getStartupScriptFileDNE(name, pkgManager, filePath)
-	return newOsPolicyTestSetup(image, name, instanceName, testName, fileDNE, machineType, ospa, ss, assertTimeout, wantCompliances)
-}
-
-func addFileRemovalTest(key string) []*osPolicyTestSetup {
-	var pkgTestSetup []*osPolicyTestSetup
-	for name, image := range utils.HeadAptImages {
-		pkgTestSetup = append(pkgTestSetup, buildFileRemoveTestSetup(name, image, "apt", key))
-	}
-	for name, image := range utils.HeadELImages {
-		pkgTestSetup = append(pkgTestSetup, buildFileRemoveTestSetup(name, image, "yum", key))
-	}
-	for name, image := range utils.HeadSUSEImages {
-		pkgTestSetup = append(pkgTestSetup, buildFileRemoveTestSetup(name, image, "zypper", key))
-	}
-	for name, image := range utils.HeadWindowsImages {
-		pkgTestSetup = append(pkgTestSetup, buildFileRemoveTestSetup(name, image, "googet", key))
-	}
-	return pkgTestSetup
-}
-
-func buildFilePresentTestSetup(name, image, pkgManager, key string) *osPolicyTestSetup {
-	assertTimeout := 180 * time.Second
-	testName := filePresentFunction
-	machineType := "e2-standard-2"
-	filePaths := []string{"/from_content", "/from_gcs", "/from_uri", "/from_local"}
-
-	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
-	ospa := &osconfigpb.OSPolicyAssignment{
-		InstanceFilter: &osconfigpb.OSPolicyAssignment_InstanceFilter{
-			InclusionLabels: []*osconfigpb.OSPolicyAssignment_LabelSet{{
-				Labels: map[string]string{"name": instanceName}},
-			},
-		},
-		Rollout: &osconfigpb.OSPolicyAssignment_Rollout{
-			DisruptionBudget: &osconfigpb.FixedOrPercent{Mode: &osconfigpb.FixedOrPercent_Percent{Percent: 100}},
-			MinWaitDuration:  &durationpb.Duration{Seconds: 0},
-		},
-		OsPolicies: []*osconfigpb.OSPolicy{
 			{
 				Id:   "files-present",
 				Mode: osconfigpb.OSPolicy_ENFORCEMENT,
@@ -845,7 +738,7 @@ func buildFilePresentTestSetup(name, image, pkgManager, key string) *osPolicyTes
 								ResourceType: &osconfigpb.OSPolicy_Resource_File_{
 									File: &osconfigpb.OSPolicy_Resource_FileResource{
 										State:  osconfigpb.OSPolicy_Resource_FileResource_PRESENT,
-										Path:   filePaths[0],
+										Path:   wantPaths[0],
 										Source: &osconfigpb.OSPolicy_Resource_FileResource_Content{Content: "something"},
 									},
 								},
@@ -855,7 +748,7 @@ func buildFilePresentTestSetup(name, image, pkgManager, key string) *osPolicyTes
 								ResourceType: &osconfigpb.OSPolicy_Resource_File_{
 									File: &osconfigpb.OSPolicy_Resource_FileResource{
 										State: osconfigpb.OSPolicy_Resource_FileResource_PRESENT,
-										Path:  filePaths[1],
+										Path:  wantPaths[1],
 										Source: &osconfigpb.OSPolicy_Resource_FileResource_File{
 											File: &osconfigpb.OSPolicy_Resource_File{
 												Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
@@ -875,7 +768,7 @@ func buildFilePresentTestSetup(name, image, pkgManager, key string) *osPolicyTes
 								ResourceType: &osconfigpb.OSPolicy_Resource_File_{
 									File: &osconfigpb.OSPolicy_Resource_FileResource{
 										State: osconfigpb.OSPolicy_Resource_FileResource_PRESENT,
-										Path:  filePaths[2],
+										Path:  wantPaths[2],
 										Source: &osconfigpb.OSPolicy_Resource_FileResource_File{
 											File: &osconfigpb.OSPolicy_Resource_File{
 												Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
@@ -894,11 +787,11 @@ func buildFilePresentTestSetup(name, image, pkgManager, key string) *osPolicyTes
 								ResourceType: &osconfigpb.OSPolicy_Resource_File_{
 									File: &osconfigpb.OSPolicy_Resource_FileResource{
 										State: osconfigpb.OSPolicy_Resource_FileResource_PRESENT,
-										Path:  filePaths[3],
+										Path:  wantPaths[3],
 										Source: &osconfigpb.OSPolicy_Resource_FileResource_File{
 											File: &osconfigpb.OSPolicy_Resource_File{
 												Type: &osconfigpb.OSPolicy_Resource_File_LocalPath{
-													LocalPath: filePaths[0],
+													LocalPath: wantPaths[0],
 												},
 											},
 										},
@@ -912,6 +805,34 @@ func buildFilePresentTestSetup(name, image, pkgManager, key string) *osPolicyTes
 		},
 	}
 	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+		{
+			OsPolicyId: "files-absent",
+			State:      osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyResourceCompliance{
+				{
+					OsPolicyResourceId: "file-absent",
+					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+					},
+					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+			},
+		},
 		{
 			OsPolicyId: "files-present",
 			State:      osconfigpb.OSPolicyComplianceState_COMPLIANT,
@@ -1007,23 +928,23 @@ func buildFilePresentTestSetup(name, image, pkgManager, key string) *osPolicyTes
 			},
 		},
 	}
-	ss := getStartupScriptFileExists(name, pkgManager, filePaths)
-	return newOsPolicyTestSetup(image, name, instanceName, testName, fileExists, machineType, ospa, ss, assertTimeout, wantCompliances)
+	ss := getStartupScriptFile(name, pkgManager, dnePath, wantPaths)
+	return newOsPolicyTestSetup(image, name, instanceName, testName, []string{fileDNE}, machineType, ospa, ss, assertTimeout, wantCompliances)
 }
 
-func addFilePresentTest(key string) []*osPolicyTestSetup {
+func addFileResourceTests(key string) []*osPolicyTestSetup {
 	var pkgTestSetup []*osPolicyTestSetup
 	for name, image := range utils.HeadAptImages {
-		pkgTestSetup = append(pkgTestSetup, buildFilePresentTestSetup(name, image, "apt", key))
+		pkgTestSetup = append(pkgTestSetup, buildFileRemoveTestSetup(name, image, "apt", key))
 	}
 	for name, image := range utils.HeadELImages {
-		pkgTestSetup = append(pkgTestSetup, buildFilePresentTestSetup(name, image, "yum", key))
+		pkgTestSetup = append(pkgTestSetup, buildFileRemoveTestSetup(name, image, "yum", key))
 	}
 	for name, image := range utils.HeadSUSEImages {
-		pkgTestSetup = append(pkgTestSetup, buildFilePresentTestSetup(name, image, "zypper", key))
+		pkgTestSetup = append(pkgTestSetup, buildFileRemoveTestSetup(name, image, "zypper", key))
 	}
 	for name, image := range utils.HeadWindowsImages {
-		pkgTestSetup = append(pkgTestSetup, buildFilePresentTestSetup(name, image, "googet", key))
+		pkgTestSetup = append(pkgTestSetup, buildFileRemoveTestSetup(name, image, "googet", key))
 	}
 	return pkgTestSetup
 }
@@ -1032,10 +953,8 @@ func generateAllTestSetup() []*osPolicyTestSetup {
 	key := utils.RandString(3)
 
 	pkgTestSetup := []*osPolicyTestSetup{}
-	pkgTestSetup = append(pkgTestSetup, addPackageInstallTest(key)...)
-	pkgTestSetup = append(pkgTestSetup, addPackageRemovalTest(key)...)
-	pkgTestSetup = append(pkgTestSetup, addPackageInstallFromNewRepoTest(key)...)
-	pkgTestSetup = append(pkgTestSetup, addFileRemovalTest(key)...)
-	pkgTestSetup = append(pkgTestSetup, addFilePresentTest(key)...)
+	pkgTestSetup = append(pkgTestSetup, addPackageResourceTests(key)...)
+	pkgTestSetup = append(pkgTestSetup, addRepositoryResourceTests(key)...)
+	pkgTestSetup = append(pkgTestSetup, addFileResourceTests(key)...)
 	return pkgTestSetup
 }
