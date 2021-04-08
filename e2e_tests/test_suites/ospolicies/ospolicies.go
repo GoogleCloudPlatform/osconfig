@@ -46,12 +46,15 @@ var (
 )
 
 const (
-	packageInstallFunction            = "pkginstall"
-	packageRemovalFunction            = "pkgremoval"
-	packageInstallFromNewRepoFunction = "pkgfromnewrepo"
-	recipeInstallFunction             = "recipeinstall"
-	fileAbsentFunction                = "fileabsent"
-	filePresentFunction               = "filepresent"
+	packageResourceApt       = "packageresourceapt"
+	packageResourceYum       = "packageresourceyum"
+	packageResourceZypper    = "packageresourcezypper"
+	packageResourceGoo       = "packageresourcegoo"
+	repositoryResourceApt    = "repositoryresourceapt"
+	repositoryResourceYum    = "repositoryresourceyum"
+	repositoryResourceZypper = "repositoryresourcezypper"
+	repositoryResourceGoo    = "repositoryresourcegoo"
+	fileResource             = "fileresource"
 )
 
 type osPolicyTestSetup struct {
@@ -63,12 +66,12 @@ type osPolicyTestSetup struct {
 	osPolicyAssignment   *osconfigpb.OSPolicyAssignment
 	startup              *computeApi.MetadataItems
 	machineType          string
-	queryPath            string
+	queryPaths           []string
 	assertTimeout        time.Duration
 	wantCompliances      []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance
 }
 
-func newOsPolicyTestSetup(image, imageName, instanceName, testName, queryPath, machineType string, ospa *osconfigpb.OSPolicyAssignment, startup *computeApi.MetadataItems, assertTimeout time.Duration, wantCompliances []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance) *osPolicyTestSetup {
+func newOsPolicyTestSetup(image, imageName, instanceName, testName string, queryPaths []string, machineType string, ospa *osconfigpb.OSPolicyAssignment, startup *computeApi.MetadataItems, assertTimeout time.Duration, wantCompliances []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance) *osPolicyTestSetup {
 	return &osPolicyTestSetup{
 		image:                image,
 		imageName:            imageName,
@@ -77,7 +80,7 @@ func newOsPolicyTestSetup(image, imageName, instanceName, testName, queryPath, m
 		osPolicyAssignment:   ospa,
 		testName:             testName,
 		machineType:          machineType,
-		queryPath:            queryPath,
+		queryPaths:           queryPaths,
 		assertTimeout:        assertTimeout,
 		startup:              startup,
 		wantCompliances:      wantCompliances,
@@ -129,7 +132,11 @@ func createOSPolicyAssignment(ctx context.Context, client *osconfigZonalV1alpha.
 	if err != nil {
 		return nil, fmt.Errorf("error running CreateOSPolicyAssignment: %s", utils.GetStatusFromError(err))
 	}
-	//return op.Wait(ctx)
+	//ospa, err := op.Wait(ctx)
+	//if err != nil {
+	//	return nil, fmt.Errorf("error waiting for operation to complete: %s", utils.GetStatusFromError(err))
+	//}
+	//return ospa, nil
 	_ = op
 
 	time.Sleep(30 * time.Second)
@@ -159,9 +166,8 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPoli
 	var metadataItems []*computeApi.MetadataItems
 	metadataItems = append(metadataItems, testSetup.startup)
 	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("enable-osconfig", "true"))
-	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("osconfig-disabled-features", "guestpolicies"))
+	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("osconfig-disabled-features", "guestpolicies,osinventory"))
 	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("osconfig-enabled-prerelease-features", "ospolicies"))
-	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("osconfig-poll-interval", "1"))
 	testProjectConfig := testconfig.GetProject()
 	zone := testProjectConfig.AcquireZone()
 	defer testProjectConfig.ReleaseZone(zone)
@@ -179,9 +185,6 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPoli
 		testCase.WriteFailure("Error waiting for osconfig agent install: %v", err)
 		return
 	}
-
-	// Wait for inventory to get reported.
-	time.Sleep(3 * time.Minute)
 
 	client, err := gcpclients.GetOsConfigClientV1Alpha()
 	if err != nil {
@@ -220,9 +223,11 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPoli
 		return
 	}
 
-	if _, err := inst.WaitForGuestAttributes(testSetup.queryPath, 10*time.Second, testSetup.assertTimeout); err != nil {
-		testCase.WriteFailure("Error while asserting: %v", err)
-		return
+	for _, p := range testSetup.queryPaths {
+		if _, err := inst.WaitForGuestAttributes(p, 10*time.Second, testSetup.assertTimeout); err != nil {
+			testCase.WriteFailure("Error while asserting: %v", err)
+			return
+		}
 	}
 }
 
@@ -249,16 +254,24 @@ func getTestCaseFromTestSetUp(testSetup *osPolicyTestSetup) (*junitxml.TestCase,
 	var tc *junitxml.TestCase
 
 	switch testSetup.testName {
-	case packageInstallFunction:
-		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Package installation] [%s]", testSetup.imageName))
-	case packageRemovalFunction:
-		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Package removal] [%s]", testSetup.imageName))
-	case packageInstallFromNewRepoFunction:
-		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Add a new package from new repository] [%s]", testSetup.imageName))
-	case fileAbsentFunction:
-		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Enforce file DNE] [%s]", testSetup.imageName))
-	case filePresentFunction:
-		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Enforce file Present] [%s]", testSetup.imageName))
+	case packageResourceApt:
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[PackageResource Apt] [%s]", testSetup.imageName))
+	case packageResourceYum:
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[PackageResource Yum] [%s]", testSetup.imageName))
+	case packageResourceZypper:
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[PackageResource Zypper] [%s]", testSetup.imageName))
+	case packageResourceGoo:
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[PackageResource GooGet] [%s]", testSetup.imageName))
+	case repositoryResourceApt:
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[RepositoryResource Apt] [%s]", testSetup.imageName))
+	case repositoryResourceYum:
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[RepositoryResource Yum] [%s]", testSetup.imageName))
+	case repositoryResourceZypper:
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[RepositoryResource Zypper] [%s]", testSetup.imageName))
+	case repositoryResourceGoo:
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[RepositoryResource GooGet] [%s]", testSetup.imageName))
+	case fileResource:
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[FileResource] [%s]", testSetup.imageName))
 	default:
 		return nil, fmt.Errorf("unknown test function name: %s", testSetup.testName)
 	}
