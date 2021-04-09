@@ -137,7 +137,7 @@ func (r *DefaultRunner) Run(ctx context.Context, cmd *exec.Cmd) ([]byte, []byte,
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err := cmd.Run()
-	clog.Debugf(ctx, "%s %q output:\n%s", cmd.Path, cmd.Args[1:], strings.ReplaceAll(stdout.String(), "\n", "\n "))
+	clog.Debugf(ctx, "%s %q exit code: %d, output:\n%s", cmd.Path, cmd.Args[1:], cmd.ProcessState.ExitCode(), strings.ReplaceAll(stdout.String(), "\n", "\n "))
 	return stdout.Bytes(), stderr.Bytes(), err
 }
 

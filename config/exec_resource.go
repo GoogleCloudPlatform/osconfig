@@ -44,7 +44,7 @@ func (e *execResource) download(ctx context.Context, execR *agentendpointpb.OSPo
 		return "", fmt.Errorf("failed to create temp dir: %s", err)
 	}
 
-	// File extensions are impoprtant on Windows.
+	// File extensions are important on Windows.
 	var name string
 	perms := os.FileMode(0644)
 	switch execR.GetSource().(type) {
@@ -85,8 +85,11 @@ func (e *execResource) download(ctx context.Context, execR *agentendpointpb.OSPo
 		default:
 			return "", fmt.Errorf("unsupported File %v", execR.GetFile())
 		}
+		if execR.GetInterpreter() == agentendpointpb.OSPolicy_Resource_ExecResource_Exec_NONE {
+			perms = os.FileMode(0755)
+		}
 		name = filepath.Join(tmpDir, name)
-		if _, err := downloadFile(ctx, name, execR.GetFile()); err != nil {
+		if _, err := downloadFile(ctx, name, perms, execR.GetFile()); err != nil {
 			return "", err
 		}
 	default:
@@ -138,6 +141,7 @@ func (e *execResource) run(ctx context.Context, name string, execR *agentendpoin
 	default:
 		return nil, nil, 0, fmt.Errorf("unsupported interpreter %q", execR.GetInterpreter())
 	}
+	args = append(args, execR.GetArgs()...)
 
 	stdout, stderr, err := runner.Run(ctx, exec.Command(cmd, args...))
 	code := 0

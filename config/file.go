@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 
 	"cloud.google.com/go/storage"
 	"github.com/GoogleCloudPlatform/osconfig/external"
@@ -35,7 +36,7 @@ func checksum(r io.Reader) string {
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
-func downloadFile(ctx context.Context, path string, file *agentendpointpb.OSPolicy_Resource_File) (string, error) {
+func downloadFile(ctx context.Context, path string, perms os.FileMode, file *agentendpointpb.OSPolicy_Resource_File) (string, error) {
 	var reader io.ReadCloser
 	var err error
 	var wantChecksum string
@@ -64,5 +65,5 @@ func downloadFile(ctx context.Context, path string, file *agentendpointpb.OSPoli
 		return "", fmt.Errorf("unknown remote File type: %+v", file.GetType())
 	}
 	defer reader.Close()
-	return util.AtomicWriteFileStream(reader, wantChecksum, path, 0644)
+	return util.AtomicWriteFileStream(reader, wantChecksum, path, perms)
 }

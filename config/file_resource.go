@@ -75,16 +75,17 @@ func (f *fileResource) download(ctx context.Context) error {
 
 	tmpFile := filepath.Join(tmpDir, filepath.Base(f.GetPath()))
 	f.managedFile.source = tmpFile
+	perms := os.FileMode(0644)
 
 	switch f.GetSource().(type) {
 	case *agentendpointpb.OSPolicy_Resource_FileResource_Content:
-		f.managedFile.checksum, err = util.AtomicWriteFileStream(strings.NewReader(f.GetContent()), "", tmpFile, 0644)
+		f.managedFile.checksum, err = util.AtomicWriteFileStream(strings.NewReader(f.GetContent()), "", tmpFile, perms)
 		if err != nil {
 			return err
 		}
 
 	case *agentendpointpb.OSPolicy_Resource_FileResource_File:
-		f.managedFile.checksum, err = downloadFile(ctx, tmpFile, f.GetFile())
+		f.managedFile.checksum, err = downloadFile(ctx, tmpFile, perms, f.GetFile())
 		if err != nil {
 			return err
 		}
