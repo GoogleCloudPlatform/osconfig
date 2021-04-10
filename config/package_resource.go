@@ -278,6 +278,7 @@ func populateInstalledCache(ctx context.Context, mp ManagedPackage) error {
 // TODO: use a persistent cache for downloaded files so we dont need to redownload them each time
 func (p *packageResouce) download(ctx context.Context, name string, file *agentendpointpb.OSPolicy_Resource_File) (string, error) {
 	var path string
+	perms := os.FileMode(0644)
 	switch {
 	case file.GetLocalPath() != "":
 		path = file.GetLocalPath()
@@ -288,7 +289,7 @@ func (p *packageResouce) download(ctx context.Context, name string, file *agente
 		}
 		p.managedPackage.tempDir = tmpDir
 		path = filepath.Join(p.managedPackage.tempDir, name)
-		if _, err := downloadFile(ctx, path, file); err != nil {
+		if _, err := downloadFile(ctx, path, perms, file); err != nil {
 			return "", err
 		}
 	}
