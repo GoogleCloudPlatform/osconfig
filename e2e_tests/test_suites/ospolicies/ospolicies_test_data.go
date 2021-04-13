@@ -23,6 +23,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
 	"google.golang.org/protobuf/types/known/durationpb"
 
+	osconfig "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
 	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
 )
 
@@ -686,7 +687,7 @@ func addRepositoryResourceTests(key string) []*osPolicyTestSetup {
 	return pkgTestSetup
 }
 
-func buildFileRemoveTestSetup(name, image, pkgManager, key string) *osPolicyTestSetup {
+func buildFileResourceTests(name, image, pkgManager, key string) *osPolicyTestSetup {
 	assertTimeout := 180 * time.Second
 	testName := fileResource
 	machineType := "e2-medium"
@@ -935,16 +936,518 @@ func buildFileRemoveTestSetup(name, image, pkgManager, key string) *osPolicyTest
 func addFileResourceTests(key string) []*osPolicyTestSetup {
 	var pkgTestSetup []*osPolicyTestSetup
 	for name, image := range utils.HeadAptImages {
-		pkgTestSetup = append(pkgTestSetup, buildFileRemoveTestSetup(name, image, "apt", key))
+		pkgTestSetup = append(pkgTestSetup, buildFileResourceTests(name, image, "apt", key))
 	}
 	for name, image := range utils.HeadELImages {
-		pkgTestSetup = append(pkgTestSetup, buildFileRemoveTestSetup(name, image, "yum", key))
+		pkgTestSetup = append(pkgTestSetup, buildFileResourceTests(name, image, "yum", key))
 	}
 	for name, image := range utils.HeadSUSEImages {
-		pkgTestSetup = append(pkgTestSetup, buildFileRemoveTestSetup(name, image, "zypper", key))
+		pkgTestSetup = append(pkgTestSetup, buildFileResourceTests(name, image, "zypper", key))
 	}
 	for name, image := range utils.HeadWindowsImages {
-		pkgTestSetup = append(pkgTestSetup, buildFileRemoveTestSetup(name, image, "googet", key))
+		pkgTestSetup = append(pkgTestSetup, buildFileResourceTests(name, image, "googet", key))
+	}
+	return pkgTestSetup
+}
+
+func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyTestSetup {
+	assertTimeout := 180 * time.Second
+	testName := linuxExecResource
+	machineType := "e2-medium"
+	checkPaths := []string{"/path1", "/path2", "/path3", "/path4"}
+
+	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
+	ospa := &osconfigpb.OSPolicyAssignment{
+		InstanceFilter: &osconfigpb.OSPolicyAssignment_InstanceFilter{
+			InclusionLabels: []*osconfigpb.OSPolicyAssignment_LabelSet{{
+				Labels: map[string]string{"name": instanceName}},
+			},
+		},
+		Rollout: &osconfigpb.OSPolicyAssignment_Rollout{
+			DisruptionBudget: &osconfigpb.FixedOrPercent{Mode: &osconfigpb.FixedOrPercent_Percent{Percent: 100}},
+			MinWaitDuration:  &durationpb.Duration{Seconds: 0},
+		},
+		OsPolicies: []*osconfigpb.OSPolicy{
+			{
+				Id:   testName,
+				Mode: osconfigpb.OSPolicy_ENFORCEMENT,
+				// Each of these resources checks for and then creates a file from checkPaths.
+				ResourceGroups: []*osconfigpb.OSPolicy_ResourceGroup{
+					{
+						Resources: []*osconfigpb.OSPolicy_Resource{
+							{
+								Id: "exec-gcs",
+								ResourceType: &osconfigpb.OSPolicy_Resource_Exec{
+									Exec: &osconfigpb.OSPolicy_Resource_ExecResource{
+										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
+												File: &osconfigpb.OSPolicy_Resource_File{
+													Type: &osconfig.OSPolicy_Resource_File_Gcs_{
+														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
+															Bucket:     "osconfig-agent-end2end-test-resources",
+															Object:     "OSPolicies/validate_shell",
+															Generation: 1618251880260222,
+														},
+													},
+												},
+											},
+											Args:        []string{checkPaths[0]},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
+										},
+										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
+												File: &osconfigpb.OSPolicy_Resource_File{
+													Type: &osconfig.OSPolicy_Resource_File_Gcs_{
+														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
+															Bucket:     "osconfig-agent-end2end-test-resources",
+															Object:     "OSPolicies/enforce_none",
+															Generation: 1618246663082861,
+														},
+													},
+												},
+											},
+											Args:        []string{checkPaths[0]},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_NONE,
+										},
+									},
+								},
+							},
+							{
+								Id: "exec-uri",
+								ResourceType: &osconfigpb.OSPolicy_Resource_Exec{
+									Exec: &osconfigpb.OSPolicy_Resource_ExecResource{
+										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
+												File: &osconfigpb.OSPolicy_Resource_File{
+													Type: &osconfig.OSPolicy_Resource_File_Remote_{
+														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
+															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/validate_shell",
+															Sha256Checksum: "67837bf4b3be1ff84758e22d2eb46db4904dd57eb50f19de3f51a52be1c5b555",
+														},
+													},
+												},
+											},
+											Args:        []string{checkPaths[1]},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
+										},
+										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
+												File: &osconfigpb.OSPolicy_Resource_File{
+													Type: &osconfig.OSPolicy_Resource_File_Remote_{
+														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
+															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/enforce_none",
+															Sha256Checksum: "6b9f3936ddc557819281d9bd933aa42be513d31447ca683a9bc26e9f14d6abf1",
+														},
+													},
+												},
+											},
+											Args:        []string{checkPaths[1]},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_NONE,
+										},
+									},
+								},
+							},
+							// These local scripts are created by the startup script.
+							{
+								Id: "exec-local",
+								ResourceType: &osconfigpb.OSPolicy_Resource_Exec{
+									Exec: &osconfigpb.OSPolicy_Resource_ExecResource{
+										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
+												File: &osconfigpb.OSPolicy_Resource_File{
+													Type: &osconfig.OSPolicy_Resource_File_LocalPath{
+														LocalPath: "/validate_shell",
+													},
+												},
+											},
+											Args:        []string{checkPaths[2]},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
+										},
+										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
+												File: &osconfigpb.OSPolicy_Resource_File{
+													Type: &osconfig.OSPolicy_Resource_File_LocalPath{
+														LocalPath: "/enforce_none",
+													},
+												},
+											},
+											Args:        []string{checkPaths[2]},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_NONE,
+										},
+									},
+								},
+							},
+							{
+								Id: "exec-script",
+								ResourceType: &osconfigpb.OSPolicy_Resource_Exec{
+									Exec: &osconfigpb.OSPolicy_Resource_ExecResource{
+										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
+												Script: "if ls $1 >/dev/null; then\nexit 100\nfi\nexit 101",
+											},
+											Args:        []string{checkPaths[3]},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
+										},
+										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
+												Script: "#!/bin/sh\ntouch $1\nexit 100",
+											},
+											Args:        []string{checkPaths[3]},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_NONE,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	expectedSteps := []*osconfigpb.OSPolicyResourceConfigStep{
+		{
+			Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+			Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+		},
+		{
+			Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+			Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+		},
+		{
+			Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+			Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+		},
+		{
+			Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+			Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+		},
+	}
+	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+		{
+			OsPolicyId: testName,
+			State:      osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyResourceCompliance{
+				{
+					OsPolicyResourceId: "exec-gcs",
+					ConfigSteps:        expectedSteps,
+					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+				{
+					OsPolicyResourceId: "exec-uri",
+					ConfigSteps:        expectedSteps,
+					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+				{
+					OsPolicyResourceId: "exec-local",
+					ConfigSteps:        expectedSteps,
+					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+				{
+					OsPolicyResourceId: "exec-script",
+					ConfigSteps:        expectedSteps,
+					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+			},
+		},
+	}
+	ss := getStartupScriptExec(name, pkgManager, checkPaths)
+	return newOsPolicyTestSetup(image, name, instanceName, testName, []string{fileExists}, machineType, ospa, ss, assertTimeout, wantCompliances)
+}
+
+func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolicyTestSetup {
+	assertTimeout := 180 * time.Second
+	testName := windowsExecResource
+	machineType := "e2-standard-2"
+	checkPaths := []string{"/path1", "/path2", "/path3", "/path4", "/path5", "/path6"}
+
+	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
+	ospa := &osconfigpb.OSPolicyAssignment{
+		InstanceFilter: &osconfigpb.OSPolicyAssignment_InstanceFilter{
+			InclusionLabels: []*osconfigpb.OSPolicyAssignment_LabelSet{{
+				Labels: map[string]string{"name": instanceName}},
+			},
+		},
+		Rollout: &osconfigpb.OSPolicyAssignment_Rollout{
+			DisruptionBudget: &osconfigpb.FixedOrPercent{Mode: &osconfigpb.FixedOrPercent_Percent{Percent: 100}},
+			MinWaitDuration:  &durationpb.Duration{Seconds: 0},
+		},
+		OsPolicies: []*osconfigpb.OSPolicy{
+			{
+				Id:   testName,
+				Mode: osconfigpb.OSPolicy_ENFORCEMENT,
+				// Each of these resources checks for and then creates a file from checkPaths.
+				ResourceGroups: []*osconfigpb.OSPolicy_ResourceGroup{
+					{
+						Resources: []*osconfigpb.OSPolicy_Resource{
+							{
+								Id: "exec-gcs-cmd",
+								ResourceType: &osconfigpb.OSPolicy_Resource_Exec{
+									Exec: &osconfigpb.OSPolicy_Resource_ExecResource{
+										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
+												File: &osconfigpb.OSPolicy_Resource_File{
+													Type: &osconfig.OSPolicy_Resource_File_Gcs_{
+														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
+															Bucket:     "osconfig-agent-end2end-test-resources",
+															Object:     "OSPolicies/validate.cmd",
+															Generation: 1618340275278922,
+														},
+													},
+												},
+											},
+											Args:        []string{checkPaths[0]},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
+										},
+										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
+												File: &osconfigpb.OSPolicy_Resource_File{
+													Type: &osconfig.OSPolicy_Resource_File_Gcs_{
+														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
+															Bucket:     "osconfig-agent-end2end-test-resources",
+															Object:     "OSPolicies/enforce.cmd",
+															Generation: 1618340277107450,
+														},
+													},
+												},
+											},
+											Args:        []string{checkPaths[0]},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_NONE,
+										},
+									},
+								},
+							},
+							{
+								Id: "exec-uri-cmd",
+								ResourceType: &osconfigpb.OSPolicy_Resource_Exec{
+									Exec: &osconfigpb.OSPolicy_Resource_ExecResource{
+										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
+												File: &osconfigpb.OSPolicy_Resource_File{
+													Type: &osconfig.OSPolicy_Resource_File_Remote_{
+														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
+															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/validate.cmd",
+															Sha256Checksum: "1635e97b142fa9dd21bb023093ede409d242f52a535ad779bb80539db95c8f77",
+														},
+													},
+												},
+											},
+											Args:        []string{checkPaths[1]},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
+										},
+										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
+												File: &osconfigpb.OSPolicy_Resource_File{
+													Type: &osconfig.OSPolicy_Resource_File_Remote_{
+														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
+															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/enforce.cmd",
+															Sha256Checksum: "d9eef617ac54a8aa46be87b652a5e70b1b32035d1540e8d9bdae5dff406ceca5",
+														},
+													},
+												},
+											},
+											Args:        []string{checkPaths[1]},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_NONE,
+										},
+									},
+								},
+							},
+							// These local scripts are created by the startup script.
+							{
+								Id: "exec-local-cmd",
+								ResourceType: &osconfigpb.OSPolicy_Resource_Exec{
+									Exec: &osconfigpb.OSPolicy_Resource_ExecResource{
+										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
+												File: &osconfigpb.OSPolicy_Resource_File{
+													Type: &osconfig.OSPolicy_Resource_File_LocalPath{
+														LocalPath: "/validate.cmd",
+													},
+												},
+											},
+											Args:        []string{checkPaths[2]},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
+										},
+										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
+												File: &osconfigpb.OSPolicy_Resource_File{
+													Type: &osconfig.OSPolicy_Resource_File_LocalPath{
+														LocalPath: "/enforce.cmd",
+													},
+												},
+											},
+											Args:        []string{checkPaths[2]},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_NONE,
+										},
+									},
+								},
+							},
+							// No support for executing a script with no Interpreter via Script on Windows.
+							{
+								Id: "exec-script",
+								ResourceType: &osconfigpb.OSPolicy_Resource_Exec{
+									Exec: &osconfigpb.OSPolicy_Resource_ExecResource{
+										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
+												Script: "if exists %1 exit 100\nexit 101",
+											},
+											Args:        []string{checkPaths[3]},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
+										},
+										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
+												Script: "New-Item -ItemType File -Path $Args[0]; exit 100",
+											},
+											Args:        []string{checkPaths[3]},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_POWERSHELL,
+										},
+									},
+								},
+							},
+							// Windows does not support executing a powershell script directly.
+							{
+								Id: "exec-gcs-uri-ps1",
+								ResourceType: &osconfigpb.OSPolicy_Resource_Exec{
+									Exec: &osconfigpb.OSPolicy_Resource_ExecResource{
+										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
+												File: &osconfigpb.OSPolicy_Resource_File{
+													Type: &osconfig.OSPolicy_Resource_File_Gcs_{
+														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
+															Bucket:     "osconfig-agent-end2end-test-resources",
+															Object:     "OSPolicies/validate.ps1",
+															Generation: 1617995966532645,
+														},
+													},
+												},
+											},
+											Args:        []string{checkPaths[4]},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_POWERSHELL,
+										},
+										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
+												File: &osconfigpb.OSPolicy_Resource_File{
+													Type: &osconfig.OSPolicy_Resource_File_Remote_{
+														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
+															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/enforce.ps1",
+															Sha256Checksum: "a5737e35f8a3a04785e4e0b9ffa90c5209db320c0ef9692672f5fb0b1dfe99d2",
+														},
+													},
+												},
+											},
+											Args:        []string{checkPaths[4]},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_POWERSHELL,
+										},
+									},
+								},
+							},
+							{
+								Id: "exec-local-powershell",
+								ResourceType: &osconfigpb.OSPolicy_Resource_Exec{
+									Exec: &osconfigpb.OSPolicy_Resource_ExecResource{
+										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
+												File: &osconfigpb.OSPolicy_Resource_File{
+													Type: &osconfig.OSPolicy_Resource_File_LocalPath{
+														LocalPath: "/validate.ps1",
+													},
+												},
+											},
+											Args:        []string{checkPaths[5]},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_POWERSHELL,
+										},
+										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
+												File: &osconfigpb.OSPolicy_Resource_File{
+													Type: &osconfig.OSPolicy_Resource_File_LocalPath{
+														LocalPath: "/enforce.ps1",
+													},
+												},
+											},
+											Args:        []string{checkPaths[5]},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_POWERSHELL,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	expectedSteps := []*osconfigpb.OSPolicyResourceConfigStep{
+		{
+			Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+			Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+		},
+		{
+			Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+			Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+		},
+		{
+			Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+			Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+		},
+		{
+			Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+			Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+		},
+	}
+	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+		{
+			OsPolicyId: testName,
+			State:      osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyResourceCompliance{
+				{
+					OsPolicyResourceId: "exec-gcs-cmd",
+					ConfigSteps:        expectedSteps,
+					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+				{
+					OsPolicyResourceId: "exec-uri-cmd",
+					ConfigSteps:        expectedSteps,
+					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+				{
+					OsPolicyResourceId: "exec-local-cmd",
+					ConfigSteps:        expectedSteps,
+					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+				{
+					OsPolicyResourceId: "exec-script",
+					ConfigSteps:        expectedSteps,
+					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+				{
+					OsPolicyResourceId: "exec-gcs-uri-ps1",
+					ConfigSteps:        expectedSteps,
+					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+				{
+					OsPolicyResourceId: "exec-local-powershell",
+					ConfigSteps:        expectedSteps,
+					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+			},
+		},
+	}
+	ss := getStartupScriptExec(name, pkgManager, checkPaths)
+	return newOsPolicyTestSetup(image, name, instanceName, testName, []string{fileExists}, machineType, ospa, ss, assertTimeout, wantCompliances)
+}
+
+func addExecResourceTests(key string) []*osPolicyTestSetup {
+	var pkgTestSetup []*osPolicyTestSetup
+	for name, image := range utils.HeadAptImages {
+		pkgTestSetup = append(pkgTestSetup, buildLinuxExecResourceTests(name, image, "apt", key))
+	}
+	for name, image := range utils.HeadELImages {
+		pkgTestSetup = append(pkgTestSetup, buildLinuxExecResourceTests(name, image, "yum", key))
+	}
+	for name, image := range utils.HeadSUSEImages {
+		pkgTestSetup = append(pkgTestSetup, buildLinuxExecResourceTests(name, image, "zypper", key))
+	}
+	for name, image := range utils.HeadWindowsImages {
+		pkgTestSetup = append(pkgTestSetup, buildWindowsExecResourceTests(name, image, "googet", key))
 	}
 	return pkgTestSetup
 }
@@ -956,5 +1459,6 @@ func generateAllTestSetup() []*osPolicyTestSetup {
 	pkgTestSetup = append(pkgTestSetup, addPackageResourceTests(key)...)
 	pkgTestSetup = append(pkgTestSetup, addRepositoryResourceTests(key)...)
 	pkgTestSetup = append(pkgTestSetup, addFileResourceTests(key)...)
+	pkgTestSetup = append(pkgTestSetup, addExecResourceTests(key)...)
 	return pkgTestSetup
 }

@@ -128,10 +128,12 @@ func InstallOSConfigGooGet() string {
 		return windowsPost
 	}
 	if config.AgentRepo() == "stable" {
-		return `c:\programdata\googet\googet.exe -noconfirm remove google-osconfig-agent
+		return `
+c:\programdata\googet\googet.exe -noconfirm remove google-osconfig-agent
 c:\programdata\googet\googet.exe -noconfirm install google-osconfig-agent` + windowsPost
 	}
-	return fmt.Sprintf(`c:\programdata\googet\googet.exe -noconfirm remove google-osconfig-agent
+	return fmt.Sprintf(`
+c:\programdata\googet\googet.exe -noconfirm remove google-osconfig-agent
 c:\programdata\googet\googet.exe -noconfirm install -sources https://packages.cloud.google.com/yuck/repos/google-osconfig-agent-%s google-osconfig-agent
 `+windowsPost, config.AgentRepo())
 }

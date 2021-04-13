@@ -326,3 +326,78 @@ Invoke-RestMethod -Method PUT -Uri $uri -Headers @{"Metadata-Flavor" = "Google"}
 		Value: &ss,
 	}
 }
+
+func getStartupScriptExec(image, pkgManager string, wantPaths []string) *computeApi.MetadataItems {
+	var ss, key string
+
+	linux := `set -x
+echo 'if ls $1 >/dev/null; then
+exit 100
+fi
+exit 101' > /validate_shell
+
+echo '#!/bin/sh
+touch $1
+exit 100' > /enforce_none
+chmod +x /enforce_none`
+
+	linuxCheck := `
+echo "Checking for %[1]s"
+while [[ ! -f %[1]s ]]; do
+  echo "%[1]s DNE"
+  sleep 10
+done
+echo "%[1]s exists"`
+	var linuxChecks string
+	for _, p := range wantPaths {
+		linuxChecks += fmt.Sprintf(linuxCheck, p)
+	}
+
+	linuxEnd := fmt.Sprintf(`
+uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s
+curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"`, fileExists)
+
+	switch pkgManager {
+	case "apt":
+		ss = linux + utils.InstallOSConfigDeb() + linuxChecks + linuxEnd
+		key = "startup-script"
+
+	case "yum":
+		ss = linux + yumStartupScripts[path.Base(image)] + linuxChecks + linuxEnd
+		key = "startup-script"
+
+	case "zypper":
+		ss = linux + utils.InstallOSConfigSUSE() + linuxChecks + linuxEnd
+		key = "startup-script"
+
+	case "googet":
+		ss = `
+@'
+if exist %1 exit 100
+exit 101
+'@ | Out-File -Encoding ASCII /validate.cmd
+'echo "" > %1' | Out-File -Encoding ASCII /enforce.cmd
+'if (Test-Path $Args[0]) {exit 100}; exit 101' > /validate.ps1
+'New-Item -ItemType File -Path $Args[0]; exit 100' > /enforce.ps1`
+		ss += utils.InstallOSConfigGooGet()
+		check := `
+Write-Host "Checking for %[1]s"
+while ( ! (Test-Path %[1]s) ) {
+  Write-Host "%[1]s DNE"
+  sleep 10
+}
+Write-Host "%[1]s exists"`
+		for _, p := range wantPaths {
+			ss += fmt.Sprintf(check, p)
+		}
+		key = "windows-startup-script-ps1"
+
+	default:
+		fmt.Printf("Invalid package manager: %s", pkgManager)
+	}
+
+	return &computeApi.MetadataItems{
+		Key:   key,
+		Value: &ss,
+	}
+}
