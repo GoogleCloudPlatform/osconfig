@@ -55,6 +55,8 @@ const (
 	repositoryResourceZypper = "repositoryresourcezypper"
 	repositoryResourceGoo    = "repositoryresourcegoo"
 	fileResource             = "fileresource"
+	linuxExecResource        = "linuxexecresource"
+	windowsExecResource      = "windowsexecresource"
 )
 
 type osPolicyTestSetup struct {
@@ -132,28 +134,11 @@ func createOSPolicyAssignment(ctx context.Context, client *osconfigZonalV1alpha.
 	if err != nil {
 		return nil, fmt.Errorf("error running CreateOSPolicyAssignment: %s", utils.GetStatusFromError(err))
 	}
-	//ospa, err := op.Wait(ctx)
-	//if err != nil {
-	//	return nil, fmt.Errorf("error waiting for operation to complete: %s", utils.GetStatusFromError(err))
-	//}
-	//return ospa, nil
-	_ = op
-
-	time.Sleep(30 * time.Second)
-	getReq := &osconfigpb.GetOSPolicyAssignmentRequest{Name: fmt.Sprintf("%s/osPolicyAssignments/%s", req.GetParent(), req.GetOsPolicyAssignmentId())}
-	for i := 0; i < 20; i++ {
-		ospa, err := client.GetOSPolicyAssignment(ctx, getReq)
-		if err != nil {
-			return nil, fmt.Errorf("error running GetOSPolicyAssignment: %s", utils.GetStatusFromError(err))
-		}
-		switch ospa.GetRolloutState() {
-		case osconfigpb.OSPolicyAssignment_SUCCEEDED, osconfigpb.OSPolicyAssignment_CANCELLED:
-			return ospa, nil
-		}
-		time.Sleep(10 * time.Second)
+	ospa, err := op.Wait(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error waiting for operation to complete: %s", utils.GetStatusFromError(err))
 	}
-
-	return nil, fmt.Errorf("timed out waiting for rollout to finish")
+	return ospa, nil
 }
 
 func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPolicyTestSetup, logger *log.Logger) {
@@ -272,6 +257,10 @@ func getTestCaseFromTestSetUp(testSetup *osPolicyTestSetup) (*junitxml.TestCase,
 		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[RepositoryResource GooGet] [%s]", testSetup.imageName))
 	case fileResource:
 		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[FileResource] [%s]", testSetup.imageName))
+	case linuxExecResource:
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Linux ExecResource] [%s]", testSetup.imageName))
+	case windowsExecResource:
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Windows ExecResource] [%s]", testSetup.imageName))
 	default:
 		return nil, fmt.Errorf("unknown test function name: %s", testSetup.testName)
 	}
@@ -289,8 +278,5 @@ func cleanupOSPolicyAssignment(ctx context.Context, testCase *junitxml.TestCase,
 	if err != nil {
 		testCase.WriteFailure(fmt.Sprintf("Error calling DeleteOSPolicyAssignment: %s", utils.GetStatusFromError(err)))
 	}
-
-	// op.Wait(ctx)
-	_ = op
-	return
+	op.Wait(ctx)
 }
