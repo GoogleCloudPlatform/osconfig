@@ -222,7 +222,6 @@ func populateInstalledCache(ctx context.Context, mp ManagedPackage) error {
 	var refreshFunc func(context.Context) ([]packages.PkgInfo, error)
 	var err error
 	switch {
-	// TODO: implement apt functions
 	case mp.Apt != nil:
 		cache = aptInstalled
 		refreshFunc = packages.InstalledDebPackages

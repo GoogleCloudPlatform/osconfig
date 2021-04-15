@@ -134,7 +134,6 @@ func validateConfigResource(ctx context.Context, plcy *policy, policyMR *config.
 	res := plcy.resources[configResource.GetId()]
 
 	outcome := agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
-	state := agentendpointpb.OSPolicyComplianceState_UNKNOWN
 	if err := res.Validate(ctx); err != nil {
 		outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 		plcy.hasError = true
@@ -152,7 +151,7 @@ func validateConfigResource(ctx context.Context, plcy *policy, policyMR *config.
 		Type:    agentendpointpb.OSPolicyResourceConfigStep_VALIDATION,
 		Outcome: outcome,
 	})
-	rCompliance.State = state
+	rCompliance.State = agentendpointpb.OSPolicyComplianceState_UNKNOWN
 }
 
 func checkConfigResourceState(ctx context.Context, plcy *policy, rCompliance *agentendpointpb.OSPolicyResourceCompliance, configResource *agentendpointpb.OSPolicy_Resource) {
@@ -177,6 +176,7 @@ func checkConfigResourceState(ctx context.Context, plcy *policy, rCompliance *ag
 		Type:    agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
 		Outcome: outcome,
 	})
+	clog.Debugf(ctx, "Resource %q state is %s.", configResource.GetId(), state)
 	rCompliance.State = state
 }
 
@@ -234,6 +234,7 @@ func postCheckConfigResourceState(ctx context.Context, plcy *policy, rCompliance
 		Type:    agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
 		Outcome: outcome,
 	})
+	clog.Debugf(ctx, "Resource %q state is %s.", configResource.GetId(), state)
 	rCompliance.State = state
 }
 

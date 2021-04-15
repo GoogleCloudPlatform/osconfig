@@ -97,7 +97,7 @@ func run(ctx context.Context) {
 	// If this call to WatchConfig fails (like a metadata error) we can't continue.
 	if err := agentconfig.WatchConfig(ctx); err != nil {
 		logger.Init(ctx, opts)
-		logger.Fatalf(err.Error())
+		logger.Fatalf("Error parsing metadata, agent cannot start: %v", err.Error())
 	}
 	opts.Debug = agentconfig.Debug()
 	opts.ProjectName = agentconfig.ProjectID()

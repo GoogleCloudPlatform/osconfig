@@ -81,7 +81,7 @@ func TestInstalledDebPackages(t *testing.T) {
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
 	expectedCmd := exec.Command(dpkgQuery, dpkgQueryArgs...)
-	data := []byte("foo amd64 1.2.3-4")
+	data := []byte("foo amd64 1.2.3-4 installed")
 
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return(data, []byte("stderr"), nil).Times(1)
 	ret, err := InstalledDebPackages(testCtx)
@@ -106,10 +106,10 @@ func TestParseInstalledDebpackages(t *testing.T) {
 		data []byte
 		want []PkgInfo
 	}{
-		{"NormalCase", []byte("foo amd64 1.2.3-4\nbar noarch 1.2.3-4"), []PkgInfo{{"foo", "x86_64", "1.2.3-4"}, {"bar", "all", "1.2.3-4"}}},
+		{"NormalCase", []byte("foo amd64 1.2.3-4 installed\nbar noarch 1.2.3-4 installed\nbaz noarch 1.2.3-4 config-files"), []PkgInfo{{"foo", "x86_64", "1.2.3-4"}, {"bar", "all", "1.2.3-4"}}},
 		{"NoPackages", []byte("nothing here"), nil},
 		{"nil", nil, nil},
-		{"UnrecognizedPackage", []byte("something we dont understand\n bar noarch 1.2.3-4"), []PkgInfo{{"bar", "all", "1.2.3-4"}}},
+		{"UnrecognizedPackage", []byte("something we dont understand\n bar noarch 1.2.3-4 installed"), []PkgInfo{{"bar", "all", "1.2.3-4"}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
