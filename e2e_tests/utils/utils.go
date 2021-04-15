@@ -380,7 +380,7 @@ func CreateComputeInstance(metadataitems []*api.MetadataItems, client daisyCompu
 				Boot:       true,
 				InitializeParams: &api.AttachedDiskInitializeParams{
 					SourceImage: image,
-					DiskType:    fmt.Sprintf("projects/%s/zones/%s/diskTypes/pd-ssd", projectID, zone),
+					DiskType:    fmt.Sprintf("projects/%s/zones/%s/diskTypes/pd-balanced", projectID, zone),
 				},
 			},
 		},

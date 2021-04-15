@@ -48,7 +48,7 @@ func buildPkgInstallTestSetup(name, image, pkgManager, key string) *guestPolicyT
 	assertTimeout := 120 * time.Second
 	testName := packageInstallFunction
 	packageName := "ed"
-	machineType := "e2-standard-2"
+	machineType := "e2-medium"
 	if pkgManager == "googet" {
 		packageName = "cowsay"
 		machineType = "e2-standard-4"
@@ -87,7 +87,7 @@ func buildPkgUpdateTestSetup(name, image, pkgManager, key string) *guestPolicyTe
 	assertTimeout := 240 * time.Second
 	testName := packageUpdateFunction
 	packageName := "ed"
-	machineType := "e2-standard-2"
+	machineType := "e2-medium"
 	if pkgManager == "googet" {
 		packageName = "cowsay"
 		machineType = "e2-standard-4"
@@ -122,7 +122,7 @@ func buildPkgDoesNotUpdateTestSetup(name, image, pkgManager, key string) *guestP
 	assertTimeout := 240 * time.Second
 	testName := packageNoUpdateFunction
 	packageName := "ed"
-	machineType := "e2-standard-2"
+	machineType := "e2-medium"
 	if pkgManager == "googet" {
 		packageName = "cowsay"
 		machineType = "e2-standard-4"
@@ -158,7 +158,7 @@ func buildPkgRemoveTestSetup(name, image, pkgManager, key string) *guestPolicyTe
 	assertTimeout := 180 * time.Second
 	testName := packageRemovalFunction
 	packageName := "vim"
-	machineType := "e2-standard-2"
+	machineType := "e2-medium"
 	if pkgManager == "googet" {
 		packageName = "certgen"
 		machineType = "e2-standard-4"
@@ -194,9 +194,9 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *g
 	assertTimeout := 120 * time.Second
 	packageName := "osconfig-agent-test"
 	testName := packageInstallFromNewRepoFunction
-	machineType := "e2-standard-2"
+	machineType := "e2-medium"
 	if pkgManager == "googet" {
-		machineType = "e2-standard-4"
+		machineType = "e2-standard-2"
 	}
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
@@ -282,7 +282,7 @@ func buildRecipeInstallTestSetup(name, image, pkgManager, key string) *guestPoli
 	assertTimeout := 120 * time.Second
 	testName := recipeInstallFunction
 	recipeName := "testrecipe"
-	machineType := "e2-standard-2"
+	machineType := "e2-medium"
 	if strings.HasPrefix(image, "windows") {
 		machineType = "e2-standard-4"
 	}
@@ -325,9 +325,9 @@ func buildRecipeStepsTestSetup(name, image, pkgManager, key string) *guestPolicy
 	assertTimeout := 120 * time.Second
 	testName := recipeStepsFunction
 	recipeName := "testrecipe"
-	machineType := "e2-standard-2"
+	machineType := "e2-medium"
 	if strings.HasPrefix(image, "windows") {
-		machineType = "e2-standard-4"
+		machineType = "e2-standard-2"
 	}
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
@@ -496,9 +496,9 @@ func buildMetadataPolicyTestSetup(name, image, pkgManager, key string) *guestPol
 	assertTimeout := 60 * time.Second
 	testName := metadataPolicyFunction
 	recipeName := "testrecipe"
-	machineType := "e2-standard-2"
+	machineType := "e2-medium"
 	if strings.HasPrefix(image, "windows") {
-		machineType = "e2-standard-4"
+		machineType = "e2-standard-2"
 	}
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))

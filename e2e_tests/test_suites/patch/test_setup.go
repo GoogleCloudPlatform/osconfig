@@ -100,7 +100,7 @@ chmod +x ./linux_local_pre_patch_script.sh
 			enableOsconfig,
 			disableFeatures,
 		},
-		machineType: "e2-standard-2",
+		machineType: "e2-medium",
 	}
 	el6Setup = &patchTestSetup{
 		assertTimeout: 15 * time.Minute,
@@ -109,7 +109,7 @@ chmod +x ./linux_local_pre_patch_script.sh
 			enableOsconfig,
 			disableFeatures,
 		},
-		machineType: "e2-standard-2",
+		machineType: "e2-medium",
 	}
 	el7Setup = &patchTestSetup{
 		assertTimeout: 15 * time.Minute,
@@ -118,7 +118,7 @@ chmod +x ./linux_local_pre_patch_script.sh
 			enableOsconfig,
 			disableFeatures,
 		},
-		machineType: "e2-standard-2",
+		machineType: "e2-medium",
 	}
 	el8Setup = &patchTestSetup{
 		assertTimeout: 15 * time.Minute,
@@ -127,7 +127,7 @@ chmod +x ./linux_local_pre_patch_script.sh
 			enableOsconfig,
 			disableFeatures,
 		},
-		machineType: "e2-standard-2",
+		machineType: "e2-medium",
 	}
 	suseSetup = &patchTestSetup{
 		assertTimeout: 15 * time.Minute,
@@ -136,7 +136,7 @@ chmod +x ./linux_local_pre_patch_script.sh
 			enableOsconfig,
 			disableFeatures,
 		},
-		machineType: "e2-standard-2",
+		machineType: "e2-medium",
 	}
 )
 
