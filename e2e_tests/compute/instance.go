@@ -48,7 +48,7 @@ func (i *Instance) Cleanup() {
 // WaitForGuestAttributes waits for guest attribute (queryPath, variableKey) to appear.
 func (i *Instance) WaitForGuestAttributes(queryPath string, interval, timeout time.Duration) ([]*computeApiBeta.GuestAttributesEntry, error) {
 	tick := time.Tick(interval)
-	timedout := time.Tick(timeout)
+	timedout := time.After(timeout)
 	for {
 		select {
 		case <-timedout:
@@ -110,7 +110,7 @@ func (i *Instance) WaitForSerialOutput(positiveRegexes []*regexp.Regexp, negativ
 	var errs int
 	matches := make([]bool, len(positiveRegexes))
 	tick := time.Tick(interval)
-	timedout := time.Tick(timeout)
+	timedout := time.After(timeout)
 	for {
 		select {
 		case <-timedout:
