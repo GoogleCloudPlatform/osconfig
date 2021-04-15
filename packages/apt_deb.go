@@ -318,7 +318,7 @@ func parseInstalledDebpackages(data []byte) []PkgInfo {
 		}
 
 		// Only report on installed packages.
-		if pkg[4] == "installed" {
+		if pkg[3] != "installed" {
 			continue
 		}
 
