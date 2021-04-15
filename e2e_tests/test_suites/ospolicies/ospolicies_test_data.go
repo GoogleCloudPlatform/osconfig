@@ -666,7 +666,7 @@ func buildGoogetRepositoryResourceTest(name, image, key string) *osPolicyTestSet
 			OsPolicyResourceCompliances: wantRepositoryCompliances,
 		},
 	}
-	ss := getStartupScriptRepo(name, "yum", packageName)
+	ss := getStartupScriptRepo(name, "googet", packageName)
 	return newOsPolicyTestSetup(image, name, instanceName, testName, []string{packageInstalled}, machineType, ospa, ss, assertTimeout, wantCompliances)
 }
 
