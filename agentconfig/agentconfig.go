@@ -91,7 +91,7 @@ var (
 	// Current supported capabilites for this agent.
 	// These are matched server side to what tasks this agent can
 	// perform.
-	capabilities = []string{"PATCH_GA", "GUEST_POLICY_BETA"}
+	capabilities = []string{"PATCH_GA", "GUEST_POLICY_BETA", "CONFIG_V1"}
 
 	osConfigWatchConfigTimeout = 10 * time.Minute
 
