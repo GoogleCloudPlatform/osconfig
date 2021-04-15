@@ -20,7 +20,6 @@ import (
 	"log"
 	"path"
 	"regexp"
-	"strings"
 	"sync"
 	"time"
 
@@ -31,6 +30,10 @@ import (
 	testconfig "github.com/GoogleCloudPlatform/osconfig/e2e_tests/test_config"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
 	api "google.golang.org/api/compute/v1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
 )
 
 const (
@@ -105,36 +108,46 @@ func runInventoryReportingTest(ctx context.Context, testSetup *inventoryTestSetu
 		return
 	}
 
-	// Build regexes for verification.
-	positivePatterns := []string{
-		fmt.Sprintf(`.*Calling ReportInventory with request containing hostname %s, short name %s, [1-9]+[0-9]* installed packages, [0-9]+ available packages`, testSetup.hostname, testSetup.shortName),
-		`.*"report_full_inventory".*false.*`,
-		`.*Finished task "Report OSInventory".*`,
-	}
-	// Because COS does not output debug agent log to serial by default and we have to manually set
-	// that up on boot the agent will report full inventory before we can see the output.
-	if !strings.Contains(testSetup.image, "cos") {
-		positivePatterns = append(positivePatterns, `.*"report_full_inventory".*true.*`)
-	}
-	positiveRegexes, err := compileRegex(positivePatterns)
+	name := fmt.Sprintf("projects/%s/locations/%s/instances/%d/inventory", testProjectConfig.TestProjectID, zone, inst.Id)
+	inv, err := waitForInventory(ctx, name, testSetup.timeout)
 	if err != nil {
-		testCase.WriteFailure("Error compiling ReportInventory RPC payload regex: %v", err)
+		testCase.WriteFailure("Error getting instance inventory: %v", err)
 		return
+	}
+	if inv.GetOsInfo().GetHostname() != testSetup.hostname {
+		testCase.WriteFailure("Hostname does not match expectation, %q != %q", inv.GetOsInfo().GetHostname(), testSetup.hostname)
+	}
+	if inv.GetOsInfo().GetShortName() != testSetup.shortName {
+		testCase.WriteFailure("Hostname does not match expectation, %q != %q", inv.GetOsInfo().GetShortName(), testSetup.shortName)
+	}
+}
+
+func waitForInventory(ctx context.Context, name string, timeout time.Duration) (*osconfigpb.Inventory, error) {
+	start := time.Now()
+	client, err := gcpclients.GetOsConfigClientV1Alpha()
+	if err != nil {
+		return nil, fmt.Errorf("error getting osconfig client: %v", err)
 	}
 
-	negativePatterns := []string{
-		".*Error reporting inventory.*",
-	}
-	negativeRegexes, err := compileRegex(negativePatterns)
-	if err != nil {
-		testCase.WriteFailure("Error compiling ReportInventory negative regex: %v", err)
-		return
-	}
-
-	// Verify a successful ReportingInventory call.
-	if err := inst.WaitForSerialOutput(positiveRegexes, negativeRegexes, 1, 10*time.Second, testSetup.timeout); err != nil {
-		testCase.WriteFailure("Error verifying a successful ReportInventory call: %v", err)
-		return
+	tick := time.Tick(10 * time.Second)
+	timedout := time.After(timeout)
+	for {
+		select {
+		case <-timedout:
+			return nil, fmt.Errorf("timed out waiting for instance inventory %q", name)
+		case <-tick:
+			inv, err := client.GetInventory(ctx, &osconfigpb.GetInventoryRequest{Name: name})
+			if err != nil {
+				st, ok := status.FromError(err)
+				if ok && st.Code() == codes.NotFound {
+					continue
+				}
+				return nil, err
+			}
+			if inv.GetUpdateTime().AsTime().After(start) {
+				return inv, nil
+			}
+		}
 	}
 }
 
