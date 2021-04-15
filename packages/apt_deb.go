@@ -35,7 +35,7 @@ var (
 	aptGet    string
 
 	dpkgInstallArgs   = []string{"--install"}
-	dpkgQueryArgs     = []string{"-W", "-f", "${Package} ${Architecture} ${Version}\n"}
+	dpkgQueryArgs     = []string{"-W", "-f", "${Package} ${Architecture} ${Version} ${db:Status-Status}\n"}
 	dpkgRepairArgs    = []string{"--configure", "-a"}
 	aptGetInstallArgs = []string{"install", "-y"}
 	aptGetRemoveArgs  = []string{"remove", "-y"}
@@ -303,8 +303,9 @@ func AptUpdate(ctx context.Context) ([]byte, error) {
 
 func parseInstalledDebpackages(data []byte) []PkgInfo {
 	/*
-	   foo amd64 1.2.3-4
-	   bar noarch 1.2.3-4
+	   foo amd64 1.2.3-4 installed
+	   bar noarch 1.2.3-4 installed
+	   baz noarch 1.2.3-4 config-files
 	   ...
 	*/
 	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
@@ -312,7 +313,12 @@ func parseInstalledDebpackages(data []byte) []PkgInfo {
 	var pkgs []PkgInfo
 	for _, ln := range lines {
 		pkg := strings.Fields(ln)
-		if len(pkg) != 3 {
+		if len(pkg) != 4 {
+			continue
+		}
+
+		// Only report on installed packages.
+		if pkg[4] == "installed" {
 			continue
 		}
 
