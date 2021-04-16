@@ -24,7 +24,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
 	computeAPI "google.golang.org/api/compute/v1"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/api/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
 )
 
 type inventoryTestSetup struct {

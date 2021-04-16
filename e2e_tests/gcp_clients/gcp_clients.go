@@ -20,8 +20,8 @@ import (
 
 	osconfigV1beta "cloud.google.com/go/osconfig/apiv1beta"
 	"github.com/GoogleCloudPlatform/compute-image-tools/daisy/compute"
+	osconfigZonalV1alpha "github.com/GoogleCloudPlatform/osconfig/e2e_tests/api/cloud.google.com/go/osconfig/apiv1alpha"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/config"
-	osconfigZonalV1alpha "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/cloud.google.com/go/osconfig/apiv1alpha"
 	"google.golang.org/api/option"
 )
 
