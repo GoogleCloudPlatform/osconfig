@@ -230,7 +230,7 @@ func testCase(ctx context.Context, testSetup *osPolicyTestSetup, tests chan *jun
 		logger.Printf("Running TestCase %q", tc.Name)
 		runTest(ctx, tc, testSetup, logger)
 		if tc.Failure != nil {
-			rerunTC := junitxml.NewTestCase(testSuiteName, tc.Name)
+			rerunTC := junitxml.NewTestCase(testSuiteName, strings.TrimPrefix(tc.Name, fmt.Sprintf("[%s] ", testSuiteName)))
 			wg.Add(1)
 			go func() {
 				defer wg.Done()

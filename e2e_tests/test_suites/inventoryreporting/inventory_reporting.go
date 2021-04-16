@@ -20,6 +20,7 @@ import (
 	"log"
 	"path"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -167,7 +168,7 @@ func inventoryReportingTestCase(ctx context.Context, testSetup *inventoryTestSet
 	logger.Printf("Running TestCase %q", inventoryTest.Name)
 	runInventoryReportingTest(ctx, testSetup, inventoryTest)
 	if inventoryTest.Failure != nil {
-		rerunTC := junitxml.NewTestCase(testSuiteName, inventoryTest.Name)
+		rerunTC := junitxml.NewTestCase(testSuiteName, strings.TrimPrefix(inventoryTest.Name, fmt.Sprintf("[%s] ", testSuiteName)))
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
