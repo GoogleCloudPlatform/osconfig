@@ -23,8 +23,8 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	osconfig "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
+	osconfig "github.com/GoogleCloudPlatform/osconfig/e2e_tests/api/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/api/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
 )
 
 const (
