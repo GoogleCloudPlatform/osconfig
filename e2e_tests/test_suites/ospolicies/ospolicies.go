@@ -26,10 +26,10 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/compute-image-tools/go/e2e_test_utils/junitxml"
+	osconfigZonalV1alpha "github.com/GoogleCloudPlatform/osconfig/e2e_tests/api/cloud.google.com/go/osconfig/apiv1alpha"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/compute"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/config"
 	gcpclients "github.com/GoogleCloudPlatform/osconfig/e2e_tests/gcp_clients"
-	osconfigZonalV1alpha "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/cloud.google.com/go/osconfig/apiv1alpha"
 	testconfig "github.com/GoogleCloudPlatform/osconfig/e2e_tests/test_config"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
 	"github.com/google/go-cmp/cmp"
@@ -37,7 +37,7 @@ import (
 	computeApi "google.golang.org/api/compute/v1"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/api/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
 )
 
 var (
@@ -229,6 +229,17 @@ func testCase(ctx context.Context, testSetup *osPolicyTestSetup, tests chan *jun
 	} else {
 		logger.Printf("Running TestCase %q", tc.Name)
 		runTest(ctx, tc, testSetup, logger)
+		if tc.Failure != nil {
+			rerunTC := junitxml.NewTestCase(testSuiteName, strings.TrimPrefix(tc.Name, fmt.Sprintf("[%s] ", testSuiteName)))
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				logger.Printf("Rerunning TestCase %q", rerunTC.Name)
+				runTest(ctx, rerunTC, testSetup, logger)
+				rerunTC.Finish(tests)
+				logger.Printf("TestCase %q finished in %fs", rerunTC.Name, rerunTC.Time)
+			}()
+		}
 		tc.Finish(tests)
 		logger.Printf("TestCase %q finished in %fs", tc.Name, tc.Time)
 	}

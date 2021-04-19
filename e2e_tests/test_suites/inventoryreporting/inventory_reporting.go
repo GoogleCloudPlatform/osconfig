@@ -20,6 +20,7 @@ import (
 	"log"
 	"path"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -33,7 +34,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/api/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
 )
 
 const (
@@ -72,7 +73,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 	logger.Printf("Finished TestSuite %q", testSuite.Name)
 }
 
-func runInventoryReportingTest(ctx context.Context, testSetup *inventoryTestSetup, testCase *junitxml.TestCase, logwg *sync.WaitGroup) {
+func runInventoryReportingTest(ctx context.Context, testSetup *inventoryTestSetup, testCase *junitxml.TestCase) {
 	testCase.Logf("Creating compute client")
 
 	computeClient, err := gcpclients.GetComputeClient()
@@ -120,6 +121,9 @@ func runInventoryReportingTest(ctx context.Context, testSetup *inventoryTestSetu
 	if inv.GetOsInfo().GetShortName() != testSetup.shortName {
 		testCase.WriteFailure("Hostname does not match expectation, %q != %q", inv.GetOsInfo().GetShortName(), testSetup.shortName)
 	}
+	if err := testSetup.itemCheck(inv.GetItems()); err != nil {
+		testCase.WriteFailure("Failure running inventory item check: %v", err)
+	}
 }
 
 func waitForInventory(ctx context.Context, name string, timeout time.Duration) (*osconfigpb.Inventory, error) {
@@ -136,7 +140,7 @@ func waitForInventory(ctx context.Context, name string, timeout time.Duration) (
 		case <-timedout:
 			return nil, fmt.Errorf("timed out waiting for instance inventory %q", name)
 		case <-tick:
-			inv, err := client.GetInventory(ctx, &osconfigpb.GetInventoryRequest{Name: name})
+			inv, err := client.GetInventory(ctx, &osconfigpb.GetInventoryRequest{Name: name, View: osconfigpb.InventoryView_FULL})
 			if err != nil {
 				st, ok := status.FromError(err)
 				if ok && st.Code() == codes.NotFound {
@@ -154,7 +158,6 @@ func waitForInventory(ctx context.Context, name string, timeout time.Duration) (
 func inventoryReportingTestCase(ctx context.Context, testSetup *inventoryTestSetup, tc chan *junitxml.TestCase, wg *sync.WaitGroup, logger *log.Logger, regex *regexp.Regexp) {
 	defer wg.Done()
 
-	var logwg sync.WaitGroup
 	inventoryTest := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Report inventory] [%s]", testSetup.testName))
 
 	if inventoryTest.FilterTestCase(regex) {
@@ -163,11 +166,20 @@ func inventoryReportingTestCase(ctx context.Context, testSetup *inventoryTestSet
 	}
 
 	logger.Printf("Running TestCase %q", inventoryTest.Name)
-	runInventoryReportingTest(ctx, testSetup, inventoryTest, &logwg)
+	runInventoryReportingTest(ctx, testSetup, inventoryTest)
+	if inventoryTest.Failure != nil {
+		rerunTC := junitxml.NewTestCase(testSuiteName, strings.TrimPrefix(inventoryTest.Name, fmt.Sprintf("[%s] ", testSuiteName)))
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			logger.Printf("Rerunning TestCase %q", rerunTC.Name)
+			runInventoryReportingTest(ctx, testSetup, rerunTC)
+			rerunTC.Finish(tc)
+			logger.Printf("TestCase %q finished in %fs", rerunTC.Name, rerunTC.Time)
+		}()
+	}
 	inventoryTest.Finish(tc)
 	logger.Printf("TestCase %q finished", inventoryTest.Name)
-
-	logwg.Wait()
 }
 
 func compileRegex(patterns []string) ([]*regexp.Regexp, error) {

@@ -23,8 +23,8 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	osconfig "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
+	osconfig "github.com/GoogleCloudPlatform/osconfig/e2e_tests/api/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/api/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
 )
 
 const (
@@ -666,7 +666,7 @@ func buildGoogetRepositoryResourceTest(name, image, key string) *osPolicyTestSet
 			OsPolicyResourceCompliances: wantRepositoryCompliances,
 		},
 	}
-	ss := getStartupScriptRepo(name, "yum", packageName)
+	ss := getStartupScriptRepo(name, "googet", packageName)
 	return newOsPolicyTestSetup(image, name, instanceName, testName, []string{packageInstalled}, machineType, ospa, ss, assertTimeout, wantCompliances)
 }
 

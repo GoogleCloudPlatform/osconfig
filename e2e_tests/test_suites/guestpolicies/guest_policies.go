@@ -21,6 +21,7 @@ import (
 	"log"
 	"path"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -213,6 +214,17 @@ func packageManagementTestCase(ctx context.Context, testSetup *guestPolicyTestSe
 	} else {
 		logger.Printf("Running TestCase %q", tc.Name)
 		runTest(ctx, tc, testSetup, logger)
+		if tc.Failure != nil {
+			rerunTC := junitxml.NewTestCase(testSuiteName, strings.TrimPrefix(tc.Name, fmt.Sprintf("[%s] ", testSuiteName)))
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				logger.Printf("Rerunning TestCase %q", rerunTC.Name)
+				runTest(ctx, rerunTC, testSetup, logger)
+				rerunTC.Finish(tests)
+				logger.Printf("TestCase %q finished in %fs", rerunTC.Name, rerunTC.Time)
+			}()
+		}
 		tc.Finish(tests)
 		logger.Printf("TestCase %q finished in %fs", tc.Name, tc.Time)
 	}

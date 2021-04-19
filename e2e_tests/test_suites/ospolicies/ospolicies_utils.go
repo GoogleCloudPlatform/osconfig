@@ -107,8 +107,9 @@ done`
 googet addrepo test https://packages.cloud.google.com/yuck/repos/osconfig-agent-test-repository
 %s
 while(1) {
+  # make sure the package we want installed is installed
   $installed_packages = googet installed
-  if ($installed_packages -like "*%[2]s*") {
+  if ($installed_packages -like "*%[3]s*") {
     $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[5]s'
     Invoke-RestMethod -Method PUT -Uri $uri -Headers @{"Metadata-Flavor" = "Google"} -Body 1
 	break
@@ -116,7 +117,9 @@ while(1) {
   sleep 10
 }
 while(1) {
-  if ($installed_packages -like "*%[3]s*") {
+  # make sure the package we want removed is removed
+  $installed_packages = googet installed
+  if ($installed_packages -notlike "*%[2]s*") {
     $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[4]s'
     Invoke-RestMethod -Method PUT -Uri $uri -Headers @{"Metadata-Flavor" = "Google"} -Body 1
 	break
@@ -226,7 +229,7 @@ while true; do
   sleep 10
 done`
 		ss = fmt.Sprintf(ss, utils.InstallOSConfigSUSE(), packageName, packageInstalled)
-		key = "startup-script"
+		key = "windows-startup-script-ps1"
 
 	default:
 		fmt.Printf("Invalid package manager: %s", pkgManager)
