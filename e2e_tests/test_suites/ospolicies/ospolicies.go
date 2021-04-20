@@ -134,6 +134,9 @@ func createOSPolicyAssignment(ctx context.Context, client *osconfigZonalV1alpha.
 	if err != nil {
 		return nil, fmt.Errorf("error running CreateOSPolicyAssignment: %s", utils.GetStatusFromError(err))
 	}
+	// Wait up to 5 min for this to complete.
+	ctx, cncl := context.WithTimeout(ctx, 5*time.Minute)
+	defer cncl()
 	ospa, err := op.Wait(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error waiting for operation to complete: %s", utils.GetStatusFromError(err))
@@ -142,6 +145,9 @@ func createOSPolicyAssignment(ctx context.Context, client *osconfigZonalV1alpha.
 }
 
 func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPolicyTestSetup, logger *log.Logger) {
+	// No test should take longer than 30 min
+	ctx, cncl := context.WithTimeout(ctx, 30*time.Minute)
+	defer cncl()
 	computeClient, err := gcpclients.GetComputeClient()
 	if err != nil {
 		testCase.WriteFailure("Error getting compute client: %v", err)
@@ -289,5 +295,7 @@ func cleanupOSPolicyAssignment(ctx context.Context, testCase *junitxml.TestCase,
 	if err != nil {
 		testCase.WriteFailure(fmt.Sprintf("Error calling DeleteOSPolicyAssignment: %s", utils.GetStatusFromError(err)))
 	}
+	ctx, cncl := context.WithTimeout(ctx, 5*time.Minute)
+	defer cncl()
 	op.Wait(ctx)
 }
