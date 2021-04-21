@@ -139,7 +139,7 @@ func createOSPolicyAssignment(ctx context.Context, client *osconfigZonalV1alpha.
 	defer cncl()
 	ospa, err := op.Wait(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("error waiting for operation to complete: %s", utils.GetStatusFromError(err))
+		return nil, fmt.Errorf("error waiting for create operation to complete for %q: %s", ospa.GetName(), utils.GetStatusFromError(err))
 	}
 	return ospa, nil
 }
@@ -195,7 +195,7 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPoli
 		testCase.WriteFailure("Error running createOSPolicyAssignment: %s", err)
 		return
 	}
-	defer cleanupOSPolicyAssignment(ctx, testCase, ospa.GetName())
+	defer cleanupOSPolicyAssignment(ctx, client, testCase, ospa.GetName())
 
 	// Check that the compliance output meets expectations.
 	compReq := &osconfigpb.GetInstanceOSPoliciesComplianceRequest{Name: fmt.Sprintf("projects/%s/locations/%s/instanceOSPoliciesCompliances/%d", testProjectConfig.TestProjectID, zone, inst.Id)}
@@ -285,15 +285,11 @@ func getTestCaseFromTestSetUp(testSetup *osPolicyTestSetup) (*junitxml.TestCase,
 	return tc, nil
 }
 
-func cleanupOSPolicyAssignment(ctx context.Context, testCase *junitxml.TestCase, name string) {
-	client, err := gcpclients.GetOsConfigClientV1Alpha()
-	if err != nil {
-		testCase.WriteFailure(fmt.Sprintf("Error while deleting guest policy: %s", utils.GetStatusFromError(err)))
-	}
-
+func cleanupOSPolicyAssignment(ctx context.Context, client *osconfigZonalV1alpha.OsConfigZonalClient, testCase *junitxml.TestCase, name string) {
 	op, err := client.DeleteOSPolicyAssignment(ctx, &osconfigpb.DeleteOSPolicyAssignmentRequest{Name: name})
 	if err != nil {
 		testCase.WriteFailure(fmt.Sprintf("Error calling DeleteOSPolicyAssignment: %s", utils.GetStatusFromError(err)))
+		return
 	}
 	ctx, cncl := context.WithTimeout(ctx, 5*time.Minute)
 	defer cncl()
