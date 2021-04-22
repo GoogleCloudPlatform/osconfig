@@ -127,19 +127,20 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 // We only want to create one GuestPolicy at a time to limit QPS.
 var gpMx sync.Mutex
 
-func createOSPolicyAssignment(ctx context.Context, client *osconfigZonalV1alpha.OsConfigZonalClient, req *osconfigpb.CreateOSPolicyAssignmentRequest) (*osconfigpb.OSPolicyAssignment, error) {
+func createOSPolicyAssignment(ctx context.Context, client *osconfigZonalV1alpha.OsConfigZonalClient, req *osconfigpb.CreateOSPolicyAssignmentRequest, testCase *junitxml.TestCase) (*osconfigpb.OSPolicyAssignment, error) {
 	gpMx.Lock()
 	defer gpMx.Unlock()
 	op, err := client.CreateOSPolicyAssignment(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("error running CreateOSPolicyAssignment: %s", utils.GetStatusFromError(err))
 	}
+	testCase.Logf("OSPolicyAssignment created, waiting for operation %q", op.Name()
 	// Wait up to 5 min for this to complete.
 	ctx, cncl := context.WithTimeout(ctx, 5*time.Minute)
 	defer cncl()
 	ospa, err := op.Wait(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("error waiting for create operation to complete for %q: %s", ospa.GetName(), utils.GetStatusFromError(err))
+		return nil, fmt.Errorf("error waiting for create operation %q, to complete: %s", op.Name(), utils.GetStatusFromError(err))
 	}
 	return ospa, nil
 }
@@ -189,8 +190,8 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPoli
 		OsPolicyAssignment:   testSetup.osPolicyAssignment,
 	}
 
-	testCase.Logf("Creating OSPolicyAssignment")
-	ospa, err := createOSPolicyAssignment(ctx, client, req)
+	testCase.Logf("Creating OSPolicyAssignment: %q", fmt.Sprintf("%s/%s", req.GetParent(),  req.GetOsPolicyAssignmentId())
+	ospa, err := createOSPolicyAssignment(ctx, client, req, testCase)
 	if err != nil {
 		testCase.WriteFailure("Error running createOSPolicyAssignment: %s", err)
 		return
