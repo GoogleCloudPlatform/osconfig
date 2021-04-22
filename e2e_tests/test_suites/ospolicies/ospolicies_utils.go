@@ -70,6 +70,30 @@ done`
 		ss = fmt.Sprintf(ss, utils.InstallOSConfigDeb(), wantRemove, wantInstall, packageInstalled, packageNotInstalled)
 		key = "startup-script"
 
+	case "deb":
+		wantInstall := []string{"google-chrome-stable", "osconfig-agent-test"}
+		ss = `set -x
+# install agent
+%[1]s
+while true; do
+  isinstalled=$(/usr/bin/dpkg-query -s %[2]s)
+  if [[ $isinstalled =~ "Status: install ok installed" ]]; then
+    break
+  fi
+  sleep 10
+done
+while true; do
+  isinstalled=$(/usr/bin/dpkg-query -s %[3]s)
+  if [[ $isinstalled =~ "Status: install ok installed" ]]; then
+    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[4]s
+    curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
+    break
+  fi
+  sleep 10
+done`
+		ss = fmt.Sprintf(ss, utils.InstallOSConfigDeb(), wantInstall[0], wantInstall[1], packageInstalled)
+		key = "startup-script"
+
 	case "yum":
 		wantInstall := "ed"
 		wantRemove := "nano"
@@ -100,6 +124,28 @@ done`
 		ss = fmt.Sprintf(ss, yumStartupScripts[path.Base(image)], wantRemove, wantInstall, packageInstalled, packageNotInstalled)
 		key = "startup-script"
 
+	case "rpm":
+		wantInstall := []string{"google-chrome-stable", "osconfig-agent-test"}
+		ss = `set -x
+# install agent
+%[1]s
+while true; do
+  if [[ -n $(/usr/bin/rpmquery -a %[2]s) ]]; then
+    break
+  fi
+  sleep 10
+done
+while true; do
+  if [[ -n $(/usr/bin/rpmquery -a %[3]s) ]]; then
+    uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[4]s
+    curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
+    break
+  fi
+  sleep 10
+done`
+		ss = fmt.Sprintf(ss, yumStartupScripts[path.Base(image)], wantInstall[0], wantInstall[1], packageInstalled)
+		key = "startup-script"
+
 	case "googet":
 		wantInstall := "cowsay"
 		wantRemove := "certgen"
@@ -127,6 +173,20 @@ while(1) {
   sleep 10
 }`
 		ss = fmt.Sprintf(ss, utils.InstallOSConfigGooGet(), wantRemove, wantInstall, packageInstalled, packageNotInstalled)
+		key = "windows-startup-script-ps1"
+
+	case "msi":
+		ss = `
+%s
+while(1) {
+  if (Get-WmiObject -Class Win32_Product | Where-Object {$_.Name -like "*Chrome*"}) {
+    $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s'
+    Invoke-RestMethod -Method PUT -Uri $uri -Headers @{"Metadata-Flavor" = "Google"} -Body 1
+	break
+  }
+  sleep 10
+}`
+		ss = fmt.Sprintf(ss, utils.InstallOSConfigGooGet(), packageInstalled)
 		key = "windows-startup-script-ps1"
 
 	case "zypper":
