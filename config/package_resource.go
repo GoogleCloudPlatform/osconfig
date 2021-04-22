@@ -410,6 +410,7 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 		enforcePackage.name = p.managedPackage.MSI.productName
 		enforcePackage.packageType = "msi"
 		enforcePackage.action = installing
+		enforcePackage.installedCache = &packageCache{} // No package cache for msi.
 		enforcePackage.actionFunc = func() error {
 			return packages.InstallMSIPackage(ctx, p.managedPackage.MSI.localPath, p.managedPackage.MSI.PackageResource.GetProperties())
 		}
