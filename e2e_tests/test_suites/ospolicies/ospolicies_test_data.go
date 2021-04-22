@@ -44,7 +44,7 @@ var (
 	yumRaptureGpgKeys = []string{"https://packages.cloud.google.com/yum/doc/yum-key.gpg", "https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg"}
 )
 
-var wantPackageCompliances = []*osconfigpb.OSPolicyResourceCompliance{
+var wantRemotePackageCompliances = []*osconfigpb.OSPolicyResourceCompliance{
 	{
 		OsPolicyResourceId: "install-package",
 		ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
@@ -69,6 +69,53 @@ var wantPackageCompliances = []*osconfigpb.OSPolicyResourceCompliance{
 	},
 	{
 		OsPolicyResourceId: "remove-package",
+		ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+		},
+		State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+	},
+}
+
+var wantLocalPackageCompliances = []*osconfigpb.OSPolicyResourceCompliance{
+	{
+		OsPolicyResourceId: "install-package",
+		ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+			{
+				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			},
+		},
+		State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+	},
+	{
+		OsPolicyResourceId: "install-package-pull-deps",
 		ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
 			{
 				Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
@@ -193,11 +240,94 @@ func buildAptTestSetup(name, image, key string) *osPolicyTestSetup {
 		{
 			OsPolicyId:                  testName,
 			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
-			OsPolicyResourceCompliances: wantPackageCompliances,
+			OsPolicyResourceCompliances: wantRemotePackageCompliances,
 		},
 	}
 	ss := getStartupScriptPackage(name, "apt")
 	return newOsPolicyTestSetup(image, name, instanceName, testName, []string{packageInstalled, packageNotInstalled}, machineType, ospa, ss, assertTimeout, wantCompliances)
+}
+
+func buildDebTestSetup(name, image, key string) *osPolicyTestSetup {
+	assertTimeout := 120 * time.Second
+	testName := packageResourceDeb
+	machineType := "e2-medium"
+
+	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
+	ospa := &osconfigpb.OSPolicyAssignment{
+		InstanceFilter: &osconfigpb.OSPolicyAssignment_InstanceFilter{
+			InclusionLabels: []*osconfigpb.OSPolicyAssignment_LabelSet{{
+				Labels: map[string]string{"name": instanceName}},
+			},
+		},
+		Rollout: &osconfigpb.OSPolicyAssignment_Rollout{
+			DisruptionBudget: &osconfigpb.FixedOrPercent{Mode: &osconfigpb.FixedOrPercent_Percent{Percent: 100}},
+			MinWaitDuration:  &durationpb.Duration{Seconds: 0},
+		},
+		OsPolicies: []*osconfigpb.OSPolicy{
+			{
+				Id:   testName,
+				Mode: osconfigpb.OSPolicy_ENFORCEMENT,
+				ResourceGroups: []*osconfigpb.OSPolicy_ResourceGroup{
+					{
+						Resources: []*osconfigpb.OSPolicy_Resource{
+							{
+								Id: "install-package",
+								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
+									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
+										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
+										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Deb_{
+											Deb: &osconfigpb.OSPolicy_Resource_PackageResource_Deb{
+												PullDeps: false,
+												Source: &osconfigpb.OSPolicy_Resource_File{
+													Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
+														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
+															Bucket:     testResourceBucket,
+															Object:     "OSPolicies/osconfig-agent-test_7.0_all_f88296edfb1ebcce2e99fb9381c456138c5db86552df6530d022841bf9ac30bf.deb",
+															Generation: 1619046473027315,
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+							{
+								Id: "install-package-pull-deps",
+								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
+									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
+										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
+										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Deb_{
+											Deb: &osconfigpb.OSPolicy_Resource_PackageResource_Deb{
+												PullDeps: true,
+												Source: &osconfigpb.OSPolicy_Resource_File{
+													Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
+														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
+															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/google-chrome-stable_current_amd64.deb",
+															Sha256Checksum: "43f141970ab61d9c5a993dcf094625d9a7a1d24212a3c2443e7092b40c3a354c",
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+		{
+			OsPolicyId:                  testName,
+			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			OsPolicyResourceCompliances: wantLocalPackageCompliances,
+		},
+	}
+	ss := getStartupScriptPackage(name, "deb")
+	return newOsPolicyTestSetup(image, name, instanceName, testName, []string{packageInstalled}, machineType, ospa, ss, assertTimeout, wantCompliances)
 }
 
 func buildYumTestSetup(name, image, key string) *osPolicyTestSetup {
@@ -255,7 +385,7 @@ func buildYumTestSetup(name, image, key string) *osPolicyTestSetup {
 		{
 			OsPolicyId:                  testName,
 			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
-			OsPolicyResourceCompliances: wantPackageCompliances,
+			OsPolicyResourceCompliances: wantRemotePackageCompliances,
 		},
 	}
 	ss := getStartupScriptPackage(name, "yum")
@@ -317,11 +447,94 @@ func buildZypperTestSetup(name, image, key string) *osPolicyTestSetup {
 		{
 			OsPolicyId:                  testName,
 			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
-			OsPolicyResourceCompliances: wantPackageCompliances,
+			OsPolicyResourceCompliances: wantRemotePackageCompliances,
 		},
 	}
 	ss := getStartupScriptPackage(name, "zypper")
 	return newOsPolicyTestSetup(image, name, instanceName, testName, []string{packageInstalled, packageNotInstalled}, machineType, ospa, ss, assertTimeout, wantCompliances)
+}
+
+func buildRpmTestSetup(name, image, key string) *osPolicyTestSetup {
+	assertTimeout := 120 * time.Second
+	testName := packageResourceRpm
+	machineType := "e2-medium"
+
+	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
+	ospa := &osconfigpb.OSPolicyAssignment{
+		InstanceFilter: &osconfigpb.OSPolicyAssignment_InstanceFilter{
+			InclusionLabels: []*osconfigpb.OSPolicyAssignment_LabelSet{{
+				Labels: map[string]string{"name": instanceName}},
+			},
+		},
+		Rollout: &osconfigpb.OSPolicyAssignment_Rollout{
+			DisruptionBudget: &osconfigpb.FixedOrPercent{Mode: &osconfigpb.FixedOrPercent_Percent{Percent: 100}},
+			MinWaitDuration:  &durationpb.Duration{Seconds: 0},
+		},
+		OsPolicies: []*osconfigpb.OSPolicy{
+			{
+				Id:   testName,
+				Mode: osconfigpb.OSPolicy_ENFORCEMENT,
+				ResourceGroups: []*osconfigpb.OSPolicy_ResourceGroup{
+					{
+						Resources: []*osconfigpb.OSPolicy_Resource{
+							{
+								Id: "install-package",
+								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
+									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
+										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
+										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Rpm{
+											Rpm: &osconfigpb.OSPolicy_Resource_PackageResource_RPM{
+												PullDeps: false,
+												Source: &osconfigpb.OSPolicy_Resource_File{
+													Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
+														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
+															Bucket:     testResourceBucket,
+															Object:     "OSPolicies/285280405927e0f9255891926f08a7ff6afe22bfb85a162452000fb9e534585b-osconfig-agent-test-0.1.0-1.el6.x86_64.rpm",
+															Generation: 1619119562326151,
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+							{
+								Id: "install-package-pull-deps",
+								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
+									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
+										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
+										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Rpm{
+											Rpm: &osconfigpb.OSPolicy_Resource_PackageResource_RPM{
+												PullDeps: true,
+												Source: &osconfigpb.OSPolicy_Resource_File{
+													Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
+														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
+															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/google-chrome-stable_current_x86_64.rpm",
+															Sha256Checksum: "8c547dc36bda13740b12e2a74aa8388e459fa53c95190327d16cb849412a0103",
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+		{
+			OsPolicyId:                  testName,
+			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			OsPolicyResourceCompliances: wantLocalPackageCompliances,
+		},
+	}
+	ss := getStartupScriptPackage(name, "rpm")
+	return newOsPolicyTestSetup(image, name, instanceName, testName, []string{packageInstalled}, machineType, ospa, ss, assertTimeout, wantCompliances)
 }
 
 func buildGooGetTestSetup(name, image, key string) *osPolicyTestSetup {
@@ -379,26 +592,91 @@ func buildGooGetTestSetup(name, image, key string) *osPolicyTestSetup {
 		{
 			OsPolicyId:                  testName,
 			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
-			OsPolicyResourceCompliances: wantPackageCompliances,
+			OsPolicyResourceCompliances: wantRemotePackageCompliances,
 		},
 	}
 	ss := getStartupScriptPackage(name, "googet")
 	return newOsPolicyTestSetup(image, name, instanceName, testName, []string{packageInstalled, packageNotInstalled}, machineType, ospa, ss, assertTimeout, wantCompliances)
 }
 
+func buildMsiTestSetup(name, image, key string) *osPolicyTestSetup {
+	assertTimeout := 120 * time.Second
+	testName := packageResourceMsi
+	machineType := "e2-standard-2"
+
+	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
+	ospa := &osconfigpb.OSPolicyAssignment{
+		InstanceFilter: &osconfigpb.OSPolicyAssignment_InstanceFilter{
+			InclusionLabels: []*osconfigpb.OSPolicyAssignment_LabelSet{{
+				Labels: map[string]string{"name": instanceName}},
+			},
+		},
+		Rollout: &osconfigpb.OSPolicyAssignment_Rollout{
+			DisruptionBudget: &osconfigpb.FixedOrPercent{Mode: &osconfigpb.FixedOrPercent_Percent{Percent: 100}},
+			MinWaitDuration:  &durationpb.Duration{Seconds: 0},
+		},
+		OsPolicies: []*osconfigpb.OSPolicy{
+			{
+				Id:   testName,
+				Mode: osconfigpb.OSPolicy_ENFORCEMENT,
+				ResourceGroups: []*osconfigpb.OSPolicy_ResourceGroup{
+					{
+						Resources: []*osconfigpb.OSPolicy_Resource{
+							{
+								Id: "install-package",
+								ResourceType: &osconfigpb.OSPolicy_Resource_Pkg{
+									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
+										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
+										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Msi{
+											Msi: &osconfigpb.OSPolicy_Resource_PackageResource_MSI{
+												Source: &osconfigpb.OSPolicy_Resource_File{
+													Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
+														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
+															Bucket:     testResourceBucket,
+															Object:     "OSPolicies/GoogleChromeStandaloneEnterprise64.msi",
+															Generation: 1618590043841384,
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+		{
+			OsPolicyId:                  testName,
+			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			OsPolicyResourceCompliances: wantLocalPackageCompliances,
+		},
+	}
+	ss := getStartupScriptPackage(name, "msi")
+	return newOsPolicyTestSetup(image, name, instanceName, testName, []string{packageInstalled}, machineType, ospa, ss, assertTimeout, wantCompliances)
+}
+
 func addPackageResourceTests(key string) []*osPolicyTestSetup {
 	var pkgTestSetup []*osPolicyTestSetup
 	for name, image := range utils.HeadAptImages {
 		pkgTestSetup = append(pkgTestSetup, buildAptTestSetup(name, image, key))
+		pkgTestSetup = append(pkgTestSetup, buildDebTestSetup(name, image, key))
 	}
 	for name, image := range utils.HeadELImages {
 		pkgTestSetup = append(pkgTestSetup, buildYumTestSetup(name, image, key))
+		pkgTestSetup = append(pkgTestSetup, buildRpmTestSetup(name, image, key))
 	}
 	for name, image := range utils.HeadSUSEImages {
 		pkgTestSetup = append(pkgTestSetup, buildZypperTestSetup(name, image, key))
+		pkgTestSetup = append(pkgTestSetup, buildRpmTestSetup(name, image, key))
 	}
 	for name, image := range utils.HeadWindowsImages {
 		pkgTestSetup = append(pkgTestSetup, buildGooGetTestSetup(name, image, key))
+		pkgTestSetup = append(pkgTestSetup, buildMsiTestSetup(name, image, key))
 	}
 	return pkgTestSetup
 }
