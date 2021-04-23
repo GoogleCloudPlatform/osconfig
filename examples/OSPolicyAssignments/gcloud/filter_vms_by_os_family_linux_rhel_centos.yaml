@@ -1,0 +1,19 @@
+osPolicies:
+  - id: remove-pkg-policy
+    mode: ENFORCEMENT
+    resourceGroups:
+      - resources:
+          - id: remove-pkg
+            pkg:
+              desiredState: REMOVED
+              yum:
+                name: bad-package
+instanceFilter:
+  osShortNames:
+  - rhel
+  - centos
+rollout:
+  disruptionBudget:
+    fixed: 10
+  minWaitDuration:
+    seconds: 300

@@ -1,0 +1,28 @@
+osPolicies:
+  - id: setup-repo-and-install-package-policy
+    mode: ENFORCEMENT
+    resourceGroups:
+      - resources:
+          - id: setup-repo
+            repository:
+              yum:
+                id: google-cloud-monitoring
+                displayName: Google Cloud Monitoring Agent Repository
+                baseUrl: https://packages.cloud.google.com/yum/repos/google-cloud-monitoring-el8-x86_64-all
+                gpgKeys:
+                  - https://packages.cloud.google.com/yum/doc/yum-key.gpg
+                  - https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+          - id: install-pkg
+            pkg:
+              desiredState: INSTALLED
+              yum:
+                name: stackdriver-agent
+instanceFilter:
+  inclusionLabels:
+    - labels:
+        used_for: testing
+rollout:
+  disruptionBudget:
+    fixed: 10
+  minWaitDuration:
+    seconds: 300
