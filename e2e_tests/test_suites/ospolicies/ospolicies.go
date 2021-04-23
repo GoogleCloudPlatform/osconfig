@@ -163,7 +163,8 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPoli
 	testProjectConfig := testconfig.GetProject()
 	zone := testProjectConfig.AcquireZone()
 	defer testProjectConfig.ReleaseZone(zone)
-	// No test should take longer than 60 min
+	// No test should take longer than 60 min, start the timer
+	// after AcquireZone as that can take some time.
 	ctx, cncl := context.WithTimeout(ctx, 60*time.Minute)
 	defer cncl()
 	testCase.Logf("Creating instance %q with image %q", testSetup.instanceName, testSetup.image)
