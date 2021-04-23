@@ -651,9 +651,32 @@ func buildMsiTestSetup(name, image, key string) *osPolicyTestSetup {
 	}
 	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
 		{
-			OsPolicyId:                  testName,
-			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
-			OsPolicyResourceCompliances: wantLocalPackageCompliances,
+			OsPolicyId: testName,
+			State:      osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyResourceCompliance{
+				{
+					OsPolicyResourceId: "install-package",
+					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+					},
+					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+			},
 		},
 	}
 	ss := getStartupScriptPackage(name, "msi")
