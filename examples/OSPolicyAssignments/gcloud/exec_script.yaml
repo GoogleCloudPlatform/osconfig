@@ -1,0 +1,22 @@
+osPolicies:
+  - id: policy-to-exec-script
+    mode: ENFORCEMENT
+    resourceGroups:
+      - resources:
+          id: touch-file
+          exec:
+            validate:
+              interpreter: SHELL
+              script: if ls /tmp/test_file >/dev/null; then exit 100; else exit 101; fi
+            enforce:
+              interpreter: SHELL
+              script: touch /tmp/test_file; exit 100
+instanceFilter:
+  inclusionLabels:
+    - labels:
+        used_for: testing
+rollout:
+  disruptionBudget:
+    fixed: 10
+  minWaitDuration:
+    seconds: 300

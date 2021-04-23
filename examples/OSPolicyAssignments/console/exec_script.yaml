@@ -1,0 +1,17 @@
+# This policy uses an `exec` resource to conditionally create a file.
+# When the policy is applied to a target vm, the `validate` step first runs.
+# If the target file already exists, the `validate` step returns exit code `100` to indicate that the resource is already in the desired state. In this case, the `enforce` step will not be run.
+# If the target file does not exist, the `validate` step returns exit code `101` to indicate that the resource is not in the desired state. In this case, the `enforce` step will be run.
+# The `enforce` step brings the resource to its desired state by creating the file and returns exit code `100` to indicate that the enforcement was successful.
+id: policy-to-exec-script
+mode: ENFORCEMENT
+resourceGroups:
+  - resources:
+      id: touch-file
+      exec:
+        validate:
+          interpreter: SHELL
+          script: if ls /tmp/test_file >/dev/null; then exit 100; else exit 101; fi
+        enforce:
+          interpreter: SHELL
+          script: touch /tmp/test_file; exit 100
