@@ -149,9 +149,6 @@ func createOSPolicyAssignment(ctx context.Context, client *osconfigZonalV1alpha.
 }
 
 func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPolicyTestSetup, logger *log.Logger) {
-	// No test should take longer than 30 min
-	ctx, cncl := context.WithTimeout(ctx, 30*time.Minute)
-	defer cncl()
 	computeClient, err := gcpclients.GetComputeClient()
 	if err != nil {
 		testCase.WriteFailure("Error getting compute client: %v", err)
@@ -166,6 +163,9 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPoli
 	testProjectConfig := testconfig.GetProject()
 	zone := testProjectConfig.AcquireZone()
 	defer testProjectConfig.ReleaseZone(zone)
+	// No test should take longer than 60 min
+	ctx, cncl := context.WithTimeout(ctx, 60*time.Minute)
+	defer cncl()
 	testCase.Logf("Creating instance %q with image %q", testSetup.instanceName, testSetup.image)
 	inst, err := utils.CreateComputeInstance(metadataItems, computeClient, testSetup.machineType, testSetup.image, testSetup.instanceName, testProjectConfig.TestProjectID, zone, testProjectConfig.ServiceAccountEmail, testProjectConfig.ServiceAccountScopes)
 	if err != nil {
