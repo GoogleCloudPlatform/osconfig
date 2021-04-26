@@ -132,8 +132,8 @@ var gpMx sync.Mutex
 
 func createOSPolicyAssignment(ctx context.Context, client *osconfigZonalV1alpha.OsConfigZonalClient, req *osconfigpb.CreateOSPolicyAssignmentRequest, testCase *junitxml.TestCase) (*osconfigpb.OSPolicyAssignment, error) {
 	gpMx.Lock()
-	defer gpMx.Unlock()
 	op, err := client.CreateOSPolicyAssignment(ctx, req)
+	gpMx.Unlock()
 	if err != nil {
 		return nil, fmt.Errorf("error running CreateOSPolicyAssignment: %s", utils.GetStatusFromError(err))
 	}
