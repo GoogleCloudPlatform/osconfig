@@ -17,6 +17,7 @@ package ospolicies
 import (
 	"fmt"
 	"path"
+	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
 	computeApi "google.golang.org/api/compute/v1"
@@ -143,7 +144,11 @@ while true; do
   fi
   sleep 10
 done`
-		ss = fmt.Sprintf(ss, yumStartupScripts[path.Base(image)], wantInstall[0], wantInstall[1], packageInstalled)
+		install := yumStartupScripts[path.Base(image)]
+		if strings.Contains(image, "suse") {
+			install = utils.InstallOSConfigSUSE()
+		}
+		ss = fmt.Sprintf(ss, install, wantInstall[0], wantInstall[1], packageInstalled)
 		key = "startup-script"
 
 	case "googet":
@@ -289,7 +294,7 @@ while true; do
   sleep 10
 done`
 		ss = fmt.Sprintf(ss, utils.InstallOSConfigSUSE(), packageName, packageInstalled)
-		key = "windows-startup-script-ps1"
+		key = "startup-script"
 
 	default:
 		fmt.Printf("Invalid package manager: %s", pkgManager)
@@ -439,7 +444,10 @@ curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"`, fileExists)
 if exist %1 exit 100
 exit 101
 '@ | Out-File -Encoding ASCII /validate.cmd
-'echo "" > %1' | Out-File -Encoding ASCII /enforce.cmd
+@'
+echo "" > %1
+exit 100
+'@ | Out-File -Encoding ASCII /enforce.cmd
 'if (Test-Path $Args[0]) {exit 100}; exit 101' > /validate.ps1
 'New-Item -ItemType File -Path $Args[0]; exit 100' > /enforce.ps1`
 		ss += utils.InstallOSConfigGooGet()
@@ -453,6 +461,9 @@ Write-Host "%[1]s exists"`
 		for _, p := range wantPaths {
 			ss += fmt.Sprintf(check, p)
 		}
+		ss += fmt.Sprintf(`
+$uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s'
+Invoke-RestMethod -Method PUT -Uri $uri -Headers @{"Metadata-Flavor" = "Google"} -Body 1`, fileExists)
 		key = "windows-startup-script-ps1"
 
 	default:
