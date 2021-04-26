@@ -275,9 +275,6 @@ var OldEL8Images = map[string]string{
 // HeadELImages is a map of names to image paths for public EL image families.
 var HeadELImages = func() (newMap map[string]string) {
 	newMap = make(map[string]string)
-	for k, v := range HeadEL6Images {
-		newMap[k] = v
-	}
 	for k, v := range HeadEL7Images {
 		newMap[k] = v
 	}
