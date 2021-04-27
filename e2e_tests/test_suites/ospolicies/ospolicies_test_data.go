@@ -651,9 +651,32 @@ func buildMsiTestSetup(name, image, key string) *osPolicyTestSetup {
 	}
 	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
 		{
-			OsPolicyId:                  testName,
-			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
-			OsPolicyResourceCompliances: wantLocalPackageCompliances,
+			OsPolicyId: testName,
+			State:      osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyResourceCompliance{
+				{
+					OsPolicyResourceId: "install-package",
+					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+					},
+					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+			},
 		},
 	}
 	ss := getStartupScriptPackage(name, "msi")
@@ -879,7 +902,7 @@ func buildZypperRepositoryResourceTest(name, image, key string) *osPolicyTestSet
 			OsPolicyResourceCompliances: wantRepositoryCompliances,
 		},
 	}
-	ss := getStartupScriptRepo(name, "yum", packageName)
+	ss := getStartupScriptRepo(name, "zypper", packageName)
 	return newOsPolicyTestSetup(image, name, instanceName, testName, []string{packageInstalled}, machineType, ospa, ss, assertTimeout, wantCompliances)
 }
 
@@ -1483,7 +1506,7 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
 															Bucket:     "osconfig-agent-end2end-test-resources",
 															Object:     "OSPolicies/enforce.cmd",
-															Generation: 1618340277107450,
+															Generation: 1619475023716779,
 														},
 													},
 												},
@@ -1518,7 +1541,7 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 													Type: &osconfig.OSPolicy_Resource_File_Remote_{
 														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
 															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/enforce.cmd",
-															Sha256Checksum: "d9eef617ac54a8aa46be87b652a5e70b1b32035d1540e8d9bdae5dff406ceca5",
+															Sha256Checksum: "08307e3de5baf1c7051c6901e798aaaf0c5f06350cc4518fbcd431dc6e6af003",
 														},
 													},
 												},
@@ -1566,7 +1589,7 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 									Exec: &osconfigpb.OSPolicy_Resource_ExecResource{
 										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
-												Script: "if exists %1 exit 100\nexit 101",
+												Script: "if exist %1 exit 100\nexit 101",
 											},
 											Args:        []string{checkPaths[3]},
 											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,

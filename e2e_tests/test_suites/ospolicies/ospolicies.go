@@ -21,7 +21,6 @@ import (
 	"log"
 	"path"
 	"regexp"
-	"strings"
 	"sync"
 	"time"
 
@@ -96,7 +95,8 @@ func newOsPolicyTestSetup(image, imageName, instanceName, testName string, query
 func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junitxml.TestSuite, logger *log.Logger, testSuiteRegex, testCaseRegex *regexp.Regexp) {
 	defer tswg.Done()
 
-	if !strings.Contains(config.SvcEndpoint(), "staging") {
+	// Skip for "stable" and "head" tests.
+	if config.AgentRepo() == "stable" || config.AgentRepo() == "" {
 		return
 	}
 	if testSuiteRegex != nil && !testSuiteRegex.MatchString(testSuiteName) {
@@ -132,8 +132,8 @@ var gpMx sync.Mutex
 
 func createOSPolicyAssignment(ctx context.Context, client *osconfigZonalV1alpha.OsConfigZonalClient, req *osconfigpb.CreateOSPolicyAssignmentRequest, testCase *junitxml.TestCase) (*osconfigpb.OSPolicyAssignment, error) {
 	gpMx.Lock()
-	defer gpMx.Unlock()
 	op, err := client.CreateOSPolicyAssignment(ctx, req)
+	gpMx.Unlock()
 	if err != nil {
 		return nil, fmt.Errorf("error running CreateOSPolicyAssignment: %s", utils.GetStatusFromError(err))
 	}
@@ -149,9 +149,6 @@ func createOSPolicyAssignment(ctx context.Context, client *osconfigZonalV1alpha.
 }
 
 func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPolicyTestSetup, logger *log.Logger) {
-	// No test should take longer than 30 min
-	ctx, cncl := context.WithTimeout(ctx, 30*time.Minute)
-	defer cncl()
 	computeClient, err := gcpclients.GetComputeClient()
 	if err != nil {
 		testCase.WriteFailure("Error getting compute client: %v", err)
@@ -162,10 +159,13 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPoli
 	metadataItems = append(metadataItems, testSetup.startup)
 	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("enable-osconfig", "true"))
 	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("osconfig-disabled-features", "guestpolicies,osinventory"))
-	metadataItems = append(metadataItems, compute.BuildInstanceMetadataItem("osconfig-enabled-prerelease-features", "ospolicies"))
 	testProjectConfig := testconfig.GetProject()
 	zone := testProjectConfig.AcquireZone()
 	defer testProjectConfig.ReleaseZone(zone)
+	// No test should take longer than 60 min, start the timer
+	// after AcquireZone as that can take some time.
+	ctx, cncl := context.WithTimeout(ctx, 60*time.Minute)
+	defer cncl()
 	testCase.Logf("Creating instance %q with image %q", testSetup.instanceName, testSetup.image)
 	inst, err := utils.CreateComputeInstance(metadataItems, computeClient, testSetup.machineType, testSetup.image, testSetup.instanceName, testProjectConfig.TestProjectID, zone, testProjectConfig.ServiceAccountEmail, testProjectConfig.ServiceAccountScopes)
 	if err != nil {
@@ -239,17 +239,19 @@ func testCase(ctx context.Context, testSetup *osPolicyTestSetup, tests chan *jun
 	} else {
 		logger.Printf("Running TestCase %q", tc.Name)
 		runTest(ctx, tc, testSetup, logger)
-		if tc.Failure != nil {
-			rerunTC := junitxml.NewTestCase(testSuiteName, strings.TrimPrefix(tc.Name, fmt.Sprintf("[%s] ", testSuiteName)))
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				logger.Printf("Rerunning TestCase %q", rerunTC.Name)
-				runTest(ctx, rerunTC, testSetup, logger)
-				rerunTC.Finish(tests)
-				logger.Printf("TestCase %q finished in %fs", rerunTC.Name, rerunTC.Time)
-			}()
-		}
+		/*
+			if tc.Failure != nil {
+				rerunTC := junitxml.NewTestCase(testSuiteName, strings.TrimPrefix(tc.Name, fmt.Sprintf("[%s] ", testSuiteName)))
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					logger.Printf("Rerunning TestCase %q", rerunTC.Name)
+					runTest(ctx, rerunTC, testSetup, logger)
+					rerunTC.Finish(tests)
+					logger.Printf("TestCase %q finished in %fs", rerunTC.Name, rerunTC.Time)
+				}()
+			}
+		*/
 		tc.Finish(tests)
 		logger.Printf("TestCase %q finished in %fs", tc.Name, tc.Time)
 	}
