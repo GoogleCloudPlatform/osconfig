@@ -154,9 +154,8 @@ func zypperRepoContents(repo *agentendpointpb.OSPolicy_Resource_RepositoryResour
 		name=DisplayName
 		baseurl=https://repo-url
 		enabled=1
-		gpgcheck=1
-		gpgkey=http://repo-url/gpg1
-		       http://repo-url/gpg2
+		gpgkey=https://repo-url/gpg1
+		       https://repo-url/gpg2
 	*/
 	var buf bytes.Buffer
 	buf.WriteString("# Repo file managed by Google OSConfig agent\n")
@@ -167,7 +166,7 @@ func zypperRepoContents(repo *agentendpointpb.OSPolicy_Resource_RepositoryResour
 		buf.WriteString(fmt.Sprintf("name=%s\n", repo.DisplayName))
 	}
 	buf.WriteString(fmt.Sprintf("baseurl=%s\n", repo.BaseUrl))
-	buf.WriteString("enabled=1\ngpgcheck=1\n")
+	buf.WriteString("enabled=1\n")
 	if len(repo.GpgKeys) > 0 {
 		buf.WriteString(fmt.Sprintf("gpgkey=%s\n", repo.GpgKeys[0]))
 		for _, k := range repo.GpgKeys[1:] {
