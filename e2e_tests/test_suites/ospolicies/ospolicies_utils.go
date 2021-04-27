@@ -130,6 +130,7 @@ done`
 		ss = `set -x
 # install agent
 %[1]s
+rpm --import https://dl.google.com/linux/linux_signing_key.pub
 while true; do
   if [[ -n $(/usr/bin/rpmquery -a %[2]s) ]]; then
     break
@@ -284,6 +285,9 @@ while(1) {
 
 	case "zypper":
 		ss = `set -x
+sleep 10
+# Update zypper since there were older versions with bugs.
+zypper -n install zypper
 %s
 while true; do
   if [[ -n $(/usr/bin/rpmquery -a %s) ]]; then
@@ -293,6 +297,10 @@ while true; do
   fi
   sleep 10
 done`
+		// SLES 12 has an old version of Zypper which has bugs in gpg importing logic.
+		if strings.Contains(image, "sles-12") {
+			ss = "rpm --import https://packages.cloud.google.com/yum/doc/yum-key.gpg\n" + ss
+		}
 		ss = fmt.Sprintf(ss, utils.InstallOSConfigSUSE(), packageName, packageInstalled)
 		key = "startup-script"
 
