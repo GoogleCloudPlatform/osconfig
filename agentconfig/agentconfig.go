@@ -64,7 +64,6 @@ const (
 	osInventoryEnabledDefault      = false
 	guestPoliciesEnabledDefault    = false
 	taskNotificationEnabledDefault = false
-	osPoliciesEnabledDefault       = false
 	debugEnabledDefault            = false
 
 	configDirWindows     = `C:\Program Files\Google\OSConfig`
@@ -106,10 +105,10 @@ var (
 )
 
 type config struct {
-	osInventoryEnabled, guestPoliciesEnabled, taskNotificationEnabled, osPolicies, debugEnabled bool
-	svcEndpoint, googetRepoFilePath, zypperRepoFilePath, yumRepoFilePath, aptRepoFilePath       string
-	numericProjectID, osConfigPollInterval                                                      int
-	projectID, instanceZone, instanceName, instanceID                                           string
+	osInventoryEnabled, guestPoliciesEnabled, taskNotificationEnabled, debugEnabled       bool
+	svcEndpoint, googetRepoFilePath, zypperRepoFilePath, yumRepoFilePath, aptRepoFilePath string
+	numericProjectID, osConfigPollInterval                                                int
+	projectID, instanceZone, instanceName, instanceID                                     string
 }
 
 func (c *config) parseFeatures(features string, enabled bool) {
@@ -118,8 +117,6 @@ func (c *config) parseFeatures(features string, enabled bool) {
 		switch f {
 		case "tasks", "ospatch": // ospatch is the legacy flag
 			c.taskNotificationEnabled = enabled
-		case "ospolicies":
-			c.osPolicies = enabled
 		case "guestpolicies", "ospackage": // ospackage is the legacy flag
 			c.guestPoliciesEnabled = enabled
 		case "osinventory":
@@ -206,7 +203,6 @@ func createConfigFromMetadata(md metadataJSON) *config {
 		osInventoryEnabled:      osInventoryEnabledDefault,
 		guestPoliciesEnabled:    guestPoliciesEnabledDefault,
 		taskNotificationEnabled: taskNotificationEnabledDefault,
-		osPolicies:              osPoliciesEnabledDefault,
 		debugEnabled:            debugEnabledDefault,
 		svcEndpoint:             prodEndpoint,
 		osConfigPollInterval:    osConfigPollIntervalDefault,
@@ -552,11 +548,6 @@ func GuestPoliciesEnabled() bool {
 // TaskNotificationEnabled indicates whether TaskNotification should be enabled.
 func TaskNotificationEnabled() bool {
 	return getAgentConfig().taskNotificationEnabled
-}
-
-// OSPoliciesEnabled indicates whether OSPolicies should be enabled.
-func OSPoliciesEnabled() bool {
-	return getAgentConfig().osPolicies
 }
 
 // Instance is the URI of the instance the agent is running on.

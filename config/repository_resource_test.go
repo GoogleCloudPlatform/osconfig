@@ -117,9 +117,9 @@ func TestRepositoryResourceValidate(t *testing.T) {
 				Zypper: &ZypperRepository{
 					RepositoryResource: zypperRepositoryResource,
 				},
-				RepoChecksum:     "c588551e69834e5f2f4d825324b2add5df3064af7d5d68021e83a308c6f62048",
-				RepoFileContents: []byte("# Repo file managed by Google OSConfig agent\n[id]\nname=displayname\nbaseurl=baseurl\nenabled=1\ngpgcheck=1\ngpgkey=key1\n       key2\n"),
-				RepoFilePath:     "/etc/zypp/repos.d/osconfig_managed_c588551e69.repo",
+				RepoChecksum:     "415a52ad70e5118cd797882d5f421b0a8d84bfe1e35cd53e8dcac486bc93186d",
+				RepoFileContents: []byte("# Repo file managed by Google OSConfig agent\n[id]\nname=displayname\nbaseurl=baseurl\nenabled=1\ngpgkey=key1\n       key2\n"),
+				RepoFilePath:     "/etc/zypp/repos.d/osconfig_managed_415a52ad70.repo",
 			},
 		},
 	}
