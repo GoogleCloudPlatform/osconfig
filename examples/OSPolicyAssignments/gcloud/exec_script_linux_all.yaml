@@ -18,5 +18,4 @@ instanceFilter:
 rollout:
   disruptionBudget:
     fixed: 10
-  minWaitDuration:
-    seconds: 300
+  minWaitDuration: 300s
