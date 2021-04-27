@@ -10,10 +10,9 @@ osPolicies:
                 name: bad-package
 instanceFilter:
   osShortNames:
-  - rhel
-  - centos
+    - rhel
+    - centos
 rollout:
   disruptionBudget:
     fixed: 10
-  minWaitDuration:
-    seconds: 300
+  minWaitDuration: 300s

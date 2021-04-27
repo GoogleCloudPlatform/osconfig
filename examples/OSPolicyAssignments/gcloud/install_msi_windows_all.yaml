@@ -15,9 +15,8 @@ osPolicies:
 instanceFilter:
   inclusionLabels:
     - labels:
-        windows-env-target : prod
+        windows-env-target: prod
 rollout:
   disruptionBudget:
     fixed: 10
-  minWaitDuration:
-    seconds: 300
+  minWaitDuration: 300s
