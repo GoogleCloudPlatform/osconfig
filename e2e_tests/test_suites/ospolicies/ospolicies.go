@@ -128,10 +128,11 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 	logger.Printf("Finished TestSuite %q", testSuite.Name)
 }
 
-// We only want to create one GuestPolicy at a time to limit QPS.
+// Use this lock to limit write QPS.
 var gpMx sync.Mutex
 
 func createOSPolicyAssignment(ctx context.Context, client *osconfigZonalV1alpha.OsConfigZonalClient, req *osconfigpb.CreateOSPolicyAssignmentRequest, testCase *junitxml.TestCase) (*osconfigpb.OSPolicyAssignment, error) {
+	// Use the lock to slow down write QPS just a bit.
 	gpMx.Lock()
 	op, err := client.CreateOSPolicyAssignment(ctx, req)
 	gpMx.Unlock()
@@ -300,6 +301,7 @@ func getTestCaseFromTestSetUp(testSetup *osPolicyTestSetup) (*junitxml.TestCase,
 }
 
 func cleanupOSPolicyAssignment(ctx context.Context, client *osconfigZonalV1alpha.OsConfigZonalClient, testCase *junitxml.TestCase, name string) {
+	// Use the lock to slow down write QPS just a bit.
 	gpMx.Lock()
 	op, err := client.DeleteOSPolicyAssignment(ctx, &osconfigpb.DeleteOSPolicyAssignmentRequest{Name: name})
 	gpMx.Unlock()
