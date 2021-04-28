@@ -21,6 +21,7 @@ import (
 	"log"
 	"path"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -162,9 +163,9 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPoli
 	testProjectConfig := testconfig.GetProject()
 	zone := testProjectConfig.AcquireZone()
 	defer testProjectConfig.ReleaseZone(zone)
-	// No test should take longer than 60 min, start the timer
+	// No test should take longer than 20 min, start the timer
 	// after AcquireZone as that can take some time.
-	ctx, cncl := context.WithTimeout(ctx, 60*time.Minute)
+	ctx, cncl := context.WithTimeout(ctx, 20*time.Minute)
 	defer cncl()
 	testCase.Logf("Creating instance %q with image %q", testSetup.instanceName, testSetup.image)
 	inst, err := utils.CreateComputeInstance(metadataItems, computeClient, testSetup.machineType, testSetup.image, testSetup.instanceName, testProjectConfig.TestProjectID, zone, testProjectConfig.ServiceAccountEmail, testProjectConfig.ServiceAccountScopes)
@@ -239,19 +240,17 @@ func testCase(ctx context.Context, testSetup *osPolicyTestSetup, tests chan *jun
 	} else {
 		logger.Printf("Running TestCase %q", tc.Name)
 		runTest(ctx, tc, testSetup, logger)
-		/*
-			if tc.Failure != nil {
-				rerunTC := junitxml.NewTestCase(testSuiteName, strings.TrimPrefix(tc.Name, fmt.Sprintf("[%s] ", testSuiteName)))
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					logger.Printf("Rerunning TestCase %q", rerunTC.Name)
-					runTest(ctx, rerunTC, testSetup, logger)
-					rerunTC.Finish(tests)
-					logger.Printf("TestCase %q finished in %fs", rerunTC.Name, rerunTC.Time)
-				}()
-			}
-		*/
+		if tc.Failure != nil {
+			rerunTC := junitxml.NewTestCase(testSuiteName, strings.TrimPrefix(tc.Name, fmt.Sprintf("[%s] ", testSuiteName)))
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				logger.Printf("Rerunning TestCase %q", rerunTC.Name)
+				runTest(ctx, rerunTC, testSetup, logger)
+				rerunTC.Finish(tests)
+				logger.Printf("TestCase %q finished in %fs", rerunTC.Name, rerunTC.Time)
+			}()
+		}
 		tc.Finish(tests)
 		logger.Printf("TestCase %q finished in %fs", tc.Name, tc.Time)
 	}
@@ -301,7 +300,9 @@ func getTestCaseFromTestSetUp(testSetup *osPolicyTestSetup) (*junitxml.TestCase,
 }
 
 func cleanupOSPolicyAssignment(ctx context.Context, client *osconfigZonalV1alpha.OsConfigZonalClient, testCase *junitxml.TestCase, name string) {
+	gpMx.Lock()
 	op, err := client.DeleteOSPolicyAssignment(ctx, &osconfigpb.DeleteOSPolicyAssignmentRequest{Name: name})
+	gpMx.Unlock()
 	if err != nil {
 		testCase.WriteFailure(fmt.Sprintf("Error calling DeleteOSPolicyAssignment: %s", utils.GetStatusFromError(err)))
 		return
