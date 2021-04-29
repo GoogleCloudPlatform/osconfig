@@ -266,6 +266,7 @@ func (c *configTask) postCheckState(ctx context.Context) {
 			}
 			rCompliance := pResult.GetOsPolicyResourceCompliances()[i]
 			postCheckConfigResourceState(ctx, plcy, rCompliance, configResource)
+			clog.Infof(ctx, "Policy %q resource %q state: %s", osPolicy.GetId(), configResource.GetId(), rCompliance.GetState())
 		}
 	}
 	return
@@ -307,6 +308,7 @@ func (c *configTask) cleanup(ctx context.Context) {
 
 func (c *configTask) run(ctx context.Context) error {
 	clog.Infof(ctx, "Beginning apply config task.")
+	clog.Debugf(ctx, "ApplyConfigTask:\n%s", util.PrettyFmt(c.Task.ApplyConfigTask))
 	c.StartedAt = time.Now()
 
 	rcsErrMsg := "Error reporting continuing state"
@@ -331,7 +333,7 @@ func (c *configTask) run(ctx context.Context) error {
 	c.policies = map[string]*policy{}
 	for i, osPolicy := range c.Task.GetOsPolicies() {
 		ctx = clog.WithLabels(ctx, map[string]string{"os_policy_assignment": osPolicy.GetOsPolicyAssignment(), "os_policy_id": osPolicy.GetId()})
-		clog.Debugf(ctx, "Executing policy:\n%s", util.PrettyFmt(osPolicy))
+		clog.Infof(ctx, "Executing policy %q", osPolicy.GetId())
 
 		pResult := c.results[i]
 		plcy := &policy{resources: map[string]*resource{}}
@@ -374,7 +376,11 @@ func (c *configTask) run(ctx context.Context) error {
 	// Run any post checks that we need to.
 	c.postCheckState(ctx)
 
-	return c.reportCompletedState(ctx, "", agentendpointpb.ApplyConfigTaskOutput_SUCCEEDED)
+	if err := c.reportCompletedState(ctx, "", agentendpointpb.ApplyConfigTaskOutput_SUCCEEDED); err != nil {
+		return err
+	}
+	clog.Infof(ctx, "Completed apply config task")
+	return nil
 }
 
 // Mark all resources that have already completed as "needs post check".

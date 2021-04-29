@@ -93,7 +93,7 @@ func (e *execResource) download(ctx context.Context, execR *agentendpointpb.OSPo
 			return "", err
 		}
 	default:
-		return "", fmt.Errorf("unrecognized Source type for FileResource: %q", execR.GetSource())
+		return "", fmt.Errorf("unrecognized Source type for ExecResource: %q", execR.GetSource())
 	}
 
 	return name, nil
@@ -111,15 +111,22 @@ func (e *execResource) validate(ctx context.Context) (*ManagedResources, error) 
 		return nil, err
 	}
 
-	e.enforcePath, err = e.download(ctx, e.GetEnforce())
-	if err != nil {
-		return nil, err
+	// Assume lack of Enforce means policy is in VALIDATE mode.
+	if e.GetEnforce() != nil {
+		e.enforcePath, err = e.download(ctx, e.GetEnforce())
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return nil, nil
 }
 
 func (e *execResource) run(ctx context.Context, name string, execR *agentendpointpb.OSPolicy_Resource_ExecResource_Exec) ([]byte, []byte, int, error) {
+	if execR == nil {
+		return nil, nil, 0, fmt.Errorf("ExecResource Exec cannot be nil")
+	}
+
 	var cmd string
 	var args []string
 	switch execR.GetInterpreter() {
