@@ -253,6 +253,44 @@ func TestRunApplyConfig(t *testing.T) {
 			5, 5, 5, true,
 		},
 		{
+			"ValidationMode",
+			configOutputGen("", agentendpointpb.ApplyConfigTaskOutput_SUCCEEDED,
+				[]*agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult{
+					{
+						OsPolicyId: "p1",
+						OsPolicyResourceCompliances: []*agentendpointpb.OSPolicyResourceCompliance{
+							{
+								State:              agentendpointpb.OSPolicyComplianceState_NON_COMPLIANT,
+								OsPolicyResourceId: "r1",
+								ConfigSteps: []*agentendpointpb.OSPolicyResourceConfigStep{
+									{
+										Type:    agentendpointpb.OSPolicyResourceConfigStep_VALIDATION,
+										Outcome: agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED,
+									},
+									{
+										Type:    agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+										Outcome: agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED,
+									},
+								},
+							},
+						},
+					},
+				},
+			),
+			&agentendpointpb.ApplyConfigTask{
+				OsPolicies: []*agentendpointpb.ApplyConfigTask_OSPolicy{
+					{
+						Id:   "p1",
+						Mode: agentendpointpb.OSPolicy_VALIDATION,
+						Resources: []*agentendpointpb.OSPolicy_Resource{
+							genTestResource("r1"),
+						},
+					},
+				},
+			},
+			5, 5, 5, false,
+		},
+		{
 			"EnforceDesiredState",
 			configOutputGen("", agentendpointpb.ApplyConfigTaskOutput_SUCCEEDED,
 				[]*agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult{

@@ -338,6 +338,12 @@ func (c *configTask) run(ctx context.Context) error {
 		c.policies[osPolicy.GetId()] = plcy
 		var policyMR *config.ManagedResources
 
+		var validateOnly bool
+		if osPolicy.GetMode() == agentendpointpb.OSPolicy_VALIDATION {
+			clog.Debugf(ctx, "Policy running in VALIDATION mode, not running enforcement action for any resources.")
+			validateOnly = true
+		}
+
 		for i, configResource := range osPolicy.GetResources() {
 			rCompliance := pResult.GetOsPolicyResourceCompliances()[i]
 			plcy.resources[configResource.GetId()] = newResource(configResource)
@@ -349,6 +355,12 @@ func (c *configTask) run(ctx context.Context) error {
 			if plcy.hasError {
 				break
 			}
+
+			// Skip enforcement actions in VALIDATION mode.
+			if validateOnly {
+				continue
+			}
+
 			if enforcementActionTaken := enforceConfigResourceState(ctx, plcy, rCompliance, configResource); enforcementActionTaken {
 				// On any change we trigger post check for all previous resouces.
 				c.markPostCheckRequired()
