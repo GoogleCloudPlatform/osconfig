@@ -307,7 +307,7 @@ func (c *configTask) cleanup(ctx context.Context) {
 }
 
 func (c *configTask) run(ctx context.Context) error {
-	clog.Infof(ctx, "Beginning apply config task.")
+	clog.Infof(ctx, "Beginning ApplyConfigTask.")
 	clog.Debugf(ctx, "ApplyConfigTask:\n%s", util.PrettyFmt(c.Task.ApplyConfigTask))
 	c.StartedAt = time.Now()
 
@@ -379,7 +379,7 @@ func (c *configTask) run(ctx context.Context) error {
 	if err := c.reportCompletedState(ctx, "", agentendpointpb.ApplyConfigTaskOutput_SUCCEEDED); err != nil {
 		return err
 	}
-	clog.Infof(ctx, "Completed apply config task")
+	clog.Infof(ctx, "Successfully completed ApplyConfigTask")
 	return nil
 }
 
@@ -403,7 +403,7 @@ func (c *configTask) markPostCheckRequired() {
 	}
 }
 
-// RunApplyConfig runs an apply config task.
+// RunApplyConfig runs an ApplyConfigTask.
 func (c *Client) RunApplyConfig(ctx context.Context, task *agentendpointpb.Task) error {
 	ctx = clog.WithLabels(ctx, task.GetServiceLabels())
 	e := &configTask{

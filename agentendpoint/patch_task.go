@@ -196,7 +196,7 @@ func (r *patchTask) rebootIfNeeded(ctx context.Context, prePatch bool) error {
 	}
 
 	if r.Task.GetDryRun() {
-		clog.Infof(ctx, "Dry run - not rebooting for patch task")
+		clog.Infof(ctx, "Dry run - not rebooting for ApplyPatchesTask")
 		return nil
 	}
 
@@ -217,7 +217,7 @@ func (r *patchTask) rebootIfNeeded(ctx context.Context, prePatch bool) error {
 
 func (r *patchTask) run(ctx context.Context) (err error) {
 	ctx = clog.WithLabels(ctx, r.state.Labels)
-	clog.Infof(ctx, "Beginning patch task")
+	clog.Infof(ctx, "Beginning ApplyPatchesTask")
 	defer func() {
 		// This should not happen but the WUA libraries are complicated and
 		// recovering with an error is better than crashing.
@@ -279,13 +279,13 @@ func (r *patchTask) run(ctx context.Context) (err error) {
 			}); err != nil {
 				return fmt.Errorf("failed to report state %s: %v", finalState, err)
 			}
-			clog.Infof(ctx, "Successfully completed patch task")
+			clog.Infof(ctx, "Successfully completed ApplyPatchesTask")
 			return nil
 		}
 	}
 }
 
-// RunApplyPatches runs a apply patches task.
+// RunApplyPatches runs an ApplyPatchesTask.
 func (c *Client) RunApplyPatches(ctx context.Context, task *agentendpointpb.Task) error {
 	r := &patchTask{
 		state:  &taskState{Labels: task.GetServiceLabels()},
