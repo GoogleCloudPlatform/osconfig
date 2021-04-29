@@ -206,7 +206,7 @@ func (e *execTask) run(ctx context.Context) error {
 		err = fmt.Errorf("invalid interpreter %q", stepConfig.GetInterpreter())
 	}
 	if err != nil {
-		msg := fmt.Sprintf("Error running ExecStepTask %v", err)
+		msg := fmt.Sprintf("Error running ExecStepTask: %v", err)
 		clog.Errorf(ctx, msg)
 		return e.reportCompletedState(ctx, msg, &agentendpointpb.ReportTaskCompleteRequest_ExecStepTaskOutput{
 			ExecStepTaskOutput: &agentendpointpb.ExecStepTaskOutput{
