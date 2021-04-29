@@ -60,6 +60,7 @@ const (
 	fileResource             = "fileresource"
 	linuxExecResource        = "linuxexecresource"
 	windowsExecResource      = "windowsexecresource"
+	validationMode           = "validationmode"
 )
 
 type osPolicyTestSetup struct {
@@ -293,6 +294,9 @@ func getTestCaseFromTestSetUp(testSetup *osPolicyTestSetup) (*junitxml.TestCase,
 		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Linux ExecResource] [%s]", testSetup.imageName))
 	case windowsExecResource:
 		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Windows ExecResource] [%s]", testSetup.imageName))
+
+	case validationMode:
+		tc = junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[ValidationMode] [%s]", testSetup.imageName))
 	default:
 		return nil, fmt.Errorf("unknown test function name: %s", testSetup.testName)
 	}
