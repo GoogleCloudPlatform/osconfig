@@ -1753,6 +1753,91 @@ func addExecResourceTests(key string) []*osPolicyTestSetup {
 	return pkgTestSetup
 }
 
+func buildValidationModeTests(name, image, pkgManager, key string) *osPolicyTestSetup {
+	assertTimeout := 180 * time.Second
+	testName := validationMode
+	machineType := "e2-medium"
+	if strings.Contains(image, "windows") {
+		machineType = "e2-standard-2"
+	}
+
+	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
+	ospa := &osconfigpb.OSPolicyAssignment{
+		InstanceFilter: &osconfigpb.OSPolicyAssignment_InstanceFilter{
+			InclusionLabels: []*osconfigpb.OSPolicyAssignment_LabelSet{{
+				Labels: map[string]string{"name": instanceName}},
+			},
+		},
+		Rollout: &osconfigpb.OSPolicyAssignment_Rollout{
+			DisruptionBudget: &osconfigpb.FixedOrPercent{Mode: &osconfigpb.FixedOrPercent_Percent{Percent: 100}},
+			MinWaitDuration:  &durationpb.Duration{Seconds: 0},
+		},
+		OsPolicies: []*osconfigpb.OSPolicy{
+			{
+				Id:   "file-present",
+				Mode: osconfigpb.OSPolicy_VALIDATION,
+				ResourceGroups: []*osconfigpb.OSPolicy_ResourceGroup{
+					{
+						Resources: []*osconfigpb.OSPolicy_Resource{
+							{
+								Id: "file-present",
+								ResourceType: &osconfigpb.OSPolicy_Resource_File_{
+									File: &osconfigpb.OSPolicy_Resource_FileResource{
+										State:  osconfigpb.OSPolicy_Resource_FileResource_PRESENT,
+										Path:   "/file-dne",
+										Source: &osconfigpb.OSPolicy_Resource_FileResource_Content{Content: "something"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+		{
+			OsPolicyId: "file-present",
+			State:      osconfigpb.OSPolicyComplianceState_NON_COMPLIANT,
+			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyResourceCompliance{
+				{
+					OsPolicyResourceId: "file-present",
+					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+					},
+					State: osconfigpb.OSPolicyComplianceState_NON_COMPLIANT,
+				},
+			},
+		},
+	}
+	ss := getStartupScriptFile(name, pkgManager, "", nil)
+	return newOsPolicyTestSetup(image, name, instanceName, testName, nil, machineType, ospa, ss, assertTimeout, wantCompliances)
+}
+
+func addValidationModeTests(key string) []*osPolicyTestSetup {
+	var pkgTestSetup []*osPolicyTestSetup
+	for name, image := range utils.HeadAptImages {
+		pkgTestSetup = append(pkgTestSetup, buildValidationModeTests(name, image, "apt", key))
+	}
+	for name, image := range utils.HeadELImages {
+		pkgTestSetup = append(pkgTestSetup, buildValidationModeTests(name, image, "yum", key))
+	}
+	for name, image := range utils.HeadSUSEImages {
+		pkgTestSetup = append(pkgTestSetup, buildValidationModeTests(name, image, "zypper", key))
+	}
+	for name, image := range utils.HeadWindowsImages {
+		pkgTestSetup = append(pkgTestSetup, buildValidationModeTests(name, image, "googet", key))
+	}
+	return pkgTestSetup
+}
+
 func generateAllTestSetup() []*osPolicyTestSetup {
 	key := utils.RandString(3)
 
@@ -1761,5 +1846,6 @@ func generateAllTestSetup() []*osPolicyTestSetup {
 	pkgTestSetup = append(pkgTestSetup, addRepositoryResourceTests(key)...)
 	pkgTestSetup = append(pkgTestSetup, addFileResourceTests(key)...)
 	pkgTestSetup = append(pkgTestSetup, addExecResourceTests(key)...)
+	pkgTestSetup = append(pkgTestSetup, addValidationModeTests(key)...)
 	return pkgTestSetup
 }
