@@ -97,10 +97,6 @@ func newOsPolicyTestSetup(image, imageName, instanceName, testName string, query
 func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junitxml.TestSuite, logger *log.Logger, testSuiteRegex, testCaseRegex *regexp.Regexp) {
 	defer tswg.Done()
 
-	// Skip for "stable" and "head" tests.
-	if config.AgentRepo() == "stable" || config.AgentRepo() == "" {
-		return
-	}
 	if testSuiteRegex != nil && !testSuiteRegex.MatchString(testSuiteName) {
 		return
 	}
