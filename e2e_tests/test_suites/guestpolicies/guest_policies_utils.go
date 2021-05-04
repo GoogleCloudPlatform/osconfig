@@ -127,6 +127,9 @@ while(1) {
 
 	case "zypper":
 		ss = `
+sleep 10
+# Update zypper since there were older versions with bugs.
+zypper -n install zypper
 zypper -n remove %[3]s
 %[1]s
 %[2]s

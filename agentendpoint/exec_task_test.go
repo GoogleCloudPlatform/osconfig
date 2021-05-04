@@ -58,7 +58,7 @@ func (*agentEndpointServiceExecTestServer) ReportInventory(ctx context.Context, 
 
 func outputGen(id string, msg string, st agentendpointpb.ExecStepTaskOutput_State, exitCode int32) *agentendpointpb.ReportTaskCompleteRequest {
 	if msg != "" {
-		msg = "Error running exec task: " + msg
+		msg = "Error running ExecStepTask: " + msg
 	}
 	return &agentendpointpb.ReportTaskCompleteRequest{
 		TaskId:       id,
