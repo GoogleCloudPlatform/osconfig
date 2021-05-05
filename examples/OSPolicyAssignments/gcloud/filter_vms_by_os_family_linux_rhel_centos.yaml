@@ -1,4 +1,4 @@
-# An OS policy assignment to remove a bad package from Red Hat Enterprise Linux and CentOS OSes.
+# An OS policy assignment to remove an unwanted package from Red Hat Enterprise Linux and CentOS OSes.
 osPolicies:
   - id: remove-pkg-policy
     mode: ENFORCEMENT
@@ -8,7 +8,7 @@ osPolicies:
             pkg:
               desiredState: REMOVED
               yum:
-                name: bad-package
+                name: unwanted-package
 instanceFilter:
   osShortNames:
     - rhel

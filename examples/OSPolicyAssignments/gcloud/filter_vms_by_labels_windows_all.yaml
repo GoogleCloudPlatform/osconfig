@@ -1,7 +1,9 @@
 # An OS policy assignment to install a Windows MSI downloaded from a Google Cloud Storage bucket.
-# The assignment is applied only to those VMs that have the label `windows-env-target:prod` assigned to them.
+# The assignment is applied only to those VMs that have the label `windows-env-target:prod`
+# assigned to them.
 # Any VMs with the label `windows-env-target:test` will be excluded from the assignment.
-# Note that a VM that has both labels `windows-env-target:prod` and `windows-env-target:test` will be excluded because the exclusion criteria has higher priority than inclusion criteria.
+# Note that a VM that has both labels `windows-env-target:prod` and `windows-env-target:test`
+# will be excluded because the exclusion criteria has higher priority than inclusion criteria.
 osPolicies:
   - id: install-msi-policy
     mode: ENFORCEMENT
