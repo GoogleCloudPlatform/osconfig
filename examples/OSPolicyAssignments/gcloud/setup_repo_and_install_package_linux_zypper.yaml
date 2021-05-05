@@ -1,5 +1,5 @@
 # An OS policy assignment to set up the Google Cloud Monitoring repository and
-# install the Stackdriver agent for VMs running either Red Hat Enterprise Linux and CentOS OSes.
+# install the Stackdriver agent for VMs running SUSE Linux Enterprise System OS.
 osPolicies:
   - id: setup-repo-and-install-package-policy
     mode: ENFORCEMENT
@@ -7,22 +7,21 @@ osPolicies:
       - resources:
           - id: setup-repo
             repository:
-              yum:
+              zypper:
                 id: google-cloud-monitoring
                 displayName: Google Cloud Monitoring Agent Repository
-                baseUrl: https://packages.cloud.google.com/yum/repos/google-cloud-monitoring-el8-x86_64-all
+                baseUrl: https://packages.cloud.google.com/yum/repos/google-cloud-monitoring-sles15-x86_64-all
                 gpgKeys:
                   - https://packages.cloud.google.com/yum/doc/yum-key.gpg
                   - https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
           - id: install-pkg
             pkg:
               desiredState: INSTALLED
-              yum:
+              zypper:
                 name: stackdriver-agent
 instanceFilter:
   osShortNames:
-    - rhel
-    - centos
+    - sles
 rollout:
   disruptionBudget:
     fixed: 10

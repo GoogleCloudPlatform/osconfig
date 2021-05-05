@@ -1,0 +1,48 @@
+# An OS policy assignment to set up the Google Cloud Monitoring repository and
+# install the Stackdriver agent for VMs running Debian OS.
+osPolicies:
+  - id: setup-repo-and-install-package-policy
+    mode: ENFORCEMENT
+    resourceGroups:
+      - osFilter:
+          osShortName: debian
+        resources:
+          - id: setup-repo
+            repository:
+              apt:
+                archiveType: DEB
+                uri: https://packages.cloud.google.com/apt
+                distribution: google-cloud-monitoring-buster-all
+                components:
+                  - main
+                gpgKey: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+          - id: install-pkg
+            pkg:
+              desiredState: INSTALLED
+              apt:
+                name: stackdriver-agent
+      - osFilter:
+          osShortName: ubuntu
+        resources:
+          - id: setup-repo
+            repository:
+              apt:
+                archiveType: DEB
+                uri: https://packages.cloud.google.com/apt
+                distribution: google-cloud-monitoring-groovy
+                components:
+                  - main
+                gpgKey: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+          - id: install-pkg
+            pkg:
+              desiredState: INSTALLED
+              apt:
+                name: stackdriver-agent
+instanceFilter:
+  osShortNames:
+    - debian
+    - ubuntu
+rollout:
+  disruptionBudget:
+    fixed: 10
+  minWaitDuration: 300s
