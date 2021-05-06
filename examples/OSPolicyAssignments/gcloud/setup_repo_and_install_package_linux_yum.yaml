@@ -1,3 +1,5 @@
+# An OS policy assignment to set up the Google Cloud Monitoring repository and
+# install the Stackdriver agent for VMs running either Red Hat Enterprise Linux and CentOS OSes.
 osPolicies:
   - id: setup-repo-and-install-package-policy
     mode: ENFORCEMENT
@@ -18,9 +20,9 @@ osPolicies:
               yum:
                 name: stackdriver-agent
 instanceFilter:
-  inclusionLabels:
-    - labels:
-        used_for: testing
+  osShortNames:
+    - rhel
+    - centos
 rollout:
   disruptionBudget:
     fixed: 10

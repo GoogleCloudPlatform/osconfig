@@ -1,4 +1,4 @@
-# This policy uses the `package` resource to install a Windows MSI file stored in Google Cloud Storage.
+# An OS policy to install a Windows MSI downloaded from a Google Cloud Storage bucket.
 id: install-msi-policy
 mode: ENFORCEMENT
 resourceGroups:

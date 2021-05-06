@@ -1,6 +1,5 @@
-# This policy uses 2 resources. The resources are always executed in the order specified.
-# 1. The `repository` resource is used to configure the Google Cloud Monitoring Yum repository.
-# 2. The `package` resource is used to install the Stackdriver agent from the repo configured above.
+# An OS policy to set up the Google Cloud Monitoring repository and
+# install the Stackdriver agent for VMs running either Red Hat Enterprise Linux and CentOS OSes.
 id: setup-repo-and-install-package-policy
 mode: ENFORCEMENT
 resourceGroups:
