@@ -32,8 +32,6 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 )
 
 // Logger holds log functions.
@@ -43,12 +41,6 @@ type Logger struct {
 	Warningf func(string, ...interface{})
 	Errorf   func(string, ...interface{})
 	Fatalf   func(string, ...interface{})
-}
-
-// PrettyFmt uses jsonpb to marshal a proto for pretty printing.
-func PrettyFmt(pb proto.Message) string {
-	m := &protojson.MarshalOptions{Indent: "  ", AllowPartial: true, UseProtoNames: true, EmitUnpopulated: true, UseEnumNumbers: false}
-	return m.Format(pb)
 }
 
 // NormPath transforms a windows path into an extended-length path as described in
