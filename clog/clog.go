@@ -46,6 +46,8 @@ func (l *log) logStructured(structuredPayload interface{}, msg string, sev logge
 	logger.Log(logger.LogEntry{Message: msg, StructuredPayload: structuredPayload, Severity: sev, CallDepth: 3, Labels: l.labels})
 }
 
+// DebugStructured is like Debugf but sends structuredPayload instead of the text message
+// to Cloud Logging.
 func DebugStructured(ctx context.Context, structuredPayload interface{}, format string, args ...interface{}) {
 	fromContext(ctx).logStructured(structuredPayload, fmt.Sprintf(format, args...), logger.Debug)
 }
