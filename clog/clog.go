@@ -40,6 +40,16 @@ func (l *log) log(msg string, sev logger.Severity) {
 	logger.Log(logger.LogEntry{Message: msg, Severity: sev, CallDepth: 3, Labels: l.labels})
 }
 
+func (l *log) logStructured(structuredPayload interface{}, msg string, sev logger.Severity) {
+	// Set CallDepth 3, one for logger.Log, one for this function, and one for
+	// the calling clog function.
+	logger.Log(logger.LogEntry{Message: msg, StructuredPayload: structuredPayload, Severity: sev, CallDepth: 3, Labels: l.labels})
+}
+
+func DebugStructured(ctx context.Context, structuredPayload interface{}, format string, args ...interface{}) {
+	fromContext(ctx).logStructured(structuredPayload, fmt.Sprintf(format, args...), logger.Debug)
+}
+
 // Debugf simulates logger.Debugf and adds context labels.
 func Debugf(ctx context.Context, format string, args ...interface{}) {
 	fromContext(ctx).log(fmt.Sprintf(format, args...), logger.Debug)

@@ -104,7 +104,7 @@ func (c *Client) RegisterAgent(ctx context.Context) error {
 	}
 
 	req := &agentendpointpb.RegisterAgentRequest{AgentVersion: agentconfig.Version(), SupportedCapabilities: agentconfig.Capabilities()}
-	clog.Debugf(ctx, "Calling RegisterAgent with request:\n%s", util.PrettyFmt(req))
+	clog.DebugStructured(ctx, req, "Calling RegisterAgent with request:\n%s", util.PrettyFmt(req))
 	req.InstanceIdToken = token
 
 	_, err = c.raw.RegisterAgent(ctx, req)
@@ -293,7 +293,7 @@ func (c *Client) receiveTaskNotification(ctx context.Context) (agentendpointpb.A
 		return nil, fmt.Errorf("error fetching Instance IDToken: %w", err)
 	}
 
-	clog.Debugf(ctx, "Calling ReceiveTaskNotification with request:\n%s", util.PrettyFmt(req))
+	clog.DebugStructured(ctx, req, "Calling ReceiveTaskNotification with request:\n%s", util.PrettyFmt(req))
 	req.InstanceIdToken = token
 
 	return c.raw.ReceiveTaskNotification(ctx, req)
