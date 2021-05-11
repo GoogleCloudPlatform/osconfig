@@ -11,6 +11,7 @@ func init() {
 	marshalOptions = protojson.MarshalOptions{Indent: "  ", AllowPartial: true, UseProtoNames: true, EmitUnpopulated: true, UseEnumNumbers: false}
 }
 
+// MarshalOptions returns protojson options used in Format.
 func MarshalOptions() protojson.MarshalOptions {
 	return marshalOptions
 }
