@@ -104,11 +104,14 @@ func (c *Client) RegisterAgent(ctx context.Context) error {
 	}
 
 	req := &agentendpointpb.RegisterAgentRequest{AgentVersion: agentconfig.Version(), SupportedCapabilities: agentconfig.Capabilities()}
-
 	req.InstanceIdToken = token
 
 	resp, err := c.raw.RegisterAgent(ctx, req)
-	clog.DebugRPC(ctx, "RegisterAgent", req, resp)
+
+	redacted := proto.Clone(req).(*agentendpointpb.RegisterAgentRequest)
+	redacted.InstanceIdToken = "<redacted>"
+	clog.DebugRPC(ctx, "RegisterAgent", redacted, resp)
+
 	return err
 }
 

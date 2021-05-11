@@ -23,7 +23,6 @@ import (
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/pretty"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -50,7 +49,7 @@ func (l *log) log(structuredPayload interface{}, msg string, sev logger.Severity
 // Conversion errors are encoded in the JSON object rather than returned,
 // because callers of logging functions should not be forced to handle errors.
 func protoToJSON(p proto.Message) interface{} {
-	bytes, err := protojson.Marshal(p)
+	bytes, err := pretty.MarshalOptions().Marshal(p)
 	if err != nil {
 		return fmt.Sprintf("Error converting proto: %s", err)
 	}

@@ -5,8 +5,17 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+var marshalOptions protojson.MarshalOptions
+
+func init() {
+	marshalOptions = protojson.MarshalOptions{Indent: "  ", AllowPartial: true, UseProtoNames: true, EmitUnpopulated: true, UseEnumNumbers: false}
+}
+
+func MarshalOptions() protojson.MarshalOptions {
+	return marshalOptions
+}
+
 // Format uses jsonpb to marshal a proto for pretty printing.
 func Format(pb proto.Message) string {
-	m := &protojson.MarshalOptions{Indent: "  ", AllowPartial: true, UseProtoNames: true, EmitUnpopulated: true, UseEnumNumbers: false}
-	return m.Format(pb)
+	return marshalOptions.Format(pb)
 }
