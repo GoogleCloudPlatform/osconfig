@@ -108,9 +108,8 @@ func (c *Client) RegisterAgent(ctx context.Context) error {
 
 	resp, err := c.raw.RegisterAgent(ctx, req)
 
-	redacted := proto.Clone(req).(*agentendpointpb.RegisterAgentRequest)
-	redacted.InstanceIdToken = "<redacted>"
-	clog.DebugRPC(ctx, "RegisterAgent", redacted, resp)
+	req.InstanceIdToken = "<redacted>"
+	clog.DebugRPC(ctx, "RegisterAgent", req, resp)
 
 	return err
 }
@@ -299,10 +298,9 @@ func (c *Client) receiveTaskNotification(ctx context.Context) (agentendpointpb.A
 
 	req.InstanceIdToken = token
 
-	redacted := proto.Clone(req).(*agentendpointpb.ReceiveTaskNotificationRequest)
-	redacted.InstanceIdToken = "<redacted>"
-	clog.DebugRPC(ctx, "ReceiveTaskNotification", redacted, nil)
 	resp, err := c.raw.ReceiveTaskNotification(ctx, req)
+	req.InstanceIdToken = "<redacted>"
+	clog.DebugRPC(ctx, "ReceiveTaskNotification", req, nil)
 	return resp, err
 }
 
