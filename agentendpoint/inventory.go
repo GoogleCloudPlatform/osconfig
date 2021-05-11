@@ -12,8 +12,8 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
+	"github.com/GoogleCloudPlatform/osconfig/pretty"
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
-	"github.com/GoogleCloudPlatform/osconfig/util"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
@@ -68,7 +68,7 @@ func (c *Client) report(ctx context.Context, state *inventory.InstanceInventory)
 		if err != nil {
 			return err
 		}
-		clog.Debugf(ctx, "ReportInventory response:\n%s", util.PrettyFmt(res))
+		clog.Debugf(ctx, "ReportInventory response:\n%s", pretty.Format(res))
 		return nil
 	}
 

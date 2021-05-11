@@ -30,9 +30,9 @@ import (
 	agentendpoint "cloud.google.com/go/osconfig/agentendpoint/apiv1"
 	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
+	"github.com/GoogleCloudPlatform/osconfig/pretty"
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
-	"github.com/GoogleCloudPlatform/osconfig/util"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -104,10 +104,13 @@ func (c *Client) RegisterAgent(ctx context.Context) error {
 	}
 
 	req := &agentendpointpb.RegisterAgentRequest{AgentVersion: agentconfig.Version(), SupportedCapabilities: agentconfig.Capabilities()}
-	clog.Debugf(ctx, "Calling RegisterAgent with request:\n%s", util.PrettyFmt(req))
 	req.InstanceIdToken = token
 
-	_, err = c.raw.RegisterAgent(ctx, req)
+	resp, err := c.raw.RegisterAgent(ctx, req)
+
+	req.InstanceIdToken = "<redacted>"
+	clog.DebugRPC(ctx, "RegisterAgent", req, resp)
+
 	return err
 }
 
@@ -130,7 +133,7 @@ func (c *Client) reportInventory(ctx context.Context, inventory *agentendpointpb
 	if reportFull {
 		req = &agentendpointpb.ReportInventoryRequest{InventoryChecksum: checksum, Inventory: inventory}
 	}
-	clog.Debugf(ctx, "Calling ReportInventory with request:\n%s", util.PrettyFmt(req))
+	clog.Debugf(ctx, "Calling ReportInventory with request:\n%s", pretty.Format(req))
 	req.InstanceIdToken = token
 
 	// Additional logging for verifications in e2e tests.
@@ -147,7 +150,7 @@ func (c *Client) startNextTask(ctx context.Context) (res *agentendpointpb.StartN
 	}
 
 	req := &agentendpointpb.StartNextTaskRequest{}
-	clog.Debugf(ctx, "Calling StartNextTask with request:\n%s", util.PrettyFmt(req))
+	clog.Debugf(ctx, "Calling StartNextTask with request:\n%s", pretty.Format(req))
 	req.InstanceIdToken = token
 
 	if err := retryutil.RetryAPICall(ctx, apiRetrySec*time.Second, "StartNextTask", func() error {
@@ -155,7 +158,7 @@ func (c *Client) startNextTask(ctx context.Context) (res *agentendpointpb.StartN
 		if err != nil {
 			return err
 		}
-		clog.Debugf(ctx, "StartNextTask response:\n%s", util.PrettyFmt(res))
+		clog.Debugf(ctx, "StartNextTask response:\n%s", pretty.Format(res))
 		return nil
 	}); err != nil {
 		return nil, fmt.Errorf("error calling StartNextTask: %w", err)
@@ -170,7 +173,7 @@ func (c *Client) reportTaskProgress(ctx context.Context, req *agentendpointpb.Re
 		return nil, err
 	}
 
-	clog.Debugf(ctx, "Calling ReportTaskProgress with request:\n%s", util.PrettyFmt(req))
+	clog.Debugf(ctx, "Calling ReportTaskProgress with request:\n%s", pretty.Format(req))
 	req.InstanceIdToken = token
 
 	if err := retryutil.RetryAPICall(ctx, apiRetrySec*time.Second, "ReportTaskProgress", func() error {
@@ -178,7 +181,7 @@ func (c *Client) reportTaskProgress(ctx context.Context, req *agentendpointpb.Re
 		if err != nil {
 			return err
 		}
-		clog.Debugf(ctx, "ReportTaskProgress response:\n%s", util.PrettyFmt(res))
+		clog.Debugf(ctx, "ReportTaskProgress response:\n%s", pretty.Format(res))
 		return nil
 	}); err != nil {
 		return nil, fmt.Errorf("error calling ReportTaskProgress: %w", err)
@@ -193,7 +196,7 @@ func (c *Client) reportTaskComplete(ctx context.Context, req *agentendpointpb.Re
 		return err
 	}
 
-	clog.Debugf(ctx, "Calling ReportTaskComplete with request:\n%s", util.PrettyFmt(req))
+	clog.Debugf(ctx, "Calling ReportTaskComplete with request:\n%s", pretty.Format(req))
 	req.InstanceIdToken = token
 
 	if err := retryutil.RetryAPICall(ctx, apiRetrySec*time.Second, "ReportTaskComplete", func() error {
@@ -201,7 +204,7 @@ func (c *Client) reportTaskComplete(ctx context.Context, req *agentendpointpb.Re
 		if err != nil {
 			return err
 		}
-		clog.Debugf(ctx, "ReportTaskComplete response:\n%s", util.PrettyFmt(res))
+		clog.Debugf(ctx, "ReportTaskComplete response:\n%s", pretty.Format(res))
 		return nil
 	}); err != nil {
 		return fmt.Errorf("error calling ReportTaskComplete: %w", err)
@@ -293,10 +296,12 @@ func (c *Client) receiveTaskNotification(ctx context.Context) (agentendpointpb.A
 		return nil, fmt.Errorf("error fetching Instance IDToken: %w", err)
 	}
 
-	clog.Debugf(ctx, "Calling ReceiveTaskNotification with request:\n%s", util.PrettyFmt(req))
 	req.InstanceIdToken = token
 
-	return c.raw.ReceiveTaskNotification(ctx, req)
+	resp, err := c.raw.ReceiveTaskNotification(ctx, req)
+	req.InstanceIdToken = "<redacted>"
+	clog.DebugRPC(ctx, "ReceiveTaskNotification", req, nil)
+	return resp, err
 }
 
 func (c *Client) loadTaskFromState(ctx context.Context) error {

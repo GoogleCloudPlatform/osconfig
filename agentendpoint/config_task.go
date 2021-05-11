@@ -21,7 +21,7 @@ import (
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/config"
-	"github.com/GoogleCloudPlatform/osconfig/util"
+	"github.com/GoogleCloudPlatform/osconfig/pretty"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
 )
@@ -308,7 +308,7 @@ func (c *configTask) cleanup(ctx context.Context) {
 
 func (c *configTask) run(ctx context.Context) error {
 	clog.Infof(ctx, "Beginning ApplyConfigTask.")
-	clog.Debugf(ctx, "ApplyConfigTask:\n%s", util.PrettyFmt(c.Task.ApplyConfigTask))
+	clog.Debugf(ctx, "ApplyConfigTask:\n%s", pretty.Format(c.Task.ApplyConfigTask))
 	c.StartedAt = time.Now()
 
 	rcsErrMsg := "Error reporting continuing state"
