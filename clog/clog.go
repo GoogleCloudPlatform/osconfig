@@ -58,24 +58,19 @@ func protoToJSON(p proto.Message) interface{} {
 
 // DebugRPC logs a completed RPC call.
 func DebugRPC(ctx context.Context, method string, req proto.Message, resp proto.Message) {
-	// See comment on DebugRPC stream for explanation why this code is untyped.
-	payload := map[string]interface{}{}
-	payload["MethodName"] = method
-	payload["Request"] = protoToJSON(req)
-	payload["Response"] = protoToJSON(resp)
-	msg := fmt.Sprintf("Called: %s with request:\n%s\nresponse:\n%s\n", method, pretty.Format(req), pretty.Format(resp))
-	fromContext(ctx).log(payload, msg, logger.Debug)
-}
-
-// DebugRPCStream logs the start of an RPC streaming call.
-func DebugRPCStream(ctx context.Context, method string, req proto.Message) {
 	// The Cloud Logging library doesn't handle proto messages nor structures containing generic JSON.
 	// To work around this we construct map[string]interface{} and fill it with JSON
 	// resulting from explicit conversion of the proto messages.
 	payload := map[string]interface{}{}
 	payload["MethodName"] = method
 	payload["Request"] = protoToJSON(req)
-	msg := fmt.Sprintf("Calling: %s stream with request:\n%s\n", method, pretty.Format(req))
+	var msg string
+	if resp != nil {
+		payload["Response"] = protoToJSON(resp)
+		msg = fmt.Sprintf("Called: %s with request:\n%s\nresponse:\n%s\n", method, pretty.Format(req), pretty.Format(resp))
+	} else {
+		msg = fmt.Sprintf("Called: %s with request:\n%s\n", method, pretty.Format(req))
+	}
 	fromContext(ctx).log(payload, msg, logger.Debug)
 }
 

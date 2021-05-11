@@ -301,7 +301,7 @@ func (c *Client) receiveTaskNotification(ctx context.Context) (agentendpointpb.A
 
 	redacted := proto.Clone(req).(*agentendpointpb.ReceiveTaskNotificationRequest)
 	redacted.InstanceIdToken = "<redacted>"
-	clog.DebugRPCStream(ctx, "ReceiveTaskNotification", redacted)
+	clog.DebugRPC(ctx, "ReceiveTaskNotification", redacted, nil)
 	resp, err := c.raw.ReceiveTaskNotification(ctx, req)
 	return resp, err
 }
