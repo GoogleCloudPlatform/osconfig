@@ -231,11 +231,11 @@ func execOutput(ctx context.Context, outputFilePath string) ([]byte, error) {
 	return output, nil
 }
 
-func (r *execResource) populateOutput(rCompliance *agentendpointpb.OSPolicyResourceCompliance) {
-	if r.enforceOutput != nil {
+func (e *execResource) populateOutput(rCompliance *agentendpointpb.OSPolicyResourceCompliance) {
+	if e.enforceOutput != nil {
 		rCompliance.Output = &agentendpointpb.OSPolicyResourceCompliance_ExecResourceOutput_{
 			ExecResourceOutput: &agentendpointpb.OSPolicyResourceCompliance_ExecResourceOutput{
-				EnforcementOutput: r.enforceOutput,
+				EnforcementOutput: e.enforceOutput,
 			},
 		}
 	}
