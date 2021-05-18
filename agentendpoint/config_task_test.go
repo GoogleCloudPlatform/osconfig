@@ -72,6 +72,10 @@ func (r *testResource) ManagedResources() *config.ManagedResources {
 	return nil
 }
 
+func (r *testResource) PopulateOutput(rCompliance *agentendpointpb.OSPolicyResourceCompliance) error {
+	return nil
+}
+
 type agentEndpointServiceConfigTestServer struct {
 	lastReportTaskCompleteRequest *agentendpointpb.ReportTaskCompleteRequest
 	progressError                 chan struct{}
@@ -142,12 +146,15 @@ func genTestResourceCompliance(id string, steps int, inDesiredState bool) *agent
 	if steps > 0 {
 		outcome := agentendpointpb.OSPolicyResourceConfigStep_FAILED
 		state := agentendpointpb.OSPolicyComplianceState_UNKNOWN
+		errMsg := "Error validating resource: this is a test error"
 		if steps > 1 {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
+			errMsg = ""
 		}
 		ret.ConfigSteps = append(ret.GetConfigSteps(), &agentendpointpb.OSPolicyResourceConfigStep{
-			Type:    agentendpointpb.OSPolicyResourceConfigStep_VALIDATION,
-			Outcome: outcome,
+			Type:         agentendpointpb.OSPolicyResourceConfigStep_VALIDATION,
+			Outcome:      outcome,
+			ErrorMessage: errMsg,
 		})
 		ret.State = state
 	}
@@ -155,15 +162,18 @@ func genTestResourceCompliance(id string, steps int, inDesiredState bool) *agent
 	if steps > 1 {
 		outcome := agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
 		state := agentendpointpb.OSPolicyComplianceState_NON_COMPLIANT
+		errMsg := ""
 		if steps == 2 && !inDesiredState {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 			state = agentendpointpb.OSPolicyComplianceState_UNKNOWN
+			errMsg = "Error running desired state check: this is a test error"
 		} else if inDesiredState {
 			state = agentendpointpb.OSPolicyComplianceState_COMPLIANT
 		}
 		ret.ConfigSteps = append(ret.GetConfigSteps(), &agentendpointpb.OSPolicyResourceConfigStep{
-			Type:    agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-			Outcome: outcome,
+			Type:         agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+			Outcome:      outcome,
+			ErrorMessage: errMsg,
 		})
 		ret.State = state
 	}
@@ -171,28 +181,34 @@ func genTestResourceCompliance(id string, steps int, inDesiredState bool) *agent
 	if steps > 2 {
 		outcome := agentendpointpb.OSPolicyResourceConfigStep_FAILED
 		state := agentendpointpb.OSPolicyComplianceState_UNKNOWN
+		errMsg := "Error running enforcement: this is a test error"
 		if steps > 3 {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
+			errMsg = ""
 		}
 		ret.ConfigSteps = append(ret.GetConfigSteps(), &agentendpointpb.OSPolicyResourceConfigStep{
-			Type:    agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-			Outcome: outcome,
+			Type:         agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+			Outcome:      outcome,
+			ErrorMessage: errMsg,
 		})
 		ret.State = state
 	}
-	// DesiredStateCheckPostEnforcement{
-	if steps > 3 {
+	// DesiredStateCheckPostEnforcement
+	if steps > 2 {
 		outcome := agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
 		state := agentendpointpb.OSPolicyComplianceState_NON_COMPLIANT
+		errMsg := ""
 		if steps == 4 {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 			state = agentendpointpb.OSPolicyComplianceState_UNKNOWN
-		} else {
+			errMsg = "Error running post config desired state check: this is a test error"
+		} else if steps == 5 {
 			state = agentendpointpb.OSPolicyComplianceState_COMPLIANT
 		}
 		ret.ConfigSteps = append(ret.GetConfigSteps(), &agentendpointpb.OSPolicyResourceConfigStep{
-			Type:    agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-			Outcome: outcome,
+			Type:         agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+			Outcome:      outcome,
+			ErrorMessage: errMsg,
 		})
 		ret.State = state
 	}

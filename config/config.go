@@ -49,6 +49,7 @@ type resource interface {
 	validate(context.Context) (*ManagedResources, error)
 	checkState(context.Context) (bool, error)
 	enforceState(context.Context) (bool, error)
+	populateOutput(*agentendpointpb.OSPolicyResourceCompliance)
 	cleanup(context.Context) error
 }
 
@@ -105,6 +106,16 @@ func (r *OSPolicyResource) EnforceState(ctx context.Context) error {
 	inDesiredState, err := r.enforceState(ctx)
 	r.inDesiredState = inDesiredState
 	return err
+}
+
+// PopulateOutput populates the output field of the provided
+// OSPolicyResourceCompliance for this resource.
+func (r *OSPolicyResource) PopulateOutput(rCompliance *agentendpointpb.OSPolicyResourceCompliance) error {
+	if r.resource == nil {
+		return errors.New("PopulateOutput run before Validate")
+	}
+	r.populateOutput(rCompliance)
+	return nil
 }
 
 // Cleanup cleans up any temporary files that this resource may have created.

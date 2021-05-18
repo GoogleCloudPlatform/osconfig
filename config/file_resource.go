@@ -208,6 +208,8 @@ func (f *fileResource) enforceState(ctx context.Context) (inDesiredState bool, e
 	return true, nil
 }
 
+func (r *fileResource) populateOutput(rCompliance *agentendpointpb.OSPolicyResourceCompliance) {}
+
 func (f *fileResource) cleanup(ctx context.Context) error {
 	if f.managedFile.tempDir != "" {
 		return os.RemoveAll(f.managedFile.tempDir)

@@ -17,7 +17,11 @@ package config
 import (
 	"context"
 	"io/ioutil"
+	"math/rand"
+	"os"
 	"path"
+	"path/filepath"
+	"reflect"
 	"testing"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
@@ -163,6 +167,77 @@ func TestExecResourceDownload(t *testing.T) {
 			}
 			if tt.wantEnforceContents != string(data) {
 				t.Errorf("unexpected enforce contents: %q", data)
+			}
+		})
+	}
+}
+
+func TestExecOutput(t *testing.T) {
+	ctx := context.Background()
+	tmpDir, err := ioutil.TempDir("", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	fileA := filepath.Join(tmpDir, "fileA")
+	contentsA := []byte("here is some text\nand some more\n")
+	if err := ioutil.WriteFile(fileA, contentsA, 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	fileB := filepath.Join(tmpDir, "fileB")
+	contentsB := make([]byte, maxExecOutputSize+100)
+	if _, err := rand.Read(contentsB); err != nil {
+		t.Fatal(err)
+	}
+	if err := ioutil.WriteFile(fileB, contentsB, 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	var tests = []struct {
+		name     string
+		filePath string
+		want     []byte
+		wantErr  bool
+	}{
+		{
+			"empty path",
+			"",
+			nil,
+			false,
+		},
+		{
+			"path DNE",
+			"DNE",
+			nil,
+			true,
+		},
+		{
+			"normal case",
+			fileA,
+			contentsA,
+			false,
+		},
+		{
+			"file to large case",
+			fileB,
+			contentsB[:maxExecOutputSize+1],
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := execOutput(ctx, tt.filePath)
+			if err != nil && !tt.wantErr {
+				t.Errorf("Unexpected error from execOutput: %v", err)
+			}
+			if err == nil && tt.wantErr {
+				t.Error("Did not get expected error from execOutput")
+			}
+
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("got != want, string(got) = %q string(want) = %q", got, tt.want)
 			}
 		})
 	}
