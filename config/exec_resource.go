@@ -216,7 +216,7 @@ func execOutput(ctx context.Context, outputFilePath string) ([]byte, error) {
 	}
 	defer f.Close()
 
-	// Make a byte slice with a capacity of 1 over maxSize.
+	// Make a byte slice with a capacity of 1 over maxSize (for simplicity).
 	output := make([]byte, 0, maxExecOutputSize+1)
 	// Read up to capactity.
 	n, err := f.Read(output[:cap(output)])
@@ -224,6 +224,7 @@ func execOutput(ctx context.Context, outputFilePath string) ([]byte, error) {
 	if err != nil && err != io.EOF {
 		return output, fmt.Errorf("error reading from OutputFilePath: %v", err)
 	}
+	// Return the output up to this point and an error if total size is greater than maxExecOutputSize.
 	if n > maxExecOutputSize {
 		return output, fmt.Errorf("contents of OutputFilePath greater than %dK", maxExecOutputSize/1024)
 	}

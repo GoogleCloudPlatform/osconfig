@@ -26,6 +26,10 @@ import (
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
 )
 
+// This is the maximum size in bytes of the OSPolicyResourceConfigStep ErrorMessage field.
+// Any message longer than this will be truncated to at max this length.
+const maxErrorMessage = 512
+
 var newResource = func(r *agentendpointpb.OSPolicy_Resource) *resource {
 	return &resource{resourceIface: resourceIface(&config.OSPolicyResource{OSPolicy_Resource: r})}
 }
@@ -127,6 +131,14 @@ func (c *configTask) reportContinuingState(ctx context.Context, configState agen
 func detectPolicyConflicts(proposed, current *config.ManagedResources) error {
 	// TODO: implement
 	return nil
+}
+
+func truncateMessage(msg string, size int) string {
+	cut := size / 2
+	if len(msg) > size {
+		return msg[:size-(cut+3)] + "..." + msg[len(msg)-cut:]
+	}
+	return msg
 }
 
 func validateConfigResource(ctx context.Context, res *resource, policyMR *config.ManagedResources, rCompliance *agentendpointpb.OSPolicyResourceCompliance, configResource *agentendpointpb.OSPolicy_Resource) (hasError bool) {

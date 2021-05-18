@@ -146,7 +146,7 @@ func genTestResourceCompliance(id string, steps int, inDesiredState bool) *agent
 	if steps > 0 {
 		outcome := agentendpointpb.OSPolicyResourceConfigStep_FAILED
 		state := agentendpointpb.OSPolicyComplianceState_UNKNOWN
-		errMsg := "Error validating resource: this is a test error"
+		errMsg := "Error validating resource: " + errTest.Error()
 		if steps > 1 {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
 			errMsg = ""
@@ -166,7 +166,7 @@ func genTestResourceCompliance(id string, steps int, inDesiredState bool) *agent
 		if steps == 2 && !inDesiredState {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 			state = agentendpointpb.OSPolicyComplianceState_UNKNOWN
-			errMsg = "Error running desired state check: this is a test error"
+			errMsg = "Error running desired state check: " + errTest.Error()
 		} else if inDesiredState {
 			state = agentendpointpb.OSPolicyComplianceState_COMPLIANT
 		}
@@ -181,7 +181,7 @@ func genTestResourceCompliance(id string, steps int, inDesiredState bool) *agent
 	if steps > 2 {
 		outcome := agentendpointpb.OSPolicyResourceConfigStep_FAILED
 		state := agentendpointpb.OSPolicyComplianceState_UNKNOWN
-		errMsg := "Error running enforcement: this is a test error"
+		errMsg := "Error running enforcement: " + errTest.Error()
 		if steps > 3 {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
 			errMsg = ""
@@ -201,7 +201,7 @@ func genTestResourceCompliance(id string, steps int, inDesiredState bool) *agent
 		if steps == 4 {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 			state = agentendpointpb.OSPolicyComplianceState_UNKNOWN
-			errMsg = "Error running post config desired state check: this is a test error"
+			errMsg = "Error running post config desired state check: " + errTest.Error()
 		} else if steps == 5 {
 			state = agentendpointpb.OSPolicyComplianceState_COMPLIANT
 		}
@@ -413,6 +413,27 @@ func TestRunApplyConfig(t *testing.T) {
 
 			if diff := cmp.Diff(tt.wantComReq, srv.lastReportTaskCompleteRequest, protocmp.Transform()); diff != "" {
 				t.Fatalf("ReportTaskCompleteRequest mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestTruncateMessage(t *testing.T) {
+	tests := []struct {
+		name    string
+		message string
+		want    string
+		length  int
+	}{
+		{"less than length", "test", "test", 5},
+		{"equal to length", "test", "test", 4},
+		{"greater than length", "this is a longer message", "this i... message", 17},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := truncateMessage(tt.message, tt.length)
+			if got != tt.want {
+				t.Errorf("%s: got (%q) != want (%q)", tt.name, got, tt.want)
 			}
 		})
 	}
