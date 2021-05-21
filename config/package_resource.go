@@ -466,6 +466,8 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 	return true, nil
 }
 
+func (p *packageResouce) populateOutput(rCompliance *agentendpointpb.OSPolicyResourceCompliance) {}
+
 func (p *packageResouce) cleanup(ctx context.Context) error {
 	if p.managedPackage.tempDir != "" {
 		return os.RemoveAll(p.managedPackage.tempDir)

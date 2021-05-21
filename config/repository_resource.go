@@ -311,6 +311,9 @@ func (r *repositoryResource) enforceState(ctx context.Context) (inDesiredState b
 	return true, nil
 }
 
+func (r *repositoryResource) populateOutput(rCompliance *agentendpointpb.OSPolicyResourceCompliance) {
+}
+
 func (r *repositoryResource) cleanup(ctx context.Context) error {
 	return nil
 }

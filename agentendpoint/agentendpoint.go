@@ -51,7 +51,6 @@ var (
 	errResourceExhausted = errors.New("ResourceExhausted")
 	taskStateFile        = agentconfig.TaskStateFile()
 	sameStateTimeWindow  = -5 * time.Second
-	osPoliciesEnabled    = false
 )
 
 // Client is a an agentendpoint client.
