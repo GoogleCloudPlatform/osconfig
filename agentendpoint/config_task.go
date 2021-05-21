@@ -58,8 +58,8 @@ type policy struct {
 
 type resource struct {
 	resourceIface
-	needsPostCheck  bool
-	hasSeriousError bool
+	needsPostCheck       bool
+	validateOrCheckError bool
 }
 
 type resourceIface interface {
@@ -368,11 +368,11 @@ func (c *configTask) run(ctx context.Context) error {
 			plcy.resources[configResource.GetId()] = newResource(configResource)
 			res := plcy.resources[configResource.GetId()]
 			if hasError := validateConfigResource(ctx, res, policyMR, rCompliance, configResource); hasError {
-				res.hasSeriousError = true
+				res.validateOrCheckError = true
 				break
 			}
 			if hasError := checkConfigResourceState(ctx, res, rCompliance, configResource); hasError {
-				res.hasSeriousError = true
+				res.validateOrCheckError = true
 				break
 			}
 
@@ -421,7 +421,7 @@ func (c *configTask) markPostCheckRequired() {
 			res, ok := plcy.resources[configResource.GetId()]
 			// This resource entry may not have been created yet is this polciy is in mid-run.
 			// We take no actions for resources that had a failure with validation or precheck.
-			if !ok || res == nil || res.hasSeriousError {
+			if !ok || res == nil || res.validateOrCheckError {
 				continue
 			}
 			res.needsPostCheck = true

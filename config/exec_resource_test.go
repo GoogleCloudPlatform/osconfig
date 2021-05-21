@@ -187,7 +187,7 @@ func TestExecOutput(t *testing.T) {
 	}
 
 	fileB := filepath.Join(tmpDir, "fileB")
-	contentsB := make([]byte, maxExecOutputSize+100)
+	contentsB := make([]byte, maxExecOutputSize*2)
 	if _, err := rand.Read(contentsB); err != nil {
 		t.Fatal(err)
 	}
@@ -222,7 +222,7 @@ func TestExecOutput(t *testing.T) {
 		{
 			"file to large case",
 			fileB,
-			contentsB[:maxExecOutputSize+1],
+			contentsB[:maxExecOutputSize],
 			true,
 		},
 	}
