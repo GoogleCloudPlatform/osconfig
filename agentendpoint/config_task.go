@@ -152,13 +152,14 @@ func validateConfigResource(ctx context.Context, res *resource, policyMR *config
 		hasError = true
 		errMessage = fmt.Sprintf("Error validating resource: %v", err)
 		clog.Errorf(ctx, errMessage)
-	}
-
-	// Detect any resource conflicts within this policy.
-	if err := detectPolicyConflicts(res.ManagedResources(), policyMR); err != nil {
-		outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
-		hasError = true
-		clog.Errorf(ctx, "Resource conflict in policy: %v", err)
+	} else {
+		// Detect any resource conflicts within this policy.
+		if err := detectPolicyConflicts(res.ManagedResources(), policyMR); err != nil {
+			outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
+			hasError = true
+			errMessage = fmt.Sprintf("Resource conflict in policy: %v", err)
+			clog.Errorf(ctx, errMessage)
+		}
 	}
 
 	rCompliance.ConfigSteps = append(rCompliance.GetConfigSteps(), &agentendpointpb.OSPolicyResourceConfigStep{
