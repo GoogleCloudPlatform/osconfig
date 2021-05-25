@@ -105,10 +105,21 @@ var (
 )
 
 type config struct {
-	osInventoryEnabled, guestPoliciesEnabled, taskNotificationEnabled, debugEnabled       bool
-	svcEndpoint, googetRepoFilePath, zypperRepoFilePath, yumRepoFilePath, aptRepoFilePath string
-	numericProjectID, osConfigPollInterval                                                int
-	projectID, instanceZone, instanceName, instanceID                                     string
+	aptRepoFilePath         string
+	instanceName            string
+	instanceZone            string
+	projectID               string
+	svcEndpoint             string
+	googetRepoFilePath      string
+	zypperRepoFilePath      string
+	yumRepoFilePath         string
+	instanceID              string
+	numericProjectID        int
+	osConfigPollInterval    int
+	debugEnabled            bool
+	taskNotificationEnabled bool
+	guestPoliciesEnabled    bool
+	osInventoryEnabled      bool
 }
 
 func (c *config) parseFeatures(features string, enabled bool) {
@@ -139,8 +150,8 @@ func getAgentConfig() config {
 }
 
 type lastEtag struct {
-	mu   sync.RWMutex
 	Etag string
+	mu   sync.RWMutex
 }
 
 func (e *lastEtag) set(etag string) {
@@ -171,9 +182,9 @@ type metadataJSON struct {
 
 type instanceJSON struct {
 	Attributes attributesJSON
+	ID         *json.Number
 	Zone       string
 	Name       string
-	ID         *json.Number
 }
 
 type projectJSON struct {
@@ -183,18 +194,18 @@ type projectJSON struct {
 }
 
 type attributesJSON struct {
+	PollIntervalOld       *json.Number `json:"os-config-poll-interval"`
+	PollInterval          *json.Number `json:"osconfig-poll-interval"`
 	InventoryEnabledOld   string       `json:"os-inventory-enabled"`
 	InventoryEnabled      string       `json:"enable-os-inventory"`
 	PreReleaseFeaturesOld string       `json:"os-config-enabled-prerelease-features"`
 	PreReleaseFeatures    string       `json:"osconfig-enabled-prerelease-features"`
-	OSConfigEnabled       string       `json:"enable-osconfig"`
-	DisabledFeatures      string       `json:"osconfig-disabled-features"`
 	DebugEnabledOld       string       `json:"enable-os-config-debug"`
 	LogLevel              string       `json:"osconfig-log-level"`
 	OSConfigEndpointOld   string       `json:"os-config-endpoint"`
 	OSConfigEndpoint      string       `json:"osconfig-endpoint"`
-	PollIntervalOld       *json.Number `json:"os-config-poll-interval"`
-	PollInterval          *json.Number `json:"osconfig-poll-interval"`
+	OSConfigEnabled       string       `json:"enable-osconfig"`
+	DisabledFeatures      string       `json:"osconfig-disabled-features"`
 }
 
 func createConfigFromMetadata(md metadataJSON) *config {
@@ -582,8 +593,8 @@ func ID() string {
 }
 
 type idToken struct {
-	raw string
 	exp *time.Time
+	raw string
 	sync.Mutex
 }
 

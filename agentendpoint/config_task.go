@@ -35,17 +35,13 @@ var newResource = func(r *agentendpointpb.OSPolicy_Resource) *resource {
 }
 
 type configTask struct {
-	client *Client
-
+	StartedAt         time.Time `json:",omitempty"`
+	client            *Client
 	lastProgressState map[agentendpointpb.ApplyConfigTaskProgress_State]time.Time
-
-	TaskID    string
-	Task      *applyConfigTask
-	StartedAt time.Time `json:",omitempty"`
-
-	// ApplyConfigTaskOutput result
-	results  []*agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult
-	policies map[string]*policy
+	Task              *applyConfigTask
+	policies          map[string]*policy
+	TaskID            string
+	results           []*agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult
 }
 
 type applyConfigTask struct {

@@ -359,11 +359,11 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 		removing   = "removing"
 
 		enforcePackage struct {
+			actionFunc     func() error
+			installedCache *packageCache
 			name           string
 			action         string
 			packageType    string
-			actionFunc     func() error
-			installedCache *packageCache
 		}
 	)
 

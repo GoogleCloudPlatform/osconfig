@@ -101,11 +101,10 @@ func executeCommand(ctx context.Context, path string, args []string) (int32, err
 }
 
 type execTask struct {
-	client *Client
-
-	TaskID    string
-	Task      *execStepTask
 	StartedAt time.Time `json:",omitempty"`
+	client    *Client
+	Task      *execStepTask
+	TaskID    string
 }
 
 type execStepTask struct {

@@ -88,16 +88,16 @@ type ZypperPatch struct {
 
 // WUAPackage describes a Windows Update Agent package.
 type WUAPackage struct {
+	LastDeploymentChangeTime time.Time
 	Title                    string
 	Description              string
-	Categories               []string
-	CategoryIDs              []string
-	KBArticleIDs             []string
-	MoreInfoURLs             []string
 	SupportURL               string
 	UpdateID                 string
+	Categories               []string
+	KBArticleIDs             []string
+	MoreInfoURLs             []string
+	CategoryIDs              []string
 	RevisionNumber           int32
-	LastDeploymentChangeTime time.Time
 }
 
 // QFEPackage describes a Windows Quick Fix Engineering package.
