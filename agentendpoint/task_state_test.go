@@ -136,7 +136,7 @@ func TestStateSave(t *testing.T) {
 		{
 			"ExecTask",
 			&taskState{ExecTask: &execTask{TaskID: "foo"}},
-			"{\"ExecTask\":{\"TaskID\":\"foo\",\"Task\":null,\"StartedAt\":\"0001-01-01T00:00:00Z\"}}",
+			"{\"ExecTask\":{\"StartedAt\":\"0001-01-01T00:00:00Z\",\"Task\":null,\"TaskID\":\"foo\"}}",
 		},
 	}
 	for _, tt := range tests {
