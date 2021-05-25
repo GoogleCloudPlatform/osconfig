@@ -31,10 +31,10 @@ var (
 type zypperPatchOpts struct {
 	categories       []string
 	severities       []string
-	withOptional     bool
-	withUpdate       bool
 	excludes         []string
 	exclusivePatches []string
+	withOptional     bool
+	withUpdate       bool
 	dryrun           bool
 }
 

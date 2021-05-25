@@ -23,9 +23,9 @@ import (
 )
 
 type aptGetUpgradeOpts struct {
-	upgradeType       packages.AptUpgradeType
 	exclusivePackages []string
 	excludes          []string
+	upgradeType       packages.AptUpgradeType
 	dryrun            bool
 }
 

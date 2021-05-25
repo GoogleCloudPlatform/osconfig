@@ -43,9 +43,9 @@ func init() {
 }
 
 type yumUpdateOpts struct {
+	excludes []string
 	security bool
 	minimal  bool
-	excludes []string
 }
 
 // YumUpdateOption is an option for yum update.

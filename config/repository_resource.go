@@ -47,8 +47,8 @@ type repositoryResource struct {
 type AptRepository struct {
 	RepositoryResource *agentendpointpb.OSPolicy_Resource_RepositoryResource_AptRepository
 	GpgFilePath        string
-	GpgFileContents    []byte
 	GpgChecksum        string
+	GpgFileContents    []byte
 }
 
 // GooGetRepository describes an googet repository resource.
@@ -68,14 +68,13 @@ type ZypperRepository struct {
 
 // ManagedRepository is the repository that this RepositoryResource manages.
 type ManagedRepository struct {
-	Apt    *AptRepository
-	GooGet *GooGetRepository
-	Yum    *YumRepository
-	Zypper *ZypperRepository
-
+	Apt              *AptRepository
+	GooGet           *GooGetRepository
+	Yum              *YumRepository
+	Zypper           *ZypperRepository
 	RepoFilePath     string
-	RepoFileContents []byte
 	RepoChecksum     string
+	RepoFileContents []byte
 }
 
 func aptRepoContents(repo *agentendpointpb.OSPolicy_Resource_RepositoryResource_AptRepository) []byte {

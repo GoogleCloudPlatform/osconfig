@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -28,6 +29,7 @@ func (c *Client) ReportInventory(ctx context.Context) {
 	state := inventory.Get(ctx)
 	write(ctx, state, inventoryURL)
 	c.report(ctx, state)
+	debug.FreeOSMemory()
 }
 
 func write(ctx context.Context, state *inventory.InstanceInventory, url string) {

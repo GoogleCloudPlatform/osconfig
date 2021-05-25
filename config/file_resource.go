@@ -40,12 +40,11 @@ type fileResource struct {
 // ManagedFile is the file that this FileResouce manages.
 type ManagedFile struct {
 	Path       string
+	tempDir    string
+	source     string
+	checksum   string
 	State      agentendpointpb.OSPolicy_Resource_FileResource_DesiredState
 	Permisions os.FileMode
-
-	tempDir  string
-	source   string
-	checksum string
 }
 
 func parsePermissions(s string) (os.FileMode, error) {

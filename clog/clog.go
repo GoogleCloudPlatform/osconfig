@@ -32,9 +32,9 @@ type clogKey struct{}
 var ctxValueKey = clogKey{}
 
 type log struct {
-	sync.Mutex
-	labels map[string]string
 	ctx    context.Context
+	labels map[string]string
+	sync.Mutex
 }
 
 func (l *log) log(structuredPayload interface{}, msg string, sev logger.Severity) {

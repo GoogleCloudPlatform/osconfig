@@ -34,8 +34,8 @@ func initTasker(ctx context.Context) {
 }
 
 type task struct {
-	name string
 	run  func()
+	name string
 }
 
 // Enqueue adds a task to the task queue.

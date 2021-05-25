@@ -30,10 +30,10 @@ var (
 )
 
 type yumUpdateOpts struct {
-	security          bool
-	minimal           bool
 	exclusivePackages []string
 	excludes          []string
+	security          bool
+	minimal           bool
 	dryrun            bool
 }
 
