@@ -10,8 +10,8 @@ import (
 func TestRunFilter(t *testing.T) {
 	patches, pkgUpdates, pkgToPatchesMap := prepareTestCase()
 	type input struct {
-		patches           []packages.ZypperPatch
-		pkgUpdates        []packages.PkgInfo
+		patches           []*packages.ZypperPatch
+		pkgUpdates        []*packages.PkgInfo
 		pkgToPatchesMap   map[string][]string
 		exclusiveIncludes []string
 		excludes          []string
@@ -85,50 +85,50 @@ func isIn(needle string, haystack []string) bool {
 	return false
 }
 
-func prepareTestCase() ([]packages.ZypperPatch, []packages.PkgInfo, map[string][]string) {
-	var patches []packages.ZypperPatch
-	var pkgUpdates []packages.PkgInfo
+func prepareTestCase() ([]*packages.ZypperPatch, []*packages.PkgInfo, map[string][]string) {
+	var patches []*packages.ZypperPatch
+	var pkgUpdates []*packages.PkgInfo
 	var pkgToPatchesMap map[string][]string
-	patches = append(patches, packages.ZypperPatch{
+	patches = append(patches, &packages.ZypperPatch{
 		Name:     "patch-1",
 		Category: "recommended",
 		Severity: "important",
 		Summary:  "patch-1",
 	})
-	patches = append(patches, packages.ZypperPatch{
+	patches = append(patches, &packages.ZypperPatch{
 		Name:     "patch-2",
 		Category: "security",
 		Severity: "critical",
 		Summary:  "patch-2",
 	})
-	patches = append(patches, packages.ZypperPatch{
+	patches = append(patches, &packages.ZypperPatch{
 		Name:     "patch-3",
 		Category: "optional",
 		Severity: "low",
 		Summary:  "patch-3",
 	})
 
-	pkgUpdates = append(pkgUpdates, packages.PkgInfo{
+	pkgUpdates = append(pkgUpdates, &packages.PkgInfo{
 		Name:    "pkg1",
 		Arch:    "noarch",
 		Version: "1.1.1",
 	})
-	pkgUpdates = append(pkgUpdates, packages.PkgInfo{
+	pkgUpdates = append(pkgUpdates, &packages.PkgInfo{
 		Name:    "pkg2",
 		Arch:    "noarch",
 		Version: "1.1.1",
 	})
-	pkgUpdates = append(pkgUpdates, packages.PkgInfo{
+	pkgUpdates = append(pkgUpdates, &packages.PkgInfo{
 		Name:    "pkg3",
 		Arch:    "noarch",
 		Version: "1.1.1",
 	})
-	pkgUpdates = append(pkgUpdates, packages.PkgInfo{
+	pkgUpdates = append(pkgUpdates, &packages.PkgInfo{
 		Name:    "pkg4",
 		Arch:    "noarch",
 		Version: "1.1.1",
 	})
-	pkgUpdates = append(pkgUpdates, packages.PkgInfo{
+	pkgUpdates = append(pkgUpdates, &packages.PkgInfo{
 		Name:    "pkg5",
 		Arch:    "noarch",
 		Version: "1.1.1",
@@ -136,7 +136,7 @@ func prepareTestCase() ([]packages.ZypperPatch, []packages.PkgInfo, map[string][
 	// individual package update that is not a part
 	// of a patch. this package only shows up
 	// if user specifies --with-update
-	pkgUpdates = append(pkgUpdates, packages.PkgInfo{
+	pkgUpdates = append(pkgUpdates, &packages.PkgInfo{
 		Name:    "pkg6",
 		Arch:    "noarch",
 		Version: "1.1.1",

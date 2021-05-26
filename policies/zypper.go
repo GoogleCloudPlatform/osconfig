@@ -69,7 +69,7 @@ func zypperChanges(ctx context.Context, zypperInstalled, zypperRemoved, zypperUp
 	var err error
 	var errs []string
 
-	var installed []packages.PkgInfo
+	var installed []*packages.PkgInfo
 	if len(zypperInstalled) > 0 || len(zypperUpdated) > 0 || len(zypperRemoved) > 0 {
 		installed, err = packages.InstalledRPMPackages(ctx)
 		if err != nil {
@@ -77,7 +77,7 @@ func zypperChanges(ctx context.Context, zypperInstalled, zypperRemoved, zypperUp
 		}
 	}
 
-	var updates []packages.PkgInfo
+	var updates []*packages.PkgInfo
 	if len(zypperUpdated) > 0 {
 		updates, err = packages.ZypperUpdates(ctx)
 		if err != nil {

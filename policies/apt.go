@@ -134,7 +134,7 @@ func aptChanges(ctx context.Context, aptInstalled, aptRemoved, aptUpdated []*age
 	var err error
 	var errs []string
 
-	var installed []packages.PkgInfo
+	var installed []*packages.PkgInfo
 	if len(aptInstalled) > 0 || len(aptUpdated) > 0 || len(aptRemoved) > 0 {
 		installed, err = packages.InstalledDebPackages(ctx)
 		if err != nil {
@@ -142,7 +142,7 @@ func aptChanges(ctx context.Context, aptInstalled, aptRemoved, aptUpdated []*age
 		}
 	}
 
-	var updates []packages.PkgInfo
+	var updates []*packages.PkgInfo
 	if len(aptUpdated) > 0 {
 		updates, err = packages.AptUpdates(ctx, packages.AptGetUpgradeType(packages.AptGetDistUpgrade), packages.AptGetUpgradeShowNew(false))
 		if err != nil {

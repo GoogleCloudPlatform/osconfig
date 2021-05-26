@@ -39,7 +39,7 @@ func init() {
 }
 
 // GemUpdates queries for all available gem updates.
-func GemUpdates(ctx context.Context) ([]PkgInfo, error) {
+func GemUpdates(ctx context.Context) ([]*PkgInfo, error) {
 	stdout, _, err := runner.Run(ctx, exec.Command(gem, gemOutdatedArgs...))
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func GemUpdates(ctx context.Context) ([]PkgInfo, error) {
 		return nil, nil
 	}
 
-	var pkgs []PkgInfo
+	var pkgs []*PkgInfo
 	for _, ln := range lines {
 		pkg := strings.Fields(ln)
 		if len(pkg) != 4 {
@@ -63,13 +63,13 @@ func GemUpdates(ctx context.Context) ([]PkgInfo, error) {
 			continue
 		}
 		ver := strings.Trim(pkg[3], ")")
-		pkgs = append(pkgs, PkgInfo{Name: pkg[0], Arch: noarch, Version: ver})
+		pkgs = append(pkgs, &PkgInfo{Name: pkg[0], Arch: noarch, Version: ver})
 	}
 	return pkgs, nil
 }
 
 // InstalledGemPackages queries for all installed gem packages.
-func InstalledGemPackages(ctx context.Context) ([]PkgInfo, error) {
+func InstalledGemPackages(ctx context.Context) ([]*PkgInfo, error) {
 	stdout, _, err := runner.Run(ctx, exec.Command(gem, gemListArgs...))
 	if err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ func InstalledGemPackages(ctx context.Context) ([]PkgInfo, error) {
 		return nil, nil
 	}
 
-	var pkgs []PkgInfo
+	var pkgs []*PkgInfo
 	for _, ln := range lines[2:] {
 		pkg := strings.Fields(ln)
 		if len(pkg) < 2 {
@@ -98,7 +98,7 @@ func InstalledGemPackages(ctx context.Context) ([]PkgInfo, error) {
 			continue
 		}
 		for _, ver := range strings.Split(strings.Trim(pkg[1], "()"), ", ") {
-			pkgs = append(pkgs, PkgInfo{Name: pkg[0], Arch: noarch, Version: ver})
+			pkgs = append(pkgs, &PkgInfo{Name: pkg[0], Arch: noarch, Version: ver})
 		}
 	}
 	return pkgs, nil

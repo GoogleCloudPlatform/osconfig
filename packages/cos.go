@@ -38,27 +38,31 @@ var readMachineArch = func() (string, error) {
 	return oi.Architecture, nil
 }
 
-func parseInstalledCOSPackages(cosPkgInfo cos.PackageInfo) ([]PkgInfo, error) {
+func parseInstalledCOSPackages(cosPkgInfo *cos.PackageInfo) ([]*PkgInfo, error) {
 	arch, err := readMachineArch()
 	if err != nil {
 		return nil, fmt.Errorf("error from readMachineArch: %v", err)
 	}
 
-	var pkgs []PkgInfo
-	for _, pkg := range cosPkgInfo.InstalledPackages {
+	var pkgs = make([]*PkgInfo, len(cosPkgInfo.InstalledPackages))
+	for i, pkg := range cosPkgInfo.InstalledPackages {
 		name := pkg.Category + "/" + pkg.Name
 		version := pkg.Version
-		pkgs = append(pkgs, PkgInfo{Name: name, Arch: arch, Version: version})
+		pkgs[i] = &PkgInfo{Name: name, Arch: arch, Version: version}
 	}
 	return pkgs, nil
 }
 
-var readCOSPackageInfo = func() (cos.PackageInfo, error) {
-	return cos.GetPackageInfo()
+var readCOSPackageInfo = func() (*cos.PackageInfo, error) {
+	pkgInfo, err := cos.GetPackageInfo()
+	if err != nil {
+		return nil, err
+	}
+	return &pkgInfo, nil
 }
 
 // InstalledCOSPackages queries for all installed COS packages.
-func InstalledCOSPackages() ([]PkgInfo, error) {
+func InstalledCOSPackages() ([]*PkgInfo, error) {
 	packageInfo, err := readCOSPackageInfo()
 	if err != nil {
 		return nil, fmt.Errorf("error reading COS package list with args: %v, contents: %v", err, packageInfo)

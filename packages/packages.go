@@ -62,18 +62,18 @@ var (
 
 // Packages is a selection of packages based on their manager.
 type Packages struct {
-	Yum           []PkgInfo     `json:"yum,omitempty"`
-	Rpm           []PkgInfo     `json:"rpm,omitempty"`
-	Apt           []PkgInfo     `json:"apt,omitempty"`
-	Deb           []PkgInfo     `json:"deb,omitempty"`
-	Zypper        []PkgInfo     `json:"zypper,omitempty"`
-	ZypperPatches []ZypperPatch `json:"zypperPatches,omitempty"`
-	COS           []PkgInfo     `json:"cos,omitempty"`
-	Gem           []PkgInfo     `json:"gem,omitempty"`
-	Pip           []PkgInfo     `json:"pip,omitempty"`
-	GooGet        []PkgInfo     `json:"googet,omitempty"`
-	WUA           []WUAPackage  `json:"wua,omitempty"`
-	QFE           []QFEPackage  `json:"qfe,omitempty"`
+	Yum           []*PkgInfo     `json:"yum,omitempty"`
+	Rpm           []*PkgInfo     `json:"rpm,omitempty"`
+	Apt           []*PkgInfo     `json:"apt,omitempty"`
+	Deb           []*PkgInfo     `json:"deb,omitempty"`
+	Zypper        []*PkgInfo     `json:"zypper,omitempty"`
+	ZypperPatches []*ZypperPatch `json:"zypperPatches,omitempty"`
+	COS           []*PkgInfo     `json:"cos,omitempty"`
+	Gem           []*PkgInfo     `json:"gem,omitempty"`
+	Pip           []*PkgInfo     `json:"pip,omitempty"`
+	GooGet        []*PkgInfo     `json:"googet,omitempty"`
+	WUA           []*WUAPackage  `json:"wua,omitempty"`
+	QFE           []*QFEPackage  `json:"qfe,omitempty"`
 }
 
 // PkgInfo describes a package.

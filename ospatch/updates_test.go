@@ -24,7 +24,7 @@ func TestGetBtime(t *testing.T) {
 	tests := []struct {
 		name    string
 		in      string
-		want    int
+		want    int64
 		wantErr bool
 	}{
 		{"NormalCase", "procs_running 2\nprocs_blocked 0\nctxt 22762852599\nbtime 1561478350\nprocesses 15504510", 1561478350, false},
@@ -65,7 +65,7 @@ func TestGetBtime(t *testing.T) {
 func TestRpmRebootRequired(t *testing.T) {
 	type args struct {
 		pkgs  []byte
-		btime int
+		btime int64
 	}
 	tests := []struct {
 		name string

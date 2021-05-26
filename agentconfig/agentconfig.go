@@ -114,7 +114,7 @@ type config struct {
 	zypperRepoFilePath      string
 	yumRepoFilePath         string
 	instanceID              string
-	numericProjectID        int
+	numericProjectID        int64
 	osConfigPollInterval    int
 	debugEnabled            bool
 	taskNotificationEnabled bool
@@ -190,7 +190,7 @@ type instanceJSON struct {
 type projectJSON struct {
 	Attributes       attributesJSON
 	ProjectID        string
-	NumericProjectID int
+	NumericProjectID int64
 }
 
 type attributesJSON struct {
@@ -568,7 +568,7 @@ func Instance() string {
 }
 
 // NumericProjectID is the numeric project ID of the instance.
-func NumericProjectID() int {
+func NumericProjectID() int64 {
 	return getAgentConfig().numericProjectID
 }
 

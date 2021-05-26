@@ -72,7 +72,7 @@ func TestPostAttributeStatusNotOk(t *testing.T) {
 
 func TestPostAttributeCompressedhappyCase(t *testing.T) {
 	td := packages.Packages{
-		Apt: []packages.PkgInfo{
+		Apt: []*packages.PkgInfo{
 			{
 				Version: "1.2.3",
 				Name:    "test-package",

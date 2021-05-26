@@ -26,6 +26,9 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// Is debug logging enabled.
+var DebugEnabled bool
+
 // https://golang.org/pkg/context/#WithValue
 type clogKey struct{}
 
@@ -58,6 +61,10 @@ func protoToJSON(p proto.Message) interface{} {
 
 // DebugRPC logs a completed RPC call.
 func DebugRPC(ctx context.Context, method string, req proto.Message, resp proto.Message) {
+	// Do this here so we don't spend resources building the log message if we don't need to.
+	if !DebugEnabled {
+		return
+	}
 	// The Cloud Logging library doesn't handle proto messages nor structures containing generic JSON.
 	// To work around this we construct map[string]interface{} and fill it with JSON
 	// resulting from explicit conversion of the proto messages.
@@ -73,6 +80,7 @@ func DebugRPC(ctx context.Context, method string, req proto.Message, resp proto.
 	}
 	fromContext(ctx).log(payload, msg, logger.Debug)
 }
+
 
 // DebugStructured is like Debugf but sends structuredPayload instead of the text message
 // to Cloud Logging.
