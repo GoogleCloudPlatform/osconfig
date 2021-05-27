@@ -1405,16 +1405,14 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 									Exec: &osconfigpb.OSPolicy_Resource_ExecResource{
 										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
-												Script: "if ls $1 >/dev/null; then\nexit 100\nfi\nexit 101",
+												Script: fmt.Sprintf("if ls %s >/dev/null; then\nexit 100\nfi\nexit 101", checkPaths[4]),
 											},
-											Args:        []string{checkPaths[4]},
 											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
 										},
 										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
-												Script: fmt.Sprintf("echo -n %q > $1\nexit 100", string(output)),
+												Script: fmt.Sprintf("echo -n %q > %s\nexit 100", string(output), checkPaths[4]),
 											},
-											Args:           []string{checkPaths[4]},
 											Interpreter:    osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
 											OutputFilePath: checkPaths[4],
 										},
@@ -1427,16 +1425,14 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 									Exec: &osconfigpb.OSPolicy_Resource_ExecResource{
 										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
-												Script: "if ls $1 >/dev/null; then\nexit 100\nfi\nexit 101",
+												Script: fmt.Sprintf("if ls %s >/dev/null; then\nexit 100\nfi\nexit 101", checkPaths[5]),
 											},
-											Args:        []string{checkPaths[5]},
 											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
 										},
 										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
-												Script: "head -c 200KB /dev/zero > $1\nexit 100",
+												Script: fmt.Sprintf("head -c 200KB /dev/zero > %s\nexit 100", checkPaths[5]),
 											},
-											Args:           []string{checkPaths[5]},
 											Interpreter:    osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
 											OutputFilePath: checkPaths[5],
 										},
@@ -1541,7 +1537,8 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 	assertTimeout := 180 * time.Second
 	testName := windowsExecResource
 	machineType := "e2-standard-2"
-	checkPaths := []string{"/path1", "/path2", "/path3", "/path4", "/path5", "/path6"}
+	checkPaths := []string{"/path1", "/path2", "/path3", "/path4", "/path5", "/path6", "/path7", "/path8"}
+	output := []byte("some output")
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
 	ospa := &osconfigpb.OSPolicyAssignment{
@@ -1752,6 +1749,46 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 									},
 								},
 							},
+							{
+								Id: "exec-output",
+								ResourceType: &osconfigpb.OSPolicy_Resource_Exec{
+									Exec: &osconfigpb.OSPolicy_Resource_ExecResource{
+										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
+												Script: fmt.Sprintf("if exist %s exit 100\nexit 101", checkPaths[6]),
+											},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
+										},
+										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
+												Script: fmt.Sprintf("echo|set /p=%q > %s\nexit 100", string(output), checkPaths[6]),
+											},
+											Interpreter:    osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
+											OutputFilePath: checkPaths[6],
+										},
+									},
+								},
+							},
+							{
+								Id: "exec-output-too-large",
+								ResourceType: &osconfigpb.OSPolicy_Resource_Exec{
+									Exec: &osconfigpb.OSPolicy_Resource_ExecResource{
+										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
+												Script: fmt.Sprintf("if exist %s exit 100\nexit 101", checkPaths[7]),
+											},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
+										},
+										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
+												Script: fmt.Sprintf("fsutil file createnew %s 200000\nexit 100", checkPaths[7]),
+											},
+											Interpreter:    osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
+											OutputFilePath: checkPaths[7],
+										},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -1810,6 +1847,44 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 					OsPolicyResourceId: "exec-local-powershell",
 					ConfigSteps:        expectedSteps,
 					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+				{
+					OsPolicyResourceId: "exec-output",
+					ConfigSteps:        expectedSteps,
+					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+					Output: &osconfigpb.OSPolicyResourceCompliance_ExecResourceOutput_{
+						ExecResourceOutput: &osconfigpb.OSPolicyResourceCompliance_ExecResourceOutput{
+							EnforcementOutput: output,
+						},
+					},
+				},
+				{
+					OsPolicyResourceId: "exec-output-too-large",
+					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:         osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+							Outcome:      osconfigpb.OSPolicyResourceConfigStep_FAILED,
+							ErrorMessage: "Error running enforcement: contents of OutputFilePath greater than 100K",
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+					},
+					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+					Output: &osconfigpb.OSPolicyResourceCompliance_ExecResourceOutput_{
+						ExecResourceOutput: &osconfigpb.OSPolicyResourceCompliance_ExecResourceOutput{
+							EnforcementOutput: make([]byte, 100*1024),
+						},
+					},
 				},
 			},
 		},
