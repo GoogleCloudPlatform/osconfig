@@ -26,7 +26,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// Is debug logging enabled.
+// DebugEnabled will log debug messages.
 var DebugEnabled bool
 
 // https://golang.org/pkg/context/#WithValue
@@ -80,7 +80,6 @@ func DebugRPC(ctx context.Context, method string, req proto.Message, resp proto.
 	}
 	fromContext(ctx).log(payload, msg, logger.Debug)
 }
-
 
 // DebugStructured is like Debugf but sends structuredPayload instead of the text message
 // to Cloud Logging.
