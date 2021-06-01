@@ -45,7 +45,7 @@ func getBtime(stat string) (int64, error) {
 			if len(split) != 2 {
 				return 0, fmt.Errorf("error parsing btime from %s: %q", stat, scnr.Text())
 			}
-			btime, err = strconv.ParseInt(string(bytes.TrimSpace(split[1])), 10, 0)
+			btime, err = strconv.ParseInt(string(bytes.TrimSpace(split[1])), 10, 64)
 			if err != nil {
 				return 0, fmt.Errorf("error parsing btime: %v", err)
 			}
@@ -68,7 +68,7 @@ func rpmRebootRequired(pkgs []byte, btime int64) bool {
 	// beneficial.
 	scnr := bufio.NewScanner(bytes.NewReader(pkgs))
 	for scnr.Scan() {
-		itime, err := strconv.ParseInt(scnr.Text(), 10, 0)
+		itime, err := strconv.ParseInt(scnr.Text(), 10, 64)
 		if err != nil {
 			continue
 		}

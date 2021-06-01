@@ -17,19 +17,17 @@ package tasker
 
 import (
 	"context"
-	"os"
 	"runtime/debug"
-	"strings"
 	"sync"
 
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 )
 
 var (
-	tc           chan *task
-	wg           sync.WaitGroup
-	mx           sync.Mutex
-	freeOSMemory = strings.ToLower(os.Getenv("OSCONFIG_FREE_OS_MEMORY"))
+	tc chan *task
+	wg sync.WaitGroup
+	mx sync.Mutex
 )
 
 func initTasker(ctx context.Context) {
@@ -75,7 +73,7 @@ func tasker(ctx context.Context) {
 			clog.Debugf(ctx, "Tasker running %q.", t.name)
 			t.run()
 			clog.Debugf(ctx, "Finished task %q.", t.name)
-			if freeOSMemory == "true" || freeOSMemory == "1" {
+			if agentconfig.FreeOSMemory() {
 				debug.FreeOSMemory()
 			}
 		}

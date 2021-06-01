@@ -3,7 +3,6 @@ package agentendpoint
 import (
 	"context"
 	"fmt"
-	"os"
 	"reflect"
 	"strings"
 	"time"
@@ -23,12 +22,10 @@ const (
 	inventoryURL = agentconfig.ReportURL + "/guestInventory"
 )
 
-var disableInventoryWrite = strings.ToLower(os.Getenv("OSCONFIG_DISABLE_INVENTORY_WRITE"))
-
 // ReportInventory writes inventory to guest attributes and reports it to agent endpoint.
 func (c *Client) ReportInventory(ctx context.Context) {
 	state := inventory.Get(ctx)
-	if disableInventoryWrite != "true" && disableInventoryWrite != "1" {
+	if agentconfig.DisableInventoryWrite() {
 		write(ctx, state, inventoryURL)
 	}
 	c.report(ctx, state)

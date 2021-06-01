@@ -102,6 +102,9 @@ var (
 			}).Dial,
 		},
 	}
+
+	freeOSMemory          = strings.ToLower(os.Getenv("OSCONFIG_FREE_OS_MEMORY"))
+	disableInventoryWrite = strings.ToLower(os.Getenv("OSCONFIG_DISABLE_INVENTORY_WRITE"))
 )
 
 type config struct {
@@ -669,4 +672,14 @@ func RestartFile() string {
 // UserAgent for creating http/grpc clients.
 func UserAgent() string {
 	return "google-osconfig-agent/" + Version()
+}
+
+// DisableInventoryWrite returns if the DisableInventoryWrite setting is set.
+func DisableInventoryWrite() bool {
+	return disableInventoryWrite != "true" && disableInventoryWrite != "1"
+}
+
+// FreeOSMemory returns if the FreeOSMemory setting is set.
+func FreeOSMemory() bool {
+	return freeOSMemory == "true" || freeOSMemory == "1"
 }

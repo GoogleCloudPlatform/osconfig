@@ -102,12 +102,12 @@ func (c *Client) RegisterAgent(ctx context.Context) error {
 	}
 
 	req := &agentendpointpb.RegisterAgentRequest{AgentVersion: agentconfig.Version(), SupportedCapabilities: agentconfig.Capabilities()}
+	req.InstanceIdToken = "<redacted>"
+	clog.DebugRPC(ctx, "RegisterAgent", req, nil)
 	req.InstanceIdToken = token
 
 	resp, err := c.raw.RegisterAgent(ctx, req)
-
-	req.InstanceIdToken = "<redacted>"
-	clog.DebugRPC(ctx, "RegisterAgent", req, resp)
+	clog.DebugRPC(ctx, "RegisterAgent", nil, resp)
 
 	return err
 }
@@ -127,14 +127,16 @@ func (c *Client) reportInventory(ctx context.Context, inventory *agentendpointpb
 	io.Copy(hash, bytes.NewReader(b))
 
 	checksum := hex.EncodeToString(hash.Sum(nil))
-	req := &agentendpointpb.ReportInventoryRequest{InventoryChecksum: checksum, InstanceIdToken: token}
+	req := &agentendpointpb.ReportInventoryRequest{InventoryChecksum: checksum}
 	if reportFull {
-		req = &agentendpointpb.ReportInventoryRequest{InventoryChecksum: checksum, Inventory: inventory, InstanceIdToken: token}
+		req = &agentendpointpb.ReportInventoryRequest{InventoryChecksum: checksum, Inventory: inventory}
 	}
-	resp, err := c.raw.ReportInventory(ctx, req)
-
 	req.InstanceIdToken = "<redacted>"
-	clog.DebugRPC(ctx, "ReportInventory", req, resp)
+	clog.DebugRPC(ctx, "ReportInventory", req, nil)
+	req.InstanceIdToken = token
+
+	resp, err := c.raw.ReportInventory(ctx, req)
+	clog.DebugRPC(ctx, "ReportInventory", nil, resp)
 	return resp, err
 }
 
@@ -143,13 +145,16 @@ func (c *Client) startNextTask(ctx context.Context) (res *agentendpointpb.StartN
 	if err != nil {
 		return nil, err
 	}
-	req := &agentendpointpb.StartNextTaskRequest{InstanceIdToken: token}
+	req := &agentendpointpb.StartNextTaskRequest{}
+	req.InstanceIdToken = "<redacted>"
+	clog.DebugRPC(ctx, "StartNextTask", req, nil)
+	req.InstanceIdToken = token
+
 	err = retryutil.RetryAPICall(ctx, apiRetrySec*time.Second, "StartNextTask", func() error {
 		res, err = c.raw.StartNextTask(ctx, req)
 		return err
 	})
-	req.InstanceIdToken = "<redacted>"
-	clog.DebugRPC(ctx, "StartNextTask", req, res)
+	clog.DebugRPC(ctx, "StartNextTask", nil, res)
 
 	if err != nil {
 		return nil, fmt.Errorf("error calling StartNextTask: %w", err)
@@ -162,13 +167,15 @@ func (c *Client) reportTaskProgress(ctx context.Context, req *agentendpointpb.Re
 	if err != nil {
 		return nil, err
 	}
+	req.InstanceIdToken = "<redacted>"
+	clog.DebugRPC(ctx, "ReportTaskProgress", req, nil)
 	req.InstanceIdToken = token
+
 	err = retryutil.RetryAPICall(ctx, apiRetrySec*time.Second, "ReportTaskProgress", func() error {
 		res, err = c.raw.ReportTaskProgress(ctx, req)
 		return err
 	})
-	req.InstanceIdToken = "<redacted>"
-	clog.DebugRPC(ctx, "ReportTaskProgress", req, res)
+	clog.DebugRPC(ctx, "ReportTaskProgress", nil, res)
 
 	if err != nil {
 		return nil, fmt.Errorf("error calling ReportTaskProgress: %w", err)
@@ -181,15 +188,16 @@ func (c *Client) reportTaskComplete(ctx context.Context, req *agentendpointpb.Re
 	if err != nil {
 		return err
 	}
+	req.InstanceIdToken = "<redacted>"
+	clog.DebugRPC(ctx, "ReportTaskComplete", req, nil)
 	req.InstanceIdToken = token
+
 	var res *agentendpointpb.ReportTaskCompleteResponse
 	err = retryutil.RetryAPICall(ctx, apiRetrySec*time.Second, "ReportTaskComplete", func() error {
 		res, err = c.raw.ReportTaskComplete(ctx, req)
 		return err
 	})
-
-	req.InstanceIdToken = "<redacted>"
-	clog.DebugRPC(ctx, "ReportTaskComplete", req, res)
+	clog.DebugRPC(ctx, "ReportTaskComplete", nil, res)
 
 	if err != nil {
 		return fmt.Errorf("error calling ReportTaskComplete: %w", err)
@@ -277,13 +285,14 @@ func (c *Client) receiveTaskNotification(ctx context.Context) (agentendpointpb.A
 	}
 
 	req := &agentendpointpb.ReceiveTaskNotificationRequest{
-		AgentVersion:    agentconfig.Version(),
-		InstanceIdToken: token,
+		AgentVersion: agentconfig.Version(),
 	}
 
-	resp, err := c.raw.ReceiveTaskNotification(ctx, req)
 	req.InstanceIdToken = "<redacted>"
 	clog.DebugRPC(ctx, "ReceiveTaskNotification", req, nil)
+	req.InstanceIdToken = token
+
+	resp, err := c.raw.ReceiveTaskNotification(ctx, req)
 	return resp, err
 }
 
