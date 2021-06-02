@@ -216,7 +216,7 @@ func RemoveAptPackages(ctx context.Context, pkgs []string) error {
 	return err
 }
 
-func parseAptUpdates(ctx context.Context, data []byte, showNew bool) []PkgInfo {
+func parseAptUpdates(ctx context.Context, data []byte, showNew bool) []*PkgInfo {
 	/*
 		Inst libldap-common [2.4.45+dfsg-1ubuntu1.2] (2.4.45+dfsg-1ubuntu1.3 Ubuntu:18.04/bionic-updates, Ubuntu:18.04/bionic-security [all])
 		Inst firmware-linux-free (3.4 Debian:9.9/stable [all]) []
@@ -231,7 +231,7 @@ func parseAptUpdates(ctx context.Context, data []byte, showNew bool) []PkgInfo {
 
 	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
 
-	var pkgs []PkgInfo
+	var pkgs []*PkgInfo
 	for _, ln := range lines {
 		pkg := bytes.Fields(ln)
 		if len(pkg) < 5 || string(pkg[0]) != "Inst" {
@@ -254,14 +254,14 @@ func parseAptUpdates(ctx context.Context, data []byte, showNew bool) []PkgInfo {
 		}
 		ver := bytes.Trim(pkg[1], "(")             // (246.0.0-0 => 246.0.0-0
 		arch := bytes.Trim(pkg[len(pkg)-1], "[])") // [all]) => all
-		pkgs = append(pkgs, PkgInfo{Name: string(pkg[0]), Arch: osinfo.Architecture(string(arch)), Version: string(ver)})
+		pkgs = append(pkgs, &PkgInfo{Name: string(pkg[0]), Arch: osinfo.Architecture(string(arch)), Version: string(ver)})
 	}
 	return pkgs
 }
 
 // AptUpdates returns all the packages that will be installed when running
 // apt-get [dist-|full-]upgrade.
-func AptUpdates(ctx context.Context, opts ...AptGetUpgradeOption) ([]PkgInfo, error) {
+func AptUpdates(ctx context.Context, opts ...AptGetUpgradeOption) ([]*PkgInfo, error) {
 	aptOpts := &aptGetUpgradeOpts{
 		upgradeType:     AptGetUpgrade,
 		showNew:         false,
@@ -301,7 +301,7 @@ func AptUpdate(ctx context.Context) ([]byte, error) {
 	return run(ctx, aptGet, aptGetUpdateArgs)
 }
 
-func parseInstalledDebpackages(data []byte) []PkgInfo {
+func parseInstalledDebpackages(data []byte) []*PkgInfo {
 	/*
 	   foo amd64 1.2.3-4 installed
 	   bar noarch 1.2.3-4 installed
@@ -310,7 +310,7 @@ func parseInstalledDebpackages(data []byte) []PkgInfo {
 	*/
 	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
 
-	var pkgs []PkgInfo
+	var pkgs []*PkgInfo
 	for _, ln := range lines {
 		pkg := strings.Fields(ln)
 		if len(pkg) != 4 {
@@ -322,13 +322,13 @@ func parseInstalledDebpackages(data []byte) []PkgInfo {
 			continue
 		}
 
-		pkgs = append(pkgs, PkgInfo{Name: pkg[0], Arch: osinfo.Architecture(pkg[1]), Version: pkg[2]})
+		pkgs = append(pkgs, &PkgInfo{Name: pkg[0], Arch: osinfo.Architecture(pkg[1]), Version: pkg[2]})
 	}
 	return pkgs
 }
 
 // InstalledDebPackages queries for all installed deb packages.
-func InstalledDebPackages(ctx context.Context) ([]PkgInfo, error) {
+func InstalledDebPackages(ctx context.Context) ([]*PkgInfo, error) {
 	out, err := run(ctx, dpkgQuery, dpkgQueryArgs)
 	if err != nil {
 		return nil, err

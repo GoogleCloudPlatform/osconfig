@@ -272,10 +272,8 @@ func (c *configTask) postCheckState(ctx context.Context) {
 		pResult := c.results[i]
 		for i, configResource := range osPolicy.GetResources() {
 			res, ok := plcy.resources[configResource.GetId()]
-			// This should not happen in the normal code flow since we only run after
-			// all resources have gone through at least the first two steps.
+			// This should only happen if there was a previous resource with a validate or check state error.
 			if !ok || res == nil {
-				clog.Errorf(ctx, "Unexpected Error: resource entry %q for policy %q is empty.", configResource.GetId(), osPolicy.GetId())
 				continue
 			}
 			rCompliance := pResult.GetOsPolicyResourceCompliances()[i]

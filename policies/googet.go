@@ -50,7 +50,7 @@ func googetChanges(ctx context.Context, gooInstalled, gooRemoved, gooUpdated []*
 	var err error
 	var errs []string
 
-	var installed []packages.PkgInfo
+	var installed []*packages.PkgInfo
 	if len(gooInstalled) > 0 || len(gooUpdated) > 0 || len(gooRemoved) > 0 {
 		installed, err = packages.InstalledGooGetPackages(ctx)
 		if err != nil {
@@ -58,7 +58,7 @@ func googetChanges(ctx context.Context, gooInstalled, gooRemoved, gooUpdated []*
 		}
 	}
 
-	var updates []packages.PkgInfo
+	var updates []*packages.PkgInfo
 	if len(gooUpdated) > 0 {
 		updates, err = packages.GooGetUpdates(ctx)
 		if err != nil {

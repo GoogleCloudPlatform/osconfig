@@ -12,7 +12,6 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
-	"github.com/GoogleCloudPlatform/osconfig/pretty"
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -26,7 +25,9 @@ const (
 // ReportInventory writes inventory to guest attributes and reports it to agent endpoint.
 func (c *Client) ReportInventory(ctx context.Context) {
 	state := inventory.Get(ctx)
-	write(ctx, state, inventoryURL)
+	if !agentconfig.DisableInventoryWrite() {
+		write(ctx, state, inventoryURL)
+	}
 	c.report(ctx, state)
 }
 
@@ -68,7 +69,6 @@ func (c *Client) report(ctx context.Context, state *inventory.InstanceInventory)
 		if err != nil {
 			return err
 		}
-		clog.Debugf(ctx, "ReportInventory response:\n%s", pretty.Format(res))
 		return nil
 	}
 
@@ -79,7 +79,6 @@ func (c *Client) report(ctx context.Context, state *inventory.InstanceInventory)
 
 	if res.GetReportFullInventory() {
 		reportFull = true
-
 		if err = retryutil.RetryAPICall(ctx, apiRetrySec*time.Second, "ReportInventory", f); err != nil {
 			clog.Errorf(ctx, "Error reporting full inventory: %v", err)
 			return
@@ -194,7 +193,7 @@ func formatPackages(ctx context.Context, packages *packages.Packages, shortName 
 	return softwarePackages
 }
 
-func formatAptPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_AptPackage {
+func formatAptPackage(pkg *packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_AptPackage {
 	return &agentendpointpb.Inventory_SoftwarePackage_AptPackage{
 		AptPackage: &agentendpointpb.Inventory_VersionedPackage{
 			PackageName:  pkg.Name,
@@ -203,7 +202,7 @@ func formatAptPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwareP
 		}}
 }
 
-func formatCOSPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_CosPackage {
+func formatCOSPackage(pkg *packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_CosPackage {
 	return &agentendpointpb.Inventory_SoftwarePackage_CosPackage{
 		CosPackage: &agentendpointpb.Inventory_VersionedPackage{
 			PackageName:  pkg.Name,
@@ -212,7 +211,7 @@ func formatCOSPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwareP
 		}}
 }
 
-func formatGooGetPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_GoogetPackage {
+func formatGooGetPackage(pkg *packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_GoogetPackage {
 	return &agentendpointpb.Inventory_SoftwarePackage_GoogetPackage{
 		GoogetPackage: &agentendpointpb.Inventory_VersionedPackage{
 			PackageName:  pkg.Name,
@@ -221,7 +220,7 @@ func formatGooGetPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_Softwa
 		}}
 }
 
-func formatYumPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_YumPackage {
+func formatYumPackage(pkg *packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_YumPackage {
 	return &agentendpointpb.Inventory_SoftwarePackage_YumPackage{
 		YumPackage: &agentendpointpb.Inventory_VersionedPackage{
 			PackageName:  pkg.Name,
@@ -229,7 +228,7 @@ func formatYumPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwareP
 			Version:      pkg.Version}}
 }
 
-func formatZypperPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_ZypperPackage {
+func formatZypperPackage(pkg *packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_ZypperPackage {
 	return &agentendpointpb.Inventory_SoftwarePackage_ZypperPackage{
 		ZypperPackage: &agentendpointpb.Inventory_VersionedPackage{
 			PackageName:  pkg.Name,
@@ -237,7 +236,7 @@ func formatZypperPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_Softwa
 			Version:      pkg.Version}}
 }
 
-func formatZypperPatch(pkg packages.ZypperPatch) *agentendpointpb.Inventory_SoftwarePackage_ZypperPatch {
+func formatZypperPatch(pkg *packages.ZypperPatch) *agentendpointpb.Inventory_SoftwarePackage_ZypperPatch {
 	return &agentendpointpb.Inventory_SoftwarePackage_ZypperPatch{
 		ZypperPatch: &agentendpointpb.Inventory_ZypperPatch{
 			PatchName: pkg.Name,
@@ -247,7 +246,7 @@ func formatZypperPatch(pkg packages.ZypperPatch) *agentendpointpb.Inventory_Soft
 		}}
 }
 
-func formatWUAPackage(pkg packages.WUAPackage) *agentendpointpb.Inventory_SoftwarePackage_WuaPackage {
+func formatWUAPackage(pkg *packages.WUAPackage) *agentendpointpb.Inventory_SoftwarePackage_WuaPackage {
 	var categories []*agentendpointpb.Inventory_WindowsUpdatePackage_WindowsUpdateCategory
 	for idx, category := range pkg.Categories {
 		categories = append(categories, &agentendpointpb.Inventory_WindowsUpdatePackage_WindowsUpdateCategory{
@@ -270,7 +269,7 @@ func formatWUAPackage(pkg packages.WUAPackage) *agentendpointpb.Inventory_Softwa
 		}}
 }
 
-func formatQFEPackage(ctx context.Context, pkg packages.QFEPackage) *agentendpointpb.Inventory_SoftwarePackage_QfePackage {
+func formatQFEPackage(ctx context.Context, pkg *packages.QFEPackage) *agentendpointpb.Inventory_SoftwarePackage_QfePackage {
 	installedTime, err := time.Parse("1/2/2006", pkg.InstalledOn)
 	if err != nil {
 		clog.Warningf(ctx, "Error parsing QFE InstalledOn date: %v", err)

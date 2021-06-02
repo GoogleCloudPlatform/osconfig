@@ -26,8 +26,8 @@ import (
 func TestGetNecessaryChanges(t *testing.T) {
 	tests := [...]struct {
 		name           string
-		installedPkgs  []packages.PkgInfo
-		upgradablePkgs []packages.PkgInfo
+		installedPkgs  []*packages.PkgInfo
+		upgradablePkgs []*packages.PkgInfo
 		installPkgs    []*agentendpointpb.Package
 		removePkgs     []*agentendpointpb.Package
 		updatePkgs     []*agentendpointpb.Package
@@ -119,10 +119,10 @@ func equalSlices(got []string, want []string) bool {
 	return reflect.DeepEqual(got, want)
 }
 
-func createPkgInfos(names ...string) []packages.PkgInfo {
-	var res []packages.PkgInfo
+func createPkgInfos(names ...string) []*packages.PkgInfo {
+	var res []*packages.PkgInfo
 	for _, n := range names {
-		res = append(res, packages.PkgInfo{Name: n})
+		res = append(res, &packages.PkgInfo{Name: n})
 	}
 	return res
 }

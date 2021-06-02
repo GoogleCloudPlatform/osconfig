@@ -41,13 +41,13 @@ func coInitializeEx() error {
 
 // In order to work around memory issues with the WUA library we spawn a
 // new process for these inventory queries.
-func wuaUpdates(ctx context.Context, query string) ([]WUAPackage, error) {
+func wuaUpdates(ctx context.Context, query string) ([]*WUAPackage, error) {
 	exe, err := os.Executable()
 	if err != nil {
 		return nil, err
 	}
 
-	var wua []WUAPackage
+	var wua []*WUAPackage
 	stdout, stderr, err := runner.Run(ctx, exec.Command(exe, "wuaupdates", query))
 	if err != nil {
 		return nil, fmt.Errorf("error running agent to query for WUA updates, err: %v, stderr: %q ", err, stderr)

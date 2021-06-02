@@ -79,7 +79,7 @@ func RunGooGetUpdate(ctx context.Context, opts ...GooGetUpdateOption) error {
 		pkgNames = append(pkgNames, pkg.Name)
 	}
 
-	msg := fmt.Sprintf("%d packages: %s", len(pkgNames), fPkgs)
+	msg := fmt.Sprintf("%d packages: %v", len(pkgNames), fPkgs)
 	if googetOpts.dryrun {
 		clog.Infof(ctx, "Running in dryrun mode, not updating %s", msg)
 		return nil

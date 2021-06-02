@@ -100,6 +100,7 @@ func run(ctx context.Context) {
 		logger.Fatalf("Error parsing metadata, agent cannot start: %v", err.Error())
 	}
 	opts.Debug = agentconfig.Debug()
+	clog.DebugEnabled = agentconfig.Debug()
 	opts.ProjectName = agentconfig.ProjectID()
 
 	if err := logger.Init(ctx, opts); err != nil {
@@ -166,6 +167,9 @@ func runTaskLoop(ctx context.Context, c chan struct{}) {
 	var taskNotificationClient *agentendpoint.Client
 	var err error
 	for {
+		// Set debug logging settings so that customers don't need to restart the agent.
+		logger.SetDebugLogging(agentconfig.Debug())
+		clog.DebugEnabled = agentconfig.Debug()
 		if agentconfig.TaskNotificationEnabled() && (taskNotificationClient == nil || taskNotificationClient.Closed()) {
 			// Start WaitForTaskNotification if we need to.
 			taskNotificationClient, err = agentendpoint.NewClient(ctx)

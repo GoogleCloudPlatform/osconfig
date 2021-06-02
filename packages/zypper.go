@@ -91,7 +91,7 @@ func InstallZypperPackages(ctx context.Context, pkgs []string) error {
 }
 
 // ZypperInstall installs zypper patches and packages
-func ZypperInstall(ctx context.Context, patches []ZypperPatch, pkgs []PkgInfo) error {
+func ZypperInstall(ctx context.Context, patches []*ZypperPatch, pkgs []*PkgInfo) error {
 	args := zypperInstallArgs
 
 	// https://www.mankier.com/8/zypper#Concepts-Package_Types use patch install
@@ -125,7 +125,7 @@ func RemoveZypperPackages(ctx context.Context, pkgs []string) error {
 	return err
 }
 
-func parseZypperUpdates(data []byte) []PkgInfo {
+func parseZypperUpdates(data []byte) []*PkgInfo {
 	/*
 		      S | Repository          | Name                   | Current Version | Available Version | Arch
 		      --+---------------------+------------------------+-----------------+-------------------+-------
@@ -136,7 +136,7 @@ func parseZypperUpdates(data []byte) []PkgInfo {
 
 	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
 
-	var pkgs []PkgInfo
+	var pkgs []*PkgInfo
 	for _, ln := range lines {
 		pkg := bytes.Split(ln, []byte("|"))
 		if len(pkg) != 6 || string(bytes.TrimSpace(pkg[0])) != "v" {
@@ -145,13 +145,13 @@ func parseZypperUpdates(data []byte) []PkgInfo {
 		name := string(bytes.TrimSpace(pkg[2]))
 		arch := string(bytes.TrimSpace(pkg[5]))
 		ver := string(bytes.TrimSpace(pkg[4]))
-		pkgs = append(pkgs, PkgInfo{Name: name, Arch: osinfo.Architecture(arch), Version: ver})
+		pkgs = append(pkgs, &PkgInfo{Name: name, Arch: osinfo.Architecture(arch), Version: ver})
 	}
 	return pkgs
 }
 
 // ZypperUpdates queries for all available zypper updates.
-func ZypperUpdates(ctx context.Context) ([]PkgInfo, error) {
+func ZypperUpdates(ctx context.Context) ([]*PkgInfo, error) {
 	out, err := run(ctx, zypper, zypperListUpdatesArgs)
 	if err != nil {
 		return nil, err
@@ -159,7 +159,7 @@ func ZypperUpdates(ctx context.Context) ([]PkgInfo, error) {
 	return parseZypperUpdates(out), nil
 }
 
-func parseZypperPatches(data []byte) ([]ZypperPatch, []ZypperPatch) {
+func parseZypperPatches(data []byte) ([]*ZypperPatch, []*ZypperPatch) {
 	/*
 		Repository                          | Name                                        | Category    | Severity  | Interactive | Status     | Summary
 		------------------------------------+---------------------------------------------+-------------+-----------+-------------+------------+------------------------------------------------------------
@@ -171,8 +171,8 @@ func parseZypperPatches(data []byte) ([]ZypperPatch, []ZypperPatch) {
 
 	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
 
-	var ins []ZypperPatch
-	var avail []ZypperPatch
+	var ins []*ZypperPatch
+	var avail []*ZypperPatch
 	for _, ln := range lines {
 		patch := bytes.Split(ln, []byte("|"))
 		if len(patch) != 7 {
@@ -186,9 +186,9 @@ func parseZypperPatches(data []byte) ([]ZypperPatch, []ZypperPatch) {
 		sum := string(bytes.TrimSpace(patch[6]))
 		switch status {
 		case "needed":
-			avail = append(avail, ZypperPatch{Name: name, Category: cat, Severity: sev, Summary: sum})
+			avail = append(avail, &ZypperPatch{Name: name, Category: cat, Severity: sev, Summary: sum})
 		case "applied":
-			ins = append(ins, ZypperPatch{Name: name, Category: cat, Severity: sev, Summary: sum})
+			ins = append(ins, &ZypperPatch{Name: name, Category: cat, Severity: sev, Summary: sum})
 		default:
 			continue
 		}
@@ -232,7 +232,7 @@ func zypperPatches(ctx context.Context, opts ...ZypperListOption) ([]byte, error
 }
 
 // ZypperPatches queries for all available zypper patches.
-func ZypperPatches(ctx context.Context, opts ...ZypperListOption) ([]ZypperPatch, error) {
+func ZypperPatches(ctx context.Context, opts ...ZypperListOption) ([]*ZypperPatch, error) {
 	out, err := zypperPatches(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -242,7 +242,7 @@ func ZypperPatches(ctx context.Context, opts ...ZypperListOption) ([]ZypperPatch
 }
 
 // ZypperInstalledPatches queries for all installed zypper patches.
-func ZypperInstalledPatches(ctx context.Context, opts ...ZypperListOption) ([]ZypperPatch, error) {
+func ZypperInstalledPatches(ctx context.Context, opts ...ZypperListOption) ([]*ZypperPatch, error) {
 	out, err := zypperPatches(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -380,7 +380,7 @@ func parseZypperPatchInfo(out []byte) (map[string][]string, error) {
 }
 
 // ZypperPackagesInPatch returns the list of patches, a package upgrade belongs to
-func ZypperPackagesInPatch(ctx context.Context, patches []ZypperPatch) (map[string][]string, error) {
+func ZypperPackagesInPatch(ctx context.Context, patches []*ZypperPatch) (map[string][]string, error) {
 	var patchNames []string
 	for _, patch := range patches {
 		patchNames = append(patchNames, patch.Name)

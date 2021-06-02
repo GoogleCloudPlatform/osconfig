@@ -69,7 +69,7 @@ func yumChanges(ctx context.Context, yumInstalled, yumRemoved, yumUpdated []*age
 	var err error
 	var errs []string
 
-	var installed []packages.PkgInfo
+	var installed []*packages.PkgInfo
 	if len(yumInstalled) > 0 || len(yumUpdated) > 0 || len(yumRemoved) > 0 {
 		installed, err = packages.InstalledRPMPackages(ctx)
 		if err != nil {
@@ -77,7 +77,7 @@ func yumChanges(ctx context.Context, yumInstalled, yumRemoved, yumUpdated []*age
 		}
 	}
 
-	var updates []packages.PkgInfo
+	var updates []*packages.PkgInfo
 	if len(yumUpdated) > 0 {
 		updates, err = packages.YumUpdates(ctx)
 		if err != nil {

@@ -26,6 +26,9 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// DebugEnabled will log debug messages.
+var DebugEnabled bool
+
 // https://golang.org/pkg/context/#WithValue
 type clogKey struct{}
 
@@ -58,18 +61,26 @@ func protoToJSON(p proto.Message) interface{} {
 
 // DebugRPC logs a completed RPC call.
 func DebugRPC(ctx context.Context, method string, req proto.Message, resp proto.Message) {
+	// Do this here so we don't spend resources building the log message if we don't need to.
+	if !DebugEnabled || (req == nil && resp == nil) {
+		return
+	}
 	// The Cloud Logging library doesn't handle proto messages nor structures containing generic JSON.
 	// To work around this we construct map[string]interface{} and fill it with JSON
 	// resulting from explicit conversion of the proto messages.
 	payload := map[string]interface{}{}
 	payload["MethodName"] = method
-	payload["Request"] = protoToJSON(req)
 	var msg string
-	if resp != nil {
+	if resp != nil && req != nil {
 		payload["Response"] = protoToJSON(resp)
+		payload["Request"] = protoToJSON(req)
 		msg = fmt.Sprintf("Called: %s with request:\n%s\nresponse:\n%s\n", method, pretty.Format(req), pretty.Format(resp))
+	} else if resp != nil {
+		payload["Response"] = protoToJSON(resp)
+		msg = fmt.Sprintf("Called: %s with response:\n%s\n", method, pretty.Format(resp))
 	} else {
-		msg = fmt.Sprintf("Called: %s with request:\n%s\n", method, pretty.Format(req))
+		payload["Request"] = protoToJSON(req)
+		msg = fmt.Sprintf("Calling: %s with request:\n%s\n", method, pretty.Format(req))
 	}
 	fromContext(ctx).log(payload, msg, logger.Debug)
 }

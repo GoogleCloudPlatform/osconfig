@@ -219,7 +219,7 @@ var (
 
 func populateInstalledCache(ctx context.Context, mp ManagedPackage) error {
 	var cache *packageCache
-	var refreshFunc func(context.Context) ([]packages.PkgInfo, error)
+	var refreshFunc func(context.Context) ([]*packages.PkgInfo, error)
 	var err error
 	switch {
 	case mp.Apt != nil:

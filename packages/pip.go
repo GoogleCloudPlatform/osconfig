@@ -47,7 +47,7 @@ type pipInstalledPkg struct {
 }
 
 // PipUpdates queries for all available pip updates.
-func PipUpdates(ctx context.Context) ([]PkgInfo, error) {
+func PipUpdates(ctx context.Context) ([]*PkgInfo, error) {
 	out, err := run(ctx, pip, pipOutdatedArgs)
 	if err != nil {
 		return nil, err
@@ -58,16 +58,16 @@ func PipUpdates(ctx context.Context) ([]PkgInfo, error) {
 		return nil, err
 	}
 
-	var pkgs []PkgInfo
+	var pkgs []*PkgInfo
 	for _, pkg := range pipUpdates {
-		pkgs = append(pkgs, PkgInfo{Name: pkg.Name, Arch: noarch, Version: pkg.LatestVersion})
+		pkgs = append(pkgs, &PkgInfo{Name: pkg.Name, Arch: noarch, Version: pkg.LatestVersion})
 	}
 
 	return pkgs, nil
 }
 
 // InstalledPipPackages queries for all installed pip packages.
-func InstalledPipPackages(ctx context.Context) ([]PkgInfo, error) {
+func InstalledPipPackages(ctx context.Context) ([]*PkgInfo, error) {
 	out, err := run(ctx, pip, pipListArgs)
 	if err != nil {
 		return nil, err
@@ -78,9 +78,9 @@ func InstalledPipPackages(ctx context.Context) ([]PkgInfo, error) {
 		return nil, err
 	}
 
-	var pkgs []PkgInfo
+	var pkgs []*PkgInfo
 	for _, pkg := range pipUpdates {
-		pkgs = append(pkgs, PkgInfo{Name: pkg.Name, Arch: noarch, Version: pkg.Version})
+		pkgs = append(pkgs, &PkgInfo{Name: pkg.Name, Arch: noarch, Version: pkg.Version})
 	}
 
 	return pkgs, nil

@@ -44,7 +44,7 @@ func init() {
 	RPMExists = util.Exists(rpm)
 }
 
-func parseInstalledRPMPackages(data []byte) []PkgInfo {
+func parseInstalledRPMPackages(data []byte) []*PkgInfo {
 	/*
 	   foo x86_64 1.2.3-4
 	   bar noarch 2:1.2.3-4
@@ -52,20 +52,20 @@ func parseInstalledRPMPackages(data []byte) []PkgInfo {
 	*/
 	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
 
-	var pkgs []PkgInfo
+	var pkgs []*PkgInfo
 	for _, ln := range lines {
 		pkg := bytes.Fields(ln)
 		if len(pkg) != 3 {
 			continue
 		}
 
-		pkgs = append(pkgs, PkgInfo{Name: string(pkg[0]), Arch: osinfo.Architecture(string(pkg[1])), Version: string(pkg[2])})
+		pkgs = append(pkgs, &PkgInfo{Name: string(pkg[0]), Arch: osinfo.Architecture(string(pkg[1])), Version: string(pkg[2])})
 	}
 	return pkgs
 }
 
 // InstalledRPMPackages queries for all installed rpm packages.
-func InstalledRPMPackages(ctx context.Context) ([]PkgInfo, error) {
+func InstalledRPMPackages(ctx context.Context) ([]*PkgInfo, error) {
 	out, err := run(ctx, rpmquery, rpmqueryInstalledArgs)
 	if err != nil {
 		return nil, err
@@ -91,5 +91,5 @@ func RPMPkgInfo(ctx context.Context, path string) (*PkgInfo, error) {
 	if len(pkgs) != 1 {
 		return nil, fmt.Errorf("unexpected number of parsed rpm packages %d: %q", len(pkgs), out)
 	}
-	return &pkgs[0], nil
+	return pkgs[0], nil
 }

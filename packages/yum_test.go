@@ -206,9 +206,9 @@ func TestParseYumUpdates(t *testing.T) {
 	tests := []struct {
 		name string
 		data []byte
-		want []PkgInfo
+		want []*PkgInfo
 	}{
-		{"NormalCase", data, []PkgInfo{{"kernel", "x86_64", "2.6.32-754.24.3.el6"}, {"foo", "all", "2.0.0-1"}, {"bar", "x86_64", "2.0.0-1"}}},
+		{"NormalCase", data, []*PkgInfo{{"kernel", "x86_64", "2.6.32-754.24.3.el6"}, {"foo", "all", "2.0.0-1"}, {"bar", "x86_64", "2.0.0-1"}}},
 		{"NoPackages", []byte("nothing here"), nil},
 		{"nil", nil, nil},
 	}

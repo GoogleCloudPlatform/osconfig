@@ -102,6 +102,9 @@ var (
 			}).Dial,
 		},
 	}
+
+	freeOSMemory          = strings.ToLower(os.Getenv("OSCONFIG_FREE_OS_MEMORY"))
+	disableInventoryWrite = strings.ToLower(os.Getenv("OSCONFIG_DISABLE_INVENTORY_WRITE"))
 )
 
 type config struct {
@@ -114,7 +117,7 @@ type config struct {
 	zypperRepoFilePath      string
 	yumRepoFilePath         string
 	instanceID              string
-	numericProjectID        int
+	numericProjectID        int64
 	osConfigPollInterval    int
 	debugEnabled            bool
 	taskNotificationEnabled bool
@@ -190,7 +193,7 @@ type instanceJSON struct {
 type projectJSON struct {
 	Attributes       attributesJSON
 	ProjectID        string
-	NumericProjectID int
+	NumericProjectID int64
 }
 
 type attributesJSON struct {
@@ -568,7 +571,7 @@ func Instance() string {
 }
 
 // NumericProjectID is the numeric project ID of the instance.
-func NumericProjectID() int {
+func NumericProjectID() int64 {
 	return getAgentConfig().numericProjectID
 }
 
@@ -669,4 +672,14 @@ func RestartFile() string {
 // UserAgent for creating http/grpc clients.
 func UserAgent() string {
 	return "google-osconfig-agent/" + Version()
+}
+
+// DisableInventoryWrite returns true if the DisableInventoryWrite setting is set.
+func DisableInventoryWrite() bool {
+	return strings.EqualFold(disableInventoryWrite, "true") || disableInventoryWrite == "1"
+}
+
+// FreeOSMemory returns true if the FreeOSMemory setting is set.
+func FreeOSMemory() bool {
+	return strings.EqualFold(freeOSMemory, "true") || freeOSMemory == "1"
 }

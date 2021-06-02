@@ -73,9 +73,9 @@ this is junk data`
 	tests := []struct {
 		name string
 		data []byte
-		want []PkgInfo
+		want []*PkgInfo
 	}{
-		{"NormalCase", []byte(normalCase), []PkgInfo{{"at", "x86_64", "3.1.14-8.3.1"}, {"autoyast2-installation", "all", "3.2.22-2.9.2"}}},
+		{"NormalCase", []byte(normalCase), []*PkgInfo{{"at", "x86_64", "3.1.14-8.3.1"}, {"autoyast2-installation", "all", "3.2.22-2.9.2"}}},
 		{"NoPackages", []byte("nothing here"), nil},
 		{"nil", nil, nil},
 	}
@@ -103,7 +103,7 @@ func TestZypperUpdates(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	want := []PkgInfo{{"at", "x86_64", "3.1.14-8.3.1"}}
+	want := []*PkgInfo{{"at", "x86_64", "3.1.14-8.3.1"}}
 	if !reflect.DeepEqual(ret, want) {
 		t.Errorf("ZypperUpdates() = %v, want %v", ret, want)
 	}
@@ -126,14 +126,14 @@ some junk data`
 	tests := []struct {
 		name      string
 		data      []byte
-		wantIns   []ZypperPatch
-		wantAvail []ZypperPatch
+		wantIns   []*ZypperPatch
+		wantAvail []*ZypperPatch
 	}{
 		{
 			"NormalCase",
 			[]byte(normalCase),
-			[]ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1206", "security", "low", "Security update for bzip2"}},
-			[]ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1221", "security", "moderate", "Security update for libxslt"}, {"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix"}},
+			[]*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1206", "security", "low", "Security update for bzip2"}},
+			[]*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1221", "security", "moderate", "Security update for libxslt"}, {"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix"}},
 		},
 		{"NoPackages", []byte("nothing here"), nil, nil},
 		{"nil", nil, nil, nil},
@@ -166,7 +166,7 @@ func TestZypperPatches(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	want := []ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix"}}
+	want := []*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix"}}
 	if !reflect.DeepEqual(ret, want) {
 		t.Errorf("ZypperPatches() = %v, want %v", ret, want)
 	}
@@ -192,7 +192,7 @@ func TestZypperInstalledPatches(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	want := []ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix"}}
+	want := []*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix"}}
 	if !reflect.DeepEqual(ret, want) {
 		t.Errorf("ZypperInstalledPatches() = %v, want %v", ret, want)
 	}
