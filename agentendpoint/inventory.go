@@ -25,7 +25,7 @@ const (
 // ReportInventory writes inventory to guest attributes and reports it to agent endpoint.
 func (c *Client) ReportInventory(ctx context.Context) {
 	state := inventory.Get(ctx)
-	if agentconfig.DisableInventoryWrite() {
+	if !agentconfig.DisableInventoryWrite() {
 		write(ctx, state, inventoryURL)
 	}
 	c.report(ctx, state)
