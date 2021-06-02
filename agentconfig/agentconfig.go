@@ -674,12 +674,12 @@ func UserAgent() string {
 	return "google-osconfig-agent/" + Version()
 }
 
-// DisableInventoryWrite returns if the DisableInventoryWrite setting is set.
+// DisableInventoryWrite returns true if the DisableInventoryWrite setting is set.
 func DisableInventoryWrite() bool {
-	return disableInventoryWrite != "true" && disableInventoryWrite != "1"
+	return strings.EqualFold(disableInventoryWrite, "true") || disableInventoryWrite == "1"
 }
 
-// FreeOSMemory returns if the FreeOSMemory setting is set.
+// FreeOSMemory returns true if the FreeOSMemory setting is set.
 func FreeOSMemory() bool {
-	return freeOSMemory == "true" || freeOSMemory == "1"
+	return strings.EqualFold(freeOSMemory, "true") || freeOSMemory == "1"
 }
