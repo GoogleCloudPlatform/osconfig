@@ -23,8 +23,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	osconfig "github.com/GoogleCloudPlatform/osconfig/e2e_tests/api/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/api/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
+	osconfigpb "google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
 )
 
 const (
@@ -1255,7 +1254,8 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 	assertTimeout := 180 * time.Second
 	testName := linuxExecResource
 	machineType := "e2-medium"
-	checkPaths := []string{"/path1", "/path2", "/path3", "/path4"}
+	checkPaths := []string{"/path1", "/path2", "/path3", "/path4", "/path5", "/path6"}
+	output := []byte("some output")
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
 	ospa := &osconfigpb.OSPolicyAssignment{
@@ -1283,7 +1283,7 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfig.OSPolicy_Resource_File_Gcs_{
+													Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
 														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
 															Bucket:     "osconfig-agent-end2end-test-resources",
 															Object:     "OSPolicies/validate_shell",
@@ -1298,7 +1298,7 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfig.OSPolicy_Resource_File_Gcs_{
+													Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
 														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
 															Bucket:     "osconfig-agent-end2end-test-resources",
 															Object:     "OSPolicies/enforce_none",
@@ -1320,7 +1320,7 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfig.OSPolicy_Resource_File_Remote_{
+													Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
 														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
 															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/validate_shell",
 															Sha256Checksum: "67837bf4b3be1ff84758e22d2eb46db4904dd57eb50f19de3f51a52be1c5b555",
@@ -1334,7 +1334,7 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfig.OSPolicy_Resource_File_Remote_{
+													Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
 														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
 															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/enforce_none",
 															Sha256Checksum: "6b9f3936ddc557819281d9bd933aa42be513d31447ca683a9bc26e9f14d6abf1",
@@ -1356,7 +1356,7 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfig.OSPolicy_Resource_File_LocalPath{
+													Type: &osconfigpb.OSPolicy_Resource_File_LocalPath{
 														LocalPath: "/validate_shell",
 													},
 												},
@@ -1367,7 +1367,7 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfig.OSPolicy_Resource_File_LocalPath{
+													Type: &osconfigpb.OSPolicy_Resource_File_LocalPath{
 														LocalPath: "/enforce_none",
 													},
 												},
@@ -1395,6 +1395,46 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 											},
 											Args:        []string{checkPaths[3]},
 											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_NONE,
+										},
+									},
+								},
+							},
+							{
+								Id: "exec-output",
+								ResourceType: &osconfigpb.OSPolicy_Resource_Exec{
+									Exec: &osconfigpb.OSPolicy_Resource_ExecResource{
+										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
+												Script: fmt.Sprintf("if ls %s >/dev/null; then\nexit 100\nfi\nexit 101", checkPaths[4]),
+											},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
+										},
+										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
+												Script: fmt.Sprintf("echo -n %q > %s\nexit 100", string(output), checkPaths[4]),
+											},
+											Interpreter:    osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
+											OutputFilePath: checkPaths[4],
+										},
+									},
+								},
+							},
+							{
+								Id: "exec-output-too-large",
+								ResourceType: &osconfigpb.OSPolicy_Resource_Exec{
+									Exec: &osconfigpb.OSPolicy_Resource_ExecResource{
+										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
+												Script: fmt.Sprintf("if ls %s >/dev/null; then\nexit 100\nfi\nexit 101", checkPaths[5]),
+											},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
+										},
+										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
+												Script: fmt.Sprintf("head -c 200KB /dev/zero > %s\nexit 100", checkPaths[5]),
+											},
+											Interpreter:    osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
+											OutputFilePath: checkPaths[5],
 										},
 									},
 								},
@@ -1448,6 +1488,44 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 					ConfigSteps:        expectedSteps,
 					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
 				},
+				{
+					OsPolicyResourceId: "exec-output",
+					ConfigSteps:        expectedSteps,
+					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+					Output: &osconfigpb.OSPolicyResourceCompliance_ExecResourceOutput_{
+						ExecResourceOutput: &osconfigpb.OSPolicyResourceCompliance_ExecResourceOutput{
+							EnforcementOutput: output,
+						},
+					},
+				},
+				{
+					OsPolicyResourceId: "exec-output-too-large",
+					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:         osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+							Outcome:      osconfigpb.OSPolicyResourceConfigStep_FAILED,
+							ErrorMessage: "Error running enforcement: contents of OutputFilePath greater than 100K",
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+					},
+					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+					Output: &osconfigpb.OSPolicyResourceCompliance_ExecResourceOutput_{
+						ExecResourceOutput: &osconfigpb.OSPolicyResourceCompliance_ExecResourceOutput{
+							EnforcementOutput: make([]byte, 100*1024),
+						},
+					},
+				},
 			},
 		},
 	}
@@ -1459,7 +1537,8 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 	assertTimeout := 180 * time.Second
 	testName := windowsExecResource
 	machineType := "e2-standard-2"
-	checkPaths := []string{"/path1", "/path2", "/path3", "/path4", "/path5", "/path6"}
+	checkPaths := []string{"/path1", "/path2", "/path3", "/path4", "/path5", "/path6", "/path7", "/path8"}
+	output := []byte("some output")
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
 	ospa := &osconfigpb.OSPolicyAssignment{
@@ -1487,7 +1566,7 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfig.OSPolicy_Resource_File_Gcs_{
+													Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
 														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
 															Bucket:     "osconfig-agent-end2end-test-resources",
 															Object:     "OSPolicies/validate.cmd",
@@ -1502,7 +1581,7 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfig.OSPolicy_Resource_File_Gcs_{
+													Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
 														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
 															Bucket:     "osconfig-agent-end2end-test-resources",
 															Object:     "OSPolicies/enforce.cmd",
@@ -1524,7 +1603,7 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfig.OSPolicy_Resource_File_Remote_{
+													Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
 														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
 															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/validate.cmd",
 															Sha256Checksum: "1635e97b142fa9dd21bb023093ede409d242f52a535ad779bb80539db95c8f77",
@@ -1538,7 +1617,7 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfig.OSPolicy_Resource_File_Remote_{
+													Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
 														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
 															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/enforce.cmd",
 															Sha256Checksum: "08307e3de5baf1c7051c6901e798aaaf0c5f06350cc4518fbcd431dc6e6af003",
@@ -1560,7 +1639,7 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfig.OSPolicy_Resource_File_LocalPath{
+													Type: &osconfigpb.OSPolicy_Resource_File_LocalPath{
 														LocalPath: "/validate.cmd",
 													},
 												},
@@ -1571,7 +1650,7 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfig.OSPolicy_Resource_File_LocalPath{
+													Type: &osconfigpb.OSPolicy_Resource_File_LocalPath{
 														LocalPath: "/enforce.cmd",
 													},
 												},
@@ -1612,7 +1691,7 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfig.OSPolicy_Resource_File_Gcs_{
+													Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
 														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
 															Bucket:     "osconfig-agent-end2end-test-resources",
 															Object:     "OSPolicies/validate.ps1",
@@ -1627,7 +1706,7 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfig.OSPolicy_Resource_File_Remote_{
+													Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
 														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
 															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/enforce.ps1",
 															Sha256Checksum: "a5737e35f8a3a04785e4e0b9ffa90c5209db320c0ef9692672f5fb0b1dfe99d2",
@@ -1648,7 +1727,7 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfig.OSPolicy_Resource_File_LocalPath{
+													Type: &osconfigpb.OSPolicy_Resource_File_LocalPath{
 														LocalPath: "/validate.ps1",
 													},
 												},
@@ -1659,13 +1738,53 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfig.OSPolicy_Resource_File_LocalPath{
+													Type: &osconfigpb.OSPolicy_Resource_File_LocalPath{
 														LocalPath: "/enforce.ps1",
 													},
 												},
 											},
 											Args:        []string{checkPaths[5]},
 											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_POWERSHELL,
+										},
+									},
+								},
+							},
+							{
+								Id: "exec-output",
+								ResourceType: &osconfigpb.OSPolicy_Resource_Exec{
+									Exec: &osconfigpb.OSPolicy_Resource_ExecResource{
+										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
+												Script: fmt.Sprintf("if exist %s exit 100\nexit 101", checkPaths[6]),
+											},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
+										},
+										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
+												Script: fmt.Sprintf("echo|set /p=%q > %s\nexit 100", string(output), checkPaths[6]),
+											},
+											Interpreter:    osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
+											OutputFilePath: checkPaths[6],
+										},
+									},
+								},
+							},
+							{
+								Id: "exec-output-too-large",
+								ResourceType: &osconfigpb.OSPolicy_Resource_Exec{
+									Exec: &osconfigpb.OSPolicy_Resource_ExecResource{
+										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
+												Script: fmt.Sprintf("if exist %s exit 100\nexit 101", checkPaths[7]),
+											},
+											Interpreter: osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
+										},
+										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
+											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
+												Script: fmt.Sprintf("fsutil file createnew %s 200000\nexit 100", checkPaths[7]),
+											},
+											Interpreter:    osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
+											OutputFilePath: checkPaths[7],
 										},
 									},
 								},
@@ -1728,6 +1847,44 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 					OsPolicyResourceId: "exec-local-powershell",
 					ConfigSteps:        expectedSteps,
 					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+				},
+				{
+					OsPolicyResourceId: "exec-output",
+					ConfigSteps:        expectedSteps,
+					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+					Output: &osconfigpb.OSPolicyResourceCompliance_ExecResourceOutput_{
+						ExecResourceOutput: &osconfigpb.OSPolicyResourceCompliance_ExecResourceOutput{
+							EnforcementOutput: output,
+						},
+					},
+				},
+				{
+					OsPolicyResourceId: "exec-output-too-large",
+					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+						{
+							Type:         osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+							Outcome:      osconfigpb.OSPolicyResourceConfigStep_FAILED,
+							ErrorMessage: "Error running enforcement: contents of OutputFilePath greater than 100K",
+						},
+						{
+							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+						},
+					},
+					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+					Output: &osconfigpb.OSPolicyResourceCompliance_ExecResourceOutput_{
+						ExecResourceOutput: &osconfigpb.OSPolicyResourceCompliance_ExecResourceOutput{
+							EnforcementOutput: make([]byte, 100*1024),
+						},
+					},
 				},
 			},
 		},
