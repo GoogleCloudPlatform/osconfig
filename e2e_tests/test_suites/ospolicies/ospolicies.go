@@ -244,7 +244,7 @@ func testCase(ctx context.Context, testSetup *osPolicyTestSetup, tests chan *jun
 			go func() {
 				defer wg.Done()
 				logger.Printf("Rerunning TestCase %q", rerunTC.Name)
-				//runTest(ctx, rerunTC, testSetup, logger)
+				runTest(ctx, rerunTC, testSetup, logger)
 				rerunTC.Finish(tests)
 				logger.Printf("TestCase %q finished in %fs", rerunTC.Name, rerunTC.Time)
 			}()
