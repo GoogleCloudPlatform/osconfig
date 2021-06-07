@@ -279,6 +279,13 @@ func inventoryTestCase(ctx context.Context, testSetup *inventoryTestSetup, tests
 	gatherInventoryTest.Finish(tests)
 	logger.Printf("TestCase %q finished", gatherInventoryTest.Name)
 	if !ok {
+		rerunTC := junitxml.NewTestCase(testSuiteName, strings.TrimPrefix(gatherInventoryTest.Name, fmt.Sprintf("[%s] ", testSuiteName)))
+		logger.Printf("Rerunning TestCase %q", rerunTC.Name)
+		ga, ok = runGatherInventoryTest(ctx, testSetup, rerunTC, &logwg)
+		rerunTC.Finish(tests)
+		logger.Printf("TestCase %q finished in %fs", rerunTC.Name, rerunTC.Time)
+	}
+	if !ok {
 		hostnameTest.WriteFailure("Setup Failure")
 		hostnameTest.Finish(tests)
 		shortNameTest.WriteFailure("Setup Failure")

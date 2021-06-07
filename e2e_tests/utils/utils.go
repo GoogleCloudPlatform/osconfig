@@ -298,12 +298,12 @@ var HeadWindowsImages = map[string]string{
 
 // OldWindowsImages is a map of names to image paths for old Windows images.
 var OldWindowsImages = map[string]string{
-	"old/windows-2012-r2":      "projects/windows-cloud/global/images/windows-server-2012-r2-dc-v20191008",
-	"old/windows-2012-r2-core": "projects/windows-cloud/global/images/windows-server-2012-r2-dc-core-v20191008",
-	"old/windows-2016":         "projects/windows-cloud/global/images/windows-server-2016-dc-v20191008",
-	"old/windows-2016-core":    "projects/windows-cloud/global/images/windows-server-2016-dc-core-v20191008",
-	"old/windows-2019":         "projects/windows-cloud/global/images/windows-server-2019-dc-v20191008",
-	"old/windows-2019-core":    "projects/windows-cloud/global/images/windows-server-2019-dc-core-v20191008",
+	"old/windows-2012-r2":      "projects/windows-cloud/global/images/windows-server-2012-r2-dc-v20210309",
+	"old/windows-2012-r2-core": "projects/windows-cloud/global/images/windows-server-2012-r2-dc-core-v20210309",
+	"old/windows-2016":         "projects/windows-cloud/global/images/windows-server-2016-dc-v20210309",
+	"old/windows-2016-core":    "projects/windows-cloud/global/images/windows-server-2016-dc-core-v20210309",
+	"old/windows-2019":         "projects/windows-cloud/global/images/windows-server-2019-dc-v20210309",
+	"old/windows-2019-core":    "projects/windows-cloud/global/images/windows-server-2019-dc-core-v20210309",
 }
 
 // HeadCOSImages is a map of names to image paths for public COS image families.
