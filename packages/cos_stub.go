@@ -19,6 +19,6 @@
 package packages
 
 // InstalledCOSPackages is a stub for unsupported architectures.
-func InstalledCOSPackages() ([]PkgInfo, error) {
+func InstalledCOSPackages() ([]*PkgInfo, error) {
 	return nil, nil
 }
