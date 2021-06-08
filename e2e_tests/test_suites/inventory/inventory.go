@@ -76,13 +76,13 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 	logger.Printf("Finished TestSuite %q", testSuite.Name)
 }
 
-func runGatherInventoryTest(ctx context.Context, testSetup *inventoryTestSetup, testCase *junitxml.TestCase, logwg *sync.WaitGroup) ([]*apiBeta.GuestAttributesEntry, bool) {
+func runGatherInventoryTest(ctx context.Context, testSetup *inventoryTestSetup, testCase *junitxml.TestCase, logwg *sync.WaitGroup) []*apiBeta.GuestAttributesEntry {
 	testCase.Logf("Creating compute client")
 
 	computeClient, err := gcpclients.GetComputeClient()
 	if err != nil {
 		testCase.WriteFailure("Error getting compute client: %v", err)
-		return nil, false
+		return nil
 	}
 
 	testSetup.hostname = fmt.Sprintf("inventory-test-%s-%s", path.Base(testSetup.testName), utils.RandString(5))
@@ -101,7 +101,7 @@ func runGatherInventoryTest(ctx context.Context, testSetup *inventoryTestSetup, 
 	inst, err := utils.CreateComputeInstance(metadataItems, computeClient, testSetup.machineType, testSetup.image, testSetup.hostname, testProjectConfig.TestProjectID, zone, testProjectConfig.ServiceAccountEmail, testProjectConfig.ServiceAccountScopes)
 	if err != nil {
 		testCase.WriteFailure("Error creating instance: %v", err)
-		return nil, false
+		return nil
 	}
 	defer inst.Cleanup()
 	defer inst.RecordSerialOutput(ctx, path.Join(*config.OutDir, testSuiteName), 1)
@@ -109,27 +109,27 @@ func runGatherInventoryTest(ctx context.Context, testSetup *inventoryTestSetup, 
 	testCase.Logf("Waiting for agent install to complete")
 	if _, err := inst.WaitForGuestAttributes("osconfig_tests/install_done", 5*time.Second, 10*time.Minute); err != nil {
 		testCase.WriteFailure("Error waiting for osconfig agent install: %v", err)
-		return nil, false
+		return nil
 	}
 
 	return gatherInventory(testCase, testSetup, inst)
 }
 
-func gatherInventory(testCase *junitxml.TestCase, testSetup *inventoryTestSetup, inst *compute.Instance) ([]*apiBeta.GuestAttributesEntry, bool) {
+func gatherInventory(testCase *junitxml.TestCase, testSetup *inventoryTestSetup, inst *compute.Instance) []*apiBeta.GuestAttributesEntry {
 	testCase.Logf("Checking inventory data")
 	// LastUpdated is the last entry written by the agent, so wait on that.
 	_, err := inst.WaitForGuestAttributes("guestInventory/LastUpdated", 10*time.Second, testSetup.timeout)
 	if err != nil {
 		testCase.WriteFailure("Error waiting for guest attributes: %v", err)
-		return nil, false
+		return nil
 	}
 
 	ga, err := inst.GetGuestAttributes("guestInventory/")
 	if err != nil {
 		testCase.WriteFailure("Error getting guest attributes: %v", err)
-		return nil, false
+		return nil
 	}
-	return ga, true
+	return ga
 }
 
 func runHostnameTest(ga []*apiBeta.GuestAttributesEntry, testSetup *inventoryTestSetup, testCase *junitxml.TestCase) {
@@ -275,17 +275,24 @@ func inventoryTestCase(ctx context.Context, testSetup *inventoryTestSetup, tests
 	}
 
 	logger.Printf("Running TestCase %q", gatherInventoryTest.Name)
-	ga, ok := runGatherInventoryTest(ctx, testSetup, gatherInventoryTest, &logwg)
+	ga := runGatherInventoryTest(ctx, testSetup, gatherInventoryTest, &logwg)
 	gatherInventoryTest.Finish(tests)
 	logger.Printf("TestCase %q finished", gatherInventoryTest.Name)
-	if !ok {
-		hostnameTest.WriteFailure("Setup Failure")
-		hostnameTest.Finish(tests)
-		shortNameTest.WriteFailure("Setup Failure")
-		shortNameTest.Finish(tests)
-		packageTest.WriteFailure("Setup Failure")
-		packageTest.Finish(tests)
-		return
+	if gatherInventoryTest.Failure != nil {
+		rerunTC := junitxml.NewTestCase(testSuiteName, strings.TrimPrefix(gatherInventoryTest.Name, fmt.Sprintf("[%s] ", testSuiteName)))
+		logger.Printf("Rerunning TestCase %q", rerunTC.Name)
+		ga = runGatherInventoryTest(ctx, testSetup, rerunTC, &logwg)
+		rerunTC.Finish(tests)
+		logger.Printf("TestCase %q finished in %fs", rerunTC.Name, rerunTC.Time)
+		if rerunTC.Failure != nil {
+			hostnameTest.WriteFailure("Setup Failure")
+			hostnameTest.Finish(tests)
+			shortNameTest.WriteFailure("Setup Failure")
+			shortNameTest.Finish(tests)
+			packageTest.WriteFailure("Setup Failure")
+			packageTest.Finish(tests)
+			return
+		}
 	}
 
 	for tc, f := range map[*junitxml.TestCase]func([]*apiBeta.GuestAttributesEntry, *inventoryTestSetup, *junitxml.TestCase){
