@@ -155,7 +155,7 @@ func (e *execResource) run(ctx context.Context, name string, execR *agentendpoin
 	}
 	args = append(args, execR.GetArgs()...)
 
-	stdout, stderr, err := runner.Run(ctx, exec.Command(cmd, args...))
+	stdout, stderr, err := runner.Run(ctx, exec.CommandContext(ctx, cmd, args...))
 	code := 0
 	if err != nil {
 		code = -1

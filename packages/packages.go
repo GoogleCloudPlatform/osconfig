@@ -106,7 +106,7 @@ type QFEPackage struct {
 }
 
 func run(ctx context.Context, cmd string, args []string) ([]byte, error) {
-	stdout, stderr, err := runner.Run(ctx, exec.Command(cmd, args...))
+	stdout, stderr, err := runner.Run(ctx, exec.CommandContext(ctx, cmd, args...))
 	if err != nil {
 		return nil, fmt.Errorf("error running %s with args %q: %v, stdout: %q, stderr: %q", cmd, args, err, stdout, stderr)
 	}

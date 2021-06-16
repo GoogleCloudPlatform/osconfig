@@ -40,7 +40,7 @@ func init() {
 
 // GemUpdates queries for all available gem updates.
 func GemUpdates(ctx context.Context) ([]*PkgInfo, error) {
-	stdout, _, err := runner.Run(ctx, exec.Command(gem, gemOutdatedArgs...))
+	stdout, _, err := runner.Run(ctx, exec.CommandContext(ctx, gem, gemOutdatedArgs...))
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func GemUpdates(ctx context.Context) ([]*PkgInfo, error) {
 
 // InstalledGemPackages queries for all installed gem packages.
 func InstalledGemPackages(ctx context.Context) ([]*PkgInfo, error) {
-	stdout, _, err := runner.Run(ctx, exec.Command(gem, gemListArgs...))
+	stdout, _, err := runner.Run(ctx, exec.CommandContext(ctx, gem, gemListArgs...))
 	if err != nil {
 		return nil, err
 	}
