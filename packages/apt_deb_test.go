@@ -15,6 +15,7 @@
 package packages
 
 import (
+	"context"
 	"errors"
 	"os"
 	"os/exec"
@@ -32,7 +33,7 @@ func TestInstallAptPackages(t *testing.T) {
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
 
-	expectedCmd := exec.Command(aptGet, append(aptGetInstallArgs, pkgs...)...)
+	expectedCmd := exec.CommandContext(context.Background(), aptGet, append(aptGetInstallArgs, pkgs...)...)
 	expectedCmd.Env = append(os.Environ(),
 		"DEBIAN_FRONTEND=noninteractive",
 	)
@@ -43,7 +44,7 @@ func TestInstallAptPackages(t *testing.T) {
 	}
 
 	first := mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), dpkgErr, errors.New("error")).Times(1)
-	repair := mockCommandRunner.EXPECT().Run(testCtx, exec.Command(dpkg, dpkgRepairArgs...)).After(first).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
+	repair := mockCommandRunner.EXPECT().Run(testCtx, exec.CommandContext(context.Background(), dpkg, dpkgRepairArgs...)).After(first).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).After(repair).Return([]byte("stdout"), []byte("stderr"), errors.New("error")).Times(1)
 	if err := InstallAptPackages(testCtx, pkgs); err == nil {
 		t.Errorf("did not get expected error")
@@ -56,7 +57,7 @@ func TestRemoveAptPackages(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	expectedCmd := exec.Command(aptGet, append(aptGetRemoveArgs, pkgs...)...)
+	expectedCmd := exec.CommandContext(context.Background(), aptGet, append(aptGetRemoveArgs, pkgs...)...)
 	expectedCmd.Env = append(os.Environ(),
 		"DEBIAN_FRONTEND=noninteractive",
 	)
@@ -67,7 +68,7 @@ func TestRemoveAptPackages(t *testing.T) {
 	}
 
 	first := mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), dpkgErr, errors.New("error")).Times(1)
-	repair := mockCommandRunner.EXPECT().Run(testCtx, exec.Command(dpkg, dpkgRepairArgs...)).After(first).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
+	repair := mockCommandRunner.EXPECT().Run(testCtx, exec.CommandContext(context.Background(), dpkg, dpkgRepairArgs...)).After(first).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).After(repair).Return([]byte("stdout"), []byte("stderr"), errors.New("error")).Times(1)
 	if err := RemoveAptPackages(testCtx, pkgs); err == nil {
 		t.Errorf("did not get expected error")
@@ -80,7 +81,7 @@ func TestInstalledDebPackages(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	expectedCmd := exec.Command(dpkgQuery, dpkgQueryArgs...)
+	expectedCmd := exec.CommandContext(context.Background(), dpkgQuery, dpkgQueryArgs...)
 	data := []byte("foo amd64 1.2.3-4 installed")
 
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return(data, []byte("stderr"), nil).Times(1)
@@ -155,8 +156,8 @@ func TestAptUpdates(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	updateCmd := exec.Command(aptGet, aptGetUpdateArgs...)
-	expectedCmd := exec.Command(aptGet, append(aptGetUpgradableArgs, aptGetUpgradeCmd)...)
+	updateCmd := exec.CommandContext(context.Background(), aptGet, aptGetUpdateArgs...)
+	expectedCmd := exec.CommandContext(context.Background(), aptGet, append(aptGetUpgradableArgs, aptGetUpgradeCmd)...)
 	data := []byte("Inst google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [amd64])")
 
 	first := mockCommandRunner.EXPECT().Run(testCtx, updateCmd).Return(data, []byte("stderr"), nil).Times(1)
@@ -185,7 +186,7 @@ func TestDebPkgInfo(t *testing.T) {
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
 	testPkg := "test.deb"
-	expectedCmd := exec.Command(dpkgDeb, "-I", testPkg)
+	expectedCmd := exec.CommandContext(context.Background(), dpkgDeb, "-I", testPkg)
 	out := []byte(`new Debian package, version 2.0.
 	size 6731954 bytes: control archive=2138 bytes.
 		498 bytes,    12 lines      control

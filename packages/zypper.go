@@ -103,7 +103,7 @@ func ZypperInstall(ctx context.Context, patches []*ZypperPatch, pkgs []*PkgInfo)
 		args = append(args, "package:"+pkg.Name)
 	}
 
-	stdout, stderr, err := runner.Run(ctx, exec.Command(zypper, args...))
+	stdout, stderr, err := runner.Run(ctx, exec.CommandContext(ctx, zypper, args...))
 	// https://en.opensuse.org/SDB:Zypper_manual#EXIT_CODES
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {

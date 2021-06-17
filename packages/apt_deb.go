@@ -181,7 +181,7 @@ func DebPkgInfo(ctx context.Context, path string) (*PkgInfo, error) {
 // InstallAptPackages installs apt packages.
 func InstallAptPackages(ctx context.Context, pkgs []string) error {
 	args := append(aptGetInstallArgs, pkgs...)
-	install := exec.Command(aptGet, args...)
+	install := exec.CommandContext(ctx, aptGet, args...)
 	install.Env = append(os.Environ(),
 		"DEBIAN_FRONTEND=noninteractive",
 	)
@@ -200,7 +200,7 @@ func InstallAptPackages(ctx context.Context, pkgs []string) error {
 // RemoveAptPackages removes apt packages.
 func RemoveAptPackages(ctx context.Context, pkgs []string) error {
 	args := append(aptGetRemoveArgs, pkgs...)
-	remove := exec.Command(aptGet, args...)
+	remove := exec.CommandContext(ctx, aptGet, args...)
 	remove.Env = append(os.Environ(),
 		"DEBIAN_FRONTEND=noninteractive",
 	)

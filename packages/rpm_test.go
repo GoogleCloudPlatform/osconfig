@@ -15,6 +15,7 @@
 package packages
 
 import (
+	"context"
 	"errors"
 	"os/exec"
 	"reflect"
@@ -51,7 +52,7 @@ func TestInstalledRPMPackages(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	expectedCmd := exec.Command(rpmquery, rpmqueryInstalledArgs...)
+	expectedCmd := exec.CommandContext(context.Background(), rpmquery, rpmqueryInstalledArgs...)
 
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("foo x86_64 1.2.3-4"), []byte("stderr"), nil).Times(1)
 	ret, err := InstalledRPMPackages(testCtx)
@@ -77,7 +78,7 @@ func TestRPMPkgInfo(t *testing.T) {
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
 	testPkg := "test.rpm"
-	expectedCmd := exec.Command(rpmquery, append(rpmqueryRPMArgs, testPkg)...)
+	expectedCmd := exec.CommandContext(context.Background(), rpmquery, append(rpmqueryRPMArgs, testPkg)...)
 
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("foo x86_64 1.2.3-4"), []byte("stderr"), nil).Times(1)
 	ret, err := RPMPkgInfo(testCtx, testPkg)

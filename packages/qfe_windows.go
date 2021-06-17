@@ -28,8 +28,8 @@ type win32QuickFixEngineering struct {
 // QuickFixEngineering queries the wmi object win32_QuickFixEngineering for a list of installed updates.
 func QuickFixEngineering(ctx context.Context) ([]*QFEPackage, error) {
 	var updts []win32QuickFixEngineering
-	clog.Debugf(ctx, "Querying WMI for installed QuickFixEngineering updates.")
 	query := "SELECT Caption, Description, HotFixID, InstalledOn FROM Win32_QuickFixEngineering"
+	clog.Debugf(ctx, "Querying WMI for installed QuickFixEngineering updates, query=%q.", query)
 	if err := wmi.Query(query, &updts); err != nil {
 		return nil, fmt.Errorf("wmi.Query(%q) error: %v", query, err)
 	}
