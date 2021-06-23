@@ -144,7 +144,7 @@ func parseYumUpdates(data []byte) []*PkgInfo {
 func YumUpdates(ctx context.Context, opts ...YumUpdateOption) ([]*PkgInfo, error) {
 	// We just use check-update to ensure all repo keys are synced as we run
 	// update with --assumeno.
-	stdout, stderr, err := runner.Run(ctx, exec.Command(yum, yumCheckUpdateArgs...))
+	stdout, stderr, err := runner.Run(ctx, exec.CommandContext(ctx, yum, yumCheckUpdateArgs...))
 	// Exit code 0 means no updates, 100 means there are updates.
 	if err == nil {
 		return nil, nil
@@ -187,7 +187,7 @@ func listAndParseYumPackages(ctx context.Context, opts ...YumUpdateOption) ([]*P
 		}
 	}
 
-	stdout, stderr, err := ptyrunner.Run(ctx, exec.Command(yum, args...))
+	stdout, stderr, err := ptyrunner.Run(ctx, exec.CommandContext(ctx, yum, args...))
 	if err != nil {
 		return nil, fmt.Errorf("error running %s with args %q: %v, stdout: %q, stderr: %q", yum, args, err, stdout, stderr)
 	}

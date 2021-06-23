@@ -129,7 +129,22 @@ func (r *DefaultRunner) Run(ctx context.Context, cmd *exec.Cmd) ([]byte, []byte,
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err := cmd.Run()
-	clog.Debugf(ctx, "%s %q exit code: %d, output:\n%s", cmd.Path, cmd.Args[1:], cmd.ProcessState.ExitCode(), strings.ReplaceAll(stdout.String(), "\n", "\n "))
+	clog.DebugStructured(
+		ctx,
+		struct {
+			Command  string
+			Args     []string
+			ExitCode interface{}
+			Stdout   string
+			Stderr   string
+		}{
+			Command:  cmd.Path,
+			Args:     cmd.Args[1:],
+			ExitCode: cmd.ProcessState.ExitCode(),
+			Stdout:   stdout.String(),
+			Stderr:   stderr.String(),
+		},
+		"%s %q exit code: %d, output:\n%s", cmd.Path, cmd.Args[1:], cmd.ProcessState.ExitCode(), strings.ReplaceAll(stdout.String(), "\n", "\n "))
 	return stdout.Bytes(), stderr.Bytes(), err
 }
 

@@ -18,9 +18,9 @@ import (
 	"context"
 	"fmt"
 
+	osconfigV1alpha "cloud.google.com/go/osconfig/apiv1alpha"
 	osconfigV1beta "cloud.google.com/go/osconfig/apiv1beta"
 	"github.com/GoogleCloudPlatform/compute-image-tools/daisy/compute"
-	osconfigZonalV1alpha "github.com/GoogleCloudPlatform/osconfig/e2e_tests/api/cloud.google.com/go/osconfig/apiv1alpha"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/config"
 	"google.golang.org/api/option"
 )
@@ -28,7 +28,7 @@ import (
 var (
 	computeClient              compute.Client
 	osconfigClientV1beta       *osconfigV1beta.Client
-	osconfigZonalClientV1alpha *osconfigZonalV1alpha.OsConfigZonalClient
+	osconfigZonalClientV1alpha *osconfigV1alpha.OsConfigZonalClient
 )
 
 // PopulateClients populates the GCP clients.
@@ -56,7 +56,7 @@ func createOsConfigClientV1beta(ctx context.Context) error {
 
 func createOsConfigClientV1Alpha(ctx context.Context) error {
 	var err error
-	osconfigZonalClientV1alpha, err = osconfigZonalV1alpha.NewOsConfigZonalClient(ctx, option.WithCredentialsFile(config.OauthPath()), option.WithEndpoint(config.SvcEndpoint()))
+	osconfigZonalClientV1alpha, err = osconfigV1alpha.NewOsConfigZonalClient(ctx, option.WithCredentialsFile(config.OauthPath()), option.WithEndpoint(config.SvcEndpoint()))
 	return err
 }
 
@@ -77,7 +77,7 @@ func GetOsConfigClientV1beta() (*osconfigV1beta.Client, error) {
 }
 
 // GetOsConfigClientV1Alpha returns a singleton GCP client for osconfig tests
-func GetOsConfigClientV1Alpha() (*osconfigZonalV1alpha.OsConfigZonalClient, error) {
+func GetOsConfigClientV1Alpha() (*osconfigV1alpha.OsConfigZonalClient, error) {
 	if osconfigZonalClientV1alpha == nil {
 		return nil, fmt.Errorf("v1alpha osconfig client was not initialized")
 	}
