@@ -111,7 +111,7 @@ func RunYumUpdate(ctx context.Context, opts ...YumUpdateOption) error {
 		pkgNames = append(pkgNames, pkg.Name)
 	}
 
-	msg := fmt.Sprintf("%d packages: %v", len(pkgNames), fPkgs)
+	msg := fmt.Sprintf("%d packages: %q", len(pkgNames), fPkgs)
 	if yumOpts.dryrun {
 		clog.Infof(ctx, "Running in dryrun mode, not updating %s", msg)
 		return nil

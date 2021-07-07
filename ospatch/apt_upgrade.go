@@ -92,7 +92,7 @@ func RunAptGetUpgrade(ctx context.Context, opts ...AptGetUpgradeOption) error {
 		pkgNames = append(pkgNames, pkg.Name)
 	}
 
-	msg := fmt.Sprintf("%d packages: %v", len(pkgNames), fPkgs)
+	msg := fmt.Sprintf("%d packages: %q", len(pkgNames), fPkgs)
 	if aptOpts.dryrun {
 		clog.Infof(ctx, "Running in dryrun mode, not updating %s", msg)
 		return nil

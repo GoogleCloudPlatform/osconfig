@@ -81,6 +81,10 @@ type PkgInfo struct {
 	Name, Arch, Version string
 }
 
+func (i *PkgInfo) String() string {
+	return fmt.Sprintf("%s %s %s", i.Name, i.Arch, i.Version)
+}
+
 // ZypperPatch describes a Zypper patch.
 type ZypperPatch struct {
 	Name, Category, Severity, Summary string
