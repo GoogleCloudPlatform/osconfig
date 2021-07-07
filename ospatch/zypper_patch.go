@@ -130,11 +130,11 @@ func RunZypperPatch(ctx context.Context, opts ...ZypperPatchOption) error {
 	if zOpts.withUpdate {
 		pkgUpdates, err = packages.ZypperUpdates(ctx)
 		if err != nil {
-			return nil
+			return err
 		}
 		pkgToPatchesMap, err = packages.ZypperPackagesInPatch(ctx, patches)
 		if err != nil {
-			return nil
+			return err
 		}
 	}
 
@@ -159,7 +159,7 @@ func RunZypperPatch(ctx context.Context, opts ...ZypperPatchOption) error {
 	if len(fpkgs) == 0 {
 		clog.Infof(ctx, "No non-patch packages to update.")
 	} else {
-		msg := fmt.Sprintf("%d patches: %v", len(fpkgs), fpkgs)
+		msg := fmt.Sprintf("%d patches: %q", len(fpkgs), fpkgs)
 		if zOpts.dryrun {
 			clog.Infof(ctx, "Running in dryrun mode, not Updating %s", msg)
 		} else {
