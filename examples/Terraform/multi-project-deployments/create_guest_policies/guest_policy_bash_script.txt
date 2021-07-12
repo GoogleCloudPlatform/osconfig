@@ -1,0 +1,13 @@
+date >> /tmp/osconfig-terraform-multi-project-test.txt
+echo "Execution PASSED!" >> date >> /tmp/osconfig-terraform-multi-project-test.txt
+
+INSTANCE_NAME=$(curl http://metadata.google.internal/computeMetadata/v1/instance/name -H Metadata-Flavor:Google)
+INSTANCE_ZONE=$(curl http://metadata.google.internal/computeMetadata/v1/instance/zone -H Metadata-Flavor:Google | cut -d'/' -f4)
+
+echo "INSTANCE_NAME=${INSTANCE_NAME}" >> /tmp/osconfig-terraform-multi-project-test.txt
+echo "INSTANCE_ZONE=${INSTANCE_ZONE}" >> /tmp/osconfig-terraform-multi-project-test.txt
+
+gcloud compute instances add-metadata \
+  "${INSTANCE_NAME}" \
+  --zone="${INSTANCE_ZONE}" \
+  --metadata='osconfig-terraform-multi-project-test=PASSED'
