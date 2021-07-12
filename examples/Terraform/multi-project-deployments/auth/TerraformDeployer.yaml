@@ -1,0 +1,33 @@
+title: Terraform Deployer can create GCP resources
+description: Custom Role for service account that deploys Terraform plans.
+stage: ALPHA
+includedPermissions:
+- compute.addresses.create
+- compute.addresses.delete
+- compute.addresses.get
+- compute.addresses.use
+- compute.disks.create
+- compute.firewalls.create
+- compute.firewalls.delete
+- compute.firewalls.get
+- compute.instanceTemplates.create
+- compute.instanceTemplates.delete
+- compute.instanceTemplates.get
+- compute.instanceTemplates.useReadOnly
+- compute.instances.create
+- compute.instances.delete
+- compute.instances.get
+- compute.instances.setLabels
+- compute.instances.setMetadata
+- compute.instances.setServiceAccount
+- compute.networks.get
+- compute.networks.updatePolicy
+- compute.subnetworks.use
+- compute.subnetworks.useExternalIp
+- compute.zones.get
+- compute.zones.list
+- billing.resourceAssociations.create
+- resourcemanager.organizations.get
+- resourcemanager.folders.create
+- resourcemanager.projects.create
+- resourcemanager.projects.createBillingAssignment
