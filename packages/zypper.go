@@ -381,6 +381,9 @@ func parseZypperPatchInfo(out []byte) (map[string][]string, error) {
 
 // ZypperPackagesInPatch returns the list of patches, a package upgrade belongs to
 func ZypperPackagesInPatch(ctx context.Context, patches []*ZypperPatch) (map[string][]string, error) {
+	if len(patches) == 0 {
+		return make(map[string][]string), nil
+	}
 	var patchNames []string
 	for _, patch := range patches {
 		patchNames = append(patchNames, patch.Name)

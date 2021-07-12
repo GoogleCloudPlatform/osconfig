@@ -317,5 +317,15 @@ Conflicts   : [32]
 			}
 		}
 	}
+}
 
+func TestZypperPackagesInPatch(t *testing.T) {
+	patches := make([]*ZypperPatch, 0)
+	ppMap, err := ZypperPackagesInPatch(testCtx, patches)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if len(ppMap) > 0 {
+		t.Errorf("Unexpected result: expected no mappings, got = [%+v]", ppMap)
+	}
 }
