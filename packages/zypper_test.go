@@ -320,8 +320,7 @@ Conflicts   : [32]
 }
 
 func TestZypperPackagesInPatch(t *testing.T) {
-	patches := make([]*ZypperPatch, 0)
-	ppMap, err := ZypperPackagesInPatch(testCtx, patches)
+	ppMap, err := ZypperPackagesInPatch(testCtx, nil)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
