@@ -4,11 +4,14 @@
 labels:
 - examples
 approvers:
-  - smaksimov
   - adjackura
   - ryanwe
   - iamsubratp
   - wj-chen
   - manjunathganga
 reviewers:
-  - smaksimov
+  - adjackura
+  - ryanwe
+  - iamsubratp
+  - wj-chen
+  - manjunathganga
