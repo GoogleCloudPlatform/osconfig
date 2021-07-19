@@ -348,13 +348,13 @@ func parseZypperPatchInfo(out []byte) (map[string][]string, error) {
 			//python-solv.x86_64 < 0.6.36-2.27.19.8
 			//zypper.src < 1.13.54-18.40.2
 			//zypper.x86_64 < 1.13.54-18.40.2
-			//zypper-log.noarch < 1.13.54-18.40.2
+			//zypper-log < 1.13.54-18.40.2
 			parts := strings.Split(string(lines[ctr]), "<")
 			if len(parts) != 2 {
 				return nil, fmt.Errorf("invalid package info")
 			}
 			nameArch := strings.Split(parts[0], ".")
-			if len(nameArch) != 2 {
+			if len(nameArch) < 1 || len(nameArch) > 2 {
 				return nil, fmt.Errorf("invalid package info")
 			}
 
