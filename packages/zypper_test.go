@@ -290,6 +290,11 @@ Conflicts   : [32]
     python3-six.noarch < 1.11.0-9.21.2
     common-package.src < 1.1.0-9.3.1
     common-package.x86_64 < 1.1.0-9.3.1
+    zypper.src < 1.14.46-13.1
+    zypper.noarch < 1.14.46-13.1
+    zypper.x86_64 < 1.14.46-13.1
+    zypper-log < 1.14.46-13.1
+    zypper-needs-restarting < 1.14.46-13.1
 
 `
 	ppMap, err := parseZypperPatchInfo([]byte(patchInfo))
