@@ -188,6 +188,13 @@ func formatPackages(ctx context.Context, packages *packages.Packages, shortName 
 			})
 		}
 	}
+	if packages.WinApp != nil {
+		for _, pkg := range packages.COS {
+			softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
+				Details: formatWinapp(pkg),
+			})
+		}
+	}
 	// Ignore Pip and Gem packages.
 
 	return softwarePackages
@@ -282,4 +289,6 @@ func formatQFEPackage(ctx context.Context, pkg *packages.QFEPackage) *agentendpo
 			HotFixId:    pkg.HotFixID,
 			InstallTime: timestamppb.New(installedTime),
 		}}
+}
+func formatWinappPackage(ctx context.Context, pkg *packages.WindowsApplication) {
 }
