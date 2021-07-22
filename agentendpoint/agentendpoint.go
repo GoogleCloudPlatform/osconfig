@@ -102,10 +102,13 @@ func (c *Client) RegisterAgent(ctx context.Context) error {
 		return err
 	}
 
-	oi, err := osinfo.Get()
-	if err != nil {
-		// Log the error but still call RegisterAgent (fields will be empty).
-		clog.Errorf(ctx, "osinfo.Get() error: %v", err)
+	oi := &osinfo.OSInfo{}
+	if agentconfig.OSInventoryEnabled() {
+		oi, err = osinfo.Get()
+		if err != nil {
+			// Log the error but still call RegisterAgent (fields will be empty).
+			clog.Errorf(ctx, "osinfo.Get() error: %v", err)
+		}
 	}
 
 	req := &agentendpointpb.RegisterAgentRequest{
