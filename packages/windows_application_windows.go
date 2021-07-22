@@ -1,0 +1,122 @@
+//  Copyright 2019 Google Inc. All Rights Reserved.
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
+package packages
+
+import (
+	//"golang.org/x/sys/windows"
+	//"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	//"time"
+	"context"
+	"strconv"
+	"time"
+
+	"github.com/GoogleCloudPlatform/osconfig/clog"
+	"golang.org/x/sys/windows/registry"
+)
+
+func getStringValueReturnEmptyIfError(k *registry.Key, value string) string {
+	value, _, err := k.GetStringValue(value)
+	if err != nil {
+		return ""
+	}
+	return value
+}
+
+func parseDate(dateString string) time.Time {
+	var t time.Time
+	if len(dateString) != 8 {
+		return t
+	}
+
+	year, err := strconv.ParseInt(dateString[0:4], 10, 32)
+	if err != nil {
+		return t
+	}
+	month, err := strconv.ParseInt(dateString[4:6], 10, 32)
+	if err != nil {
+		return t
+	}
+	day, err := strconv.ParseInt(dateString[6:8], 10, 32)
+	if err != nil {
+		return t
+	}
+
+	return time.Date(int(year), time.Month(month), int(day), 0, 0, 0, 0, time.Now().Location())
+}
+
+func getWindowsApplicationFromRegistryKey(ctx context.Context, k *registry.Key) *WindowsApplication {
+	displayName, _, errName := k.GetStringValue("DisplayName")
+	_, _, errUninstall := k.GetStringValue("UninstallString")
+
+	if errName == nil && errUninstall == nil {
+		return &WindowsApplication{
+			DisplayName:    displayName,
+			DisplayVersion: getStringValueReturnEmptyIfError(k, "DisplayVersion"),
+			Publisher:      getStringValueReturnEmptyIfError(k, "Publisher"),
+			InstallDate:    parseDate(getStringValueReturnEmptyIfError(k, "InstallDate")),
+			HelpLink:       getStringValueReturnEmptyIfError(k, "HelpLink"),
+		}
+	}
+	return nil
+}
+
+func GetWindowsApplications(ctx context.Context) ([]*WindowsApplication, error) {
+	directories := []string{
+		`SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall`,
+		`SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall`,
+	}
+	var allApps []*WindowsApplication
+
+	for _, dir := range directories {
+		clog.Debugf(ctx, "loading windows applications from: %v", dir)
+		apps, err := loadWindowsApplicationsFromRegistryDirectory(ctx, dir)
+		if err != nil {
+			clog.Debugf(ctx, "error loading windows applications from registry: %v, error: %v", dir, err)
+			continue
+		}
+		allApps = append(allApps, apps...)
+	}
+	clog.Debugf(ctx, "Loaded windows applications")
+	for _, app := range allApps {
+		clog.Debugf(ctx, "%v", app)
+	}
+	return allApps, nil
+}
+
+func loadWindowsApplicationsFromRegistryDirectory(ctx context.Context, directory string) ([]*WindowsApplication, error) {
+	dirKey, err := registry.OpenKey(registry.LOCAL_MACHINE, directory, registry.ENUMERATE_SUB_KEYS)
+	if err != nil {
+		return nil, err
+	}
+	defer dirKey.Close()
+
+	var result []*WindowsApplication
+	subkeys, err := dirKey.ReadSubKeyNames(0)
+	if err != nil {
+		return nil, err
+	}
+	for _, subkey := range subkeys {
+		k, err := registry.OpenKey(dirKey, subkey, registry.QUERY_VALUE)
+		if err != nil {
+			continue
+		}
+		app := getWindowsApplicationFromRegistryKey(ctx, &k)
+		if app != nil {
+			result = append(result, app)
+		}
+		k.Close()
+	}
+	return result, nil
+}
