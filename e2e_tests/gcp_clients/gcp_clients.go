@@ -18,10 +18,10 @@ import (
 	"context"
 	"fmt"
 
-	osconfigV1alpha "cloud.google.com/go/osconfig/apiv1alpha"
 	osconfigV1beta "cloud.google.com/go/osconfig/apiv1beta"
 	"github.com/GoogleCloudPlatform/compute-image-tools/daisy/compute"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/config"
+	osconfigV1alpha "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/cloud.google.com/go/osconfig/apiv1alpha"
 	"google.golang.org/api/option"
 )
 
