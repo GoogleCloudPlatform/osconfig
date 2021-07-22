@@ -22,7 +22,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20210514164344-f6687ab2804c
 	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22
 	google.golang.org/api v0.46.0
-	google.golang.org/genproto v0.0.0-20210517163617-5e0236093d7a
-	google.golang.org/grpc v1.37.1
-	google.golang.org/protobuf v1.26.0
+	google.golang.org/genproto v0.0.0-20210721163202-f1cecdd8b78a
+	google.golang.org/grpc v1.39.0
+	google.golang.org/protobuf v1.27.1
 )

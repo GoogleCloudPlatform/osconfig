@@ -16,6 +16,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
+	date "google.golang.org/genproto/googleapis/type/date"
 )
 
 const (
@@ -188,10 +189,10 @@ func formatPackages(ctx context.Context, packages *packages.Packages, shortName 
 			})
 		}
 	}
-	if packages.WinApp != nil {
-		for _, pkg := range packages.COS {
+	if packages.WindowsApplication != nil {
+		for _, pkg := range packages.WindowsApplication {
 			softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
-				Details: formatWinapp(pkg),
+				Details: formatWindowsApplication(pkg),
 			})
 		}
 	}
@@ -290,5 +291,20 @@ func formatQFEPackage(ctx context.Context, pkg *packages.QFEPackage) *agentendpo
 			InstallTime: timestamppb.New(installedTime),
 		}}
 }
-func formatWinappPackage(ctx context.Context, pkg *packages.WindowsApplication) {
+
+func formatWindowsApplication(pkg *packages.WindowsApplication) *agentendpointpb.Inventory_SoftwarePackage_WindowsApplication {
+
+	d := date.Date{
+		Year:  int32(pkg.InstallDate.Year()),
+		Month: int32(pkg.InstallDate.Month()),
+		Day:   int32(pkg.InstallDate.Day()),
+	}
+	return &agentendpointpb.Inventory_SoftwarePackage_WindowsApplication{
+		WindowsApplication: &agentendpointpb.Inventory_WindowsApplication{
+			DisplayName:    pkg.DisplayName,
+			DisplayVersion: pkg.DisplayVersion,
+			Publisher:      pkg.Publisher,
+			InstallDate:    &d,
+			HelpLink:       pkg.HelpLink,
+		}}
 }
