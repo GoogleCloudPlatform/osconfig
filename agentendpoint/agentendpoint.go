@@ -30,6 +30,7 @@ import (
 	agentendpoint "cloud.google.com/go/osconfig/agentendpoint/apiv1"
 	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
+	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
 	"google.golang.org/api/option"
@@ -101,7 +102,23 @@ func (c *Client) RegisterAgent(ctx context.Context) error {
 		return err
 	}
 
-	req := &agentendpointpb.RegisterAgentRequest{AgentVersion: agentconfig.Version(), SupportedCapabilities: agentconfig.Capabilities()}
+	oi := &osinfo.OSInfo{}
+	if agentconfig.OSInventoryEnabled() {
+		oi, err = osinfo.Get()
+		if err != nil {
+			// Log the error but still call RegisterAgent (fields will be empty).
+			clog.Errorf(ctx, "osinfo.Get() error: %v", err)
+		}
+	}
+
+	req := &agentendpointpb.RegisterAgentRequest{
+		AgentVersion:          agentconfig.Version(),
+		SupportedCapabilities: agentconfig.Capabilities(),
+		OsLongName:            oi.LongName,
+		OsShortName:           oi.ShortName,
+		OsVersion:             oi.Version,
+		OsArchitecture:        oi.Architecture,
+	}
 	req.InstanceIdToken = "<redacted>"
 	clog.DebugRPC(ctx, "RegisterAgent", req, nil)
 	req.InstanceIdToken = token
