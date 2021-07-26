@@ -16,7 +16,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
-	date "google.golang.org/genproto/googleapis/type/date"
+	datepb "google.golang.org/genproto/googleapis/type/date"
 )
 
 const (
@@ -294,7 +294,7 @@ func formatQFEPackage(ctx context.Context, pkg *packages.QFEPackage) *agentendpo
 
 func formatWindowsApplication(pkg *packages.WindowsApplication) *agentendpointpb.Inventory_SoftwarePackage_WindowsApplication {
 
-	d := date.Date{
+	d := datepb.Date{
 		Year:  int32(pkg.InstallDate.Year()),
 		Month: int32(pkg.InstallDate.Month()),
 		Day:   int32(pkg.InstallDate.Day()),

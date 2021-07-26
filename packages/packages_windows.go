@@ -126,7 +126,7 @@ func GetInstalledPackages(ctx context.Context) (*Packages, error) {
 		pkgs.QFE = qfe
 	}
 
-	clog.Debugf(ctx, "Searching for Windows Applications.")
+	clog.Debugf(ctx, "Listing Windows Applications.")
 	if windowsApplications, err := GetWindowsApplications(ctx); err != nil {
 		msg := fmt.Sprintf("error listing installed Windows Applications: %v", err)
 		clog.Debugf(ctx, "Error: %s", msg)
