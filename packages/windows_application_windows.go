@@ -65,12 +65,6 @@ func getWindowsApplication(ctx context.Context, k *registry.Key) *WindowsApplica
 			HelpLink:       getStringValueReturnEmptyIfError(k, "HelpLink"),
 		}
 	}
-	if errName != nil && !registry.ErrNotExist.Is(errName) {
-		clog.Debugf(ctx, "error loading DisplayName value from registry key: %v", errName)
-	}
-	if errUninstall != nil && !registry.ErrNotExist.Is(errUninstall) {
-		clog.Debugf(ctx, "error loading UninstallString value from registry key: %v", errUninstall)
-	}
 	return nil
 }
 
@@ -90,7 +84,10 @@ func GetWindowsApplications(ctx context.Context) ([]*WindowsApplication, error) 
 		}
 		allApps = append(allApps, apps...)
 	}
-	clog.Debugf(ctx, "Loaded windows applications: %v", allApps)
+	clog.Debugf(ctx, "Loaded windows applications")
+	for _, app := range allApps {
+		clog.Debugf(ctx, "Loaded windows applications: %v", app)
+	}
 	return allApps, nil
 }
 
