@@ -74,7 +74,7 @@ type Packages struct {
 	GooGet             []*PkgInfo            `json:"googet,omitempty"`
 	WUA                []*WUAPackage         `json:"wua,omitempty"`
 	QFE                []*QFEPackage         `json:"qfe,omitempty"`
-	WindowsApplication []*WindowsApplication `json:"windowsApplication,omitempty"`
+	WindowsApplication []*WindowsApplication `json:"-"`
 }
 
 // PkgInfo describes a package.

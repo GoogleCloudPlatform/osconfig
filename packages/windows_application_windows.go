@@ -56,13 +56,18 @@ func getWindowsApplication(ctx context.Context, k *registry.Key) *WindowsApplica
 	displayName, _, errName := k.GetStringValue("DisplayName")
 	_, _, errUninstall := k.GetStringValue("UninstallString")
 
+	displayVersion, _, _ := k.GetStringValue("DisplayVersion")
+	publisher, _, _ := k.GetStringValue("Publisher")
+	installDate, _, _ := k.GetStringValue("InstallDate")
+	helpLink, _, _ := k.GetStringValue("HelpLink")
+
 	if errName == nil && errUninstall == nil {
 		return &WindowsApplication{
 			DisplayName:    displayName,
-			DisplayVersion: getStringValueReturnEmptyIfError(k, "DisplayVersion"),
-			Publisher:      getStringValueReturnEmptyIfError(k, "Publisher"),
-			InstallDate:    parseDate(getStringValueReturnEmptyIfError(k, "InstallDate")),
-			HelpLink:       getStringValueReturnEmptyIfError(k, "HelpLink"),
+			DisplayVersion: displayVersion,
+			Publisher:      publisher,
+			InstallDate:    parseDate(installDate),
+			HelpLink:       helpLink,
 		}
 	}
 	return nil
@@ -83,10 +88,6 @@ func GetWindowsApplications(ctx context.Context) ([]*WindowsApplication, error) 
 			continue
 		}
 		allApps = append(allApps, apps...)
-	}
-	clog.Debugf(ctx, "Loaded windows applications")
-	for _, app := range allApps {
-		clog.Debugf(ctx, "Loaded windows applications: %v", app)
 	}
 	return allApps, nil
 }
