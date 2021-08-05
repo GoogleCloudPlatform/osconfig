@@ -56,12 +56,11 @@ func getWindowsApplication(ctx context.Context, k *registry.Key) *WindowsApplica
 	displayName, _, errName := k.GetStringValue("DisplayName")
 	_, _, errUninstall := k.GetStringValue("UninstallString")
 
-	displayVersion, _, _ := k.GetStringValue("DisplayVersion")
-	publisher, _, _ := k.GetStringValue("Publisher")
-	installDate, _, _ := k.GetStringValue("InstallDate")
-	helpLink, _, _ := k.GetStringValue("HelpLink")
-
 	if errName == nil && errUninstall == nil {
+		displayVersion, _, _ := k.GetStringValue("DisplayVersion")
+		publisher, _, _ := k.GetStringValue("Publisher")
+		installDate, _, _ := k.GetStringValue("InstallDate")
+		helpLink, _, _ := k.GetStringValue("HelpLink")
 		return &WindowsApplication{
 			DisplayName:    displayName,
 			DisplayVersion: displayVersion,
