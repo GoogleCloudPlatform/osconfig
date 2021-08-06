@@ -294,10 +294,15 @@ func formatQFEPackage(ctx context.Context, pkg *packages.QFEPackage) *agentendpo
 
 func formatWindowsApplication(pkg *packages.WindowsApplication) *agentendpointpb.Inventory_SoftwarePackage_WindowsApplication {
 
-	d := datepb.Date{
-		Year:  int32(pkg.InstallDate.Year()),
-		Month: int32(pkg.InstallDate.Month()),
-		Day:   int32(pkg.InstallDate.Day()),
+	d := datepb.Date{}
+	// We have to check if date is zero.
+	// Because zero value of time has Year, Month, Day equal to 1
+	if !pkg.InstallDate.IsZero() {
+		d = datepb.Date{
+			Year:  int32(pkg.InstallDate.Year()),
+			Month: int32(pkg.InstallDate.Month()),
+			Day:   int32(pkg.InstallDate.Day()),
+		}
 	}
 	return &agentendpointpb.Inventory_SoftwarePackage_WindowsApplication{
 		WindowsApplication: &agentendpointpb.Inventory_WindowsApplication{

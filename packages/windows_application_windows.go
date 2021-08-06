@@ -23,14 +23,6 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-func getStringValueReturnEmptyIfError(k *registry.Key, value string) string {
-	value, _, err := k.GetStringValue(value)
-	if err != nil {
-		return ""
-	}
-	return value
-}
-
 func parseDate(dateString string) time.Time {
 	if len(dateString) != 8 {
 		return time.Time{}
