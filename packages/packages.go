@@ -62,18 +62,19 @@ var (
 
 // Packages is a selection of packages based on their manager.
 type Packages struct {
-	Yum           []*PkgInfo     `json:"yum,omitempty"`
-	Rpm           []*PkgInfo     `json:"rpm,omitempty"`
-	Apt           []*PkgInfo     `json:"apt,omitempty"`
-	Deb           []*PkgInfo     `json:"deb,omitempty"`
-	Zypper        []*PkgInfo     `json:"zypper,omitempty"`
-	ZypperPatches []*ZypperPatch `json:"zypperPatches,omitempty"`
-	COS           []*PkgInfo     `json:"cos,omitempty"`
-	Gem           []*PkgInfo     `json:"gem,omitempty"`
-	Pip           []*PkgInfo     `json:"pip,omitempty"`
-	GooGet        []*PkgInfo     `json:"googet,omitempty"`
-	WUA           []*WUAPackage  `json:"wua,omitempty"`
-	QFE           []*QFEPackage  `json:"qfe,omitempty"`
+	Yum                []*PkgInfo            `json:"yum,omitempty"`
+	Rpm                []*PkgInfo            `json:"rpm,omitempty"`
+	Apt                []*PkgInfo            `json:"apt,omitempty"`
+	Deb                []*PkgInfo            `json:"deb,omitempty"`
+	Zypper             []*PkgInfo            `json:"zypper,omitempty"`
+	ZypperPatches      []*ZypperPatch        `json:"zypperPatches,omitempty"`
+	COS                []*PkgInfo            `json:"cos,omitempty"`
+	Gem                []*PkgInfo            `json:"gem,omitempty"`
+	Pip                []*PkgInfo            `json:"pip,omitempty"`
+	GooGet             []*PkgInfo            `json:"googet,omitempty"`
+	WUA                []*WUAPackage         `json:"wua,omitempty"`
+	QFE                []*QFEPackage         `json:"qfe,omitempty"`
+	WindowsApplication []*WindowsApplication `json:"-"`
 }
 
 // PkgInfo describes a package.
@@ -107,6 +108,15 @@ type WUAPackage struct {
 // QFEPackage describes a Windows Quick Fix Engineering package.
 type QFEPackage struct {
 	Caption, Description, HotFixID, InstalledOn string
+}
+
+// WindowsApplication describes a Windows Application.
+type WindowsApplication struct {
+	DisplayName    string
+	DisplayVersion string
+	InstallDate    time.Time
+	Publisher      string
+	HelpLink       string
 }
 
 func run(ctx context.Context, cmd string, args []string) ([]byte, error) {
