@@ -9,13 +9,13 @@ then
   exit 1	
 fi
 
-if [ -z "$TF_ADMIN_USER_EMAIL" ]
+if [ -z "$TF_ADMIN_USER" ]
 then 
-  echo "\$TF_ADMIN_USER_EMAIL is empty. You must set it first."
+  echo "\$TF_ADMIN_USER is empty. You must set it first."
   exit 1	
 fi
 
 gcloud organizations add-iam-policy-binding ${TF_VAR_organization_id} \
---member="user:${TF_ADMIN_USER_EMAIL}" \
+--member="user:${TF_ADMIN_USER}" \
 --role="organizations/${TF_VAR_organization_id}/roles/TerraformDeployer6"
 
