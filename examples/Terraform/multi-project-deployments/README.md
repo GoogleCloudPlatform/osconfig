@@ -16,54 +16,65 @@ From the [Cloud Shell](https://cloud.google.com/shell)
 
 Clone the Git repository with the command
 
+
 ```
-git clone ssh://username@gmail.com@source.developers.google.com:2022/p/scip-deployment-manager-dev/r/terraform-multi-project-osconfig-guest-policy
+git clone git@github.com:GoogleCloudPlatform/osconfig.git
 ```
 
 change directory, into the repository
 
 ```
-cd terraform-multi-project-osconfig-guest-policy
+cd examples/Terraform/multi-project-deployments
+```
+
+## Define environment variables
+
+The following variables will contain sensitive information. Therefore, it is
+recommended that you set them dynamically, only for your session.
+
+```
+export TF_VAR_organization_id=YOUR_ORG_ID
+export TF_VAR_billing_account=YOUR_BILLING_ACCOUNT_ID
+export TF_ADMIN_USER_EMAIL=THE_USER_TYPING_TF_COMMANDS
+```
+
+You can find the values for `YOUR_ORG_ID` and `YOUR_BILLING_ACCOUNT_ID` using the following commands:
+
+```
+gcloud organizations list
+gcloud beta billing accounts list
 ```
 
 ## Configure Authorization
 
-A service account ought to be authorized to perform operations in Google Cloud
-infrastructure.
+As the user running the Terraform commands, you will need a set of permissions.
 
 ### Create Custom IAM Roles
 
-In order to assign all the necessary permissions to the service account,
+In order to assign all the necessary permissions,
 [create an IAM custom 
 role](https://cloud.google.com/sdk/gcloud/reference/beta/iam/roles/create)
 using the following commands in the script:
 
 ```
 preparation_scripts/create_terraform_custom_role.sh
-enable_services_in_admin_project.sh
 ```
 
 Where the `TerraformDeployer.yaml` file in this repository already specifies all the permissions needed.
 
-### Create Service Account and assign Custom IAM Role
+### Create and assign Custom IAM Role to TF admin user
 
 Use the commands in the script:
 
 ```
-preparation_scripts/create_terraform_service_account.sh
+preparation_scripts/grant_terraform_custom_role_to_admin_user.sh
 ```
 
-in order to:
-
-*  Create a dedicated service account
-*  Assign to it the Custom IAM Role
-*  Download the service account key
+in order to assign the new Custom Role to the admin user who will be typing Terraform commands.
 
 which follows the GCP documentation for
 
-*  [Creating service accounts](https://cloud.google.com/sdk/gcloud/reference/iam/service-accounts/create).
 *  [Binding IAM policies](https://cloud.google.com/sdk/gcloud/reference/projects/add-iam-policy-binding).
-*  [Creating service account keys](https://cloud.google.com/sdk/gcloud/reference/iam/service-accounts/keys/create).
 
 
 ### Enable required services
