@@ -29,7 +29,6 @@ gcloud services enable cloudresourcemanager.googleapis.com
 gcloud services enable compute.googleapis.com
 gcloud services enable iam.googleapis.com
 gcloud services enable serviceusage.googleapis.com
-gcloud services enable sourcerepo.googleapis.com
 
 gcloud projects add-iam-policy-binding ${TF_ADMIN_PROJECT} \
   --member user:${TF_ADMIN_USER} \
