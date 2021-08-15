@@ -1,5 +1,5 @@
 resource "google_folder" "tf_osconfig_folder" {
-  display_name = var.folder_name
+  display_name = "tf-osconfig-test-folder"
   parent       = "organizations/${var.organization_id}"
 }
 
