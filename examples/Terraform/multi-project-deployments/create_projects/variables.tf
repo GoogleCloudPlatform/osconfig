@@ -7,3 +7,8 @@ variable "billing_account" {
   description = "Billing Account to which charge the Projects."
   type        = string
 }
+
+variable "labels" {
+  type        = map(string)
+  description = "Labels, provided as a map"
+}
