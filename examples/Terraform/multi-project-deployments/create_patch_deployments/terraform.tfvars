@@ -1,3 +1,5 @@
+folder_name = "tf-osconfig-test-folder"
+
 labels = {
   pizza_topping = "pepperoni"
 }
