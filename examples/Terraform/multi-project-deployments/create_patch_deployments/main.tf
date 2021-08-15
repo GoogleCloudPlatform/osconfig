@@ -1,5 +1,9 @@
+locals {
+  folder_name = "tf-osconfig-test-folder"
+}
+
 data "google_active_folder" "terraform_osconfig" {
-  display_name = var.folder_name
+  display_name = local.folder_name
   parent       = "organizations/${var.organization_id}"
 }
 
