@@ -1,8 +1,0 @@
-title: VM Manager Deployer
-description: Custom Role for creating  Guest Policies and Patch Jobs
-stage: ALPHA
-includedPermissions:
-- osconfig.guestPolicies.update
-- resourcemanager.organizations.get
-- resourcemanager.projects.create
-- resourcemanager.projects.createBillingAssignment

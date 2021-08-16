@@ -16,95 +16,64 @@ From the [Cloud Shell](https://cloud.google.com/shell)
 
 Clone the Git repository with the command
 
+
 ```
-git clone ssh://username@gmail.com@source.developers.google.com:2022/p/scip-deployment-manager-dev/r/terraform-multi-project-osconfig-guest-policy
+git clone https://github.com:GoogleCloudPlatform/osconfig.git
 ```
 
 change directory, into the repository
 
 ```
-cd terraform-multi-project-osconfig-guest-policy
+cd osconfig
+cd examples/Terraform/multi-project-deployments
 ```
 
-## Configure Authorization
+## Define environment variables
 
-A service account ought to be authorized to perform operations in Google Cloud
-infrastructure.
-
-### Create Custom IAM Roles
-
-In order to assign all the necessary permissions to the service account,
-[create an IAM custom 
-role](https://cloud.google.com/sdk/gcloud/reference/beta/iam/roles/create)
-using the following commands in the script:
+The following variables will contain sensitive information. Therefore, it is
+recommended that you set them dynamically, only for your session.
 
 ```
-preparation_scripts/create_terraform_custom_role.sh
-enable_services_in_admin_project.sh
+export TF_VAR_organization_id=YOUR_ORG_ID
+export TF_VAR_billing_account=YOUR_BILLING_ACCOUNT_ID
+export TF_ADMIN_PROJECT=THE_PROJECT_FROM_WHERE_TF_COMMANDS_WILL_BE_SENT
+export TF_ADMIN_USER=THE_USER_TYPING_TF_COMMANDS
 ```
 
-Where the `TerraformDeployer.yaml` file in this repository already specifies all the permissions needed.
-
-### Create Service Account and assign Custom IAM Role
-
-Use the commands in the script:
+You can find the values for `YOUR_ORG_ID` and `YOUR_BILLING_ACCOUNT_ID` using the following commands:
 
 ```
-preparation_scripts/create_terraform_service_account.sh
+gcloud organizations list
+gcloud beta billing accounts list
 ```
 
-in order to:
-
-*  Create a dedicated service account
-*  Assign to it the Custom IAM Role
-*  Download the service account key
-
-which follows the GCP documentation for
-
-*  [Creating service accounts](https://cloud.google.com/sdk/gcloud/reference/iam/service-accounts/create).
-*  [Binding IAM policies](https://cloud.google.com/sdk/gcloud/reference/projects/add-iam-policy-binding).
-*  [Creating service account keys](https://cloud.google.com/sdk/gcloud/reference/iam/service-accounts/keys/create).
-
-
-### Enable required services
-
-Use the command in the script
+## Configure User Admin and Project Admin
 
 ```
-preparation_scripts/enable_services_in_admin_project.sh
+cd preparation_scripts
+./create_tf_admin_project.sh
 ```
 
-to enable the API services required for this tutorial.
+This script will create a Project that will serve to administer TF commands. It
+will enable the required services in that project. Finally, it will also grant
+the necessary permissions to the `TF_ADMIN_USER`.
 
-
-### Set up environment variables
-
-As a helper example, use the file
-
-```
-preparation_scripts/setup_env.sh
-```
-
-Edit the file to introduce the appropriate values in the environment variables.
-
-Then use the command
-
-```
-source preparation_scripts/setup_env.sh
-```
 
 ### Create Resources in order
+
+Login as the `TF_ADMIN_USER` and authenticate with the following commands.
+
+```
+gcloud auth application-default login
+gcloud auth application-default set-quota-project $TF_ADMIN_PROJECT
+```
 
 You can now proceed to create the cloud resouces by using the following modules in order:
 
 ```
 create_projects
-enable_projects_for_vmmanager
+
 create_guest_policies
 create_patch_deployments
-create_vm_instances
 ```
-
-Note that the last one `create_vm_instance` could be done either before or after `create_guest_policies` and `create_path_deployments`.
-
 

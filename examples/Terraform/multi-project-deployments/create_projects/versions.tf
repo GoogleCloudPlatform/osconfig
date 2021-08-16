@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">=0.13.0"
+  required_version = ">=0.14.0"
   required_providers {
     google  = ">= 3.43, <4.0"
     archive = "~> 1.0"

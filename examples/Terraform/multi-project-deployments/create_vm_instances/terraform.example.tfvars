@@ -1,3 +1,0 @@
-labels = {
-  key = "value"
-}
