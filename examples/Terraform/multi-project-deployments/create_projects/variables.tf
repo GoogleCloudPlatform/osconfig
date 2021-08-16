@@ -8,6 +8,11 @@ variable "billing_account" {
   type        = string
 }
 
+variable "folder_name" {
+  description = "Folder from where to list projects."
+  type        = string
+}
+
 variable "labels" {
   type        = map(string)
   description = "Labels, provided as a map"

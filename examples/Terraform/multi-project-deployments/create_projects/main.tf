@@ -2,7 +2,7 @@
 #   Create Folder to contain test projects
 #
 resource "google_folder" "tf_osconfig_folder" {
-  display_name = "tf-osconfig-test-folder"
+  display_name = var.folder_name
   parent       = "organizations/${var.organization_id}"
 }
 
