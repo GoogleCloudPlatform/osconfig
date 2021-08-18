@@ -150,7 +150,11 @@ func parseDpkgDeb(data []byte) (*PkgInfo, error) {
 			continue
 		}
 		if bytes.Contains(fields[0], []byte("Package:")) {
-			info.Name = string(fields[1])
+			// Some packages do not adhere to the Debian Policy and might have mix-cased names
+			// And dpkg will register the package with lower case anyway so use lower-case package name
+			// This is necessary because the compliance check is done between the .deb file descriptor value
+			// and the internal dpkg db which register a lower-cased package name
+			info.Name = strings.ToLower(string(fields[1]))
 			continue
 		}
 		if bytes.Contains(fields[0], []byte("Version:")) {
