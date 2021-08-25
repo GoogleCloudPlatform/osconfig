@@ -41,7 +41,7 @@ type inventoryTestSetup struct {
 
 var (
 	windowsSetup = &inventoryTestSetup{
-		packageType: []string{"googet", "wua", "qfe"},
+		packageType: []string{"googet", "wua", "qfe", "windowsapplication"},
 		shortName:   "windows",
 
 		startup:     compute.BuildInstanceMetadataItem("windows-startup-script-ps1", utils.InstallOSConfigGooGet()),
@@ -51,6 +51,13 @@ var (
 			var foundGooget bool
 			var qfeExists bool
 			var wuaExists bool
+			var windowsApplicationExist bool
+			missingWindowsApplications := map[string]bool{
+				"GooGet - google-osconfig-agent": false,
+				"GooGet - googet":                false,
+				"Google Cloud SDK":               false,
+			}
+
 			for _, item := range items {
 				if item.GetInstalledPackage().GetGoogetPackage().GetPackageName() == "googet" {
 					foundGooget = true
@@ -61,7 +68,16 @@ var (
 				if item.GetInstalledPackage().GetWuaPackage() != nil {
 					wuaExists = true
 				}
+				windowsApplication := item.GetInstalledPackage().GetWindowsApplication()
+				if windowsApplication != nil {
+					windowsApplicationExist = true
+					displayName := windowsApplication.GetDisplayName()
+					if _, ok := missingWindowsApplications[displayName]; ok {
+						delete(missingWindowsApplications, displayName)
+					}
+				}
 			}
+
 			if !foundGooget {
 				return errors.New("did not find 'googet' in installed packages")
 			}
@@ -71,6 +87,17 @@ var (
 			if !wuaExists {
 				return errors.New("did not find any WUA installed package")
 			}
+			if !windowsApplicationExist {
+				return errors.New("did not find any Windows Application installed package")
+			}
+			if len(missingWindowsApplications) != 0 {
+				missingApplications := []string{}
+				for app := range missingWindowsApplications {
+					missingApplications = append(missingApplications, app)
+				}
+				return errors.New("did not find Windows Applications: " + strings.Join(missingApplications, ", "))
+			}
+
 			return nil
 		},
 	}
