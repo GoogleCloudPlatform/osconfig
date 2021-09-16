@@ -14,6 +14,7 @@
 
 // Only build for linux but not on unsupported architectures.
 
+//go:build linux && (386 || amd64)
 // +build linux
 // +build 386 amd64
 

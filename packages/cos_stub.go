@@ -14,6 +14,7 @@
 
 // Stub for linux builds.
 
+//go:build linux && !386 && !amd64
 // +build linux,!386,!amd64
 
 package packages
