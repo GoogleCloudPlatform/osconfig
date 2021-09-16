@@ -17,8 +17,11 @@ package agentendpoint
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/pretty"
@@ -34,6 +37,8 @@ var newResource = func(r *agentendpointpb.OSPolicy_Resource) *resource {
 	return &resource{resourceIface: resourceIface(&config.OSPolicyResource{OSPolicy_Resource: r})}
 }
 
+var repoFormats = []string{agentconfig.AptRepoFormat(), agentconfig.YumRepoFormat(), agentconfig.ZypperRepoFormat(), agentconfig.GooGetRepoFormat()}
+
 type configTask struct {
 	StartedAt         time.Time `json:",omitempty"`
 	client            *Client
@@ -42,6 +47,7 @@ type configTask struct {
 	policies          map[string]*policy
 	TaskID            string
 	results           []*agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult
+	managedResources  []*config.ManagedResources
 }
 
 type applyConfigTask struct {
@@ -146,15 +152,17 @@ func validateConfigResource(ctx context.Context, res *resource, policyMR *config
 	if err := res.Validate(ctx); err != nil {
 		outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 		hasError = true
-		errMessage = fmt.Sprintf("Error validating resource: %v", err)
+		errMessage = truncateMessage(fmt.Sprintf("Validate: resource %q error: %v", configResource.GetId(), err), maxErrorMessage)
 		clog.Errorf(ctx, errMessage)
 	} else {
 		// Detect any resource conflicts within this policy.
 		if err := detectPolicyConflicts(res.ManagedResources(), policyMR); err != nil {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 			hasError = true
-			errMessage = fmt.Sprintf("Resource conflict in policy: %v", err)
+			errMessage = fmt.Sprintf("Validate: resource conflict in policy: %v", err)
 			clog.Errorf(ctx, errMessage)
+		} else {
+			clog.Infof(ctx, "Validate: resource %q validation successful.", configResource.GetId())
 		}
 	}
 
@@ -178,7 +186,7 @@ func checkConfigResourceState(ctx context.Context, res *resource, rCompliance *a
 	if err != nil {
 		outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 		hasError = true
-		errMessage = fmt.Sprintf("Error running desired state check: %v", err)
+		errMessage = truncateMessage(fmt.Sprintf("Check state: resource %q error: %v", configResource.GetId(), err), maxErrorMessage)
 		clog.Errorf(ctx, errMessage)
 	} else if res.InDesiredState() {
 		state = agentendpointpb.OSPolicyComplianceState_COMPLIANT
@@ -191,7 +199,7 @@ func checkConfigResourceState(ctx context.Context, res *resource, rCompliance *a
 		Outcome:      outcome,
 		ErrorMessage: errMessage,
 	})
-	clog.Debugf(ctx, "Resource %q state is %s.", configResource.GetId(), state)
+	clog.Infof(ctx, "Check state: resource %q state is %s.", configResource.GetId(), state)
 	rCompliance.State = state
 	return hasError
 }
@@ -201,7 +209,7 @@ func enforceConfigResourceState(ctx context.Context, res *resource, rCompliance 
 	clog.Debugf(ctx, "Running step 'enforce state' on resource %q.", configResource.GetId())
 	// Only enforce resources that need it.
 	if res.InDesiredState() {
-		clog.Debugf(ctx, "No enforcement required for %q.", configResource.GetId())
+		clog.Debugf(ctx, "Enforce state: No enforcement required for %q.", configResource.GetId())
 		return false, false
 	}
 
@@ -211,8 +219,10 @@ func enforceConfigResourceState(ctx context.Context, res *resource, rCompliance 
 	if err != nil {
 		outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 		hasError = true
-		errMessage = fmt.Sprintf("Error running enforcement: %v", err)
+		errMessage = truncateMessage(fmt.Sprintf("Enforce state: resource %q error: %v", configResource.GetId(), err), maxErrorMessage)
 		clog.Errorf(ctx, errMessage)
+	} else {
+		clog.Infof(ctx, "Enforce state: resource %q enforcement successful.", configResource.GetId())
 	}
 
 	rCompliance.ConfigSteps = append(rCompliance.GetConfigSteps(), &agentendpointpb.OSPolicyResourceConfigStep{
@@ -230,7 +240,7 @@ func postCheckConfigResourceState(ctx context.Context, res *resource, rComplianc
 	ctx = clog.WithLabels(ctx, map[string]string{"resource_id": configResource.GetId()})
 	clog.Debugf(ctx, "Running step 'check state post enforcement' on resource %q.", configResource.GetId())
 	if !res.needsPostCheck {
-		clog.Debugf(ctx, "No post check required for %q.", configResource.GetId())
+		clog.Debugf(ctx, "Check state post enforcement: no post check required for %q.", configResource.GetId())
 		return
 	}
 
@@ -240,7 +250,7 @@ func postCheckConfigResourceState(ctx context.Context, res *resource, rComplianc
 	err := res.CheckState(ctx)
 	if err != nil {
 		outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
-		errMessage = fmt.Sprintf("Error running post config desired state check: %v", err)
+		errMessage = truncateMessage(fmt.Sprintf("Check state post enforcement: resource %q error: %v", configResource.GetId(), err), maxErrorMessage)
 		clog.Errorf(ctx, errMessage)
 	} else if res.InDesiredState() {
 		state = agentendpointpb.OSPolicyComplianceState_COMPLIANT
@@ -253,7 +263,7 @@ func postCheckConfigResourceState(ctx context.Context, res *resource, rComplianc
 		Outcome:      outcome,
 		ErrorMessage: errMessage,
 	})
-	clog.Debugf(ctx, "Resource %q state is %s.", configResource.GetId(), state)
+	clog.Infof(ctx, "Check state post enforcement: resource %q state is %s.", configResource.GetId(), state)
 	rCompliance.State = state
 }
 
@@ -301,7 +311,43 @@ func (c *configTask) generateBaseResults() {
 	}
 }
 
+func removeIfNoMatch(a string, s []string) error {
+	for _, b := range s {
+		if a == b {
+			return nil
+		}
+	}
+	return os.Remove(a)
+}
+
+func (c *configTask) cleanupRepos(ctx context.Context) {
+	var managedRepos []string
+	for _, managedResource := range c.managedResources {
+		if managedResource == nil {
+			continue
+		}
+		for _, managedRepo := range managedResource.Repositories {
+			managedRepos = append(managedRepos, managedRepo.RepoFilePath)
+		}
+	}
+	for _, format := range repoFormats {
+		matches, err := filepath.Glob(fmt.Sprintf(format, "*"))
+		if err != nil {
+			clog.Errorf(ctx, "Error globing directory: %v", err)
+		}
+		for _, match := range matches {
+			if err := removeIfNoMatch(match, managedRepos); err != nil {
+				clog.Errorf(ctx, "Error cleaning up old repo: %v", err)
+			}
+		}
+	}
+}
+
 func (c *configTask) cleanup(ctx context.Context) {
+	// Purge repositories that are no longer managed.
+	c.cleanupRepos(ctx)
+
+	// Cleanup any policy specific resources.
 	for _, osPolicy := range c.Task.GetOsPolicies() {
 		ctx = clog.WithLabels(ctx, map[string]string{"config_assignment": osPolicy.GetOsPolicyAssignment(), "policy_id": osPolicy.GetId()})
 		plcy := c.policies[osPolicy.GetId()]
@@ -354,7 +400,7 @@ func (c *configTask) run(ctx context.Context) error {
 
 		var validateOnly bool
 		if osPolicy.GetMode() == agentendpointpb.OSPolicy_VALIDATION {
-			clog.Debugf(ctx, "Policy running in VALIDATION mode, not running enforcement action for any resources.")
+			clog.Infof(ctx, "Policy running in VALIDATION mode, not running enforcement action for any resources.")
 			validateOnly = true
 		}
 
@@ -392,6 +438,7 @@ func (c *configTask) run(ctx context.Context) error {
 				break
 			}
 		}
+		c.managedResources = append(c.managedResources, policyMR)
 	}
 
 	// Run any post checks that we need to.

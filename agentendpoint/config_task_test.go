@@ -17,6 +17,10 @@ package agentendpoint
 import (
 	"context"
 	"errors"
+	"fmt"
+	"io/ioutil"
+	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/GoogleCloudPlatform/osconfig/config"
@@ -146,7 +150,7 @@ func genTestResourceCompliance(id string, steps int, inDesiredState bool) *agent
 	if steps > 0 {
 		outcome := agentendpointpb.OSPolicyResourceConfigStep_FAILED
 		state := agentendpointpb.OSPolicyComplianceState_UNKNOWN
-		errMsg := "Error validating resource: " + errTest.Error()
+		errMsg := `Validate: resource "r1" error: ` + errTest.Error()
 		if steps > 1 {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
 			errMsg = ""
@@ -166,7 +170,7 @@ func genTestResourceCompliance(id string, steps int, inDesiredState bool) *agent
 		if steps == 2 && !inDesiredState {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 			state = agentendpointpb.OSPolicyComplianceState_UNKNOWN
-			errMsg = "Error running desired state check: " + errTest.Error()
+			errMsg = `Check state: resource "r1" error: ` + errTest.Error()
 		} else if inDesiredState {
 			state = agentendpointpb.OSPolicyComplianceState_COMPLIANT
 		}
@@ -181,7 +185,7 @@ func genTestResourceCompliance(id string, steps int, inDesiredState bool) *agent
 	if steps > 2 {
 		outcome := agentendpointpb.OSPolicyResourceConfigStep_FAILED
 		state := agentendpointpb.OSPolicyComplianceState_UNKNOWN
-		errMsg := "Error running enforcement: " + errTest.Error()
+		errMsg := `Enforce state: resource "r1" error: ` + errTest.Error()
 		if steps > 3 {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
 			errMsg = ""
@@ -201,7 +205,7 @@ func genTestResourceCompliance(id string, steps int, inDesiredState bool) *agent
 		if steps == 4 {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 			state = agentendpointpb.OSPolicyComplianceState_UNKNOWN
-			errMsg = "Error running post config desired state check: " + errTest.Error()
+			errMsg = `Check state post enforcement: resource "r1" error: ` + errTest.Error()
 		} else if steps == 5 {
 			state = agentendpointpb.OSPolicyComplianceState_COMPLIANT
 		}
@@ -415,6 +419,37 @@ func TestRunApplyConfig(t *testing.T) {
 				t.Fatalf("ReportTaskCompleteRequest mismatch (-want +got):\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestCleanupRepos(t *testing.T) {
+	ctx := context.Background()
+	tmpDir, err := ioutil.TempDir("", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	repoFormats = []string{filepath.Join(tmpDir, "some_repo_%s.repo"), filepath.Join(tmpDir, "some/other_repo_%s.repo")}
+	want := []string{filepath.Join(tmpDir, "some_repo.repo"), filepath.Join(tmpDir, fmt.Sprintf("some_repo_%s.repo", "123456"))}
+
+	task := &configTask{}
+	task.managedResources = []*config.ManagedResources{{Repositories: []config.ManagedRepository{{RepoFilePath: want[1]}}}}
+
+	// Create the repos.
+	if err := ioutil.WriteFile(want[0], nil, 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := ioutil.WriteFile(want[1], nil, 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := ioutil.WriteFile(filepath.Join(tmpDir, fmt.Sprintf("some_repo_%s.repo", "do_not_want")), nil, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	task.cleanupRepos(ctx)
+
+	got, err := filepath.Glob(tmpDir + "/*")
+	if !reflect.DeepEqual(want, got) {
+		t.Errorf("want != got: want: %q, got:%q", want, got)
 	}
 }
 

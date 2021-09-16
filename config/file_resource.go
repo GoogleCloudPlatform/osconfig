@@ -24,6 +24,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
@@ -185,6 +186,7 @@ func copyFile(dst, src string, perms os.FileMode) (retErr error) {
 }
 
 func (f *fileResource) enforceState(ctx context.Context) (inDesiredState bool, err error) {
+	clog.Infof(ctx, "Enforcing state %q for file %q.", f.managedFile.State, f.managedFile.Path)
 	switch f.managedFile.State {
 	case agentendpointpb.OSPolicy_Resource_FileResource_ABSENT:
 		if err := os.Remove(f.managedFile.Path); err != nil {

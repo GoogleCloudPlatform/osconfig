@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -514,6 +515,11 @@ func ZypperRepoDir() string {
 	return zypperRepoDir
 }
 
+// ZypperRepoFormat is the format of the zypper repo files.
+func ZypperRepoFormat() string {
+	return filepath.Join(zypperRepoDir, "osconfig_managed_%s.repo")
+}
+
 // ZypperRepoFilePath is the location where the zypper repo file will be created.
 func ZypperRepoFilePath() string {
 	return getAgentConfig().zypperRepoFilePath
@@ -522,6 +528,11 @@ func ZypperRepoFilePath() string {
 // YumRepoDir is the location of the yum repo files.
 func YumRepoDir() string {
 	return yumRepoDir
+}
+
+// YumRepoFormat is the format of the yum repo files.
+func YumRepoFormat() string {
+	return filepath.Join(yumRepoDir, "osconfig_managed_%s.repo")
 }
 
 // YumRepoFilePath is the location where the yum repo file will be created.
@@ -534,6 +545,11 @@ func AptRepoDir() string {
 	return aptRepoDir
 }
 
+// AptRepoFormat is the format of the apt repo files.
+func AptRepoFormat() string {
+	return filepath.Join(aptRepoDir, "osconfig_managed_%s.list")
+}
+
 // AptRepoFilePath is the location where the apt repo file will be created.
 func AptRepoFilePath() string {
 	return getAgentConfig().aptRepoFilePath
@@ -542,6 +558,11 @@ func AptRepoFilePath() string {
 // GooGetRepoDir is the location of the googet repo files.
 func GooGetRepoDir() string {
 	return googetRepoDir
+}
+
+// GooGetRepoFormat is the format of the googet repo files.
+func GooGetRepoFormat() string {
+	return filepath.Join(googetRepoDir, "osconfig_managed_%s.repo")
 }
 
 // GooGetRepoFilePath is the location where the googet repo file will be created.
