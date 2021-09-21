@@ -311,7 +311,7 @@ func (c *configTask) generateBaseResults() {
 	}
 }
 
-func removeIfNoMatch(a string, s []string) error {
+func removeFileIfNoMatch(a string, s []string) error {
 	for _, b := range s {
 		if a == b {
 			return nil
