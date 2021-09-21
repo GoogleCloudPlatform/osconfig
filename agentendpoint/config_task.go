@@ -336,7 +336,7 @@ func (c *configTask) cleanupRepos(ctx context.Context) {
 			clog.Errorf(ctx, "Error globing directory: %v", err)
 		}
 		for _, match := range matches {
-			if err := removeIfNoMatch(match, managedRepos); err != nil {
+			if err := removeFileIfNoMatch(match, managedRepos); err != nil {
 				clog.Errorf(ctx, "Error cleaning up old repo: %v", err)
 			}
 		}
