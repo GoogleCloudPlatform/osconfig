@@ -159,7 +159,7 @@ func validateConfigResource(ctx context.Context, res *resource, policyMR *config
 		if err := detectPolicyConflicts(res.ManagedResources(), policyMR); err != nil {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 			hasError = true
-			errMessage = fmt.Sprintf("Validate: resource conflict in policy: %v", err)
+			errMessage = truncateMessage(fmt.Sprintf("Validate: resource conflict in policy: %v", err), maxErrorMessage)
 			clog.Errorf(ctx, errMessage)
 		} else {
 			clog.Infof(ctx, "Validate: resource %q validation successful.", configResource.GetId())
