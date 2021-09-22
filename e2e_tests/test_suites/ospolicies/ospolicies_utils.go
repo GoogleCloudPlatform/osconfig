@@ -16,21 +16,10 @@ package ospolicies
 
 import (
 	"fmt"
-	"path"
 	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
 	computeApi "google.golang.org/api/compute/v1"
-)
-
-var (
-	yumStartupScripts = map[string]string{
-		"rhel-6":   utils.InstallOSConfigEL6(),
-		"rhel-7":   utils.InstallOSConfigEL7(),
-		"rhel-8":   utils.InstallOSConfigEL8(),
-		"centos-7": utils.InstallOSConfigEL7(),
-		"centos-8": utils.InstallOSConfigEL8(),
-	}
 )
 
 func getStartupScriptPackage(image, pkgManager string) *computeApi.MetadataItems {
@@ -122,7 +111,7 @@ while true; do
   fi
   sleep 10
 done`
-		ss = fmt.Sprintf(ss, yumStartupScripts[path.Base(image)], wantRemove, wantInstall, packageInstalled, packageNotInstalled)
+		ss = fmt.Sprintf(ss, utils.InstallOSConfigEL(image), wantRemove, wantInstall, packageInstalled, packageNotInstalled)
 		key = "startup-script"
 
 	case "rpm":
@@ -145,7 +134,7 @@ while true; do
   fi
   sleep 10
 done`
-		install := yumStartupScripts[path.Base(image)]
+		install := utils.InstallOSConfigEL(image)
 		if strings.Contains(image, "suse") {
 			install = utils.InstallOSConfigSUSE()
 		}
@@ -266,7 +255,7 @@ while true; do
   fi
   sleep 10
 done`
-		ss = fmt.Sprintf(ss, yumStartupScripts[path.Base(image)], packageName, packageInstalled)
+		ss = fmt.Sprintf(ss, utils.InstallOSConfigEL(image), packageName, packageInstalled)
 		key = "startup-script"
 
 	case "googet":
@@ -350,7 +339,7 @@ curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"`, fileExists)
 		key = "startup-script"
 
 	case "yum":
-		ss = fmt.Sprintf(linux, dnePath, yumStartupScripts[path.Base(image)], fileDNE)
+		ss = fmt.Sprintf(linux, dnePath, utils.InstallOSConfigEL(image), fileDNE)
 		for _, p := range wantPaths {
 			ss += fmt.Sprintf(linuxCheck, p)
 		}
@@ -439,7 +428,7 @@ curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"`, fileExists)
 		key = "startup-script"
 
 	case "yum":
-		ss = linux + yumStartupScripts[path.Base(image)] + linuxChecks + linuxEnd
+		ss = linux + utils.InstallOSConfigEL(image) + linuxChecks + linuxEnd
 		key = "startup-script"
 
 	case "zypper":
