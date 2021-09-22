@@ -115,6 +115,11 @@ func formatPackages(ctx context.Context, packages *packages.Packages, shortName 
 				Details: formatAptPackage(pkg),
 			})
 		}
+		for _, pkg := range packages.Deb {
+			softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
+				Details: formatAptPackage(pkg),
+			})
+		}
 	}
 	if packages.GooGet != nil {
 		for _, pkg := range packages.GooGet {
@@ -129,9 +134,19 @@ func formatPackages(ctx context.Context, packages *packages.Packages, shortName 
 				Details: formatYumPackage(pkg),
 			})
 		}
+		for _, pkg := range packages.Rpm {
+			softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
+				Details: formatYumPackage(pkg),
+			})
+		}
 	}
 	if packages.Zypper != nil {
 		for _, pkg := range packages.Zypper {
+			softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
+				Details: formatZypperPackage(pkg),
+			})
+		}
+		for _, pkg := range packages.Rpm {
 			softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
 				Details: formatZypperPackage(pkg),
 			})
@@ -156,30 +171,6 @@ func formatPackages(ctx context.Context, packages *packages.Packages, shortName 
 			softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
 				Details: formatQFEPackage(ctx, pkg),
 			})
-		}
-	}
-	// Map Deb packages to Apt packages.
-	if packages.Deb != nil {
-		for _, pkg := range packages.Deb {
-			softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
-				Details: formatAptPackage(pkg),
-			})
-		}
-	}
-	// Map Rpm packages to Yum or Zypper packages depending on the OS.
-	if packages.Rpm != nil {
-		if shortName == "sles" {
-			for _, pkg := range packages.Rpm {
-				softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
-					Details: formatZypperPackage(pkg),
-				})
-			}
-		} else {
-			for _, pkg := range packages.Rpm {
-				softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
-					Details: formatYumPackage(pkg),
-				})
-			}
 		}
 	}
 	if packages.COS != nil {
