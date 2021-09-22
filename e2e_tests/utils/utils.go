@@ -18,6 +18,8 @@ package utils
 import (
 	"fmt"
 	"math/rand"
+	"path"
+	"strings"
 	"time"
 
 	daisyCompute "github.com/GoogleCloudPlatform/compute-image-tools/daisy/compute"
@@ -189,6 +191,19 @@ func InstallOSConfigEL6() string {
 		return fmt.Sprintf(yumRepoSetup+yumInstallAgent, "el6", config.AgentRepo(), 1)
 	}
 	return fmt.Sprintf(yumRepoSetup+yumInstallAgent, "el6", config.AgentRepo(), 0)
+}
+
+// InstallOSConfigEL installs the osconfig agent on el based systems.
+func InstallOSConfigEL(image string) string {
+	switch {
+	case strings.Contains(path.Base(image), "8"):
+		return InstallOSConfigEL8()
+	case strings.Contains(path.Base(image), "7"):
+		return InstallOSConfigEL7()
+	case strings.Contains(path.Base(image), "6"):
+		return InstallOSConfigEL6()
+	}
+	return ""
 }
 
 // HeadAptImages is a map of names to image paths for public image families that use APT.

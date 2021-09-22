@@ -16,6 +16,7 @@ package inventoryreporting
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -44,11 +45,12 @@ var (
 		packageType: []string{"googet", "wua", "qfe", "windowsapplication"},
 		shortName:   "windows",
 
-		startup:     compute.BuildInstanceMetadataItem("windows-startup-script-ps1", utils.InstallOSConfigGooGet()),
+		startup:     compute.BuildInstanceMetadataItem("windows-startup-script-ps1", getStartupScriptGoo()),
 		machineType: "e2-standard-2",
 		timeout:     25 * time.Minute,
 		itemCheck: func(items map[string]*osconfigpb.Inventory_Item) error {
 			var foundGooget bool
+			var foundCowsay bool
 			var qfeExists bool
 			var wuaExists bool
 			var windowsApplicationExist bool
@@ -61,6 +63,9 @@ var (
 			for _, item := range items {
 				if item.GetInstalledPackage().GetGoogetPackage().GetPackageName() == "googet" {
 					foundGooget = true
+				}
+				if item.GetAvailablePackage().GetGoogetPackage().GetPackageName() == "cowsay" {
+					foundCowsay = true
 				}
 				if item.GetInstalledPackage().GetQfePackage() != nil {
 					qfeExists = true
@@ -80,6 +85,9 @@ var (
 
 			if !foundGooget {
 				return errors.New("did not find 'googet' in installed packages")
+			}
+			if !foundCowsay {
+				return errors.New("did not find 'cowsay' in available packages")
 			}
 			if !qfeExists {
 				return errors.New("did not find any QFE installed package")
@@ -104,30 +112,53 @@ var (
 
 	aptSetup = &inventoryTestSetup{
 		packageType: []string{"deb"},
-		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigDeb()),
+		startup:     compute.BuildInstanceMetadataItem("startup-script", getStartupScriptDeb()),
 		machineType: "e2-medium",
 		timeout:     10 * time.Minute,
 		itemCheck: func(items map[string]*osconfigpb.Inventory_Item) error {
+			var bashFound bool
+			var cowsayFound bool
 			for _, item := range items {
 				if item.GetInstalledPackage().GetAptPackage().GetPackageName() == "bash" {
-					return nil
+					bashFound = true
+				}
+				if item.GetAvailablePackage().GetAptPackage().GetPackageName() == "cowsay" {
+					cowsayFound = true
 				}
 			}
-			return errors.New("did not find 'bash' in installed packages")
+			if !bashFound {
+				return errors.New("did not find 'bash' in installed packages")
+			}
+			if !cowsayFound {
+				return errors.New("did not find 'cowsay' in available packages")
+			}
+			return nil
 		},
 	}
+
 	yumBashInstalledCheck = func(items map[string]*osconfigpb.Inventory_Item) error {
+		var bashFound bool
+		var cowsayFound bool
 		for _, item := range items {
 			if item.GetInstalledPackage().GetYumPackage().GetPackageName() == "bash" {
-				return nil
+				bashFound = true
+			}
+			if item.GetAvailablePackage().GetYumPackage().GetPackageName() == "cowsay" {
+				cowsayFound = true
 			}
 		}
-		return errors.New("did not find 'bash' in installed packages")
+		if !bashFound {
+			return errors.New("did not find 'bash' in installed packages")
+		}
+		if !cowsayFound {
+			return errors.New("did not find 'cowsay' in available packages")
+		}
+		return nil
 	}
 
 	el6Setup = &inventoryTestSetup{
 		packageType: []string{"rpm"},
-		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigEL6()),
+		startup:     compute.BuildInstanceMetadataItem("startup-script", getStartupScriptEL("6")),
 		machineType: "e2-medium",
 		timeout:     10 * time.Minute,
 		itemCheck:   yumBashInstalledCheck,
@@ -135,7 +166,7 @@ var (
 
 	el7Setup = &inventoryTestSetup{
 		packageType: []string{"rpm"},
-		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigEL7()),
+		startup:     compute.BuildInstanceMetadataItem("startup-script", getStartupScriptEL("7")),
 		machineType: "e2-medium",
 		timeout:     10 * time.Minute,
 		itemCheck:   yumBashInstalledCheck,
@@ -143,7 +174,7 @@ var (
 
 	el8Setup = &inventoryTestSetup{
 		packageType: []string{"rpm"},
-		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigEL8()),
+		startup:     compute.BuildInstanceMetadataItem("startup-script", getStartupScriptEL("8")),
 		machineType: "e2-medium",
 		timeout:     10 * time.Minute,
 		itemCheck:   yumBashInstalledCheck,
@@ -151,16 +182,27 @@ var (
 
 	suseSetup = &inventoryTestSetup{
 		packageType: []string{"zypper"},
-		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigSUSE()),
+		startup:     compute.BuildInstanceMetadataItem("startup-script", getStartupScriptZypper()),
 		machineType: "e2-medium",
 		timeout:     15 * time.Minute,
 		itemCheck: func(items map[string]*osconfigpb.Inventory_Item) error {
+			var bashFound bool
+			var cowsayFound bool
 			for _, item := range items {
 				if item.GetInstalledPackage().GetZypperPackage().GetPackageName() == "bash" {
-					return nil
+					bashFound = true
+				}
+				if item.GetAvailablePackage().GetZypperPackage().GetPackageName() == "cowsay" {
+					cowsayFound = true
 				}
 			}
-			return errors.New("did not find 'bash' in installed packages")
+			if !bashFound {
+				return errors.New("did not find 'bash' in installed packages")
+			}
+			if !cowsayFound {
+				return errors.New("did not find 'cowsay' in available packages")
+			}
+			return nil
 		},
 	}
 
@@ -178,6 +220,66 @@ var (
 		},
 	}
 )
+
+func getStartupScriptEL(image string) string {
+	ss := `
+echo 'Adding test repo'
+cat > /etc/yum.repos.d/osconfig-agent-test.repo <<EOM
+[test-repo]
+name=test repo
+baseurl=https://packages.cloud.google.com/yum/repos/osconfig-agent-test-repository
+enabled=1
+gpgcheck=0
+EOM
+n=0
+while ! yum -y install cowsay-3.03-20.el7; do
+  if [[ n -gt 5 ]]; then
+    exit 1
+  fi
+  n=$[$n+1]
+  sleep 10
+done
+%s`
+	return fmt.Sprintf(ss, utils.InstallOSConfigEL(image))
+}
+
+func getStartupScriptDeb() string {
+	ss := `
+echo 'Adding test repo'
+echo 'deb http://packages.cloud.google.com/apt osconfig-agent-test-repository main' >> /etc/apt/sources.list
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+   sleep 5
+done
+apt-get update
+apt-get -y install cowsay=3.03+dfsg1-10 || exit 1
+%s`
+	return fmt.Sprintf(ss, utils.InstallOSConfigDeb())
+}
+
+func getStartupScriptGoo() string {
+	ss := `
+echo 'Adding test repo'
+googet addrepo test https://packages.cloud.google.com/yuck/repos/osconfig-agent-test-repository
+googet -noconfirm install cowsay.x86_64.0.1.0@1
+%s`
+	return fmt.Sprintf(ss, utils.InstallOSConfigGooGet())
+}
+
+func getStartupScriptZypper() string {
+	ss := `
+echo 'Adding test repo'
+cat > /etc/zypp/repos.d/osconfig-agent-test.repo <<EOM
+[test-repo]
+name=test repo
+baseurl=https://packages.cloud.google.com/yum/repos/osconfig-agent-test-repository
+enabled=1
+gpgcheck=0
+EOM
+zypper -n --no-gpg-checks install cowsay-3.03-20.el7
+%s`
+	return fmt.Sprintf(ss, utils.InstallOSConfigSUSE())
+}
 
 func headImageTestSetup() (setup []*inventoryTestSetup) {
 	// This maps a specific inventoryTestSetup to test setup names and associated images.
@@ -205,6 +307,8 @@ func headImageTestSetup() (setup []*inventoryTestSetup) {
 				new.shortName = "centos"
 			} else if strings.Contains(name, "rhel") {
 				new.shortName = "rhel"
+			} else if strings.Contains(name, "rocky") {
+				new.shortName = "rocky"
 			} else if strings.Contains(name, "debian") {
 				new.shortName = "debian"
 			} else if strings.Contains(name, "ubuntu") {

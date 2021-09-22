@@ -16,21 +16,9 @@ package guestpolicies
 
 import (
 	"fmt"
-	"path"
 
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
 	computeApi "google.golang.org/api/compute/v1"
-)
-
-var (
-	yumStartupScripts = map[string]string{
-		"rhel-6":   utils.InstallOSConfigEL6(),
-		"rhel-7":   utils.InstallOSConfigEL7(),
-		"rhel-8":   utils.InstallOSConfigEL8(),
-		"centos-6": utils.InstallOSConfigEL6(),
-		"centos-7": utils.InstallOSConfigEL7(),
-		"centos-8": utils.InstallOSConfigEL8(),
-	}
 )
 
 var waitForRestartLinux = `
@@ -104,7 +92,7 @@ while true; do
   curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
   sleep 5
 done`
-		ss = fmt.Sprintf(ss, yumStartupScripts[path.Base(image)], waitForRestartLinux, packageName, packageInstalled, packageNotInstalled)
+		ss = fmt.Sprintf(ss, utils.InstallOSConfigEL(image), waitForRestartLinux, packageName, packageInstalled, packageNotInstalled)
 		key = "startup-script"
 
 	case "googet":
@@ -224,7 +212,7 @@ while true; do
   curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
   sleep 5
 done`
-		ss = fmt.Sprintf(ss, yumStartupScripts[path.Base(image)], waitForRestartLinux, packageInstalled, packageNotInstalled)
+		ss = fmt.Sprintf(ss, utils.InstallOSConfigEL(image), waitForRestartLinux, packageInstalled, packageNotInstalled)
 		key = "startup-script"
 
 	case "googet":
@@ -323,7 +311,7 @@ while ($true) {
 	case "apt":
 		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigDeb(), waitForRestartLinux, scriptLinux)
 	case "yum":
-		script = fmt.Sprintf("%s\n%s\n%s", yumStartupScripts[path.Base(image)], waitForRestartLinux, scriptLinux)
+		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigEL(image), waitForRestartLinux, scriptLinux)
 	case "zypper":
 		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigSUSE(), waitForRestartLinux, scriptLinux)
 	case "googet":
@@ -416,7 +404,7 @@ while ($true) {
 	case "apt":
 		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigDeb(), waitForRestartLinux, scriptLinux)
 	case "yum":
-		script = fmt.Sprintf("%s\n%s\n%s", yumStartupScripts[path.Base(image)], waitForRestartLinux, scriptLinux)
+		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigEL(image), waitForRestartLinux, scriptLinux)
 	case "zypper":
 		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigSUSE(), waitForRestartLinux, scriptLinux)
 	case "googet":
