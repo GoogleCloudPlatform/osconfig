@@ -168,20 +168,14 @@ func generateInventory() *agentendpointpb.Inventory {
 						Architecture: "Arch",
 						Version:      "Version"}}},
 			{
-				Details: &agentendpointpb.Inventory_SoftwarePackage_YumPackage{
-					YumPackage: &agentendpointpb.Inventory_VersionedPackage{
-						PackageName:  "RpmInstalledPkg",
-						Architecture: "Arch",
-						Version:      "Version"}}},
-			{
 				Details: &agentendpointpb.Inventory_SoftwarePackage_ZypperPackage{
 					ZypperPackage: &agentendpointpb.Inventory_VersionedPackage{
 						PackageName:  "ZypperInstalledPkg",
 						Architecture: "Arch",
 						Version:      "Version"}}},
 			{
-				Details: &agentendpointpb.Inventory_SoftwarePackage_ZypperPackage{
-					ZypperPackage: &agentendpointpb.Inventory_VersionedPackage{
+				Details: &agentendpointpb.Inventory_SoftwarePackage_YumPackage{
+					YumPackage: &agentendpointpb.Inventory_VersionedPackage{
 						PackageName:  "RpmInstalledPkg",
 						Architecture: "Arch",
 						Version:      "Version"}}},
@@ -402,6 +396,7 @@ func TestWrite(t *testing.T) {
 
 func TestReport(t *testing.T) {
 	ctx := context.Background()
+	packages.YumExists = true
 	srv := &agentEndpointServiceInventoryTestServer{}
 	tc, err := newTestClient(ctx, srv)
 	if err != nil {
@@ -425,7 +420,7 @@ func TestReport(t *testing.T) {
 
 			tc.client.report(ctx, tt.inventoryState)
 
-			if diff := cmp.Diff(tt.wantInventory, srv.lastReportInventoryRequest.Inventory, protocmp.Transform()); diff != "" {
+			if diff := cmp.Diff(srv.lastReportInventoryRequest.Inventory, tt.wantInventory, protocmp.Transform()); diff != "" {
 				t.Fatalf("ReportInventoryRequest.Inventory mismatch (-want +got):\n%s", diff)
 			}
 		})

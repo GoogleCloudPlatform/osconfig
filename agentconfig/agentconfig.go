@@ -72,11 +72,11 @@ const (
 	cacheDirLinux     = "/var/lib/google_osconfig_agent"
 
 	taskStateFileWindows  = cacheDirWindows + `\osconfig_task.state`
-	taskStateFileLinux    = cacheDirWindows + "/osconfig_task.state"
+	taskStateFileLinux    = cacheDirLinux + "/osconfig_task.state"
 	oldTaskStateFileLinux = oldConfigDirLinux + "/osconfig_task.state"
 
-	configCacheFileWindows = cacheDirLinux + `\osconfig_task.state`
-	configCacheFileLinux   = cacheDirLinux + "/osconfig_task.state"
+	configCacheFileWindows = cacheDirWindows + `\osconfig_config.cache`
+	configCacheFileLinux   = cacheDirLinux + "/osconfig_config.cache"
 
 	restartFileWindows  = cacheDirWindows + `\osconfig_agent_restart_required`
 	restartFileLinux    = cacheDirLinux + "/osconfig_agent_restart_required"
