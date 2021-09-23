@@ -81,7 +81,7 @@ fi
 
 if [ $1 -eq 2 ]; then
   # If the old directory exists make sure we set the file there.
-  [ -f /etc/osconfig ] && touch /etc/osconfig/osconfig_agent_restart_required
+  [ -e /etc/osconfig ] && touch /etc/osconfig/osconfig_agent_restart_required
   touch /var/lib/google_osconfig_agent/osconfig_agent_restart_required
 fi
 
