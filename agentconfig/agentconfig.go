@@ -67,12 +67,20 @@ const (
 	taskNotificationEnabledDefault = false
 	debugEnabledDefault            = false
 
-	configDirWindows     = `C:\Program Files\Google\OSConfig`
-	configDirLinux       = "/etc/osconfig"
-	taskStateFileWindows = configDirWindows + `\osconfig_task.state`
-	taskStateFileLinux   = configDirLinux + "/osconfig_task.state"
-	restartFileWindows   = configDirWindows + `\osconfig_agent_restart_required`
-	restartFileLinux     = configDirLinux + "/osconfig_agent_restart_required"
+	oldConfigDirLinux = "/etc/osconfig"
+	cacheDirWindows   = `C:\Program Files\Google\OSConfig`
+	cacheDirLinux     = "/var/lib/google_osconfig_agent"
+
+	taskStateFileWindows  = cacheDirWindows + `\osconfig_task.state`
+	taskStateFileLinux    = cacheDirWindows + "/osconfig_task.state"
+	oldTaskStateFileLinux = oldConfigDirLinux + "/osconfig_task.state"
+
+	configCacheFileWindows = cacheDirLinux + `\osconfig_task.state`
+	configCacheFileLinux   = cacheDirLinux + "/osconfig_task.state"
+
+	restartFileWindows  = cacheDirWindows + `\osconfig_agent_restart_required`
+	restartFileLinux    = cacheDirLinux + "/osconfig_agent_restart_required"
+	oldRestartFileLinux = oldConfigDirLinux + "/osconfig_agent_restart_required"
 
 	osConfigPollIntervalDefault = 10
 	osConfigMetadataPollTimeout = 60
@@ -681,6 +689,11 @@ func TaskStateFile() string {
 	return taskStateFileLinux
 }
 
+// OldTaskStateFile is the location of the task state file.
+func OldTaskStateFile() string {
+	return oldTaskStateFileLinux
+}
+
 // RestartFile is the location of the restart required file.
 func RestartFile() string {
 	if runtime.GOOS == "windows" {
@@ -688,6 +701,11 @@ func RestartFile() string {
 	}
 
 	return restartFileLinux
+}
+
+// OldRestartFile is the location of the restart required file.
+func OldRestartFile() string {
+	return oldRestartFileLinux
 }
 
 // UserAgent for creating http/grpc clients.

@@ -20,6 +20,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"os"
@@ -35,6 +36,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/policies"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 	"github.com/tarm/serial"
 
 	_ "net/http/pprof"
@@ -113,6 +115,21 @@ func run(ctx context.Context) {
 	if err := os.Remove(agentconfig.RestartFile()); err != nil && !os.IsNotExist(err) {
 		clog.Errorf(ctx, "Error removing restart signal file: %v", err)
 	}
+
+	// On shutdown if the old restart file exists, and there is nothing else in that old directory,
+	// cleanup that directory ignoring all errors.
+	// This ensures we only cleanup this directory if we were using it with an old version of the agent.
+	deferredFuncs = append(deferredFuncs, func() {
+		if runtime.GOOS == "linux" && util.Exists(agentconfig.OldRestartFile()) {
+			os.Remove(agentconfig.OldRestartFile())
+
+			files, err := ioutil.ReadDir(filepath.Dir(agentconfig.OldRestartFile()))
+			if err != nil || len(files) > 0 {
+				return
+			}
+			os.RemoveAll(filepath.Dir(agentconfig.OldRestartFile()))
+		}
+	})
 
 	deferredFuncs = append(deferredFuncs, logger.Close, func() { clog.Infof(ctx, "OSConfig Agent (version %s) shutting down.", agentconfig.Version()) })
 

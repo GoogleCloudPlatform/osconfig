@@ -50,6 +50,7 @@ var (
 	errServiceNotEnabled = errors.New("service is not enabled for this project")
 	errResourceExhausted = errors.New("ResourceExhausted")
 	taskStateFile        = agentconfig.TaskStateFile()
+	oldTaskStateFile     = agentconfig.OldTaskStateFile()
 	sameStateTimeWindow  = -5 * time.Second
 )
 
