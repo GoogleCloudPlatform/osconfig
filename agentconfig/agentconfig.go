@@ -705,7 +705,7 @@ func RestartFile() string {
 
 // OldRestartFile is the location of the restart required file.
 func OldRestartFile() string {
-	return restartFileLinux
+	return oldRestartFileLinux
 }
 
 // UserAgent for creating http/grpc clients.
