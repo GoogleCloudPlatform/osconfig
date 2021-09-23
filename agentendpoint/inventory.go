@@ -146,7 +146,7 @@ func formatPackages(ctx context.Context, pkgs *packages.Packages, shortName stri
 		softwarePackages = append(softwarePackages, temp...)
 	}
 	if pkgs.Zypper != nil {
-		temp := make([]*agentendpointpb.Inventory_SoftwarePackage, len(pkgs.Yum))
+		temp := make([]*agentendpointpb.Inventory_SoftwarePackage, len(pkgs.Zypper))
 		for i, pkg := range pkgs.Zypper {
 			temp[i] = &agentendpointpb.Inventory_SoftwarePackage{
 				Details: formatZypperPackage(pkg),
