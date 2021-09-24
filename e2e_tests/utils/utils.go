@@ -226,13 +226,13 @@ var HeadAptImages = map[string]string{
 // OldAptImages is a map of names to image paths for old images that use APT.
 var OldAptImages = map[string]string{
 	// Debian images.
-	"old/debian-9":  "projects/debian-cloud/global/images/debian-9-stretch-v20191014",
-	"old/debian-10": "projects/debian-cloud/global/images/debian-10-buster-v20191014",
+	"old/debian-9":  "projects/debian-cloud/global/images/debian-9-stretch-v20210512",
+	"old/debian-10": "projects/debian-cloud/global/images/debian-10-buster-v20210512",
 
 	// Ubuntu images.
-	"old/ubuntu-1604-lts": "projects/ubuntu-os-cloud/global/images/ubuntu-1604-xenial-v20191005",
-	"old/ubuntu-1804-lts": "projects/ubuntu-os-cloud/global/images/ubuntu-1804-bionic-v20191002",
-	"old/ubuntu-2004-lts": "projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20200506",
+	"old/ubuntu-1604-lts": "projects/ubuntu-os-cloud/global/images/ubuntu-1604-xenial-v20210416",
+	"old/ubuntu-1804-lts": "projects/ubuntu-os-cloud/global/images/ubuntu-1804-bionic-v20210514",
+	"old/ubuntu-2004-lts": "projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20210510",
 }
 
 // HeadSUSEImages is a map of names to image paths for public SUSE images.
@@ -271,8 +271,8 @@ var HeadEL7Images = map[string]string{
 
 // OldEL7Images is a map of names to image paths for old EL7 images.
 var OldEL7Images = map[string]string{
-	"old/centos-7": "projects/centos-cloud/global/images/centos-7-v20191014",
-	"old/rhel-7":   "projects/rhel-cloud/global/images/rhel-7-v20191014",
+	"old/centos-7": "projects/centos-cloud/global/images/centos-7-v20210512",
+	"old/rhel-7":   "projects/rhel-cloud/global/images/rhel-7-v20210512",
 }
 
 // HeadEL8Images is a map of names to image paths for public EL8 image families.
@@ -285,8 +285,8 @@ var HeadEL8Images = map[string]string{
 
 // OldEL8Images is a map of names to image paths for old EL8 images.
 var OldEL8Images = map[string]string{
-	"old/centos-8": "projects/centos-cloud/global/images/centos-7-v20191014",
-	"old/rhel-8":   "projects/rhel-cloud/global/images/rhel-7-v20191014",
+	"old/centos-8": "projects/centos-cloud/global/images/centos-7-v20210512",
+	"old/rhel-8":   "projects/rhel-cloud/global/images/rhel-7-v20210512",
 }
 
 // HeadELImages is a map of names to image paths for public EL image families.
