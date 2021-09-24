@@ -1512,7 +1512,7 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 						{
 							Type:         osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
 							Outcome:      osconfigpb.OSPolicyResourceConfigStep_FAILED,
-							ErrorMessage: "Error running enforcement: contents of OutputFilePath greater than 100K",
+							ErrorMessage: `Enforce state: resource "exec-output-too-large" error: contents of OutputFilePath greater than 100K`,
 						},
 						{
 							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
