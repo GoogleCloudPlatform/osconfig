@@ -84,7 +84,7 @@ func runWithPty(cmd *exec.Cmd) ([]byte, []byte, error) {
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setctty: true,
 		Setsid:  true,
-		Ctty:    int(tty.Fd()),
+		Ctty:    0, // Stdin of the child process
 	}
 
 	var stdout bytes.Buffer
@@ -114,8 +114,17 @@ func runWithPty(cmd *exec.Cmd) ([]byte, []byte, error) {
 	}()
 
 	err = cmd.Run()
+	if err != nil {
+		// Yum returns non-zero exit values on non-error conditions.
+		// Only fail on errors which are *not* in this category.
+		if _, ok := err.(*exec.ExitError); !ok {
+			return stdout.Bytes(), stderr.Bytes(), err
+		}
+	}
+
 	if err := tty.Close(); err != nil {
-		return nil, nil, err
+		return stdout.Bytes(), stderr.Bytes(), err
+
 	}
 
 	wg.Wait()
