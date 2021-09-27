@@ -113,24 +113,26 @@ func runWithPty(cmd *exec.Cmd) ([]byte, []byte, error) {
 		}
 	}()
 
-	err = cmd.Run()
-	if err != nil {
-		// Yum returns non-zero exit values on non-error conditions.
-		// Only fail on errors which are *not* in this category.
-		if _, ok := err.(*exec.ExitError); !ok {
-			return stdout.Bytes(), stderr.Bytes(), err
-		}
-	}
+	cmdErr := cmd.Run()
 
 	if err := tty.Close(); err != nil {
 		return stdout.Bytes(), stderr.Bytes(), err
 
 	}
-
 	wg.Wait()
+
+	if cmdErr != nil {
+		// Yum returns non-zero exit values on non-error conditions.
+		// Errors which are *not* in this category indicate failure.
+		if _, ok := cmdErr.(*exec.ExitError); !ok {
+			return stdout.Bytes(), stderr.Bytes(), cmdErr
+
+		}
+	}
+
 	// Exit code 0 means no updates, 1 probably means there are but we just didn't install them.
-	if err == nil {
-		return nil, nil, err
+	if cmdErr == nil {
+		return nil, nil, nil
 	}
 	return stdout.Bytes(), stderr.Bytes(), retErr
 }
