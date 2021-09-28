@@ -530,7 +530,7 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 		enforcePackage.name = p.managedPackage.MSI.productName
 		enforcePackage.packageType = "msi"
 		enforcePackage.action = installing
-		enforcePackage.installedCache = &packageCache{} // We have a msi cache but installing an MSI does not invalidate it.
+		enforcePackage.installedCache = &packageCache{} // No package cache for msi.
 		// Check if we have not pulled the package yet.
 		if p.managedPackage.MSI.localPath == "" {
 			localPath, err := p.download(ctx, "pkg.msi", p.GetMsi().GetSource())
