@@ -188,29 +188,29 @@ func msiInstallProductW(szPackagePath string, szCommandLine []string) error {
 }
 
 // MSIInfo returns the ProductName and ProductCode for an MSI.
-func MSIInfo(path string) (string, string, bool, error) {
+func MSIInfo(path string) (string, string, error) {
 	setUIMode()
 
 	if err := coInitializeEx(); err != nil {
-		return "", false, err
+		return "", "", err
 	}
 	defer ole.CoUninitialize()
 
 	const MSIOPENPACKAGEFLAGS_IGNOREMACHINESTATE = 1
 	handle, err := msiOpenPackageExW(path, MSIOPENPACKAGEFLAGS_IGNOREMACHINESTATE)
 	if err != nil {
-		return "", false, fmt.Errorf("error opening MSI package %q: %v", path, err)
+		return "", "", fmt.Errorf("error opening MSI package %q: %v", path, err)
 	}
 	defer msiCloseHandle(handle)
 
 	productCode, err := msiGetProductPropertyW(handle, "ProductCode")
 	if err != nil {
-		return "", false, fmt.Errorf("error getting ProductCode property: %v", err)
+		return "", "", fmt.Errorf("error getting ProductCode property: %v", err)
 	}
 
 	productName, err := msiGetProductPropertyW(handle, "ProductName")
 	if err != nil {
-		return "", false, fmt.Errorf("error getting ProductName property: %v", err)
+		return "", "", fmt.Errorf("error getting ProductName property: %v", err)
 	}
 
 	return productName, productCode, nil
@@ -221,13 +221,13 @@ func MSIInstalled(productCode string) (bool, error) {
 	setUIMode()
 
 	if err := coInitializeEx(); err != nil {
-		return "", false, err
+		return false, err
 	}
 	defer ole.CoUninitialize()
 
 	state, err := msiMsiQueryProductStateW(productCode)
 	if err != nil {
-		return "", false, err
+		return false, err
 	}
 
 	return state == INSTALLSTATE_DEFAULT, nil
