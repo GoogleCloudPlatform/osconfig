@@ -16,10 +16,12 @@ package config
 
 import (
 	"context"
+	"encoding/json"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"testing"
 	"time"
 
@@ -494,5 +496,60 @@ func TestPackageResourceEnforceState(t *testing.T) {
 				t.Errorf("Enforce function did not set package cache to nil")
 			}
 		})
+	}
+}
+
+func TestPackageInfoCache(t *testing.T) {
+	ctx := context.Background()
+	pkgInfo := &packages.PkgInfo{Name: "name", Arch: "arch", Version: "version"}
+	pkgFile := &agentendpointpb.OSPolicy_Resource_File{AllowInsecure: true, Type: &agentendpointpb.OSPolicy_Resource_File_Gcs_{Gcs: &agentendpointpb.OSPolicy_Resource_File_Gcs{Bucket: "bucket", Object: "object", Generation: 123456789}}}
+	wantKey := "IAESFQoGYnVja2V0EgZvYmplY3QYlZrvOg"
+
+	tmpDir, err := ioutil.TempDir("", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+	packageInfoCacheFile = filepath.Join(tmpDir, "file.cache")
+
+	updatePackageInfoCache(ctx, pkgInfo, pkgFile)
+	got := getPackageInfoFromCache(pkgFile)
+	if !reflect.DeepEqual(got, pkgInfo) {
+		t.Errorf("Did not get expected cache data, got: %+v, want: %+v", got, pkgInfo)
+	}
+
+	gotCache := getPackageInfoCache()
+	if _, ok := gotCache[wantKey]; !ok {
+		t.Errorf("Cache did not contain expected key, cache: %+v, want: %q", gotCache, wantKey)
+	}
+}
+
+func TestUpdatePackageInfoCacheTimeout(t *testing.T) {
+	ctx := context.Background()
+
+	tmpDir, err := ioutil.TempDir("", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+	packageInfoCacheFile = filepath.Join(tmpDir, "file.cache")
+
+	cache := packageInfoCache{}
+	key := "IAESFQoGYnVja2V0EgZvYmplY3QYlZrvOg"
+	info := &packages.PkgInfo{Name: "name", Arch: "arch", Version: "version"}
+	cache[key] = packageInfo{PkgInfo: info, LastLookup: time.Now().Add(packageInfoCacheTimeout).Add(-1 * time.Hour)}
+
+	data, err := json.Marshal(cache)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := ioutil.WriteFile(packageInfoCacheFile, data, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	updatePackageInfoCache(ctx, nil, nil)
+	gotCache := getPackageInfoCache()
+	if _, ok := gotCache[key]; ok {
+		t.Errorf("Cache should not contain expired data, cache: %+v", gotCache)
 	}
 }

@@ -16,6 +16,8 @@ package config
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -23,11 +25,19 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
+	"google.golang.org/protobuf/proto"
+)
+
+var (
+	packageInfoCacheFile = filepath.Join(agentconfig.CacheDir(), "config_package_info.cache")
+	// Clear out the entry if the last lookup is > 7 days ago.
+	packageInfoCacheTimeout = -168 * time.Hour
 )
 
 type packageResouce struct {
@@ -56,8 +66,8 @@ type GooGetPackage struct {
 
 // MSIPackage describes an msi package resource.
 type MSIPackage struct {
-	PackageResource        *agentendpointpb.OSPolicy_Resource_PackageResource_MSI
-	productName, localPath string
+	PackageResource                     *agentendpointpb.OSPolicy_Resource_PackageResource_MSI
+	productName, productCode, localPath string
 }
 
 // YumPackage describes a yum package resource.
@@ -100,6 +110,78 @@ func (p *packageResouce) validateFile(file *agentendpointpb.OSPolicy_Resource_Fi
 	return nil
 }
 
+type packageInfoCache map[string]packageInfo
+
+type packageInfo struct {
+	PkgInfo    *packages.PkgInfo
+	LastLookup time.Time
+}
+
+func getPackageInfoCacheKey(pkgFile *agentendpointpb.OSPolicy_Resource_File) (string, error) {
+	// We use the base64 encoded binary proto as the key.
+	raw, err := proto.Marshal(pkgFile)
+	if err != nil {
+		return "", err
+	}
+	return base64.RawStdEncoding.EncodeToString(raw), nil
+}
+
+func getPackageInfoCache() packageInfoCache {
+	data, err := ioutil.ReadFile(packageInfoCacheFile)
+	if err != nil {
+		// Just ignore the error and return early
+		// The error mode here is just always redownload the file.
+		return nil
+	}
+	var cache packageInfoCache
+	if err := json.Unmarshal(data, &cache); err != nil {
+		return nil
+	}
+	return cache
+}
+
+func getPackageInfoFromCache(pkgFile *agentendpointpb.OSPolicy_Resource_File) *packages.PkgInfo {
+	cache := getPackageInfoCache()
+	key, err := getPackageInfoCacheKey(pkgFile)
+	if err != nil {
+		// Just ignore the error and return early
+		// The error mode here is just always redownload the file.
+		return nil
+	}
+	packageInfo, ok := cache[key]
+	if !ok {
+		return nil
+	}
+	return packageInfo.PkgInfo
+}
+
+func updatePackageInfoCache(ctx context.Context, info *packages.PkgInfo, pkgFile *agentendpointpb.OSPolicy_Resource_File) {
+	cache := getPackageInfoCache()
+	for k, v := range cache {
+		if time.Now().Add(packageInfoCacheTimeout).After(v.LastLookup) {
+			delete(cache, k)
+		}
+	}
+	key, err := getPackageInfoCacheKey(pkgFile)
+	if err != nil {
+		// Just ignore the error and return early
+		// The error mode here is just always redownload the file.
+		clog.Warningf(ctx, "Error creating the package info cache: %v", err)
+		return
+	}
+	if cache == nil {
+		cache = packageInfoCache{}
+	}
+	cache[key] = packageInfo{PkgInfo: info, LastLookup: time.Now()}
+
+	data, err := json.Marshal(cache)
+	if err != nil {
+		clog.Warningf(ctx, "Error creating the package info cache: %v", err)
+		return
+	}
+	ioutil.WriteFile(packageInfoCacheFile, data, 0644)
+}
+
 func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error) {
 	switch p.GetSystemPackage().(type) {
 	case *agentendpointpb.OSPolicy_Resource_PackageResource_Apt:
@@ -121,14 +203,22 @@ func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error
 		if err := p.validateFile(pr.GetSource()); err != nil {
 			return nil, err
 		}
-		localPath, err := p.download(ctx, "pkg.deb", p.GetDeb().GetSource())
-		if err != nil {
-			return nil, err
+		var localPath string
+		var err error
+		source := p.GetDeb().GetSource()
+		info := getPackageInfoFromCache(source)
+		if info == nil {
+			localPath, err = p.download(ctx, "pkg.deb", source)
+			if err != nil {
+				return nil, err
+			}
+			info, err = packages.DebPkgInfo(ctx, localPath)
+			if err != nil {
+				return nil, err
+			}
 		}
-		info, err := packages.DebPkgInfo(ctx, localPath)
-		if err != nil {
-			return nil, err
-		}
+		// Always update the cache to update the timestamps.
+		updatePackageInfoCache(ctx, info, source)
 
 		p.managedPackage.Deb = &DebPackage{PackageResource: pr, localPath: localPath, name: info.Name}
 
@@ -151,12 +241,26 @@ func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error
 		if err := p.validateFile(pr.GetSource()); err != nil {
 			return nil, err
 		}
-		localPath, err := p.download(ctx, "pkg.msi", p.GetMsi().GetSource())
-		if err != nil {
-			return nil, err
+		var localPath string
+		var err error
+		source := p.GetMsi().GetSource()
+		info := getPackageInfoFromCache(source)
+		if info == nil {
+			localPath, err = p.download(ctx, "pkg.msi", source)
+			if err != nil {
+				return nil, err
+			}
+			productName, productCode, err := packages.MSIInfo(localPath)
+			if err != nil {
+				return nil, err
+			}
+			// We store productCode as version in the packageinfo struct.
+			info = &packages.PkgInfo{Name: productName, Version: productCode}
 		}
+		// Always update the cache to update the timestamps.
+		updatePackageInfoCache(ctx, info, source)
 
-		p.managedPackage.MSI = &MSIPackage{PackageResource: pr, localPath: localPath}
+		p.managedPackage.MSI = &MSIPackage{PackageResource: pr, localPath: localPath, productName: info.Name, productCode: info.Version}
 
 	case *agentendpointpb.OSPolicy_Resource_PackageResource_Yum:
 		pr := p.GetYum()
@@ -185,14 +289,22 @@ func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error
 		if err := p.validateFile(pr.GetSource()); err != nil {
 			return nil, err
 		}
-		localPath, err := p.download(ctx, "pkg.rpm", p.GetRpm().GetSource())
-		if err != nil {
-			return nil, err
+		var localPath string
+		var err error
+		source := p.GetRpm().GetSource()
+		info := getPackageInfoFromCache(source)
+		if info == nil {
+			localPath, err = p.download(ctx, "pkg.rpm", source)
+			if err != nil {
+				return nil, err
+			}
+			info, err = packages.RPMPkgInfo(ctx, localPath)
+			if err != nil {
+				return nil, err
+			}
 		}
-		info, err := packages.RPMPkgInfo(ctx, localPath)
-		if err != nil {
-			return nil, err
-		}
+		// Always update the cache to update the timestamps.
+		updatePackageInfoCache(ctx, info, source)
 
 		p.managedPackage.RPM = &RPMPackage{PackageResource: pr, localPath: localPath, name: info.Name}
 
@@ -319,7 +431,7 @@ func (p *packageResouce) checkState(ctx context.Context) (inDesiredState bool, e
 
 	case p.managedPackage.MSI != nil:
 		desiredState = agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED
-		p.managedPackage.MSI.productName, pkgIns, err = packages.MSIInfo(p.managedPackage.MSI.localPath)
+		pkgIns, err = packages.MSIInstalled(p.managedPackage.MSI.productCode)
 		if err != nil {
 			return false, err
 		}
@@ -389,6 +501,14 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 		enforcePackage.packageType = "deb"
 		enforcePackage.installedCache = debInstalled
 		enforcePackage.action = installing
+		// Check if we have not pulled the package yet.
+		if p.managedPackage.Deb.localPath == "" {
+			localPath, err := p.download(ctx, "pkg.deb", p.GetDeb().GetSource())
+			if err != nil {
+				return false, err
+			}
+			p.managedPackage.Deb.localPath = localPath
+		}
 		if p.GetDeb().GetPullDeps() {
 			enforcePackage.actionFunc = func() error { return packages.InstallAptPackages(ctx, []string{p.managedPackage.Deb.localPath}) }
 		} else {
@@ -410,7 +530,15 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 		enforcePackage.name = p.managedPackage.MSI.productName
 		enforcePackage.packageType = "msi"
 		enforcePackage.action = installing
-		enforcePackage.installedCache = &packageCache{} // No package cache for msi.
+		enforcePackage.installedCache = &packageCache{} // We have a msi cache but installing an MSI does not invalidate it.
+		// Check if we have not pulled the package yet.
+		if p.managedPackage.MSI.localPath == "" {
+			localPath, err := p.download(ctx, "pkg.msi", p.GetMsi().GetSource())
+			if err != nil {
+				return false, err
+			}
+			p.managedPackage.MSI.localPath = localPath
+		}
 		enforcePackage.actionFunc = func() error {
 			return packages.InstallMSIPackage(ctx, p.managedPackage.MSI.localPath, p.managedPackage.MSI.PackageResource.GetProperties())
 		}
@@ -442,6 +570,14 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 		enforcePackage.packageType = "rpm"
 		enforcePackage.installedCache = rpmInstalled
 		enforcePackage.action = installing
+		// Check if we have not pulled the package yet.
+		if p.managedPackage.RPM.localPath == "" {
+			localPath, err := p.download(ctx, "pkg.rpm", p.GetRpm().GetSource())
+			if err != nil {
+				return false, err
+			}
+			p.managedPackage.RPM.localPath = localPath
+		}
 		if p.GetRpm().GetPullDeps() {
 			switch {
 			case packages.YumExists:
@@ -457,7 +593,7 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 	}
 
 	clog.Infof(ctx, "%s %s package %q", strings.Title(enforcePackage.action), enforcePackage.packageType, enforcePackage.name)
-	// Reset the cache as we are taking action.
+	// Reset the cache as we are taking action on.
 	enforcePackage.installedCache.cache = nil
 	if err := enforcePackage.actionFunc(); err != nil {
 		return false, fmt.Errorf("error %s %s package %q", enforcePackage.action, enforcePackage.packageType, enforcePackage.name)

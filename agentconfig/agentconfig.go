@@ -75,9 +75,6 @@ const (
 	taskStateFileLinux    = cacheDirLinux + "/osconfig_task.state"
 	oldTaskStateFileLinux = oldConfigDirLinux + "/osconfig_task.state"
 
-	configCacheFileWindows = cacheDirWindows + `\osconfig_config.cache`
-	configCacheFileLinux   = cacheDirLinux + "/osconfig_config.cache"
-
 	restartFileWindows  = cacheDirWindows + `\osconfig_agent_restart_required`
 	restartFileLinux    = cacheDirLinux + "/osconfig_agent_restart_required"
 	oldRestartFileLinux = oldConfigDirLinux + "/osconfig_agent_restart_required"
@@ -706,6 +703,15 @@ func RestartFile() string {
 // OldRestartFile is the location of the restart required file.
 func OldRestartFile() string {
 	return oldRestartFileLinux
+}
+
+// CacheDir is the location of the cache directory.
+func CacheDir() string {
+	if runtime.GOOS == "windows" {
+		return cacheDirWindows
+	}
+
+	return cacheDirLinux
 }
 
 // UserAgent for creating http/grpc clients.

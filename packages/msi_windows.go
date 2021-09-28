@@ -187,8 +187,8 @@ func msiInstallProductW(szPackagePath string, szCommandLine []string) error {
 	return nil
 }
 
-// MSIInfo returns the ProductName and whether or not a specific msi (based on ProductCode) is installed.
-func MSIInfo(path string) (string, bool, error) {
+// MSIInfo returns the ProductName and ProductCode for an MSI.
+func MSIInfo(path string) (string, string, bool, error) {
 	setUIMode()
 
 	if err := coInitializeEx(); err != nil {
@@ -213,12 +213,24 @@ func MSIInfo(path string) (string, bool, error) {
 		return "", false, fmt.Errorf("error getting ProductName property: %v", err)
 	}
 
+	return productName, productCode, nil
+}
+
+// MSIInstalled returns if the msi ProductCode is installed.
+func MSIInstalled(productCode string) (bool, error) {
+	setUIMode()
+
+	if err := coInitializeEx(); err != nil {
+		return "", false, err
+	}
+	defer ole.CoUninitialize()
+
 	state, err := msiMsiQueryProductStateW(productCode)
 	if err != nil {
 		return "", false, err
 	}
 
-	return productName, state == INSTALLSTATE_DEFAULT, nil
+	return state == INSTALLSTATE_DEFAULT, nil
 }
 
 // InstallMSIPackage installs an msi package.
