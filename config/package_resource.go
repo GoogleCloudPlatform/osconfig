@@ -141,7 +141,7 @@ func loadPackageInfoCache(ctx context.Context) {
 	}
 	var cache packageInfoCache
 	if err := json.Unmarshal(data, &cache); err != nil {
-		clog.Debugf(ctx, "Error reading the package info cache: %v", err)
+		clog.Debugf(ctx, "Error unmarshaling the package info cache: %v", err)
 		packageInfoCacheStore = packageInfoCache{}
 		return
 	}
@@ -154,7 +154,7 @@ func getPackageInfoFromCache(ctx context.Context, pkgFile *agentendpointpb.OSPol
 	if err != nil {
 		// Just ignore the error and return early
 		// The error mode here is just always redownload the file.
-		clog.Debugf(ctx, "Error reading the package info cache: %v", err)
+		clog.Debugf(ctx, "Error creating the package info cache key: %v", err)
 		return nil
 	}
 	packageInfo, ok := packageInfoCacheStore[key]
