@@ -38,6 +38,7 @@ var (
 	packageInfoCacheFile = filepath.Join(agentconfig.CacheDir(), "config_package_info.cache")
 	// Clear out the entry if the last lookup is > 7 days ago.
 	packageInfoCacheTimeout = -168 * time.Hour
+	packageInfoCacheStore   packageInfoCache
 )
 
 type packageResouce struct {
@@ -126,29 +127,37 @@ func getPackageInfoCacheKey(pkgFile *agentendpointpb.OSPolicy_Resource_File) (st
 	return base64.RawStdEncoding.EncodeToString(raw), nil
 }
 
-func getPackageInfoCache() packageInfoCache {
+func loadPackageInfoCache(ctx context.Context) {
+	if packageInfoCacheStore != nil {
+		return
+	}
 	data, err := ioutil.ReadFile(packageInfoCacheFile)
 	if err != nil {
 		// Just ignore the error and return early
-		// The error mode here is just always redownload the file.
-		return nil
+		// The error mode here is to just always redownload the file.
+		clog.Debugf(ctx, "Error reading the package info cache: %v", err)
+		packageInfoCacheStore = packageInfoCache{}
+		return
 	}
 	var cache packageInfoCache
 	if err := json.Unmarshal(data, &cache); err != nil {
-		return nil
+		clog.Debugf(ctx, "Error reading the package info cache: %v", err)
+		packageInfoCacheStore = packageInfoCache{}
+		return
 	}
-	return cache
+	packageInfoCacheStore = cache
 }
 
-func getPackageInfoFromCache(pkgFile *agentendpointpb.OSPolicy_Resource_File) *packages.PkgInfo {
-	cache := getPackageInfoCache()
+func getPackageInfoFromCache(ctx context.Context, pkgFile *agentendpointpb.OSPolicy_Resource_File) *packages.PkgInfo {
+	loadPackageInfoCache(ctx)
 	key, err := getPackageInfoCacheKey(pkgFile)
 	if err != nil {
 		// Just ignore the error and return early
 		// The error mode here is just always redownload the file.
+		clog.Debugf(ctx, "Error reading the package info cache: %v", err)
 		return nil
 	}
-	packageInfo, ok := cache[key]
+	packageInfo, ok := packageInfoCacheStore[key]
 	if !ok {
 		return nil
 	}
@@ -156,30 +165,32 @@ func getPackageInfoFromCache(pkgFile *agentendpointpb.OSPolicy_Resource_File) *p
 }
 
 func updatePackageInfoCache(ctx context.Context, info *packages.PkgInfo, pkgFile *agentendpointpb.OSPolicy_Resource_File) {
-	cache := getPackageInfoCache()
-	for k, v := range cache {
+	loadPackageInfoCache(ctx)
+	for k, v := range packageInfoCacheStore {
 		if time.Now().Add(packageInfoCacheTimeout).After(v.LastLookup) {
-			delete(cache, k)
+			delete(packageInfoCacheStore, k)
 		}
 	}
 	key, err := getPackageInfoCacheKey(pkgFile)
 	if err != nil {
 		// Just ignore the error and return early
-		// The error mode here is just always redownload the file.
+		// The error mode here is to just always redownload the file.
 		clog.Warningf(ctx, "Error creating the package info cache: %v", err)
 		return
 	}
-	if cache == nil {
-		cache = packageInfoCache{}
-	}
-	cache[key] = packageInfo{PkgInfo: info, LastLookup: time.Now()}
+	packageInfoCacheStore[key] = packageInfo{PkgInfo: info, LastLookup: time.Now()}
+}
 
-	data, err := json.Marshal(cache)
-	if err != nil {
-		clog.Warningf(ctx, "Error creating the package info cache: %v", err)
-		return
+func savePackageInfoCache(ctx context.Context) error {
+	if packageInfoCacheStore == nil {
+		return nil
 	}
-	ioutil.WriteFile(packageInfoCacheFile, data, 0644)
+	data, err := json.Marshal(packageInfoCacheStore)
+	if err != nil {
+		return err
+	}
+	packageInfoCacheStore = nil
+	return ioutil.WriteFile(packageInfoCacheFile, data, 0644)
 }
 
 func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error) {
@@ -206,7 +217,7 @@ func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error
 		var localPath string
 		var err error
 		source := p.GetDeb().GetSource()
-		info := getPackageInfoFromCache(source)
+		info := getPackageInfoFromCache(ctx, source)
 		if info == nil {
 			localPath, err = p.download(ctx, "pkg.deb", source)
 			if err != nil {
@@ -244,7 +255,7 @@ func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error
 		var localPath string
 		var err error
 		source := p.GetMsi().GetSource()
-		info := getPackageInfoFromCache(source)
+		info := getPackageInfoFromCache(ctx, source)
 		if info == nil {
 			localPath, err = p.download(ctx, "pkg.msi", source)
 			if err != nil {
@@ -292,7 +303,7 @@ func (p *packageResouce) validate(ctx context.Context) (*ManagedResources, error
 		var localPath string
 		var err error
 		source := p.GetRpm().GetSource()
-		info := getPackageInfoFromCache(source)
+		info := getPackageInfoFromCache(ctx, source)
 		if info == nil {
 			localPath, err = p.download(ctx, "pkg.rpm", source)
 			if err != nil {
@@ -605,6 +616,10 @@ func (p *packageResouce) enforceState(ctx context.Context) (inDesiredState bool,
 func (p *packageResouce) populateOutput(rCompliance *agentendpointpb.OSPolicyResourceCompliance) {}
 
 func (p *packageResouce) cleanup(ctx context.Context) error {
+	// Save cache and clear the variable.
+	if err := savePackageInfoCache(ctx); err != nil {
+		clog.Warningf(ctx, "Error saving the package info cache: %v", err)
+	}
 	if p.managedPackage.tempDir != "" {
 		return os.RemoveAll(p.managedPackage.tempDir)
 	}

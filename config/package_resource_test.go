@@ -250,6 +250,7 @@ func TestPackageResourceValidate(t *testing.T) {
 					ResourceType: &agentendpointpb.OSPolicy_Resource_Pkg{Pkg: tt.prpb},
 				},
 			}
+			defer pr.Cleanup(ctx)
 
 			if tt.expectedCmd != nil {
 				mockCommandRunner.EXPECT().Run(ctx, tt.expectedCmd).Return(tt.expectedCmdReturn, nil, nil)
@@ -369,6 +370,7 @@ func TestPackageResourceCheckState(t *testing.T) {
 					ResourceType: &agentendpointpb.OSPolicy_Resource_Pkg{Pkg: tt.prpb},
 				},
 			}
+			defer pr.Cleanup(ctx)
 			// Run validate first to make sure everything gets setup correctly.
 			// This adds complexity to this 'unit' test and turns it into more
 			// of a integration test but reduces overall test functions and gives
@@ -474,6 +476,8 @@ func TestPackageResourceEnforceState(t *testing.T) {
 					ResourceType: &agentendpointpb.OSPolicy_Resource_Pkg{Pkg: tt.prpb},
 				},
 			}
+			defer pr.Cleanup(ctx)
+
 			// Run Validate first to make sure everything gets setup correctly.
 			// This adds complexity to this 'unit' test and turns it into more
 			// of a integration test but reduces overall test functions and gives
@@ -511,16 +515,28 @@ func TestPackageInfoCache(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 	packageInfoCacheFile = filepath.Join(tmpDir, "file.cache")
+	packageInfoCacheStore = nil
 
 	updatePackageInfoCache(ctx, pkgInfo, pkgFile)
-	got := getPackageInfoFromCache(pkgFile)
+	if err := savePackageInfoCache(ctx); err != nil {
+		t.Fatal(err)
+	}
+	got := getPackageInfoFromCache(ctx, pkgFile)
 	if !reflect.DeepEqual(got, pkgInfo) {
 		t.Errorf("Did not get expected cache data, got: %+v, want: %+v", got, pkgInfo)
 	}
+	if _, ok := packageInfoCacheStore[wantKey]; !ok {
+		t.Errorf("Cache did not contain expected key, cache: %+v, want: %q", packageInfoCacheStore, wantKey)
+	}
 
-	gotCache := getPackageInfoCache()
-	if _, ok := gotCache[wantKey]; !ok {
-		t.Errorf("Cache did not contain expected key, cache: %+v, want: %q", gotCache, wantKey)
+	// Now test save and reload.
+	savePackageInfoCache(ctx)
+	if packageInfoCacheStore != nil {
+		t.Fatal("expected packageInfoCacheStore to be nil")
+	}
+	loadPackageInfoCache(ctx)
+	if _, ok := packageInfoCacheStore[wantKey]; !ok {
+		t.Errorf("Cache did not contain expected key, cache: %+v, want: %q", packageInfoCacheStore, wantKey)
 	}
 }
 
@@ -533,6 +549,7 @@ func TestUpdatePackageInfoCacheTimeout(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 	packageInfoCacheFile = filepath.Join(tmpDir, "file.cache")
+	packageInfoCacheStore = nil
 
 	cache := packageInfoCache{}
 	key := "IAESFQoGYnVja2V0EgZvYmplY3QYlZrvOg"
@@ -548,8 +565,7 @@ func TestUpdatePackageInfoCacheTimeout(t *testing.T) {
 	}
 
 	updatePackageInfoCache(ctx, nil, nil)
-	gotCache := getPackageInfoCache()
-	if _, ok := gotCache[key]; ok {
-		t.Errorf("Cache should not contain expired data, cache: %+v", gotCache)
+	if _, ok := packageInfoCacheStore[key]; ok {
+		t.Errorf("Cache should not contain expired data, cache: %+v", packageInfoCacheStore)
 	}
 }
