@@ -25,6 +25,11 @@ func InstallMSIPackage(_ context.Context, _ string, _ []string) error {
 }
 
 // MSIInfo is a linux stub function.
-func MSIInfo(_ string) (string, bool, error) {
-	return "", false, nil
+func MSIInfo(_ string) (string, string, error) {
+	return "", "", nil
+}
+
+// MSIInstalled is a linux stub function.
+func MSIInstalled(_ string) (bool, error) {
+	return false, nil
 }

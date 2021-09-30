@@ -16,10 +16,12 @@ package config
 
 import (
 	"context"
+	"encoding/json"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"testing"
 	"time"
 
@@ -248,6 +250,7 @@ func TestPackageResourceValidate(t *testing.T) {
 					ResourceType: &agentendpointpb.OSPolicy_Resource_Pkg{Pkg: tt.prpb},
 				},
 			}
+			defer pr.Cleanup(ctx)
 
 			if tt.expectedCmd != nil {
 				mockCommandRunner.EXPECT().Run(ctx, tt.expectedCmd).Return(tt.expectedCmdReturn, nil, nil)
@@ -367,6 +370,7 @@ func TestPackageResourceCheckState(t *testing.T) {
 					ResourceType: &agentendpointpb.OSPolicy_Resource_Pkg{Pkg: tt.prpb},
 				},
 			}
+			defer pr.Cleanup(ctx)
 			// Run validate first to make sure everything gets setup correctly.
 			// This adds complexity to this 'unit' test and turns it into more
 			// of a integration test but reduces overall test functions and gives
@@ -472,6 +476,8 @@ func TestPackageResourceEnforceState(t *testing.T) {
 					ResourceType: &agentendpointpb.OSPolicy_Resource_Pkg{Pkg: tt.prpb},
 				},
 			}
+			defer pr.Cleanup(ctx)
+
 			// Run Validate first to make sure everything gets setup correctly.
 			// This adds complexity to this 'unit' test and turns it into more
 			// of a integration test but reduces overall test functions and gives
@@ -494,5 +500,72 @@ func TestPackageResourceEnforceState(t *testing.T) {
 				t.Errorf("Enforce function did not set package cache to nil")
 			}
 		})
+	}
+}
+
+func TestPackageInfoCache(t *testing.T) {
+	ctx := context.Background()
+	pkgInfo := &packages.PkgInfo{Name: "name", Arch: "arch", Version: "version"}
+	pkgFile := &agentendpointpb.OSPolicy_Resource_File{AllowInsecure: true, Type: &agentendpointpb.OSPolicy_Resource_File_Gcs_{Gcs: &agentendpointpb.OSPolicy_Resource_File_Gcs{Bucket: "bucket", Object: "object", Generation: 123456789}}}
+	wantKey := "IAESFQoGYnVja2V0EgZvYmplY3QYlZrvOg"
+
+	tmpDir, err := ioutil.TempDir("", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+	packageInfoCacheFile = filepath.Join(tmpDir, "file.cache")
+	packageInfoCacheStore = nil
+
+	updatePackageInfoCache(ctx, pkgInfo, pkgFile)
+	if err := savePackageInfoCache(ctx); err != nil {
+		t.Fatal(err)
+	}
+	got := getPackageInfoFromCache(ctx, pkgFile)
+	if !reflect.DeepEqual(got, pkgInfo) {
+		t.Errorf("Did not get expected cache data, got: %+v, want: %+v", got, pkgInfo)
+	}
+	if _, ok := packageInfoCacheStore[wantKey]; !ok {
+		t.Errorf("Cache did not contain expected key, cache: %+v, want: %q", packageInfoCacheStore, wantKey)
+	}
+
+	// Now test save and reload.
+	savePackageInfoCache(ctx)
+	if packageInfoCacheStore != nil {
+		t.Fatal("expected packageInfoCacheStore to be nil")
+	}
+	loadPackageInfoCache(ctx)
+	if _, ok := packageInfoCacheStore[wantKey]; !ok {
+		t.Errorf("Cache did not contain expected key, cache: %+v, want: %q", packageInfoCacheStore, wantKey)
+	}
+}
+
+func TestUpdatePackageInfoCacheTimeout(t *testing.T) {
+	ctx := context.Background()
+
+	tmpDir, err := ioutil.TempDir("", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+	packageInfoCacheFile = filepath.Join(tmpDir, "file.cache")
+	packageInfoCacheStore = nil
+
+	cache := packageInfoCache{}
+	key := "IAESFQoGYnVja2V0EgZvYmplY3QYlZrvOg"
+	info := &packages.PkgInfo{Name: "name", Arch: "arch", Version: "version"}
+	cache[key] = packageInfo{PkgInfo: info, LastLookup: time.Now().Add(packageInfoCacheTimeout).Add(-1 * time.Hour)}
+
+	data, err := json.Marshal(cache)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := ioutil.WriteFile(packageInfoCacheFile, data, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	updatePackageInfoCache(ctx, nil, nil)
+	if _, ok := packageInfoCacheStore[key]; ok {
+		t.Errorf("Cache should not contain expired data, cache: %+v", packageInfoCacheStore)
 	}
 }
