@@ -117,6 +117,13 @@ func RunYumUpdate(ctx context.Context, opts ...YumUpdateOption) error {
 		return nil
 	}
 	clog.Infof(ctx, "Updating %s", msg)
+	logPackages(ctx, fPkgs)
 
-	return packages.InstallYumPackages(ctx, pkgNames)
+	err = packages.InstallYumPackages(ctx, pkgNames)
+	if err == nil {
+		logSuccess(ctx, fPkgs)
+	} else {
+		logFailure(ctx, fPkgs, err)
+	}
+	return err
 }
