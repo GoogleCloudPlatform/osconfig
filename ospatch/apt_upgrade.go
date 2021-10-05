@@ -98,7 +98,6 @@ func RunAptGetUpgrade(ctx context.Context, opts ...AptGetUpgradeOption) error {
 		return nil
 	}
 
-	clog.Infof(ctx, "Updating %s", msg)
 	logPackages(ctx, fPkgs)
 	err = packages.InstallAptPackages(ctx, pkgNames)
 	if err == nil {

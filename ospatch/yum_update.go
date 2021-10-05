@@ -116,7 +116,6 @@ func RunYumUpdate(ctx context.Context, opts ...YumUpdateOption) error {
 		clog.Infof(ctx, "Running in dryrun mode, not updating %s", msg)
 		return nil
 	}
-	clog.Infof(ctx, "Updating %s", msg)
 	logPackages(ctx, fPkgs)
 
 	err = packages.InstallYumPackages(ctx, pkgNames)
