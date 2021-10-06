@@ -97,7 +97,14 @@ func RunAptGetUpgrade(ctx context.Context, opts ...AptGetUpgradeOption) error {
 		clog.Infof(ctx, "Running in dryrun mode, not updating %s", msg)
 		return nil
 	}
-	clog.Infof(ctx, "Updating %s", msg)
 
-	return packages.InstallAptPackages(ctx, pkgNames)
+	logPackages(ctx, fPkgs)
+	err = packages.InstallAptPackages(ctx, pkgNames)
+	if err == nil {
+		logSuccess(ctx, fPkgs)
+	} else {
+		logFailure(ctx, fPkgs, err)
+	}
+
+	return err
 }
