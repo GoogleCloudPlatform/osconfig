@@ -40,7 +40,7 @@ func TestRunYumUpdateWithSecurity(t *testing.T) {
 		os.Exit(100)
 	}
 
-	cmd := exec.Command(os.Args[0], "-test.run=TestRunYumUpdateWithSecurity")
+	cmd := exec.CommandContext(context.Background(), os.Args[0], "-test.run=TestRunYumUpdateWithSecurity")
 	cmd.Env = append(os.Environ(), "EXIT100=1")
 	err := cmd.Run()
 
@@ -49,12 +49,12 @@ func TestRunYumUpdateWithSecurity(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	packages.SetCommandRunner(mockCommandRunner)
-	checkUpdateCall := mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"check-update", "--assumeyes"}...)).Return([]byte("stdout"), []byte("stderr"), err).Times(1)
+	checkUpdateCall := mockCommandRunner.EXPECT().Run(ctx, exec.CommandContext(context.Background(), "/usr/bin/yum", []string{"check-update", "--assumeyes"}...)).Return([]byte("stdout"), []byte("stderr"), err).Times(1)
 	// yum install call to install package
-	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"install", "--assumeyes", "foo"}...)).After(checkUpdateCall).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
+	mockCommandRunner.EXPECT().Run(ctx, exec.CommandContext(context.Background(), "/usr/bin/yum", []string{"install", "--assumeyes", "foo"}...)).After(checkUpdateCall).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
 
 	packages.SetPtyCommandRunner(mockCommandRunner)
-	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"update", "--assumeno", "--cacheonly", "--color=never", "--security"}...)).Return(data, []byte("stderr"), nil).Times(1)
+	mockCommandRunner.EXPECT().Run(ctx, exec.CommandContext(context.Background(), "/usr/bin/yum", []string{"update", "--assumeno", "--cacheonly", "--color=never", "--security"}...)).Return(data, []byte("stderr"), nil).Times(1)
 
 	err = RunYumUpdate(ctx, YumUpdateMinimal(false), YumUpdateSecurity(true))
 	if err != nil {
@@ -82,7 +82,7 @@ func TestRunYumUpdateWithSecurityWithExclusives(t *testing.T) {
 		os.Exit(100)
 	}
 
-	cmd := exec.Command(os.Args[0], "-test.run=TestRunYumUpdateWithSecurityWithExclusives")
+	cmd := exec.CommandContext(context.Background(), os.Args[0], "-test.run=TestRunYumUpdateWithSecurityWithExclusives")
 	cmd.Env = append(os.Environ(), "EXIT100=1")
 	err := cmd.Run()
 
@@ -91,12 +91,12 @@ func TestRunYumUpdateWithSecurityWithExclusives(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	packages.SetCommandRunner(mockCommandRunner)
-	checkUpdateCall := mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"check-update", "--assumeyes"}...)).Return([]byte("stdout"), []byte("stderr"), err).Times(1)
+	checkUpdateCall := mockCommandRunner.EXPECT().Run(ctx, exec.CommandContext(context.Background(), "/usr/bin/yum", []string{"check-update", "--assumeyes"}...)).Return([]byte("stdout"), []byte("stderr"), err).Times(1)
 	// yum install call to install package, make sure only 2 packages are installed.
-	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"install", "--assumeyes", "foo", "bar"}...)).After(checkUpdateCall).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
+	mockCommandRunner.EXPECT().Run(ctx, exec.CommandContext(context.Background(), "/usr/bin/yum", []string{"install", "--assumeyes", "foo", "bar"}...)).After(checkUpdateCall).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
 
 	packages.SetPtyCommandRunner(mockCommandRunner)
-	mockCommandRunner.EXPECT().Run(ctx, exec.Command("/usr/bin/yum", []string{"update", "--assumeno", "--cacheonly", "--color=never", "--security"}...)).Return(data, []byte("stderr"), nil).Times(1)
+	mockCommandRunner.EXPECT().Run(ctx, exec.CommandContext(context.Background(), "/usr/bin/yum", []string{"update", "--assumeno", "--cacheonly", "--color=never", "--security"}...)).Return(data, []byte("stderr"), nil).Times(1)
 
 	err = RunYumUpdate(ctx, YumUpdateMinimal(false), YumUpdateSecurity(true), YumExclusivePackages(exclusivePackages))
 	if err != nil {

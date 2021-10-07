@@ -29,7 +29,7 @@ type changes struct {
 
 // getNecessaryChanges compares the current state and the desired state to determine which packages
 // need to be installed, upgraded, or removed.
-func getNecessaryChanges(installedPkgs []packages.PkgInfo, upgradablePkgs []packages.PkgInfo, installPkgs, removePkgs, updatePkgs []*agentendpointpb.Package) changes {
+func getNecessaryChanges(installedPkgs []*packages.PkgInfo, upgradablePkgs []*packages.PkgInfo, installPkgs, removePkgs, updatePkgs []*agentendpointpb.Package) changes {
 	installedPkgMap := make(map[string]bool)
 	for _, pkg := range installedPkgs {
 		installedPkgMap[pkg.Name] = true

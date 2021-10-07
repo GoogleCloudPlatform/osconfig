@@ -38,7 +38,7 @@ func init() {
 	GooGetExists = util.Exists(googet)
 }
 
-func parseGooGetUpdates(data []byte) []PkgInfo {
+func parseGooGetUpdates(data []byte) []*PkgInfo {
 	/*
 	   Searching for available updates...
 	   foo.noarch, 3.5.4@1 --> 3.6.7@1 from repo
@@ -47,7 +47,7 @@ func parseGooGetUpdates(data []byte) []PkgInfo {
 	*/
 	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
 
-	var pkgs []PkgInfo
+	var pkgs []*PkgInfo
 	for _, ln := range lines {
 		pkg := strings.Fields(ln)
 		if len(pkg) < 4 {
@@ -58,13 +58,13 @@ func parseGooGetUpdates(data []byte) []PkgInfo {
 		if len(p) != 2 {
 			continue
 		}
-		pkgs = append(pkgs, PkgInfo{Name: p[0], Arch: strings.Trim(p[1], ","), Version: pkg[3]})
+		pkgs = append(pkgs, &PkgInfo{Name: p[0], Arch: strings.Trim(p[1], ","), Version: pkg[3]})
 	}
 	return pkgs
 }
 
 // GooGetUpdates queries for all available googet updates.
-func GooGetUpdates(ctx context.Context) ([]PkgInfo, error) {
+func GooGetUpdates(ctx context.Context) ([]*PkgInfo, error) {
 	out, err := run(ctx, googet, googetUpdateQueryArgs)
 	if err != nil {
 		return nil, err
@@ -85,7 +85,7 @@ func RemoveGooGetPackages(ctx context.Context, pkgs []string) error {
 	return err
 }
 
-func parseInstalledGooGetPackages(data []byte) []PkgInfo {
+func parseInstalledGooGetPackages(data []byte) []*PkgInfo {
 	/*
 	   Installed Packages:
 	   foo.x86_64 1.2.3@4
@@ -94,7 +94,7 @@ func parseInstalledGooGetPackages(data []byte) []PkgInfo {
 	*/
 	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
 
-	var pkgs []PkgInfo
+	var pkgs []*PkgInfo
 	for _, ln := range lines {
 		pkg := bytes.Fields(ln)
 		if len(pkg) != 2 {
@@ -106,13 +106,13 @@ func parseInstalledGooGetPackages(data []byte) []PkgInfo {
 			continue
 		}
 
-		pkgs = append(pkgs, PkgInfo{Name: string(p[0]), Arch: string(p[1]), Version: string(pkg[1])})
+		pkgs = append(pkgs, &PkgInfo{Name: string(p[0]), Arch: string(p[1]), Version: string(pkg[1])})
 	}
 	return pkgs
 }
 
 // InstalledGooGetPackages queries for all installed googet packages.
-func InstalledGooGetPackages(ctx context.Context) ([]PkgInfo, error) {
+func InstalledGooGetPackages(ctx context.Context) ([]*PkgInfo, error) {
 	out, err := run(ctx, googet, googetInstalledQueryArgs)
 	if err != nil {
 		return nil, err

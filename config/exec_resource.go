@@ -17,6 +17,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -24,10 +25,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
 )
+
+const maxExecOutputSize = 100 * 1024
 
 var runner = util.CommandRunner(&util.DefaultRunner{})
 
@@ -35,6 +39,7 @@ type execResource struct {
 	*agentendpointpb.OSPolicy_Resource_ExecResource
 
 	validatePath, enforcePath, tempDir string
+	enforceOutput                      []byte
 }
 
 // TODO: use a persistent cache for downloaded files so we dont need to redownload them each time
@@ -150,7 +155,7 @@ func (e *execResource) run(ctx context.Context, name string, execR *agentendpoin
 	}
 	args = append(args, execR.GetArgs()...)
 
-	stdout, stderr, err := runner.Run(ctx, exec.Command(cmd, args...))
+	stdout, stderr, err := runner.Run(ctx, exec.CommandContext(ctx, cmd, args...))
 	code := 0
 	if err != nil {
 		code = -1
@@ -181,6 +186,7 @@ func (e *execResource) checkState(ctx context.Context) (inDesiredState bool, err
 }
 
 func (e *execResource) enforceState(ctx context.Context) (inDesiredState bool, err error) {
+	clog.Infof(ctx, `Running "Enforce" for ExecResource.`)
 	// For enforce we expect an exit code of 100 for "success" and anything positive code is a failure".
 	// 100 was chosen over 0 because we want an explicit indicator of "sucess" vs errors.
 	// Also Powershell will always exit 0 unless "exit" is explicitly called.
@@ -190,9 +196,49 @@ func (e *execResource) enforceState(ctx context.Context) (inDesiredState bool, e
 	case -1:
 		return false, err
 	case 100:
-		return true, nil
+		out, err := execOutput(ctx, e.GetEnforce().GetOutputFilePath())
+		e.enforceOutput = out
+		return true, err
 	default:
 		return false, fmt.Errorf("unexpected return code from enforce: %d, stdout: %s, stderr: %s", code, stdout, stderr)
+	}
+}
+
+func execOutput(ctx context.Context, outputFilePath string) ([]byte, error) {
+	if outputFilePath == "" {
+		return nil, nil
+	}
+
+	clog.Debugf(ctx, "Reading %q for ExecResource output", outputFilePath)
+
+	f, err := os.Open(outputFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("error opening OutputFilePath: %v", err)
+	}
+	defer f.Close()
+
+	// Make a byte slice with a capacity of 1 over maxSize (for checking maxExecOutputSize).
+	output := make([]byte, 0, maxExecOutputSize+1)
+	// Read up to capactity.
+	n, err := f.Read(output[:cap(output)])
+	output = output[:len(output)+n]
+	if err != nil && err != io.EOF {
+		return output, fmt.Errorf("error reading from OutputFilePath: %v", err)
+	}
+	// Return the output up to this point and an error if total size is greater than maxExecOutputSize.
+	if n > maxExecOutputSize {
+		return output[:maxExecOutputSize], fmt.Errorf("contents of OutputFilePath greater than %dK", maxExecOutputSize/1024)
+	}
+	return output, nil
+}
+
+func (e *execResource) populateOutput(rCompliance *agentendpointpb.OSPolicyResourceCompliance) {
+	if e.enforceOutput != nil {
+		rCompliance.Output = &agentendpointpb.OSPolicyResourceCompliance_ExecResourceOutput_{
+			ExecResourceOutput: &agentendpointpb.OSPolicyResourceCompliance_ExecResourceOutput{
+				EnforcementOutput: e.enforceOutput,
+			},
+		}
 	}
 }
 

@@ -17,31 +17,37 @@ package agentendpoint
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/config"
-	"github.com/GoogleCloudPlatform/osconfig/util"
+	"github.com/GoogleCloudPlatform/osconfig/pretty"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
 )
+
+// This is the maximum size in bytes of the OSPolicyResourceConfigStep ErrorMessage field.
+// Any message longer than this will be truncated to at max this length.
+const maxErrorMessage = 512
 
 var newResource = func(r *agentendpointpb.OSPolicy_Resource) *resource {
 	return &resource{resourceIface: resourceIface(&config.OSPolicyResource{OSPolicy_Resource: r})}
 }
 
+var repoFormats = []string{agentconfig.AptRepoFormat(), agentconfig.YumRepoFormat(), agentconfig.ZypperRepoFormat(), agentconfig.GooGetRepoFormat()}
+
 type configTask struct {
-	client *Client
-
+	StartedAt         time.Time `json:",omitempty"`
+	client            *Client
 	lastProgressState map[agentendpointpb.ApplyConfigTaskProgress_State]time.Time
-
-	TaskID    string
-	Task      *applyConfigTask
-	StartedAt time.Time `json:",omitempty"`
-
-	// ApplyConfigTaskOutput result
-	results  []*agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult
-	policies map[string]*policy
+	Task              *applyConfigTask
+	policies          map[string]*policy
+	TaskID            string
+	results           []*agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult
+	managedResources  []*config.ManagedResources
 }
 
 type applyConfigTask struct {
@@ -50,18 +56,19 @@ type applyConfigTask struct {
 
 type policy struct {
 	resources map[string]*resource
-	hasError  bool
 }
 
 type resource struct {
 	resourceIface
-	needsPostCheck bool
+	needsPostCheck       bool
+	validateOrCheckError bool
 }
 
 type resourceIface interface {
 	Validate(context.Context) error
 	CheckState(context.Context) error
 	EnforceState(context.Context) error
+	PopulateOutput(*agentendpointpb.OSPolicyResourceCompliance) error
 	Cleanup(context.Context) error
 	InDesiredState() bool
 	ManagedResources() *config.ManagedResources
@@ -128,44 +135,59 @@ func detectPolicyConflicts(proposed, current *config.ManagedResources) error {
 	return nil
 }
 
-func validateConfigResource(ctx context.Context, plcy *policy, policyMR *config.ManagedResources, rCompliance *agentendpointpb.OSPolicyResourceCompliance, configResource *agentendpointpb.OSPolicy_Resource) {
+func truncateMessage(msg string, size int) string {
+	cut := size / 2
+	if len(msg) > size {
+		return msg[:size-(cut+3)] + "..." + msg[len(msg)-cut:]
+	}
+	return msg
+}
+
+func validateConfigResource(ctx context.Context, res *resource, policyMR *config.ManagedResources, rCompliance *agentendpointpb.OSPolicyResourceCompliance, configResource *agentendpointpb.OSPolicy_Resource) (hasError bool) {
 	ctx = clog.WithLabels(ctx, map[string]string{"resource_id": configResource.GetId()})
 	clog.Debugf(ctx, "Running step 'validate' on resource %q.", configResource.GetId())
-	res := plcy.resources[configResource.GetId()]
 
+	var errMessage string
 	outcome := agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
 	if err := res.Validate(ctx); err != nil {
 		outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
-		plcy.hasError = true
-		clog.Errorf(ctx, "Error validating resource: %v", err)
-	}
-
-	// Detect any resource conflicts within this policy.
-	if err := detectPolicyConflicts(res.ManagedResources(), policyMR); err != nil {
-		outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
-		plcy.hasError = true
-		clog.Errorf(ctx, "Resource conflict in policy: %v", err)
+		hasError = true
+		errMessage = truncateMessage(fmt.Sprintf("Validate: resource %q error: %v", configResource.GetId(), err), maxErrorMessage)
+		clog.Errorf(ctx, errMessage)
+	} else {
+		// Detect any resource conflicts within this policy.
+		if err := detectPolicyConflicts(res.ManagedResources(), policyMR); err != nil {
+			outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
+			hasError = true
+			errMessage = truncateMessage(fmt.Sprintf("Validate: resource conflict in policy: %v", err), maxErrorMessage)
+			clog.Errorf(ctx, errMessage)
+		} else {
+			clog.Infof(ctx, "Validate: resource %q validation successful.", configResource.GetId())
+		}
 	}
 
 	rCompliance.ConfigSteps = append(rCompliance.GetConfigSteps(), &agentendpointpb.OSPolicyResourceConfigStep{
-		Type:    agentendpointpb.OSPolicyResourceConfigStep_VALIDATION,
-		Outcome: outcome,
+		Type:         agentendpointpb.OSPolicyResourceConfigStep_VALIDATION,
+		Outcome:      outcome,
+		ErrorMessage: errMessage,
 	})
 	rCompliance.State = agentendpointpb.OSPolicyComplianceState_UNKNOWN
+	return hasError
 }
 
-func checkConfigResourceState(ctx context.Context, plcy *policy, rCompliance *agentendpointpb.OSPolicyResourceCompliance, configResource *agentendpointpb.OSPolicy_Resource) {
+func checkConfigResourceState(ctx context.Context, res *resource, rCompliance *agentendpointpb.OSPolicyResourceCompliance, configResource *agentendpointpb.OSPolicy_Resource) (hasError bool) {
 	ctx = clog.WithLabels(ctx, map[string]string{"resource_id": configResource.GetId()})
 	clog.Debugf(ctx, "Running step 'check state' on resource %q.", configResource.GetId())
-	res := plcy.resources[configResource.GetId()]
 
+	var errMessage string
 	outcome := agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
 	state := agentendpointpb.OSPolicyComplianceState_UNKNOWN
 	err := res.CheckState(ctx)
 	if err != nil {
 		outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
-		plcy.hasError = true
-		clog.Errorf(ctx, "Error running desired state check: %v", err)
+		hasError = true
+		errMessage = truncateMessage(fmt.Sprintf("Check state: resource %q error: %v", configResource.GetId(), err), maxErrorMessage)
+		clog.Errorf(ctx, errMessage)
 	} else if res.InDesiredState() {
 		state = agentendpointpb.OSPolicyComplianceState_COMPLIANT
 	} else {
@@ -173,57 +195,63 @@ func checkConfigResourceState(ctx context.Context, plcy *policy, rCompliance *ag
 	}
 
 	rCompliance.ConfigSteps = append(rCompliance.GetConfigSteps(), &agentendpointpb.OSPolicyResourceConfigStep{
-		Type:    agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-		Outcome: outcome,
+		Type:         agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+		Outcome:      outcome,
+		ErrorMessage: errMessage,
 	})
-	clog.Debugf(ctx, "Resource %q state is %s.", configResource.GetId(), state)
+	clog.Infof(ctx, "Check state: resource %q state is %s.", configResource.GetId(), state)
 	rCompliance.State = state
+	return hasError
 }
 
-func enforceConfigResourceState(ctx context.Context, plcy *policy, rCompliance *agentendpointpb.OSPolicyResourceCompliance, configResource *agentendpointpb.OSPolicy_Resource) (enforcementActionTaken bool) {
+func enforceConfigResourceState(ctx context.Context, res *resource, rCompliance *agentendpointpb.OSPolicyResourceCompliance, configResource *agentendpointpb.OSPolicy_Resource) (enforcementActionTaken, hasError bool) {
 	ctx = clog.WithLabels(ctx, map[string]string{"resource_id": configResource.GetId()})
 	clog.Debugf(ctx, "Running step 'enforce state' on resource %q.", configResource.GetId())
-	res := plcy.resources[configResource.GetId()]
 	// Only enforce resources that need it.
 	if res.InDesiredState() {
-		clog.Debugf(ctx, "No enforcement required for %q.", configResource.GetId())
-		return false
+		clog.Debugf(ctx, "Enforce state: No enforcement required for %q.", configResource.GetId())
+		return false, false
 	}
 
+	var errMessage string
 	outcome := agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
 	err := res.EnforceState(ctx)
 	if err != nil {
 		outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
-		plcy.hasError = true
-		clog.Errorf(ctx, "Error running enforcement: %v", err)
+		hasError = true
+		errMessage = truncateMessage(fmt.Sprintf("Enforce state: resource %q error: %v", configResource.GetId(), err), maxErrorMessage)
+		clog.Errorf(ctx, errMessage)
+	} else {
+		clog.Infof(ctx, "Enforce state: resource %q enforcement successful.", configResource.GetId())
 	}
 
 	rCompliance.ConfigSteps = append(rCompliance.GetConfigSteps(), &agentendpointpb.OSPolicyResourceConfigStep{
-		Type:    agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-		Outcome: outcome,
+		Type:         agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+		Outcome:      outcome,
+		ErrorMessage: errMessage,
 	})
 	// Resource is always in an unknown state after enforcement is run.
 	// A COMPLIANT state will only happen after a post check.
 	rCompliance.State = agentendpointpb.OSPolicyComplianceState_UNKNOWN
-	return true
+	return true, hasError
 }
 
-func postCheckConfigResourceState(ctx context.Context, plcy *policy, rCompliance *agentendpointpb.OSPolicyResourceCompliance, configResource *agentendpointpb.OSPolicy_Resource) {
+func postCheckConfigResourceState(ctx context.Context, res *resource, rCompliance *agentendpointpb.OSPolicyResourceCompliance, configResource *agentendpointpb.OSPolicy_Resource) {
 	ctx = clog.WithLabels(ctx, map[string]string{"resource_id": configResource.GetId()})
 	clog.Debugf(ctx, "Running step 'check state post enforcement' on resource %q.", configResource.GetId())
-	res := plcy.resources[configResource.GetId()]
 	if !res.needsPostCheck {
-		clog.Debugf(ctx, "No post check required for %q.", configResource.GetId())
+		clog.Debugf(ctx, "Check state post enforcement: no post check required for %q.", configResource.GetId())
 		return
 	}
 
+	var errMessage string
 	outcome := agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
 	state := agentendpointpb.OSPolicyComplianceState_UNKNOWN
 	err := res.CheckState(ctx)
 	if err != nil {
 		outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
-		plcy.hasError = true
-		clog.Errorf(ctx, "Error running post config desired state check: %v", err)
+		errMessage = truncateMessage(fmt.Sprintf("Check state post enforcement: resource %q error: %v", configResource.GetId(), err), maxErrorMessage)
+		clog.Errorf(ctx, errMessage)
 	} else if res.InDesiredState() {
 		state = agentendpointpb.OSPolicyComplianceState_COMPLIANT
 	} else {
@@ -231,10 +259,11 @@ func postCheckConfigResourceState(ctx context.Context, plcy *policy, rCompliance
 	}
 
 	rCompliance.ConfigSteps = append(rCompliance.GetConfigSteps(), &agentendpointpb.OSPolicyResourceConfigStep{
-		Type:    agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-		Outcome: outcome,
+		Type:         agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+		Outcome:      outcome,
+		ErrorMessage: errMessage,
 	})
-	clog.Debugf(ctx, "Resource %q state is %s.", configResource.GetId(), state)
+	clog.Infof(ctx, "Check state post enforcement: resource %q state is %s.", configResource.GetId(), state)
 	rCompliance.State = state
 }
 
@@ -250,22 +279,15 @@ func (c *configTask) postCheckState(ctx context.Context) {
 			clog.Errorf(ctx, "Unexpected Error: policy entry for %q is empty.", osPolicy.GetId())
 			continue
 		}
-		// Skip state check if this policy already has an error from a previous step.
-		if plcy.hasError {
-			clog.Debugf(ctx, "Policy has error, skipping post check.")
-			continue
-		}
 		pResult := c.results[i]
 		for i, configResource := range osPolicy.GetResources() {
 			res, ok := plcy.resources[configResource.GetId()]
-			// This should not happen in the normal code flow since we only run after
-			// all resources have gone through at least the first two steps.
+			// This should only happen if there was a previous resource with a validate or check state error.
 			if !ok || res == nil {
-				clog.Errorf(ctx, "Unexpected Error: resource entry %q for policy %q is empty.", configResource.GetId(), osPolicy.GetId())
 				continue
 			}
 			rCompliance := pResult.GetOsPolicyResourceCompliances()[i]
-			postCheckConfigResourceState(ctx, plcy, rCompliance, configResource)
+			postCheckConfigResourceState(ctx, res, rCompliance, configResource)
 			clog.Infof(ctx, "Policy %q resource %q state: %s", osPolicy.GetId(), configResource.GetId(), rCompliance.GetState())
 		}
 	}
@@ -289,7 +311,43 @@ func (c *configTask) generateBaseResults() {
 	}
 }
 
+func removeFileIfNoMatch(a string, s []string) error {
+	for _, b := range s {
+		if a == b {
+			return nil
+		}
+	}
+	return os.Remove(a)
+}
+
+func (c *configTask) cleanupRepos(ctx context.Context) {
+	var managedRepos []string
+	for _, managedResource := range c.managedResources {
+		if managedResource == nil {
+			continue
+		}
+		for _, managedRepo := range managedResource.Repositories {
+			managedRepos = append(managedRepos, managedRepo.RepoFilePath)
+		}
+	}
+	for _, format := range repoFormats {
+		matches, err := filepath.Glob(fmt.Sprintf(format, "*"))
+		if err != nil {
+			clog.Errorf(ctx, "Error globing directory: %v", err)
+		}
+		for _, match := range matches {
+			if err := removeFileIfNoMatch(match, managedRepos); err != nil {
+				clog.Errorf(ctx, "Error cleaning up old repo: %v", err)
+			}
+		}
+	}
+}
+
 func (c *configTask) cleanup(ctx context.Context) {
+	// Purge repositories that are no longer managed.
+	c.cleanupRepos(ctx)
+
+	// Cleanup any policy specific resources.
 	for _, osPolicy := range c.Task.GetOsPolicies() {
 		ctx = clog.WithLabels(ctx, map[string]string{"config_assignment": osPolicy.GetOsPolicyAssignment(), "policy_id": osPolicy.GetId()})
 		plcy := c.policies[osPolicy.GetId()]
@@ -308,7 +366,7 @@ func (c *configTask) cleanup(ctx context.Context) {
 
 func (c *configTask) run(ctx context.Context) error {
 	clog.Infof(ctx, "Beginning ApplyConfigTask.")
-	clog.Debugf(ctx, "ApplyConfigTask:\n%s", util.PrettyFmt(c.Task.ApplyConfigTask))
+	clog.Debugf(ctx, "ApplyConfigTask:\n%s", pretty.Format(c.Task.ApplyConfigTask))
 	c.StartedAt = time.Now()
 
 	rcsErrMsg := "Error reporting continuing state"
@@ -342,19 +400,20 @@ func (c *configTask) run(ctx context.Context) error {
 
 		var validateOnly bool
 		if osPolicy.GetMode() == agentendpointpb.OSPolicy_VALIDATION {
-			clog.Debugf(ctx, "Policy running in VALIDATION mode, not running enforcement action for any resources.")
+			clog.Infof(ctx, "Policy running in VALIDATION mode, not running enforcement action for any resources.")
 			validateOnly = true
 		}
 
 		for i, configResource := range osPolicy.GetResources() {
 			rCompliance := pResult.GetOsPolicyResourceCompliances()[i]
 			plcy.resources[configResource.GetId()] = newResource(configResource)
-			validateConfigResource(ctx, plcy, policyMR, rCompliance, configResource)
-			if plcy.hasError {
+			res := plcy.resources[configResource.GetId()]
+			if hasError := validateConfigResource(ctx, res, policyMR, rCompliance, configResource); hasError {
+				res.validateOrCheckError = true
 				break
 			}
-			checkConfigResourceState(ctx, plcy, rCompliance, configResource)
-			if plcy.hasError {
+			if hasError := checkConfigResourceState(ctx, res, rCompliance, configResource); hasError {
+				res.validateOrCheckError = true
 				break
 			}
 
@@ -363,14 +422,23 @@ func (c *configTask) run(ctx context.Context) error {
 				continue
 			}
 
-			if enforcementActionTaken := enforceConfigResourceState(ctx, plcy, rCompliance, configResource); enforcementActionTaken {
-				// On any change we trigger post check for all previous resouces.
+			// Only errors in validate and check state constitute a serious error,
+			// for enforce if any action is taken we still want to run post check.
+			// We do however stop further execution of this polcy on enforce error.
+			enforcementActionTaken, hasError := enforceConfigResourceState(ctx, res, rCompliance, configResource)
+			if enforcementActionTaken {
+				// On any change we trigger post check for all previous resouces,
+				// even if there was an error.
 				c.markPostCheckRequired()
 			}
-			if plcy.hasError {
+			// Still record output even if there was an error during enforcement.
+			res.PopulateOutput(rCompliance)
+			// Errors from enforcement are not classified as "serious" becasue we want post check to run for this resource.
+			if hasError {
 				break
 			}
 		}
+		c.managedResources = append(c.managedResources, policyMR)
 	}
 
 	// Run any post checks that we need to.
@@ -388,14 +456,14 @@ func (c *configTask) markPostCheckRequired() {
 	for _, osPolicy := range c.Task.GetOsPolicies() {
 		plcy, ok := c.policies[osPolicy.GetId()]
 		// This policy entry may not have been created yet by the loop in run().
-		// We take no further actions for policies that are in an error state.
-		if !ok || plcy.hasError {
+		if !ok {
 			continue
 		}
 		for _, configResource := range osPolicy.GetResources() {
 			res, ok := plcy.resources[configResource.GetId()]
 			// This resource entry may not have been created yet is this polciy is in mid-run.
-			if !ok || res == nil {
+			// We take no actions for resources that had a failure with validation or precheck.
+			if !ok || res == nil || res.validateOrCheckError {
 				continue
 			}
 			res.needsPostCheck = true

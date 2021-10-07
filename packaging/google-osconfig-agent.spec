@@ -43,7 +43,7 @@ install -d "%{buildroot}/%{_docdir}/%{name}"
 cp -r THIRD_PARTY_LICENSES "%buildroot/%_docdir/%name/THIRD_PARTY_LICENSES"
 
 install -d %{buildroot}%{_bindir}
-install -d %{buildroot}/etc/osconfig
+install -d %{buildroot}/var/lib/google_osconfig_agent
 install -p -m 0755 google_osconfig_agent %{buildroot}%{_bindir}/google_osconfig_agent
 %if 0%{?el6}
 install -d %{buildroot}/etc/init
@@ -80,7 +80,9 @@ if [ $1 -eq 1 ]; then
 fi
 
 if [ $1 -eq 2 ]; then
-  touch /etc/osconfig/osconfig_agent_restart_required
+  # If the old directory exists make sure we set the file there.
+  [ -e /etc/osconfig ] && touch /etc/osconfig/osconfig_agent_restart_required
+  touch /var/lib/google_osconfig_agent/osconfig_agent_restart_required
 fi
 
 %preun

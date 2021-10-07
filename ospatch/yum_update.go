@@ -30,10 +30,10 @@ var (
 )
 
 type yumUpdateOpts struct {
-	security          bool
-	minimal           bool
 	exclusivePackages []string
 	excludes          []string
+	security          bool
+	minimal           bool
 	dryrun            bool
 }
 
@@ -111,12 +111,18 @@ func RunYumUpdate(ctx context.Context, opts ...YumUpdateOption) error {
 		pkgNames = append(pkgNames, pkg.Name)
 	}
 
-	msg := fmt.Sprintf("%d packages: %s", len(pkgNames), fPkgs)
+	msg := fmt.Sprintf("%d packages: %q", len(pkgNames), fPkgs)
 	if yumOpts.dryrun {
 		clog.Infof(ctx, "Running in dryrun mode, not updating %s", msg)
 		return nil
 	}
-	clog.Infof(ctx, "Updating %s", msg)
+	logPackages(ctx, fPkgs)
 
-	return packages.InstallYumPackages(ctx, pkgNames)
+	err = packages.InstallYumPackages(ctx, pkgNames)
+	if err == nil {
+		logSuccess(ctx, fPkgs)
+	} else {
+		logFailure(ctx, fPkgs, err)
+	}
+	return err
 }

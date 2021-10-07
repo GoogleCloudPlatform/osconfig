@@ -15,6 +15,7 @@
 package packages
 
 import (
+	"context"
 	"errors"
 	"os/exec"
 	"reflect"
@@ -31,7 +32,7 @@ func TestZypperInstalls(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	expectedCmd := exec.Command(zypper, append(zypperInstallArgs, pkgs...)...)
+	expectedCmd := exec.CommandContext(context.Background(), zypper, append(zypperInstallArgs, pkgs...)...)
 
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
 	if err := InstallZypperPackages(testCtx, pkgs); err != nil {
@@ -50,7 +51,7 @@ func TestRemoveZypper(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	expectedCmd := exec.Command(zypper, append(zypperRemoveArgs, pkgs...)...)
+	expectedCmd := exec.CommandContext(context.Background(), zypper, append(zypperRemoveArgs, pkgs...)...)
 
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
 	if err := RemoveZypperPackages(testCtx, pkgs); err != nil {
@@ -73,9 +74,9 @@ this is junk data`
 	tests := []struct {
 		name string
 		data []byte
-		want []PkgInfo
+		want []*PkgInfo
 	}{
-		{"NormalCase", []byte(normalCase), []PkgInfo{{"at", "x86_64", "3.1.14-8.3.1"}, {"autoyast2-installation", "all", "3.2.22-2.9.2"}}},
+		{"NormalCase", []byte(normalCase), []*PkgInfo{{"at", "x86_64", "3.1.14-8.3.1"}, {"autoyast2-installation", "all", "3.2.22-2.9.2"}}},
 		{"NoPackages", []byte("nothing here"), nil},
 		{"nil", nil, nil},
 	}
@@ -94,7 +95,7 @@ func TestZypperUpdates(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	expectedCmd := exec.Command(zypper, zypperListUpdatesArgs...)
+	expectedCmd := exec.CommandContext(context.Background(), zypper, zypperListUpdatesArgs...)
 
 	data := []byte("v | SLES12-SP3-Updates  | at                     | 3.1.14-7.3      | 3.1.14-8.3.1      | x86_64")
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return(data, []byte("stderr"), nil).Times(1)
@@ -103,7 +104,7 @@ func TestZypperUpdates(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	want := []PkgInfo{{"at", "x86_64", "3.1.14-8.3.1"}}
+	want := []*PkgInfo{{"at", "x86_64", "3.1.14-8.3.1"}}
 	if !reflect.DeepEqual(ret, want) {
 		t.Errorf("ZypperUpdates() = %v, want %v", ret, want)
 	}
@@ -126,14 +127,14 @@ some junk data`
 	tests := []struct {
 		name      string
 		data      []byte
-		wantIns   []ZypperPatch
-		wantAvail []ZypperPatch
+		wantIns   []*ZypperPatch
+		wantAvail []*ZypperPatch
 	}{
 		{
 			"NormalCase",
 			[]byte(normalCase),
-			[]ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1206", "security", "low", "Security update for bzip2"}},
-			[]ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1221", "security", "moderate", "Security update for libxslt"}, {"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix"}},
+			[]*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1206", "security", "low", "Security update for bzip2"}},
+			[]*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1221", "security", "moderate", "Security update for libxslt"}, {"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix"}},
 		},
 		{"NoPackages", []byte("nothing here"), nil, nil},
 		{"nil", nil, nil, nil},
@@ -157,7 +158,7 @@ func TestZypperPatches(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	expectedCmd := exec.Command(zypper, append(zypperListPatchesArgs, "--all")...)
+	expectedCmd := exec.CommandContext(context.Background(), zypper, append(zypperListPatchesArgs, "--all")...)
 
 	data := []byte("SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1258 | recommended | moderate  | ---         | needed     | Recommended update for postfix")
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return(data, []byte("stderr"), nil).Times(1)
@@ -166,7 +167,7 @@ func TestZypperPatches(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	want := []ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix"}}
+	want := []*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix"}}
 	if !reflect.DeepEqual(ret, want) {
 		t.Errorf("ZypperPatches() = %v, want %v", ret, want)
 	}
@@ -183,7 +184,7 @@ func TestZypperInstalledPatches(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	expectedCmd := exec.Command(zypper, append(zypperListPatchesArgs, "--all")...)
+	expectedCmd := exec.CommandContext(context.Background(), zypper, append(zypperListPatchesArgs, "--all")...)
 
 	data := []byte("SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1258 | recommended | moderate  | ---         | applied     | Recommended update for postfix")
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return(data, []byte("stderr"), nil).Times(1)
@@ -192,7 +193,7 @@ func TestZypperInstalledPatches(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	want := []ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix"}}
+	want := []*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix"}}
 	if !reflect.DeepEqual(ret, want) {
 		t.Errorf("ZypperInstalledPatches() = %v, want %v", ret, want)
 	}
@@ -289,6 +290,11 @@ Conflicts   : [32]
     python3-six.noarch < 1.11.0-9.21.2
     common-package.src < 1.1.0-9.3.1
     common-package.x86_64 < 1.1.0-9.3.1
+    zypper.src < 1.14.46-13.1
+    zypper.noarch < 1.14.46-13.1
+    zypper.x86_64 < 1.14.46-13.1
+    zypper-log < 1.14.46-13.1
+    zypper-needs-restarting < 1.14.46-13.1
 
 `
 	ppMap, err := parseZypperPatchInfo([]byte(patchInfo))
@@ -316,5 +322,14 @@ Conflicts   : [32]
 			}
 		}
 	}
+}
 
+func TestZypperPackagesInPatch(t *testing.T) {
+	ppMap, err := ZypperPackagesInPatch(testCtx, nil)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if len(ppMap) > 0 {
+		t.Errorf("Unexpected result: expected no mappings, got = [%+v]", ppMap)
+	}
 }

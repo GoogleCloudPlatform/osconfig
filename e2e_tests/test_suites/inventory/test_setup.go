@@ -113,6 +113,8 @@ func headImageTestSetup() (setup []*inventoryTestSetup) {
 				new.shortName = "centos"
 			} else if strings.Contains(name, "rhel") {
 				new.shortName = "rhel"
+			} else if strings.Contains(name, "rocky") {
+				new.shortName = "rocky"
 			} else if strings.Contains(name, "debian") {
 				new.shortName = "debian"
 			} else if strings.Contains(name, "ubuntu") {

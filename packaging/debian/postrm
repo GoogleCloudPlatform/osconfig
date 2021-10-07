@@ -3,7 +3,9 @@
 set -e 
 
 if [ $1 = upgrade ]; then
-	touch /etc/osconfig/osconfig_agent_restart_required
+    # If the old directory exists make sure we set the file there.
+    [ -e /etc/osconfig ] && touch /etc/osconfig/osconfig_agent_restart_required
+	touch /var/lib/google_osconfig_agent/osconfig_agent_restart_required
 fi
 
 exit 0

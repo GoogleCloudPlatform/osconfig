@@ -24,8 +24,8 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
+	"github.com/GoogleCloudPlatform/osconfig/pretty"
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
-	"github.com/GoogleCloudPlatform/osconfig/util"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -93,7 +93,7 @@ func (c *BetaClient) LookupEffectiveGuestPolicies(ctx context.Context) (res *age
 		return nil, err
 	}
 
-	clog.Debugf(ctx, "Calling LookupEffectiveGuestPolicies with request:\n%s", util.PrettyFmt(req))
+	clog.Debugf(ctx, "Calling LookupEffectiveGuestPolicies with request:\n%s", pretty.Format(req))
 	req.InstanceIdToken = token
 
 	// Only retry up to 30s for LookupEffectiveGuestPolicies in order to not hang up local configs.
@@ -102,7 +102,7 @@ func (c *BetaClient) LookupEffectiveGuestPolicies(ctx context.Context) (res *age
 		if err != nil {
 			return err
 		}
-		clog.Debugf(ctx, "LookupEffectiveGuestPolicies response:\n%s", util.PrettyFmt(res))
+		clog.Debugf(ctx, "LookupEffectiveGuestPolicies response:\n%s", pretty.Format(res))
 		return nil
 	}); err != nil {
 		return nil, fmt.Errorf("error calling LookupEffectiveGuestPolicies: %w", err)

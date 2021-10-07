@@ -32,8 +32,6 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 )
 
 // Logger holds log functions.
@@ -43,12 +41,6 @@ type Logger struct {
 	Warningf func(string, ...interface{})
 	Errorf   func(string, ...interface{})
 	Fatalf   func(string, ...interface{})
-}
-
-// PrettyFmt uses jsonpb to marshal a proto for pretty printing.
-func PrettyFmt(pb proto.Message) string {
-	m := &protojson.MarshalOptions{Indent: "  ", AllowPartial: true, UseProtoNames: true, EmitUnpopulated: true, UseEnumNumbers: false}
-	return m.Format(pb)
 }
 
 // NormPath transforms a windows path into an extended-length path as described in
@@ -137,7 +129,22 @@ func (r *DefaultRunner) Run(ctx context.Context, cmd *exec.Cmd) ([]byte, []byte,
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err := cmd.Run()
-	clog.Debugf(ctx, "%s %q exit code: %d, output:\n%s", cmd.Path, cmd.Args[1:], cmd.ProcessState.ExitCode(), strings.ReplaceAll(stdout.String(), "\n", "\n "))
+	clog.DebugStructured(
+		ctx,
+		struct {
+			Command  string
+			Args     []string
+			ExitCode interface{}
+			Stdout   string
+			Stderr   string
+		}{
+			Command:  cmd.Path,
+			Args:     cmd.Args[1:],
+			ExitCode: cmd.ProcessState.ExitCode(),
+			Stdout:   stdout.String(),
+			Stderr:   stderr.String(),
+		},
+		"%s %q exit code: %d, output:\n%s", cmd.Path, cmd.Args[1:], cmd.ProcessState.ExitCode(), strings.ReplaceAll(stdout.String(), "\n", "\n "))
 	return stdout.Bytes(), stderr.Bytes(), err
 }
 

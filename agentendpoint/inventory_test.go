@@ -73,27 +73,27 @@ func (s *agentEndpointServiceInventoryTestServer) ReportInventory(ctx context.Co
 	return resp, nil
 }
 
-func generateInventoryState(shortName string) *inventory.InstanceInventory {
+func generateInventoryState() *inventory.InstanceInventory {
 	return &inventory.InstanceInventory{
 		Hostname:             "Hostname",
 		LongName:             "LongName",
-		ShortName:            shortName,
+		ShortName:            "ShortName",
 		Version:              "Version",
 		Architecture:         "Architecture",
 		KernelVersion:        "KernelVersion",
 		KernelRelease:        "KernelRelease",
 		OSConfigAgentVersion: "OSConfigAgentVersion",
 		InstalledPackages: &packages.Packages{
-			Yum:           []packages.PkgInfo{{Name: "YumInstalledPkg", Arch: "Arch", Version: "Version"}},
-			Rpm:           []packages.PkgInfo{{Name: "RpmInstalledPkg", Arch: "Arch", Version: "Version"}},
-			Apt:           []packages.PkgInfo{{Name: "AptInstalledPkg", Arch: "Arch", Version: "Version"}},
-			Deb:           []packages.PkgInfo{{Name: "DebInstalledPkg", Arch: "Arch", Version: "Version"}},
-			Zypper:        []packages.PkgInfo{{Name: "ZypperInstalledPkg", Arch: "Arch", Version: "Version"}},
-			ZypperPatches: []packages.ZypperPatch{{Name: "ZypperInstalledPatch", Category: "Category", Severity: "Severity", Summary: "Summary"}},
-			Gem:           []packages.PkgInfo{{Name: "GemInstalledPkg", Arch: "Arch", Version: "Version"}},
-			Pip:           []packages.PkgInfo{{Name: "PipInstalledPkg", Arch: "Arch", Version: "Version"}},
-			GooGet:        []packages.PkgInfo{{Name: "GooGetInstalledPkg", Arch: "Arch", Version: "Version"}},
-			WUA: []packages.WUAPackage{{
+			Yum:           []*packages.PkgInfo{{Name: "YumInstalledPkg", Arch: "Arch", Version: "Version"}},
+			Rpm:           []*packages.PkgInfo{{Name: "RpmInstalledPkg", Arch: "Arch", Version: "Version"}},
+			Apt:           []*packages.PkgInfo{{Name: "AptInstalledPkg", Arch: "Arch", Version: "Version"}},
+			Deb:           []*packages.PkgInfo{{Name: "DebInstalledPkg", Arch: "Arch", Version: "Version"}},
+			Zypper:        []*packages.PkgInfo{{Name: "ZypperInstalledPkg", Arch: "Arch", Version: "Version"}},
+			ZypperPatches: []*packages.ZypperPatch{{Name: "ZypperInstalledPatch", Category: "Category", Severity: "Severity", Summary: "Summary"}},
+			Gem:           []*packages.PkgInfo{{Name: "GemInstalledPkg", Arch: "Arch", Version: "Version"}},
+			Pip:           []*packages.PkgInfo{{Name: "PipInstalledPkg", Arch: "Arch", Version: "Version"}},
+			GooGet:        []*packages.PkgInfo{{Name: "GooGetInstalledPkg", Arch: "Arch", Version: "Version"}},
+			WUA: []*packages.WUAPackage{{
 				Title:                    "WUAInstalled",
 				Description:              "Description",
 				Categories:               []string{"Category"},
@@ -104,20 +104,18 @@ func generateInventoryState(shortName string) *inventory.InstanceInventory {
 				UpdateID:                 "UpdateID",
 				RevisionNumber:           1,
 				LastDeploymentChangeTime: time.Date(2020, time.November, 10, 23, 0, 0, 0, time.UTC)}},
-			QFE: []packages.QFEPackage{{Caption: "QFEInstalled", Description: "Description", HotFixID: "HotFixID", InstalledOn: "9/1/2020"}},
-			COS: []packages.PkgInfo{{Name: "CosInstalledPkg", Arch: "Arch", Version: "Version"}},
+			QFE: []*packages.QFEPackage{{Caption: "QFEInstalled", Description: "Description", HotFixID: "HotFixID", InstalledOn: "9/1/2020"}},
+			COS: []*packages.PkgInfo{{Name: "CosInstalledPkg", Arch: "Arch", Version: "Version"}},
 		},
 		PackageUpdates: &packages.Packages{
-			Yum:           []packages.PkgInfo{{Name: "YumPkgUpdate", Arch: "Arch", Version: "Version"}},
-			Rpm:           []packages.PkgInfo{{Name: "RpmPkgUpdate", Arch: "Arch", Version: "Version"}},
-			Apt:           []packages.PkgInfo{{Name: "AptPkgUpdate", Arch: "Arch", Version: "Version"}},
-			Deb:           []packages.PkgInfo{{Name: "DebPkgUpdate", Arch: "Arch", Version: "Version"}},
-			Zypper:        []packages.PkgInfo{{Name: "ZypperPkgUpdate", Arch: "Arch", Version: "Version"}},
-			ZypperPatches: []packages.ZypperPatch{{Name: "ZypperPatchUpdate", Category: "Category", Severity: "Severity", Summary: "Summary"}},
-			Gem:           []packages.PkgInfo{{Name: "GemPkgUpdate", Arch: "Arch", Version: "Version"}},
-			Pip:           []packages.PkgInfo{{Name: "PipPkgUpdate", Arch: "Arch", Version: "Version"}},
-			GooGet:        []packages.PkgInfo{{Name: "GooGetPkgUpdate", Arch: "Arch", Version: "Version"}},
-			WUA: []packages.WUAPackage{{
+			Yum:           []*packages.PkgInfo{{Name: "YumPkgUpdate", Arch: "Arch", Version: "Version"}},
+			Apt:           []*packages.PkgInfo{{Name: "AptPkgUpdate", Arch: "Arch", Version: "Version"}},
+			Zypper:        []*packages.PkgInfo{{Name: "ZypperPkgUpdate", Arch: "Arch", Version: "Version"}},
+			ZypperPatches: []*packages.ZypperPatch{{Name: "ZypperPatchUpdate", Category: "Category", Severity: "Severity", Summary: "Summary"}},
+			Gem:           []*packages.PkgInfo{{Name: "GemPkgUpdate", Arch: "Arch", Version: "Version"}},
+			Pip:           []*packages.PkgInfo{{Name: "PipPkgUpdate", Arch: "Arch", Version: "Version"}},
+			GooGet:        []*packages.PkgInfo{{Name: "GooGetPkgUpdate", Arch: "Arch", Version: "Version"}},
+			WUA: []*packages.WUAPackage{{
 				Title:                    "WUAUpdate",
 				Description:              "Description",
 				Categories:               []string{"Category"},
@@ -128,48 +126,16 @@ func generateInventoryState(shortName string) *inventory.InstanceInventory {
 				UpdateID:                 "UpdateID",
 				RevisionNumber:           1,
 				LastDeploymentChangeTime: time.Time{}}},
-			QFE: []packages.QFEPackage{{Caption: "QFEUpdate", Description: "Description", HotFixID: "HotFixID", InstalledOn: "InvalidDate"}},
-			COS: []packages.PkgInfo{{Name: "CosInstalledPkg", Arch: "Arch", Version: "Version"}},
 		},
 	}
 }
 
-func generateInventory(shortName string) *agentendpointpb.Inventory {
-	var mappedRPMInstalledPkg *agentendpointpb.Inventory_SoftwarePackage
-	var mappedRPMPkgUpdate *agentendpointpb.Inventory_SoftwarePackage
-	if shortName == "sles" {
-		mappedRPMInstalledPkg = &agentendpointpb.Inventory_SoftwarePackage{
-			Details: &agentendpointpb.Inventory_SoftwarePackage_ZypperPackage{
-				ZypperPackage: &agentendpointpb.Inventory_VersionedPackage{
-					PackageName:  "RpmInstalledPkg",
-					Architecture: "Arch",
-					Version:      "Version"}}}
-		mappedRPMPkgUpdate = &agentendpointpb.Inventory_SoftwarePackage{
-			Details: &agentendpointpb.Inventory_SoftwarePackage_ZypperPackage{
-				ZypperPackage: &agentendpointpb.Inventory_VersionedPackage{
-					PackageName:  "RpmPkgUpdate",
-					Architecture: "Arch",
-					Version:      "Version"}}}
-	} else {
-		mappedRPMInstalledPkg = &agentendpointpb.Inventory_SoftwarePackage{
-			Details: &agentendpointpb.Inventory_SoftwarePackage_YumPackage{
-				YumPackage: &agentendpointpb.Inventory_VersionedPackage{
-					PackageName:  "RpmInstalledPkg",
-					Architecture: "Arch",
-					Version:      "Version"}}}
-		mappedRPMPkgUpdate = &agentendpointpb.Inventory_SoftwarePackage{
-			Details: &agentendpointpb.Inventory_SoftwarePackage_YumPackage{
-				YumPackage: &agentendpointpb.Inventory_VersionedPackage{
-					PackageName:  "RpmPkgUpdate",
-					Architecture: "Arch",
-					Version:      "Version"}}}
-	}
-
+func generateInventory() *agentendpointpb.Inventory {
 	return &agentendpointpb.Inventory{
 		OsInfo: &agentendpointpb.Inventory_OsInfo{
 			Hostname:             "Hostname",
 			LongName:             "LongName",
-			ShortName:            shortName,
+			ShortName:            "ShortName",
 			Version:              "Version",
 			Architecture:         "Architecture",
 			KernelVersion:        "KernelVersion",
@@ -181,6 +147,12 @@ func generateInventory(shortName string) *agentendpointpb.Inventory {
 				Details: &agentendpointpb.Inventory_SoftwarePackage_AptPackage{
 					AptPackage: &agentendpointpb.Inventory_VersionedPackage{
 						PackageName:  "AptInstalledPkg",
+						Architecture: "Arch",
+						Version:      "Version"}}},
+			{
+				Details: &agentendpointpb.Inventory_SoftwarePackage_AptPackage{
+					AptPackage: &agentendpointpb.Inventory_VersionedPackage{
+						PackageName:  "DebInstalledPkg",
 						Architecture: "Arch",
 						Version:      "Version"}}},
 			{
@@ -199,6 +171,12 @@ func generateInventory(shortName string) *agentendpointpb.Inventory {
 				Details: &agentendpointpb.Inventory_SoftwarePackage_ZypperPackage{
 					ZypperPackage: &agentendpointpb.Inventory_VersionedPackage{
 						PackageName:  "ZypperInstalledPkg",
+						Architecture: "Arch",
+						Version:      "Version"}}},
+			{
+				Details: &agentendpointpb.Inventory_SoftwarePackage_YumPackage{
+					YumPackage: &agentendpointpb.Inventory_VersionedPackage{
+						PackageName:  "RpmInstalledPkg",
 						Architecture: "Arch",
 						Version:      "Version"}}},
 			{
@@ -230,13 +208,6 @@ func generateInventory(shortName string) *agentendpointpb.Inventory {
 						Description: "Description",
 						HotFixId:    "HotFixID",
 						InstallTime: timestamppb.New(time.Date(2020, time.September, 1, 0, 0, 0, 0, time.UTC))}}},
-			{
-				Details: &agentendpointpb.Inventory_SoftwarePackage_AptPackage{
-					AptPackage: &agentendpointpb.Inventory_VersionedPackage{
-						PackageName:  "DebInstalledPkg",
-						Architecture: "Arch",
-						Version:      "Version"}}},
-			mappedRPMInstalledPkg,
 			{
 				Details: &agentendpointpb.Inventory_SoftwarePackage_CosPackage{
 					CosPackage: &agentendpointpb.Inventory_VersionedPackage{
@@ -290,26 +261,6 @@ func generateInventory(shortName string) *agentendpointpb.Inventory {
 						UpdateId:                 "UpdateID",
 						RevisionNumber:           1,
 						LastDeploymentChangeTime: timestamppb.New(time.Time{})}}},
-			{
-				Details: &agentendpointpb.Inventory_SoftwarePackage_QfePackage{
-					QfePackage: &agentendpointpb.Inventory_WindowsQuickFixEngineeringPackage{
-						Caption:     "QFEUpdate",
-						Description: "Description",
-						HotFixId:    "HotFixID",
-						InstallTime: timestamppb.New(time.Time{})}}},
-			{
-				Details: &agentendpointpb.Inventory_SoftwarePackage_AptPackage{
-					AptPackage: &agentendpointpb.Inventory_VersionedPackage{
-						PackageName:  "DebPkgUpdate",
-						Architecture: "Arch",
-						Version:      "Version"}}},
-			mappedRPMPkgUpdate,
-			{
-				Details: &agentendpointpb.Inventory_SoftwarePackage_CosPackage{
-					CosPackage: &agentendpointpb.Inventory_VersionedPackage{
-						PackageName:  "CosInstalledPkg",
-						Architecture: "Arch",
-						Version:      "Version"}}},
 		},
 	}
 }
@@ -336,12 +287,12 @@ func TestWrite(t *testing.T) {
 		KernelRelease: "KernelRelease",
 		Version:       "Version",
 		InstalledPackages: &packages.Packages{
-			Yum: []packages.PkgInfo{{Name: "Name", Arch: "Arch", Version: "Version"}},
-			WUA: []packages.WUAPackage{{Title: "Title"}},
-			QFE: []packages.QFEPackage{{HotFixID: "HotFixID"}},
+			Yum: []*packages.PkgInfo{{Name: "Name", Arch: "Arch", Version: "Version"}},
+			WUA: []*packages.WUAPackage{{Title: "Title"}},
+			QFE: []*packages.QFEPackage{{HotFixID: "HotFixID"}},
 		},
 		PackageUpdates: &packages.Packages{
-			Apt: []packages.PkgInfo{{Name: "Name", Arch: "Arch", Version: "Version"}},
+			Apt: []*packages.PkgInfo{{Name: "Name", Arch: "Arch", Version: "Version"}},
 		},
 		OSConfigAgentVersion: "OSConfigAgentVersion",
 		LastUpdated:          "LastUpdated",
@@ -445,6 +396,7 @@ func TestWrite(t *testing.T) {
 
 func TestReport(t *testing.T) {
 	ctx := context.Background()
+	packages.YumExists = true
 	srv := &agentEndpointServiceInventoryTestServer{}
 	tc, err := newTestClient(ctx, srv)
 	if err != nil {
@@ -458,9 +410,8 @@ func TestReport(t *testing.T) {
 		inventoryState      *inventory.InstanceInventory
 		wantInventory       *agentendpointpb.Inventory
 	}{
-		{"ReportChecksumOnly", false, generateInventoryState("rhel"), nil},
-		{"ReportFullInventoryRpmMapppingToYum", true, generateInventoryState("ubuntu"), generateInventory("ubuntu")},
-		{"ReportFullInventoryRpmMappingToZypper", true, generateInventoryState("sles"), generateInventory("sles")},
+		{"ReportChecksumOnly", false, generateInventoryState(), nil},
+		{"ReportFullInventory", true, generateInventoryState(), generateInventory()},
 	}
 
 	for _, tt := range tests {
@@ -469,7 +420,7 @@ func TestReport(t *testing.T) {
 
 			tc.client.report(ctx, tt.inventoryState)
 
-			if diff := cmp.Diff(tt.wantInventory, srv.lastReportInventoryRequest.Inventory, protocmp.Transform()); diff != "" {
+			if diff := cmp.Diff(srv.lastReportInventoryRequest.Inventory, tt.wantInventory, protocmp.Transform()); diff != "" {
 				t.Fatalf("ReportInventoryRequest.Inventory mismatch (-want +got):\n%s", diff)
 			}
 		})

@@ -20,6 +20,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"os"
@@ -35,6 +36,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/policies"
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 	"github.com/tarm/serial"
 
 	_ "net/http/pprof"
@@ -100,6 +102,7 @@ func run(ctx context.Context) {
 		logger.Fatalf("Error parsing metadata, agent cannot start: %v", err.Error())
 	}
 	opts.Debug = agentconfig.Debug()
+	clog.DebugEnabled = agentconfig.Debug()
 	opts.ProjectName = agentconfig.ProjectID()
 
 	if err := logger.Init(ctx, opts); err != nil {
@@ -113,6 +116,21 @@ func run(ctx context.Context) {
 		clog.Errorf(ctx, "Error removing restart signal file: %v", err)
 	}
 
+	// On shutdown if the old restart file exists, and there is nothing else in that old directory,
+	// cleanup that directory ignoring all errors.
+	// This ensures we only cleanup this directory if we were using it with an old version of the agent.
+	deferredFuncs = append(deferredFuncs, func() {
+		if runtime.GOOS == "linux" && util.Exists(agentconfig.OldRestartFile()) {
+			os.Remove(agentconfig.OldRestartFile())
+
+			files, err := ioutil.ReadDir(filepath.Dir(agentconfig.OldRestartFile()))
+			if err != nil || len(files) > 0 {
+				return
+			}
+			os.RemoveAll(filepath.Dir(agentconfig.OldRestartFile()))
+		}
+	})
+
 	deferredFuncs = append(deferredFuncs, logger.Close, func() { clog.Infof(ctx, "OSConfig Agent (version %s) shutting down.", agentconfig.Version()) })
 
 	obtainLock()
@@ -122,8 +140,8 @@ func run(ctx context.Context) {
 
 	clog.Infof(ctx, "OSConfig Agent (version %s) started.", agentconfig.Version())
 
-	// Call RegisterAgent on start then at least once every day.
-	registerAgent(ctx)
+	// Call RegisterAgent at least once every day, on start calling
+	// of RegisterAgent is handled in the service loop.
 	go func() {
 		c := time.Tick(24 * time.Hour)
 		for range c {
@@ -166,6 +184,13 @@ func runTaskLoop(ctx context.Context, c chan struct{}) {
 	var taskNotificationClient *agentendpoint.Client
 	var err error
 	for {
+		// Set debug logging settings so that customers don't need to restart the agent.
+		logger.SetDebugLogging(agentconfig.Debug())
+		clog.DebugEnabled = agentconfig.Debug()
+		if agentconfig.TaskNotificationEnabled() && taskNotificationClient == nil {
+			// Call RegisterAgent now since we just we either just started running or were just enabled.
+			registerAgent(ctx)
+		}
 		if agentconfig.TaskNotificationEnabled() && (taskNotificationClient == nil || taskNotificationClient.Closed()) {
 			// Start WaitForTaskNotification if we need to.
 			taskNotificationClient, err = agentendpoint.NewClient(ctx)
@@ -188,6 +213,7 @@ func runTaskLoop(ctx context.Context, c chan struct{}) {
 		default:
 		}
 
+		// Wait on any metadata config change.
 		if err := agentconfig.WatchConfig(ctx); err != nil {
 			clog.Errorf(ctx, err.Error())
 		}
@@ -200,19 +226,10 @@ func runTaskLoop(ctx context.Context, c chan struct{}) {
 	}
 }
 
-func runServiceLoop(ctx context.Context) {
-	// This is just to ensure WaitForTaskNotification runs before any periodocs.
-	c := make(chan struct{})
-	// Configures WaitForTaskNotification, waits for config changes with WatchConfig.
-	go runTaskLoop(ctx, c)
-	<-c
-
-	// Runs functions that need to run on a set interval.
-	ticker := time.NewTicker(agentconfig.SvcPollInterval())
+// Runs internal functions that need to run on an interval.
+func runInternalPeriodics(ctx context.Context) {
+	ticker := time.NewTicker(10 * time.Minute)
 	defer ticker.Stop()
-	// First inventory run will be somewhere between 3 and 5 min.
-	firstInventory := time.After(time.Duration(rand.Intn(120)+180) * time.Second)
-	ranFirstInventory := false
 	for {
 		if _, err := os.Stat(agentconfig.RestartFile()); err == nil {
 			clog.Infof(ctx, "Restart required marker file exists, beginning agent shutdown, waiting for tasks to complete.")
@@ -224,6 +241,32 @@ func runServiceLoop(ctx context.Context) {
 			os.Exit(2)
 		}
 
+		select {
+		case <-ticker.C:
+			continue
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func runServiceLoop(ctx context.Context) {
+	go runInternalPeriodics(ctx)
+
+	// This is just to ensure WaitForTaskNotification runs before any other tasks.
+	c := make(chan struct{})
+	// Configures WaitForTaskNotification, waits for config changes with WatchConfig.
+	go runTaskLoop(ctx, c)
+	// Don't continue any other tasks until WaitForTaskNotification has run.
+	<-c
+
+	// Runs functions that need to run on a set interval.
+	ticker := time.NewTicker(agentconfig.SvcPollInterval())
+	defer ticker.Stop()
+	// First inventory run will be somewhere between 3 and 5 min.
+	firstInventory := time.After(time.Duration(rand.Intn(120)+180) * time.Second)
+	ranFirstInventory := false
+	for {
 		if agentconfig.GuestPoliciesEnabled() {
 			policies.Run(ctx)
 		}

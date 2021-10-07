@@ -1,0 +1,11 @@
+id: win-policy
+mode: VALIDATION
+resourceGroups:
+  - resources:
+      exec:
+        validate:
+          interpreter: POWERSHELL
+          script: |
+            $service = Get-Service -Name 'WinRM'
+            if ($service.Status -eq 'Running') {exit 100} else {exit 101}
+      id: test-powershell

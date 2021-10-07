@@ -23,9 +23,9 @@ import (
 )
 
 type aptGetUpgradeOpts struct {
-	upgradeType       packages.AptUpgradeType
 	exclusivePackages []string
 	excludes          []string
+	upgradeType       packages.AptUpgradeType
 	dryrun            bool
 }
 
@@ -92,12 +92,19 @@ func RunAptGetUpgrade(ctx context.Context, opts ...AptGetUpgradeOption) error {
 		pkgNames = append(pkgNames, pkg.Name)
 	}
 
-	msg := fmt.Sprintf("%d packages: %s", len(pkgNames), fPkgs)
+	msg := fmt.Sprintf("%d packages: %q", len(pkgNames), fPkgs)
 	if aptOpts.dryrun {
 		clog.Infof(ctx, "Running in dryrun mode, not updating %s", msg)
 		return nil
 	}
-	clog.Infof(ctx, "Updating %s", msg)
 
-	return packages.InstallAptPackages(ctx, pkgNames)
+	logPackages(ctx, fPkgs)
+	err = packages.InstallAptPackages(ctx, pkgNames)
+	if err == nil {
+		logSuccess(ctx, fPkgs)
+	} else {
+		logFailure(ctx, fPkgs, err)
+	}
+
+	return err
 }

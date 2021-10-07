@@ -14,11 +14,12 @@
 
 // Stub for linux builds.
 
+//go:build linux && !386 && !amd64
 // +build linux,!386,!amd64
 
 package packages
 
 // InstalledCOSPackages is a stub for unsupported architectures.
-func InstalledCOSPackages() ([]PkgInfo, error) {
+func InstalledCOSPackages() ([]*PkgInfo, error) {
 	return nil, nil
 }

@@ -26,10 +26,10 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/compute-image-tools/go/e2e_test_utils/junitxml"
-	osconfigZonalV1alpha "github.com/GoogleCloudPlatform/osconfig/e2e_tests/api/cloud.google.com/go/osconfig/apiv1alpha"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/compute"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/config"
 	gcpclients "github.com/GoogleCloudPlatform/osconfig/e2e_tests/gcp_clients"
+	osconfigV1alpha "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/cloud.google.com/go/osconfig/apiv1alpha"
 	testconfig "github.com/GoogleCloudPlatform/osconfig/e2e_tests/test_config"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
 	"github.com/google/go-cmp/cmp"
@@ -37,7 +37,7 @@ import (
 	computeApi "google.golang.org/api/compute/v1"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/api/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
 )
 
 var (
@@ -128,7 +128,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 // Use this lock to limit write QPS.
 var gpMx sync.Mutex
 
-func createOSPolicyAssignment(ctx context.Context, client *osconfigZonalV1alpha.OsConfigZonalClient, req *osconfigpb.CreateOSPolicyAssignmentRequest, testCase *junitxml.TestCase) (*osconfigpb.OSPolicyAssignment, error) {
+func createOSPolicyAssignment(ctx context.Context, client *osconfigV1alpha.OsConfigZonalClient, req *osconfigpb.CreateOSPolicyAssignmentRequest, testCase *junitxml.TestCase) (*osconfigpb.OSPolicyAssignment, error) {
 	// Use the lock to slow down write QPS just a bit.
 	gpMx.Lock()
 	op, err := client.CreateOSPolicyAssignment(ctx, req)
@@ -300,7 +300,7 @@ func getTestCaseFromTestSetUp(testSetup *osPolicyTestSetup) (*junitxml.TestCase,
 	return tc, nil
 }
 
-func cleanupOSPolicyAssignment(ctx context.Context, client *osconfigZonalV1alpha.OsConfigZonalClient, testCase *junitxml.TestCase, name string) {
+func cleanupOSPolicyAssignment(ctx context.Context, client *osconfigV1alpha.OsConfigZonalClient, testCase *junitxml.TestCase, name string) {
 	// Use the lock to slow down write QPS just a bit.
 	gpMx.Lock()
 	op, err := client.DeleteOSPolicyAssignment(ctx, &osconfigpb.DeleteOSPolicyAssignmentRequest{Name: name})

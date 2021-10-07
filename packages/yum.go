@@ -43,9 +43,9 @@ func init() {
 }
 
 type yumUpdateOpts struct {
+	excludes []string
 	security bool
 	minimal  bool
-	excludes []string
 }
 
 // YumUpdateOption is an option for yum update.
@@ -87,7 +87,7 @@ func RemoveYumPackages(ctx context.Context, pkgs []string) error {
 	return err
 }
 
-func parseYumUpdates(data []byte) []PkgInfo {
+func parseYumUpdates(data []byte) []*PkgInfo {
 	/*
 				Last metadata expiration check: 0:11:22 ago on Tue 12 Nov 2019 12:13:38 AM UTC.
 				Dependencies resolved.
@@ -113,7 +113,7 @@ func parseYumUpdates(data []byte) []PkgInfo {
 
 	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
 
-	var pkgs []PkgInfo
+	var pkgs []*PkgInfo
 	var upgrading bool
 	for _, ln := range lines {
 		pkg := bytes.Fields(ln)
@@ -135,16 +135,16 @@ func parseYumUpdates(data []byte) []PkgInfo {
 			}
 			break
 		}
-		pkgs = append(pkgs, PkgInfo{Name: string(pkg[0]), Arch: osinfo.Architecture(string(pkg[1])), Version: string(pkg[2])})
+		pkgs = append(pkgs, &PkgInfo{Name: string(pkg[0]), Arch: osinfo.Architecture(string(pkg[1])), Version: string(pkg[2])})
 	}
 	return pkgs
 }
 
 // YumUpdates queries for all available yum updates.
-func YumUpdates(ctx context.Context, opts ...YumUpdateOption) ([]PkgInfo, error) {
+func YumUpdates(ctx context.Context, opts ...YumUpdateOption) ([]*PkgInfo, error) {
 	// We just use check-update to ensure all repo keys are synced as we run
 	// update with --assumeno.
-	stdout, stderr, err := runner.Run(ctx, exec.Command(yum, yumCheckUpdateArgs...))
+	stdout, stderr, err := runner.Run(ctx, exec.CommandContext(ctx, yum, yumCheckUpdateArgs...))
 	// Exit code 0 means no updates, 100 means there are updates.
 	if err == nil {
 		return nil, nil
@@ -163,7 +163,7 @@ func YumUpdates(ctx context.Context, opts ...YumUpdateOption) ([]PkgInfo, error)
 	return listAndParseYumPackages(ctx, opts...)
 }
 
-func listAndParseYumPackages(ctx context.Context, opts ...YumUpdateOption) ([]PkgInfo, error) {
+func listAndParseYumPackages(ctx context.Context, opts ...YumUpdateOption) ([]*PkgInfo, error) {
 	yumOpts := &yumUpdateOpts{
 		security: false,
 		minimal:  false,
@@ -187,7 +187,7 @@ func listAndParseYumPackages(ctx context.Context, opts ...YumUpdateOption) ([]Pk
 		}
 	}
 
-	stdout, stderr, err := ptyrunner.Run(ctx, exec.Command(yum, args...))
+	stdout, stderr, err := ptyrunner.Run(ctx, exec.CommandContext(ctx, yum, args...))
 	if err != nil {
 		return nil, fmt.Errorf("error running %s with args %q: %v, stdout: %q, stderr: %q", yum, args, err, stdout, stderr)
 	}

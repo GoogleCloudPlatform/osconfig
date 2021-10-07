@@ -24,6 +24,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
@@ -40,12 +41,11 @@ type fileResource struct {
 // ManagedFile is the file that this FileResouce manages.
 type ManagedFile struct {
 	Path       string
+	tempDir    string
+	source     string
+	checksum   string
 	State      agentendpointpb.OSPolicy_Resource_FileResource_DesiredState
 	Permisions os.FileMode
-
-	tempDir  string
-	source   string
-	checksum string
 }
 
 func parsePermissions(s string) (os.FileMode, error) {
@@ -186,6 +186,7 @@ func copyFile(dst, src string, perms os.FileMode) (retErr error) {
 }
 
 func (f *fileResource) enforceState(ctx context.Context) (inDesiredState bool, err error) {
+	clog.Infof(ctx, "Enforcing state %q for file %q.", f.managedFile.State, f.managedFile.Path)
 	switch f.managedFile.State {
 	case agentendpointpb.OSPolicy_Resource_FileResource_ABSENT:
 		if err := os.Remove(f.managedFile.Path); err != nil {
@@ -207,6 +208,8 @@ func (f *fileResource) enforceState(ctx context.Context) (inDesiredState bool, e
 
 	return true, nil
 }
+
+func (f *fileResource) populateOutput(rCompliance *agentendpointpb.OSPolicyResourceCompliance) {}
 
 func (f *fileResource) cleanup(ctx context.Context) error {
 	if f.managedFile.tempDir != "" {

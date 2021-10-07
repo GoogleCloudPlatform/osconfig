@@ -105,6 +105,29 @@ func TestLoadState(t *testing.T) {
 	}
 }
 
+func TestLoadOldState(t *testing.T) {
+	td, err := ioutil.TempDir(os.TempDir(), "")
+	if err != nil {
+		t.Fatalf("error creating temp dir: %v", err)
+	}
+	defer os.RemoveAll(td)
+	testState := filepath.Join(td, "testState")
+	oldTaskStateFile = testState
+
+	if err := ioutil.WriteFile(testState, []byte(testPatchTaskStateString), 0600); err != nil {
+		t.Fatalf("error writing state: %v", err)
+	}
+
+	st, err := loadState("/path/dne")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if diff := cmp.Diff(testPatchTaskState, st, cmpopts.IgnoreUnexported(patchTask{}), protocmp.Transform()); diff != "" {
+		t.Errorf("State does not match expectation: (-got +want)\n%s", diff)
+	}
+}
+
 func TestStateSave(t *testing.T) {
 	td, err := ioutil.TempDir(os.TempDir(), "")
 	if err != nil {
@@ -136,7 +159,7 @@ func TestStateSave(t *testing.T) {
 		{
 			"ExecTask",
 			&taskState{ExecTask: &execTask{TaskID: "foo"}},
-			"{\"ExecTask\":{\"TaskID\":\"foo\",\"Task\":null,\"StartedAt\":\"0001-01-01T00:00:00Z\"}}",
+			"{\"ExecTask\":{\"StartedAt\":\"0001-01-01T00:00:00Z\",\"Task\":null,\"TaskID\":\"foo\"}}",
 		},
 	}
 	for _, tt := range tests {

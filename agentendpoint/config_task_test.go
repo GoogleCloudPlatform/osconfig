@@ -17,6 +17,10 @@ package agentendpoint
 import (
 	"context"
 	"errors"
+	"fmt"
+	"io/ioutil"
+	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/GoogleCloudPlatform/osconfig/config"
@@ -69,6 +73,10 @@ func (r *testResource) EnforceState(ctx context.Context) error {
 }
 
 func (r *testResource) ManagedResources() *config.ManagedResources {
+	return nil
+}
+
+func (r *testResource) PopulateOutput(rCompliance *agentendpointpb.OSPolicyResourceCompliance) error {
 	return nil
 }
 
@@ -142,12 +150,15 @@ func genTestResourceCompliance(id string, steps int, inDesiredState bool) *agent
 	if steps > 0 {
 		outcome := agentendpointpb.OSPolicyResourceConfigStep_FAILED
 		state := agentendpointpb.OSPolicyComplianceState_UNKNOWN
+		errMsg := `Validate: resource "r1" error: ` + errTest.Error()
 		if steps > 1 {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
+			errMsg = ""
 		}
 		ret.ConfigSteps = append(ret.GetConfigSteps(), &agentendpointpb.OSPolicyResourceConfigStep{
-			Type:    agentendpointpb.OSPolicyResourceConfigStep_VALIDATION,
-			Outcome: outcome,
+			Type:         agentendpointpb.OSPolicyResourceConfigStep_VALIDATION,
+			Outcome:      outcome,
+			ErrorMessage: errMsg,
 		})
 		ret.State = state
 	}
@@ -155,15 +166,18 @@ func genTestResourceCompliance(id string, steps int, inDesiredState bool) *agent
 	if steps > 1 {
 		outcome := agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
 		state := agentendpointpb.OSPolicyComplianceState_NON_COMPLIANT
+		errMsg := ""
 		if steps == 2 && !inDesiredState {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 			state = agentendpointpb.OSPolicyComplianceState_UNKNOWN
+			errMsg = `Check state: resource "r1" error: ` + errTest.Error()
 		} else if inDesiredState {
 			state = agentendpointpb.OSPolicyComplianceState_COMPLIANT
 		}
 		ret.ConfigSteps = append(ret.GetConfigSteps(), &agentendpointpb.OSPolicyResourceConfigStep{
-			Type:    agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-			Outcome: outcome,
+			Type:         agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
+			Outcome:      outcome,
+			ErrorMessage: errMsg,
 		})
 		ret.State = state
 	}
@@ -171,28 +185,34 @@ func genTestResourceCompliance(id string, steps int, inDesiredState bool) *agent
 	if steps > 2 {
 		outcome := agentendpointpb.OSPolicyResourceConfigStep_FAILED
 		state := agentendpointpb.OSPolicyComplianceState_UNKNOWN
+		errMsg := `Enforce state: resource "r1" error: ` + errTest.Error()
 		if steps > 3 {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
+			errMsg = ""
 		}
 		ret.ConfigSteps = append(ret.GetConfigSteps(), &agentendpointpb.OSPolicyResourceConfigStep{
-			Type:    agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-			Outcome: outcome,
+			Type:         agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
+			Outcome:      outcome,
+			ErrorMessage: errMsg,
 		})
 		ret.State = state
 	}
-	// DesiredStateCheckPostEnforcement{
-	if steps > 3 {
+	// DesiredStateCheckPostEnforcement
+	if steps > 2 {
 		outcome := agentendpointpb.OSPolicyResourceConfigStep_SUCCEEDED
 		state := agentendpointpb.OSPolicyComplianceState_NON_COMPLIANT
+		errMsg := ""
 		if steps == 4 {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 			state = agentendpointpb.OSPolicyComplianceState_UNKNOWN
-		} else {
+			errMsg = `Check state post enforcement: resource "r1" error: ` + errTest.Error()
+		} else if steps == 5 {
 			state = agentendpointpb.OSPolicyComplianceState_COMPLIANT
 		}
 		ret.ConfigSteps = append(ret.GetConfigSteps(), &agentendpointpb.OSPolicyResourceConfigStep{
-			Type:    agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-			Outcome: outcome,
+			Type:         agentendpointpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
+			Outcome:      outcome,
+			ErrorMessage: errMsg,
 		})
 		ret.State = state
 	}
@@ -397,6 +417,58 @@ func TestRunApplyConfig(t *testing.T) {
 
 			if diff := cmp.Diff(tt.wantComReq, srv.lastReportTaskCompleteRequest, protocmp.Transform()); diff != "" {
 				t.Fatalf("ReportTaskCompleteRequest mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestCleanupRepos(t *testing.T) {
+	ctx := context.Background()
+	tmpDir, err := ioutil.TempDir("", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	repoFormats = []string{filepath.Join(tmpDir, "some_repo_%s.repo"), filepath.Join(tmpDir, "some/other_repo_%s.repo")}
+	want := []string{filepath.Join(tmpDir, "some_repo.repo"), filepath.Join(tmpDir, fmt.Sprintf("some_repo_%s.repo", "123456"))}
+
+	task := &configTask{}
+	task.managedResources = []*config.ManagedResources{{Repositories: []config.ManagedRepository{{RepoFilePath: want[1]}}}}
+
+	// Create the repos.
+	if err := ioutil.WriteFile(want[0], nil, 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := ioutil.WriteFile(want[1], nil, 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := ioutil.WriteFile(filepath.Join(tmpDir, fmt.Sprintf("some_repo_%s.repo", "do_not_want")), nil, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	task.cleanupRepos(ctx)
+
+	got, err := filepath.Glob(tmpDir + "/*")
+	if !reflect.DeepEqual(want, got) {
+		t.Errorf("want != got: want: %q, got:%q", want, got)
+	}
+}
+
+func TestTruncateMessage(t *testing.T) {
+	tests := []struct {
+		name    string
+		message string
+		want    string
+		length  int
+	}{
+		{"less than length", "test", "test", 5},
+		{"equal to length", "test", "test", 4},
+		{"greater than length", "this is a longer message", "this i... message", 17},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := truncateMessage(tt.message, tt.length)
+			if got != tt.want {
+				t.Errorf("%s: got (%q) != want (%q)", tt.name, got, tt.want)
 			}
 		})
 	}

@@ -31,10 +31,10 @@ var (
 type zypperPatchOpts struct {
 	categories       []string
 	severities       []string
-	withOptional     bool
-	withUpdate       bool
 	excludes         []string
 	exclusivePatches []string
+	withOptional     bool
+	withUpdate       bool
 	dryrun           bool
 }
 
@@ -126,15 +126,15 @@ func RunZypperPatch(ctx context.Context, opts ...ZypperPatchOption) error {
 	// if user specifies, --with-update get the necessary patch/package
 	// information and then runfilter on them
 	var pkgToPatchesMap map[string][]string
-	var pkgUpdates []packages.PkgInfo
+	var pkgUpdates []*packages.PkgInfo
 	if zOpts.withUpdate {
 		pkgUpdates, err = packages.ZypperUpdates(ctx)
 		if err != nil {
-			return nil
+			return err
 		}
 		pkgToPatchesMap, err = packages.ZypperPackagesInPatch(ctx, patches)
 		if err != nil {
-			return nil
+			return err
 		}
 	}
 
@@ -148,7 +148,7 @@ func RunZypperPatch(ctx context.Context, opts ...ZypperPatchOption) error {
 	if len(fPatches) == 0 {
 		clog.Infof(ctx, "No patches to install.")
 	} else {
-		msg := fmt.Sprintf("%d patches: %s", len(fPatches), fPatches)
+		msg := fmt.Sprintf("%d patches: %v", len(fPatches), fPatches)
 		if zOpts.dryrun {
 			clog.Infof(ctx, "Running in dryrun mode, not installing %s", msg)
 		} else {
@@ -159,7 +159,7 @@ func RunZypperPatch(ctx context.Context, opts ...ZypperPatchOption) error {
 	if len(fpkgs) == 0 {
 		clog.Infof(ctx, "No non-patch packages to update.")
 	} else {
-		msg := fmt.Sprintf("%d patches: %s", len(fpkgs), fpkgs)
+		msg := fmt.Sprintf("%d patches: %q", len(fpkgs), fpkgs)
 		if zOpts.dryrun {
 			clog.Infof(ctx, "Running in dryrun mode, not Updating %s", msg)
 		} else {
@@ -174,10 +174,10 @@ func RunZypperPatch(ctx context.Context, opts ...ZypperPatchOption) error {
 	return packages.ZypperInstall(ctx, fPatches, fpkgs)
 }
 
-func runFilter(patches []packages.ZypperPatch, exclusivePatches, excludes []string, pkgUpdates []packages.PkgInfo, pkgToPatchesMap map[string][]string, withUpdate bool) ([]packages.ZypperPatch, []packages.PkgInfo, error) {
+func runFilter(patches []*packages.ZypperPatch, exclusivePatches, excludes []string, pkgUpdates []*packages.PkgInfo, pkgToPatchesMap map[string][]string, withUpdate bool) ([]*packages.ZypperPatch, []*packages.PkgInfo, error) {
 	// exclusive patches
-	var fPatches []packages.ZypperPatch
-	var fPkgs []packages.PkgInfo
+	var fPatches []*packages.ZypperPatch
+	var fPkgs []*packages.PkgInfo
 	if len(exclusivePatches) > 0 {
 		for _, patch := range patches {
 			if containsString(exclusivePatches, patch.Name) {

@@ -13,10 +13,10 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
-	"github.com/GoogleCloudPlatform/osconfig/util"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
+	datepb "google.golang.org/genproto/googleapis/type/date"
 )
 
 const (
@@ -26,7 +26,9 @@ const (
 // ReportInventory writes inventory to guest attributes and reports it to agent endpoint.
 func (c *Client) ReportInventory(ctx context.Context) {
 	state := inventory.Get(ctx)
-	write(ctx, state, inventoryURL)
+	if !agentconfig.DisableInventoryWrite() {
+		write(ctx, state, inventoryURL)
+	}
 	c.report(ctx, state)
 }
 
@@ -68,7 +70,6 @@ func (c *Client) report(ctx context.Context, state *inventory.InstanceInventory)
 		if err != nil {
 			return err
 		}
-		clog.Debugf(ctx, "ReportInventory response:\n%s", util.PrettyFmt(res))
 		return nil
 	}
 
@@ -79,7 +80,6 @@ func (c *Client) report(ctx context.Context, state *inventory.InstanceInventory)
 
 	if res.GetReportFullInventory() {
 		reportFull = true
-
 		if err = retryutil.RetryAPICall(ctx, apiRetrySec*time.Second, "ReportInventory", f); err != nil {
 			clog.Errorf(ctx, "Error reporting full inventory: %v", err)
 			return
@@ -104,97 +104,124 @@ func formatInventory(ctx context.Context, state *inventory.InstanceInventory) *a
 	return &agentendpointpb.Inventory{OsInfo: osInfo, InstalledPackages: installedPackages, AvailablePackages: availablePackages}
 }
 
-func formatPackages(ctx context.Context, packages *packages.Packages, shortName string) []*agentendpointpb.Inventory_SoftwarePackage {
+func formatPackages(ctx context.Context, pkgs *packages.Packages, shortName string) []*agentendpointpb.Inventory_SoftwarePackage {
 	var softwarePackages []*agentendpointpb.Inventory_SoftwarePackage
-	if packages == nil {
+	if pkgs == nil {
 		return softwarePackages
 	}
-	if packages.Apt != nil {
-		for _, pkg := range packages.Apt {
-			softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
+	if pkgs.Apt != nil {
+		temp := make([]*agentendpointpb.Inventory_SoftwarePackage, len(pkgs.Apt))
+		for i, pkg := range pkgs.Apt {
+			temp[i] = &agentendpointpb.Inventory_SoftwarePackage{
 				Details: formatAptPackage(pkg),
-			})
+			}
 		}
+		softwarePackages = append(softwarePackages, temp...)
 	}
-	if packages.GooGet != nil {
-		for _, pkg := range packages.GooGet {
-			softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
+	if pkgs.Deb != nil {
+		temp := make([]*agentendpointpb.Inventory_SoftwarePackage, len(pkgs.Deb))
+		for i, pkg := range pkgs.Deb {
+			temp[i] = &agentendpointpb.Inventory_SoftwarePackage{
+				Details: formatAptPackage(pkg),
+			}
+		}
+		softwarePackages = append(softwarePackages, temp...)
+	}
+	if pkgs.GooGet != nil {
+		temp := make([]*agentendpointpb.Inventory_SoftwarePackage, len(pkgs.GooGet))
+		for i, pkg := range pkgs.GooGet {
+			temp[i] = &agentendpointpb.Inventory_SoftwarePackage{
 				Details: formatGooGetPackage(pkg),
-			})
+			}
 		}
+		softwarePackages = append(softwarePackages, temp...)
 	}
-	if packages.Yum != nil {
-		for _, pkg := range packages.Yum {
-			softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
+	if pkgs.Yum != nil {
+		temp := make([]*agentendpointpb.Inventory_SoftwarePackage, len(pkgs.Yum))
+		for i, pkg := range pkgs.Yum {
+			temp[i] = &agentendpointpb.Inventory_SoftwarePackage{
 				Details: formatYumPackage(pkg),
-			})
+			}
 		}
+		softwarePackages = append(softwarePackages, temp...)
 	}
-	if packages.Zypper != nil {
-		for _, pkg := range packages.Zypper {
-			softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
+	if pkgs.Zypper != nil {
+		temp := make([]*agentendpointpb.Inventory_SoftwarePackage, len(pkgs.Zypper))
+		for i, pkg := range pkgs.Zypper {
+			temp[i] = &agentendpointpb.Inventory_SoftwarePackage{
 				Details: formatZypperPackage(pkg),
-			})
-		}
-	}
-	if packages.ZypperPatches != nil {
-		for _, pkg := range packages.ZypperPatches {
-			softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
-				Details: formatZypperPatch(pkg),
-			})
-		}
-	}
-	if packages.WUA != nil {
-		for _, pkg := range packages.WUA {
-			softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
-				Details: formatWUAPackage(pkg),
-			})
-		}
-	}
-	if packages.QFE != nil {
-		for _, pkg := range packages.QFE {
-			softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
-				Details: formatQFEPackage(ctx, pkg),
-			})
-		}
-	}
-	// Map Deb packages to Apt packages.
-	if packages.Deb != nil {
-		for _, pkg := range packages.Deb {
-			softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
-				Details: formatAptPackage(pkg),
-			})
-		}
-	}
-	// Map Rpm packages to Yum or Zypper packages depending on the OS.
-	if packages.Rpm != nil {
-		if shortName == "sles" {
-			for _, pkg := range packages.Rpm {
-				softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
-					Details: formatZypperPackage(pkg),
-				})
 			}
-		} else {
-			for _, pkg := range packages.Rpm {
-				softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
+		}
+		softwarePackages = append(softwarePackages, temp...)
+	}
+	if pkgs.Rpm != nil {
+		temp := make([]*agentendpointpb.Inventory_SoftwarePackage, len(pkgs.Rpm))
+		if packages.YumExists {
+			for i, pkg := range pkgs.Rpm {
+				temp[i] = &agentendpointpb.Inventory_SoftwarePackage{
 					Details: formatYumPackage(pkg),
-				})
+				}
+			}
+		} else if packages.ZypperExists {
+			for i, pkg := range pkgs.Rpm {
+				temp[i] = &agentendpointpb.Inventory_SoftwarePackage{
+					Details: formatZypperPackage(pkg),
+				}
 			}
 		}
+		softwarePackages = append(softwarePackages, temp...)
 	}
-	if packages.COS != nil {
-		for _, pkg := range packages.COS {
-			softwarePackages = append(softwarePackages, &agentendpointpb.Inventory_SoftwarePackage{
-				Details: formatCOSPackage(pkg),
-			})
+	if pkgs.ZypperPatches != nil {
+		temp := make([]*agentendpointpb.Inventory_SoftwarePackage, len(pkgs.ZypperPatches))
+		for i, pkg := range pkgs.ZypperPatches {
+			temp[i] = &agentendpointpb.Inventory_SoftwarePackage{
+				Details: formatZypperPatch(pkg),
+			}
 		}
+		softwarePackages = append(softwarePackages, temp...)
+	}
+	if pkgs.WUA != nil {
+		temp := make([]*agentendpointpb.Inventory_SoftwarePackage, len(pkgs.WUA))
+		for i, pkg := range pkgs.WUA {
+			temp[i] = &agentendpointpb.Inventory_SoftwarePackage{
+				Details: formatWUAPackage(pkg),
+			}
+		}
+		softwarePackages = append(softwarePackages, temp...)
+	}
+	if pkgs.QFE != nil {
+		temp := make([]*agentendpointpb.Inventory_SoftwarePackage, len(pkgs.QFE))
+		for i, pkg := range pkgs.QFE {
+			temp[i] = &agentendpointpb.Inventory_SoftwarePackage{
+				Details: formatQFEPackage(ctx, pkg),
+			}
+		}
+		softwarePackages = append(softwarePackages, temp...)
+	}
+	if pkgs.COS != nil {
+		temp := make([]*agentendpointpb.Inventory_SoftwarePackage, len(pkgs.COS))
+		for i, pkg := range pkgs.COS {
+			temp[i] = &agentendpointpb.Inventory_SoftwarePackage{
+				Details: formatCOSPackage(pkg),
+			}
+		}
+		softwarePackages = append(softwarePackages, temp...)
+	}
+	if pkgs.WindowsApplication != nil {
+		temp := make([]*agentendpointpb.Inventory_SoftwarePackage, len(pkgs.WindowsApplication))
+		for i, pkg := range pkgs.WindowsApplication {
+			temp[i] = &agentendpointpb.Inventory_SoftwarePackage{
+				Details: formatWindowsApplication(pkg),
+			}
+		}
+		softwarePackages = append(softwarePackages, temp...)
 	}
 	// Ignore Pip and Gem packages.
 
 	return softwarePackages
 }
 
-func formatAptPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_AptPackage {
+func formatAptPackage(pkg *packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_AptPackage {
 	return &agentendpointpb.Inventory_SoftwarePackage_AptPackage{
 		AptPackage: &agentendpointpb.Inventory_VersionedPackage{
 			PackageName:  pkg.Name,
@@ -203,7 +230,7 @@ func formatAptPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwareP
 		}}
 }
 
-func formatCOSPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_CosPackage {
+func formatCOSPackage(pkg *packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_CosPackage {
 	return &agentendpointpb.Inventory_SoftwarePackage_CosPackage{
 		CosPackage: &agentendpointpb.Inventory_VersionedPackage{
 			PackageName:  pkg.Name,
@@ -212,7 +239,7 @@ func formatCOSPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwareP
 		}}
 }
 
-func formatGooGetPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_GoogetPackage {
+func formatGooGetPackage(pkg *packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_GoogetPackage {
 	return &agentendpointpb.Inventory_SoftwarePackage_GoogetPackage{
 		GoogetPackage: &agentendpointpb.Inventory_VersionedPackage{
 			PackageName:  pkg.Name,
@@ -221,7 +248,7 @@ func formatGooGetPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_Softwa
 		}}
 }
 
-func formatYumPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_YumPackage {
+func formatYumPackage(pkg *packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_YumPackage {
 	return &agentendpointpb.Inventory_SoftwarePackage_YumPackage{
 		YumPackage: &agentendpointpb.Inventory_VersionedPackage{
 			PackageName:  pkg.Name,
@@ -229,7 +256,7 @@ func formatYumPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwareP
 			Version:      pkg.Version}}
 }
 
-func formatZypperPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_ZypperPackage {
+func formatZypperPackage(pkg *packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_ZypperPackage {
 	return &agentendpointpb.Inventory_SoftwarePackage_ZypperPackage{
 		ZypperPackage: &agentendpointpb.Inventory_VersionedPackage{
 			PackageName:  pkg.Name,
@@ -237,7 +264,7 @@ func formatZypperPackage(pkg packages.PkgInfo) *agentendpointpb.Inventory_Softwa
 			Version:      pkg.Version}}
 }
 
-func formatZypperPatch(pkg packages.ZypperPatch) *agentendpointpb.Inventory_SoftwarePackage_ZypperPatch {
+func formatZypperPatch(pkg *packages.ZypperPatch) *agentendpointpb.Inventory_SoftwarePackage_ZypperPatch {
 	return &agentendpointpb.Inventory_SoftwarePackage_ZypperPatch{
 		ZypperPatch: &agentendpointpb.Inventory_ZypperPatch{
 			PatchName: pkg.Name,
@@ -247,7 +274,7 @@ func formatZypperPatch(pkg packages.ZypperPatch) *agentendpointpb.Inventory_Soft
 		}}
 }
 
-func formatWUAPackage(pkg packages.WUAPackage) *agentendpointpb.Inventory_SoftwarePackage_WuaPackage {
+func formatWUAPackage(pkg *packages.WUAPackage) *agentendpointpb.Inventory_SoftwarePackage_WuaPackage {
 	var categories []*agentendpointpb.Inventory_WindowsUpdatePackage_WindowsUpdateCategory
 	for idx, category := range pkg.Categories {
 		categories = append(categories, &agentendpointpb.Inventory_WindowsUpdatePackage_WindowsUpdateCategory{
@@ -270,7 +297,7 @@ func formatWUAPackage(pkg packages.WUAPackage) *agentendpointpb.Inventory_Softwa
 		}}
 }
 
-func formatQFEPackage(ctx context.Context, pkg packages.QFEPackage) *agentendpointpb.Inventory_SoftwarePackage_QfePackage {
+func formatQFEPackage(ctx context.Context, pkg *packages.QFEPackage) *agentendpointpb.Inventory_SoftwarePackage_QfePackage {
 	installedTime, err := time.Parse("1/2/2006", pkg.InstalledOn)
 	if err != nil {
 		clog.Warningf(ctx, "Error parsing QFE InstalledOn date: %v", err)
@@ -282,5 +309,27 @@ func formatQFEPackage(ctx context.Context, pkg packages.QFEPackage) *agentendpoi
 			Description: pkg.Description,
 			HotFixId:    pkg.HotFixID,
 			InstallTime: timestamppb.New(installedTime),
+		}}
+}
+
+func formatWindowsApplication(pkg *packages.WindowsApplication) *agentendpointpb.Inventory_SoftwarePackage_WindowsApplication {
+
+	d := datepb.Date{}
+	// We have to check if date is zero.
+	// Because zero value of time has Year, Month, Day equal to 1
+	if !pkg.InstallDate.IsZero() {
+		d = datepb.Date{
+			Year:  int32(pkg.InstallDate.Year()),
+			Month: int32(pkg.InstallDate.Month()),
+			Day:   int32(pkg.InstallDate.Day()),
+		}
+	}
+	return &agentendpointpb.Inventory_SoftwarePackage_WindowsApplication{
+		WindowsApplication: &agentendpointpb.Inventory_WindowsApplication{
+			DisplayName:    pkg.DisplayName,
+			DisplayVersion: pkg.DisplayVersion,
+			Publisher:      pkg.Publisher,
+			InstallDate:    &d,
+			HelpLink:       pkg.HelpLink,
 		}}
 }

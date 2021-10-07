@@ -17,8 +17,10 @@ package tasker
 
 import (
 	"context"
+	"runtime/debug"
 	"sync"
 
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 )
 
@@ -34,8 +36,8 @@ func initTasker(ctx context.Context) {
 }
 
 type task struct {
-	name string
 	run  func()
+	name string
 }
 
 // Enqueue adds a task to the task queue.
@@ -71,6 +73,9 @@ func tasker(ctx context.Context) {
 			clog.Debugf(ctx, "Tasker running %q.", t.name)
 			t.run()
 			clog.Debugf(ctx, "Finished task %q.", t.name)
+			if agentconfig.FreeOSMemory() {
+				debug.FreeOSMemory()
+			}
 		}
 	}
 }

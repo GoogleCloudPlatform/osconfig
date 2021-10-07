@@ -26,6 +26,7 @@ import (
 	"path/filepath"
 
 	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 	"golang.org/x/crypto/openpgp"
@@ -47,8 +48,8 @@ type repositoryResource struct {
 type AptRepository struct {
 	RepositoryResource *agentendpointpb.OSPolicy_Resource_RepositoryResource_AptRepository
 	GpgFilePath        string
-	GpgFileContents    []byte
 	GpgChecksum        string
+	GpgFileContents    []byte
 }
 
 // GooGetRepository describes an googet repository resource.
@@ -68,14 +69,13 @@ type ZypperRepository struct {
 
 // ManagedRepository is the repository that this RepositoryResource manages.
 type ManagedRepository struct {
-	Apt    *AptRepository
-	GooGet *GooGetRepository
-	Yum    *YumRepository
-	Zypper *ZypperRepository
-
+	Apt              *AptRepository
+	GooGet           *GooGetRepository
+	Yum              *YumRepository
+	Zypper           *ZypperRepository
 	RepoFilePath     string
-	RepoFileContents []byte
 	RepoChecksum     string
+	RepoFileContents []byte
 }
 
 func aptRepoContents(repo *agentendpointpb.OSPolicy_Resource_RepositoryResource_AptRepository) []byte {
@@ -213,7 +213,7 @@ func fetchGPGKey(key string) ([]byte, error) {
 }
 
 func (r *repositoryResource) validate(ctx context.Context) (*ManagedResources, error) {
-	var filePath string
+	var repoFormat string
 	switch r.GetRepository().(type) {
 	case *agentendpointpb.OSPolicy_Resource_RepositoryResource_Apt:
 		if !packages.AptExists {
@@ -222,7 +222,7 @@ func (r *repositoryResource) validate(ctx context.Context) (*ManagedResources, e
 		gpgkey := r.GetApt().GetGpgKey()
 		r.managedRepository.Apt = &AptRepository{RepositoryResource: r.GetApt()}
 		r.managedRepository.RepoFileContents = aptRepoContents(r.GetApt())
-		filePath = filepath.Join(agentconfig.AptRepoDir(), "osconfig_managed_%s.list")
+		repoFormat = agentconfig.AptRepoFormat()
 		if gpgkey != "" {
 			keyContents, err := fetchGPGKey(gpgkey)
 			if err != nil {
@@ -240,7 +240,7 @@ func (r *repositoryResource) validate(ctx context.Context) (*ManagedResources, e
 		}
 		r.managedRepository.GooGet = &GooGetRepository{RepositoryResource: r.GetGoo()}
 		r.managedRepository.RepoFileContents = googetRepoContents(r.GetGoo())
-		filePath = filepath.Join(agentconfig.GooGetRepoDir(), "osconfig_managed_%s.repo")
+		repoFormat = agentconfig.GooGetRepoFormat()
 
 	case *agentendpointpb.OSPolicy_Resource_RepositoryResource_Yum:
 		if !packages.YumExists {
@@ -248,7 +248,7 @@ func (r *repositoryResource) validate(ctx context.Context) (*ManagedResources, e
 		}
 		r.managedRepository.Yum = &YumRepository{RepositoryResource: r.GetYum()}
 		r.managedRepository.RepoFileContents = yumRepoContents(r.GetYum())
-		filePath = filepath.Join(agentconfig.YumRepoDir(), "osconfig_managed_%s.repo")
+		repoFormat = agentconfig.YumRepoFormat()
 
 	case *agentendpointpb.OSPolicy_Resource_RepositoryResource_Zypper:
 		if !packages.ZypperExists {
@@ -256,13 +256,13 @@ func (r *repositoryResource) validate(ctx context.Context) (*ManagedResources, e
 		}
 		r.managedRepository.Zypper = &ZypperRepository{RepositoryResource: r.GetZypper()}
 		r.managedRepository.RepoFileContents = zypperRepoContents(r.GetZypper())
-		filePath = filepath.Join(agentconfig.ZypperRepoDir(), "osconfig_managed_%s.repo")
+		repoFormat = agentconfig.ZypperRepoFormat()
 	default:
 		return nil, fmt.Errorf("Repository field not set or references unknown repository type: %v", r.GetRepository())
 	}
 
 	r.managedRepository.RepoChecksum = checksum(bytes.NewReader(r.managedRepository.RepoFileContents))
-	r.managedRepository.RepoFilePath = fmt.Sprintf(filePath, r.managedRepository.RepoChecksum[:10])
+	r.managedRepository.RepoFilePath = fmt.Sprintf(repoFormat, r.managedRepository.RepoChecksum[:10])
 	return &ManagedResources{Repositories: []ManagedRepository{r.managedRepository}}, nil
 }
 
@@ -295,6 +295,7 @@ func (r *repositoryResource) checkState(ctx context.Context) (inDesiredState boo
 }
 
 func (r *repositoryResource) enforceState(ctx context.Context) (inDesiredState bool, err error) {
+	clog.Infof(ctx, "Enforcing repo %s.", r.managedRepository.RepoFilePath)
 	// Set APT gpg key if applicable.
 	if r.managedRepository.Apt != nil && r.managedRepository.Apt.GpgFileContents != nil {
 		if err := ioutil.WriteFile(r.managedRepository.Apt.GpgFilePath, r.managedRepository.Apt.GpgFileContents, 0644); err != nil {
@@ -309,6 +310,9 @@ func (r *repositoryResource) enforceState(ctx context.Context) (inDesiredState b
 		return false, err
 	}
 	return true, nil
+}
+
+func (r *repositoryResource) populateOutput(rCompliance *agentendpointpb.OSPolicyResourceCompliance) {
 }
 
 func (r *repositoryResource) cleanup(ctx context.Context) error {

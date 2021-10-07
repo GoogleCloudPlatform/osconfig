@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -66,12 +67,17 @@ const (
 	taskNotificationEnabledDefault = false
 	debugEnabledDefault            = false
 
-	configDirWindows     = `C:\Program Files\Google\OSConfig`
-	configDirLinux       = "/etc/osconfig"
-	taskStateFileWindows = configDirWindows + `\osconfig_task.state`
-	taskStateFileLinux   = configDirLinux + "/osconfig_task.state"
-	restartFileWindows   = configDirWindows + `\osconfig_agent_restart_required`
-	restartFileLinux     = configDirLinux + "/osconfig_agent_restart_required"
+	oldConfigDirLinux = "/etc/osconfig"
+	cacheDirWindows   = `C:\Program Files\Google\OSConfig`
+	cacheDirLinux     = "/var/lib/google_osconfig_agent"
+
+	taskStateFileWindows  = cacheDirWindows + `\osconfig_task.state`
+	taskStateFileLinux    = cacheDirLinux + "/osconfig_task.state"
+	oldTaskStateFileLinux = oldConfigDirLinux + "/osconfig_task.state"
+
+	restartFileWindows  = cacheDirWindows + `\osconfig_agent_restart_required`
+	restartFileLinux    = cacheDirLinux + "/osconfig_agent_restart_required"
+	oldRestartFileLinux = oldConfigDirLinux + "/osconfig_agent_restart_required"
 
 	osConfigPollIntervalDefault = 10
 	osConfigMetadataPollTimeout = 60
@@ -102,13 +108,27 @@ var (
 			}).Dial,
 		},
 	}
+
+	freeOSMemory          = strings.ToLower(os.Getenv("OSCONFIG_FREE_OS_MEMORY"))
+	disableInventoryWrite = strings.ToLower(os.Getenv("OSCONFIG_DISABLE_INVENTORY_WRITE"))
 )
 
 type config struct {
-	osInventoryEnabled, guestPoliciesEnabled, taskNotificationEnabled, debugEnabled       bool
-	svcEndpoint, googetRepoFilePath, zypperRepoFilePath, yumRepoFilePath, aptRepoFilePath string
-	numericProjectID, osConfigPollInterval                                                int
-	projectID, instanceZone, instanceName, instanceID                                     string
+	aptRepoFilePath         string
+	instanceName            string
+	instanceZone            string
+	projectID               string
+	svcEndpoint             string
+	googetRepoFilePath      string
+	zypperRepoFilePath      string
+	yumRepoFilePath         string
+	instanceID              string
+	numericProjectID        int64
+	osConfigPollInterval    int
+	debugEnabled            bool
+	taskNotificationEnabled bool
+	guestPoliciesEnabled    bool
+	osInventoryEnabled      bool
 }
 
 func (c *config) parseFeatures(features string, enabled bool) {
@@ -139,8 +159,8 @@ func getAgentConfig() config {
 }
 
 type lastEtag struct {
-	mu   sync.RWMutex
 	Etag string
+	mu   sync.RWMutex
 }
 
 func (e *lastEtag) set(etag string) {
@@ -171,30 +191,30 @@ type metadataJSON struct {
 
 type instanceJSON struct {
 	Attributes attributesJSON
+	ID         *json.Number
 	Zone       string
 	Name       string
-	ID         *json.Number
 }
 
 type projectJSON struct {
 	Attributes       attributesJSON
 	ProjectID        string
-	NumericProjectID int
+	NumericProjectID int64
 }
 
 type attributesJSON struct {
+	PollIntervalOld       *json.Number `json:"os-config-poll-interval"`
+	PollInterval          *json.Number `json:"osconfig-poll-interval"`
 	InventoryEnabledOld   string       `json:"os-inventory-enabled"`
 	InventoryEnabled      string       `json:"enable-os-inventory"`
 	PreReleaseFeaturesOld string       `json:"os-config-enabled-prerelease-features"`
 	PreReleaseFeatures    string       `json:"osconfig-enabled-prerelease-features"`
-	OSConfigEnabled       string       `json:"enable-osconfig"`
-	DisabledFeatures      string       `json:"osconfig-disabled-features"`
 	DebugEnabledOld       string       `json:"enable-os-config-debug"`
 	LogLevel              string       `json:"osconfig-log-level"`
 	OSConfigEndpointOld   string       `json:"os-config-endpoint"`
 	OSConfigEndpoint      string       `json:"osconfig-endpoint"`
-	PollIntervalOld       *json.Number `json:"os-config-poll-interval"`
-	PollInterval          *json.Number `json:"osconfig-poll-interval"`
+	OSConfigEnabled       string       `json:"enable-osconfig"`
+	DisabledFeatures      string       `json:"osconfig-disabled-features"`
 }
 
 func createConfigFromMetadata(md metadataJSON) *config {
@@ -500,6 +520,11 @@ func ZypperRepoDir() string {
 	return zypperRepoDir
 }
 
+// ZypperRepoFormat is the format of the zypper repo files.
+func ZypperRepoFormat() string {
+	return filepath.Join(zypperRepoDir, "osconfig_managed_%s.repo")
+}
+
 // ZypperRepoFilePath is the location where the zypper repo file will be created.
 func ZypperRepoFilePath() string {
 	return getAgentConfig().zypperRepoFilePath
@@ -508,6 +533,11 @@ func ZypperRepoFilePath() string {
 // YumRepoDir is the location of the yum repo files.
 func YumRepoDir() string {
 	return yumRepoDir
+}
+
+// YumRepoFormat is the format of the yum repo files.
+func YumRepoFormat() string {
+	return filepath.Join(yumRepoDir, "osconfig_managed_%s.repo")
 }
 
 // YumRepoFilePath is the location where the yum repo file will be created.
@@ -520,6 +550,11 @@ func AptRepoDir() string {
 	return aptRepoDir
 }
 
+// AptRepoFormat is the format of the apt repo files.
+func AptRepoFormat() string {
+	return filepath.Join(aptRepoDir, "osconfig_managed_%s.list")
+}
+
 // AptRepoFilePath is the location where the apt repo file will be created.
 func AptRepoFilePath() string {
 	return getAgentConfig().aptRepoFilePath
@@ -528,6 +563,11 @@ func AptRepoFilePath() string {
 // GooGetRepoDir is the location of the googet repo files.
 func GooGetRepoDir() string {
 	return googetRepoDir
+}
+
+// GooGetRepoFormat is the format of the googet repo files.
+func GooGetRepoFormat() string {
+	return filepath.Join(googetRepoDir, "osconfig_managed_%s.repo")
 }
 
 // GooGetRepoFilePath is the location where the googet repo file will be created.
@@ -557,7 +597,7 @@ func Instance() string {
 }
 
 // NumericProjectID is the numeric project ID of the instance.
-func NumericProjectID() int {
+func NumericProjectID() int64 {
 	return getAgentConfig().numericProjectID
 }
 
@@ -582,8 +622,8 @@ func ID() string {
 }
 
 type idToken struct {
-	raw string
 	exp *time.Time
+	raw string
 	sync.Mutex
 }
 
@@ -646,6 +686,11 @@ func TaskStateFile() string {
 	return taskStateFileLinux
 }
 
+// OldTaskStateFile is the location of the task state file.
+func OldTaskStateFile() string {
+	return oldTaskStateFileLinux
+}
+
 // RestartFile is the location of the restart required file.
 func RestartFile() string {
 	if runtime.GOOS == "windows" {
@@ -655,7 +700,31 @@ func RestartFile() string {
 	return restartFileLinux
 }
 
+// OldRestartFile is the location of the restart required file.
+func OldRestartFile() string {
+	return oldRestartFileLinux
+}
+
+// CacheDir is the location of the cache directory.
+func CacheDir() string {
+	if runtime.GOOS == "windows" {
+		return cacheDirWindows
+	}
+
+	return cacheDirLinux
+}
+
 // UserAgent for creating http/grpc clients.
 func UserAgent() string {
 	return "google-osconfig-agent/" + Version()
+}
+
+// DisableInventoryWrite returns true if the DisableInventoryWrite setting is set.
+func DisableInventoryWrite() bool {
+	return strings.EqualFold(disableInventoryWrite, "true") || disableInventoryWrite == "1"
+}
+
+// FreeOSMemory returns true if the FreeOSMemory setting is set.
+func FreeOSMemory() bool {
+	return strings.EqualFold(freeOSMemory, "true") || freeOSMemory == "1"
 }

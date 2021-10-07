@@ -45,8 +45,6 @@ type InstanceInventory struct {
 func Get(ctx context.Context) *InstanceInventory {
 	clog.Debugf(ctx, "Gathering instance inventory.")
 
-	hs := &InstanceInventory{}
-
 	installedPackages, err := packages.GetInstalledPackages(ctx)
 	if err != nil {
 		clog.Errorf(ctx, "packages.GetInstalledPackages() error: %v", err)
@@ -62,18 +60,17 @@ func Get(ctx context.Context) *InstanceInventory {
 		clog.Errorf(ctx, "osinfo.Get() error: %v", err)
 	}
 
-	hs.Hostname = oi.Hostname
-	hs.LongName = oi.LongName
-	hs.ShortName = oi.ShortName
-	hs.Version = oi.Version
-	hs.KernelVersion = oi.KernelVersion
-	hs.KernelRelease = oi.KernelRelease
-	hs.Architecture = oi.Architecture
-	hs.OSConfigAgentVersion = agentconfig.Version()
-	hs.InstalledPackages = installedPackages
-	hs.PackageUpdates = packageUpdates
-
-	hs.LastUpdated = time.Now().UTC().Format(time.RFC3339)
-
-	return hs
+	return &InstanceInventory{
+		Hostname:             oi.Hostname,
+		LongName:             oi.LongName,
+		ShortName:            oi.ShortName,
+		Version:              oi.Version,
+		KernelVersion:        oi.KernelVersion,
+		KernelRelease:        oi.KernelRelease,
+		Architecture:         oi.Architecture,
+		OSConfigAgentVersion: agentconfig.Version(),
+		InstalledPackages:    installedPackages,
+		PackageUpdates:       packageUpdates,
+		LastUpdated:          time.Now().UTC().Format(time.RFC3339),
+	}
 }

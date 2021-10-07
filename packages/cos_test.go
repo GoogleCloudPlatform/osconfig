@@ -12,6 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
+//go:build linux && (386 || amd64)
 // +build linux
 // +build 386 amd64
 
@@ -31,7 +32,7 @@ func TestParseInstalledCOSPackages(t *testing.T) {
 	readMachineArch = func() (string, error) {
 		return "", errors.New("failed to obtain machine architecture")
 	}
-	if _, err := parseInstalledCOSPackages(cos.PackageInfo{}); err == nil {
+	if _, err := parseInstalledCOSPackages(&cos.PackageInfo{}); err == nil {
 		t.Errorf("did not get expected error")
 	}
 
@@ -40,11 +41,11 @@ func TestParseInstalledCOSPackages(t *testing.T) {
 	}
 
 	pkg0 := cos.Package{Category: "dev-util", Name: "foo-x", Version: "1.2.3", EbuildVersion: "someversion"}
-	expect0 := PkgInfo{"dev-util/foo-x", "x86_64", "1.2.3"}
+	expect0 := &PkgInfo{"dev-util/foo-x", "x86_64", "1.2.3"}
 	pkg1 := cos.Package{Category: "app-admin", Name: "bar", Version: "0.1"}
-	expect1 := PkgInfo{"app-admin/bar", "x86_64", "0.1"}
+	expect1 := &PkgInfo{"app-admin/bar", "x86_64", "0.1"}
 
-	pkgInfo := cos.PackageInfo{InstalledPackages: []cos.Package{pkg0, pkg1}}
+	pkgInfo := &cos.PackageInfo{InstalledPackages: []cos.Package{pkg0, pkg1}}
 	parsed, err := parseInstalledCOSPackages(pkgInfo)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -143,7 +144,7 @@ func TestInstalledCOSPackages(t *testing.T) {
 		t.Fatalf("Failed to close test file: %v", err)
 	}
 
-	expected := []PkgInfo{
+	expected := []*PkgInfo{
 		{"app-arch/gzip", "x86_64", "1.9"},
 		{"dev-libs/popt", "x86_64", "1.16"},
 		{"app-emulation/docker-credential-helpers", "x86_64", "0.6.3"},
@@ -162,8 +163,9 @@ func TestInstalledCOSPackages(t *testing.T) {
 	readMachineArch = func() (string, error) {
 		return "", errors.New("failed to obtain machine architecture")
 	}
-	readCOSPackageInfo = func() (cos.PackageInfo, error) {
-		return cos.GetPackageInfoFromFile(testFile.Name())
+	readCOSPackageInfo = func() (*cos.PackageInfo, error) {
+		info, err := cos.GetPackageInfoFromFile(testFile.Name())
+		return &info, err
 	}
 	if _, err := InstalledCOSPackages(); err == nil {
 		t.Errorf("did not get expected error from readMachineArch")
@@ -172,8 +174,9 @@ func TestInstalledCOSPackages(t *testing.T) {
 	readMachineArch = func() (string, error) {
 		return "x86_64", nil
 	}
-	readCOSPackageInfo = func() (cos.PackageInfo, error) {
-		return cos.GetPackageInfoFromFile("_" + testFile.Name())
+	readCOSPackageInfo = func() (*cos.PackageInfo, error) {
+		info, err := cos.GetPackageInfoFromFile("_" + testFile.Name())
+		return &info, err
 	}
 	if _, err := InstalledCOSPackages(); err == nil {
 		t.Errorf("did not get expected error fro readCOSPackageInfo")
@@ -182,8 +185,9 @@ func TestInstalledCOSPackages(t *testing.T) {
 	readMachineArch = func() (string, error) {
 		return "x86_64", nil
 	}
-	readCOSPackageInfo = func() (cos.PackageInfo, error) {
-		return cos.GetPackageInfoFromFile(testFile.Name())
+	readCOSPackageInfo = func() (*cos.PackageInfo, error) {
+		info, err := cos.GetPackageInfoFromFile(testFile.Name())
+		return &info, err
 	}
 	ret, err := InstalledCOSPackages()
 	if err != nil {

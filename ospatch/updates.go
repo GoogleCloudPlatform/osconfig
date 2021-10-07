@@ -30,14 +30,14 @@ const (
 	rpmquery = "/usr/bin/rpmquery"
 )
 
-func getBtime(stat string) (int, error) {
+func getBtime(stat string) (int64, error) {
 	f, err := os.Open(stat)
 	if err != nil {
 		return 0, fmt.Errorf("error opening %s: %v", stat, err)
 	}
 	defer f.Close()
 
-	var btime int
+	var btime int64
 	scnr := bufio.NewScanner(f)
 	for scnr.Scan() {
 		if bytes.HasPrefix(scnr.Bytes(), []byte("btime")) {
@@ -45,7 +45,7 @@ func getBtime(stat string) (int, error) {
 			if len(split) != 2 {
 				return 0, fmt.Errorf("error parsing btime from %s: %q", stat, scnr.Text())
 			}
-			btime, err = strconv.Atoi(string(bytes.TrimSpace(split[1])))
+			btime, err = strconv.ParseInt(string(bytes.TrimSpace(split[1])), 10, 64)
 			if err != nil {
 				return 0, fmt.Errorf("error parsing btime: %v", err)
 			}
@@ -62,13 +62,13 @@ func getBtime(stat string) (int, error) {
 	return btime, nil
 }
 
-func rpmRebootRequired(pkgs []byte, btime int) bool {
+func rpmRebootRequired(pkgs []byte, btime int64) bool {
 	// Scanning this output is best effort, false negatives are much prefered
 	// to false positives, and keeping this as simple as possible is
 	// beneficial.
 	scnr := bufio.NewScanner(bytes.NewReader(pkgs))
 	for scnr.Scan() {
-		itime, err := strconv.Atoi(scnr.Text())
+		itime, err := strconv.ParseInt(scnr.Text(), 10, 64)
 		if err != nil {
 			continue
 		}
@@ -120,11 +120,11 @@ func containsString(ss []string, c string) bool {
 	return false
 }
 
-func filterPackages(pkgs []packages.PkgInfo, exclusivePackages, excludes []string) ([]packages.PkgInfo, error) {
+func filterPackages(pkgs []*packages.PkgInfo, exclusivePackages, excludes []string) ([]*packages.PkgInfo, error) {
 	if len(exclusivePackages) != 0 && len(excludes) != 0 {
 		return nil, errors.New("exclusivePackages and excludes can not both be non 0")
 	}
-	var fPkgs []packages.PkgInfo
+	var fPkgs []*packages.PkgInfo
 	for _, pkg := range pkgs {
 		if containsString(excludes, pkg.Name) {
 			continue

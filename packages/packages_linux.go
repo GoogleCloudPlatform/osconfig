@@ -20,7 +20,6 @@ import (
 	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
-	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
 // GetPackageUpdates gets all available package updates from any known
@@ -95,9 +94,9 @@ func GetPackageUpdates(ctx context.Context) (*Packages, error) {
 // GetInstalledPackages gets all installed packages from any known installed
 // package manager.
 func GetInstalledPackages(ctx context.Context) (*Packages, error) {
-	pkgs := Packages{}
+	pkgs := &Packages{}
 	var errs []string
-	if util.Exists(rpmquery) {
+	if RPMQueryExists {
 		rpm, err := InstalledRPMPackages(ctx)
 		if err != nil {
 			msg := fmt.Sprintf("error listing installed rpm packages: %v", err)
@@ -107,7 +106,7 @@ func GetInstalledPackages(ctx context.Context) (*Packages, error) {
 			pkgs.Rpm = rpm
 		}
 	}
-	if util.Exists(zypper) {
+	if ZypperExists {
 		zypperPatches, err := ZypperInstalledPatches(ctx)
 		if err != nil {
 			msg := fmt.Sprintf("error getting zypper installed patches: %v", err)
@@ -117,7 +116,7 @@ func GetInstalledPackages(ctx context.Context) (*Packages, error) {
 			pkgs.ZypperPatches = zypperPatches
 		}
 	}
-	if util.Exists(dpkgQuery) {
+	if DpkgQueryExists {
 		deb, err := InstalledDebPackages(ctx)
 		if err != nil {
 			msg := fmt.Sprintf("error listing installed deb packages: %v", err)
@@ -137,7 +136,7 @@ func GetInstalledPackages(ctx context.Context) (*Packages, error) {
 			pkgs.COS = cos
 		}
 	}
-	if util.Exists(gem) {
+	if GemExists {
 		gem, err := InstalledGemPackages(ctx)
 		if err != nil {
 			msg := fmt.Sprintf("error listing installed gem packages: %v", err)
@@ -146,7 +145,7 @@ func GetInstalledPackages(ctx context.Context) (*Packages, error) {
 			pkgs.Gem = gem
 		}
 	}
-	if util.Exists(pip) {
+	if PipExists {
 		pip, err := InstalledPipPackages(ctx)
 		if err != nil {
 			msg := fmt.Sprintf("error listing installed pip packages: %v", err)
@@ -160,5 +159,5 @@ func GetInstalledPackages(ctx context.Context) (*Packages, error) {
 	if len(errs) != 0 {
 		err = errors.New(strings.Join(errs, "\n"))
 	}
-	return &pkgs, err
+	return pkgs, err
 }
