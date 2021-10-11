@@ -5,7 +5,7 @@ osPolicies:
     mode: ENFORCEMENT
     resourceGroups:
       - inventoryFilters:
-          osShortName: debian
+          - osShortName: debian
         resources:
           - id: setup-repo
             repository:
@@ -22,7 +22,7 @@ osPolicies:
               apt:
                 name: stackdriver-agent
       - inventoryFilters:
-          osShortName: ubuntu
+          - osShortName: ubuntu
         resources:
           - id: setup-repo
             repository:
