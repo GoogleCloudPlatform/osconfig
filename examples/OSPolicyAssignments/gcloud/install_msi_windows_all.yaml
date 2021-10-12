@@ -1,4 +1,5 @@
-# An OS policy assignment to install a Windows MSI downloaded from a Google Cloud Storage bucket on all VMs running Windows Server OS.
+# An OS policy assignment to install a Windows MSI downloaded from a Google Cloud Storage bucket
+# on all VMs running Windows Server OS.
 osPolicies:
   - id: install-msi-policy
     mode: ENFORCEMENT
@@ -14,8 +15,8 @@ osPolicies:
                     object: my-app.msi
                     generation: 1619136883923956
 instanceFilter:
-  osShortNames:
-    - windows
+  inventories:
+    - osShortName: windows
 rollout:
   disruptionBudget:
     fixed: 10

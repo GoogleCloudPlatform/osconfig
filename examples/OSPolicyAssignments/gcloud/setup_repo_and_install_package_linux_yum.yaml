@@ -20,9 +20,9 @@ osPolicies:
               yum:
                 name: stackdriver-agent
 instanceFilter:
-  osShortNames:
-    - rhel
-    - centos
+  inventories:
+    - osShortName: rhel
+    - osShortName: centos
 rollout:
   disruptionBudget:
     fixed: 10

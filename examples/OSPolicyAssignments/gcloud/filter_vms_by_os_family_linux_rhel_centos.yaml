@@ -10,9 +10,9 @@ osPolicies:
               yum:
                 name: unwanted-package
 instanceFilter:
-  osShortNames:
-    - rhel
-    - centos
+  inventories:
+    - osShortName: rhel
+    - osShortName: centos
 rollout:
   disruptionBudget:
     fixed: 10

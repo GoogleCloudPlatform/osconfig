@@ -3,8 +3,8 @@
 id: setup-repo-and-install-package-policy
 mode: ENFORCEMENT
 resourceGroups:
-  - osFilter:
-      osShortName: debian
+  - inventoryFilters:
+      - osShortName: debian
     resources:
       - id: setup-repo
         repository:
@@ -20,8 +20,8 @@ resourceGroups:
           desiredState: INSTALLED
           apt:
             name: stackdriver-agent
-  - osFilter:
-      osShortName: ubuntu
+  - inventoryFilters:
+      - osShortName: ubuntu
     resources:
       - id: setup-repo
         repository:
