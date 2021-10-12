@@ -15,13 +15,13 @@ resourceGroups:
                   try
                   {
                       # Start RDP service
-                      Write-Host "Attempting to start RDP service"
+                      Write-Hotst "Attempting to start RDP service"
                       Set-Service -Name TermService -Status Running -StartupType Automatic
                       $RDP_Status = $true
                   }
-                  catch 
+                  catch [System.Exception]
                   {
-                      throw "Error starting RDP service: $Error[0]"
+                      throw "Error starting RDP service: $_"
                   }
                   return $RDP_Status
               }
@@ -37,9 +37,9 @@ resourceGroups:
                       Set-NetFirewallProfile -Profile Domain, Public, Private -Enabled False
                       $Firewall_Disabled_Status = $true
                   }
-                  catch
+                  catch [System.Exception]
                   {
-                      throw "Error disabling firewall: $Error[0]"
+                      throw "Error disabling firewall: $_"
                   }
                   return $Firewall_Disabled_Status
               }
@@ -55,9 +55,9 @@ resourceGroups:
                       reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server" /f /v fDenyTSConnections /t REG_DWORD /d 0    
                       $RDP_Connections_Status = $true
                   }
-                  catch
+                  catch [System.Exception]
                   {
-                      throw "Error enabling RDP connections: $Error[0]"
+                      throw "Error enabling RDP connections: $_"
                   }
                   return $RDP_Connections_Status
               }
@@ -73,9 +73,9 @@ resourceGroups:
                       reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" /v SecurityLayer /t REG_DWORD /d 1 /f
                       $RDP_Default_Sec_Status = $true
                   }
-                  catch
+                  catch [System.Exception]
                   {
-                      throw "Error resetting RDP security to default: $Error[0]"
+                      throw "Error resetting RDP security to default: $_"
                   }
                   return $RDP_Default_Sec_Status
               }
@@ -91,9 +91,9 @@ resourceGroups:
                       reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" /v UserAuthentication /t REG_DWORD /d 0 /f    
                       $RDP_Default_NLA_Status = $true
                   }
-                  catch
+                  catch [System.Exception]
                   {
-                      throw "Error resetting RDP NLA setting to default: $Error[0]"
+                      throw "Error resetting RDP NLA setting to default: $_"
                   }
                   return $RDP_Default_NLA_Status
               }
@@ -109,9 +109,9 @@ resourceGroups:
                       netsh interface ipv4 set address "Ethernet" dhcp
                       $Network_Adapter_DHCP_Status = $true
                   }
-                  catch
+                  catch [System.Exception]
                   {
-                      throw "Error changing Network adapter to DHCP mode: $Error[0]"
+                      throw "Error changing Network adapter to DHCP mode: $_"
                   }
                   return $Network_Adapter_DHCP_Status
               }
