@@ -148,7 +148,7 @@ func RunZypperPatch(ctx context.Context, opts ...ZypperPatchOption) error {
 	if len(fPatches) == 0 {
 		clog.Infof(ctx, "No patches to install.")
 	} else {
-		msg := fmt.Sprintf("%d patches: %s", len(fPatches), fPatches)
+		msg := fmt.Sprintf("%d patches: %v", len(fPatches), fPatches)
 		if zOpts.dryrun {
 			clog.Infof(ctx, "Running in dryrun mode, not installing %s", msg)
 		} else {
