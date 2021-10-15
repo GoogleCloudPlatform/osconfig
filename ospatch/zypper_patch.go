@@ -17,6 +17,7 @@ package ospatch
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
@@ -96,6 +97,14 @@ func ZypperUpdateDryrun(dryrun bool) ZypperPatchOption {
 	}
 }
 
+func formatPatches(patches []*packages.ZypperPatch) string {
+	names := []string{}
+	for _, p := range patches {
+		names = append(names, p.Name)
+	}
+	return strings.Join(names, ", ")
+}
+
 // RunZypperPatch runs zypper patch.
 func RunZypperPatch(ctx context.Context, opts ...ZypperPatchOption) error {
 	zOpts := &zypperPatchOpts{
@@ -148,7 +157,7 @@ func RunZypperPatch(ctx context.Context, opts ...ZypperPatchOption) error {
 	if len(fPatches) == 0 {
 		clog.Infof(ctx, "No patches to install.")
 	} else {
-		msg := fmt.Sprintf("%d patches: %v", len(fPatches), fPatches)
+		msg := fmt.Sprintf("%d patches: %s", len(fPatches), formatPatches(fPatches))
 		if zOpts.dryrun {
 			clog.Infof(ctx, "Running in dryrun mode, not installing %s", msg)
 		} else {
