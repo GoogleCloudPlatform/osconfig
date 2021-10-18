@@ -145,14 +145,16 @@ func RunZypperPatch(ctx context.Context, opts ...ZypperPatchOption) error {
 		return nil
 	}
 
+	var ops opsToReport
+
 	if len(fPatches) == 0 {
 		clog.Infof(ctx, "No patches to install.")
 	} else {
-		msg := fmt.Sprintf("%d patches: %v", len(fPatches), fPatches)
+		msg := fmt.Sprintf("%d patches: %s", len(fPatches), formatPatches(fPatches))
 		if zOpts.dryrun {
 			clog.Infof(ctx, "Running in dryrun mode, not installing %s", msg)
 		} else {
-			clog.Infof(ctx, "Installing %s", msg)
+			ops.patches = fPatches
 		}
 	}
 
@@ -163,18 +165,19 @@ func RunZypperPatch(ctx context.Context, opts ...ZypperPatchOption) error {
 		if zOpts.dryrun {
 			clog.Infof(ctx, "Running in dryrun mode, not Updating %s", msg)
 		} else {
-			logPackages(ctx, fpkgs)
+			ops.packages = fpkgs
 		}
 	}
+	logOps(ctx, ops)
 
 	if zOpts.dryrun {
 		return nil
 	}
 	err = packages.ZypperInstall(ctx, fPatches, fpkgs)
 	if err == nil {
-		logSuccess(ctx, fpkgs)
+		logSuccess(ctx, ops)
 	} else {
-		logFailure(ctx, fpkgs, err)
+		logFailure(ctx, ops, err)
 	}
 	return err
 }
