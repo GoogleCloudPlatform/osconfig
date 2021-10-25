@@ -29,7 +29,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/compute"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/config"
 	gcpclients "github.com/GoogleCloudPlatform/osconfig/e2e_tests/gcp_clients"
-	osconfigV1alpha "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/cloud.google.com/go/osconfig/apiv1alpha"
+	osconfig "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/cloud.google.com/go/osconfig/apiv1"
 	testconfig "github.com/GoogleCloudPlatform/osconfig/e2e_tests/test_config"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
 	"github.com/google/go-cmp/cmp"
@@ -37,7 +37,7 @@ import (
 	computeApi "google.golang.org/api/compute/v1"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1"
 )
 
 var (
@@ -74,10 +74,10 @@ type osPolicyTestSetup struct {
 	machineType          string
 	queryPaths           []string
 	assertTimeout        time.Duration
-	wantCompliances      []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance
+	wantCompliances      []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance
 }
 
-func newOsPolicyTestSetup(image, imageName, instanceName, testName string, queryPaths []string, machineType string, ospa *osconfigpb.OSPolicyAssignment, startup *computeApi.MetadataItems, assertTimeout time.Duration, wantCompliances []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance) *osPolicyTestSetup {
+func newOsPolicyTestSetup(image, imageName, instanceName, testName string, queryPaths []string, machineType string, ospa *osconfigpb.OSPolicyAssignment, startup *computeApi.MetadataItems, assertTimeout time.Duration, wantCompliances []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance) *osPolicyTestSetup {
 	return &osPolicyTestSetup{
 		image:                image,
 		imageName:            imageName,
@@ -128,7 +128,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 // Use this lock to limit write QPS.
 var gpMx sync.Mutex
 
-func createOSPolicyAssignment(ctx context.Context, client *osconfigV1alpha.OsConfigZonalClient, req *osconfigpb.CreateOSPolicyAssignmentRequest, testCase *junitxml.TestCase) (*osconfigpb.OSPolicyAssignment, error) {
+func createOSPolicyAssignment(ctx context.Context, client *osconfig.OsConfigZonalClient, req *osconfigpb.CreateOSPolicyAssignmentRequest, testCase *junitxml.TestCase) (*osconfigpb.OSPolicyAssignment, error) {
 	// Use the lock to slow down write QPS just a bit.
 	gpMx.Lock()
 	op, err := client.CreateOSPolicyAssignment(ctx, req)
@@ -180,7 +180,7 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPoli
 		return
 	}
 
-	client, err := gcpclients.GetOsConfigClientV1Alpha()
+	client, err := gcpclients.GetOsConfigClientV1()
 	if err != nil {
 		testCase.WriteFailure("Error getting osconfig client: %v", err)
 		return
@@ -201,8 +201,8 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPoli
 	defer cleanupOSPolicyAssignment(ctx, client, testCase, ospa.GetName())
 
 	// Check that the compliance output meets expectations.
-	compReq := &osconfigpb.GetInstanceOSPoliciesComplianceRequest{Name: fmt.Sprintf("projects/%s/locations/%s/instanceOSPoliciesCompliances/%d", testProjectConfig.TestProjectID, zone, inst.Id)}
-	compliance, err := client.GetInstanceOSPoliciesCompliance(ctx, compReq)
+	repReq := &osconfigpb.GetOSPolicyAssignmentReportRequest{Name: fmt.Sprintf("projects/%s/locations/%s/instances/%d/osPolicyAssignments/%s/report", testProjectConfig.TestProjectID, zone, inst.Id, ospa.GetName())}
+	compliance, err := client.GetOSPolicyAssignmentReport(ctx, repReq)
 	if err != nil {
 		testCase.WriteFailure("Error running GetInstanceOSPoliciesCompliance: %s", err)
 		return
@@ -300,7 +300,7 @@ func getTestCaseFromTestSetUp(testSetup *osPolicyTestSetup) (*junitxml.TestCase,
 	return tc, nil
 }
 
-func cleanupOSPolicyAssignment(ctx context.Context, client *osconfigV1alpha.OsConfigZonalClient, testCase *junitxml.TestCase, name string) {
+func cleanupOSPolicyAssignment(ctx context.Context, client *osconfig.OsConfigZonalClient, testCase *junitxml.TestCase, name string) {
 	// Use the lock to slow down write QPS just a bit.
 	gpMx.Lock()
 	op, err := client.DeleteOSPolicyAssignment(ctx, &osconfigpb.DeleteOSPolicyAssignmentRequest{Name: name})

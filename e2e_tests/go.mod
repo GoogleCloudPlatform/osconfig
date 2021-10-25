@@ -10,6 +10,7 @@ require (
 	github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20210621170517-facc9c0d81b9
 	github.com/GoogleCloudPlatform/osconfig v0.0.0-20210719204415-9fd26d68a050
 	github.com/StackExchange/wmi v1.2.0 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-ole/go-ole v1.2.5 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2

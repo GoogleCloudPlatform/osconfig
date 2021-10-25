@@ -21,14 +21,14 @@ import (
 	osconfigV1beta "cloud.google.com/go/osconfig/apiv1beta"
 	"github.com/GoogleCloudPlatform/compute-image-tools/daisy/compute"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/config"
-	osconfigV1alpha "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/cloud.google.com/go/osconfig/apiv1alpha"
+	osconfigV1 "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/cloud.google.com/go/osconfig/apiv1"
 	"google.golang.org/api/option"
 )
 
 var (
-	computeClient              compute.Client
-	osconfigClientV1beta       *osconfigV1beta.Client
-	osconfigZonalClientV1alpha *osconfigV1alpha.OsConfigZonalClient
+	computeClient         compute.Client
+	osconfigClientV1beta  *osconfigV1beta.Client
+	osconfigZonalClientV1 *osconfigV1.OsConfigZonalClient
 )
 
 // PopulateClients populates the GCP clients.
@@ -36,7 +36,7 @@ func PopulateClients(ctx context.Context) error {
 	if err := createComputeClient(ctx); err != nil {
 		return err
 	}
-	if err := createOsConfigClientV1Alpha(ctx); err != nil {
+	if err := createOsConfigClientV1(ctx); err != nil {
 		return err
 	}
 	return createOsConfigClientV1beta(ctx)
@@ -54,9 +54,9 @@ func createOsConfigClientV1beta(ctx context.Context) error {
 	return err
 }
 
-func createOsConfigClientV1Alpha(ctx context.Context) error {
+func createOsConfigClientV1(ctx context.Context) error {
 	var err error
-	osconfigZonalClientV1alpha, err = osconfigV1alpha.NewOsConfigZonalClient(ctx, option.WithCredentialsFile(config.OauthPath()), option.WithEndpoint(config.SvcEndpoint()))
+	osconfigZonalClientV1, err = osconfigV1.NewOsConfigZonalClient(ctx, option.WithCredentialsFile(config.OauthPath()), option.WithEndpoint(config.SvcEndpoint()))
 	return err
 }
 
@@ -77,9 +77,9 @@ func GetOsConfigClientV1beta() (*osconfigV1beta.Client, error) {
 }
 
 // GetOsConfigClientV1Alpha returns a singleton GCP client for osconfig tests
-func GetOsConfigClientV1Alpha() (*osconfigV1alpha.OsConfigZonalClient, error) {
-	if osconfigZonalClientV1alpha == nil {
-		return nil, fmt.Errorf("v1alpha osconfig client was not initialized")
+func GetOsConfigClientV1() (*osconfigV1.OsConfigZonalClient, error) {
+	if osconfigZonalClientV1 == nil {
+		return nil, fmt.Errorf("v1 osconfig client was not initialized")
 	}
-	return osconfigZonalClientV1alpha, nil
+	return osconfigZonalClientV1, nil
 }
