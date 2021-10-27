@@ -76,7 +76,7 @@ func GetOsConfigClientV1beta() (*osconfigV1beta.Client, error) {
 	return osconfigClientV1beta, nil
 }
 
-// GetOsConfigClientV1Alpha returns a singleton GCP client for osconfig tests
+// GetOsConfigClientV1 returns a singleton GCP client for osconfig tests
 func GetOsConfigClientV1() (*osconfigV1.OsConfigZonalClient, error) {
 	if osconfigZonalClientV1 == nil {
 		return nil, fmt.Errorf("v1 osconfig client was not initialized")
