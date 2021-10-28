@@ -1,10 +1,7 @@
 id: cloudops-policy
 mode: ENFORCEMENT
 resourceGroups:
-  - inventoryFilters:
-      - osShortName: centos
-        osVersion: 7
-    resources:
+  - resources:
       - id: add-repo
         repository:
           yum:

@@ -1,0 +1,49 @@
+# An OS policy assignment that ensures google-cloud-ops-agent is running on all Centos VMs in the project
+osPolicies:
+  - id: cloudops-policy
+    mode: ENFORCEMENT
+    resourceGroups:
+        resources:
+          - id: add-repo
+            repository:
+              yum:
+                id: google-cloud-ops-agent
+                displayName: Google Cloud Ops Agent Repository
+                baseUrl: https://packages.cloud.google.com/yum/repos/google-cloud-ops-agent-el7-x86_64-all
+                gpgKeys:
+                  - https://packages.cloud.google.com/yum/doc/yum-key.gpg
+                  - https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+          - id: install-pkg
+            pkg:
+              desiredState: INSTALLED
+              yum:
+                name: google-cloud-ops-agent
+          - id: exec-script
+            exec:
+              validate:
+                script: |-
+                  if [[ $(rpm --query --queryformat '%{VERSION}
+                  ' google-cloud-ops-agent) == '1.0.2' ]]; then exit 100; else exit 101; fi
+                interpreter: SHELL
+              enforce:
+                script:
+                  sudo yum remove -y google-cloud-ops-agent || true; sudo yum install
+                  -y 'google-cloud-ops-agent-1.0.2*' && exit 100
+                interpreter: SHELL
+          - id: ensure-agent-running
+            exec:
+              validate:
+                script:
+                  if (ps aux | grep 'opt[/].*google-cloud-ops-agent.*bin/'); then exit
+                  100; else exit 101; fi
+                interpreter: SHELL
+              enforce:
+                script: sudo systemctl start google-cloud-ops-agent.target && exit 100
+                interpreter: SHELL
+instanceFilter:
+  inventories:
+    - osShortName: centos
+rollout:
+  disruptionBudget:
+    fixed: 10
+  minWaitDuration: 300s
