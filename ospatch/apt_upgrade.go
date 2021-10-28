@@ -98,12 +98,16 @@ func RunAptGetUpgrade(ctx context.Context, opts ...AptGetUpgradeOption) error {
 		return nil
 	}
 
-	logPackages(ctx, fPkgs)
+	ops := opsToReport{
+		packages: fPkgs,
+	}
+	logOps(ctx, ops)
+
 	err = packages.InstallAptPackages(ctx, pkgNames)
 	if err == nil {
-		logSuccess(ctx, fPkgs)
+		logSuccess(ctx, ops)
 	} else {
-		logFailure(ctx, fPkgs, err)
+		logFailure(ctx, ops, err)
 	}
 
 	return err
