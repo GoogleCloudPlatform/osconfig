@@ -1,142 +1,261 @@
-id: win-policy
-mode: VALIDATION
-resourceGroups: 
-  - resources: 
-      exec: 
-        validate: 
+﻿id: win-rdp-policy
+mode: ENFORCEMENT
+resourceGroups:
+  resources:
+    id: restore-rdp-powershell
+    exec: 
+      validate: 
+        interpreter: POWERSHELL
+        script: |
+            Start-Transcript -Path "C:\transcript_validate.log" -Append
+            
+            function Get-RDPService ()
+            {
+                $RDP_Status = $false
+            
+                try
+                {
+                    Write-Host "Checking if TermService is running.."   
+                    $service = Get-Service -Name 'TermService'
+                    if ($service.Status -eq 'Running')
+                    {
+                    $RDP_Status = $true
+                    }                    
+                }
+                catch [System.Exception]
+                {
+                    throw "Error checking RDP service: $_"
+                }
+                return $RDP_Status
+            }
+            
+            function Get-FirewallSettings ()
+            {
+                $Firewall_Disabled_Status = $false
+            
+                try
+                {
+                    Write-Host "Checking if Firewall is disabled across profiles.."   
+                    $Firewall_Profiles = Get-NetFirewallProfile
+                    # check if firewall disabled across profiles
+                    if ($Firewall_Profiles.Enabled -notcontains "True"){
+                        $Firewall_Disabled_Status = $true
+                    }
+                }
+                catch [System.Exception]
+                {
+                    throw "Error disabling firewall: $_"
+                }
+                return $Firewall_Disabled_Status
+            }
+            
+            function Get-RDPConnections ()
+            {
+                $RDP_Connections_Status = $false
+            
+                try
+                {
+                    Write-Host "Checking if Terminal Service set to accept incoming connections.."   
+                    $value = Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server" -Name fDenyTSConnections | Select -ExpandProperty fDenyTSConnections
+                    if ($value -eq 0){
+                        $RDP_Connections_Status = $true
+                    }
+                }
+                catch [System.Exception]
+                {
+                    throw "Error getting registry value for RDP connections: $_"
+                }
+                return $RDP_Connections_Status
+            }
+            
+            function Get-RDPDefaultSecurityNeg ()
+            {
+                $RDP_Default_Sec_Status = $false
+            
+                try
+                {
+                    Write-Host "Checking if Terminal Service is using default RDP security settings.."   
+                    $value = Get-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" -Name SecurityLayer | Select -ExpandProperty SecurityLayer
+                    if ($value -eq 1){
+                        $RDP_Default_Sec_Status = $true
+                    }                     
+                }
+                catch [System.Exception]
+                {
+                    throw "Error getting registry value for RDP security: $_"
+                }
+                return $RDP_Default_Sec_Status
+            }
+            
+            function Get-RDPDefaultNLA ()
+            {
+                $RDP_Default_NLA_Status = $false
+            
+                try
+                {
+                    Write-Host "Checking if Terminal Service is using default NLA settings.."  
+                    $value = Get-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" -Name UserAuthentication | Select -ExpandProperty UserAuthentication
+                    if ($value -eq 0){
+                        $RDP_Default_NLA_Status = $true
+                    }                     
+                }
+                catch [System.Exception]
+                {
+                    throw "Error getting registry value for RDP NLA setting: $_"
+                }
+                return $RDP_Default_NLA_Status
+            }
+            
+            function Get-NetworkAdapterDHCP ()
+            {             
+                $Network_Adapter_DHCP_Status = $false
+            
+                try
+                {
+                    Write-Host "Checking if network interface is set to DHCP mode.."  
+                    $value = Get-NetIPInterface -InterfaceAlias Ethernet -AddressFamily IPv4 | Select -ExpandProperty Dhcp
+                    if ($value -eq 'Enabled'){
+                        $Network_Adapter_DHCP_Status = $true
+                    }
+                }
+                catch [System.Exception]
+                {
+                    throw "Error retrieving Network adapter settings: $_"
+                }
+                return $Network_Adapter_DHCP_Status
+            }
+            
+            function Get-GCEInstanceRDPsettings()
+            {
+                Write-Host "Running diagnostic tests.."
+            
+                $r1 = Get-RDPService
+                $r2 = Get-FirewallSettings
+                $r3 = Get-RDPConnections
+                $r4 = Get-RDPDefaultSecurityNeg
+                $r5 = Get-RDPDefaultNLA
+                $r6 = Get-NetworkAdapterDHCP
+                
+                if (($r1 -and $r2 -and $r3 -and $r4 -and $r5 -and $r6) -eq $true)
+                {
+                    Write-Host "Instance is configured for allowing RDP connections"
+                    return 100
+                }
+                else
+                {
+                  Write-Host "Instance may not be configured for allowing RDP connections"
+                  return 101
+                }           
+            }
+            
+            # Mapping PS exit code to guest policy exit code (Success 100, Failure 101)
+            if (Get-GCEInstanceRDPsettings -eq 100){
+                exit 100
+            }
+            else{ # includes errors running scripts or thrown exceptions
+                exit 101
+            }
+      enforce: 
           interpreter: POWERSHELL
           script: |
-              Start-Transcript -Path "C:\transcript.log"
+              Start-Transcript -Path "C:\transcript_enforce.log" -Append
               
               function Set-RDPService ()
-              {
-                  $RDP_Status = $false
-              
+              {            
                   try
                   {
-                      # Start RDP service
-                      Write-Hotst "Attempting to start RDP service"
+                      Write-Host "Attempting to start RDP service"
                       Set-Service -Name TermService -Status Running -StartupType Automatic
-                      $RDP_Status = $true
                   }
                   catch [System.Exception]
                   {
                       throw "Error starting RDP service: $_"
                   }
-                  return $RDP_Status
               }
               
               function Set-FirewallDisable ()
               {
-                  $Firewall_Disabled_Status = $false
-              
                   try
                   {
-                      # Disable firewall
                       Write-Host "Attempting to disable firewall"
                       Set-NetFirewallProfile -Profile Domain, Public, Private -Enabled False
-                      $Firewall_Disabled_Status = $true
                   }
                   catch [System.Exception]
                   {
                       throw "Error disabling firewall: $_"
                   }
-                  return $Firewall_Disabled_Status
               }
               
               function Set-RDPConnections ()
               {
-                  $RDP_Connections_Status = $false
-              
                   try
                   {
                       Write-Host "Attempting to enable RDP connections"
-                      # Enable RDP connections
                       reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server" /f /v fDenyTSConnections /t REG_DWORD /d 0    
-                      $RDP_Connections_Status = $true
                   }
                   catch [System.Exception]
                   {
                       throw "Error enabling RDP connections: $_"
                   }
-                  return $RDP_Connections_Status
               }
               
               function Set-RDPDefaultSecurityNeg ()
               {
-                  $RDP_Default_Sec_Status = $false
-              
                   try
                   {
                       Write-Host "Attempting to reset RDP security negotiation to default"
-                      # Reset client/server security negotiation to its default value
                       reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" /v SecurityLayer /t REG_DWORD /d 1 /f
-                      $RDP_Default_Sec_Status = $true
                   }
                   catch [System.Exception]
                   {
                       throw "Error resetting RDP security to default: $_"
                   }
-                  return $RDP_Default_Sec_Status
               }
               
               function Set-RDPDefaultNLA ()
               {
-                  $RDP_Default_NLA_Status = $false
-              
                   try
                   {
                       Write-Host "Attempting to reset RDP NLA to default"
-                      # Reset user network level authentication to its default value:
                       reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" /v UserAuthentication /t REG_DWORD /d 0 /f    
-                      $RDP_Default_NLA_Status = $true
                   }
                   catch [System.Exception]
                   {
                       throw "Error resetting RDP NLA setting to default: $_"
                   }
-                  return $RDP_Default_NLA_Status
               }
               
               function Set-NetworkAdapterDHCP ()
               {             
-                  $Network_Adapter_DHCP_Status = $false
-
                   try
                   {
                       Write-Host "Attempting to enable DHCP for Ethernet adapters"
-                      # Set network to DHCP mode
                       netsh interface ipv4 set address "Ethernet" dhcp
-                      $Network_Adapter_DHCP_Status = $true
                   }
                   catch [System.Exception]
                   {
                       throw "Error changing Network adapter to DHCP mode: $_"
                   }
-                  return $Network_Adapter_DHCP_Status
               }
               
               function Repair-GCEInstanceRDP()
               {
-                  $r1 = Set-RDPService
-                  $r2 = Set-FirewallDisable
-                  $r3 = Set-RDPConnections
-                  $r4 = Set-RDPDefaultSecurityNeg
-                  $r5 = Set-RDPDefaultNLA
-                  $r6 = Set-NetworkAdapterDHCP
+                  Set-RDPService
+                  Set-FirewallDisable
+                  Set-RDPConnections
+                  Set-RDPDefaultSecurityNeg
+                  Set-RDPDefaultNLA
+                  Set-NetworkAdapterDHCP
                   
-                  if (($r1 -and $r2 -and $r3 -and $r4 -and $r5 -and $r6) -eq $true)
-                  {
-                      Write-Host "Successfully repaired RDP configurations"
-                      exit 100
-                  }
-                  else
-                  {
-                    Write-Host "Not all settings successfully changed. See C:\transcript.log for more information."
-                    exit 101
-                  }           
+                  Write-Host "Successfully repaired RDP configurations"
+                  return 100
               }
               
-              Repair-GCEInstanceRDP
-      
-      id: restore-rdp-powershell
+              # Mapping PS exit code to guest policy exit code (Success 100, Failure 101)
+              if (Repair-GCEInstanceRDP -eq 100){
+                  exit 100
+              }
+              else{ # includes errors running scripts or thrown exceptions
+                  exit 101
+              }
+
