@@ -271,7 +271,7 @@ func (c *configTask) postCheckState(ctx context.Context) {
 	// Actually run post check state (for policies that do not have a previous error).
 	// No prepopulate run for post check as we will always check every resource.
 	for i, osPolicy := range c.Task.GetOsPolicies() {
-		ctx = clog.WithLabels(ctx, map[string]string{"config_assignment": osPolicy.GetOsPolicyAssignment(), "policy_id": osPolicy.GetId()})
+		ctx := clog.WithLabels(ctx, map[string]string{"os_policy_assignment": osPolicy.GetOsPolicyAssignment(), "os_policy_id": osPolicy.GetId()})
 		plcy, ok := c.policies[osPolicy.GetId()]
 		// This should not happen in the normal code flow since we only run postCheckState after
 		// all policies have been evaluated.
@@ -349,10 +349,10 @@ func (c *configTask) cleanup(ctx context.Context) {
 
 	// Cleanup any policy specific resources.
 	for _, osPolicy := range c.Task.GetOsPolicies() {
-		ctx = clog.WithLabels(ctx, map[string]string{"config_assignment": osPolicy.GetOsPolicyAssignment(), "policy_id": osPolicy.GetId()})
+		ctx := clog.WithLabels(ctx, map[string]string{"os_policy_assignment": osPolicy.GetOsPolicyAssignment(), "os_policy_id": osPolicy.GetId()})
 		plcy := c.policies[osPolicy.GetId()]
 		for _, configResource := range osPolicy.GetResources() {
-			ctx = clog.WithLabels(ctx, map[string]string{"resource_id": configResource.GetId()})
+			ctx := clog.WithLabels(ctx, map[string]string{"resource_id": configResource.GetId()})
 			res, ok := plcy.resources[configResource.GetId()]
 			if !ok || res == nil {
 				continue
@@ -390,7 +390,7 @@ func (c *configTask) run(ctx context.Context) error {
 
 	c.policies = map[string]*policy{}
 	for i, osPolicy := range c.Task.GetOsPolicies() {
-		ctx = clog.WithLabels(ctx, map[string]string{"os_policy_assignment": osPolicy.GetOsPolicyAssignment(), "os_policy_id": osPolicy.GetId()})
+		ctx := clog.WithLabels(ctx, map[string]string{"os_policy_assignment": osPolicy.GetOsPolicyAssignment(), "os_policy_id": osPolicy.GetId()})
 		clog.Infof(ctx, "Executing policy %q", osPolicy.GetId())
 
 		pResult := c.results[i]
