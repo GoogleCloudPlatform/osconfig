@@ -201,10 +201,10 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPoli
 	defer cleanupOSPolicyAssignment(ctx, client, testCase, ospa.GetName())
 
 	// Check that the compliance output meets expectations.
-	repReq := &osconfigpb.GetOSPolicyAssignmentReportRequest{Name: fmt.Sprintf("projects/%s/locations/%s/instances/%d/osPolicyAssignments/%s/report", testProjectConfig.TestProjectID, zone, inst.Id, ospa.GetName())}
+	repReq := &osconfigpb.GetOSPolicyAssignmentReportRequest{Name: fmt.Sprintf("projects/%s/locations/%s/instances/%d/osPolicyAssignments/%s/report", testProjectConfig.TestProjectID, zone, inst.Id, testSetup.osPolicyAssignmentID)}
 	compliance, err := client.GetOSPolicyAssignmentReport(ctx, repReq)
 	if err != nil {
-		testCase.WriteFailure("Error running GetInstanceOSPoliciesCompliance: %s", err)
+		testCase.WriteFailure("Error running GetOSPolicyAssignmentReport: %s", err)
 		return
 	}
 	if diff := cmp.Diff(testSetup.wantCompliances, compliance.OsPolicyCompliances, protocmp.Transform(), cmp.FilterPath(func(p cmp.Path) bool {

@@ -503,8 +503,6 @@ func (c *osConfigZonalGRPCClient) CreateOSPolicyAssignment(ctx context.Context, 
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("Create Resp metadata: %+v\n", resp.GetMetadata())
-	fmt.Printf("Create Resp: %+v\n", resp.GetResponse())
 	return &CreateOSPolicyAssignmentOperation{
 		lro: longrunning.InternalNewOperation(*c.LROClient, resp),
 	}, nil

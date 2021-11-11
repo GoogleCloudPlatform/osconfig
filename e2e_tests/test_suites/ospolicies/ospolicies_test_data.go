@@ -1891,7 +1891,7 @@ func buildValidationModeTests(name, image, pkgManager, key string) *osPolicyTest
 	wantCompliances := []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance{
 		{
 			OsPolicyId:      "file-present",
-			ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_COMPLIANT,
+			ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_NON_COMPLIANT,
 			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance{
 				{
 					OsPolicyResourceId: "file-present",
