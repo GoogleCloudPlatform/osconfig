@@ -213,12 +213,10 @@ var HeadAptImages = map[string]string{
 	"debian-cloud/debian-10": "projects/debian-cloud/global/images/family/debian-10",
 
 	// Ubuntu images.
-	"ubuntu-os-cloud/ubuntu-1604-lts": "projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts",
 	"ubuntu-os-cloud/ubuntu-1804-lts": "projects/ubuntu-os-cloud/global/images/family/ubuntu-1804-lts",
 	"ubuntu-os-cloud/ubuntu-2004-lts": "projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts",
 
 	// Proposed Ubuntu images.
-	"ubuntu-os-cloud-image-proposed/ubuntu-1604-lts": "projects/ubuntu-os-cloud-image-proposed/global/images/family/ubuntu-1604-lts",
 	"ubuntu-os-cloud-image-proposed/ubuntu-1804-lts": "projects/ubuntu-os-cloud-image-proposed/global/images/family/ubuntu-1804-lts",
 	"ubuntu-os-cloud-image-proposed/ubuntu-2004-lts": "projects/ubuntu-os-cloud-image-proposed/global/images/family/ubuntu-2004-lts",
 }
@@ -230,7 +228,6 @@ var OldAptImages = map[string]string{
 	"old/debian-10": "projects/debian-cloud/global/images/debian-10-buster-v20210512",
 
 	// Ubuntu images.
-	"old/ubuntu-1604-lts": "projects/ubuntu-os-cloud/global/images/ubuntu-1604-xenial-v20210416",
 	"old/ubuntu-1804-lts": "projects/ubuntu-os-cloud/global/images/ubuntu-1804-bionic-v20210514",
 	"old/ubuntu-2004-lts": "projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20210510",
 }
