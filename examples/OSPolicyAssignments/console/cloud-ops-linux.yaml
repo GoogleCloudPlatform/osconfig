@@ -1,0 +1,14 @@
+id: google-cloud-ops-agent-linux-policy
+mode: ENFORCEMENT
+resourceGroups:
+  - resources:
+      - id: exec-script
+        exec:
+          validate:
+            script: |-
+              if (curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh && sudo bash add-google-cloud-ops-agent-repo.sh --also-install --version=2.*.*); then exit 100; else exit 101; fi
+            interpreter: SHELL
+          enforce:
+            script: |-
+              if (curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh && sudo bash add-google-cloud-ops-agent-repo.sh --also-install --version=2.*.*); then exit 100; else exit 101; fi
+            interpreter: SHELL
