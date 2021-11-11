@@ -23,7 +23,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1"
 )
 
 const (
@@ -43,144 +43,120 @@ var (
 	yumRaptureGpgKeys = []string{"https://packages.cloud.google.com/yum/doc/yum-key.gpg", "https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg"}
 )
 
-var wantRemotePackageCompliances = []*osconfigpb.OSPolicyResourceCompliance{
+var wantRemotePackageCompliances = []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance{
 	{
 		OsPolicyResourceId: "install-package",
-		ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+		ConfigSteps: []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep{
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_VALIDATION,
 			},
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
 			},
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
 			},
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
 			},
 		},
-		State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+		ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 	},
 	{
 		OsPolicyResourceId: "remove-package",
-		ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+		ConfigSteps: []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep{
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_VALIDATION,
 			},
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
 			},
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
 			},
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
 			},
 		},
-		State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+		ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 	},
 }
 
-var wantLocalPackageCompliances = []*osconfigpb.OSPolicyResourceCompliance{
+var wantLocalPackageCompliances = []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance{
 	{
 		OsPolicyResourceId: "install-package",
-		ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+		ConfigSteps: []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep{
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_VALIDATION,
 			},
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
 			},
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
 			},
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
 			},
 		},
-		State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+		ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 	},
 	{
 		OsPolicyResourceId: "install-package-pull-deps",
-		ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+		ConfigSteps: []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep{
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_VALIDATION,
 			},
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
 			},
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
 			},
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
 			},
 		},
-		State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+		ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 	},
 }
 
-var wantRepositoryCompliances = []*osconfigpb.OSPolicyResourceCompliance{
+var wantRepositoryCompliances = []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance{
 	{
 		OsPolicyResourceId: "install-repo",
-		ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+		ConfigSteps: []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep{
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_VALIDATION,
 			},
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
 			},
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
 			},
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
 			},
 		},
-		State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+		ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 	},
 	{
 		OsPolicyResourceId: "install-package",
-		ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+		ConfigSteps: []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep{
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_VALIDATION,
 			},
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
 			},
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
 			},
 			{
-				Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-				Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+				Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
 			},
 		},
-		State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+		ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 	},
 }
 
@@ -235,10 +211,10 @@ func buildAptTestSetup(name, image, key string) *osPolicyTestSetup {
 			},
 		},
 	}
-	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+	wantCompliances := []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance{
 		{
 			OsPolicyId:                  testName,
-			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			ComplianceState:             osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_COMPLIANT,
 			OsPolicyResourceCompliances: wantRemotePackageCompliances,
 		},
 	}
@@ -318,10 +294,10 @@ func buildDebTestSetup(name, image, key string) *osPolicyTestSetup {
 			},
 		},
 	}
-	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+	wantCompliances := []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance{
 		{
 			OsPolicyId:                  testName,
-			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			ComplianceState:             osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_COMPLIANT,
 			OsPolicyResourceCompliances: wantLocalPackageCompliances,
 		},
 	}
@@ -380,10 +356,10 @@ func buildYumTestSetup(name, image, key string) *osPolicyTestSetup {
 			},
 		},
 	}
-	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+	wantCompliances := []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance{
 		{
 			OsPolicyId:                  testName,
-			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			ComplianceState:             osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_COMPLIANT,
 			OsPolicyResourceCompliances: wantRemotePackageCompliances,
 		},
 	}
@@ -442,10 +418,10 @@ func buildZypperTestSetup(name, image, key string) *osPolicyTestSetup {
 			},
 		},
 	}
-	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+	wantCompliances := []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance{
 		{
 			OsPolicyId:                  testName,
-			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			ComplianceState:             osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_COMPLIANT,
 			OsPolicyResourceCompliances: wantRemotePackageCompliances,
 		},
 	}
@@ -525,10 +501,10 @@ func buildRpmTestSetup(name, image, key string) *osPolicyTestSetup {
 			},
 		},
 	}
-	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+	wantCompliances := []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance{
 		{
 			OsPolicyId:                  testName,
-			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			ComplianceState:             osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_COMPLIANT,
 			OsPolicyResourceCompliances: wantLocalPackageCompliances,
 		},
 	}
@@ -587,10 +563,10 @@ func buildGooGetTestSetup(name, image, key string) *osPolicyTestSetup {
 			},
 		},
 	}
-	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+	wantCompliances := []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance{
 		{
 			OsPolicyId:                  testName,
-			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			ComplianceState:             osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_COMPLIANT,
 			OsPolicyResourceCompliances: wantRemotePackageCompliances,
 		},
 	}
@@ -648,32 +624,28 @@ func buildMsiTestSetup(name, image, key string) *osPolicyTestSetup {
 			},
 		},
 	}
-	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+	wantCompliances := []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance{
 		{
-			OsPolicyId: testName,
-			State:      osconfigpb.OSPolicyComplianceState_COMPLIANT,
-			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyResourceCompliance{
+			OsPolicyId:      testName,
+			ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_COMPLIANT,
+			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance{
 				{
 					OsPolicyResourceId: "install-package",
-					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+					ConfigSteps: []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep{
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_VALIDATION,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
 						},
 					},
-					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+					ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 				},
 			},
 		},
@@ -760,10 +732,10 @@ func buildAptRepositoryResourceTest(name, image, key string) *osPolicyTestSetup 
 			},
 		},
 	}
-	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+	wantCompliances := []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance{
 		{
 			OsPolicyId:                  testName,
-			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			ComplianceState:             osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_COMPLIANT,
 			OsPolicyResourceCompliances: wantRepositoryCompliances,
 		},
 	}
@@ -827,10 +799,10 @@ func buildYumRepositoryResourceTest(name, image, key string) *osPolicyTestSetup 
 			},
 		},
 	}
-	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+	wantCompliances := []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance{
 		{
 			OsPolicyId:                  testName,
-			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			ComplianceState:             osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_COMPLIANT,
 			OsPolicyResourceCompliances: wantRepositoryCompliances,
 		},
 	}
@@ -894,10 +866,10 @@ func buildZypperRepositoryResourceTest(name, image, key string) *osPolicyTestSet
 			},
 		},
 	}
-	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+	wantCompliances := []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance{
 		{
 			OsPolicyId:                  testName,
-			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			ComplianceState:             osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_COMPLIANT,
 			OsPolicyResourceCompliances: wantRepositoryCompliances,
 		},
 	}
@@ -959,10 +931,10 @@ func buildGoogetRepositoryResourceTest(name, image, key string) *osPolicyTestSet
 			},
 		},
 	}
-	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+	wantCompliances := []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance{
 		{
 			OsPolicyId:                  testName,
-			State:                       osconfigpb.OSPolicyComplianceState_COMPLIANT,
+			ComplianceState:             osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_COMPLIANT,
 			OsPolicyResourceCompliances: wantRepositoryCompliances,
 		},
 	}
@@ -1105,126 +1077,106 @@ func buildFileResourceTests(name, image, pkgManager, key string) *osPolicyTestSe
 			},
 		},
 	}
-	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+	wantCompliances := []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance{
 		{
-			OsPolicyId: "files-absent",
-			State:      osconfigpb.OSPolicyComplianceState_COMPLIANT,
-			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyResourceCompliance{
+			OsPolicyId:      "files-absent",
+			ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_COMPLIANT,
+			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance{
 				{
 					OsPolicyResourceId: "file-absent",
-					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+					ConfigSteps: []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep{
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_VALIDATION,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
 						},
 					},
-					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+					ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 				},
 			},
 		},
 		{
-			OsPolicyId: "files-present",
-			State:      osconfigpb.OSPolicyComplianceState_COMPLIANT,
-			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyResourceCompliance{
+			OsPolicyId:      "files-present",
+			ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_COMPLIANT,
+			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance{
 				{
 					OsPolicyResourceId: "file-present-from-content",
-					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+					ConfigSteps: []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep{
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_VALIDATION,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
 						},
 					},
-					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+					ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 				},
 				{
 					OsPolicyResourceId: "file-present-from-gcs",
-					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+					ConfigSteps: []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep{
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_VALIDATION,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
 						},
 					},
-					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+					ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 				},
 				{
 					OsPolicyResourceId: "file-present-from-uri",
-					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+					ConfigSteps: []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep{
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_VALIDATION,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
 						},
 					},
-					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+					ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 				},
 				{
 					OsPolicyResourceId: "file-present-from-local",
-					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+					ConfigSteps: []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep{
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_VALIDATION,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
 						},
 					},
-					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
+					ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 				},
 			},
 		},
@@ -1445,83 +1397,75 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 			},
 		},
 	}
-	expectedSteps := []*osconfigpb.OSPolicyResourceConfigStep{
+	expectedSteps := []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep{
 		{
-			Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
-			Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_VALIDATION,
 		},
 		{
-			Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-			Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
 		},
 		{
-			Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-			Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
 		},
 		{
-			Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-			Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
 		},
 	}
-	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+	wantCompliances := []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance{
 		{
-			OsPolicyId: testName,
-			State:      osconfigpb.OSPolicyComplianceState_COMPLIANT,
-			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyResourceCompliance{
+			OsPolicyId:      testName,
+			ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_COMPLIANT,
+			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance{
 				{
 					OsPolicyResourceId: "exec-gcs",
 					ConfigSteps:        expectedSteps,
-					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+					ComplianceState:    osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 				},
 				{
 					OsPolicyResourceId: "exec-uri",
 					ConfigSteps:        expectedSteps,
-					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+					ComplianceState:    osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 				},
 				{
 					OsPolicyResourceId: "exec-local",
 					ConfigSteps:        expectedSteps,
-					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+					ComplianceState:    osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 				},
 				{
 					OsPolicyResourceId: "exec-script",
 					ConfigSteps:        expectedSteps,
-					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+					ComplianceState:    osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 				},
 				{
 					OsPolicyResourceId: "exec-output",
 					ConfigSteps:        expectedSteps,
-					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
-					Output: &osconfigpb.OSPolicyResourceCompliance_ExecResourceOutput_{
-						ExecResourceOutput: &osconfigpb.OSPolicyResourceCompliance_ExecResourceOutput{
+					ComplianceState:    osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
+					Output: &osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_ExecResourceOutput_{
+						ExecResourceOutput: &osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_ExecResourceOutput{
 							EnforcementOutput: output,
 						},
 					},
 				},
 				{
 					OsPolicyResourceId: "exec-output-too-large",
-					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+					ConfigSteps: []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep{
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_VALIDATION,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
 						},
 						{
-							Type:         osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-							Outcome:      osconfigpb.OSPolicyResourceConfigStep_FAILED,
+							Type:         osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
 							ErrorMessage: `Enforce state: resource "exec-output-too-large" error: contents of OutputFilePath greater than 100K`,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
 						},
 					},
-					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
-					Output: &osconfigpb.OSPolicyResourceCompliance_ExecResourceOutput_{
-						ExecResourceOutput: &osconfigpb.OSPolicyResourceCompliance_ExecResourceOutput{
+					ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
+					Output: &osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_ExecResourceOutput_{
+						ExecResourceOutput: &osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_ExecResourceOutput{
 							EnforcementOutput: make([]byte, 100*1024),
 						},
 					},
@@ -1795,93 +1739,85 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 			},
 		},
 	}
-	expectedSteps := []*osconfigpb.OSPolicyResourceConfigStep{
+	expectedSteps := []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep{
 		{
-			Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
-			Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_VALIDATION,
 		},
 		{
-			Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-			Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
 		},
 		{
-			Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-			Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
 		},
 		{
-			Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-			Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+			Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
 		},
 	}
-	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+	wantCompliances := []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance{
 		{
-			OsPolicyId: testName,
-			State:      osconfigpb.OSPolicyComplianceState_COMPLIANT,
-			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyResourceCompliance{
+			OsPolicyId:      testName,
+			ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_COMPLIANT,
+			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance{
 				{
 					OsPolicyResourceId: "exec-gcs-cmd",
 					ConfigSteps:        expectedSteps,
-					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+					ComplianceState:    osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 				},
 				{
 					OsPolicyResourceId: "exec-uri-cmd",
 					ConfigSteps:        expectedSteps,
-					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+					ComplianceState:    osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 				},
 				{
 					OsPolicyResourceId: "exec-local-cmd",
 					ConfigSteps:        expectedSteps,
-					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+					ComplianceState:    osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 				},
 				{
 					OsPolicyResourceId: "exec-script",
 					ConfigSteps:        expectedSteps,
-					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+					ComplianceState:    osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 				},
 				{
 					OsPolicyResourceId: "exec-gcs-uri-ps1",
 					ConfigSteps:        expectedSteps,
-					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+					ComplianceState:    osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 				},
 				{
 					OsPolicyResourceId: "exec-local-powershell",
 					ConfigSteps:        expectedSteps,
-					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
+					ComplianceState:    osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 				},
 				{
 					OsPolicyResourceId: "exec-output",
 					ConfigSteps:        expectedSteps,
-					State:              osconfigpb.OSPolicyComplianceState_COMPLIANT,
-					Output: &osconfigpb.OSPolicyResourceCompliance_ExecResourceOutput_{
-						ExecResourceOutput: &osconfigpb.OSPolicyResourceCompliance_ExecResourceOutput{
+					ComplianceState:    osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
+					Output: &osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_ExecResourceOutput_{
+						ExecResourceOutput: &osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_ExecResourceOutput{
 							EnforcementOutput: output,
 						},
 					},
 				},
 				{
 					OsPolicyResourceId: "exec-output-too-large",
-					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+					ConfigSteps: []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep{
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_VALIDATION,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
 						},
 						{
-							Type:         osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-							Outcome:      osconfigpb.OSPolicyResourceConfigStep_FAILED,
+							Type:         osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
 							ErrorMessage: `Enforce state: resource "exec-output-too-large" error: contents of OutputFilePath greater than 100K`,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
 						},
 					},
-					State: osconfigpb.OSPolicyComplianceState_COMPLIANT,
-					Output: &osconfigpb.OSPolicyResourceCompliance_ExecResourceOutput_{
-						ExecResourceOutput: &osconfigpb.OSPolicyResourceCompliance_ExecResourceOutput{
+					ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
+					Output: &osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_ExecResourceOutput_{
+						ExecResourceOutput: &osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_ExecResourceOutput{
 							EnforcementOutput: make([]byte, 100*1024),
 						},
 					},
@@ -1952,24 +1888,22 @@ func buildValidationModeTests(name, image, pkgManager, key string) *osPolicyTest
 			},
 		},
 	}
-	wantCompliances := []*osconfigpb.InstanceOSPoliciesCompliance_OSPolicyCompliance{
+	wantCompliances := []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance{
 		{
-			OsPolicyId: "file-present",
-			State:      osconfigpb.OSPolicyComplianceState_NON_COMPLIANT,
-			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyResourceCompliance{
+			OsPolicyId:      "file-present",
+			ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_NON_COMPLIANT,
+			OsPolicyResourceCompliances: []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance{
 				{
 					OsPolicyResourceId: "file-present",
-					ConfigSteps: []*osconfigpb.OSPolicyResourceConfigStep{
+					ConfigSteps: []*osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep{
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_VALIDATION,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_VALIDATION,
 						},
 						{
-							Type:    osconfigpb.OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
-							Outcome: osconfigpb.OSPolicyResourceConfigStep_SUCCEEDED,
+							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK,
 						},
 					},
-					State: osconfigpb.OSPolicyComplianceState_NON_COMPLIANT,
+					ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_NON_COMPLIANT,
 				},
 			},
 		},

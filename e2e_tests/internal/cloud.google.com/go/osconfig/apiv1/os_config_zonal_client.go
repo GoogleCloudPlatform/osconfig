@@ -25,7 +25,8 @@ import (
 
 	"cloud.google.com/go/longrunning"
 	lroauto "cloud.google.com/go/longrunning/autogen"
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1"
+	//"github.com/davecgh/go-spew/spew"
 	gax "github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
@@ -42,18 +43,18 @@ var newOsConfigZonalClientHook clientHook
 
 // OsConfigZonalCallOptions contains the retry settings for each method of OsConfigZonalClient.
 type OsConfigZonalCallOptions struct {
-	CreateOSPolicyAssignment          []gax.CallOption
-	UpdateOSPolicyAssignment          []gax.CallOption
-	GetOSPolicyAssignment             []gax.CallOption
-	ListOSPolicyAssignments           []gax.CallOption
-	ListOSPolicyAssignmentRevisions   []gax.CallOption
-	DeleteOSPolicyAssignment          []gax.CallOption
-	GetInstanceOSPoliciesCompliance   []gax.CallOption
-	ListInstanceOSPoliciesCompliances []gax.CallOption
-	GetInventory                      []gax.CallOption
-	ListInventories                   []gax.CallOption
-	GetVulnerabilityReport            []gax.CallOption
-	ListVulnerabilityReports          []gax.CallOption
+	CreateOSPolicyAssignment        []gax.CallOption
+	UpdateOSPolicyAssignment        []gax.CallOption
+	GetOSPolicyAssignment           []gax.CallOption
+	ListOSPolicyAssignments         []gax.CallOption
+	ListOSPolicyAssignmentRevisions []gax.CallOption
+	DeleteOSPolicyAssignment        []gax.CallOption
+	GetOSPolicyAssignmentReport     []gax.CallOption
+	ListOSPolicyAssignmentReports   []gax.CallOption
+	GetInventory                    []gax.CallOption
+	ListInventories                 []gax.CallOption
+	GetVulnerabilityReport          []gax.CallOption
+	ListVulnerabilityReports        []gax.CallOption
 }
 
 func defaultOsConfigZonalGRPCClientOptions() []option.ClientOption {
@@ -137,7 +138,7 @@ func defaultOsConfigZonalCallOptions() *OsConfigZonalCallOptions {
 				})
 			}),
 		},
-		GetInstanceOSPoliciesCompliance: []gax.CallOption{
+		GetOSPolicyAssignmentReport: []gax.CallOption{
 			gax.WithRetry(func() gax.Retryer {
 				return gax.OnCodes([]codes.Code{
 					codes.Unavailable,
@@ -148,7 +149,7 @@ func defaultOsConfigZonalCallOptions() *OsConfigZonalCallOptions {
 				})
 			}),
 		},
-		ListInstanceOSPoliciesCompliances: []gax.CallOption{
+		ListOSPolicyAssignmentReports: []gax.CallOption{
 			gax.WithRetry(func() gax.Retryer {
 				return gax.OnCodes([]codes.Code{
 					codes.Unavailable,
@@ -220,8 +221,8 @@ type internalOsConfigZonalClient interface {
 	ListOSPolicyAssignmentRevisions(context.Context, *osconfigpb.ListOSPolicyAssignmentRevisionsRequest, ...gax.CallOption) *OSPolicyAssignmentIterator
 	DeleteOSPolicyAssignment(context.Context, *osconfigpb.DeleteOSPolicyAssignmentRequest, ...gax.CallOption) (*DeleteOSPolicyAssignmentOperation, error)
 	DeleteOSPolicyAssignmentOperation(name string) *DeleteOSPolicyAssignmentOperation
-	GetInstanceOSPoliciesCompliance(context.Context, *osconfigpb.GetInstanceOSPoliciesComplianceRequest, ...gax.CallOption) (*osconfigpb.InstanceOSPoliciesCompliance, error)
-	ListInstanceOSPoliciesCompliances(context.Context, *osconfigpb.ListInstanceOSPoliciesCompliancesRequest, ...gax.CallOption) *InstanceOSPoliciesComplianceIterator
+	GetOSPolicyAssignmentReport(context.Context, *osconfigpb.GetOSPolicyAssignmentReportRequest, ...gax.CallOption) (*osconfigpb.OSPolicyAssignmentReport, error)
+	ListOSPolicyAssignmentReports(context.Context, *osconfigpb.ListOSPolicyAssignmentReportsRequest, ...gax.CallOption) *OSPolicyAssignmentReportIterator
 	GetInventory(context.Context, *osconfigpb.GetInventoryRequest, ...gax.CallOption) (*osconfigpb.Inventory, error)
 	ListInventories(context.Context, *osconfigpb.ListInventoriesRequest, ...gax.CallOption) *InventoryIterator
 	GetVulnerabilityReport(context.Context, *osconfigpb.GetVulnerabilityReportRequest, ...gax.CallOption) (*osconfigpb.VulnerabilityReport, error)
@@ -278,7 +279,7 @@ func (c *OsConfigZonalClient) Connection() *grpc.ClientConn {
 // rollout details. The rollout can be cancelled by cancelling the LRO.
 //
 // For more information, see Method:
-// projects.locations.osPolicyAssignments.operations.cancel (at https://cloud.google.com/compute/docs/osconfig/rest/v1alpha/projects.locations.osPolicyAssignments.operations/cancel).
+// projects.locations.osPolicyAssignments.operations.cancel (at https://cloud.google.com/compute/docs/osconfig/rest/v1/projects.locations.osPolicyAssignments.operations/cancel).
 func (c *OsConfigZonalClient) CreateOSPolicyAssignment(ctx context.Context, req *osconfigpb.CreateOSPolicyAssignmentRequest, opts ...gax.CallOption) (*CreateOSPolicyAssignmentOperation, error) {
 	return c.internalClient.CreateOSPolicyAssignment(ctx, req, opts...)
 }
@@ -297,7 +298,7 @@ func (c *OsConfigZonalClient) CreateOSPolicyAssignmentOperation(name string) *Cr
 // rollout details. The rollout can be cancelled by cancelling the LRO.
 //
 // For more information, see Method:
-// projects.locations.osPolicyAssignments.operations.cancel (at https://cloud.google.com/compute/docs/osconfig/rest/v1alpha/projects.locations.osPolicyAssignments.operations/cancel).
+// projects.locations.osPolicyAssignments.operations.cancel (at https://cloud.google.com/compute/docs/osconfig/rest/v1/projects.locations.osPolicyAssignments.operations/cancel).
 func (c *OsConfigZonalClient) UpdateOSPolicyAssignment(ctx context.Context, req *osconfigpb.UpdateOSPolicyAssignmentRequest, opts ...gax.CallOption) (*UpdateOSPolicyAssignmentOperation, error) {
 	return c.internalClient.UpdateOSPolicyAssignment(ctx, req, opts...)
 }
@@ -340,7 +341,7 @@ func (c *OsConfigZonalClient) ListOSPolicyAssignmentRevisions(ctx context.Contex
 // the OS policy assignment are deleted.
 //
 // For more information, see Method:
-// projects.locations.osPolicyAssignments.operations.cancel (at https://cloud.google.com/compute/docs/osconfig/rest/v1alpha/projects.locations.osPolicyAssignments.operations/cancel).
+// projects.locations.osPolicyAssignments.operations.cancel (at https://cloud.google.com/compute/docs/osconfig/rest/v1/projects.locations.osPolicyAssignments.operations/cancel).
 func (c *OsConfigZonalClient) DeleteOSPolicyAssignment(ctx context.Context, req *osconfigpb.DeleteOSPolicyAssignmentRequest, opts ...gax.CallOption) (*DeleteOSPolicyAssignmentOperation, error) {
 	return c.internalClient.DeleteOSPolicyAssignment(ctx, req, opts...)
 }
@@ -351,16 +352,16 @@ func (c *OsConfigZonalClient) DeleteOSPolicyAssignmentOperation(name string) *De
 	return c.internalClient.DeleteOSPolicyAssignmentOperation(name)
 }
 
-// GetInstanceOSPoliciesCompliance get OS policies compliance data for the specified Compute Engine VM
+// GetOSPolicyAssignmentReport get the OS policy asssignment report for the specified Compute Engine VM
 // instance.
-func (c *OsConfigZonalClient) GetInstanceOSPoliciesCompliance(ctx context.Context, req *osconfigpb.GetInstanceOSPoliciesComplianceRequest, opts ...gax.CallOption) (*osconfigpb.InstanceOSPoliciesCompliance, error) {
-	return c.internalClient.GetInstanceOSPoliciesCompliance(ctx, req, opts...)
+func (c *OsConfigZonalClient) GetOSPolicyAssignmentReport(ctx context.Context, req *osconfigpb.GetOSPolicyAssignmentReportRequest, opts ...gax.CallOption) (*osconfigpb.OSPolicyAssignmentReport, error) {
+	return c.internalClient.GetOSPolicyAssignmentReport(ctx, req, opts...)
 }
 
-// ListInstanceOSPoliciesCompliances list OS policies compliance data for all Compute Engine VM instances in the
-// specified zone.
-func (c *OsConfigZonalClient) ListInstanceOSPoliciesCompliances(ctx context.Context, req *osconfigpb.ListInstanceOSPoliciesCompliancesRequest, opts ...gax.CallOption) *InstanceOSPoliciesComplianceIterator {
-	return c.internalClient.ListInstanceOSPoliciesCompliances(ctx, req, opts...)
+// ListOSPolicyAssignmentReports list OS policy asssignment reports for all Compute Engine VM instances in
+// the specified zone.
+func (c *OsConfigZonalClient) ListOSPolicyAssignmentReports(ctx context.Context, req *osconfigpb.ListOSPolicyAssignmentReportsRequest, opts ...gax.CallOption) *OSPolicyAssignmentReportIterator {
+	return c.internalClient.ListOSPolicyAssignmentReports(ctx, req, opts...)
 }
 
 // GetInventory get inventory data for the specified VM instance. If the VM has no
@@ -558,11 +559,13 @@ func (c *osConfigZonalGRPCClient) ListOSPolicyAssignments(ctx context.Context, r
 	it := &OSPolicyAssignmentIterator{}
 	req = proto.Clone(req).(*osconfigpb.ListOSPolicyAssignmentsRequest)
 	it.InternalFetch = func(pageSize int, pageToken string) ([]*osconfigpb.OSPolicyAssignment, string, error) {
-		var resp *osconfigpb.ListOSPolicyAssignmentsResponse
-		req.PageToken = pageToken
+		resp := &osconfigpb.ListOSPolicyAssignmentsResponse{}
+		if pageToken != "" {
+			req.PageToken = pageToken
+		}
 		if pageSize > math.MaxInt32 {
 			req.PageSize = math.MaxInt32
-		} else {
+		} else if pageSize != 0 {
 			req.PageSize = int32(pageSize)
 		}
 		err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -585,9 +588,11 @@ func (c *osConfigZonalGRPCClient) ListOSPolicyAssignments(ctx context.Context, r
 		it.items = append(it.items, items...)
 		return nextPageToken, nil
 	}
+
 	it.pageInfo, it.nextFunc = iterator.NewPageInfo(fetch, it.bufLen, it.takeBuf)
 	it.pageInfo.MaxSize = int(req.GetPageSize())
 	it.pageInfo.Token = req.GetPageToken()
+
 	return it
 }
 
@@ -598,11 +603,13 @@ func (c *osConfigZonalGRPCClient) ListOSPolicyAssignmentRevisions(ctx context.Co
 	it := &OSPolicyAssignmentIterator{}
 	req = proto.Clone(req).(*osconfigpb.ListOSPolicyAssignmentRevisionsRequest)
 	it.InternalFetch = func(pageSize int, pageToken string) ([]*osconfigpb.OSPolicyAssignment, string, error) {
-		var resp *osconfigpb.ListOSPolicyAssignmentRevisionsResponse
-		req.PageToken = pageToken
+		resp := &osconfigpb.ListOSPolicyAssignmentRevisionsResponse{}
+		if pageToken != "" {
+			req.PageToken = pageToken
+		}
 		if pageSize > math.MaxInt32 {
 			req.PageSize = math.MaxInt32
-		} else {
+		} else if pageSize != 0 {
 			req.PageSize = int32(pageSize)
 		}
 		err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -625,9 +632,11 @@ func (c *osConfigZonalGRPCClient) ListOSPolicyAssignmentRevisions(ctx context.Co
 		it.items = append(it.items, items...)
 		return nextPageToken, nil
 	}
+
 	it.pageInfo, it.nextFunc = iterator.NewPageInfo(fetch, it.bufLen, it.takeBuf)
 	it.pageInfo.MaxSize = int(req.GetPageSize())
 	it.pageInfo.Token = req.GetPageToken()
+
 	return it
 }
 
@@ -654,7 +663,7 @@ func (c *osConfigZonalGRPCClient) DeleteOSPolicyAssignment(ctx context.Context, 
 	}, nil
 }
 
-func (c *osConfigZonalGRPCClient) GetInstanceOSPoliciesCompliance(ctx context.Context, req *osconfigpb.GetInstanceOSPoliciesComplianceRequest, opts ...gax.CallOption) (*osconfigpb.InstanceOSPoliciesCompliance, error) {
+func (c *osConfigZonalGRPCClient) GetOSPolicyAssignmentReport(ctx context.Context, req *osconfigpb.GetOSPolicyAssignmentReportRequest, opts ...gax.CallOption) (*osconfigpb.OSPolicyAssignmentReport, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
 		cctx, cancel := context.WithTimeout(ctx, 60000*time.Millisecond)
 		defer cancel()
@@ -662,11 +671,11 @@ func (c *osConfigZonalGRPCClient) GetInstanceOSPoliciesCompliance(ctx context.Co
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
-	opts = append((*c.CallOptions).GetInstanceOSPoliciesCompliance[0:len((*c.CallOptions).GetInstanceOSPoliciesCompliance):len((*c.CallOptions).GetInstanceOSPoliciesCompliance)], opts...)
-	var resp *osconfigpb.InstanceOSPoliciesCompliance
+	opts = append((*c.CallOptions).GetOSPolicyAssignmentReport[0:len((*c.CallOptions).GetOSPolicyAssignmentReport):len((*c.CallOptions).GetOSPolicyAssignmentReport)], opts...)
+	var resp *osconfigpb.OSPolicyAssignmentReport
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
-		resp, err = c.osConfigZonalClient.GetInstanceOSPoliciesCompliance(ctx, req, settings.GRPC...)
+		resp, err = c.osConfigZonalClient.GetOSPolicyAssignmentReport(ctx, req, settings.GRPC...)
 		return err
 	}, opts...)
 	if err != nil {
@@ -675,23 +684,25 @@ func (c *osConfigZonalGRPCClient) GetInstanceOSPoliciesCompliance(ctx context.Co
 	return resp, nil
 }
 
-func (c *osConfigZonalGRPCClient) ListInstanceOSPoliciesCompliances(ctx context.Context, req *osconfigpb.ListInstanceOSPoliciesCompliancesRequest, opts ...gax.CallOption) *InstanceOSPoliciesComplianceIterator {
+func (c *osConfigZonalGRPCClient) ListOSPolicyAssignmentReports(ctx context.Context, req *osconfigpb.ListOSPolicyAssignmentReportsRequest, opts ...gax.CallOption) *OSPolicyAssignmentReportIterator {
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "parent", url.QueryEscape(req.GetParent())))
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
-	opts = append((*c.CallOptions).ListInstanceOSPoliciesCompliances[0:len((*c.CallOptions).ListInstanceOSPoliciesCompliances):len((*c.CallOptions).ListInstanceOSPoliciesCompliances)], opts...)
-	it := &InstanceOSPoliciesComplianceIterator{}
-	req = proto.Clone(req).(*osconfigpb.ListInstanceOSPoliciesCompliancesRequest)
-	it.InternalFetch = func(pageSize int, pageToken string) ([]*osconfigpb.InstanceOSPoliciesCompliance, string, error) {
-		var resp *osconfigpb.ListInstanceOSPoliciesCompliancesResponse
-		req.PageToken = pageToken
+	opts = append((*c.CallOptions).ListOSPolicyAssignmentReports[0:len((*c.CallOptions).ListOSPolicyAssignmentReports):len((*c.CallOptions).ListOSPolicyAssignmentReports)], opts...)
+	it := &OSPolicyAssignmentReportIterator{}
+	req = proto.Clone(req).(*osconfigpb.ListOSPolicyAssignmentReportsRequest)
+	it.InternalFetch = func(pageSize int, pageToken string) ([]*osconfigpb.OSPolicyAssignmentReport, string, error) {
+		resp := &osconfigpb.ListOSPolicyAssignmentReportsResponse{}
+		if pageToken != "" {
+			req.PageToken = pageToken
+		}
 		if pageSize > math.MaxInt32 {
 			req.PageSize = math.MaxInt32
-		} else {
+		} else if pageSize != 0 {
 			req.PageSize = int32(pageSize)
 		}
 		err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 			var err error
-			resp, err = c.osConfigZonalClient.ListInstanceOSPoliciesCompliances(ctx, req, settings.GRPC...)
+			resp, err = c.osConfigZonalClient.ListOSPolicyAssignmentReports(ctx, req, settings.GRPC...)
 			return err
 		}, opts...)
 		if err != nil {
@@ -699,7 +710,7 @@ func (c *osConfigZonalGRPCClient) ListInstanceOSPoliciesCompliances(ctx context.
 		}
 
 		it.Response = resp
-		return resp.GetInstanceOsPoliciesCompliances(), resp.GetNextPageToken(), nil
+		return resp.GetOsPolicyAssignmentReports(), resp.GetNextPageToken(), nil
 	}
 	fetch := func(pageSize int, pageToken string) (string, error) {
 		items, nextPageToken, err := it.InternalFetch(pageSize, pageToken)
@@ -709,9 +720,11 @@ func (c *osConfigZonalGRPCClient) ListInstanceOSPoliciesCompliances(ctx context.
 		it.items = append(it.items, items...)
 		return nextPageToken, nil
 	}
+
 	it.pageInfo, it.nextFunc = iterator.NewPageInfo(fetch, it.bufLen, it.takeBuf)
 	it.pageInfo.MaxSize = int(req.GetPageSize())
 	it.pageInfo.Token = req.GetPageToken()
+
 	return it
 }
 
@@ -743,11 +756,13 @@ func (c *osConfigZonalGRPCClient) ListInventories(ctx context.Context, req *osco
 	it := &InventoryIterator{}
 	req = proto.Clone(req).(*osconfigpb.ListInventoriesRequest)
 	it.InternalFetch = func(pageSize int, pageToken string) ([]*osconfigpb.Inventory, string, error) {
-		var resp *osconfigpb.ListInventoriesResponse
-		req.PageToken = pageToken
+		resp := &osconfigpb.ListInventoriesResponse{}
+		if pageToken != "" {
+			req.PageToken = pageToken
+		}
 		if pageSize > math.MaxInt32 {
 			req.PageSize = math.MaxInt32
-		} else {
+		} else if pageSize != 0 {
 			req.PageSize = int32(pageSize)
 		}
 		err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -770,9 +785,11 @@ func (c *osConfigZonalGRPCClient) ListInventories(ctx context.Context, req *osco
 		it.items = append(it.items, items...)
 		return nextPageToken, nil
 	}
+
 	it.pageInfo, it.nextFunc = iterator.NewPageInfo(fetch, it.bufLen, it.takeBuf)
 	it.pageInfo.MaxSize = int(req.GetPageSize())
 	it.pageInfo.Token = req.GetPageToken()
+
 	return it
 }
 
@@ -804,11 +821,13 @@ func (c *osConfigZonalGRPCClient) ListVulnerabilityReports(ctx context.Context, 
 	it := &VulnerabilityReportIterator{}
 	req = proto.Clone(req).(*osconfigpb.ListVulnerabilityReportsRequest)
 	it.InternalFetch = func(pageSize int, pageToken string) ([]*osconfigpb.VulnerabilityReport, string, error) {
-		var resp *osconfigpb.ListVulnerabilityReportsResponse
-		req.PageToken = pageToken
+		resp := &osconfigpb.ListVulnerabilityReportsResponse{}
+		if pageToken != "" {
+			req.PageToken = pageToken
+		}
 		if pageSize > math.MaxInt32 {
 			req.PageSize = math.MaxInt32
-		} else {
+		} else if pageSize != 0 {
 			req.PageSize = int32(pageSize)
 		}
 		err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -831,9 +850,11 @@ func (c *osConfigZonalGRPCClient) ListVulnerabilityReports(ctx context.Context, 
 		it.items = append(it.items, items...)
 		return nextPageToken, nil
 	}
+
 	it.pageInfo, it.nextFunc = iterator.NewPageInfo(fetch, it.bufLen, it.takeBuf)
 	it.pageInfo.MaxSize = int(req.GetPageSize())
 	it.pageInfo.Token = req.GetPageToken()
+
 	return it
 }
 
@@ -1033,53 +1054,6 @@ func (op *UpdateOSPolicyAssignmentOperation) Name() string {
 	return op.lro.Name()
 }
 
-// InstanceOSPoliciesComplianceIterator manages a stream of *osconfigpb.InstanceOSPoliciesCompliance.
-type InstanceOSPoliciesComplianceIterator struct {
-	items    []*osconfigpb.InstanceOSPoliciesCompliance
-	pageInfo *iterator.PageInfo
-	nextFunc func() error
-
-	// Response is the raw response for the current page.
-	// It must be cast to the RPC response type.
-	// Calling Next() or InternalFetch() updates this value.
-	Response interface{}
-
-	// InternalFetch is for use by the Google Cloud Libraries only.
-	// It is not part of the stable interface of this package.
-	//
-	// InternalFetch returns results from a single call to the underlying RPC.
-	// The number of results is no greater than pageSize.
-	// If there are no more results, nextPageToken is empty and err is nil.
-	InternalFetch func(pageSize int, pageToken string) (results []*osconfigpb.InstanceOSPoliciesCompliance, nextPageToken string, err error)
-}
-
-// PageInfo supports pagination. See the google.golang.org/api/iterator package for details.
-func (it *InstanceOSPoliciesComplianceIterator) PageInfo() *iterator.PageInfo {
-	return it.pageInfo
-}
-
-// Next returns the next result. Its second return value is iterator.Done if there are no more
-// results. Once Next returns Done, all subsequent calls will return Done.
-func (it *InstanceOSPoliciesComplianceIterator) Next() (*osconfigpb.InstanceOSPoliciesCompliance, error) {
-	var item *osconfigpb.InstanceOSPoliciesCompliance
-	if err := it.nextFunc(); err != nil {
-		return item, err
-	}
-	item = it.items[0]
-	it.items = it.items[1:]
-	return item, nil
-}
-
-func (it *InstanceOSPoliciesComplianceIterator) bufLen() int {
-	return len(it.items)
-}
-
-func (it *InstanceOSPoliciesComplianceIterator) takeBuf() interface{} {
-	b := it.items
-	it.items = nil
-	return b
-}
-
 // InventoryIterator manages a stream of *osconfigpb.Inventory.
 type InventoryIterator struct {
 	items    []*osconfigpb.Inventory
@@ -1169,6 +1143,53 @@ func (it *OSPolicyAssignmentIterator) bufLen() int {
 }
 
 func (it *OSPolicyAssignmentIterator) takeBuf() interface{} {
+	b := it.items
+	it.items = nil
+	return b
+}
+
+// OSPolicyAssignmentReportIterator manages a stream of *osconfigpb.OSPolicyAssignmentReport.
+type OSPolicyAssignmentReportIterator struct {
+	items    []*osconfigpb.OSPolicyAssignmentReport
+	pageInfo *iterator.PageInfo
+	nextFunc func() error
+
+	// Response is the raw response for the current page.
+	// It must be cast to the RPC response type.
+	// Calling Next() or InternalFetch() updates this value.
+	Response interface{}
+
+	// InternalFetch is for use by the Google Cloud Libraries only.
+	// It is not part of the stable interface of this package.
+	//
+	// InternalFetch returns results from a single call to the underlying RPC.
+	// The number of results is no greater than pageSize.
+	// If there are no more results, nextPageToken is empty and err is nil.
+	InternalFetch func(pageSize int, pageToken string) (results []*osconfigpb.OSPolicyAssignmentReport, nextPageToken string, err error)
+}
+
+// PageInfo supports pagination. See the google.golang.org/api/iterator package for details.
+func (it *OSPolicyAssignmentReportIterator) PageInfo() *iterator.PageInfo {
+	return it.pageInfo
+}
+
+// Next returns the next result. Its second return value is iterator.Done if there are no more
+// results. Once Next returns Done, all subsequent calls will return Done.
+func (it *OSPolicyAssignmentReportIterator) Next() (*osconfigpb.OSPolicyAssignmentReport, error) {
+	var item *osconfigpb.OSPolicyAssignmentReport
+	if err := it.nextFunc(); err != nil {
+		return item, err
+	}
+	item = it.items[0]
+	it.items = it.items[1:]
+	return item, nil
+}
+
+func (it *OSPolicyAssignmentReportIterator) bufLen() int {
+	return len(it.items)
+}
+
+func (it *OSPolicyAssignmentReportIterator) takeBuf() interface{} {
 	b := it.items
 	it.items = nil
 	return b

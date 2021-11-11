@@ -34,7 +34,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1alpha"
+	osconfigpb "github.com/GoogleCloudPlatform/osconfig/e2e_tests/internal/google.golang.org/genproto/googleapis/cloud/osconfig/v1"
 )
 
 const (
@@ -128,7 +128,7 @@ func runInventoryReportingTest(ctx context.Context, testSetup *inventoryTestSetu
 
 func waitForInventory(ctx context.Context, name string, timeout time.Duration) (*osconfigpb.Inventory, error) {
 	start := time.Now()
-	client, err := gcpclients.GetOsConfigClientV1Alpha()
+	client, err := gcpclients.GetOsConfigClientV1()
 	if err != nil {
 		return nil, fmt.Errorf("error getting osconfig client: %v", err)
 	}
