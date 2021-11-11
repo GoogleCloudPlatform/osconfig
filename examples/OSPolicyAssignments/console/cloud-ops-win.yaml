@@ -1,0 +1,26 @@
+id: google-cloud-ops-agent-windows-policy
+mode: ENFORCEMENT
+resourceGroups:
+  resources:
+    - id: exec-script
+      exec:
+        validate:
+          script: |-
+            (New-Object Net.WebClient).DownloadFile("https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.ps1", "${env:UserProfile}\add-google-cloud-ops-agent-repo.ps1")
+            Invoke-Expression "${env:UserProfile}\add-google-cloud-ops-agent-repo.ps1 -AlsoInstall -Version 2.*.*"
+            if ($LastExitCode) {
+            exit 101
+            }else {
+            exit 100
+            }
+          interpreter: POWERSHELL
+        enforce:
+          script: |-
+            (New-Object Net.WebClient).DownloadFile("https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.ps1", "${env:UserProfile}\add-google-cloud-ops-agent-repo.ps1")
+            Invoke-Expression "${env:UserProfile}\add-google-cloud-ops-agent-repo.ps1 -AlsoInstall -Version 2.*.*"
+            if ($LastExitCode) {
+            exit 101
+            }else {
+            exit 100
+            }
+          interpreter: POWERSHELL
