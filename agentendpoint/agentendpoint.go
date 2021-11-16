@@ -124,7 +124,11 @@ func (c *Client) RegisterAgent(ctx context.Context) error {
 	clog.DebugRPC(ctx, "RegisterAgent", req, nil)
 	req.InstanceIdToken = token
 
-	resp, err := c.raw.RegisterAgent(ctx, req)
+	var resp *agentendpointpb.RegisterAgentResponse
+	err = retryutil.RetryAPICall(ctx, apiRetrySec*time.Second, "RegisterAgent", func() error {
+		resp, err = c.raw.RegisterAgent(ctx, req)
+		return err
+	})
 	clog.DebugRPC(ctx, "RegisterAgent", nil, resp)
 
 	return err

@@ -76,13 +76,23 @@ func (s *serialPort) Write(b []byte) (int, error) {
 
 var deferredFuncs []func()
 
+// RegisterAgent is a blocking call, the RPC itself has retry logic baked it
+// with jitter and backoff up to a total of 10 minutes.
+// If client creation or register agent (after retries) fail we then wait for
+// 5 minutes and try again.
 func registerAgent(ctx context.Context) {
-	if agentconfig.TaskNotificationEnabled() || agentconfig.GuestPoliciesEnabled() {
-		if client, err := agentendpoint.NewClient(ctx); err != nil {
-			logger.Errorf(err.Error())
-		} else if err := client.RegisterAgent(ctx); err != nil {
-			logger.Errorf(err.Error())
+	for {
+		if agentconfig.TaskNotificationEnabled() || agentconfig.GuestPoliciesEnabled() {
+			if client, err := agentendpoint.NewClient(ctx); err != nil {
+				logger.Errorf(err.Error())
+			} else if err := client.RegisterAgent(ctx); err != nil {
+				logger.Errorf(err.Error())
+			} else {
+				// RegisterAgent completed successfully.
+				return
+			}
 		}
+		time.Sleep(5 * time.Minute)
 	}
 }
 
@@ -189,6 +199,7 @@ func runTaskLoop(ctx context.Context, c chan struct{}) {
 		clog.DebugEnabled = agentconfig.Debug()
 		if agentconfig.TaskNotificationEnabled() && taskNotificationClient == nil {
 			// Call RegisterAgent now since we just we either just started running or were just enabled.
+			// This call is blocking until as we can't continue unless register agent has completed.
 			registerAgent(ctx)
 		}
 		if agentconfig.TaskNotificationEnabled() && (taskNotificationClient == nil || taskNotificationClient.Closed()) {
