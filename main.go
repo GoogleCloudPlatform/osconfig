@@ -82,17 +82,12 @@ var deferredFuncs []func()
 // 5 minutes and try again.
 func registerAgent(ctx context.Context) {
 	for {
-		// Only call register agent if the agent is enabled.
-		if agentconfig.TaskNotificationEnabled() || agentconfig.GuestPoliciesEnabled() {
-			if client, err := agentendpoint.NewClient(ctx); err != nil {
-				logger.Errorf(err.Error())
-			} else if err := client.RegisterAgent(ctx); err != nil {
-				logger.Errorf(err.Error())
-			} else {
-				// RegisterAgent completed successfully.
-				return
-			}
+		if client, err := agentendpoint.NewClient(ctx); err != nil {
+			logger.Errorf(err.Error())
+		} else if err := client.RegisterAgent(ctx); err != nil {
+			logger.Errorf(err.Error())
 		} else {
+			// RegisterAgent completed successfully.
 			return
 		}
 		time.Sleep(5 * time.Minute)
@@ -158,7 +153,9 @@ func run(ctx context.Context) {
 	go func() {
 		c := time.Tick(24 * time.Hour)
 		for range c {
-			registerAgent(ctx)
+			if agentconfig.TaskNotificationEnabled() || agentconfig.GuestPoliciesEnabled() {
+				registerAgent(ctx)
+			}
 		}
 	}()
 
