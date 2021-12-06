@@ -1,0 +1,25 @@
+# An OS policy assignment to copy file from GCS bucket.
+osPolicies:
+  - mode: ENFORCEMENT
+    id: copy-file-from-bucket
+    resourceGroups:
+      - resources:
+          - file:
+              id: copy-file
+              permissions: '755'
+              state: CONTENTS_MATCH
+              file:
+                gcs:
+                  bucket: <your-bucket-name>
+                  generation: 123456789 # https://cloud.google.com/storage/docs/generations-preconditions
+                  object: test.txt
+              path: C:\<your-local-path>
+instanceFilter:
+  inclusionLabels:
+    - labels:
+        env: dev
+rollout:
+  disruptionBudget:
+    fixed: 10
+  minWaitDuration: 300s
+  
