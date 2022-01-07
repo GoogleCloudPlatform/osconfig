@@ -1,0 +1,22 @@
+osPolicies:
+  - id: install-bits-from-gcs
+    mode: ENFORCEMENT
+    resourceGroups:
+      - resources:
+          - id: gcs-file
+            file:
+              file: #source
+                gcs:
+                  bucket: 'the-bucket'
+                  object: 'theObject'
+                  generation: 123456789 # See http://cloud/storage/docs/using-versioned-objects
+              path: /opt/the-file  #destination
+              state: CONTENTS_MATCH  #prevent drift
+              permissions: '777' # executable
+instanceFilter:
+  inventories:
+    - osShortName: debian
+rollout:
+  disruptionBudget:
+    fixed: 10
+  minWaitDuration: 180s
