@@ -90,7 +90,11 @@ func registerAgent(ctx context.Context) {
 			// RegisterAgent completed successfully.
 			return
 		}
-		time.Sleep(5 * time.Minute)
+		select {
+		case <-time.After(5 * time.Minute):
+		case <-ctx.Done():
+			return
+		}
 	}
 }
 
