@@ -274,7 +274,6 @@ var OldEL7Images = map[string]string{
 
 // HeadEL8Images is a map of names to image paths for public EL8 image families.
 var HeadEL8Images = map[string]string{
-	"centos-cloud/centos-8":           "projects/centos-cloud/global/images/family/centos-8",
 	"centos-cloud/centos-stream-8":    "projects/centos-cloud/global/images/family/centos-stream-8",
 	"rhel-cloud/rhel-8":               "projects/rhel-cloud/global/images/family/rhel-8",
 	"rocky-linux-cloud/rocky-linux-8": "projects/rocky-linux-cloud/global/images/family/rocky-linux-8",
@@ -282,8 +281,7 @@ var HeadEL8Images = map[string]string{
 
 // OldEL8Images is a map of names to image paths for old EL8 images.
 var OldEL8Images = map[string]string{
-	"old/centos-8": "projects/centos-cloud/global/images/centos-7-v20210512",
-	"old/rhel-8":   "projects/rhel-cloud/global/images/rhel-7-v20210512",
+	"old/rhel-8": "projects/rhel-cloud/global/images/rhel-7-v20210512",
 }
 
 // HeadELImages is a map of names to image paths for public EL image families.
