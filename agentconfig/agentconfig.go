@@ -84,9 +84,10 @@ const (
 )
 
 var (
-	endpoint = flag.String("endpoint", prodEndpoint, "osconfig endpoint override")
-	debug    = flag.Bool("debug", false, "set debug log verbosity")
-	stdout   = flag.Bool("stdout", false, "log to stdout")
+	endpoint            = flag.String("endpoint", prodEndpoint, "osconfig endpoint override")
+	debug               = flag.Bool("debug", false, "set debug log verbosity")
+	stdout              = flag.Bool("stdout", false, "log to stdout")
+	disableLocalLogging = flag.Bool("disable_local_logging", false, "disable logging using event log or syslog")
 
 	agentConfig   = &config{}
 	agentConfigMx sync.RWMutex
@@ -508,6 +509,11 @@ func Debug() bool {
 // Stdout flag.
 func Stdout() bool {
 	return *stdout
+}
+
+// DisableLocalLogging flag.
+func DisableLocalLogging() bool {
+	return *disableLocalLogging
 }
 
 // SvcEndpoint is the OS Config service endpoint.

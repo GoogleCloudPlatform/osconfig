@@ -96,7 +96,7 @@ func registerAgent(ctx context.Context) {
 
 func run(ctx context.Context) {
 	// Setup logging.
-	opts := logger.LogOpts{LoggerName: "OSConfigAgent", UserAgent: agentconfig.UserAgent()}
+	opts := logger.LogOpts{LoggerName: "OSConfigAgent", UserAgent: agentconfig.UserAgent(), DisableLocalLogging: agentconfig.DisableLocalLogging()}
 	if agentconfig.Stdout() {
 		opts.Writers = []io.Writer{os.Stdout}
 	}
