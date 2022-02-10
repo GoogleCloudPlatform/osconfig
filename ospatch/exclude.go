@@ -18,6 +18,7 @@ import (
 	"regexp"
 )
 
+// Exclude represents package exclude entry by a user
 type Exclude struct {
 	IsRegexp     bool
 	Regex        *regexp.Regexp
