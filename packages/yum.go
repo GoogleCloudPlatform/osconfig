@@ -43,7 +43,6 @@ func init() {
 }
 
 type yumUpdateOpts struct {
-	excludes []string
 	security bool
 	minimal  bool
 }
@@ -64,14 +63,6 @@ func YumUpdateSecurity(security bool) YumUpdateOption {
 func YumUpdateMinimal(minimal bool) YumUpdateOption {
 	return func(args *yumUpdateOpts) {
 		args.minimal = minimal
-	}
-}
-
-// YumExcludes returns a YumUpdateOption that specifies the excludes
-// command should be used.
-func YumExcludes(excludes []string) YumUpdateOption {
-	return func(args *yumUpdateOpts) {
-		args.excludes = excludes
 	}
 }
 
@@ -167,7 +158,6 @@ func listAndParseYumPackages(ctx context.Context, opts ...YumUpdateOption) ([]*P
 	yumOpts := &yumUpdateOpts{
 		security: false,
 		minimal:  false,
-		excludes: []string{},
 	}
 
 	for _, opt := range opts {
@@ -180,11 +170,6 @@ func listAndParseYumPackages(ctx context.Context, opts ...YumUpdateOption) ([]*P
 	}
 	if yumOpts.security {
 		args = append(args, "--security")
-	}
-	if len(yumOpts.excludes) > 0 {
-		for _, pkg := range yumOpts.excludes {
-			args = append(args, []string{"--exclude", pkg}...)
-		}
 	}
 
 	stdout, stderr, err := ptyrunner.Run(ctx, exec.CommandContext(ctx, yum, args...))

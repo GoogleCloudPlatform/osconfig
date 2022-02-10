@@ -24,7 +24,7 @@ import (
 
 type aptGetUpgradeOpts struct {
 	exclusivePackages []string
-	excludes          []string
+	excludes          []*Exclude
 	upgradeType       packages.AptUpgradeType
 	dryrun            bool
 }
@@ -40,7 +40,7 @@ func AptGetUpgradeType(upgradeType packages.AptUpgradeType) AptGetUpgradeOption 
 }
 
 // AptGetExcludes excludes these packages from upgrade.
-func AptGetExcludes(excludes []string) AptGetUpgradeOption {
+func AptGetExcludes(excludes []*Exclude) AptGetUpgradeOption {
 	return func(args *aptGetUpgradeOpts) {
 		args.excludes = excludes
 	}

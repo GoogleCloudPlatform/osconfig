@@ -31,7 +31,7 @@ var (
 
 type yumUpdateOpts struct {
 	exclusivePackages []string
-	excludes          []string
+	excludes          []*Exclude
 	security          bool
 	minimal           bool
 	dryrun            bool
@@ -58,7 +58,7 @@ func YumUpdateMinimal(minimal bool) YumUpdateOption {
 
 // YumUpdateExcludes returns a YumUpdateOption that specifies what packages to add to
 // the --exclude flag.
-func YumUpdateExcludes(excludes []string) YumUpdateOption {
+func YumUpdateExcludes(excludes []*Exclude) YumUpdateOption {
 	return func(args *yumUpdateOpts) {
 		args.excludes = excludes
 	}
@@ -90,14 +90,14 @@ func RunYumUpdate(ctx context.Context, opts ...YumUpdateOption) error {
 		opt(yumOpts)
 	}
 
-	pkgs, err := packages.YumUpdates(ctx, packages.YumUpdateMinimal(yumOpts.minimal), packages.YumUpdateSecurity(yumOpts.security), packages.YumExcludes(yumOpts.excludes))
+	pkgs, err := packages.YumUpdates(ctx, packages.YumUpdateMinimal(yumOpts.minimal), packages.YumUpdateSecurity(yumOpts.security))
 	if err != nil {
 		return err
 	}
 
 	// Yum excludes are already excluded while listing yumUpdates, so we send
 	// and empty list.
-	fPkgs, err := filterPackages(pkgs, yumOpts.exclusivePackages, []string{})
+	fPkgs, err := filterPackages(pkgs, yumOpts.exclusivePackages, yumOpts.excludes)
 	if err != nil {
 		return err
 	}
