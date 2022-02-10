@@ -25,6 +25,7 @@ type Exclude struct {
 	strictString *string
 }
 
+// CreateRegexExclude returns new Exclude struct that represents exclusion with regex
 func CreateRegexExclude(regex *regexp.Regexp) *Exclude {
 	return &Exclude{
 		isRegexp: true,
@@ -32,6 +33,7 @@ func CreateRegexExclude(regex *regexp.Regexp) *Exclude {
 	}
 }
 
+// CreateStringExclude returns new Exclude struct that represents exclusion with string
 func CreateStringExclude(strictString *string) *Exclude {
 	return &Exclude{
 		isRegexp:     false,
@@ -39,6 +41,7 @@ func CreateStringExclude(strictString *string) *Exclude {
 	}
 }
 
+// MatchesName returns if a package with a certain name matches Exclude struct and should be excluded
 func (exclude *Exclude) MatchesName(name *string) bool {
 	if exclude.isRegexp {
 		return exclude.regex.MatchString(*name)
