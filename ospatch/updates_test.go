@@ -100,9 +100,9 @@ func TestFilterPackages(t *testing.T) {
 		exludes []*Exclude
 		want    []*packages.PkgInfo
 	}{
-		{name: "StrictStringFiltering", pkgs: []*packages.PkgInfo{&pkg}, exludes: []*Exclude{{IsRegexp: false, StrictString: &strictString}}, want: []*packages.PkgInfo{}},
-		{name: "RegexpFiltering", pkgs: []*packages.PkgInfo{&pkg}, exludes: []*Exclude{{IsRegexp: true, Regex: regex}}, want: []*packages.PkgInfo{}},
-		{name: "MissedFilter", pkgs: []*packages.PkgInfo{&pkg}, exludes: []*Exclude{{IsRegexp: true, Regex: missingRegex}}, want: []*packages.PkgInfo{&pkg}},
+		{name: "StrictStringFiltering", pkgs: []*packages.PkgInfo{&pkg}, exludes: []*Exclude{CreateStringExclude(&strictString)}, want: []*packages.PkgInfo{}},
+		{name: "RegexpFiltering", pkgs: []*packages.PkgInfo{&pkg}, exludes: []*Exclude{CreateRegexExclude(regex)}, want: []*packages.PkgInfo{}},
+		{name: "MissedFilter", pkgs: []*packages.PkgInfo{&pkg}, exludes: []*Exclude{CreateRegexExclude(missingRegex)}, want: []*packages.PkgInfo{&pkg}},
 	}
 
 	for _, tt := range tests {

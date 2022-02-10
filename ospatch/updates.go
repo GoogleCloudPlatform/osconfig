@@ -113,18 +113,11 @@ func rpmReboot() (bool, error) {
 
 func shouldPackageBeExcluded(excludes []*Exclude, packageName *string) bool {
 	for _, exclude := range excludes {
-		if excludeMatchesPackageName(exclude, packageName) {
+		if exclude.MatchesName(packageName) {
 			return true
 		}
 	}
 	return false
-}
-
-func excludeMatchesPackageName(exclude *Exclude, packageName *string) bool {
-	if exclude.IsRegexp {
-		return exclude.Regex.MatchString(*packageName)
-	}
-	return *exclude.StrictString == *packageName
 }
 
 func containsString(ss []string, c string) bool {

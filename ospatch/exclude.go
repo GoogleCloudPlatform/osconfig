@@ -20,7 +20,28 @@ import (
 
 // Exclude represents package exclude entry by a user
 type Exclude struct {
-	IsRegexp     bool
-	Regex        *regexp.Regexp
-	StrictString *string
+	isRegexp     bool
+	regex        *regexp.Regexp
+	strictString *string
+}
+
+func CreateRegexExclude(regex *regexp.Regexp) *Exclude {
+	return &Exclude{
+		isRegexp: true,
+		regex:    regex,
+	}
+}
+
+func CreateStringExclude(strictString *string) *Exclude {
+	return &Exclude{
+		isRegexp:     false,
+		strictString: strictString,
+	}
+}
+
+func (exclude *Exclude) MatchesName(name *string) bool {
+	if exclude.isRegexp {
+		return exclude.regex.MatchString(*name)
+	}
+	return *exclude.strictString == *name
 }

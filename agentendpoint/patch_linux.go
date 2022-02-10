@@ -104,17 +104,10 @@ func convertInputToExcludes(input []string) ([]*ospatch.Exclude, error) {
 			}
 			output = append(output, exclude)
 		} else {
-			output = append(output, strictExcludeFromString(s))
+			output = append(output, ospatch.CreateStringExclude(&s))
 		}
 	}
 	return output, nil
-}
-
-func strictExcludeFromString(s string) *ospatch.Exclude {
-	return &ospatch.Exclude{
-		IsRegexp:     false,
-		StrictString: &s,
-	}
 }
 
 func regexExcludeFromString(s string) (*ospatch.Exclude, error) {
@@ -122,8 +115,5 @@ func regexExcludeFromString(s string) (*ospatch.Exclude, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &ospatch.Exclude{
-		IsRegexp: true,
-		Regex:    compile,
-	}, nil
+	return ospatch.CreateRegexExclude(compile), nil
 }

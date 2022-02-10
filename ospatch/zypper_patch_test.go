@@ -36,11 +36,11 @@ func TestRunFilter(t *testing.T) {
 		},
 		{name: "runFilterwithUpdatewithexcludes",
 			// withupdate, exclude a patch that has
-			input:  input{patches: patches, pkgUpdates: pkgUpdates, pkgToPatchesMap: pkgToPatchesMap, exclusiveIncludes: []string{}, excludes: []*Exclude{{IsRegexp: false, StrictString: &patch3String}}, withUpdate: true},
+			input:  input{patches: patches, pkgUpdates: pkgUpdates, pkgToPatchesMap: pkgToPatchesMap, exclusiveIncludes: []string{}, excludes: []*Exclude{CreateStringExclude(&patch3String)}, withUpdate: true},
 			expect: expect{patches: []string{"patch-1", "patch-2"}, pkgUpdates: []string{"pkg6"}, err: nil},
 		},
 		{name: "runFilterwithoutUpdatewithexcludes",
-			input:  input{patches: patches, pkgUpdates: pkgUpdates, pkgToPatchesMap: pkgToPatchesMap, exclusiveIncludes: []string{}, excludes: []*Exclude{{IsRegexp: false, StrictString: &patch3String}}, withUpdate: false},
+			input:  input{patches: patches, pkgUpdates: pkgUpdates, pkgToPatchesMap: pkgToPatchesMap, exclusiveIncludes: []string{}, excludes: []*Exclude{CreateStringExclude(&patch3String)}, withUpdate: false},
 			expect: expect{patches: []string{"patch-1", "patch-2"}, pkgUpdates: []string{}, err: nil},
 		},
 		{name: "runFilterwithUpdatewithoutexcludes",
