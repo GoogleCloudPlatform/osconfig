@@ -8,14 +8,14 @@ osPolicies:
            exec:
              validate:
                # Checks if the group is logaccess. If yes, exits  with code 100. If no,
-                # exits with code 101 and proceeds to the `enforce` step.
+               # exits with code 101 and proceeds to the `enforce` step.
                script:
-                 if stat -c '%G /var/log/auth.log | grep -q 'logaccess'; then exit 100; else exit 101; fi
+                 if stat -c '%G' /var/log/auth.log | grep -q 'logaccess'; then exit 100; else exit 101; fi
                interpreter: SHELL
              enforce:
                # Changes the group to logaccess and exits with code 100.
                script:
-                 sudo chgrp logaccess /var/log/auth.log && exit 100
+                 chgrp logaccess /var/log/auth.log && exit 100
 instanceFilter:
  inclusionLabels:
    - labels:
