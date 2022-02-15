@@ -14,7 +14,7 @@ func TestRunFilter(t *testing.T) {
 		pkgUpdates        []*packages.PkgInfo
 		pkgToPatchesMap   map[string][]string
 		exclusiveIncludes []string
-		excludes          []string
+		excludes          []*Exclude
 		withUpdate        bool
 	}
 	type expect struct {
@@ -23,30 +23,32 @@ func TestRunFilter(t *testing.T) {
 		err        error
 	}
 
+	var patch3String = "patch-3"
+
 	tests := []struct {
 		name   string
 		input  input
 		expect expect
 	}{
 		{name: "runfilterwithexclusivepatches",
-			input:  input{patches: patches, pkgUpdates: pkgUpdates, pkgToPatchesMap: pkgToPatchesMap, exclusiveIncludes: []string{"patch-3"}, excludes: []string{}, withUpdate: false},
+			input:  input{patches: patches, pkgUpdates: pkgUpdates, pkgToPatchesMap: pkgToPatchesMap, exclusiveIncludes: []string{"patch-3"}, excludes: []*Exclude{}, withUpdate: false},
 			expect: expect{patches: []string{"patch-3"}, pkgUpdates: []string{}, err: nil},
 		},
 		{name: "runFilterwithUpdatewithexcludes",
 			// withupdate, exclude a patch that has
-			input:  input{patches: patches, pkgUpdates: pkgUpdates, pkgToPatchesMap: pkgToPatchesMap, exclusiveIncludes: []string{}, excludes: []string{"patch-3"}, withUpdate: true},
+			input:  input{patches: patches, pkgUpdates: pkgUpdates, pkgToPatchesMap: pkgToPatchesMap, exclusiveIncludes: []string{}, excludes: []*Exclude{CreateStringExclude(&patch3String)}, withUpdate: true},
 			expect: expect{patches: []string{"patch-1", "patch-2"}, pkgUpdates: []string{"pkg6"}, err: nil},
 		},
 		{name: "runFilterwithoutUpdatewithexcludes",
-			input:  input{patches: patches, pkgUpdates: pkgUpdates, pkgToPatchesMap: pkgToPatchesMap, exclusiveIncludes: []string{}, excludes: []string{"patch-3"}, withUpdate: false},
+			input:  input{patches: patches, pkgUpdates: pkgUpdates, pkgToPatchesMap: pkgToPatchesMap, exclusiveIncludes: []string{}, excludes: []*Exclude{CreateStringExclude(&patch3String)}, withUpdate: false},
 			expect: expect{patches: []string{"patch-1", "patch-2"}, pkgUpdates: []string{}, err: nil},
 		},
 		{name: "runFilterwithUpdatewithoutexcludes",
-			input:  input{patches: patches, pkgUpdates: pkgUpdates, pkgToPatchesMap: pkgToPatchesMap, exclusiveIncludes: []string{}, excludes: []string{}, withUpdate: true},
+			input:  input{patches: patches, pkgUpdates: pkgUpdates, pkgToPatchesMap: pkgToPatchesMap, exclusiveIncludes: []string{}, excludes: []*Exclude{}, withUpdate: true},
 			expect: expect{patches: []string{"patch-1", "patch-2", "patch-3"}, pkgUpdates: []string{"pkg6"}, err: nil},
 		},
 		{name: "runFilterwithoutUpdatewithoutexcludes",
-			input:  input{patches: patches, pkgUpdates: pkgUpdates, pkgToPatchesMap: pkgToPatchesMap, exclusiveIncludes: []string{}, excludes: []string{}, withUpdate: false},
+			input:  input{patches: patches, pkgUpdates: pkgUpdates, pkgToPatchesMap: pkgToPatchesMap, exclusiveIncludes: []string{}, excludes: []*Exclude{}, withUpdate: false},
 			expect: expect{patches: []string{"patch-1", "patch-2", "patch-3"}, pkgUpdates: []string{}, err: nil},
 		},
 	}

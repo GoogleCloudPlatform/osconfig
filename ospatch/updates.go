@@ -111,6 +111,15 @@ func rpmReboot() (bool, error) {
 	return rpmRebootRequired(out, btime), nil
 }
 
+func shouldPackageBeExcluded(excludes []*Exclude, packageName *string) bool {
+	for _, exclude := range excludes {
+		if exclude.MatchesName(packageName) {
+			return true
+		}
+	}
+	return false
+}
+
 func containsString(ss []string, c string) bool {
 	for _, s := range ss {
 		if s == c {
@@ -120,13 +129,13 @@ func containsString(ss []string, c string) bool {
 	return false
 }
 
-func filterPackages(pkgs []*packages.PkgInfo, exclusivePackages, excludes []string) ([]*packages.PkgInfo, error) {
+func filterPackages(pkgs []*packages.PkgInfo, exclusivePackages []string, excludes []*Exclude) ([]*packages.PkgInfo, error) {
 	if len(exclusivePackages) != 0 && len(excludes) != 0 {
 		return nil, errors.New("exclusivePackages and excludes can not both be non 0")
 	}
-	var fPkgs []*packages.PkgInfo
+	var fPkgs = []*packages.PkgInfo{}
 	for _, pkg := range pkgs {
-		if containsString(excludes, pkg.Name) {
+		if shouldPackageBeExcluded(excludes, &pkg.Name) {
 			continue
 		}
 		if exclusivePackages == nil || containsString(exclusivePackages, pkg.Name) {

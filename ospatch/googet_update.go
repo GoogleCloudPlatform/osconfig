@@ -24,7 +24,7 @@ import (
 
 type googetUpdateOpts struct {
 	exclusivePackages []string
-	excludes          []string
+	excludes          []*Exclude
 	dryrun            bool
 }
 
@@ -32,7 +32,7 @@ type googetUpdateOpts struct {
 type GooGetUpdateOption func(*googetUpdateOpts)
 
 // GooGetExcludes excludes these packages from upgrade.
-func GooGetExcludes(excludes []string) GooGetUpdateOption {
+func GooGetExcludes(excludes []*Exclude) GooGetUpdateOption {
 	return func(args *googetUpdateOpts) {
 		args.excludes = excludes
 	}

@@ -17,7 +17,11 @@ package ospatch
 import (
 	"io/ioutil"
 	"os"
+	"reflect"
+	"regexp"
 	"testing"
+
+	"github.com/GoogleCloudPlatform/osconfig/packages"
 )
 
 func TestGetBtime(t *testing.T) {
@@ -80,6 +84,35 @@ func TestRpmRebootRequired(t *testing.T) {
 			got := rpmRebootRequired(tt.args.pkgs, tt.args.btime)
 			if got != tt.want {
 				t.Errorf("rpmRebootRequired() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFilterPackages(t *testing.T) {
+	pkg := packages.PkgInfo{Name: "NameOfThePackage"}
+	strictString := "NameOfThePackage"
+	regex, _ := regexp.Compile("^NameO[e-g]ThePackage$")
+	missingRegex, _ := regexp.Compile("^NameO[e-g]ThePackag$")
+	tests := []struct {
+		name    string
+		pkgs    []*packages.PkgInfo
+		exludes []*Exclude
+		want    []*packages.PkgInfo
+	}{
+		{name: "StrictStringFiltering", pkgs: []*packages.PkgInfo{&pkg}, exludes: []*Exclude{CreateStringExclude(&strictString)}, want: []*packages.PkgInfo{}},
+		{name: "RegexpFiltering", pkgs: []*packages.PkgInfo{&pkg}, exludes: []*Exclude{CreateRegexExclude(regex)}, want: []*packages.PkgInfo{}},
+		{name: "MissedFilter", pkgs: []*packages.PkgInfo{&pkg}, exludes: []*Exclude{CreateRegexExclude(missingRegex)}, want: []*packages.PkgInfo{&pkg}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := filterPackages(tt.pkgs, nil, tt.exludes)
+			if err != nil {
+				t.Errorf("err = %v, want %v", err, nil)
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("filterPackages() = %v, want %v", got, tt.want)
 			}
 		})
 	}

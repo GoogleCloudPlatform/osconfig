@@ -17,6 +17,7 @@ package agentendpoint
 import (
 	"context"
 	"errors"
+	"regexp"
 	"strings"
 	"time"
 
@@ -33,9 +34,13 @@ func (r *patchTask) runUpdates(ctx context.Context) error {
 	const retryPeriod = 3 * time.Minute
 	// Check for both apt-get and dpkg-query to give us a clean signal.
 	if packages.AptExists && packages.DpkgQueryExists {
+		excludes, err := convertInputToExcludes(r.Task.GetPatchConfig().GetApt().GetExcludes())
+		if err != nil {
+			return err
+		}
 		opts := []ospatch.AptGetUpgradeOption{
 			ospatch.AptGetDryRun(r.Task.GetDryRun()),
-			ospatch.AptGetExcludes(r.Task.GetPatchConfig().GetApt().GetExcludes()),
+			ospatch.AptGetExcludes(excludes),
 			ospatch.AptGetExclusivePackages(r.Task.GetPatchConfig().GetApt().GetExclusivePackages()),
 		}
 		switch r.Task.GetPatchConfig().GetApt().GetType() {
@@ -48,10 +53,14 @@ func (r *patchTask) runUpdates(ctx context.Context) error {
 		}
 	}
 	if packages.YumExists && packages.RPMQueryExists {
+		excludes, err := convertInputToExcludes(r.Task.GetPatchConfig().GetYum().GetExcludes())
+		if err != nil {
+			return err
+		}
 		opts := []ospatch.YumUpdateOption{
 			ospatch.YumUpdateSecurity(r.Task.GetPatchConfig().GetYum().GetSecurity()),
 			ospatch.YumUpdateMinimal(r.Task.GetPatchConfig().GetYum().GetMinimal()),
-			ospatch.YumUpdateExcludes(r.Task.GetPatchConfig().GetYum().GetExcludes()),
+			ospatch.YumUpdateExcludes(excludes),
 			ospatch.YumExclusivePackages(r.Task.GetPatchConfig().GetYum().GetExclusivePackages()),
 			ospatch.YumDryRun(r.Task.GetDryRun()),
 		}
@@ -61,12 +70,16 @@ func (r *patchTask) runUpdates(ctx context.Context) error {
 		}
 	}
 	if packages.ZypperExists && packages.RPMQueryExists {
+		excludes, err := convertInputToExcludes(r.Task.GetPatchConfig().GetZypper().GetExcludes())
+		if err != nil {
+			return err
+		}
 		opts := []ospatch.ZypperPatchOption{
 			ospatch.ZypperPatchCategories(r.Task.GetPatchConfig().GetZypper().GetCategories()),
 			ospatch.ZypperPatchSeverities(r.Task.GetPatchConfig().GetZypper().GetSeverities()),
 			ospatch.ZypperUpdateWithUpdate(r.Task.GetPatchConfig().GetZypper().GetWithUpdate()),
 			ospatch.ZypperUpdateWithOptional(r.Task.GetPatchConfig().GetZypper().GetWithOptional()),
-			ospatch.ZypperUpdateWithExcludes(r.Task.GetPatchConfig().GetZypper().GetExcludes()),
+			ospatch.ZypperUpdateWithExcludes(excludes),
 			ospatch.ZypperUpdateWithExclusivePatches(r.Task.GetPatchConfig().GetZypper().GetExclusivePatches()),
 			ospatch.ZypperUpdateDryrun(r.Task.GetDryRun()),
 		}
@@ -79,4 +92,28 @@ func (r *patchTask) runUpdates(ctx context.Context) error {
 		return nil
 	}
 	return errors.New(strings.Join(errs, ",\n"))
+}
+
+func convertInputToExcludes(input []string) ([]*ospatch.Exclude, error) {
+	var output []*ospatch.Exclude
+	for _, s := range input {
+		if len(s) >= 2 && (s)[0] == '/' && s[len(s)-1] == '/' {
+			exclude, err := regexExcludeFromString(s[1 : len(s)-1])
+			if err != nil {
+				return nil, err
+			}
+			output = append(output, exclude)
+		} else {
+			output = append(output, ospatch.CreateStringExclude(&s))
+		}
+	}
+	return output, nil
+}
+
+func regexExcludeFromString(s string) (*ospatch.Exclude, error) {
+	compile, err := regexp.Compile(s)
+	if err != nil {
+		return nil, err
+	}
+	return ospatch.CreateRegexExclude(compile), nil
 }
