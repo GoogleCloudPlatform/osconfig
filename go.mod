@@ -3,7 +3,6 @@ module github.com/GoogleCloudPlatform/osconfig
 go 1.13
 
 require (
-	cloud.google.com/go v0.100.2
 	cloud.google.com/go/compute v1.2.0
 	cloud.google.com/go/iam v0.2.0 // indirect
 	cloud.google.com/go/logging v1.4.2 // indirect
