@@ -28,7 +28,7 @@ func GetPackageUpdates(ctx context.Context) (*Packages, error) {
 	pkgs := Packages{}
 	var errs []string
 	if AptExists {
-		apt, err := AptUpdates(ctx, AptGetUpgradeType(AptGetFullUpgrade), AptGetUpgradeShowNew(false))
+		apt, err := AptUpdates(ctx, AptGetUpgradeType(AptGetFullUpgrade), AptGetUpgradeShowNew(false), AptGetUpgradeAllowDowngrades(true))
 		if err != nil {
 			msg := fmt.Sprintf("error getting apt updates: %v", err)
 			clog.Debugf(ctx, "Error: %s", msg)
