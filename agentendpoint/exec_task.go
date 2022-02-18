@@ -184,6 +184,7 @@ func (e *execTask) run(ctx context.Context) error {
 	exitCode := int32(-1)
 	switch stepConfig.GetInterpreter() {
 	case agentendpointpb.ExecStepConfig_INTERPRETER_UNSPECIFIED:
+	case agentendpointpb.ExecStepConfig_NONE:
 		if goos == "windows" {
 			err = errWinNoInt
 		} else {
