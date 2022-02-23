@@ -206,6 +206,10 @@ func InstallOSConfigEL(image string) string {
 	return ""
 }
 
+var DowngradeAptImages = map[string]string{
+	"debian-cloud/debian-10": "projects/debian-cloud/global/images/family/debian-10",
+}
+
 // HeadAptImages is a map of names to image paths for public image families that use APT.
 var HeadAptImages = map[string]string{
 	// Debian images.

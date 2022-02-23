@@ -128,6 +128,15 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		}
 		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
 	}
+	// Test that pre- and post-patch steps run as expected.
+	for _, setup := range aptDownradeImageTestSetup() {
+		wg.Add(1)
+		s := setup
+		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[PatchJob runs pre-step and post-step] [%s]", s.testName))
+		pc := patchConfigWithPreStepsForcingDowngrade()
+		f := func() { runExecutePatchJobTest(ctx, tc, s, pc) }
+		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
+	}
 	// Test YUM specific functionality, this just tests that using these settings doesn't break anything.
 	for _, setup := range yumHeadImageTestSetup() {
 		wg.Add(1)
@@ -434,6 +443,14 @@ func patchConfigWithPrePostSteps() *osconfigpb.PatchConfig {
 	postStep := &osconfigpb.ExecStep{LinuxExecStepConfig: linuxPostStepConfig, WindowsExecStepConfig: windowsPostStepConfig}
 
 	return &osconfigpb.PatchConfig{PreStep: preStep, PostStep: postStep}
+}
+
+func patchConfigWithPreStepsForcingDowngrade() *osconfigpb.PatchConfig {
+	linuxPreStepConfig := &osconfigpb.ExecStepConfig{Executable: &osconfigpb.ExecStepConfig_LocalPath{LocalPath: "./set_apt_downgrade.sh"}, Interpreter: osconfigpb.ExecStepConfig_SHELL}
+
+	preStep := &osconfigpb.ExecStep{LinuxExecStepConfig: linuxPreStepConfig}
+
+	return &osconfigpb.PatchConfig{PreStep: preStep}
 }
 
 func validatePrePostStepSuccess(inst *compute.Instance, testCase *junitxml.TestCase) {
