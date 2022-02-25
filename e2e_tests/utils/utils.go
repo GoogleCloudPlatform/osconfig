@@ -306,7 +306,7 @@ var HeadWindowsImages = map[string]string{
 	"windows-cloud/windows-2019":         "projects/windows-cloud/global/images/family/windows-2019",
 	"windows-cloud/windows-2019-core":    "projects/windows-cloud/global/images/family/windows-2019-core",
 	"windows-cloud/windows-20h2-core":    "projects/windows-cloud/global/images/family/windows-20h2-core",
-	"windows-cloud/windows-2022":    "projects/windows-cloud/global/images/family/windows-2022",
+	"windows-cloud/windows-2022":         "projects/windows-cloud/global/images/family/windows-2022",
 	"windows-cloud/windows-2022-core":    "projects/windows-cloud/global/images/family/windows-2022-core",
 }
 
