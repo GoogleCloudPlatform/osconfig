@@ -129,7 +129,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
 	}
 	// Test that apt-get patch works even when a package needs to be downgraded
-	for _, setup := range aptDownradeImageTestSetup() {
+	for _, setup := range aptDowngradeImageTestSetup() {
 		wg.Add(1)
 		s := setup
 		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[PatchJob apt-get doesn't fail on downgrades] [%s]", s.testName))

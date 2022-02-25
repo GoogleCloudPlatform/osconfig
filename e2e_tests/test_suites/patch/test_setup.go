@@ -205,7 +205,7 @@ func aptHeadImageTestSetup() []*patchTestSetup {
 	return imageTestSetup(mapping)
 }
 
-func aptDownradeImageTestSetup() []*patchTestSetup {
+func aptDowngradeImageTestSetup() []*patchTestSetup {
 	// This maps a specific patchTestSetup to test setup names and associated images.
 	mapping := map[*patchTestSetup]map[string]string{
 		aptDowngradeSetup: utils.DowngradeAptImages,
