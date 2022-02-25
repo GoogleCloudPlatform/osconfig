@@ -211,6 +211,7 @@ var HeadAptImages = map[string]string{
 	// Debian images.
 	"debian-cloud/debian-9":  "projects/debian-cloud/global/images/family/debian-9",
 	"debian-cloud/debian-10": "projects/debian-cloud/global/images/family/debian-10",
+	"debian-cloud/debian-11": "projects/debian-cloud/global/images/family/debian-11",
 
 	// Ubuntu images.
 	"ubuntu-os-cloud/ubuntu-1804-lts": "projects/ubuntu-os-cloud/global/images/family/ubuntu-1804-lts",
@@ -304,8 +305,9 @@ var HeadWindowsImages = map[string]string{
 	"windows-cloud/windows-2016-core":    "projects/windows-cloud/global/images/family/windows-2016-core",
 	"windows-cloud/windows-2019":         "projects/windows-cloud/global/images/family/windows-2019",
 	"windows-cloud/windows-2019-core":    "projects/windows-cloud/global/images/family/windows-2019-core",
-	"windows-cloud/windows-2004-core":    "projects/windows-cloud/global/images/family/windows-2004-core",
 	"windows-cloud/windows-20h2-core":    "projects/windows-cloud/global/images/family/windows-20h2-core",
+	"windows-cloud/windows-2022":         "projects/windows-cloud/global/images/family/windows-2022",
+	"windows-cloud/windows-2022-core":    "projects/windows-cloud/global/images/family/windows-2022-core",
 }
 
 // OldWindowsImages is a map of names to image paths for old Windows images.

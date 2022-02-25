@@ -132,7 +132,7 @@ func gatherInventory(testCase *junitxml.TestCase, testSetup *inventoryTestSetup,
 	return ga
 }
 
-func runHostnameTest(ga []*apiBeta.GuestAttributesEntry, testSetup *inventoryTestSetup, testCase *junitxml.TestCase) {
+func runHostnameTest(ga []*apiBeta.GuestAttributesEntry, testSetup *inventoryTestSetup) error {
 	var hostname string
 	for _, item := range ga {
 		if item.Key == "Hostname" {
@@ -143,16 +143,16 @@ func runHostnameTest(ga []*apiBeta.GuestAttributesEntry, testSetup *inventoryTes
 
 	if hostname == "" {
 		s, _ := json.MarshalIndent(ga, "", "  ")
-		testCase.WriteFailure("Hostname not found in guestInventory: %s", s)
-		return
+		return fmt.Errorf("Hostname not found in guestInventory: %s", s)
 	}
 
 	if hostname != testSetup.hostname {
-		testCase.WriteFailure("Hostname does not match expectation: got: %q, want: %q", hostname, testSetup.hostname)
+		return fmt.Errorf("Hostname does not match expectation: got: %q, want: %q", hostname, testSetup.hostname)
 	}
+	return nil
 }
 
-func runShortNameTest(ga []*apiBeta.GuestAttributesEntry, testSetup *inventoryTestSetup, testCase *junitxml.TestCase) {
+func runShortNameTest(ga []*apiBeta.GuestAttributesEntry, testSetup *inventoryTestSetup) error {
 	var shortName string
 	for _, item := range ga {
 		if item.Key == "ShortName" {
@@ -163,16 +163,16 @@ func runShortNameTest(ga []*apiBeta.GuestAttributesEntry, testSetup *inventoryTe
 
 	if shortName == "" {
 		s, _ := json.MarshalIndent(ga, "", "  ")
-		testCase.WriteFailure("ShortName not found in guestInventory: %s", s)
-		return
+		return fmt.Errorf("ShortName not found in guestInventory: %s", s)
 	}
 
 	if shortName != testSetup.shortName {
-		testCase.WriteFailure("ShortName does not match expectation: got: %q, want: %q", shortName, testSetup.shortName)
+		return fmt.Errorf("ShortName does not match expectation: got: %q, want: %q", shortName, testSetup.shortName)
 	}
+	return nil
 }
 
-func runPackagesTest(ga []*apiBeta.GuestAttributesEntry, testSetup *inventoryTestSetup, testCase *junitxml.TestCase) {
+func runPackagesTest(ga []*apiBeta.GuestAttributesEntry, testSetup *inventoryTestSetup) error {
 	var packagesEncoded string
 	for _, item := range ga {
 		if item.Key == "InstalledPackages" {
@@ -183,136 +183,104 @@ func runPackagesTest(ga []*apiBeta.GuestAttributesEntry, testSetup *inventoryTes
 
 	if packagesEncoded == "" {
 		s, _ := json.MarshalIndent(ga, "", "  ")
-		testCase.WriteFailure("InstalledPackages not found in guestInventory: %s", s)
-		return
+		return fmt.Errorf("InstalledPackages not found in guestInventory: %s", s)
 	}
 
 	decoded, err := base64.StdEncoding.DecodeString(packagesEncoded)
 	if err != nil {
-		testCase.WriteFailure(err.Error())
-		return
+		return err
 	}
 
 	zr, err := gzip.NewReader(bytes.NewReader(decoded))
 	if err != nil {
-		testCase.WriteFailure(err.Error())
-		return
+		return err
 	}
 	defer zr.Close()
 
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, zr); err != nil {
-		testCase.WriteFailure(err.Error())
-		return
+		return err
 	}
 
 	var pkgs packages.Packages
 	if err := json.Unmarshal(buf.Bytes(), &pkgs); err != nil {
-		testCase.WriteFailure(err.Error())
-		return
+		return err
 	}
 
 	for _, pt := range testSetup.packageType {
 		switch pt {
 		case "googet":
 			if len(pkgs.GooGet) < 1 {
-				testCase.WriteFailure("No packages exported in InstalledPackages for %q", pt)
-				return
+				return fmt.Errorf("no packages exported in InstalledPackages for %q", pt)
 			}
 		case "deb":
 			if len(pkgs.Deb) < 1 {
-				testCase.WriteFailure("No packages exported in InstalledPackages for %q", pt)
-				return
+				return fmt.Errorf("no packages exported in InstalledPackages for %q", pt)
 			}
 		case "rpm":
 			if len(pkgs.Rpm) < 1 {
-				testCase.WriteFailure("No packages exported in InstalledPackages for %q", pt)
-				return
+				return fmt.Errorf("no packages exported in InstalledPackages for %q", pt)
 			}
 		case "pip":
 			if len(pkgs.Pip) < 1 {
-				testCase.WriteFailure("No packages exported in InstalledPackages for %q", pt)
-				return
+				return fmt.Errorf("no packages exported in InstalledPackages for %q", pt)
 			}
 		case "gem":
 			if len(pkgs.Gem) < 1 {
-				testCase.WriteFailure("No packages exported in InstalledPackages for %q", pt)
-				return
+				return fmt.Errorf("no packages exported in InstalledPackages for %q", pt)
 			}
 		case "wua":
 			if len(pkgs.WUA) < 1 {
-				testCase.WriteFailure("No packages exported in InstalledPackages for %q", pt)
-				return
+				return fmt.Errorf("no packages exported in InstalledPackages for %q", pt)
 			}
 		case "qfe":
 			if len(pkgs.QFE) < 1 {
-				testCase.WriteFailure("No packages exported in InstalledPackages for %q", pt)
-				return
+				return fmt.Errorf("no packages exported in InstalledPackages for %q", pt)
 			}
 		}
 	}
+	return nil
 }
 
 func inventoryTestCase(ctx context.Context, testSetup *inventoryTestSetup, tests chan *junitxml.TestCase, wg *sync.WaitGroup, logger *log.Logger, regex *regexp.Regexp) {
 	defer wg.Done()
 
 	var logwg sync.WaitGroup
-	gatherInventoryTest := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Gather inventory] [%s]", testSetup.testName))
-	hostnameTest := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Check Hostname] [%s]", testSetup.testName))
-	shortNameTest := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Check ShortName] [%s]", testSetup.testName))
-	packageTest := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Check InstalledPackages] [%s]", testSetup.testName))
+	inventoryTest := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Guest Attributes inventory] [%s]", testSetup.testName))
 
-	if gatherInventoryTest.FilterTestCase(regex) {
-		gatherInventoryTest.Finish(tests)
-
-		hostnameTest.WriteSkipped("Setup skipped")
-		hostnameTest.Finish(tests)
-		shortNameTest.WriteSkipped("Setup skipped")
-		hostnameTest.Finish(tests)
-		packageTest.WriteSkipped("Setup skipped")
-		packageTest.Finish(tests)
+	if inventoryTest.FilterTestCase(regex) {
+		inventoryTest.Finish(tests)
 		return
 	}
 
-	logger.Printf("Running TestCase %q", gatherInventoryTest.Name)
-	ga := runGatherInventoryTest(ctx, testSetup, gatherInventoryTest, &logwg)
-	gatherInventoryTest.Finish(tests)
-	logger.Printf("TestCase %q finished", gatherInventoryTest.Name)
-	if gatherInventoryTest.Failure != nil {
-		rerunTC := junitxml.NewTestCase(testSuiteName, strings.TrimPrefix(gatherInventoryTest.Name, fmt.Sprintf("[%s] ", testSuiteName)))
+	logger.Printf("Running TestCase %q", inventoryTest.Name)
+	ga := runGatherInventoryTest(ctx, testSetup, inventoryTest, &logwg)
+	if inventoryTest.Failure != nil {
+		rerunTC := junitxml.NewTestCase(testSuiteName, strings.TrimPrefix(inventoryTest.Name, fmt.Sprintf("[%s] ", testSuiteName)))
 		logger.Printf("Rerunning TestCase %q", rerunTC.Name)
 		ga = runGatherInventoryTest(ctx, testSetup, rerunTC, &logwg)
-		rerunTC.Finish(tests)
-		logger.Printf("TestCase %q finished in %fs", rerunTC.Name, rerunTC.Time)
 		if rerunTC.Failure != nil {
-			hostnameTest.WriteFailure("Setup Failure")
-			hostnameTest.Finish(tests)
-			shortNameTest.WriteFailure("Setup Failure")
-			shortNameTest.Finish(tests)
-			packageTest.WriteFailure("Setup Failure")
-			packageTest.Finish(tests)
+			logger.Printf("TestCase %q finished in %fs", rerunTC.Name, rerunTC.Time)
+			rerunTC.Finish(tests)
 			return
 		}
 	}
 
-	for tc, f := range map[*junitxml.TestCase]func([]*apiBeta.GuestAttributesEntry, *inventoryTestSetup, *junitxml.TestCase){
-		hostnameTest:  runHostnameTest,
-		shortNameTest: runShortNameTest,
-		packageTest:   runPackagesTest,
-	} {
-		// Skip packages test for cos as it is not currently supported.
-		if strings.Contains(tc.Name, "cos") && strings.Contains(tc.Name, "Packages") {
-			tc.WriteSkipped("Inventory Packages not currently supported on COS")
-			tc.Finish(tests)
-		} else if tc.FilterTestCase(regex) {
-			tc.Finish(tests)
-		} else {
-			logger.Printf("Running TestCase %q", tc.Name)
-			f(ga, testSetup, tc)
-			tc.Finish(tests)
-			logger.Printf("TestCase %q finished in %fs", tc.Name, tc.Time)
+	if err := runHostnameTest(ga, testSetup); err != nil {
+		inventoryTest.WriteFailure("Error checking hostname: %v", err)
+	}
+	if err := runShortNameTest(ga, testSetup); err != nil {
+		inventoryTest.WriteFailure("Error checking shortname: %v", err)
+	}
+
+	// Skip packages test for cos as it is not currently supported.
+	if !strings.Contains(inventoryTest.Name, "cos") {
+		if err := runPackagesTest(ga, testSetup); err != nil {
+			inventoryTest.WriteFailure("Error checking packages: %v", err)
 		}
 	}
-	logwg.Wait()
 
+	logwg.Wait()
+	inventoryTest.Finish(tests)
+	logger.Printf("TestCase %q finished", inventoryTest.Name)
 }

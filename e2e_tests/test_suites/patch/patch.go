@@ -23,6 +23,7 @@ import (
 	"path"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -419,6 +420,17 @@ func runTestCase(tc *junitxml.TestCase, f func(), tests chan *junitxml.TestCase,
 	} else {
 		logger.Printf("Running TestCase %q", tc.Name)
 		f()
+		if tc.Failure != nil {
+			rerunTC := junitxml.NewTestCase(testSuiteName, strings.TrimPrefix(tc.Name, fmt.Sprintf("[%s] ", testSuiteName)))
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				logger.Printf("Rerunning TestCase %q", rerunTC.Name)
+				f()
+				rerunTC.Finish(tests)
+				logger.Printf("TestCase %q finished in %fs", rerunTC.Name, rerunTC.Time)
+			}()
+		}
 		tc.Finish(tests)
 		logger.Printf("TestCase %q finished in %fs", tc.Name, tc.Time)
 	}
