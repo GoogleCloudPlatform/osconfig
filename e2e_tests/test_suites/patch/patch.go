@@ -132,7 +132,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 	for _, setup := range aptDownradeImageTestSetup() {
 		wg.Add(1)
 		s := setup
-		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[PatchJob runs pre-step and post-step] [%s]", s.testName))
+		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[PatchJob apt-get doesn't fail on downgrades] [%s]", s.testName))
 		pc := patchConfigWithPreStepsForcingDowngrade()
 		f := func() { runExecutePatchJobTest(ctx, tc, s, pc) }
 		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
