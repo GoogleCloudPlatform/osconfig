@@ -41,8 +41,7 @@ import (
 )
 
 const (
-	testSuiteName              = "OSPatch"
-	aptDowngradeScriptLocation = "./set_apt_downgrade.sh"
+	testSuiteName = "OSPatch"
 )
 
 var (
@@ -129,13 +128,14 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		}
 		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
 	}
-	// Test that pre- and post-patch steps run as expected.
+	// Test that apt-get patch works even when a package needs to be downgraded
 	for _, setup := range aptDownradeImageTestSetup() {
 		wg.Add(1)
 		s := setup
 		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[PatchJob apt-get doesn't fail on downgrades] [%s]", s.testName))
-		pc := patchConfigWithPreStepsForcingDowngrade()
-		f := func() { runExecutePatchJobTest(ctx, tc, s, pc) }
+		f := func() {
+			runExecutePatchJobTest(ctx, tc, s, &osconfigpb.PatchConfig{Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST}})
+		}
 		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
 	}
 	// Test YUM specific functionality, this just tests that using these settings doesn't break anything.
@@ -444,14 +444,6 @@ func patchConfigWithPrePostSteps() *osconfigpb.PatchConfig {
 	postStep := &osconfigpb.ExecStep{LinuxExecStepConfig: linuxPostStepConfig, WindowsExecStepConfig: windowsPostStepConfig}
 
 	return &osconfigpb.PatchConfig{PreStep: preStep, PostStep: postStep}
-}
-
-func patchConfigWithPreStepsForcingDowngrade() *osconfigpb.PatchConfig {
-	linuxPreStepConfig := &osconfigpb.ExecStepConfig{Executable: &osconfigpb.ExecStepConfig_LocalPath{LocalPath: aptDowngradeScriptLocation}, Interpreter: osconfigpb.ExecStepConfig_SHELL}
-
-	preStep := &osconfigpb.ExecStep{LinuxExecStepConfig: linuxPreStepConfig}
-
-	return &osconfigpb.PatchConfig{PreStep: preStep}
 }
 
 func validatePrePostStepSuccess(inst *compute.Instance, testCase *junitxml.TestCase) {
