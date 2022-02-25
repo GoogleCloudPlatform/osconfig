@@ -1,0 +1,26 @@
+# OS policy assignment that sets the /var/log/auth.log group to logaccess.
+osPolicies:
+ - id: log-access-policy
+   mode: ENFORCEMENT
+   resourceGroups:
+       resources:
+         - id: grant-log-access
+           exec:
+             validate:
+               # Checks if the group is logaccess. If yes, exits  with code 100. If no,
+               # exits with code 101 and proceeds to the `enforce` step.
+               script:
+                 if stat -c '%G' /var/log/auth.log | grep -q 'logaccess'; then exit 100; else exit 101; fi
+               interpreter: SHELL
+             enforce:
+               # Changes the group to logaccess and exits with code 100.
+               script:
+                 chgrp logaccess /var/log/auth.log && exit 100
+instanceFilter:
+ inclusionLabels:
+   - labels:
+       vm: tutorial
+rollout:
+ disruptionBudget:
+   fixed: 10
+ minWaitDuration: 30s
