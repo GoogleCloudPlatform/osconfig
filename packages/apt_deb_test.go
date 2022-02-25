@@ -228,3 +228,23 @@ func TestDebPkgInfo(t *testing.T) {
 		t.Errorf("did not get expected error")
 	}
 }
+
+func TestAllowDowngradesLogic(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	runner = mockCommandRunner
+	cmdWithoutAllowDowngradesFlag := exec.CommandContext(context.Background(), aptGet, []string{}...)
+	cmdWithAllowDowngradesFlag := exec.CommandContext(context.Background(), aptGet, []string{"--allow-downgrades"}...)
+
+	mockCommandRunner.EXPECT().Run(testCtx, cmdWithoutAllowDowngradesFlag).Return([]byte(""), []byte("E: Packages were downgraded and -y was used without --allow-downgrades."), errors.New("error")).Times(1)
+	stdoutBytes := []byte("stdout")
+	stderrBytes := []byte("stderr")
+	mockCommandRunner.EXPECT().Run(testCtx, cmdWithAllowDowngradesFlag).Return(stdoutBytes, stderrBytes, nil).Times(1)
+
+	stdout, stderr, err := runAptGet(testCtx, []string{}, []cmdModifier{})
+	if err != nil || !reflect.DeepEqual(stderr, stderrBytes) || !reflect.DeepEqual(stdout, stdoutBytes) {
+		t.Errorf("unexpected output: err - %v, stderr - %v, stdout - %v", err, string(stderr), string(stdout))
+	}
+}

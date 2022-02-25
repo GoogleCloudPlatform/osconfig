@@ -116,6 +116,29 @@ func dpkgRepair(ctx context.Context, out []byte) bool {
 	return true
 }
 
+type cmdModifier func(*exec.Cmd)
+
+func runAptGet(ctx context.Context, args []string, cmdModifiers []cmdModifier) ([]byte, []byte, error) {
+	cmd := exec.CommandContext(ctx, aptGet, args...)
+	for _, modifier := range cmdModifiers {
+		modifier(cmd)
+	}
+
+	stdout, stderr, err := runner.Run(ctx, cmd)
+	stdout, stderr, err = retryIfDowngradesRequired(ctx, cmd, stdout, stderr, err)
+	return stdout, stderr, err
+}
+
+func retryIfDowngradesRequired(ctx context.Context, cmd *exec.Cmd, stdout []byte, stderr []byte, err error) ([]byte, []byte, error) {
+	if err != nil {
+		if string(stderr) == "E: Packages were downgraded and -y was used without --allow-downgrades." {
+			cmd.Args = append(cmd.Args, allowDowngradesArg)
+			stdout, stderr, err = runner.Run(ctx, cmd)
+		}
+	}
+	return stdout, stderr, err
+}
+
 func parseDpkgDeb(data []byte) (*PkgInfo, error) {
 	/*
 	   new Debian package, version 2.0.
@@ -185,14 +208,15 @@ func DebPkgInfo(ctx context.Context, path string) (*PkgInfo, error) {
 // InstallAptPackages installs apt packages.
 func InstallAptPackages(ctx context.Context, pkgs []string) error {
 	args := append(aptGetInstallArgs, pkgs...)
-	install := exec.CommandContext(ctx, aptGet, args...)
-	install.Env = append(os.Environ(),
-		"DEBIAN_FRONTEND=noninteractive",
-	)
-	stdout, stderr, err := runner.Run(ctx, install)
+	cmdModifiers := []cmdModifier{
+		func(cmd *exec.Cmd) {
+			cmd.Env = append(os.Environ(), "DEBIAN_FRONTEND=noninteractive")
+		},
+	}
+	stdout, stderr, err := runAptGet(ctx, args, cmdModifiers)
 	if err != nil {
 		if dpkgRepair(ctx, stderr) {
-			stdout, stderr, err = runner.Run(ctx, install)
+			stdout, stderr, err = runAptGet(ctx, args, cmdModifiers)
 		}
 	}
 	if err != nil {
@@ -204,14 +228,15 @@ func InstallAptPackages(ctx context.Context, pkgs []string) error {
 // RemoveAptPackages removes apt packages.
 func RemoveAptPackages(ctx context.Context, pkgs []string) error {
 	args := append(aptGetRemoveArgs, pkgs...)
-	remove := exec.CommandContext(ctx, aptGet, args...)
-	remove.Env = append(os.Environ(),
-		"DEBIAN_FRONTEND=noninteractive",
-	)
-	stdout, stderr, err := runner.Run(ctx, remove)
+	cmdModifiers := []cmdModifier{
+		func(cmd *exec.Cmd) {
+			cmd.Env = append(os.Environ(), "DEBIAN_FRONTEND=noninteractive")
+		},
+	}
+	stdout, stderr, err := runAptGet(ctx, args, cmdModifiers)
 	if err != nil {
 		if dpkgRepair(ctx, stderr) {
-			stdout, stderr, err = runner.Run(ctx, remove)
+			stdout, stderr, err = runAptGet(ctx, args, cmdModifiers)
 		}
 	}
 	if err != nil {
@@ -292,7 +317,7 @@ func AptUpdates(ctx context.Context, opts ...AptGetUpgradeOption) ([]*PkgInfo, e
 		return nil, err
 	}
 
-	out, err := run(ctx, aptGet, args)
+	out, _, err := runAptGet(ctx, args, []cmdModifier{})
 	if err != nil {
 		return nil, err
 	}
@@ -302,7 +327,8 @@ func AptUpdates(ctx context.Context, opts ...AptGetUpgradeOption) ([]*PkgInfo, e
 
 // AptUpdate runs apt-get update.
 func AptUpdate(ctx context.Context) ([]byte, error) {
-	return run(ctx, aptGet, aptGetUpdateArgs)
+	stdout, _, err := runAptGet(ctx, aptGetUpdateArgs, []cmdModifier{})
+	return stdout, err
 }
 
 func parseInstalledDebpackages(data []byte) []*PkgInfo {
