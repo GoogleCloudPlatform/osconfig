@@ -81,10 +81,10 @@ chmod +x ./linux_local_pre_patch_script.sh
 `
 
 	setUpDowngradeScript = `
-echo 'echo \'deb [trusted=yes check-valid-until=no] http://snapshot.debian.org/archive/debian/20190801T025637Z/ buster main\' >> /etc/apt/sources.list' >> ./set_apt_downgrade.sh
-echo 'echo \'Package: sudo\' >> /etc/apt/preferences' >> ./set_apt_downgrade.sh
-echo 'echo \'Pin: version 1.8.27-1\' >> /etc/apt/preferences' >> ./set_apt_downgrade.sh
-echo 'echo \'Pin-priority: 9999\' >> /etc/apt/preferences' >> ./set_apt_downgrade.sh
+echo 'echo \'deb [trusted=yes check-valid-until=no] http://snapshot.debian.org/archive/debian/20190801T025637Z/ buster main\' >> /etc/apt/sources.list' >> ` + AptDowngradeScriptLocation + `
+echo 'echo \'Package: sudo\' >> /etc/apt/preferences' >> ` + AptDowngradeScriptLocation + `
+echo 'echo \'Pin: version 1.8.27-1\' >> /etc/apt/preferences' >> ` + AptDowngradeScriptLocation + `
+echo 'echo \'Pin-priority: 9999\' >> /etc/apt/preferences' >> ` + AptDowngradeScriptLocation + `
 `
 
 	enableOsconfig  = compute.BuildInstanceMetadataItem("enable-osconfig", "true")

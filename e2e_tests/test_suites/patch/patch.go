@@ -41,7 +41,8 @@ import (
 )
 
 const (
-	testSuiteName = "OSPatch"
+	testSuiteName              = "OSPatch"
+	AptDowngradeScriptLocation = "./set_apt_downgrade.sh"
 )
 
 var (
@@ -446,7 +447,7 @@ func patchConfigWithPrePostSteps() *osconfigpb.PatchConfig {
 }
 
 func patchConfigWithPreStepsForcingDowngrade() *osconfigpb.PatchConfig {
-	linuxPreStepConfig := &osconfigpb.ExecStepConfig{Executable: &osconfigpb.ExecStepConfig_LocalPath{LocalPath: "./set_apt_downgrade.sh"}, Interpreter: osconfigpb.ExecStepConfig_SHELL}
+	linuxPreStepConfig := &osconfigpb.ExecStepConfig{Executable: &osconfigpb.ExecStepConfig_LocalPath{LocalPath: AptDowngradeScriptLocation}, Interpreter: osconfigpb.ExecStepConfig_SHELL}
 
 	preStep := &osconfigpb.ExecStep{LinuxExecStepConfig: linuxPreStepConfig}
 
