@@ -80,6 +80,13 @@ echo 'curl -X PUT --data "1" http://metadata.google.internal/computeMetadata/v1/
 chmod +x ./linux_local_pre_patch_script.sh
 `
 
+	setUpDowngradeState = `
+echo 'deb [trusted=yes check-valid-until=no] http://snapshot.debian.org/archive/debian/20190801T025637Z/ buster main' >> /etc/apt/sources.list
+echo 'Package: sudo' >> /etc/apt/preferences
+echo 'Pin: version 1.8.27-1' >> /etc/apt/preferences
+echo 'Pin-priority: 9999' >> /etc/apt/preferences
+`
+
 	enableOsconfig  = compute.BuildInstanceMetadataItem("enable-osconfig", "true")
 	disableFeatures = compute.BuildInstanceMetadataItem("osconfig-disabled-features", "guestpolicies,osinventory")
 
@@ -97,6 +104,15 @@ chmod +x ./linux_local_pre_patch_script.sh
 		assertTimeout: 10 * time.Minute,
 		metadata: []*computeApi.MetadataItems{
 			compute.BuildInstanceMetadataItem("startup-script", linuxRecordBoot+utils.InstallOSConfigDeb()+linuxLocalPrePatchScript),
+			enableOsconfig,
+			disableFeatures,
+		},
+		machineType: "e2-medium",
+	}
+	aptDowngradeSetup = &patchTestSetup{
+		assertTimeout: 10 * time.Minute,
+		metadata: []*computeApi.MetadataItems{
+			compute.BuildInstanceMetadataItem("startup-script", linuxRecordBoot+utils.InstallOSConfigDeb()+linuxLocalPrePatchScript+setUpDowngradeState),
 			enableOsconfig,
 			disableFeatures,
 		},
@@ -184,6 +200,15 @@ func aptHeadImageTestSetup() []*patchTestSetup {
 	// This maps a specific patchTestSetup to test setup names and associated images.
 	mapping := map[*patchTestSetup]map[string]string{
 		aptSetup: utils.HeadAptImages,
+	}
+
+	return imageTestSetup(mapping)
+}
+
+func aptDowngradeImageTestSetup() []*patchTestSetup {
+	// This maps a specific patchTestSetup to test setup names and associated images.
+	mapping := map[*patchTestSetup]map[string]string{
+		aptDowngradeSetup: utils.DowngradeAptImages,
 	}
 
 	return imageTestSetup(mapping)
