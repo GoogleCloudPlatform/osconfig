@@ -134,7 +134,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		wg.Add(1)
 		s := setup
 		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[PatchJob apt-get doesn't fail on downgrades] [%s]", s.testName))
-		f := func() {
+		f := func(tc *junitxml.TestCase) {
 			runExecutePatchJobTest(ctx, tc, s, &osconfigpb.PatchConfig{Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST}})
 		}
 		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
