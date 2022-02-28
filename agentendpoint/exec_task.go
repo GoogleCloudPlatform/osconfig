@@ -45,7 +45,7 @@ var (
 	goos = runtime.GOOS
 
 	errLinuxPowerShell = errors.New("interpreter POWERSHELL cannot be used on non-Windows system")
-	errWinNoInt        = fmt.Errorf("interpreter must be specified for a Windows system")
+	errWinNoInt        = fmt.Errorf("an interpreter value of `SHELL` or `POWERSHELL` must be set for files ran on Windows systems")
 )
 
 func init() {
