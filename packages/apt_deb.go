@@ -131,7 +131,7 @@ func runAptGet(ctx context.Context, args []string, cmdModifiers []cmdModifier) (
 
 func retryIfDowngradesRequired(ctx context.Context, cmd *exec.Cmd, stdout []byte, stderr []byte, err error) ([]byte, []byte, error) {
 	if err != nil {
-		if string(stderr) == "E: Packages were downgraded and -y was used without --allow-downgrades." {
+		if strings.Contains(string(stderr), "E: Packages were downgraded and -y was used without --allow-downgrades.") {
 			cmd.Args = append(cmd.Args, allowDowngradesArg)
 			stdout, stderr, err = runner.Run(ctx, cmd)
 		}
