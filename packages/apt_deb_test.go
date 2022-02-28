@@ -238,7 +238,7 @@ func TestAllowDowngradesLogic(t *testing.T) {
 	cmdWithoutAllowDowngradesFlag := exec.CommandContext(context.Background(), aptGet, []string{}...)
 	cmdWithAllowDowngradesFlag := exec.CommandContext(context.Background(), aptGet, []string{"--allow-downgrades"}...)
 
-	mockCommandRunner.EXPECT().Run(testCtx, cmdWithoutAllowDowngradesFlag).Return([]byte(""), []byte("E: Packages were downgraded and -y was used without --allow-downgrades."), errors.New("error")).Times(1)
+	mockCommandRunner.EXPECT().Run(testCtx, cmdWithoutAllowDowngradesFlag).Return([]byte(""), []byte("E: Packages were downgraded and -y was used without --allow-downgrades.\n"), errors.New("error")).Times(1)
 	stdoutBytes := []byte("stdout")
 	stderrBytes := []byte("stderr")
 	mockCommandRunner.EXPECT().Run(testCtx, cmdWithAllowDowngradesFlag).Return(stdoutBytes, stderrBytes, nil).Times(1)
