@@ -124,18 +124,20 @@ func runAptGet(ctx context.Context, args []string, cmdModifiers []cmdModifier) (
 		modifier(cmd)
 	}
 
-	stdout, stderr, err := runner.Run(ctx, cmd)
-	stdout, stderr, err = retryIfDowngradesRequired(ctx, cmd, stdout, stderr, err)
-	return stdout, stderr, err
+	return runner.Run(ctx, cmd)
 }
 
-func retryIfDowngradesRequired(ctx context.Context, cmd *exec.Cmd, stdout []byte, stderr []byte, err error) ([]byte, []byte, error) {
+func runAptGetWithDowngradeRetrial(ctx context.Context, args []string, cmdModifiers []cmdModifier) ([]byte, []byte, error) {
+	stdout, stderr, err := runAptGet(ctx, args, cmdModifiers)
 	if err != nil {
 		if strings.Contains(string(stderr), "E: Packages were downgraded and -y was used without --allow-downgrades.") {
-			cmd.Args = append(cmd.Args, allowDowngradesArg)
-			stdout, stderr, err = runner.Run(ctx, cmd)
+			cmdModifiers = append(cmdModifiers, func(cmd *exec.Cmd) {
+				cmd.Args = append(cmd.Args, allowDowngradesArg)
+			})
+			stdout, stderr, err = runAptGet(ctx, args, cmdModifiers)
 		}
 	}
+
 	return stdout, stderr, err
 }
 
@@ -213,10 +215,10 @@ func InstallAptPackages(ctx context.Context, pkgs []string) error {
 			cmd.Env = append(os.Environ(), "DEBIAN_FRONTEND=noninteractive")
 		},
 	}
-	stdout, stderr, err := runAptGet(ctx, args, cmdModifiers)
+	stdout, stderr, err := runAptGetWithDowngradeRetrial(ctx, args, cmdModifiers)
 	if err != nil {
 		if dpkgRepair(ctx, stderr) {
-			stdout, stderr, err = runAptGet(ctx, args, cmdModifiers)
+			stdout, stderr, err = runAptGetWithDowngradeRetrial(ctx, args, cmdModifiers)
 		}
 	}
 	if err != nil {
@@ -233,10 +235,10 @@ func RemoveAptPackages(ctx context.Context, pkgs []string) error {
 			cmd.Env = append(os.Environ(), "DEBIAN_FRONTEND=noninteractive")
 		},
 	}
-	stdout, stderr, err := runAptGet(ctx, args, cmdModifiers)
+	stdout, stderr, err := runAptGetWithDowngradeRetrial(ctx, args, cmdModifiers)
 	if err != nil {
 		if dpkgRepair(ctx, stderr) {
-			stdout, stderr, err = runAptGet(ctx, args, cmdModifiers)
+			stdout, stderr, err = runAptGetWithDowngradeRetrial(ctx, args, cmdModifiers)
 		}
 	}
 	if err != nil {
@@ -317,7 +319,7 @@ func AptUpdates(ctx context.Context, opts ...AptGetUpgradeOption) ([]*PkgInfo, e
 		return nil, err
 	}
 
-	out, _, err := runAptGet(ctx, args, []cmdModifier{})
+	out, _, err := runAptGetWithDowngradeRetrial(ctx, args, []cmdModifier{})
 	if err != nil {
 		return nil, err
 	}
@@ -327,7 +329,7 @@ func AptUpdates(ctx context.Context, opts ...AptGetUpgradeOption) ([]*PkgInfo, e
 
 // AptUpdate runs apt-get update.
 func AptUpdate(ctx context.Context) ([]byte, error) {
-	stdout, _, err := runAptGet(ctx, aptGetUpdateArgs, []cmdModifier{})
+	stdout, _, err := runAptGetWithDowngradeRetrial(ctx, aptGetUpdateArgs, []cmdModifier{})
 	return stdout, err
 }
 

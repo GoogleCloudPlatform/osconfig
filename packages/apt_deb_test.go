@@ -243,7 +243,7 @@ func TestAllowDowngradesLogic(t *testing.T) {
 	stderrBytes := []byte("stderr")
 	mockCommandRunner.EXPECT().Run(testCtx, cmdWithAllowDowngradesFlag).Return(stdoutBytes, stderrBytes, nil).Times(1)
 
-	stdout, stderr, err := runAptGet(testCtx, []string{}, []cmdModifier{})
+	stdout, stderr, err := runAptGetWithDowngradeRetrial(testCtx, []string{}, []cmdModifier{})
 	if err != nil || !reflect.DeepEqual(stderr, stderrBytes) || !reflect.DeepEqual(stdout, stdoutBytes) {
 		t.Errorf("unexpected output: err - %v, stderr - %v, stdout - %v", err, string(stderr), string(stdout))
 	}
