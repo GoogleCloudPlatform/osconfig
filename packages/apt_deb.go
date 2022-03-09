@@ -215,10 +215,10 @@ func InstallAptPackages(ctx context.Context, pkgs []string) error {
 			cmd.Env = append(os.Environ(), "DEBIAN_FRONTEND=noninteractive")
 		},
 	}
-	stdout, stderr, err := runAptGet(ctx, args, cmdModifiers)
+	stdout, stderr, err := runAptGetWithDowngradeRetrial(ctx, args, cmdModifiers)
 	if err != nil {
 		if dpkgRepair(ctx, stderr) {
-			stdout, stderr, err = runAptGet(ctx, args, cmdModifiers)
+			stdout, stderr, err = runAptGetWithDowngradeRetrial(ctx, args, cmdModifiers)
 		}
 	}
 	if err != nil {
