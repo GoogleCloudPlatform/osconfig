@@ -17,8 +17,14 @@ package agentconfig
 
 import (
 	"context"
+	"crypto"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -81,6 +87,11 @@ const (
 
 	osConfigPollIntervalDefault = 10
 	osConfigMetadataPollTimeout = 60
+
+	certIdHeaderKey           = "CertId"
+	signatureDelimiter        = "||"
+	isOnPremVMEnv             = "ANTHOS_MANAGED_HOST"
+	onPremVmConfigFilePathEnv = "ANTHOS_VM_CONFIG_FILE_PATH"
 )
 
 var (
@@ -376,7 +387,76 @@ func formatMetadataError(err error) error {
 	return err
 }
 
-func getMetadata(suffix string) ([]byte, string, error) {
+func GetSignaturePayload(r *http.Request) string {
+	var stringList []string
+	stringList = append(stringList, "Method_"+r.Method)
+	stringList = append(stringList, "URI_"+r.RequestURI)
+	stringList = append(stringList, "CertId_"+r.Header.Get(certIdHeaderKey))
+	if body, err := r.GetBody(); err != nil {
+		fmt.Printf("Error while getting body from request: %v", err)
+	} else {
+		var buffer []byte
+		if bodyLen, err := body.Read(buffer); err != nil && bodyLen > 0 {
+			stringList = append(stringList, "Body_"+string(buffer))
+		}
+	}
+
+	return strings.Join(stringList, signatureDelimiter)
+}
+
+func Sign(payload string, rsaKey *rsa.PrivateKey) (string, error) {
+	hasher := sha256.New()
+	hasher.Write([]byte(payload))
+
+	if sigBytes, err := rsa.SignPSS(rand.Reader, rsaKey, crypto.SHA256, hasher.Sum(nil), &rsa.PSSOptions{
+		SaltLength: rsa.PSSSaltLengthAuto,
+	}); err == nil {
+		return base64.StdEncoding.EncodeToString(sigBytes), nil
+	} else {
+		return "", err
+	}
+}
+
+func isOnPremVm() bool {
+	isOnPremVMStr := strings.ToLower(os.Getenv(isOnPremVMEnv))
+	if isOnPremVMStr != "true" {
+		return false
+	}
+	return true
+}
+
+func addRequestHeaders(req *http.Request) (*http.Request, error) {
+	req.Header.Add("Metadata-Flavor", "Google")
+	if !isOnPremVm() {
+		return req, nil
+	}
+
+	onPremConfig, err := OnPremVmConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add(certIdHeaderKey, "")
+	payload := GetSignaturePayload(req)
+	sig, err := Sign(payload, onPremConfig.PrivateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Authorization Bearer ", sig)
+	return req, nil
+}
+
+func getComputeMetadataURL(suffix string) (string, error) {
+	if isOnPremVm() {
+		onPremConfig, err := OnPremVmConfig()
+		if err != nil {
+			return "", err
+		}
+
+		return "https://" + onPremConfig.MetadataEndpoint + "/computeMetadata/v1/" + suffix, nil
+	}
+
 	host := os.Getenv(metadataHostEnv)
 	if host == "" {
 		// Using 169.254.169.254 instead of "metadata" here because Go
@@ -386,12 +466,24 @@ func getMetadata(suffix string) ([]byte, string, error) {
 		// being stable anyway.
 		host = metadataIP
 	}
-	computeMetadataURL := "http://" + host + "/computeMetadata/v1/" + suffix
+	return "http://" + host + "/computeMetadata/v1/" + suffix, nil
+}
+
+func getMetadata(suffix string) ([]byte, string, error) {
+	computeMetadataURL, err := getComputeMetadataURL(suffix)
+	if err != nil {
+		return nil, "", err
+	}
+
 	req, err := http.NewRequest("GET", computeMetadataURL, nil)
 	if err != nil {
 		return nil, "", err
 	}
-	req.Header.Add("Metadata-Flavor", "Google")
+
+	req, err = addRequestHeaders(req)
+	if err != nil {
+		return nil, "", err
+	}
 	resp, err := defaultClient.Do(req)
 	if err != nil {
 		return nil, "", err
@@ -625,6 +717,70 @@ func Name() string {
 // ID is the instance id.
 func ID() string {
 	return getAgentConfig().instanceID
+}
+
+type onPremVmConfig struct {
+	InstanceId       string          `json:"vmId"`
+	CertId           string          `json:"certId"`
+	PrivateKey       *rsa.PrivateKey `json:"-"`
+	PrivateKeyStr    string          `json:"privateKey"`
+	MetadataEndpoint string          `json:"metadataEndpoint"`
+	Exp              *time.Time      `json:"-"`
+	Lock             sync.Mutex      `json:"-"`
+}
+
+func (c *onPremVmConfig) get() error {
+	if !isOnPremVm() {
+		return nil
+	}
+
+	onPremVmConfigFilePath := strings.ToLower(os.Getenv(onPremVmConfigFilePathEnv))
+	data, err := os.ReadFile(onPremVmConfigFilePath)
+	if err != nil {
+		fmt.Printf("could not read onPrem Vm Config File from path: %v, %v", onPremVmConfigFilePath, err)
+		return err
+	}
+	var config onPremVmConfig
+	if err := json.Unmarshal(data, &config); err != nil {
+		fmt.Printf("could not parse onPrem Vm Config File from path: %v, %v", onPremVmConfigFilePath, err)
+		return err
+	}
+
+	block, _ := pem.Decode([]byte(config.PrivateKeyStr))
+	parseResult, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		fmt.Printf("could not parse privateKey from onPrem Vm Config File "+
+			"from path: %v\n, privateKey: \n%v\n, %v", onPremVmConfigFilePath,
+			config.PrivateKeyStr, err)
+		return err
+	}
+
+	c.PrivateKey = parseResult
+	c.InstanceId = config.InstanceId
+	c.CertId = config.CertId
+	c.PrivateKeyStr = config.PrivateKeyStr
+	c.MetadataEndpoint = config.MetadataEndpoint
+
+	t := time.Now().Add(20 * time.Minute)
+	c.Exp = &t
+
+	return nil
+}
+
+var onPremConfig onPremVmConfig
+
+func OnPremVmConfig() (*onPremVmConfig, error) {
+	onPremConfig.Lock.Lock()
+	defer onPremConfig.Lock.Unlock()
+
+	// Rerequest token if expiry is within 1 minutes.
+	if onPremConfig.Exp == nil || time.Now().After(onPremConfig.Exp.Add(-1*time.Minute)) {
+		if err := onPremConfig.get(); err != nil {
+			return nil, err
+		}
+	}
+
+	return &onPremConfig, nil
 }
 
 type idToken struct {
