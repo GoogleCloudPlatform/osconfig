@@ -127,6 +127,12 @@ func run(ctx context.Context, cmd string, args []string) ([]byte, error) {
 	return stdout, nil
 }
 
+func runWithDeadline(ctx context.Context, timeout time.Duration, cmd string, args []string) ([]byte, error) {
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	return run(ctxWithTimeout, cmd, args)
+}
+
 type ptyRunner struct{}
 
 func (p *ptyRunner) Run(ctx context.Context, cmd *exec.Cmd) ([]byte, []byte, error) {

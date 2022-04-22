@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"runtime"
+	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
@@ -27,6 +28,7 @@ var (
 
 	pipListArgs     = []string{"list", "--format=json"}
 	pipOutdatedArgs = append(pipListArgs, "--outdated")
+	pipListTimeout  = 15 * time.Second
 )
 
 func init() {
@@ -68,7 +70,7 @@ func PipUpdates(ctx context.Context) ([]*PkgInfo, error) {
 
 // InstalledPipPackages queries for all installed pip packages.
 func InstalledPipPackages(ctx context.Context) ([]*PkgInfo, error) {
-	out, err := run(ctx, pip, pipListArgs)
+	out, err := runWithDeadline(ctx, pipListTimeout, pip, pipListArgs)
 	if err != nil {
 		return nil, err
 	}
