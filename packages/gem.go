@@ -19,6 +19,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/util"
@@ -29,6 +30,7 @@ var (
 
 	gemListArgs     = []string{"list", "--local"}
 	gemOutdatedArgs = []string{"outdated", "--local"}
+	gemListTimeout  = 15 * time.Second
 )
 
 func init() {
@@ -70,7 +72,7 @@ func GemUpdates(ctx context.Context) ([]*PkgInfo, error) {
 
 // InstalledGemPackages queries for all installed gem packages.
 func InstalledGemPackages(ctx context.Context) ([]*PkgInfo, error) {
-	stdout, _, err := runner.Run(ctx, exec.CommandContext(ctx, gem, gemListArgs...))
+	stdout, err := runWithDeadline(ctx, gemListTimeout, gem, gemListArgs)
 	if err != nil {
 		return nil, err
 	}
