@@ -1,0 +1,31 @@
+# An OS policy to ensure sshd is installed and running on windows
+# only applies to VMs running windows with the label 'ssh' with value 'installed'
+osPolicies:
+  - id: win-ensure-openssh-policy
+    mode: ENFORCEMENT
+    resourceGroups:
+      - resources:
+          id: ensure-ssh
+          exec:
+            validate:
+              interpreter: POWERSHELL
+              script: |
+                $service = Get-Service -Name 'sshd'
+                if ($service.Status -eq 'Running') {exit 100} else {exit 101}
+            enforce:
+              interpreter: POWERSHELL
+              script: |
+                Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
+                Set-Service -Name sshd -StartupType 'Automatic'
+                Start-Service sshd
+                exit 100
+instanceFilter:
+  osShortNames:
+    - windows
+  inclusionLabels:
+    - labels:
+        ssh: installed
+rollout:
+  disruptionBudget:
+    fixed: 10
+  minWaitDuration: 300s
