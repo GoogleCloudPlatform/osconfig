@@ -8,6 +8,8 @@ export DH_GOPKG := github.com/GoogleCloudPlatform/osconfig
 export DH_GOLANG_EXCLUDES := e2e_tests/
 export CGO_ENABLED := 0
 export GO111MODULE := on
+export GOPATH := /usr/share/gocode
+export DH_GOLANG_BUILDPKG := github.com/GoogleCloudPlatform/osconfig github.com/GoogleCloudPlatform/osconfig/agentconfig github.com/GoogleCloudPlatform/osconfig/agentendpoint github.com/GoogleCloudPlatform/osconfig/attributes github.com/GoogleCloudPlatform/osconfig/clog github.com/GoogleCloudPlatform/osconfig/external github.com/GoogleCloudPlatform/osconfig/inventory github.com/GoogleCloudPlatform/osconfig/osinfo github.com/GoogleCloudPlatform/osconfig/ospatch github.com/GoogleCloudPlatform/osconfig/packages github.com/GoogleCloudPlatform/osconfig/policies github.com/GoogleCloudPlatform/osconfig/policies/recipes github.com/GoogleCloudPlatform/osconfig/retryutil github.com/GoogleCloudPlatform/osconfig/tasker github.com/GoogleCloudPlatform/osconfig/util github.com/GoogleCloudPlatform/osconfig/util/mocks
 export GOPROXY := https://proxy.golang.org
 export GOCACHE := /tmp/.cache
 
