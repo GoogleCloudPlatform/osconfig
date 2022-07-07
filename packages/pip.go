@@ -26,9 +26,10 @@ import (
 var (
 	pip string
 
-	pipListArgs     = []string{"list", "--format=json"}
-	pipOutdatedArgs = append(pipListArgs, "--outdated")
-	pipListTimeout  = 15 * time.Second
+	pipListArgs        = []string{"list", "--format=json"}
+	pipOutdatedArgs    = append(pipListArgs, "--outdated")
+	pipListTimeout     = 15 * time.Second
+	pipOutdatedTimeout = 15 * time.Second
 )
 
 func init() {
@@ -50,7 +51,7 @@ type pipInstalledPkg struct {
 
 // PipUpdates queries for all available pip updates.
 func PipUpdates(ctx context.Context) ([]*PkgInfo, error) {
-	out, err := run(ctx, pip, pipOutdatedArgs)
+	out, err := runWithDeadline(ctx, pipOutdatedTimeout, pip, pipOutdatedArgs)
 	if err != nil {
 		return nil, err
 	}
