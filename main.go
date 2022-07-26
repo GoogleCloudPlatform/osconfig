@@ -86,6 +86,7 @@ func registerAgent(ctx context.Context) {
 			logger.Errorf(err.Error())
 		} else if err := client.RegisterAgent(ctx); err != nil {
 			logger.Errorf(err.Error())
+			client.Close()
 		} else {
 			// RegisterAgent completed successfully.
 			return
