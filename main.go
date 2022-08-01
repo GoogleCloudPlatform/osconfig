@@ -89,6 +89,7 @@ func registerAgent(ctx context.Context) {
 			client.Close()
 		} else {
 			// RegisterAgent completed successfully.
+			client.Close()
 			return
 		}
 		time.Sleep(5 * time.Minute)
