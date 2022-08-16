@@ -26,8 +26,8 @@ type Exclude struct {
 	strictString *string
 }
 
-func (e Exclude) String() string {
-	return fmt.Sprintf("{isRegexp: %t, regex: %+v, strictString: %s}", e.isRegexp, e.regex, *e.strictString)
+func (exclude Exclude) String() string {
+	return fmt.Sprintf("{isRegexp: %t, regex: %+v, strictString: %s}", exclude.isRegexp, exclude.regex, *exclude.strictString)
 }
 
 // CreateRegexExclude returns new Exclude struct that represents exclusion with regex
