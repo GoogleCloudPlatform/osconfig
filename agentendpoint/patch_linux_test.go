@@ -24,23 +24,20 @@ import (
 )
 
 func TestExcludeConversion(t *testing.T) {
-	strictString := "PackageName"
 	regex, _ := regexp.Compile("PackageName")
 	emptyRegex, _ := regexp.Compile("")
-	slashString := "/"
-	emptyString := ""
 
 	tests := []struct {
 		name  string
 		input []string
 		want  []*ospatch.Exclude
 	}{
-		{name: "StrictStringConversion", input: []string{"PackageName"}, want: []*ospatch.Exclude{ospatch.CreateStringExclude(&strictString)}},
+		{name: "StrictStringConversion", input: []string{"PackageName"}, want: CreateStringExcludes("PackageName")},
 		{name: "MultipleStringConversion", input: []string{"PackageName1", "PackageName2"}, want: CreateStringExcludes("PackageName1", "PackageName2")},
 		{name: "RegexConversion", input: []string{"/PackageName/"}, want: []*ospatch.Exclude{ospatch.CreateRegexExclude(regex)}},
 		{name: "CornerCaseRegex", input: []string{"//"}, want: []*ospatch.Exclude{ospatch.CreateRegexExclude(emptyRegex)}},
-		{name: "CornerCaseStrictString", input: []string{"/"}, want: []*ospatch.Exclude{ospatch.CreateStringExclude(&slashString)}},
-		{name: "CornerCaseEmptyString", input: []string{""}, want: []*ospatch.Exclude{ospatch.CreateStringExclude(&emptyString)}},
+		{name: "CornerCaseStrictString", input: []string{"/"}, want: CreateStringExcludes("/")},
+		{name: "CornerCaseEmptyString", input: []string{""}, want: CreateStringExcludes("")},
 	}
 
 	for _, tt := range tests {
