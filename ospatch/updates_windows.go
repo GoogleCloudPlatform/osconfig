@@ -189,7 +189,7 @@ func GetWUAUpdates(ctx context.Context, session *packages.IUpdateSession, classF
 	if err != nil {
 		return nil, fmt.Errorf("GetWUAUpdateCollection error: %v", err)
 	}
-	if len(classFilter) == 0 && len(kbExcludes) == 0 {
+	if len(classFilter) == 0 && len(kbExcludes) == 0 && len(exclusivePatches) ==0 {
 		return updts, nil
 	}
 	defer updts.Release()
