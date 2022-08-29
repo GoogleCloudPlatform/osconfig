@@ -15,6 +15,7 @@
 package ospatch
 
 import (
+	"fmt"
 	"regexp"
 )
 
@@ -23,6 +24,10 @@ type Exclude struct {
 	isRegexp     bool
 	regex        *regexp.Regexp
 	strictString *string
+}
+
+func (exclude Exclude) String() string {
+	return fmt.Sprintf("{isRegexp: %t, regex: %+v, strictString: %s}", exclude.isRegexp, exclude.regex, *exclude.strictString)
 }
 
 // CreateRegexExclude returns new Exclude struct that represents exclusion with regex
@@ -35,9 +40,10 @@ func CreateRegexExclude(regex *regexp.Regexp) *Exclude {
 
 // CreateStringExclude returns new Exclude struct that represents exclusion with string
 func CreateStringExclude(strictString *string) *Exclude {
+	strictStringCopied := *strictString //copy the string for safety reason
 	return &Exclude{
 		isRegexp:     false,
-		strictString: strictString,
+		strictString: &strictStringCopied,
 	}
 }
 
