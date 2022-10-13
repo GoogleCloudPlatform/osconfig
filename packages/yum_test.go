@@ -219,3 +219,69 @@ func TestParseYumUpdates(t *testing.T) {
 		})
 	}
 }
+
+func TestGetYumTX(t *testing.T) {
+	dataWithTX := []byte(`
+	=================================================================================================================================================================================
+	Package                                      Arch                           Version                                              Repository                                Size
+	=================================================================================================================================================================================
+	Installing:
+	  kernel                                    x86_64                         2.6.32-754.24.3.el6                                  updates                                   32 M
+	   replacing kernel.x86_64 1.0.0-4
+	Upgrading:
+	  foo                                       noarch                         2.0.0-1                                              BaseOS                                   361 k
+	  bar                                       x86_64                         2.0.0-1                                              repo                                      10 M
+	Obsoleting:
+	  baz                                       noarch                         2.0.0-1                                              repo                                      10 M
+
+	Transaction Summary
+	=================================================================================================================================================================================
+	Upgrade  11 Packages
+
+	Total download size: 106 M
+	Exiting on user command
+	Your transaction was saved, rerun it with:
+	 yum load-transaction /tmp/yum_save_tx.abcdef.yumtx
+	`)
+	dataNoTX := []byte(`
+	=================================================================================================================================================================================
+	Package                                      Arch                           Version                                              Repository                                Size
+	=================================================================================================================================================================================
+	Installing:
+	kernel                                    x86_64                         2.6.32-754.24.3.el6                                  updates                                   32 M
+	replacing kernel.x86_64 1.0.0-4
+	Upgrading:
+	foo                                       noarch                         2.0.0-1                                              BaseOS                                   361 k
+	bar                                       x86_64                         2.0.0-1                                              repo                                      10 M
+	Obsoleting:
+	baz                                       noarch                         2.0.0-1                                              repo                                      10 M
+
+	Transaction Summary
+	=================================================================================================================================================================================
+	Upgrade  11 Packages
+	`)
+	dataUnexpected := []byte(`
+	Exiting on user command
+	Your transaction was saved, rerun it with:
+	 yum load-transaction /tmp/otherfilename
+	`)
+
+	tests := []struct {
+		name string
+		data []byte
+		want string
+	}{
+		{"Transaction created", dataWithTX, "/tmp/yum_save_tx.abcdef.yumtx"},
+		{"Transaction not created", dataNoTX, ""},
+		{"Unexpected Filename", dataUnexpected, ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := getYumTXFile(tt.data); got != tt.want {
+				t.Errorf("%s: getYumTXFile() = %v, want %v", tt.name, got, tt.want)
+			}
+		})
+	}
+
+}

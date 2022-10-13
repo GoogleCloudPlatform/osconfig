@@ -18,9 +18,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
@@ -131,6 +134,35 @@ func parseYumUpdates(data []byte) []*PkgInfo {
 	return pkgs
 }
 
+func getYumTXFile(data []byte) string {
+	/* The last lines of a non-complete yum update where the transaction
+	   is saved look like:
+
+	     Exiting on user command
+	     Your transaction was saved, rerun it with:
+	      yum load-transaction /tmp/yum_save_tx.2022-10-12.20-26.j3auah.yumtx
+	*/
+	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
+
+	var filename string
+	for _, ln := range lines {
+		flds := bytes.Fields(ln)
+		if len(flds) != 3 {
+			continue
+		}
+		if string(flds[1]) == "load-transaction" {
+			filename = string(flds[2])
+		} else {
+			continue
+		}
+
+		if strings.HasPrefix(filename, "/tmp/yum_save_tx.") {
+			return filename
+		}
+	}
+	return ""
+}
+
 // YumUpdates queries for all available yum updates.
 func YumUpdates(ctx context.Context, opts ...YumUpdateOption) ([]*PkgInfo, error) {
 	// We just use check-update to ensure all repo keys are synced as we run
@@ -178,6 +210,17 @@ func listAndParseYumPackages(ctx context.Context, opts ...YumUpdateOption) ([]*P
 	}
 	if stdout == nil {
 		return nil, nil
+	}
+
+	// Some versions of yum will leave a transaction file in /tmp when update
+	// is run with --assumeno. This will attempt to delete that file.
+	yumTXFile := getYumTXFile(stdout)
+	if yumTXFile != "" {
+		clog.Debugf(ctx, "Removing yum tx file: %s", yumTXFile)
+		err := os.Remove(yumTXFile)
+		if err != nil {
+			clog.Debugf(ctx, "Error deleting yum tx file %s: %v", yumTXFile, err)
+		}
 	}
 
 	pkgs := parseYumUpdates(stdout)
