@@ -144,20 +144,10 @@ func getYumTXFile(data []byte) string {
 	*/
 	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
 
-	var filename string
 	for _, ln := range lines {
 		flds := bytes.Fields(ln)
-		if len(flds) != 3 {
-			continue
-		}
-		if string(flds[1]) == "load-transaction" {
-			filename = string(flds[2])
-		} else {
-			continue
-		}
-
-		if strings.HasPrefix(filename, "/tmp/yum_save_tx.") {
-			return filename
+		if len(flds) == 3 && string(flds[1]) == "load-transaction" && strings.HasPrefix(string(flds[2]), "/tmp/yum_save_tx.") {
+			return string(flds[2])
 		}
 	}
 	return ""
@@ -217,8 +207,7 @@ func listAndParseYumPackages(ctx context.Context, opts ...YumUpdateOption) ([]*P
 	yumTXFile := getYumTXFile(stdout)
 	if yumTXFile != "" {
 		clog.Debugf(ctx, "Removing yum tx file: %s", yumTXFile)
-		err := os.Remove(yumTXFile)
-		if err != nil {
+		if err := os.Remove(yumTXFile); err != nil {
 			clog.Debugf(ctx, "Error deleting yum tx file %s: %v", yumTXFile, err)
 		}
 	}
