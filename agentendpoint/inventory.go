@@ -49,7 +49,7 @@ func write(ctx context.Context, state *inventory.InstanceInventory, url string) 
 		case reflect.Ptr:
 			switch reflect.Indirect(f).Kind() {
 			case reflect.Struct:
-				clog.Debugf(ctx, "postAttributeCompressed %s: %+v", u, f)
+				clog.Debugf(ctx, "postAttributeCompressed %s", u)
 				if err := attributes.PostAttributeCompressed(u, f.Interface()); err != nil {
 					clog.Errorf(ctx, "postAttributeCompressed error: %v", err)
 				}
