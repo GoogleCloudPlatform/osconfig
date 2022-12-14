@@ -60,6 +60,7 @@ func fetchArtifact(ctx context.Context, artifact *agentendpointpb.SoftwareRecipe
 		if err != nil {
 			return "", fmt.Errorf("error creating gcs client: %v", err)
 		}
+		defer cl.Close()
 		reader, err = external.FetchGCSObject(ctx, cl, gcs.Bucket, gcs.Object, gcs.Generation)
 		if err != nil {
 			return "", fmt.Errorf("error fetching artifact %q from GCS: %v", artifact.Id, err)

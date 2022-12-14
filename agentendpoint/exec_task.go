@@ -65,6 +65,7 @@ func getGCSObject(ctx context.Context, bkt, obj string, gen int64) (string, erro
 	if err != nil {
 		return "", fmt.Errorf("error creating gcs client: %v", err)
 	}
+	defer cl.Close()
 	reader, err := external.FetchGCSObject(ctx, cl, bkt, obj, gen)
 	if err != nil {
 		return "", fmt.Errorf("error fetching GCS object: %v", err)
