@@ -4,8 +4,8 @@ osPolicies:
     id: copy-file-from-bucket
     resourceGroups:
       - resources:
-          - file:
-              id: copy-file
+          - id: copy-file
+            file:
               permissions: '755'
               state: CONTENTS_MATCH
               file:
@@ -22,4 +22,4 @@ rollout:
   disruptionBudget:
     fixed: 10
   minWaitDuration: 300s
-  
+
