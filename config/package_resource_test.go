@@ -144,7 +144,7 @@ func TestPackageResourceValidate(t *testing.T) {
 				PackageResource: &agentendpointpb.OSPolicy_Resource_PackageResource_Deb{
 					Source: &agentendpointpb.OSPolicy_Resource_File{
 						Type: &agentendpointpb.OSPolicy_Resource_File_LocalPath{LocalPath: tmpFile}}}}},
-			exec.CommandContext(context.Background(), "/usr/bin/dpkg-deb", "-I", tmpFile),
+			exec.Command("/usr/bin/dpkg-deb", "-I", tmpFile),
 			[]byte("Package: foo\nVersion: 1:1dummy-g1\nArchitecture: amd64"),
 		},
 		{
@@ -239,7 +239,7 @@ func TestPackageResourceValidate(t *testing.T) {
 				PackageResource: &agentendpointpb.OSPolicy_Resource_PackageResource_RPM{
 					Source: &agentendpointpb.OSPolicy_Resource_File{
 						Type: &agentendpointpb.OSPolicy_Resource_File_LocalPath{LocalPath: tmpFile}}}}},
-			exec.CommandContext(context.Background(), "/usr/bin/rpmquery", "--queryformat", "%{NAME} %{ARCH} %|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\n", "-p", tmpFile),
+			exec.Command("/usr/bin/rpmquery", "--queryformat", "%{NAME} %{ARCH} %|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\n", "-p", tmpFile),
 			[]byte("foo x86_64 1.2.3-4"),
 		},
 	}
@@ -253,7 +253,7 @@ func TestPackageResourceValidate(t *testing.T) {
 			defer pr.Cleanup(ctx)
 
 			if tt.expectedCmd != nil {
-				mockCommandRunner.EXPECT().Run(ctx, tt.expectedCmd).Return(tt.expectedCmdReturn, nil, nil)
+				mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(tt.expectedCmd)).Return(tt.expectedCmdReturn, nil, nil)
 			}
 
 			err := pr.Validate(ctx)
@@ -288,7 +288,7 @@ func TestPopulateInstalledCache(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	packages.SetCommandRunner(mockCommandRunner)
-	mockCommandRunner.EXPECT().Run(ctx, exec.CommandContext(context.Background(), "googet.exe", "installed")).Return([]byte("Installed Packages:\nfoo.x86_64 1.2.3@4\nbar.noarch 1.2.3@4"), nil, nil).Times(1)
+	mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(exec.Command("googet.exe", "installed"))).Return([]byte("Installed Packages:\nfoo.x86_64 1.2.3@4\nbar.noarch 1.2.3@4"), nil, nil).Times(1)
 
 	if err := populateInstalledCache(ctx, ManagedPackage{GooGet: &GooGetPackage{}}); err != nil {
 		t.Fatalf("Unexpected error from populateInstalledCache: %v", err)
@@ -411,8 +411,8 @@ func TestPackageResourceEnforceState(t *testing.T) {
 			aptInstalledPR,
 			aptInstalled,
 			func() []*exec.Cmd {
-				cmd1 := exec.CommandContext(context.Background(), "/usr/bin/apt-get", "update")
-				cmd2 := exec.CommandContext(context.Background(), "/usr/bin/apt-get", "install", "-y", "foo")
+				cmd1 := exec.Command("/usr/bin/apt-get", "update")
+				cmd2 := exec.Command("/usr/bin/apt-get", "install", "-y", "foo")
 				cmd2.Env = append(os.Environ(),
 					"DEBIAN_FRONTEND=noninteractive",
 				)
@@ -424,7 +424,7 @@ func TestPackageResourceEnforceState(t *testing.T) {
 			aptRemovedPR,
 			aptInstalled,
 			func() []*exec.Cmd {
-				cmd1 := exec.CommandContext(context.Background(), "/usr/bin/apt-get", "remove", "-y", "foo")
+				cmd1 := exec.Command("/usr/bin/apt-get", "remove", "-y", "foo")
 				cmd1.Env = append(os.Environ(),
 					"DEBIAN_FRONTEND=noninteractive",
 				)
@@ -435,37 +435,37 @@ func TestPackageResourceEnforceState(t *testing.T) {
 			"GooGetInstalled",
 			googetInstalledPR,
 			gooInstalled,
-			[]*exec.Cmd{exec.CommandContext(context.Background(), "googet.exe", "-noconfirm", "install", "foo")},
+			[]*exec.Cmd{exec.Command("googet.exe", "-noconfirm", "install", "foo")},
 		},
 		{
 			"GooGetRemoved",
 			googetRemovedPR,
 			gooInstalled,
-			[]*exec.Cmd{exec.CommandContext(context.Background(), "googet.exe", "-noconfirm", "remove", "foo")},
+			[]*exec.Cmd{exec.Command("googet.exe", "-noconfirm", "remove", "foo")},
 		},
 		{
 			"YumInstalled",
 			yumInstalledPR,
 			yumInstalled,
-			[]*exec.Cmd{exec.CommandContext(context.Background(), "/usr/bin/yum", "install", "--assumeyes", "foo")},
+			[]*exec.Cmd{exec.Command("/usr/bin/yum", "install", "--assumeyes", "foo")},
 		},
 		{
 			"YumRemoved",
 			yumRemovedPR,
 			yumInstalled,
-			[]*exec.Cmd{exec.CommandContext(context.Background(), "/usr/bin/yum", "remove", "--assumeyes", "foo")},
+			[]*exec.Cmd{exec.Command("/usr/bin/yum", "remove", "--assumeyes", "foo")},
 		},
 		{
 			"ZypperInstalled",
 			zypperInstalledPR,
 			zypperInstalled,
-			[]*exec.Cmd{exec.CommandContext(context.Background(), "/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "foo")},
+			[]*exec.Cmd{exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "foo")},
 		},
 		{
 			"ZypperRemoved",
 			zypperRemovedPR,
 			zypperInstalled,
-			[]*exec.Cmd{exec.CommandContext(context.Background(), "/usr/bin/zypper", "--non-interactive", "remove", "foo")},
+			[]*exec.Cmd{exec.Command("/usr/bin/zypper", "--non-interactive", "remove", "foo")},
 		},
 	}
 
@@ -489,7 +489,7 @@ func TestPackageResourceEnforceState(t *testing.T) {
 			tt.cachePointer.cache = map[string]struct{}{"foo": {}}
 
 			for _, expectedCmd := range tt.expectedCmds {
-				mockCommandRunner.EXPECT().Run(ctx, expectedCmd)
+				mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(expectedCmd))
 			}
 
 			if err := pr.EnforceState(ctx); err != nil {
