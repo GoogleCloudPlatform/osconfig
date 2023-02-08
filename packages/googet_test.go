@@ -15,7 +15,6 @@
 package packages
 
 import (
-	"context"
 	"errors"
 	"os/exec"
 	"reflect"
@@ -31,7 +30,7 @@ func TestInstallGooGetPackages(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	expectedCmd := exec.CommandContext(context.Background(), googet, append(googetInstallArgs, pkgs...)...)
+	expectedCmd := utilmocks.EqCmd(exec.Command(googet, append(googetInstallArgs, pkgs...)...))
 
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
 	if err := InstallGooGetPackages(testCtx, pkgs); err != nil {
@@ -50,7 +49,7 @@ func TestRemoveGooGet(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	expectedCmd := exec.CommandContext(context.Background(), googet, append(googetRemoveArgs, pkgs...)...)
+	expectedCmd := utilmocks.EqCmd(exec.Command(googet, append(googetRemoveArgs, pkgs...)...))
 
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
 	if err := RemoveGooGetPackages(testCtx, pkgs); err != nil {
@@ -89,7 +88,7 @@ func TestInstalledGooGetPackages(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	expectedCmd := exec.CommandContext(context.Background(), googet, googetInstalledQueryArgs...)
+	expectedCmd := utilmocks.EqCmd(exec.Command(googet, googetInstalledQueryArgs...))
 
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("foo.x86_64 1.2.3@4"), []byte("stderr"), nil).Times(1)
 	ret, err := InstalledGooGetPackages(testCtx)
@@ -134,7 +133,7 @@ func TestGooGetUpdates(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	expectedCmd := exec.CommandContext(context.Background(), googet, googetUpdateQueryArgs...)
+	expectedCmd := utilmocks.EqCmd(exec.Command(googet, googetUpdateQueryArgs...))
 
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("foo.noarch, 3.5.4@1 --> 3.6.7@1 from repo"), []byte("stderr"), nil).Times(1)
 	ret, err := GooGetUpdates(testCtx)

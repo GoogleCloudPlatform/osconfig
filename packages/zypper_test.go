@@ -15,7 +15,6 @@
 package packages
 
 import (
-	"context"
 	"errors"
 	"os/exec"
 	"reflect"
@@ -32,7 +31,7 @@ func TestZypperInstalls(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	expectedCmd := exec.CommandContext(context.Background(), zypper, append(zypperInstallArgs, pkgs...)...)
+	expectedCmd := utilmocks.EqCmd(exec.Command(zypper, append(zypperInstallArgs, pkgs...)...))
 
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
 	if err := InstallZypperPackages(testCtx, pkgs); err != nil {
@@ -51,7 +50,7 @@ func TestRemoveZypper(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	expectedCmd := exec.CommandContext(context.Background(), zypper, append(zypperRemoveArgs, pkgs...)...)
+	expectedCmd := utilmocks.EqCmd(exec.Command(zypper, append(zypperRemoveArgs, pkgs...)...))
 
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
 	if err := RemoveZypperPackages(testCtx, pkgs); err != nil {
@@ -95,7 +94,7 @@ func TestZypperUpdates(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	expectedCmd := exec.CommandContext(context.Background(), zypper, zypperListUpdatesArgs...)
+	expectedCmd := utilmocks.EqCmd(exec.Command(zypper, zypperListUpdatesArgs...))
 
 	data := []byte("v | SLES12-SP3-Updates  | at                     | 3.1.14-7.3      | 3.1.14-8.3.1      | x86_64")
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return(data, []byte("stderr"), nil).Times(1)
@@ -158,7 +157,7 @@ func TestZypperPatches(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	expectedCmd := exec.CommandContext(context.Background(), zypper, append(zypperListPatchesArgs, "--all")...)
+	expectedCmd := utilmocks.EqCmd(exec.Command(zypper, append(zypperListPatchesArgs, "--all")...))
 
 	data := []byte("SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1258 | recommended | moderate  | ---         | needed     | Recommended update for postfix")
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return(data, []byte("stderr"), nil).Times(1)
@@ -184,7 +183,7 @@ func TestZypperInstalledPatches(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	expectedCmd := exec.CommandContext(context.Background(), zypper, append(zypperListPatchesArgs, "--all")...)
+	expectedCmd := utilmocks.EqCmd(exec.Command(zypper, append(zypperListPatchesArgs, "--all")...))
 
 	data := []byte("SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1258 | recommended | moderate  | ---         | applied     | Recommended update for postfix")
 	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return(data, []byte("stderr"), nil).Times(1)
