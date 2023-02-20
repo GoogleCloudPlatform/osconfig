@@ -214,13 +214,13 @@ var DowngradeAptImages = map[string]string{
 // HeadAptImages is a map of names to image paths for public image families that use APT.
 var HeadAptImages = map[string]string{
 	// Debian images.
-	"debian-cloud/debian-9":  "projects/debian-cloud/global/images/family/debian-9",
 	"debian-cloud/debian-10": "projects/debian-cloud/global/images/family/debian-10",
 	"debian-cloud/debian-11": "projects/debian-cloud/global/images/family/debian-11",
 
 	// Ubuntu images.
 	"ubuntu-os-cloud/ubuntu-1804-lts": "projects/ubuntu-os-cloud/global/images/family/ubuntu-1804-lts",
 	"ubuntu-os-cloud/ubuntu-2004-lts": "projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts",
+	"ubuntu-os-cloud/ubuntu-2204-lts": "projects/ubuntu-os-cloud/global/images/family/ubuntu-2204-lts",
 
 	// Proposed Ubuntu images.
 	"ubuntu-os-cloud-image-proposed/ubuntu-1804-lts": "projects/ubuntu-os-cloud-image-proposed/global/images/family/ubuntu-1804-lts",
@@ -230,7 +230,6 @@ var HeadAptImages = map[string]string{
 // OldAptImages is a map of names to image paths for old images that use APT.
 var OldAptImages = map[string]string{
 	// Debian images.
-	"old/debian-9":  "projects/debian-cloud/global/images/debian-9-stretch-v20210512",
 	"old/debian-10": "projects/debian-cloud/global/images/debian-10-buster-v20210512",
 
 	// Ubuntu images.
