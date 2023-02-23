@@ -227,14 +227,14 @@ var HeadAptImages = map[string]string{
 	"ubuntu-os-cloud-image-proposed/ubuntu-2004-lts": "projects/ubuntu-os-cloud-image-proposed/global/images/family/ubuntu-2004-lts",
 }
 
-// OldAptImages is a map of names to image paths for old images that use APT.
+// OldAptImages is a map of names to image paths for old (deprecated) images that use APT.
 var OldAptImages = map[string]string{
 	// Debian images.
 	"old/debian-10": "projects/debian-cloud/global/images/debian-10-buster-v20210512",
 
 	// Ubuntu images.
-	"old/ubuntu-1804-lts": "projects/ubuntu-os-cloud/global/images/ubuntu-1804-bionic-v20210514",
-	"old/ubuntu-2004-lts": "projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20210510",
+	"old/ubuntu-1804-lts": "projects/ubuntu-os-cloud/global/images/ubuntu-1804-bionic-v20230131",
+	"old/ubuntu-2004-lts": "projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20230113",
 }
 
 // HeadSUSEImages is a map of names to image paths for public SUSE images.
@@ -247,10 +247,10 @@ var HeadSUSEImages = map[string]string{
 
 // OldSUSEImages is a map of names to image paths for old SUSE images.
 var OldSUSEImages = map[string]string{
-	"old/sles-12": "projects/compute-image-tools-test/global/images/sles-12-sp5-v20191209",
-	"old/sles-15": "projects/compute-image-tools-test/global/images/sles-15-sp1-v20190625",
+	"old/sles-12": "projects/compute-image-tools-test/global/images/sles-12-sp5-v20221104-x86-64",
+	"old/sles-15": "projects/compute-image-tools-test/global/images/sles-15-sp4-v20221104-x86-64",
 
-	"old/opensuse-leap": "projects/opensuse-cloud/global/images/opensuse-leap-15-1-v20190618",
+	"old/opensuse-leap": "projects/opensuse-cloud/global/images/opensuse-leap-15-4-v20220831-x86-64",
 }
 
 // HeadEL6Images is a map of names to image paths for public EL6 images, we use the last
@@ -309,7 +309,6 @@ var HeadWindowsImages = map[string]string{
 	"windows-cloud/windows-2016-core":    "projects/windows-cloud/global/images/family/windows-2016-core",
 	"windows-cloud/windows-2019":         "projects/windows-cloud/global/images/family/windows-2019",
 	"windows-cloud/windows-2019-core":    "projects/windows-cloud/global/images/family/windows-2019-core",
-	"windows-cloud/windows-20h2-core":    "projects/windows-cloud/global/images/family/windows-20h2-core",
 	"windows-cloud/windows-2022":         "projects/windows-cloud/global/images/family/windows-2022",
 	"windows-cloud/windows-2022-core":    "projects/windows-cloud/global/images/family/windows-2022-core",
 }
