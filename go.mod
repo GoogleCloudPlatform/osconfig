@@ -18,9 +18,9 @@ require (
 	github.com/ulikunitz/xz v0.5.10
 	go.chromium.org/luci v0.0.0-20201204084249-3e81ee3e83fe // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
-	golang.org/x/net v0.0.0-20210917221730-978cfadd31cf // indirect
+	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
-	golang.org/x/sys v0.1.0
+	golang.org/x/sys v0.5.0
 	google.golang.org/api v0.57.0
 	google.golang.org/genproto v0.0.0-20210923133937-385e58f4e555
 	google.golang.org/grpc v1.40.0
