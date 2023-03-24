@@ -15,6 +15,7 @@
 package packages
 
 import (
+	"context"
 	"errors"
 	"os/exec"
 	"reflect"
@@ -123,6 +124,15 @@ SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-122
 SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1258 | recommended | moderate  | ---         | needed     | Recommended update for postfix
 some junk data`
 
+	//Recently new format of response was observed, the difference is additional "Since" field in the table.
+	withSinceField := `Repository                                    | Name                                                  | Category    | Severity  | Interactive    | Status     | Since      | Summary
+----------------------------------------------+-------------------------------------------------------+-------------+-----------+----------------+------------+------------------------------------------------------------
+SLE-Module-Basesystem15-SP1-Updates           | SUSE-SLE-Module-Basesystem-15-SP1-2019-1206           | security    | low       | ---            | applied    | -          | Security update for bzip2
+SLE-Module-Basesystem15-SP1-Updates           | SUSE-SLE-Module-Basesystem-15-SP1-2019-1221           | security    | moderate  | ---            | needed     | -          | Security update for libxslt
+SLE-Module-Basesystem15-SP1-Updates           | SUSE-SLE-Module-Basesystem-15-SP1-2019-1229           | recommended | moderate  | ---            | not needed | -          | Recommended update for sensors
+SLE-Module-Basesystem15-SP1-Updates           | SUSE-SLE-Module-Basesystem-15-SP1-2019-1258           | recommended | moderate  | ---            | needed     | -          | Recommended update for postfix
+some junk data`
+
 	tests := []struct {
 		name      string
 		data      []byte
@@ -135,12 +145,19 @@ some junk data`
 			[]*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1206", "security", "low", "Security update for bzip2"}},
 			[]*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1221", "security", "moderate", "Security update for libxslt"}, {"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix"}},
 		},
+		{
+			"WithSinceField",
+			[]byte(withSinceField),
+			[]*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1206", "security", "low", "Security update for bzip2"}},
+			[]*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1221", "security", "moderate", "Security update for libxslt"}, {"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix"}},
+		},
 		{"NoPackages", []byte("nothing here"), nil, nil},
 		{"nil", nil, nil, nil},
 	}
+	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotIns, gotAvail := parseZypperPatches(tt.data)
+			gotIns, gotAvail := parseZypperPatches(ctx, tt.data)
 			if !reflect.DeepEqual(gotIns, tt.wantIns) {
 				t.Errorf("parseZypperPatches() = %v, want %v", gotIns, tt.wantIns)
 			}

@@ -141,7 +141,7 @@ const (
 	INSTALLSTATE_DEFAULT    = msiInstallState(5)
 )
 
-//  https://docs.microsoft.com/en-us/windows/win32/api/msi/nf-msi-msiqueryproductstatew
+// https://docs.microsoft.com/en-us/windows/win32/api/msi/nf-msi-msiqueryproductstatew
 func msiMsiQueryProductStateW(szProduct string) (msiInstallState, error) {
 	/*
 		INSTALLSTATE MsiQueryProductStateW(

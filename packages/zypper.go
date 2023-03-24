@@ -24,6 +24,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
@@ -159,8 +160,9 @@ func ZypperUpdates(ctx context.Context) ([]*PkgInfo, error) {
 	return parseZypperUpdates(out), nil
 }
 
-func parseZypperPatches(data []byte) ([]*ZypperPatch, []*ZypperPatch) {
+func parseZypperPatches(ctx context.Context, data []byte) ([]*ZypperPatch, []*ZypperPatch) {
 	/*
+
 		Repository                          | Name                                        | Category    | Severity  | Interactive | Status     | Summary
 		------------------------------------+---------------------------------------------+-------------+-----------+-------------+------------+------------------------------------------------------------
 		SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1206 | security    | low       | ---         | applied    | Security update for bzip2
@@ -171,29 +173,45 @@ func parseZypperPatches(data []byte) ([]*ZypperPatch, []*ZypperPatch) {
 
 	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
 
-	var ins []*ZypperPatch
-	var avail []*ZypperPatch
+	var installed []*ZypperPatch
+	var available []*ZypperPatch
 	for _, ln := range lines {
-		patch := bytes.Split(ln, []byte("|"))
-		if len(patch) != 7 {
+		patch, status, err := parseZypperPatch(ln)
+		if err != nil {
+			clog.Debugf(ctx, "skip zypper patch, unable to parse patch, err - %s", err)
 			continue
 		}
 
-		name := string(bytes.TrimSpace(patch[1]))
-		cat := string(bytes.TrimSpace(patch[2]))
-		sev := string(bytes.TrimSpace(patch[3]))
-		status := string(bytes.TrimSpace(patch[5]))
-		sum := string(bytes.TrimSpace(patch[6]))
 		switch status {
 		case "needed":
-			avail = append(avail, &ZypperPatch{Name: name, Category: cat, Severity: sev, Summary: sum})
+			available = append(available, patch)
 		case "applied":
-			ins = append(ins, &ZypperPatch{Name: name, Category: cat, Severity: sev, Summary: sum})
+			installed = append(installed, patch)
 		default:
 			continue
 		}
 	}
-	return ins, avail
+
+	return installed, available
+}
+
+func parseZypperPatch(tableLine []byte) (*ZypperPatch, string, error) {
+	patch := bytes.Split(tableLine, []byte("|"))
+	if len(patch) < 7 || len(patch) > 8 {
+		return nil, "", fmt.Errorf("unexpected format of the zypper patch, expected 7 or 8 segments, got - %d, record - %s", len(patch), string(tableLine))
+	}
+
+	name := string(bytes.TrimSpace(patch[1]))
+	category := string(bytes.TrimSpace(patch[2]))
+	severity := string(bytes.TrimSpace(patch[3]))
+	status := string(bytes.TrimSpace(patch[5]))
+	summary := string(bytes.TrimSpace(patch[6]))
+
+	if len(patch) == 8 {
+		summary = string(bytes.TrimSpace(patch[7]))
+	}
+
+	return &ZypperPatch{Name: name, Category: category, Severity: severity, Summary: summary}, status, nil
 }
 
 func zypperPatches(ctx context.Context, opts ...ZypperListOption) ([]byte, error) {
@@ -237,7 +255,7 @@ func ZypperPatches(ctx context.Context, opts ...ZypperListOption) ([]*ZypperPatc
 	if err != nil {
 		return nil, err
 	}
-	_, patches := parseZypperPatches(out)
+	_, patches := parseZypperPatches(ctx, out)
 	return patches, nil
 }
 
@@ -247,7 +265,7 @@ func ZypperInstalledPatches(ctx context.Context, opts ...ZypperListOption) ([]*Z
 	if err != nil {
 		return nil, err
 	}
-	patches, _ := parseZypperPatches(out)
+	patches, _ := parseZypperPatches(ctx, out)
 	return patches, nil
 }
 
