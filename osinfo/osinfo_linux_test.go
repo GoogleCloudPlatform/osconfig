@@ -94,8 +94,8 @@ func TestGetDistributionInfoOracleReleaseCentos(t *testing.T) {
 	}
 }
 
-//// redhat-release
-//// normal details of redhat system
+// redhat-release
+// normal details of redhat system
 func TestGetDistributionInfoRedHatRelease(t *testing.T) {
 	fcontent := `Red Hat Enterprise Linux release 8.0 (Ootpa)`
 	di := parseEnterpriseRelease(fcontent)
