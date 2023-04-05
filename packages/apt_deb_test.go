@@ -155,8 +155,18 @@ func TestAptUpdates(t *testing.T) {
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
-	updateCmd := utilmocks.EqCmd(exec.Command(aptGet, aptGetUpdateArgs...))
-	expectedCmd := utilmocks.EqCmd(exec.Command(aptGet, append(aptGetUpgradableArgs, aptGetUpgradeCmd)...))
+
+	aptUpdateCmd := exec.Command(aptGet, aptGetUpdateArgs...)
+	aptUpdateCmd.Env = append(os.Environ(),
+		"DEBIAN_FRONTEND=noninteractive",
+	)
+	updateCmd := utilmocks.EqCmd(aptUpdateCmd)
+
+	aptUpgradeCmd := exec.Command(aptGet, append(aptGetUpgradableArgs, aptGetUpgradeCmd)...)
+	aptUpgradeCmd.Env = append(os.Environ(),
+		"DEBIAN_FRONTEND=noninteractive",
+	)
+	expectedCmd := utilmocks.EqCmd(aptUpgradeCmd)
 	data := []byte("Inst google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [amd64])")
 
 	first := mockCommandRunner.EXPECT().Run(testCtx, updateCmd).Return(data, []byte("stderr"), nil).Times(1)

@@ -412,6 +412,9 @@ func TestPackageResourceEnforceState(t *testing.T) {
 			aptInstalled,
 			func() []*exec.Cmd {
 				cmd1 := exec.Command("/usr/bin/apt-get", "update")
+				cmd1.Env = append(os.Environ(),
+					"DEBIAN_FRONTEND=noninteractive",
+				)
 				cmd2 := exec.Command("/usr/bin/apt-get", "install", "-y", "foo")
 				cmd2.Env = append(os.Environ(),
 					"DEBIAN_FRONTEND=noninteractive",
