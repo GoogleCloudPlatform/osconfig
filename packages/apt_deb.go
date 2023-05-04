@@ -319,7 +319,11 @@ func AptUpdates(ctx context.Context, opts ...AptGetUpgradeOption) ([]*PkgInfo, e
 		return nil, err
 	}
 
-	out, _, err := runAptGetWithDowngradeRetrial(ctx, args, []cmdModifier{})
+	out, _, err := runAptGetWithDowngradeRetrial(ctx, args, []cmdModifier{
+		func(cmd *exec.Cmd) {
+			cmd.Env = append(os.Environ(), "DEBIAN_FRONTEND=noninteractive")
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -329,7 +333,11 @@ func AptUpdates(ctx context.Context, opts ...AptGetUpgradeOption) ([]*PkgInfo, e
 
 // AptUpdate runs apt-get update.
 func AptUpdate(ctx context.Context) ([]byte, error) {
-	stdout, _, err := runAptGet(ctx, aptGetUpdateArgs, []cmdModifier{})
+	stdout, _, err := runAptGet(ctx, aptGetUpdateArgs, []cmdModifier{
+		func(cmd *exec.Cmd) {
+			cmd.Env = append(os.Environ(), "DEBIAN_FRONTEND=noninteractive")
+		},
+	})
 	return stdout, err
 }
 
