@@ -5,6 +5,8 @@ resourceGroups:
       exec:
         validate:
           interpreter: POWERSHELL
+          # An exit code 100 to indicates that exec resource is already in desired state. 
+          # An exit code of 101 to indicate that exec resource is not in desired state. 
           script: |
             $service = Get-Service -Name 'WinRM'
             if ($service.Status -eq 'Running') {exit 100} else {exit 101}
