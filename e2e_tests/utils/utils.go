@@ -247,8 +247,8 @@ var HeadSUSEImages = map[string]string{
 
 // OldSUSEImages is a map of names to image paths for old SUSE images.
 var OldSUSEImages = map[string]string{
-	"old/sles-12": "projects/compute-image-tools-test/global/images/sles-12-sp5-v20221104-x86-64",
-	"old/sles-15": "projects/compute-image-tools-test/global/images/sles-15-sp4-v20221104-x86-64",
+	"old/sles-12": "projects/suse-cloud/global/images/sles-12-sp5-v20221104-x86-64",
+	"old/sles-15": "projects/suse-cloud/global/images/sles-15-sp4-v20221104-x86-64",
 
 	"old/opensuse-leap": "projects/opensuse-cloud/global/images/opensuse-leap-15-4-v20220831-x86-64",
 }
