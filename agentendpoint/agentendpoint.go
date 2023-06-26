@@ -413,7 +413,7 @@ func (c *Client) WaitForTaskNotification(ctx context.Context) {
 					errs++
 					clog.Warningf(ctx, "Error waiting for task (attempt %d of 10): %v", errs, err)
 					resourceExhausted = 0
-					if errs > 10 {
+					if errs >= 10 {
 						c.Close()
 						return
 					}
