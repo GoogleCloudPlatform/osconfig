@@ -1,6 +1,6 @@
 module github.com/GoogleCloudPlatform/osconfig
 
-go 1.16
+go 1.17
 
 require (
 	cloud.google.com/go v0.110.0 // indirect
