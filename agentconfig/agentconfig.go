@@ -60,7 +60,7 @@ const (
 	aptRepoDir         = "/etc/apt/sources.list.d"
 	aptRepoFilePath    = aptRepoDir + "/google_osconfig_managed.list"
 
-	prodEndpoint = "{zone}-osconfig.googleapis.com:443"
+	prodEndpoint = "{zone}-osconfig.googleapis.com.:443"
 
 	osInventoryEnabledDefault      = false
 	guestPoliciesEnabledDefault    = false
