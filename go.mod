@@ -1,6 +1,6 @@
 module github.com/GoogleCloudPlatform/osconfig
 
-go 1.17
+go 1.19
 
 require (
 	cloud.google.com/go/compute/metadata v0.2.3
