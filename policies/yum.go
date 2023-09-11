@@ -45,6 +45,8 @@ func yumRepositories(ctx context.Context, repos []*agentendpointpb.YumRepository
 	*/
 	var buf bytes.Buffer
 	buf.WriteString("# Repo file managed by Google OSConfig agent\n")
+	buf.WriteString("[main]\n")
+	buf.WriteString("gpgcheck=1\n")
 	for _, repo := range repos {
 		buf.WriteString(fmt.Sprintf("\n[%s]\n", repo.Id))
 		if repo.DisplayName == "" {
