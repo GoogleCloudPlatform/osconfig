@@ -130,6 +130,7 @@ type config struct {
 	taskNotificationEnabled bool
 	guestPoliciesEnabled    bool
 	osInventoryEnabled      bool
+	guestAttributesEnabled  bool
 }
 
 func (c *config) parseFeatures(features string, enabled bool) {
@@ -216,6 +217,7 @@ type attributesJSON struct {
 	OSConfigEndpoint      string       `json:"osconfig-endpoint"`
 	OSConfigEnabled       string       `json:"enable-osconfig"`
 	DisabledFeatures      string       `json:"osconfig-disabled-features"`
+	EnableGuestAttributes string       `json:"enable-guest-attributes"`
 }
 
 func createConfigFromMetadata(md metadataJSON) *config {
@@ -332,6 +334,13 @@ func createConfigFromMetadata(md metadataJSON) *config {
 		c.debugEnabled = true
 	case "info":
 		c.debugEnabled = false
+	}
+
+	if md.Project.Attributes.EnableGuestAttributes != "" {
+		c.guestAttributesEnabled = parseBool(md.Project.Attributes.EnableGuestAttributes)
+	}
+	if md.Instance.Attributes.EnableGuestAttributes != "" {
+		c.guestAttributesEnabled = parseBool(md.Instance.Attributes.EnableGuestAttributes)
 	}
 
 	// Flags take precedence over metadata.
@@ -625,6 +634,11 @@ func Name() string {
 // ID is the instance id.
 func ID() string {
 	return getAgentConfig().instanceID
+}
+
+// GuestAttributesEnabled is a boolean flag that signal that guest attributes feature is enabled.
+func GuestAttributesEnabled() bool {
+	return getAgentConfig().guestAttributesEnabled
 }
 
 type idToken struct {
