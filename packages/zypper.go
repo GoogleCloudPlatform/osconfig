@@ -198,7 +198,7 @@ func parseZypperPatches(ctx context.Context, data []byte) ([]*ZypperPatch, []*Zy
 func parseZypperPatch(tableLine []byte) (*ZypperPatch, string, error) {
 	patch := bytes.Split(tableLine, []byte("|"))
 	if len(patch) < 7 || len(patch) > 8 {
-		return nil, "", fmt.Errorf("not parsable zypper patch line; expected 7 or 8 segments, got - %d; probably the line just didn't contain a patch item; line: %s", len(patch), string(tableLine))
+		return nil, "", fmt.Errorf("not parsable zypper patch line; expected 7 or 8 segments, got - %d; this usually doesn't indicate any error; line: %s", len(patch), string(tableLine))
 	}
 
 	name := string(bytes.TrimSpace(patch[1]))
