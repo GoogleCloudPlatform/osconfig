@@ -156,14 +156,6 @@ var (
 		return nil
 	}
 
-	el6Setup = &inventoryTestSetup{
-		packageType: []string{"rpm"},
-		startup:     compute.BuildInstanceMetadataItem("startup-script", getStartupScriptEL("6")),
-		machineType: "e2-medium",
-		timeout:     10 * time.Minute,
-		itemCheck:   yumBashInstalledCheck,
-	}
-
 	el7Setup = &inventoryTestSetup{
 		packageType: []string{"rpm"},
 		startup:     compute.BuildInstanceMetadataItem("startup-script", getStartupScriptEL("7")),
@@ -175,6 +167,14 @@ var (
 	el8Setup = &inventoryTestSetup{
 		packageType: []string{"rpm"},
 		startup:     compute.BuildInstanceMetadataItem("startup-script", getStartupScriptEL("8")),
+		machineType: "e2-medium",
+		timeout:     10 * time.Minute,
+		itemCheck:   yumBashInstalledCheck,
+	}
+
+	el9Setup = &inventoryTestSetup{
+		packageType: []string{"rpm"},
+		startup:     compute.BuildInstanceMetadataItem("startup-script", getStartupScriptEL("9")),
 		machineType: "e2-medium",
 		timeout:     10 * time.Minute,
 		itemCheck:   yumBashInstalledCheck,
@@ -285,9 +285,9 @@ func headImageTestSetup() (setup []*inventoryTestSetup) {
 	// This maps a specific inventoryTestSetup to test setup names and associated images.
 	headTestSetupMapping := map[*inventoryTestSetup]map[string]string{
 		windowsSetup: utils.HeadWindowsImages,
-		el6Setup:     utils.HeadEL6Images,
 		el7Setup:     utils.HeadEL7Images,
 		el8Setup:     utils.HeadEL8Images,
+		el6Setup:     utils.HeadEL9Images,
 		aptSetup:     utils.HeadAptImages,
 		suseSetup:    utils.HeadSUSEImages,
 	}
