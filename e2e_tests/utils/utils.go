@@ -191,7 +191,6 @@ func InstallOSConfigEL7() string {
 	return fmt.Sprintf(yumRepoSetup+yumInstallAgent, "el7", config.AgentRepo(), 0)
 }
 
-
 // InstallOSConfigEL installs the osconfig agent on el based systems.
 func InstallOSConfigEL(image string) string {
 	switch {
@@ -238,10 +237,10 @@ var HeadSUSEImages = map[string]string{
 
 	"suse-sap-cloud/sles-12-sp5-sap":          "projects/suse-sap-cloud/global/images/sles-12-sp5-sap-v20231019-x86-64",
 	"suse-sap-cloud/sles-15-sp5-sap":          "projects/suse-sap-cloud/global/images/sles-15-sp5-sap-v20230921-x86-64",
-	
+
 	"suse-sap-cloud/sles-15-sp4-hardened-sap": "projects/suse-sap-cloud/global/images/sles-sap-15-sp4-hardened-v20230828-x86-64",
 	"suse-sap-cloud/sles-15-sp5-hardened-sap": "projects/suse-sap-cloud/global/images/sles-sap-15-sp5-hardened-v20230921-x86-64",
-	
+
 	"opensuse-cloud/opensuse-leap-15-4": "projects/opensuse-cloud/global/images/opensuse-leap-15-4-v20230907-x86-64",
 	"opensuse-cloud/opensuse-leap-15-5": "projects/opensuse-cloud/global/images/opensuse-leap-15-5-v20230908-x86-64",
 }
@@ -292,12 +291,12 @@ var OldEL8Images = map[string]string{
 // HeadEL9Images is a map of names to image paths for public EL9 image families. (RHEL, CentOS, Rocky)
 var HeadEL9Images = map[string]string{
 	"centos-cloud/centos-stream-9":    "projects/centos-cloud/global/images/centos-stream-9-v20231010",
-	
+
 	"rhel-cloud/rhel-9":               "projects/rhel-cloud/global/images/rhel-9-v20231010",
 
 	"rhel-sap-cloud/rhel-9-0-sap":  "projects/rhel-sap-cloud/global/images/rhel-9-0-sap-v20231010",
 	"rhel-sap-cloud/rhel-9-2-sap":  "projects/rhel-sap-cloud/global/images/rhel-9-2-sap-v20231010",
-	
+
 	"rocky-linux-cloud/rocky-linux-9": "projects/rocky-linux-cloud/global/images/rocky-linux-9-v20231010",
 	"rocky-linux-cloud/rocky-linux-9-optimized-gcp": "projects/rocky-linux-cloud/global/images/rocky-linux-9-optimized-gcp-v20231010",
 }
@@ -337,7 +336,7 @@ var HeadWindowsImages = map[string]string{
 
 // OldWindowsImages is a map of names to image paths for old Windows images.
 var OldWindowsImages = map[string]string{
-	"old/windows-2019":      "projects/cloud-cluster-osconfig/global/images/windows-2019-v202205091405",
+	"old/windows-2019":              "projects/cloud-cluster-osconfig/global/images/windows-2019-v202205091405",
 	"old/windows-2019-golden-image": "projects/cloud-cluster-osconfig/global/images/windows-2019-v202205091405-golden-image",
 }
 
