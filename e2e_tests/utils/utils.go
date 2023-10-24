@@ -236,11 +236,11 @@ var HeadSUSEImages = map[string]string{
 	"suse-cloud/sles-12-sp5": "projects/suse-cloud/global/images/sles-12-sp5-v20230807-x86-64",
 	"suse-cloud/sles-15-sp5": "projects/suse-cloud/global/images/sles-15-sp5-v20230921-x86-64",
 
-	"suse-sap-cloud/sles-12-sp5-sap":          "projects/suse-sap-cloud/global/images/sles-12-sp5-sap-v20231019-x86-64"
+	"suse-sap-cloud/sles-12-sp5-sap":          "projects/suse-sap-cloud/global/images/sles-12-sp5-sap-v20231019-x86-64",
 	"suse-sap-cloud/sles-15-sp5-sap":          "projects/suse-sap-cloud/global/images/sles-15-sp5-sap-v20230921-x86-64",
 	
-	"suse-sap-cloud/sles-15-sp4-hardened-sap": "projects/suse-sap-cloud/global/images/sles-sap-15-sp4-hardened-v20230828-x86-64"
-	"suse-sap-cloud/sles-15-sp5-hardened-sap": "projects/suse-sap-cloud/global/images/sles-sap-15-sp5-hardened-v20230921-x86-64"
+	"suse-sap-cloud/sles-15-sp4-hardened-sap": "projects/suse-sap-cloud/global/images/sles-sap-15-sp4-hardened-v20230828-x86-64",
+	"suse-sap-cloud/sles-15-sp5-hardened-sap": "projects/suse-sap-cloud/global/images/sles-sap-15-sp5-hardened-v20230921-x86-64",
 	
 	"opensuse-cloud/opensuse-leap-15-4": "projects/opensuse-cloud/global/images/opensuse-leap-15-4-v20230907-x86-64",
 	"opensuse-cloud/opensuse-leap-15-5": "projects/opensuse-cloud/global/images/opensuse-leap-15-5-v20230908-x86-64",
@@ -274,11 +274,11 @@ var HeadEL8Images = map[string]string{
 
 	"rhel-cloud/rhel-8":            "projects/rhel-cloud/global/images/rhel-8-v20231010",
 
-	"rhel-sap-cloud/rhel-8-1-sap":  "projects/rhel-sap-cloud/global/images/rhel-8-1-sap-v20231010"
-	"rhel-sap-cloud/rhel-8-2-sap":  "projects/rhel-sap-cloud/global/images/rhel-8-2-sap-v20231010"
-	"rhel-sap-cloud/rhel-8-4-sap":  "projects/rhel-sap-cloud/global/images/rhel-8-4-sap-v20231010"
-	"rhel-sap-cloud/rhel-8-6-sap":  "projects/rhel-sap-cloud/global/images/rhel-8-6-sap-v20231010"
-	"rhel-sap-cloud/rhel-8-8-sap":  "projects/rhel-sap-cloud/global/images/rhel-8-8-sap-v20231010"
+	"rhel-sap-cloud/rhel-8-1-sap":  "projects/rhel-sap-cloud/global/images/rhel-8-1-sap-v20231010",
+	"rhel-sap-cloud/rhel-8-2-sap":  "projects/rhel-sap-cloud/global/images/rhel-8-2-sap-v20231010",
+	"rhel-sap-cloud/rhel-8-4-sap":  "projects/rhel-sap-cloud/global/images/rhel-8-4-sap-v20231010",
+	"rhel-sap-cloud/rhel-8-6-sap":  "projects/rhel-sap-cloud/global/images/rhel-8-6-sap-v20231010",
+	"rhel-sap-cloud/rhel-8-8-sap":  "projects/rhel-sap-cloud/global/images/rhel-8-8-sap-v20231010",
 
 	"rocky-linux-cloud/rocky-linux-8":               "projects/rocky-linux-cloud/global/images/rocky-linux-8-v20231010",
 	"rocky-linux-cloud/rocky-linux-8-optimized-gcp": "projects/rocky-linux-cloud/global/images/rocky-linux-8-optimized-gcp-v20231010",
