@@ -34,7 +34,6 @@ var (
 sed -i 's/repo_gpgcheck=1/repo_gpgcheck=0/g' /etc/yum.repos.d/google-cloud.repo
 sleep 10
 systemctl stop google-osconfig-agent
-stop -q -n google-osconfig-agent  # required for EL6
 while ! yum install -y google-osconfig-agent; do
 if [[ n -gt 3 ]]; then
   exit 1
@@ -42,8 +41,7 @@ fi
 n=$[$n+1]
 sleep 5
 done
-systemctl start google-osconfig-agent
-start -q -n google-osconfig-agent  # required for EL6` + CurlPost
+systemctl start google-osconfig-agent` + CurlPost
 
 	zypperInstallAgent = `
 sleep 10
@@ -94,7 +92,7 @@ baseurl=https://packages.cloud.google.com/yum/repos/google-osconfig-agent-%s-%s
 enabled=1
 gpgcheck=%d
 gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
-	   https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+           https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 EOM`
 
 	zypperRepoSetup = `
@@ -105,7 +103,7 @@ baseurl=https://packages.cloud.google.com/yum/repos/google-osconfig-agent-%s-%s
 enabled=1
 gpgcheck=%d
 gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
-	   https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+           https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 EOM`
 )
 
@@ -151,7 +149,21 @@ func InstallOSConfigSUSE() string {
 	return fmt.Sprintf(zypperRepoSetup+zypperInstallAgent, "el8", config.AgentRepo(), 0)
 }
 
-// InstallOSConfigEL8 installs the osconfig agent on el8 based systems.
+// InstallOSConfigEL9 installs the osconfig agent on el9 based systems. (RHEL)
+func InstallOSConfigEL9() string {
+	if config.AgentRepo() == "" {
+		return CurlPost
+	}
+	if config.AgentRepo() == "stable" {
+		return yumInstallAgent
+	}
+	if config.AgentRepo() == "staging" {
+		return fmt.Sprintf(yumRepoSetup+yumInstallAgent, "el9", config.AgentRepo(), 1)
+	}
+	return fmt.Sprintf(yumRepoSetup+yumInstallAgent, "el9", config.AgentRepo(), 0)
+}
+
+// InstallOSConfigEL8 installs the osconfig agent on el8 based systems. (RHEL)
 func InstallOSConfigEL8() string {
 	if config.AgentRepo() == "" {
 		return CurlPost
@@ -179,114 +191,122 @@ func InstallOSConfigEL7() string {
 	return fmt.Sprintf(yumRepoSetup+yumInstallAgent, "el7", config.AgentRepo(), 0)
 }
 
-// InstallOSConfigEL6 installs the osconfig agent on el6 based systems.
-func InstallOSConfigEL6() string {
-	if config.AgentRepo() == "" {
-		return CurlPost
-	}
-	if config.AgentRepo() == "stable" {
-		return yumInstallAgent
-	}
-	if config.AgentRepo() == "staging" {
-		return fmt.Sprintf(yumRepoSetup+yumInstallAgent, "el6", config.AgentRepo(), 1)
-	}
-	return fmt.Sprintf(yumRepoSetup+yumInstallAgent, "el6", config.AgentRepo(), 0)
-}
-
 // InstallOSConfigEL installs the osconfig agent on el based systems.
 func InstallOSConfigEL(image string) string {
 	switch {
+	case strings.Contains(path.Base(image), "9"):
+		return InstallOSConfigEL9()
 	case strings.Contains(path.Base(image), "8"):
 		return InstallOSConfigEL8()
 	case strings.Contains(path.Base(image), "7"):
 		return InstallOSConfigEL7()
-	case strings.Contains(path.Base(image), "6"):
-		return InstallOSConfigEL6()
+
 	}
 	return ""
 }
 
 // DowngradeAptImages is a single image that are used for testing downgrade case with apt-get
 var DowngradeAptImages = map[string]string{
-	"debian-cloud/debian-10": "projects/debian-cloud/global/images/family/debian-10",
+	"debian-cloud/debian-10": "projects/debian-cloud/global/images/debian-10-buster-v20231010",
 }
 
 // HeadAptImages is a map of names to image paths for public image families that use APT.
 var HeadAptImages = map[string]string{
 	// Debian images.
-	"debian-cloud/debian-10": "projects/debian-cloud/global/images/family/debian-10",
-	"debian-cloud/debian-11": "projects/debian-cloud/global/images/family/debian-11",
+	"debian-cloud/debian-11": "projects/debian-cloud/global/images/debian-11-bullseye-v20231010",
+	"debian-cloud/debian-12": "projects/debian-cloud/global/images/debian-12-bookworm-v20231010",
 
 	// Ubuntu images.
-	"ubuntu-os-cloud/ubuntu-2004-lts": "projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts",
-	"ubuntu-os-cloud/ubuntu-2204-lts": "projects/ubuntu-os-cloud/global/images/family/ubuntu-2204-lts",
-
-	// Proposed Ubuntu images.
-	"ubuntu-os-cloud-image-proposed/ubuntu-2004-lts": "projects/ubuntu-os-cloud-image-proposed/global/images/family/ubuntu-2004-lts",
+	"ubuntu-os-cloud/ubuntu-2304": "projects/ubuntu-os-cloud/global/images/ubuntu-2304-lunar-amd64-v20231020",
+	"ubuntu-os-cloud/ubuntu-2314": "projects/ubuntu-os-cloud/global/images/ubuntu-2310-mantic-amd64-v20231011",
 }
 
 // OldAptImages is a map of names to image paths for old (deprecated) images that use APT.
 var OldAptImages = map[string]string{
 	// Debian images.
-	"old/debian-10": "projects/debian-cloud/global/images/debian-10-buster-v20210512",
+	"old/debian-10": "projects/debian-cloud/global/images/debian-10-buster-v20231010",
 
 	// Ubuntu images.
-	"old/ubuntu-2004-lts": "projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20230113",
+	"old/ubuntu-2004": "projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20230918",
 }
 
 // HeadSUSEImages is a map of names to image paths for public SUSE images.
 var HeadSUSEImages = map[string]string{
-	"suse-cloud/sles-12": "projects/suse-cloud/global/images/family/sles-12",
-	"suse-cloud/sles-15": "projects/suse-cloud/global/images/family/sles-15",
+	"suse-cloud/sles-12-sp5": "projects/suse-cloud/global/images/sles-12-sp5-v20230807-x86-64",
+	"suse-cloud/sles-15-sp5": "projects/suse-cloud/global/images/sles-15-sp5-v20230921-x86-64",
 
-	"opensuse-cloud/opensuse-leap": "projects/opensuse-cloud/global/images/family/opensuse-leap",
+	"suse-sap-cloud/sles-12-sp5-sap": "projects/suse-sap-cloud/global/images/sles-12-sp5-sap-v20231019-x86-64",
+	"suse-sap-cloud/sles-15-sp5-sap": "projects/suse-sap-cloud/global/images/sles-15-sp5-sap-v20230921-x86-64",
+
+	"suse-sap-cloud/sles-15-sp4-hardened-sap": "projects/suse-sap-cloud/global/images/sles-sap-15-sp4-hardened-v20230828-x86-64",
+	"suse-sap-cloud/sles-15-sp5-hardened-sap": "projects/suse-sap-cloud/global/images/sles-sap-15-sp5-hardened-v20230921-x86-64",
+
+	"opensuse-cloud/opensuse-leap-15-4": "projects/opensuse-cloud/global/images/opensuse-leap-15-4-v20230907-x86-64",
+	"opensuse-cloud/opensuse-leap-15-5": "projects/opensuse-cloud/global/images/opensuse-leap-15-5-v20230908-x86-64",
 }
 
 // OldSUSEImages is a map of names to image paths for old SUSE images.
 var OldSUSEImages = map[string]string{
-	"old/sles-12": "projects/suse-cloud/global/images/sles-12-sp5-v20221104-x86-64",
-	"old/sles-15": "projects/suse-cloud/global/images/sles-15-sp4-v20221104-x86-64",
-
-	"old/opensuse-leap": "projects/opensuse-cloud/global/images/opensuse-leap-15-4-v20220831-x86-64",
+	"old/sles-15-sp1-sap": "projects/suse-sap-cloud/global/images/sles-15-sp1-sap-v20221108-x86-64",
+	"old/sles-15-sp2-sap": "projects/suse-sap-cloud/global/images/sles-15-sp2-sap-v20221108-x86-64",
+	"old/sles-15-sp3-sap": "projects/suse-sap-cloud/global/images/sles-15-sp3-sap-v20221108-x86-64",
+	"old/sles-15-sp4-sap": "projects/suse-sap-cloud/global/images/sles-15-sp4-sap-v20230623-x86-64",
 }
 
-// HeadEL6Images is a map of names to image paths for public EL6 images, we use the last
-// published image here as EL6 is EOL.
-// TODO: Either remove support for el6 or move this to a deprected test suite.
-var HeadEL6Images = map[string]string{
-	"rhel-cloud/rhel-6": "projects/rhel-cloud/global/images/rhel-6-v20201112",
-}
-
-// OldEL6Images is a map of names to image paths for old EL6 images.
-var OldEL6Images = map[string]string{
-	"old/rhel-6": "projects/rhel-cloud/global/images/rhel-6-v20191014",
-}
-
-// HeadEL7Images is a map of names to image paths for public EL7 image families.
+// HeadEL7Images is a map of names to image paths for public EL7 image families. (RHEL, CentOS)
 var HeadEL7Images = map[string]string{
-	"centos-cloud/centos-7": "projects/centos-cloud/global/images/family/centos-7",
-	"rhel-cloud/rhel-7":     "projects/rhel-cloud/global/images/family/rhel-7",
+	"centos-cloud/centos-7": "projects/centos-cloud/global/images/centos-7-v20231010",
+
+	"rhel-cloud/rhel-7": "projects/rhel-cloud/global/images/rhel-7-v20231010",
+
+	"rhel-sap-cloud/rhel-7-sap": "projects/rhel-sap-cloud/global/images/rhel-7-9-sap-v20231011",
 }
 
 // OldEL7Images is a map of names to image paths for old EL7 images.
 var OldEL7Images = map[string]string{
-	"old/centos-7": "projects/centos-cloud/global/images/centos-7-v20210512",
-	"old/rhel-7":   "projects/rhel-cloud/global/images/rhel-7-v20210512",
+	// Currently empty
 }
 
-// HeadEL8Images is a map of names to image paths for public EL8 image families.
+// HeadEL8Images is a map of names to image paths for public EL8 image families. (RHEL, CentOS, Rocky)
 var HeadEL8Images = map[string]string{
-	"centos-cloud/centos-stream-8":    "projects/centos-cloud/global/images/family/centos-stream-8",
-	"rhel-cloud/rhel-8":               "projects/rhel-cloud/global/images/family/rhel-8",
-	"rocky-linux-cloud/rocky-linux-8": "projects/rocky-linux-cloud/global/images/family/rocky-linux-8",
+	"centos-cloud/centos-stream-8": "projects/centos-cloud/global/images/centos-stream-8-v20231010",
+
+	"rhel-cloud/rhel-8": "projects/rhel-cloud/global/images/rhel-8-v20231010",
+
+	"rhel-sap-cloud/rhel-8-1-sap": "projects/rhel-sap-cloud/global/images/rhel-8-1-sap-v20231010",
+	"rhel-sap-cloud/rhel-8-2-sap": "projects/rhel-sap-cloud/global/images/rhel-8-2-sap-v20231010",
+	"rhel-sap-cloud/rhel-8-4-sap": "projects/rhel-sap-cloud/global/images/rhel-8-4-sap-v20231010",
+	"rhel-sap-cloud/rhel-8-6-sap": "projects/rhel-sap-cloud/global/images/rhel-8-6-sap-v20231010",
+	"rhel-sap-cloud/rhel-8-8-sap": "projects/rhel-sap-cloud/global/images/rhel-8-8-sap-v20231010",
+
+	"rocky-linux-cloud/rocky-linux-8":               "projects/rocky-linux-cloud/global/images/rocky-linux-8-v20231010",
+	"rocky-linux-cloud/rocky-linux-8-optimized-gcp": "projects/rocky-linux-cloud/global/images/rocky-linux-8-optimized-gcp-v20231010",
 }
 
-// OldEL8Images is a map of names to image paths for old EL8 images.
+// OldEL8Images is a map of names to image paths for old EL8 images. (RHEL, CentOS, Rocky)
 var OldEL8Images = map[string]string{
-	"old/rhel-8": "projects/rhel-cloud/global/images/rhel-7-v20210512",
+	// Currently empty
 }
 
-// HeadELImages is a map of names to image paths for public EL image families.
+// HeadEL9Images is a map of names to image paths for public EL9 image families. (RHEL, CentOS, Rocky)
+var HeadEL9Images = map[string]string{
+	"centos-cloud/centos-stream-9": "projects/centos-cloud/global/images/centos-stream-9-v20231010",
+
+	"rhel-cloud/rhel-9": "projects/rhel-cloud/global/images/rhel-9-v20231010",
+
+	"rhel-sap-cloud/rhel-9-0-sap": "projects/rhel-sap-cloud/global/images/rhel-9-0-sap-v20231010",
+	"rhel-sap-cloud/rhel-9-2-sap": "projects/rhel-sap-cloud/global/images/rhel-9-2-sap-v20231010",
+
+	"rocky-linux-cloud/rocky-linux-9":               "projects/rocky-linux-cloud/global/images/rocky-linux-9-v20231010",
+	"rocky-linux-cloud/rocky-linux-9-optimized-gcp": "projects/rocky-linux-cloud/global/images/rocky-linux-9-optimized-gcp-v20231010",
+}
+
+// OldEL9Images is a map of names to image paths for old EL9 images. (RHEL, CentOS, Rocky)
+var OldEL9Images = map[string]string{
+	// Currently empty
+}
+
+// HeadELImages is a map of names to image paths for public EL image families. (RHEL, CentOS, Rocky)
 var HeadELImages = func() (newMap map[string]string) {
 	newMap = make(map[string]string)
 	for k, v := range HeadEL7Images {
@@ -295,36 +315,35 @@ var HeadELImages = func() (newMap map[string]string) {
 	for k, v := range HeadEL8Images {
 		newMap[k] = v
 	}
+	for k, v := range HeadEL9Images {
+		newMap[k] = v
+	}
 	return
 }()
 
 // HeadWindowsImages is a map of names to image paths for public Windows image families.
 var HeadWindowsImages = map[string]string{
-	"windows-cloud/windows-2012-r2":      "projects/windows-cloud/global/images/family/windows-2012-r2",
-	"windows-cloud/windows-2012-r2-core": "projects/windows-cloud/global/images/family/windows-2012-r2-core",
-	"windows-cloud/windows-2016":         "projects/windows-cloud/global/images/family/windows-2016",
-	"windows-cloud/windows-2016-core":    "projects/windows-cloud/global/images/family/windows-2016-core",
-	"windows-cloud/windows-2019":         "projects/windows-cloud/global/images/family/windows-2019",
-	"windows-cloud/windows-2019-core":    "projects/windows-cloud/global/images/family/windows-2019-core",
-	"windows-cloud/windows-2022":         "projects/windows-cloud/global/images/family/windows-2022",
-	"windows-cloud/windows-2022-core":    "projects/windows-cloud/global/images/family/windows-2022-core",
+	"windows-cloud/windows-2016-dc-core":                "projects/windows-cloud/global/images/windows-server-2016-dc-core-v20231011",
+	"windows-cloud/windows-2016-dc":                     "projects/windows-cloud/global/images/windows-server-2016-dc-v20231011",
+	"windows-cloud/windows-2019-dc-core-for-containers": "projects/windows-cloud/global/images/windows-server-2019-dc-core-for-containers-v20231012",
+	"windows-cloud/windows-2019-dc-core":                "projects/windows-cloud/global/images/windows-server-2019-dc-core-v20231011",
+	"windows-cloud/windows-2019-dc-for-containers":      "projects/windows-cloud/global/images/windows-server-2019-dc-for-containers-v20231012",
+	"windows-cloud/windows-2019-dc":                     "projects/windows-cloud/global/images/windows-server-2019-dc-v20231011",
+	"windows-cloud/windows-2022-dc-core":                "projects/windows-cloud/global/images/windows-server-2022-dc-core-v20231011",
+	"windows-cloud/windows-2022-dc":                     "projects/windows-cloud/global/images/windows-server-2022-dc-v20231011",
 }
 
 // OldWindowsImages is a map of names to image paths for old Windows images.
 var OldWindowsImages = map[string]string{
-	"old/windows-2012-r2":      "projects/windows-cloud/global/images/windows-server-2012-r2-dc-v20210309",
-	"old/windows-2012-r2-core": "projects/windows-cloud/global/images/windows-server-2012-r2-dc-core-v20210309",
-	"old/windows-2016":         "projects/windows-cloud/global/images/windows-server-2016-dc-v20210309",
-	"old/windows-2016-core":    "projects/windows-cloud/global/images/windows-server-2016-dc-core-v20210309",
-	"old/windows-2019":         "projects/windows-cloud/global/images/windows-server-2019-dc-v20210309",
-	"old/windows-2019-core":    "projects/windows-cloud/global/images/windows-server-2019-dc-core-v20210309",
+	"old/windows-2019":              "projects/cloud-cluster-osconfig/global/images/windows-2019-v202205091405",
+	"old/windows-2019-golden-image": "projects/cloud-cluster-osconfig/global/images/windows-2019-v202205091405-golden-image",
 }
 
 // HeadCOSImages is a map of names to image paths for public COS image families.
 var HeadCOSImages = map[string]string{
-	"cos-cloud/cos-stable": "projects/cos-cloud/global/images/family/cos-stable",
-	"cos-cloud/cos-beta":   "projects/cos-cloud/global/images/family/cos-beta",
-	"cos-cloud/cos-dev":    "projects/cos-cloud/global/images/family/cos-dev",
+	"cos-cloud/cos-stable": "projects/cos-cloud/global/images/cos-stable-109-17800-0-51",
+	"cos-cloud/cos-beta":   "projects/cos-cloud/global/images/cos-beta-109-17800-0-51",
+	"cos-cloud/cos-dev":    "projects/cos-cloud/global/images/cos-dev-113-17965-0-0",
 }
 
 // RandString generates a random string of n length.

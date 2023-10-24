@@ -118,15 +118,6 @@ echo 'Pin-priority: 9999' >> /etc/apt/preferences
 		},
 		machineType: "e2-medium",
 	}
-	el6Setup = &patchTestSetup{
-		assertTimeout: 15 * time.Minute,
-		metadata: []*computeApi.MetadataItems{
-			compute.BuildInstanceMetadataItem("startup-script", linuxRecordBoot+utils.InstallOSConfigEL6()+linuxLocalPrePatchScript),
-			enableOsconfig,
-			disableFeatures,
-		},
-		machineType: "e2-medium",
-	}
 	el7Setup = &patchTestSetup{
 		assertTimeout: 15 * time.Minute,
 		metadata: []*computeApi.MetadataItems{
@@ -140,6 +131,15 @@ echo 'Pin-priority: 9999' >> /etc/apt/preferences
 		assertTimeout: 15 * time.Minute,
 		metadata: []*computeApi.MetadataItems{
 			compute.BuildInstanceMetadataItem("startup-script", linuxRecordBoot+utils.InstallOSConfigEL8()+linuxLocalPrePatchScript),
+			enableOsconfig,
+			disableFeatures,
+		},
+		machineType: "e2-medium",
+	}
+	el9Setup = &patchTestSetup{
+		assertTimeout: 15 * time.Minute,
+		metadata: []*computeApi.MetadataItems{
+			compute.BuildInstanceMetadataItem("startup-script", linuxRecordBoot+utils.InstallOSConfigEL9()+linuxLocalPrePatchScript),
 			enableOsconfig,
 			disableFeatures,
 		},
@@ -172,9 +172,9 @@ func headImageTestSetup() []*patchTestSetup {
 	// This maps a specific patchTestSetup to test setup names and associated images.
 	mapping := map[*patchTestSetup]map[string]string{
 		windowsSetup: utils.HeadWindowsImages,
-		el6Setup:     utils.HeadEL6Images,
 		el7Setup:     utils.HeadEL7Images,
 		el8Setup:     utils.HeadEL8Images,
+		el6Setup:     utils.HeadEL9Images,
 		aptSetup:     utils.HeadAptImages,
 		suseSetup:    utils.HeadSUSEImages,
 	}
@@ -186,9 +186,9 @@ func oldImageTestSetup() []*patchTestSetup {
 	// This maps a specific patchTestSetup to test setup names and associated images.
 	mapping := map[*patchTestSetup]map[string]string{
 		windowsSetup: utils.OldWindowsImages,
-		el6Setup:     utils.OldEL6Images,
 		el7Setup:     utils.OldEL7Images,
 		el8Setup:     utils.OldEL8Images,
+		el6Setup:     utils.OldEL9Images,
 		aptSetup:     utils.OldAptImages,
 		suseSetup:    utils.OldSUSEImages,
 	}
@@ -217,9 +217,9 @@ func aptDowngradeImageTestSetup() []*patchTestSetup {
 func yumHeadImageTestSetup() []*patchTestSetup {
 	// This maps a specific patchTestSetup to test setup names and associated images.
 	mapping := map[*patchTestSetup]map[string]string{
-		el6Setup: utils.HeadEL6Images,
 		el7Setup: utils.HeadEL7Images,
 		el8Setup: utils.HeadEL8Images,
+		el6Setup: utils.HeadEL9Images,
 	}
 
 	return imageTestSetup(mapping)
