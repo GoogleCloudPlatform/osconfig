@@ -174,7 +174,7 @@ func headImageTestSetup() []*patchTestSetup {
 		windowsSetup: utils.HeadWindowsImages,
 		el7Setup:     utils.HeadEL7Images,
 		el8Setup:     utils.HeadEL8Images,
-		el6Setup:     utils.HeadEL9Images,
+		el9Setup:     utils.HeadEL9Images,
 		aptSetup:     utils.HeadAptImages,
 		suseSetup:    utils.HeadSUSEImages,
 	}
@@ -188,7 +188,7 @@ func oldImageTestSetup() []*patchTestSetup {
 		windowsSetup: utils.OldWindowsImages,
 		el7Setup:     utils.OldEL7Images,
 		el8Setup:     utils.OldEL8Images,
-		el6Setup:     utils.OldEL9Images,
+		el9Setup:     utils.OldEL9Images,
 		aptSetup:     utils.OldAptImages,
 		suseSetup:    utils.OldSUSEImages,
 	}
@@ -219,7 +219,7 @@ func yumHeadImageTestSetup() []*patchTestSetup {
 	mapping := map[*patchTestSetup]map[string]string{
 		el7Setup: utils.HeadEL7Images,
 		el8Setup: utils.HeadEL8Images,
-		el6Setup: utils.HeadEL9Images,
+		el9Setup: utils.HeadEL9Images,
 	}
 
 	return imageTestSetup(mapping)
