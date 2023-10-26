@@ -280,7 +280,7 @@ var HeadEL8Images = map[string]string{
 	"rhel-sap-cloud/rhel-8-8-sap": "projects/rhel-sap-cloud/global/images/rhel-8-8-sap-v20231010",
 
 	"rocky-linux-cloud/rocky-linux-8":               "projects/rocky-linux-cloud/global/images/rocky-linux-8-v20231010",
-	"rocky-linux-cloud/rocky-linux-8-optimized-gcp": "projects/rocky-linux-cloud/global/images/rocky-linux-8-optimized-gcp-v20231010",
+	"rocky-linux-cloud/rocky-linux-8-opt-gcp": "projects/rocky-linux-cloud/global/images/rocky-linux-8-optimized-gcp-v20231010",
 }
 
 // OldEL8Images is a map of names to image paths for old EL8 images. (RHEL, CentOS, Rocky)
@@ -298,7 +298,7 @@ var HeadEL9Images = map[string]string{
 	"rhel-sap-cloud/rhel-9-2-sap": "projects/rhel-sap-cloud/global/images/rhel-9-2-sap-v20231010",
 
 	"rocky-linux-cloud/rocky-linux-9":               "projects/rocky-linux-cloud/global/images/rocky-linux-9-v20231010",
-	"rocky-linux-cloud/rocky-linux-9-optimized-gcp": "projects/rocky-linux-cloud/global/images/rocky-linux-9-optimized-gcp-v20231010",
+	"rocky-linux-cloud/rocky-linux-9-opt-gcp": "projects/rocky-linux-cloud/global/images/rocky-linux-9-optimized-gcp-v20231010",
 }
 
 // OldEL9Images is a map of names to image paths for old EL9 images. (RHEL, CentOS, Rocky)
@@ -323,20 +323,20 @@ var HeadELImages = func() (newMap map[string]string) {
 
 // HeadWindowsImages is a map of names to image paths for public Windows image families.
 var HeadWindowsImages = map[string]string{
-	"windows-cloud/windows-2016-dc-core":                "projects/windows-cloud/global/images/windows-server-2016-dc-core-v20231011",
-	"windows-cloud/windows-2016-dc":                     "projects/windows-cloud/global/images/windows-server-2016-dc-v20231011",
-	"windows-cloud/windows-2019-dc-core-for-containers": "projects/windows-cloud/global/images/windows-server-2019-dc-core-for-containers-v20231012",
-	"windows-cloud/windows-2019-dc-core":                "projects/windows-cloud/global/images/windows-server-2019-dc-core-v20231011",
-	"windows-cloud/windows-2019-dc-for-containers":      "projects/windows-cloud/global/images/windows-server-2019-dc-for-containers-v20231012",
-	"windows-cloud/windows-2019-dc":                     "projects/windows-cloud/global/images/windows-server-2019-dc-v20231011",
-	"windows-cloud/windows-2022-dc-core":                "projects/windows-cloud/global/images/windows-server-2022-dc-core-v20231011",
-	"windows-cloud/windows-2022-dc":                     "projects/windows-cloud/global/images/windows-server-2022-dc-v20231011",
+	"windows-cloud/win-2016-dc-core":                "projects/windows-cloud/global/images/windows-server-2016-dc-core-v20231011",
+	"windows-cloud/win-2016-dc":                     "projects/windows-cloud/global/images/windows-server-2016-dc-v20231011",
+	"windows-cloud/win-2019-dc-core-for-containers": "projects/windows-cloud/global/images/windows-server-2019-dc-core-for-containers-v20231012",
+	"windows-cloud/win-2019-dc-core":                "projects/windows-cloud/global/images/windows-server-2019-dc-core-v20231011",
+	"windows-cloud/win-2019-dc-for-containers":      "projects/windows-cloud/global/images/windows-server-2019-dc-for-containers-v20231012",
+	"windows-cloud/win-2019-dc":                     "projects/windows-cloud/global/images/windows-server-2019-dc-v20231011",
+	"windows-cloud/win-2022-dc-core":                "projects/windows-cloud/global/images/windows-server-2022-dc-core-v20231011",
+	"windows-cloud/win-2022-dc":                     "projects/windows-cloud/global/images/windows-server-2022-dc-v20231011",
 }
 
 // OldWindowsImages is a map of names to image paths for old Windows images.
 var OldWindowsImages = map[string]string{
-	"old/windows-2019":              "projects/cloud-cluster-osconfig/global/images/windows-2019-v202205091405",
-	"old/windows-2019-golden-image": "projects/cloud-cluster-osconfig/global/images/windows-2019-v202205091405-golden-image",
+	"old/win-2019":              "projects/cloud-cluster-osconfig/global/images/windows-2019-v202205091405",
+	"old/win-2019-golden-image": "projects/cloud-cluster-osconfig/global/images/windows-2019-v202205091405-golden-image",
 }
 
 // HeadCOSImages is a map of names to image paths for public COS image families.
