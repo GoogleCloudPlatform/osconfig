@@ -279,7 +279,7 @@ var HeadEL8Images = map[string]string{
 	"rhel-sap-cloud/rhel-8-6-sap": "projects/rhel-sap-cloud/global/images/rhel-8-6-sap-v20231010",
 	"rhel-sap-cloud/rhel-8-8-sap": "projects/rhel-sap-cloud/global/images/rhel-8-8-sap-v20231010",
 
-	"rocky-linux-cloud/rocky-linux-8":               "projects/rocky-linux-cloud/global/images/rocky-linux-8-v20231010",
+	"rocky-linux-cloud/rocky-linux-8":         "projects/rocky-linux-cloud/global/images/rocky-linux-8-v20231010",
 	"rocky-linux-cloud/rocky-linux-8-opt-gcp": "projects/rocky-linux-cloud/global/images/rocky-linux-8-optimized-gcp-v20231010",
 }
 
@@ -297,7 +297,7 @@ var HeadEL9Images = map[string]string{
 	"rhel-sap-cloud/rhel-9-0-sap": "projects/rhel-sap-cloud/global/images/rhel-9-0-sap-v20231010",
 	"rhel-sap-cloud/rhel-9-2-sap": "projects/rhel-sap-cloud/global/images/rhel-9-2-sap-v20231010",
 
-	"rocky-linux-cloud/rocky-linux-9":               "projects/rocky-linux-cloud/global/images/rocky-linux-9-v20231010",
+	"rocky-linux-cloud/rocky-linux-9":         "projects/rocky-linux-cloud/global/images/rocky-linux-9-v20231010",
 	"rocky-linux-cloud/rocky-linux-9-opt-gcp": "projects/rocky-linux-cloud/global/images/rocky-linux-9-optimized-gcp-v20231010",
 }
 
