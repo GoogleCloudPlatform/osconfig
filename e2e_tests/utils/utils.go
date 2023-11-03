@@ -325,9 +325,7 @@ var HeadELImages = func() (newMap map[string]string) {
 var HeadWindowsImages = map[string]string{
 	"windows-cloud/win-2016-dc-core":                "projects/windows-cloud/global/images/windows-server-2016-dc-core-v20231011",
 	"windows-cloud/win-2016-dc":                     "projects/windows-cloud/global/images/windows-server-2016-dc-v20231011",
-	"windows-cloud/win-2019-dc-core-for-containers": "projects/windows-cloud/global/images/windows-server-2019-dc-core-for-containers-v20231012",
 	"windows-cloud/win-2019-dc-core":                "projects/windows-cloud/global/images/windows-server-2019-dc-core-v20231011",
-	"windows-cloud/win-2019-dc-for-containers":      "projects/windows-cloud/global/images/windows-server-2019-dc-for-containers-v20231012",
 	"windows-cloud/win-2019-dc":                     "projects/windows-cloud/global/images/windows-server-2019-dc-v20231011",
 	"windows-cloud/win-2022-dc-core":                "projects/windows-cloud/global/images/windows-server-2022-dc-core-v20231011",
 	"windows-cloud/win-2022-dc":                     "projects/windows-cloud/global/images/windows-server-2022-dc-v20231011",
