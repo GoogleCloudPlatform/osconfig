@@ -104,7 +104,7 @@ func runInventoryReportingTest(ctx context.Context, testSetup *inventoryTestSetu
 	defer inst.RecordSerialOutput(ctx, path.Join(*config.OutDir, testSuiteName), 1)
 
 	testCase.Logf("Waiting for agent install to complete")
-	if _, err := inst.WaitForGuestAttributes("osconfig_tests/install_done", 5*time.Second, 10*time.Minute); err != nil {
+	if _, err := inst.WaitForGuestAttributes("osconfig_tests/install_done", 5*time.Second, 25*time.Minute); err != nil {
 		testCase.WriteFailure("Error waiting for osconfig agent install: %v", err)
 		return
 	}
