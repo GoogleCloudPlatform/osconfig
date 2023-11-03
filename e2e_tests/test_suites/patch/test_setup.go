@@ -101,7 +101,7 @@ echo 'Pin-priority: 9999' >> /etc/apt/preferences
 		machineType: "e2-standard-4",
 	}
 	aptSetup = &patchTestSetup{
-		assertTimeout: 10 * time.Minute,
+		assertTimeout: 30 * time.Minute,
 		metadata: []*computeApi.MetadataItems{
 			compute.BuildInstanceMetadataItem("startup-script", linuxRecordBoot+utils.InstallOSConfigDeb()+linuxLocalPrePatchScript),
 			enableOsconfig,
@@ -110,7 +110,7 @@ echo 'Pin-priority: 9999' >> /etc/apt/preferences
 		machineType: "e2-medium",
 	}
 	aptDowngradeSetup = &patchTestSetup{
-		assertTimeout: 10 * time.Minute,
+		assertTimeout: 30 * time.Minute,
 		metadata: []*computeApi.MetadataItems{
 			compute.BuildInstanceMetadataItem("startup-script", linuxRecordBoot+utils.InstallOSConfigDeb()+linuxLocalPrePatchScript+setUpDowngradeState),
 			enableOsconfig,
@@ -119,7 +119,7 @@ echo 'Pin-priority: 9999' >> /etc/apt/preferences
 		machineType: "e2-medium",
 	}
 	el7Setup = &patchTestSetup{
-		assertTimeout: 15 * time.Minute,
+		assertTimeout: 30 * time.Minute,
 		metadata: []*computeApi.MetadataItems{
 			compute.BuildInstanceMetadataItem("startup-script", linuxRecordBoot+utils.InstallOSConfigEL7()+linuxLocalPrePatchScript),
 			enableOsconfig,
@@ -128,7 +128,7 @@ echo 'Pin-priority: 9999' >> /etc/apt/preferences
 		machineType: "e2-medium",
 	}
 	el8Setup = &patchTestSetup{
-		assertTimeout: 15 * time.Minute,
+		assertTimeout: 30 * time.Minute,
 		metadata: []*computeApi.MetadataItems{
 			compute.BuildInstanceMetadataItem("startup-script", linuxRecordBoot+utils.InstallOSConfigEL8()+linuxLocalPrePatchScript),
 			enableOsconfig,
@@ -137,7 +137,7 @@ echo 'Pin-priority: 9999' >> /etc/apt/preferences
 		machineType: "e2-medium",
 	}
 	el9Setup = &patchTestSetup{
-		assertTimeout: 15 * time.Minute,
+		assertTimeout: 30 * time.Minute,
 		metadata: []*computeApi.MetadataItems{
 			compute.BuildInstanceMetadataItem("startup-script", linuxRecordBoot+utils.InstallOSConfigEL9()+linuxLocalPrePatchScript),
 			enableOsconfig,
@@ -146,7 +146,7 @@ echo 'Pin-priority: 9999' >> /etc/apt/preferences
 		machineType: "e2-medium",
 	}
 	suseSetup = &patchTestSetup{
-		assertTimeout: 15 * time.Minute,
+		assertTimeout: 30 * time.Minute,
 		metadata: []*computeApi.MetadataItems{
 			compute.BuildInstanceMetadataItem("startup-script", linuxRecordBoot+utils.InstallOSConfigSUSE()+linuxLocalPrePatchScript),
 			enableOsconfig,

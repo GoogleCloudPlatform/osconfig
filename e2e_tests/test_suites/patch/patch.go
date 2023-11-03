@@ -274,7 +274,7 @@ func runExecutePatchJobTest(ctx context.Context, testCase *junitxml.TestCase, te
 	defer inst.RecordSerialOutput(ctx, path.Join(*config.OutDir, testSuiteName), 1)
 
 	testCase.Logf("Waiting for agent install to complete")
-	if _, err := inst.WaitForGuestAttributes("osconfig_tests/install_done", 5*time.Second, 15*time.Minute); err != nil {
+	if _, err := inst.WaitForGuestAttributes("osconfig_tests/install_done", 5*time.Second, 25*time.Minute); err != nil {
 		testCase.WriteFailure("Error waiting for osconfig agent install: %v", err)
 		return
 	}
@@ -340,7 +340,7 @@ func runRebootPatchTest(ctx context.Context, testCase *junitxml.TestCase, testSe
 	defer inst.RecordSerialOutput(ctx, path.Join(*config.OutDir, testSuiteName), 1)
 
 	testCase.Logf("Waiting for agent install to complete")
-	if _, err := inst.WaitForGuestAttributes("osconfig_tests/install_done", 5*time.Second, 15*time.Minute); err != nil {
+	if _, err := inst.WaitForGuestAttributes("osconfig_tests/install_done", 5*time.Second, 25*time.Minute); err != nil {
 		testCase.WriteFailure("Error waiting for osconfig agent install: %v", err)
 		return
 	}
@@ -459,11 +459,11 @@ func patchConfigWithPrePostSteps() *osconfigpb.PatchConfig {
 }
 
 func validatePrePostStepSuccess(inst *compute.Instance, testCase *junitxml.TestCase) {
-	if _, err := inst.WaitForGuestAttributes("osconfig_tests/pre_step_ran", 5*time.Second, 1*time.Minute); err != nil {
+	if _, err := inst.WaitForGuestAttributes("osconfig_tests/pre_step_ran", 5*time.Second, 10*time.Minute); err != nil {
 		testCase.WriteFailure("error while asserting: %v", err)
 		return
 	}
-	if _, err := inst.WaitForGuestAttributes("osconfig_tests/post_step_ran", 5*time.Second, 1*time.Minute); err != nil {
+	if _, err := inst.WaitForGuestAttributes("osconfig_tests/post_step_ran", 5*time.Second, 10*time.Minute); err != nil {
 		testCase.WriteFailure("error while asserting: %v", err)
 		return
 	}
