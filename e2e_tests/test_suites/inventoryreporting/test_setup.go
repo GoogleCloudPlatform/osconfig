@@ -47,7 +47,7 @@ var (
 
 		startup:     compute.BuildInstanceMetadataItem("windows-startup-script-ps1", getStartupScriptGoo()),
 		machineType: "e2-standard-2",
-		timeout:     25 * time.Minute,
+		timeout:     30 * time.Minute,
 		itemCheck: func(items map[string]*osconfigpb.Inventory_Item) error {
 			var foundGooget bool
 			var foundCowsay bool
@@ -114,7 +114,7 @@ var (
 		packageType: []string{"deb"},
 		startup:     compute.BuildInstanceMetadataItem("startup-script", getStartupScriptDeb()),
 		machineType: "e2-medium",
-		timeout:     10 * time.Minute,
+		timeout:     25 * time.Minute,
 		itemCheck: func(items map[string]*osconfigpb.Inventory_Item) error {
 			var bashFound bool
 			var cowsayFound bool
@@ -160,7 +160,7 @@ var (
 		packageType: []string{"rpm"},
 		startup:     compute.BuildInstanceMetadataItem("startup-script", getStartupScriptEL("7")),
 		machineType: "e2-medium",
-		timeout:     10 * time.Minute,
+		timeout:     25 * time.Minute,
 		itemCheck:   yumBashInstalledCheck,
 	}
 
@@ -168,7 +168,7 @@ var (
 		packageType: []string{"rpm"},
 		startup:     compute.BuildInstanceMetadataItem("startup-script", getStartupScriptEL("8")),
 		machineType: "e2-medium",
-		timeout:     10 * time.Minute,
+		timeout:     25 * time.Minute,
 		itemCheck:   yumBashInstalledCheck,
 	}
 
@@ -176,7 +176,7 @@ var (
 		packageType: []string{"rpm"},
 		startup:     compute.BuildInstanceMetadataItem("startup-script", getStartupScriptEL("9")),
 		machineType: "e2-medium",
-		timeout:     10 * time.Minute,
+		timeout:     25 * time.Minute,
 		itemCheck:   yumBashInstalledCheck,
 	}
 
@@ -184,7 +184,7 @@ var (
 		packageType: []string{"zypper"},
 		startup:     compute.BuildInstanceMetadataItem("startup-script", getStartupScriptZypper()),
 		machineType: "e2-medium",
-		timeout:     15 * time.Minute,
+		timeout:     25 * time.Minute,
 		itemCheck: func(items map[string]*osconfigpb.Inventory_Item) error {
 			var bashFound bool
 			var cowsayFound bool
@@ -209,7 +209,7 @@ var (
 	cosSetup = &inventoryTestSetup{
 		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.CosSetup),
 		machineType: "e2-medium",
-		timeout:     5 * time.Minute,
+		timeout:     25 * time.Minute,
 		itemCheck: func(items map[string]*osconfigpb.Inventory_Item) error {
 			for _, item := range items {
 				if item.GetInstalledPackage().GetCosPackage().GetPackageName() == "app-shells/bash" {

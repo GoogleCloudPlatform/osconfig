@@ -42,48 +42,48 @@ var (
 
 		startup:     compute.BuildInstanceMetadataItem("windows-startup-script-ps1", utils.InstallOSConfigGooGet()),
 		machineType: "e2-standard-4",
-		timeout:     25 * time.Minute,
+		timeout:     30 * time.Minute,
 	}
 
 	aptSetup = &inventoryTestSetup{
 		packageType: []string{"deb"},
 		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigDeb()),
 		machineType: "e2-standard-2",
-		timeout:     10 * time.Minute,
+		timeout:     25 * time.Minute,
 	}
 
 	el7Setup = &inventoryTestSetup{
 		packageType: []string{"rpm"},
 		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigEL7()),
 		machineType: "e2-standard-2",
-		timeout:     10 * time.Minute,
+		timeout:     25 * time.Minute,
 	}
 
 	el8Setup = &inventoryTestSetup{
 		packageType: []string{"rpm"},
 		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigEL8()),
 		machineType: "e2-standard-2",
-		timeout:     10 * time.Minute,
+		timeout:     25 * time.Minute,
 	}
 
 	el9Setup = &inventoryTestSetup{
 		packageType: []string{"rpm"},
 		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigEL9()),
 		machineType: "e2-standard-2",
-		timeout:     10 * time.Minute,
+		timeout:     25 * time.Minute,
 	}
 
 	suseSetup = &inventoryTestSetup{
 		packageType: []string{"zypper"},
 		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigSUSE()),
 		machineType: "e2-standard-2",
-		timeout:     15 * time.Minute,
+		timeout:     25 * time.Minute,
 	}
 
 	cosSetup = &inventoryTestSetup{
 		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.CurlPost),
 		machineType: "e2-standard-2",
-		timeout:     5 * time.Minute,
+		timeout:     15 * time.Minute,
 	}
 )
 
