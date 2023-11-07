@@ -2,18 +2,8 @@
 # See the OWNERS docs at https://go.k8s.io/owners
 
 approvers:
-  - adjackura
-  - bkatyl
   - burov
-  - chaitanyakulkarni28
-  - dorileo
   - dowgird
   - Gulio
-  - jjerger
-  - karnvadaliya
-  - koln67
   - michaljankowiak
   - paulinakania
-  - quintonamore
-  - vorakl
-  - zmarano
