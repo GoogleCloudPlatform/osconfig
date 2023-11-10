@@ -333,8 +333,7 @@ var HeadWindowsImages = map[string]string{
 
 // OldWindowsImages is a map of names to image paths for old Windows images.
 var OldWindowsImages = map[string]string{
-	"old/win-2019":              "projects/cloud-cluster-osconfig/global/images/windows-2019-v202205091405",
-	"old/win-2019-golden-image": "projects/cloud-cluster-osconfig/global/images/windows-2019-v202205091405-golden-image",
+	// Currently empty
 }
 
 // HeadCOSImages is a map of names to image paths for public COS image families.
