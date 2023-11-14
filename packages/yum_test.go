@@ -220,6 +220,36 @@ func TestParseYumUpdates(t *testing.T) {
 	}
 }
 
+func TestParseYumUpdatesWithInstallingDependenciesKeywords(t *testing.T) {
+	data := []byte(`
+	=================================================================================================================================================================================
+	Package                                      Arch                           Version                                              Repository                                Size
+	=================================================================================================================================================================================
+	Installing dependencies:
+	  kernel                                    x86_64                         2.6.32-754.24.3.el6                                  updates                                   32 M
+	Installing weak dependencies:
+	  foo                                       noarch                         2.0.0-1                                              BaseOS                                   361 k
+	  bar                                       x86_64                         2.0.0-1                                              repo                                      10 M
+`)
+
+	tests := []struct {
+		name string
+		data []byte
+		want []*PkgInfo
+	}{
+		{"NormalCase", data, []*PkgInfo{{"kernel", "x86_64", "2.6.32-754.24.3.el6"}, {"foo", "all", "2.0.0-1"}, {"bar", "x86_64", "2.0.0-1"}}},
+		{"NoPackages", []byte("nothing here"), nil},
+		{"nil", nil, nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := parseYumUpdates(tt.data); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("parseYumUpdates() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestGetYumTX(t *testing.T) {
 	dataWithTX := []byte(`
 	=================================================================================================================================================================================
