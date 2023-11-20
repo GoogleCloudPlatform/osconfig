@@ -449,7 +449,7 @@ func (s *IUpdateSession) GetWUAUpdateCollection(ctx context.Context, query strin
 			var excepinfo ole.EXCEPINFO
 			excepinfo, ok = oleError.SubError().(ole.EXCEPINFO)
 			if ok {
-				clog.Infof(ctx, "Error with SCODE was founded. SCODE : 0x%x", excepinfo.SCODE())
+				clog.Errorf(ctx, "Error with SCODE was founded. SCODE : 0x%x", excepinfo.SCODE())
 				scodeStr = fmt.Sprintf(" SCODE: 0x%x", excepinfo.SCODE())
 			}
 		}
