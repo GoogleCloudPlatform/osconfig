@@ -100,12 +100,12 @@ func (s *IUpdateSession) InstallWUAUpdate(ctx context.Context, updt *IUpdate) er
 	}
 
 	clog.Debugf(ctx, "Downloading update %s", title.Value())
-	if err := s.DownloadWUAUpdateCollection(updts); err != nil {
+	if err := s.DownloadWUAUpdateCollection(ctx, updts); err != nil {
 		return fmt.Errorf("DownloadWUAUpdateCollection error: %v", err)
 	}
 
 	clog.Debugf(ctx, "Installing update %s", title.Value())
-	if err := s.InstallWUAUpdateCollection(updts); err != nil {
+	if err := s.InstallWUAUpdateCollection(ctx, updts); err != nil {
 		return fmt.Errorf("InstallWUAUpdateCollection error: %v", err)
 	}
 
@@ -384,44 +384,44 @@ func WUAUpdates(ctx context.Context, query string) ([]WUAPackage, error) {
 }
 
 // DownloadWUAUpdateCollection downloads all updates in a IUpdateCollection
-func (s *IUpdateSession) DownloadWUAUpdateCollection(updates *IUpdateCollection) error {
+func (s *IUpdateSession) DownloadWUAUpdateCollection(ctx context.Context, updates *IUpdateCollection) error {
 	// returns IUpdateDownloader
 	// https://docs.microsoft.com/en-us/windows/desktop/api/wuapi/nn-wuapi-iupdatedownloader
 	downloaderRaw, err := s.CallMethod("CreateUpdateDownloader")
 	if err != nil {
-		return fmt.Errorf("error calling method CreateUpdateDownloader on IUpdateSession: %v", err)
+		return fmt.Errorf("error calling method CreateUpdateDownloader on IUpdateSession: %v"+GetScodeString(ctx, err), err)
 	}
 	downloader := downloaderRaw.ToIDispatch()
 	defer downloader.Release()
 
 	if _, err := downloader.PutProperty("Updates", updates.IDispatch); err != nil {
-		return fmt.Errorf("error calling PutProperty Updates on IUpdateDownloader: %v", err)
+		return fmt.Errorf("error calling PutProperty Updates on IUpdateDownloader: %v"+GetScodeString(ctx, err), err)
 	}
 
 	if _, err := downloader.CallMethod("Download"); err != nil {
-		return fmt.Errorf("error calling method Download on IUpdateDownloader: %v", err)
+		return fmt.Errorf("error calling method Download on IUpdateDownloader: %v"+GetScodeString(ctx, err), err)
 	}
 	return nil
 }
 
 // InstallWUAUpdateCollection installs all updates in a IUpdateCollection
-func (s *IUpdateSession) InstallWUAUpdateCollection(updates *IUpdateCollection) error {
+func (s *IUpdateSession) InstallWUAUpdateCollection(ctx context.Context, updates *IUpdateCollection) error {
 	// returns IUpdateInstallersession *ole.IDispatch,
 	// https://docs.microsoft.com/en-us/windows/desktop/api/wuapi/nf-wuapi-iupdatesession-createupdateinstaller
 	installerRaw, err := s.CallMethod("CreateUpdateInstaller")
 	if err != nil {
-		return fmt.Errorf("error calling method CreateUpdateInstaller on IUpdateSession: %v", err)
+		return fmt.Errorf("error calling method CreateUpdateInstaller on IUpdateSession: %v"+GetScodeString(ctx, err), err)
 	}
 	installer := installerRaw.ToIDispatch()
 	defer installer.Release()
 
 	if _, err := installer.PutProperty("Updates", updates.IDispatch); err != nil {
-		return fmt.Errorf("error calling PutProperty Updates on IUpdateInstaller: %v", err)
+		return fmt.Errorf("error calling PutProperty Updates on IUpdateInstaller: %v"+GetScodeString(ctx, err), err)
 	}
 
 	// TODO: Look into using the async methods and attempt to track/log progress.
 	if _, err := installer.CallMethod("Install"); err != nil {
-		return fmt.Errorf("error calling method Install on IUpdateInstaller: %v", err)
+		return fmt.Errorf("error calling method Install on IUpdateInstaller: %v"+GetScodeString(ctx, err), err)
 	}
 	return nil
 }
@@ -433,7 +433,7 @@ func (s *IUpdateSession) GetWUAUpdateCollection(ctx context.Context, query strin
 	// https://msdn.microsoft.com/en-us/library/windows/desktop/aa386515(v=vs.85).aspx
 	searcherRaw, err := s.CallMethod("CreateUpdateSearcher")
 	if err != nil {
-		return nil, fmt.Errorf("error calling CreateUpdateSearcher: %v", err)
+		return nil, fmt.Errorf("error calling CreateUpdateSearcher: %v"+GetScodeString(ctx, err), err)
 	}
 	searcher := searcherRaw.ToIDispatch()
 	defer searcher.Release()
@@ -442,19 +442,7 @@ func (s *IUpdateSession) GetWUAUpdateCollection(ctx context.Context, query strin
 	// https://msdn.microsoft.com/en-us/library/windows/desktop/aa386077(v=vs.85).aspx
 	resultRaw, err := searcher.CallMethod("Search", query)
 	if err != nil {
-		var oleError *ole.OleError
-		oleError, ok := err.(*ole.OleError)
-		var scodeStr = ""
-		if ok {
-			var excepinfo ole.EXCEPINFO
-			excepinfo, ok = oleError.SubError().(ole.EXCEPINFO)
-			if ok {
-				clog.Errorf(ctx, "Error with SCODE was founded. SCODE : 0x%x", excepinfo.SCODE())
-				scodeStr = fmt.Sprintf(" SCODE: 0x%x", excepinfo.SCODE())
-			}
-		}
-
-		return nil, fmt.Errorf("error calling method Search on IUpdateSearcher: %v"+scodeStr, err)
+		return nil, fmt.Errorf("error calling method Search on IUpdateSearcher: %v"+GetScodeString(ctx, err), err)
 	}
 	result := resultRaw.ToIDispatch()
 	defer result.Release()
@@ -463,8 +451,25 @@ func (s *IUpdateSession) GetWUAUpdateCollection(ctx context.Context, query strin
 	// https://msdn.microsoft.com/en-us/library/windows/desktop/aa386107(v=vs.85).aspx
 	updtsRaw, err := result.GetProperty("Updates")
 	if err != nil {
-		return nil, fmt.Errorf("error calling GetProperty Updates on ISearchResult: %v", err)
+		return nil, fmt.Errorf("error calling GetProperty Updates on ISearchResult: %v"+GetScodeString(ctx, err), err)
 	}
 
 	return &IUpdateCollection{IDispatch: updtsRaw.ToIDispatch()}, nil
+}
+
+// GetScodeString return empty string if empty string if SCODE wasn't found else string containgin SCODE the
+// following format " SCODE : 0x12345678". Where SCODE is a 32-bit status value that is used to describe an error or warning.
+func GetScodeString(ctx context.Context, err error) string {
+	var scodeStr = ""
+	var oleError *ole.OleError
+	oleError, ok := err.(*ole.OleError)
+	if ok {
+		var excepinfo ole.EXCEPINFO
+		excepinfo, ok = oleError.SubError().(ole.EXCEPINFO)
+		if ok {
+			clog.Errorf(ctx, "Error with SCODE was founded. SCODE : 0x%x", excepinfo.SCODE())
+			scodeStr = fmt.Sprintf(" SCODE: 0x%x", excepinfo.SCODE())
+		}
+	}
+	return scodeStr
 }
