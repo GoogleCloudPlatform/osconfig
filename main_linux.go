@@ -58,6 +58,6 @@ func obtainLock() {
 	deferredFuncs = append(deferredFuncs, func() { syscall.Flock(int(f.Fd()), syscall.LOCK_UN); f.Close(); os.Remove(lockFile) })
 }
 
-func wuaUpdates(_ string) error {
+func wuaUpdates(ctx context.Context, _ string) error {
 	return errors.New("wuaUpdates not implemented on linux")
 }

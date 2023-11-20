@@ -185,7 +185,7 @@ func GetWUAUpdates(ctx context.Context, session *packages.IUpdateSession, classF
 	// Search for all not installed updates but filter out ones that will be installed after a reboot.
 	filter := "IsInstalled=0 AND RebootRequired=0"
 	clog.Debugf(ctx, "Searching for WUA updates with query %q", filter)
-	updts, err := session.GetWUAUpdateCollection(filter)
+	updts, err := session.GetWUAUpdateCollection(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("GetWUAUpdateCollection error: %v", err)
 	}

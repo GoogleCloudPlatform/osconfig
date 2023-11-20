@@ -350,14 +350,14 @@ func (c *IUpdateCollection) extractPkg(item int) (*WUAPackage, error) {
 }
 
 // WUAUpdates queries the Windows Update Agent API searcher with the provided query.
-func WUAUpdates(query string) ([]WUAPackage, error) {
+func WUAUpdates(ctx context.Context, query string) ([]WUAPackage, error) {
 	session, err := NewUpdateSession()
 	if err != nil {
 		return nil, fmt.Errorf("error creating NewUpdateSession: %v", err)
 	}
 	defer session.Close()
 
-	updts, err := session.GetWUAUpdateCollection(query)
+	updts, err := session.GetWUAUpdateCollection(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("error calling GetWUAUpdateCollection with query %q: %v", query, err)
 	}
@@ -428,7 +428,7 @@ func (s *IUpdateSession) InstallWUAUpdateCollection(updates *IUpdateCollection) 
 
 // GetWUAUpdateCollection queries the Windows Update Agent API searcher with the provided query
 // and returns a IUpdateCollection.
-func (s *IUpdateSession) GetWUAUpdateCollection(query string) (*IUpdateCollection, error) {
+func (s *IUpdateSession) GetWUAUpdateCollection(ctx context.Context, query string) (*IUpdateCollection, error) {
 	// returns IUpdateSearcher
 	// https://msdn.microsoft.com/en-us/library/windows/desktop/aa386515(v=vs.85).aspx
 	searcherRaw, err := s.CallMethod("CreateUpdateSearcher")
@@ -442,7 +442,19 @@ func (s *IUpdateSession) GetWUAUpdateCollection(query string) (*IUpdateCollectio
 	// https://msdn.microsoft.com/en-us/library/windows/desktop/aa386077(v=vs.85).aspx
 	resultRaw, err := searcher.CallMethod("Search", query)
 	if err != nil {
-		return nil, fmt.Errorf("error calling method Search on IUpdateSearcher: %v", err)
+		var oleError *ole.OleError
+		oleError, ok := err.(*ole.OleError)
+		var scodeStr = ""
+		if ok {
+			var excepinfo ole.EXCEPINFO
+			excepinfo, ok = oleError.SubError().(ole.EXCEPINFO)
+			if ok {
+				clog.Infof(ctx, "Error with SCODE was founded. SCODE : 0x%x", excepinfo.SCODE())
+				scodeStr = fmt.Sprintf(" SCODE: 0x%x", excepinfo.SCODE())
+			}
+		}
+
+		return nil, fmt.Errorf("error calling method Search on IUpdateSearcher: %v"+scodeStr, err)
 	}
 	result := resultRaw.ToIDispatch()
 	defer result.Release()
