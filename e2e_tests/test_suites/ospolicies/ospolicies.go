@@ -138,7 +138,7 @@ func createOSPolicyAssignment(ctx context.Context, client *osconfig.OsConfigZona
 	}
 	testCase.Logf("OSPolicyAssignment created, waiting for operation %q", op.Name())
 	// Wait up to 5 min for this to complete.
-	ctx, cncl := context.WithTimeout(ctx, 5*time.Minute)
+	ctx, cncl := context.WithTimeout(ctx, 10*time.Minute)
 	defer cncl()
 	ospa, err := op.Wait(ctx)
 	if err != nil {
@@ -161,9 +161,9 @@ func runTest(ctx context.Context, testCase *junitxml.TestCase, testSetup *osPoli
 	testProjectConfig := testconfig.GetProject()
 	zone := testProjectConfig.AcquireZone()
 	defer testProjectConfig.ReleaseZone(zone)
-	// No test should take longer than 20 min, start the timer
+	// No test should take longer than 30 min, start the timer
 	// after AcquireZone as that can take some time.
-	ctx, cncl := context.WithTimeout(ctx, 20*time.Minute)
+	ctx, cncl := context.WithTimeout(ctx, 30*time.Minute)
 	defer cncl()
 	testCase.Logf("Creating instance %q with image %q", testSetup.instanceName, testSetup.image)
 	inst, err := utils.CreateComputeInstance(metadataItems, computeClient, testSetup.machineType, testSetup.image, testSetup.instanceName, testProjectConfig.TestProjectID, zone, testProjectConfig.ServiceAccountEmail, testProjectConfig.ServiceAccountScopes)

@@ -40,7 +40,7 @@ type log struct {
 	sync.Mutex
 }
 
-func (l *log) log(structuredPayload interface{}, msg string, sev logger.Severity) {
+func (l *log) log(structuredPayload any, msg string, sev logger.Severity) {
 	// Set CallDepth 3, one for logger.Log, one for this function, and one for
 	// the calling clog function.
 	logger.Log(logger.LogEntry{Message: msg, StructuredPayload: structuredPayload, Severity: sev, CallDepth: 3, Labels: l.labels})
@@ -51,7 +51,7 @@ func (l *log) log(structuredPayload interface{}, msg string, sev logger.Severity
 //
 // Conversion errors are encoded in the JSON object rather than returned,
 // because callers of logging functions should not be forced to handle errors.
-func protoToJSON(p proto.Message) interface{} {
+func protoToJSON(p proto.Message) any {
 	bytes, err := pretty.MarshalOptions().Marshal(p)
 	if err != nil {
 		return fmt.Sprintf("Error converting proto: %s", err)
@@ -66,9 +66,9 @@ func DebugRPC(ctx context.Context, method string, req proto.Message, resp proto.
 		return
 	}
 	// The Cloud Logging library doesn't handle proto messages nor structures containing generic JSON.
-	// To work around this we construct map[string]interface{} and fill it with JSON
+	// To work around this we construct map[string]any and fill it with JSON
 	// resulting from explicit conversion of the proto messages.
-	payload := map[string]interface{}{}
+	payload := map[string]any{}
 	payload["MethodName"] = method
 	var msg string
 	if resp != nil && req != nil {
@@ -87,27 +87,27 @@ func DebugRPC(ctx context.Context, method string, req proto.Message, resp proto.
 
 // DebugStructured is like Debugf but sends structuredPayload instead of the text message
 // to Cloud Logging.
-func DebugStructured(ctx context.Context, structuredPayload interface{}, format string, args ...interface{}) {
+func DebugStructured(ctx context.Context, structuredPayload any, format string, args ...any) {
 	fromContext(ctx).log(structuredPayload, fmt.Sprintf(format, args...), logger.Debug)
 }
 
 // Debugf simulates logger.Debugf and adds context labels.
-func Debugf(ctx context.Context, format string, args ...interface{}) {
+func Debugf(ctx context.Context, format string, args ...any) {
 	fromContext(ctx).log(nil, fmt.Sprintf(format, args...), logger.Debug)
 }
 
 // Infof simulates logger.Infof and adds context labels.
-func Infof(ctx context.Context, format string, args ...interface{}) {
+func Infof(ctx context.Context, format string, args ...any) {
 	fromContext(ctx).log(nil, fmt.Sprintf(format, args...), logger.Info)
 }
 
 // Warningf simulates logger.Warningf and context labels.
-func Warningf(ctx context.Context, format string, args ...interface{}) {
+func Warningf(ctx context.Context, format string, args ...any) {
 	fromContext(ctx).log(nil, fmt.Sprintf(format, args...), logger.Warning)
 }
 
 // Errorf simulates logger.Errorf and adds context labels.
-func Errorf(ctx context.Context, format string, args ...interface{}) {
+func Errorf(ctx context.Context, format string, args ...any) {
 	fromContext(ctx).log(nil, fmt.Sprintf(format, args...), logger.Error)
 }
 
