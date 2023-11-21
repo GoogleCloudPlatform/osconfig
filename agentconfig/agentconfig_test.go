@@ -206,7 +206,7 @@ func TestSetConfigDefaultValues(t *testing.T) {
 		t.Errorf("Default poll interval: got(%f) != want(%d)", SvcPollInterval().Minutes(), osConfigPollIntervalDefault)
 	}
 
-	expectedEndpoint := "fake-zone-osconfig.googleapis.com:443"
+	expectedEndpoint := "fake-zone-osconfig.googleapis.com.:443"
 	if SvcEndpoint() != expectedEndpoint {
 		t.Errorf("Default endpoint: got(%s) != want(%s)", SvcEndpoint(), expectedEndpoint)
 	}
