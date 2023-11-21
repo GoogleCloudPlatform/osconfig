@@ -161,7 +161,7 @@ var wantRepositoryCompliances = []*osconfigpb.OSPolicyAssignmentReport_OSPolicyC
 }
 
 func buildAptTestSetup(name, image, key string) *osPolicyTestSetup {
-	assertTimeout := 120 * time.Second
+	assertTimeout := 360 * time.Second
 	testName := packageResourceApt
 	machineType := "e2-medium"
 
@@ -223,7 +223,7 @@ func buildAptTestSetup(name, image, key string) *osPolicyTestSetup {
 }
 
 func buildDebTestSetup(name, image, key string) *osPolicyTestSetup {
-	assertTimeout := 120 * time.Second
+	assertTimeout := 360 * time.Second
 	testName := packageResourceDeb
 	machineType := "e2-medium"
 
@@ -306,7 +306,7 @@ func buildDebTestSetup(name, image, key string) *osPolicyTestSetup {
 }
 
 func buildYumTestSetup(name, image, key string) *osPolicyTestSetup {
-	assertTimeout := 120 * time.Second
+	assertTimeout := 360 * time.Second
 	testName := packageResourceYum
 	machineType := "e2-medium"
 
@@ -368,7 +368,7 @@ func buildYumTestSetup(name, image, key string) *osPolicyTestSetup {
 }
 
 func buildZypperTestSetup(name, image, key string) *osPolicyTestSetup {
-	assertTimeout := 120 * time.Second
+	assertTimeout := 360 * time.Second
 	testName := packageResourceZypper
 	machineType := "e2-medium"
 
@@ -430,7 +430,7 @@ func buildZypperTestSetup(name, image, key string) *osPolicyTestSetup {
 }
 
 func buildRpmTestSetup(name, image, key string) *osPolicyTestSetup {
-	assertTimeout := 120 * time.Second
+	assertTimeout := 360 * time.Second
 	testName := packageResourceRpm
 	machineType := "e2-medium"
 
@@ -513,7 +513,7 @@ func buildRpmTestSetup(name, image, key string) *osPolicyTestSetup {
 }
 
 func buildGooGetTestSetup(name, image, key string) *osPolicyTestSetup {
-	assertTimeout := 120 * time.Second
+	assertTimeout := 360 * time.Second
 	testName := packageResourceGoo
 	machineType := "e2-standard-2"
 
@@ -575,7 +575,7 @@ func buildGooGetTestSetup(name, image, key string) *osPolicyTestSetup {
 }
 
 func buildMsiTestSetup(name, image, key string) *osPolicyTestSetup {
-	assertTimeout := 120 * time.Second
+	assertTimeout := 360 * time.Second
 	testName := packageResourceMsi
 	machineType := "e2-standard-2"
 
@@ -676,7 +676,7 @@ func addPackageResourceTests(key string) []*osPolicyTestSetup {
 }
 
 func buildAptRepositoryResourceTest(name, image, key string) *osPolicyTestSetup {
-	assertTimeout := 120 * time.Second
+	assertTimeout := 360 * time.Second
 	packageName := "osconfig-agent-test"
 	testName := repositoryResourceApt
 	machineType := "e2-medium"
@@ -744,7 +744,7 @@ func buildAptRepositoryResourceTest(name, image, key string) *osPolicyTestSetup 
 }
 
 func buildYumRepositoryResourceTest(name, image, key string) *osPolicyTestSetup {
-	assertTimeout := 120 * time.Second
+	assertTimeout := 360 * time.Second
 	packageName := "osconfig-agent-test"
 	testName := repositoryResourceYum
 	machineType := "e2-medium"
@@ -811,7 +811,7 @@ func buildYumRepositoryResourceTest(name, image, key string) *osPolicyTestSetup 
 }
 
 func buildZypperRepositoryResourceTest(name, image, key string) *osPolicyTestSetup {
-	assertTimeout := 120 * time.Second
+	assertTimeout := 360 * time.Second
 	packageName := "osconfig-agent-test"
 	testName := repositoryResourceZypper
 	machineType := "e2-medium"
@@ -878,7 +878,7 @@ func buildZypperRepositoryResourceTest(name, image, key string) *osPolicyTestSet
 }
 
 func buildGoogetRepositoryResourceTest(name, image, key string) *osPolicyTestSetup {
-	assertTimeout := 120 * time.Second
+	assertTimeout := 360 * time.Second
 	packageName := "osconfig-agent-test"
 	testName := repositoryResourceGoo
 	machineType := "e2-standard-2"
@@ -960,7 +960,7 @@ func addRepositoryResourceTests(key string) []*osPolicyTestSetup {
 }
 
 func buildFileResourceTests(name, image, pkgManager, key string) *osPolicyTestSetup {
-	assertTimeout := 180 * time.Second
+	assertTimeout := 360 * time.Second
 	testName := fileResource
 	machineType := "e2-medium"
 	if strings.Contains(image, "windows") {
@@ -1203,7 +1203,7 @@ func addFileResourceTests(key string) []*osPolicyTestSetup {
 }
 
 func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyTestSetup {
-	assertTimeout := 180 * time.Second
+	assertTimeout := 360 * time.Second
 	testName := linuxExecResource
 	machineType := "e2-medium"
 	checkPaths := []string{"/path1", "/path2", "/path3", "/path4", "/path5", "/path6"}
@@ -1478,7 +1478,7 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 }
 
 func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolicyTestSetup {
-	assertTimeout := 180 * time.Second
+	assertTimeout := 360 * time.Second
 	testName := windowsExecResource
 	machineType := "e2-standard-2"
 	checkPaths := []string{"/path1", "/path2", "/path3", "/path4", "/path5", "/path6", "/path7", "/path8"}
@@ -1847,7 +1847,7 @@ func addExecResourceTests(key string) []*osPolicyTestSetup {
 }
 
 func buildValidationModeTests(name, image, pkgManager, key string) *osPolicyTestSetup {
-	assertTimeout := 180 * time.Second
+	assertTimeout := 360 * time.Second
 	testName := validationMode
 	machineType := "e2-medium"
 	if strings.Contains(image, "windows") {

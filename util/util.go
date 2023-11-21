@@ -36,11 +36,11 @@ import (
 
 // Logger holds log functions.
 type Logger struct {
-	Debugf   func(string, ...interface{})
-	Infof    func(string, ...interface{})
-	Warningf func(string, ...interface{})
-	Errorf   func(string, ...interface{})
-	Fatalf   func(string, ...interface{})
+	Debugf   func(string, ...any)
+	Infof    func(string, ...any)
+	Warningf func(string, ...any)
+	Errorf   func(string, ...any)
+	Fatalf   func(string, ...any)
 }
 
 // NormPath transforms a windows path into an extended-length path as described in
@@ -134,7 +134,7 @@ func (r *DefaultRunner) Run(ctx context.Context, cmd *exec.Cmd) ([]byte, []byte,
 		struct {
 			Command  string
 			Args     []string
-			ExitCode interface{}
+			ExitCode any
 			Stdout   string
 			Stderr   string
 		}{

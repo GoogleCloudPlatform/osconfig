@@ -28,7 +28,6 @@ while [[ -z $restarted ]]; do
   restart=$(curl -f "http://metadata.google.internal/computeMetadata/v1/instance/attributes/restart-agent" -H "Metadata-Flavor: Google")
   if [[ -n $restart ]]; then
     systemctl restart google-osconfig-agent
-    restart -q -n google-osconfig-agent  # required for EL6
     restarted=true
     sleep 30
   fi

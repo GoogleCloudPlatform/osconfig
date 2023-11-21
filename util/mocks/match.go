@@ -25,7 +25,7 @@ type eqCmdMatcher struct {
 	x *exec.Cmd
 }
 
-func (e eqCmdMatcher) Matches(x interface{}) bool {
+func (e eqCmdMatcher) Matches(x any) bool {
 	xCmd, ok := x.(*exec.Cmd)
 	if !ok {
 		return false

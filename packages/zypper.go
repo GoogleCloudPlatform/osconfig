@@ -178,7 +178,7 @@ func parseZypperPatches(ctx context.Context, data []byte) ([]*ZypperPatch, []*Zy
 	for _, ln := range lines {
 		patch, status, err := parseZypperPatch(ln)
 		if err != nil {
-			clog.Debugf(ctx, "skip zypper patch, unable to parse patch, err - %s", err)
+			clog.Debugf(ctx, "skipping a line from zypper patch output: %s", err)
 			continue
 		}
 
@@ -198,7 +198,7 @@ func parseZypperPatches(ctx context.Context, data []byte) ([]*ZypperPatch, []*Zy
 func parseZypperPatch(tableLine []byte) (*ZypperPatch, string, error) {
 	patch := bytes.Split(tableLine, []byte("|"))
 	if len(patch) < 7 || len(patch) > 8 {
-		return nil, "", fmt.Errorf("unexpected format of the zypper patch, expected 7 or 8 segments, got - %d, record - %s", len(patch), string(tableLine))
+		return nil, "", fmt.Errorf("not parsable zypper patch line; expected 7 or 8 segments, got - %d; this usually isn't an error; line: %s", len(patch), string(tableLine))
 	}
 
 	name := string(bytes.TrimSpace(patch[1]))
