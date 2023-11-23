@@ -342,7 +342,7 @@ func main() {
 	// as JSON on stdout. This avoids memory issues with the WUA api since this is
 	// called often for Windows inventory runs.
 	case "wuaupdates":
-		if err := wuaUpdates(flag.Arg(1)); err != nil {
+		if err := wuaUpdates(ctx, flag.Arg(1)); err != nil {
 			fmt.Fprint(os.Stderr, err)
 			os.Exit(1)
 		}

@@ -134,8 +134,8 @@ func runService(ctx context.Context) {
 	}
 }
 
-func wuaUpdates(query string) error {
-	updts, err := packages.WUAUpdates(query)
+func wuaUpdates(ctx context.Context, query string) error {
+	updts, err := packages.WUAUpdates(ctx, query)
 	if err != nil {
 		return err
 	}
