@@ -4,14 +4,16 @@
 labels:
 - examples
 approvers:
-  - adjackura
-  - ryanwe
-  - iamsubratp
-  - wj-chen
-  - manjunathganga
+  - burov
+  - dowgird
+  - Gulio
+  - michaljankowiak
+  - paulinakania
+  - savijatv
 reviewers:
-  - adjackura
-  - ryanwe
-  - iamsubratp
-  - wj-chen
-  - manjunathganga
+  - burov
+  - dowgird
+  - Gulio
+  - michaljankowiak
+  - paulinakania
+  - savijatv
