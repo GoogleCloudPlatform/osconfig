@@ -1,0 +1,35 @@
+# An OS policy to opt-out of CIS check and check compliance status once a day.
+osPolicies:
+- id: exclude-cis-check-and-check-compliance-once-a-day-policy
+  mode: ENFORCEMENT
+  resourceGroups:
+  - resources:
+      id: exclude-cis-check-and-check-compliance-once-a-day
+      exec:
+        validate:
+          interpreter: SHELL
+          # If cis-compliance-scanner.service is active, return an exit code
+          # 100 to indicate that the instance is in compliant state.
+          # Otherwise, return an exit code of 101 to run `enforce` step.
+          script: |-
+            is_active=$(systemctl is-active cis-compliance-scanner.timer)
+            result=$(systemctl show -p Result --value cis-compliance-scanner.service)
+
+            if [ "$is_active" == "active" ] && [ "$result" == "success" ]; then
+              exit 100;
+            else
+              exit 101;
+            fi
+        enforce:
+          interpreter: SHELL
+          # Return an exit code of 100 to indicate that the desired changes
+          # were successfully applied.
+          script: |-
+            # Opt-out of the etc-passwd-permissions check.
+            sed -i 's/^EXTRA.*$/EXTRA_OPTIONS="--benchmark-opt-out-ids=etc-passwd-permissions"/' /etc/cis-scanner/env_vars &&
+            # Check the compliance of the instance once a day.
+            systemctl start cis-compliance-scanner.timer
+            # Ensure cis-compliance-scanner completes before exiting
+            PID=`systemctl show --property MainPID --value cis-compliance-scanner.service` &&
+            timeout 5m bash -c -- 'while [ -e /proc/'$PID' ]; do echo "CIS Scanner with PID:'$PID' is still running"; sleep 1; done' &&
+            exit 100

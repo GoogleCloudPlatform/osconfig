@@ -1,0 +1,43 @@
+# An OS policy to check CIS level 1 compliance once an hour.
+osPolicies:
+- id: ensure-cis-level1-compliance-once-an-hour-policy
+  mode: ENFORCEMENT
+  resourceGroups:
+  - resources:
+      id: ensure-cis-level1-compliance-once-an-hour
+      exec:
+        validate:
+          interpreter: SHELL
+          # If cis-compliance-scanner.service is active, return an exit code
+          # 100 to indicate that the instance is in compliant state.
+          # Otherwise, return an exit code of 101 to run `enforce` step.
+          script: |-
+            is_active=$(systemctl is-active cis-compliance-scanner.timer)
+            result=$(systemctl show -p Result --value cis-compliance-scanner.service)
+
+            if [ "$is_active" == "active" ] && [ "$result" == "success" ]; then
+              exit 100;
+            else
+              exit 101;
+            fi
+        enforce:
+          interpreter: SHELL
+          # Return an exit code of 100 to indicate that the desired changes
+          # were successfully applied.
+          script: |-
+            # Overwrite "OnUnitActiveSec" field of the
+            # cis-compliance-scanner.timer to trigger
+            # cis-compliance-scanner.service once an hour
+            # instead of once a day.
+            mkdir /etc/systemd/system/cis-compliance-scanner.timer.d
+            tee /etc/systemd/system/cis-compliance-scanner.timer.d/override.conf <<EOF
+            [Unit]
+            Description=Run CIS Scanner once an hour
+
+            [Timer]
+            OnUnitActiveSec=1h
+            EOF
+            # Reload systemd units.
+            systemctl daemon-reload
+            # Check the compliance of the instance once an hour.
+            systemctl start cis-compliance-scanner.timer && exit 100
