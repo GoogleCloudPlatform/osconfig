@@ -34,7 +34,7 @@ var (
 
 func init() {
 	if runtime.GOOS != "windows" {
-		pip = "/usr/bin/pip"
+		pip = "/usr/bin/pip3"
 	}
 	PipExists = util.Exists(pip)
 }
