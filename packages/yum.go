@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"slices"
 	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
@@ -109,14 +110,15 @@ func parseYumUpdates(data []byte) []*PkgInfo {
 
 	var pkgs []*PkgInfo
 	var upgrading bool
+	packagesInstallOrUpdateKeywords := []string{"Upgrading:", "Updating:", "Installing:", "Installing dependencies:", "Installing weak dependencies:"}
 	for _, ln := range lines {
 		pkg := bytes.Fields(ln)
 		if len(pkg) == 0 {
 			continue
 		}
-		// Continue until we see the installing/upgrading section.
+		// Continue until we see one of the installing/upgrading keywords section.
 		// Yum has this as Updating, dnf is Upgrading.
-		if string(pkg[0]) == "Upgrading:" || string(pkg[0]) == "Updating:" || string(pkg[0]) == "Installing:" {
+		if slices.Contains(packagesInstallOrUpdateKeywords, string(bytes.Join(pkg, []byte(" ")))) {
 			upgrading = true
 			continue
 		} else if !upgrading {
