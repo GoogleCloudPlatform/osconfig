@@ -30,6 +30,6 @@ osPolicies:
             # Check the compliance of the instance once a day.
             systemctl start cis-compliance-scanner.timer
             # Ensure cis-compliance-scanner completes before exiting
-            PID=`systemctl show --property MainPID --value cis-compliance-scanner.service` &&
+            PID=$(systemctl show --property MainPID --value cis-compliance-scanner.service) &&
             timeout 5m bash -c -- 'while [ -e /proc/'$PID' ]; do echo "CIS Scanner with PID:'$PID' is still running"; sleep 1; done' &&
             exit 100
