@@ -340,6 +340,128 @@ Conflicts   : [32]
 	}
 }
 
+func TestParsePatchInfo_differentFormatsOfConflictPkgsVersions(t *testing.T) {
+	patchInfo := `
+Information for patch SUSE-SLE-Module-Basesystem-15-SP5-2023-4176:
+------------------------------------------------------------------
+Repository  : SLE-Module-Basesystem15-SP5-Updates
+Name        : SUSE-SLE-Module-Basesystem-15-SP5-2023-4176
+Version     : 1
+Arch        : noarch
+Vendor      : maint-coord@suse.de
+Status      : needed
+Category    : security
+Severity    : important
+Created On  : Tue Oct 24 13:35:58 2023
+Interactive : ---
+Summary     : Security update for ruby2.5
+Description :
+    This update for ruby2.5 fixes the following issues:
+
+    - CVE-2023-28755: Fixed a ReDoS vulnerability in URI. (bsc#1209891)
+    - CVE-2023-28756: Fixed an expensive regexp in the RFC2822 time parser. (bsc#1209967)
+    - CVE-2021-41817: Fixed a Regular Expression Denial of Service Vulnerability of Date Parsing Methods. (bsc#1193035)
+    - CVE-2021-33621: Fixed a HTTP response splitting vulnerability in CGI gem. (bsc#1205726)
+Provides    : patch:SUSE-SLE-Module-Basesystem-15-SP5-2023-4176 = 1
+Conflicts   : [11]
+    libruby2_5-2_5.x86_64 < 2.5.9-150000.4.29.1
+    libruby2_5-2_5.noarch < 2.5.9-150000.4.29.1
+    srcpackage:ruby2.5 < 2.5.9-150000.4.29.1
+    ruby2.5.noarch < 2.5.9-150000.4.29.1
+    ruby2.5.x86_64 < 2.5.9-150000.4.29.1
+    ruby2.5-devel.x86_64 < 2.5.9-150000.4.29.1
+    ruby2.5-devel.noarch < 2.5.9-150000.4.29.1
+    ruby2.5-devel-extra.x86_64 < 2.5.9-150000.4.29.1
+    ruby2.5-devel-extra.noarch < 2.5.9-150000.4.29.1
+    ruby2.5-stdlib.x86_64 < 2.5.9-150000.4.29.1
+    ruby2.5-stdlib.noarch < 2.5.9-150000.4.29.1
+Information for patch SUSE-SLE-Module-Basesystem-15-SP5-2023-4843:
+------------------------------------------------------------------
+Repository  : SLE-Module-Basesystem15-SP5-Updates
+Name        : SUSE-SLE-Module-Basesystem-15-SP5-2023-4843
+Version     : 1
+Arch        : noarch
+Vendor      : maint-coord@suse.de
+Status      : needed
+Category    : security
+Severity    : moderate
+Created On  : Thu Dec 14 11:23:04 2023
+Interactive : ---
+Summary     : Security update for python3-cryptography
+Description :
+    This update for python3-cryptography fixes the following issues:
+    - CVE-2023-49083: Fixed a NULL pointer dereference when loading certificates from a PKCS#7 bundle (bsc#1217592).
+Provides    : patch:SUSE-SLE-Module-Basesystem-15-SP5-2023-4843 = 1
+Conflicts   : [3]
+    srcpackage:python3-cryptography < 3.3.2-150400.23.1
+    python3-cryptography.noarch < 3.3.2-150400.23.1
+    python3-cryptography.x86_64 < 3.3.2-150400.23.1
+Information for patch SUSE-SLE-Module-Basesystem-15-SP5-2023-3973:
+------------------------------------------------------------------
+Repository  : SLE-Module-Basesystem15-SP5-Updates
+Name        : SUSE-SLE-Module-Basesystem-15-SP5-2023-3973
+Version     : 1
+Arch        : noarch
+Vendor      : maint-coord@suse.de
+Status      : needed
+Category    : recommended
+Severity    : moderate
+Created On  : Thu Oct  5 08:17:12 2023
+Interactive : restart
+Summary     : Recommended update for zypper
+Description :
+    This update for zypper fixes the following issues:
+
+    - Fix name of the bash completion script (bsc#1215007)
+    - Update notes about failing signature checks (bsc#1214395)
+    - Improve the SIGINT handler to be signal safe (bsc#1214292)
+    - Update to version 1.14.64
+    - Changed location of bash completion script (bsc#1213854).
+Provides    : patch:SUSE-SLE-Module-Basesystem-15-SP5-2023-3973 = 1
+Conflicts   : [5]
+    srcpackage:zypper < 1.14.64-150400.3.32.1
+    zypper.noarch < 1.14.64-150400.3.32.1
+    zypper.x86_64 < 1.14.64-150400.3.32.1
+    zypper-log < 1.14.64-150400.3.32.1
+    zypper-needs-restarting < 1.14.64-150400.3.32.1
+`
+	ppMap, err := parseZypperPatchInfo([]byte(patchInfo))
+	if err != nil {
+		t.Errorf("unexpected error: %+v", err)
+	}
+
+	if _, ok := ppMap["libruby2_5-2_5"]; !ok {
+		t.Errorf("Unexpected result: expected a patch for libruby2_5-2_5")
+	}
+
+	if _, ok := ppMap["ruby2.5"]; !ok {
+		t.Errorf("Unexpected result: expected a patch for ruby2.5")
+	}
+
+	if _, ok := ppMap["python3-cryptography"]; !ok {
+		t.Errorf("Unexpected result: expected a patch for python3-cryptography")
+	}
+
+	if _, ok := ppMap["zypper-log"]; !ok {
+		t.Errorf("Unexpected result: expected a patch for zypper-log")
+	}
+
+	if _, ok := ppMap["zypper-needs-restarting"]; !ok {
+		t.Errorf("Unexpected result: expected a patch for zypper-needs-restarting")
+	}
+
+	patches, ok := ppMap["python3-cryptography"]
+	if !ok {
+		t.Errorf("Unexpected result: expected a patch for python3-cryptography")
+	} else {
+		for _, patch := range patches {
+			if strings.Compare(patch, "SUSE-SLE-Module-Basesystem-15-SP5-2023-4843") != 0 {
+				t.Errorf("Unexptected result: patch name should be SUSE-SLE-Module-Basesystem-15-SP5-2023-4843")
+			}
+		}
+	}
+}
+
 func TestZypperPackagesInPatch(t *testing.T) {
 	ppMap, err := ZypperPackagesInPatch(testCtx, nil)
 	if err != nil {
