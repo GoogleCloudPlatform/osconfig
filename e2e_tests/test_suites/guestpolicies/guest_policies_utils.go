@@ -247,12 +247,12 @@ enabled=1
 gpgcheck=0
 EOM
 zypper -n remove ed
-zypper -n --no-gpg-checks install ed-0.2-39.el5_2
+zypper -n --no-gpg-checks install cowsay-3.03-20.el7
 %[1]s
 %[2]s
 while true; do
   isinstalled=$(/usr/bin/rpmquery -a ed)
-  if [[ $isinstalled =~ 0.2-39.el5_2 ]]; then
+  if [[ $isinstalled =~ 3.03-20.el7 ]]; then
     uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[3]s
   else
     uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[4]s
