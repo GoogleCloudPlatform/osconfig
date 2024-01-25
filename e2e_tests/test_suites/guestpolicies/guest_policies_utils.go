@@ -239,22 +239,18 @@ while(1) {
 	case "zypper":
 		ss = `
 echo 'Adding test repo'
-cat > /etc/zypp/repos.d/google-osconfig-agent.repo <<EOM
-[test-repo]
-name=test repo
-baseurl=https://packages.cloud.google.com/yum/repos/osconfig-agent-test-repository
-enabled=1
-gpgcheck=0
-EOM
-zypper -n remove ed
+zypper ar --no-gpgcheck -f "https://packages.cloud.google.com/yum/repos/osconfig-agent-test-repository" "test-repo"
+zypper refresh
+zypper -n remove cowsay
 zypper -n --no-gpg-checks install cowsay-3.03-20.el7
 %[1]s
 %[2]s
 while true; do
-  isinstalled=$(/usr/bin/rpmquery -a ed)
+  isinstalled=$(/usr/bin/rpmquery -a cowsay)
   if [[ $isinstalled =~ 3.03-20.el7 ]]; then
     uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[3]s
   else
+    # For package update tests, the new version after the agent update it should be cowsay-3.04-2.el7.noarch
     uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[4]s
   fi
   curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"

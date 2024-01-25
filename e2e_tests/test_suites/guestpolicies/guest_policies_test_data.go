@@ -92,6 +92,9 @@ func buildPkgUpdateTestSetup(name, image, pkgManager, key string) *guestPolicyTe
 		packageName = "cowsay"
 		machineType = "e2-standard-4"
 	}
+	if pkgManager == "zypper" {
+		packageName = "cowsay"
+	}
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
 	gp := &osconfigpb.GuestPolicy{
 		Packages:   osconfigserver.BuildPackagePolicy(nil, nil, []string{packageName}),
@@ -126,6 +129,9 @@ func buildPkgDoesNotUpdateTestSetup(name, image, pkgManager, key string) *guestP
 	if pkgManager == "googet" {
 		packageName = "cowsay"
 		machineType = "e2-standard-4"
+	}
+	if pkgManager == "zypper" {
+		packageName = "cowsay"
 	}
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
