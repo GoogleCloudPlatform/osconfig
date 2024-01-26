@@ -399,7 +399,11 @@ while ($true) {
 	case "apt":
 		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigDeb(), waitForRestartLinux, scriptLinux)
 	case "yum":
-		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigEL(image), waitForRestartLinux, scriptLinux)
+		// A dependancy package for ed-1.1-3.3.el6.x86_64.rpm which is used in Enterprise-Linux Recipe steps tests
+		yumInstallInfoPackage := `
+    yum install -y info
+    `
+		script = fmt.Sprintf("%s\n%s\n%s\n%s", yumInstallInfoPackage, utils.InstallOSConfigEL(image), waitForRestartLinux, scriptLinux)
 	case "zypper":
 		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigSUSE(), waitForRestartLinux, scriptLinux)
 	case "googet":
