@@ -405,7 +405,10 @@ while ($true) {
     `
 		script = fmt.Sprintf("%s\n%s\n%s\n%s", yumInstallInfoPackage, utils.InstallOSConfigEL(image), waitForRestartLinux, scriptLinux)
 	case "zypper":
-		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigSUSE(), waitForRestartLinux, scriptLinux)
+		zypperRemoveEdPackageIfExist := `
+    zypper remove -y ed
+    `
+		script = fmt.Sprintf("%s\n%s\n%s\n%s", zypperRemoveEdPackageIfExist, utils.InstallOSConfigSUSE(), waitForRestartLinux, scriptLinux)
 	case "googet":
 		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigGooGet(), waitForRestartWin, scriptWin)
 		key = "windows-startup-script-ps1"
