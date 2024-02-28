@@ -400,12 +400,11 @@ while ($true) {
 		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigDeb(), waitForRestartLinux, scriptLinux)
 	case "yum":
 		// A dependancy package for ed-1.1-3.3.el6.x86_64.rpm which is used in Enterprise-Linux Recipe steps tests
-		yumInstallInfoPackage := `
-    yum install -y info
-    `
+		yumInstallInfoPackage := fmt.Sprintf("\n%s\n", "yum install -y info")
 		script = fmt.Sprintf("%s\n%s\n%s\n%s", yumInstallInfoPackage, utils.InstallOSConfigEL(image), waitForRestartLinux, scriptLinux)
 	case "zypper":
-		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigSUSE(), waitForRestartLinux, scriptLinux)
+		zypperRemoveEdPackageIfExist := fmt.Sprintf("\n%s\n", "zypper remove -y ed")
+		script = fmt.Sprintf("%s\n%s\n%s\n%s", zypperRemoveEdPackageIfExist, utils.InstallOSConfigSUSE(), waitForRestartLinux, scriptLinux)
 	case "googet":
 		script = fmt.Sprintf("%s\n%s\n%s", utils.InstallOSConfigGooGet(), waitForRestartWin, scriptWin)
 		key = "windows-startup-script-ps1"

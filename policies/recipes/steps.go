@@ -464,14 +464,14 @@ func stepRunScript(ctx context.Context, step *agentendpointpb.SoftwareRecipe_Ste
 		if runtime.GOOS == "windows" {
 			cmd = scriptPath
 		} else {
-			args = append([]string{scriptPath})
+			args = append(args, scriptPath)
 			cmd = "/bin/sh"
 		}
 	case agentendpointpb.SoftwareRecipe_Step_RunScript_POWERSHELL:
 		if runtime.GOOS != "windows" {
 			return fmt.Errorf("interpreter %q can only be used on Windows systems", step.Interpreter)
 		}
-		args = append([]string{"-File", scriptPath})
+		args = append(args, "-File", scriptPath)
 		cmd = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\PowerShell.exe"
 	default:
 		return fmt.Errorf("unsupported interpreter %q", step.Interpreter)

@@ -141,14 +141,14 @@ func (e *execResource) run(ctx context.Context, name string, execR *agentendpoin
 		if goos == "windows" {
 			cmd = name
 		} else {
-			args = append([]string{name})
+			args = append(args, name)
 			cmd = "/bin/sh"
 		}
 	case agentendpointpb.OSPolicy_Resource_ExecResource_Exec_POWERSHELL:
 		if goos != "windows" {
 			return nil, nil, 0, fmt.Errorf("interpreter %q can only be used on Windows systems", execR.GetInterpreter())
 		}
-		args = append([]string{"-File", name})
+		args = append(args, "-File", name)
 		cmd = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\PowerShell.exe"
 	default:
 		return nil, nil, 0, fmt.Errorf("unsupported interpreter %q", execR.GetInterpreter())
