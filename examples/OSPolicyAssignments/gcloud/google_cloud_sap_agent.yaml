@@ -1,0 +1,261 @@
+#
+# For use with the gcloud OS Policy create / update command
+#
+# An OS Policy that will install the Google Cloud SAP Agent and keep it updated
+# This policy will apply to all RHEL 7.*, 8.*, 9.*, SLES 12.*, 15.*, and Windows with
+# OS images that have the label "workload=sap".  The labels can be modified in the labels section.
+#
+# This policy will apply when the VM has enabled the osconfig metadata: "enable-osconfig=TRUE"
+#
+osPolicies:
+  - id: google-cloud-sap-agent-policy
+    mode: ENFORCEMENT
+    resourceGroups:
+      # RHEL 7.*
+      - inventoryFilters:
+          - osShortName: rhel
+            osVersion: 7.*
+        resources:
+          - id: sapagent-repo
+            repository:
+              yum:
+                id: google-cloud-sap-agent
+                displayName: Google Cloud Agent for SAP Repository
+                baseUrl: https://packages.cloud.google.com/yum/repos/google-cloud-sap-agent-el7-x86_64
+                gpgKeys:
+                  - https://packages.cloud.google.com/yum/doc/yum-key.gpg
+                  - https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+          - id: install-sapagent
+            exec:
+              validate:
+                interpreter: SHELL
+                # If the Agent for SAP is already installed, return an exit code 100 to indicate
+                # that exec resource is already in desired state. In this scenario,
+                # the `enforce` step will not be run.
+                # Otherwise return an exit code of 101 to indicate that exec resource is not in
+                # desired state. In this scenario, the `enforce` step will be run.
+                script: if sudo yum list installed | grep google-cloud-sap-agent; then exit 100; else exit 101; fi
+              enforce:
+                interpreter: SHELL
+                # Install the Agent for SAP and return an exit code of 100 to indicate that the
+                # resource is now in its desired state.
+                script: sudo yum install -y google-cloud-sap-agent && exit 100
+          - id: update-sapagent
+            exec:
+              validate:
+                interpreter: SHELL
+                # If the Agent for SAP is already up-to-date, return an exit code 100 to indicate
+                # that exec resource is already in desired state. In this scenario,
+                # the `enforce` step will not be run.
+                # Otherwise return an exit code of 101 to indicate that exec resource is not in
+                # desired state. In this scenario, the `enforce` step will be run.
+                script: if yum check-update google-cloud-sap-agent | grep google-cloud-sap-agent; then exit 101; else exit 100; fi
+              enforce:
+                interpreter: SHELL
+                # Update the Agent for SAP and return an exit code of 100 to indicate that the
+                # resource is now in its desired state.
+                script: yum update -y google-cloud-sap-agent && exit 100
+      # RHEL 8.*
+      - inventoryFilters:
+          - osShortName: rhel
+            osVersion: 8.*
+        resources:
+          - id: sapagent-repo
+            repository:
+              yum:
+                id: google-cloud-sap-agent
+                displayName: Google Cloud Agent for SAP Repository
+                baseUrl: https://packages.cloud.google.com/yum/repos/google-cloud-sap-agent-el8-x86_64
+                gpgKeys:
+                  - https://packages.cloud.google.com/yum/doc/yum-key.gpg
+                  - https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+          - id: install-sapagent
+            exec:
+              validate:
+                interpreter: SHELL
+                # If the Agent for SAP is already installed, return an exit code 100 to indicate
+                # that exec resource is already in desired state. In this scenario,
+                # the `enforce` step will not be run.
+                # Otherwise return an exit code of 101 to indicate that exec resource is not in
+                # desired state. In this scenario, the `enforce` step will be run.
+                script: if sudo yum list installed | grep google-cloud-sap-agent; then exit 100; else exit 101; fi
+              enforce:
+                interpreter: SHELL
+                # Install the Agent for SAP and return an exit code of 100 to indicate that the
+                # resource is now in its desired state.
+                script: sudo yum install -y google-cloud-sap-agent && exit 100
+          - id: update-sapagent
+            exec:
+              validate:
+                interpreter: SHELL
+                # If the Agent for SAP is already up-to-date, return an exit code 100 to indicate
+                # that exec resource is already in desired state. In this scenario,
+                # the `enforce` step will not be run.
+                # Otherwise return an exit code of 101 to indicate that exec resource is not in
+                # desired state. In this scenario, the `enforce` step will be run.
+                script: if yum check-update google-cloud-sap-agent | grep google-cloud-sap-agent; then exit 101; else exit 100; fi
+              enforce:
+                interpreter: SHELL
+                # Update the Agent for SAP and return an exit code of 100 to indicate that the
+                # resource is now in its desired state.
+                script: yum update -y google-cloud-sap-agent && exit 100
+      # RHEL 9.*
+      - inventoryFilters:
+          - osShortName: rhel
+            osVersion: 9.*
+        resources:
+          - id: sapagent-repo
+            repository:
+              yum:
+                id: google-cloud-sap-agent
+                displayName: Google Cloud Agent for SAP Repository
+                baseUrl: https://packages.cloud.google.com/yum/repos/google-cloud-sap-agent-el9-x86_64
+                gpgKeys:
+                  - https://packages.cloud.google.com/yum/doc/yum-key.gpg
+                  - https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+          - id: install-sapagent
+            exec:
+              validate:
+                interpreter: SHELL
+                # If the Agent for SAP is already installed, return an exit code 100 to indicate
+                # that exec resource is already in desired state. In this scenario,
+                # the `enforce` step will not be run.
+                # Otherwise return an exit code of 101 to indicate that exec resource is not in
+                # desired state. In this scenario, the `enforce` step will be run.
+                script: if sudo yum list installed | grep google-cloud-sap-agent; then exit 100; else exit 101; fi
+              enforce:
+                interpreter: SHELL
+                # Install the Agent for SAP and return an exit code of 100 to indicate that the
+                # resource is now in its desired state.
+                script: sudo yum install -y google-cloud-sap-agent && exit 100
+          - id: update-sapagent
+            exec:
+              validate:
+                interpreter: SHELL
+                # If the Agent for SAP is already up-to-date, return an exit code 100 to indicate
+                # that exec resource is already in desired state. In this scenario,
+                # the `enforce` step will not be run.
+                # Otherwise return an exit code of 101 to indicate that exec resource is not in
+                # desired state. In this scenario, the `enforce` step will be run.
+                script: if yum check-update google-cloud-sap-agent | grep google-cloud-sap-agent; then exit 101; else exit 100; fi
+              enforce:
+                interpreter: SHELL
+                # Update the Agent for SAP and return an exit code of 100 to indicate that the
+                # resource is now in its desired state.
+                script: yum update -y google-cloud-sap-agent && exit 100
+      # SLES 12.*
+      - inventoryFilters:
+          - osShortName: sles
+            osVersion: 12.*
+        resources:
+          - id: sapagent-repo
+            repository:
+              zypper:
+                id: google-cloud-sap-agent
+                displayName: Google Cloud Agent for SAP Repository
+                baseUrl: https://packages.cloud.google.com/yum/repos/google-cloud-sap-agent-sles12-x86_64
+                gpgKeys:
+                  - https://packages.cloud.google.com/yum/doc/yum-key.gpg
+                  - https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+          - id: install-sapagent
+            exec:
+              validate:
+                interpreter: SHELL
+                # If the Agent for SAP is already installed, return an exit code 100 to indicate
+                # that exec resource is already in desired state. In this scenario,
+                # the `enforce` step will not be run.
+                # Otherwise return an exit code of 101 to indicate that exec resource is not in
+                # desired state. In this scenario, the `enforce` step will be run.
+                script: if sudo zypper search -i google-cloud-sap-agent; then exit 100; else exit 101; fi
+              enforce:
+                interpreter: SHELL
+                # Install the Agent for SAP and return an exit code of 100 to indicate that the
+                # resource is now in its desired state.
+                script: sudo zypper --gpg-auto-import-keys install -y google-cloud-sap-agent && exit 100
+          - id: update-sapagent
+            exec:
+              validate:
+                interpreter: SHELL
+                # If the Agent for SAP is already up-to-date, return an exit code 100 to indicate
+                # that exec resource is already in desired state. In this scenario,
+                # the `enforce` step will not be run.
+                # Otherwise return an exit code of 101 to indicate that exec resource is not in
+                # desired state. In this scenario, the `enforce` step will be run.
+                script: if sudo zypper list-updates -r google-cloud-sap-agent | grep google-cloud-sap-agent; then exit 101; else exit 100; fi
+              enforce:
+                interpreter: SHELL
+                # Update the Agent for SAP and return an exit code of 100 to indicate that the
+                # resource is now in its desired state.
+                script:  sudo zypper --gpg-auto-import-keys update -y google-cloud-sap-agent && exit 100
+      # SLES 15.*
+      - inventoryFilters:
+          - osShortName: sles
+            osVersion: 15.*
+        resources:
+          - id: sapagent-repo
+            repository:
+              zypper:
+                id: google-cloud-sap-agent
+                displayName: Google Cloud Agent for SAP Repository
+                baseUrl: https://packages.cloud.google.com/yum/repos/google-cloud-sap-agent-sles15-x86_64
+                gpgKeys:
+                  - https://packages.cloud.google.com/yum/doc/yum-key.gpg
+                  - https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+          - id: install-sapagent
+            exec:
+              validate:
+                interpreter: SHELL
+                # If the Agent for SAP is already installed, return an exit code 100 to indicate
+                # that exec resource is already in desired state. In this scenario,
+                # the `enforce` step will not be run.
+                # Otherwise return an exit code of 101 to indicate that exec resource is not in
+                # desired state. In this scenario, the `enforce` step will be run.
+                script: if sudo zypper search -i google-cloud-sap-agent; then exit 100; else exit 101; fi
+              enforce:
+                interpreter: SHELL
+                # Install the Agent for SAP and return an exit code of 100 to indicate that the
+                # resource is now in its desired state.
+                script: sudo zypper --gpg-auto-import-keys install -y google-cloud-sap-agent && exit 100
+          - id: update-sapagent
+            exec:
+              validate:
+                interpreter: SHELL
+                # If the Agent for SAP is already up-to-date, return an exit code 100 to indicate
+                # that exec resource is already in desired state. In this scenario,
+                # the `enforce` step will not be run.
+                # Otherwise return an exit code of 101 to indicate that exec resource is not in
+                # desired state. In this scenario, the `enforce` step will be run.
+                script: if sudo zypper list-updates -r google-cloud-sap-agent | grep google-cloud-sap-agent; then exit 101; else exit 100; fi
+              enforce:
+                interpreter: SHELL
+                # Update the Agent for SAP and return an exit code of 100 to indicate that the
+                # resource is now in its desired state.
+                script:  sudo zypper --gpg-auto-import-keys update -y google-cloud-sap-agent && exit 100
+      # Windows
+      - inventoryFilters:
+          - osShortName: windows
+        resources:
+          - id: sapagent-repo
+            repository:
+              goo:
+                name: google-cloud-sap-agent
+                url: https://packages.cloud.google.com/yuck/repos/google-cloud-sap-agent-windows
+          - id: install-sapagent
+            pkg:
+              desiredState: INSTALLED
+              googet:
+                name: google-cloud-sap-agent
+
+instanceFilter:
+  inclusionLabels:
+    # Modify labels for the VMs that you want the policy to apply to
+    - labels:
+       workload: sap
+  inventories:
+    - osShortName: rhel
+    - osShortName: sles
+    - osShortName: windows
+rollout:
+  disruptionBudget:
+    fixed: 10
+  minWaitDuration: 60s
