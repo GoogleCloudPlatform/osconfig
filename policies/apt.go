@@ -28,7 +28,6 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/armor"
-	"golang.org/x/crypto/openpgp/packet"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
@@ -40,7 +39,20 @@ var debArchiveTypeMap = map[agentendpointpb.AptRepository_ArchiveType]string{
 
 const aptGPGFile = "/etc/apt/trusted.gpg.d/osconfig_agent_managed.gpg"
 
-func getAptGPGKey(key string) (*openpgp.Entity, error) {
+func isArmoredGPGKey(keyData []byte) bool {
+	var buf bytes.Buffer
+	tee := io.TeeReader(bytes.NewReader(keyData), &buf)
+
+	// Try decoding as armored
+	decodedBlock, err := armor.Decode(tee)
+	if err == nil && decodedBlock != nil {
+		return true
+	}
+
+	return false
+}
+
+func getAptGPGKey(key string) (openpgp.EntityList, error) {
 	resp, err := http.Get(key)
 	if err != nil {
 		return nil, err
@@ -50,18 +62,16 @@ func getAptGPGKey(key string) (*openpgp.Entity, error) {
 		return nil, fmt.Errorf("key size of %d too large", resp.ContentLength)
 	}
 
-	var buf bytes.Buffer
-	tee := io.TeeReader(resp.Body, &buf)
-
-	b, err := armor.Decode(tee)
-	if err != nil && err != io.EOF {
-		return nil, err
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("can not read response body for key %s, err: %v", key, err)
 	}
 
-	if b == nil {
-		return openpgp.ReadEntity(packet.NewReader(&buf))
+	if isArmoredGPGKey(responseBody) {
+		return openpgp.ReadArmoredKeyRing(bytes.NewBuffer(responseBody))
 	}
-	return openpgp.ReadEntity(packet.NewReader(b.Body))
+
+	return openpgp.ReadKeyRing(bytes.NewReader(responseBody))
 }
 
 func containsEntity(es []*openpgp.Entity, e *openpgp.Entity) bool {
@@ -86,13 +96,15 @@ func aptRepositories(ctx context.Context, repos []*agentendpointpb.AptRepository
 
 	sort.Strings(keys)
 	for _, key := range keys {
-		e, err := getAptGPGKey(key)
+		entityList, err := getAptGPGKey(key)
 		if err != nil {
 			clog.Errorf(ctx, "Error fetching gpg key %q: %v", key, err)
 			continue
 		}
-		if !containsEntity(es, e) {
-			es = append(es, e)
+		for _, e := range entityList {
+			if !containsEntity(es, e) {
+				es = append(es, e)
+			}
 		}
 	}
 
