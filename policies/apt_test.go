@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
@@ -78,5 +79,32 @@ func TestAptRepositories(t *testing.T) {
 		if got != tt.want {
 			t.Errorf("%s: got:\n%q\nwant:\n%q", tt.desc, got, tt.want)
 		}
+	}
+}
+
+func TestGetAptGPGKey(t *testing.T) {
+	key := "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+
+	entityList, err := getAptGPGKey(key)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(entityList) != 2 {
+		t.Errorf("Expected: %v key(s), got: %v", 2, len(entityList))
+	}
+
+	// check if Artifact Regitry key exist or not
+	artifactRegistryKeyFound := false
+	for _, e := range entityList {
+		for key := range e.Identities {
+			if strings.Contains(key, "Artifact Registry") {
+				artifactRegistryKeyFound = true
+			}
+		}
+	}
+
+	if !artifactRegistryKeyFound {
+		t.Errorf("Expected to find Artifact Registry key in Google Cloud Public GPG key, but its missed.")
 	}
 }

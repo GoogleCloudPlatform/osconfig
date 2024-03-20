@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -275,5 +276,32 @@ func TestRepositoryResourceEnforceState(t *testing.T) {
 				t.Fatal("Repo file contents do not match after enforcement")
 			}
 		})
+	}
+}
+
+func TestFetchGPGKey(t *testing.T) {
+	key := "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+
+	entityList, err := fetchGPGKey(key)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(entityList) != 2 {
+		t.Errorf("Expected: %v key(s), got: %v", 2, len(entityList))
+	}
+
+	// check if Artifact Regitry key exist or not
+	artifactRegistryKeyFound := false
+	for _, e := range entityList {
+		for key := range e.Identities {
+			if strings.Contains(key, "Artifact Registry") {
+				artifactRegistryKeyFound = true
+			}
+		}
+	}
+
+	if !artifactRegistryKeyFound {
+		t.Errorf("Expected to find Artifact Registry key in Google Cloud Public GPG key, but its missed.")
 	}
 }

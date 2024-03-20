@@ -31,7 +31,6 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/util"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/armor"
-	"golang.org/x/crypto/openpgp/packet"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
 )
@@ -176,40 +175,50 @@ func zypperRepoContents(repo *agentendpointpb.OSPolicy_Resource_RepositoryResour
 	return buf.Bytes()
 }
 
-func fetchGPGKey(key string) ([]byte, error) {
+func serializeGPGKeyEntity(entityList openpgp.EntityList) ([]byte, error) {
+	var buf bytes.Buffer
+	for _, entity := range entityList {
+		if err := entity.Serialize(&buf); err != nil {
+			return nil, fmt.Errorf("error serializing gpg key: %v", err)
+		}
+	}
+	return buf.Bytes(), nil
+}
+
+func isArmoredGPGKey(keyData []byte) bool {
+	var buf bytes.Buffer
+	tee := io.TeeReader(bytes.NewReader(keyData), &buf)
+
+	// Try decoding as armored
+	decodedBlock, err := armor.Decode(tee)
+	if err == nil && decodedBlock != nil {
+		return true
+	}
+
+	return false
+}
+
+func fetchGPGKey(key string) (openpgp.EntityList, error) {
 	resp, err := http.Get(key)
 	if err != nil {
-		return nil, fmt.Errorf("error downloading gpg key: %v", err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.ContentLength > 1024*1024 {
 		return nil, fmt.Errorf("key size of %d too large", resp.ContentLength)
 	}
 
-	var buf bytes.Buffer
-	tee := io.TeeReader(resp.Body, &buf)
-
-	decoded, err := armor.Decode(tee)
-	if err != nil && err != io.EOF {
-		return nil, fmt.Errorf("error decoding gpg key: %v", err)
-	}
-
-	var entity *openpgp.Entity
-	if decoded == nil {
-		entity, err = openpgp.ReadEntity(packet.NewReader(&buf))
-	} else {
-		entity, err = openpgp.ReadEntity(packet.NewReader(decoded.Body))
-	}
+	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("error reading gpg key: %v", err)
+		return nil, fmt.Errorf("can not read response body for key %s, err: %v", key, err)
 	}
 
-	buf.Reset()
-	if err := entity.Serialize(&buf); err != nil {
-		return nil, fmt.Errorf("error serializing gpg key: %v", err)
+	if isArmoredGPGKey(responseBody) {
+		return openpgp.ReadArmoredKeyRing(bytes.NewBuffer(responseBody))
 	}
 
-	return buf.Bytes(), nil
+	return openpgp.ReadKeyRing(bytes.NewReader(responseBody))
+
 }
 
 func (r *repositoryResource) validate(ctx context.Context) (*ManagedResources, error) {
@@ -224,7 +233,11 @@ func (r *repositoryResource) validate(ctx context.Context) (*ManagedResources, e
 		r.managedRepository.RepoFileContents = aptRepoContents(r.GetApt())
 		repoFormat = agentconfig.AptRepoFormat()
 		if gpgkey != "" {
-			keyContents, err := fetchGPGKey(gpgkey)
+			entityList, err := fetchGPGKey(gpgkey)
+			if err != nil {
+				return nil, fmt.Errorf("error fetching apt gpg key %q: %v", gpgkey, err)
+			}
+			keyContents, err := serializeGPGKeyEntity(entityList)
 			if err != nil {
 				return nil, fmt.Errorf("error fetching apt gpg key %q: %v", gpgkey, err)
 			}
