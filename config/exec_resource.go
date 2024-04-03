@@ -31,7 +31,7 @@ import (
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
 )
 
-const maxExecOutputSize = 100 * 1024
+const maxExecOutputSize = 500 * 1024
 
 var runner = util.CommandRunner(&util.DefaultRunner{})
 
