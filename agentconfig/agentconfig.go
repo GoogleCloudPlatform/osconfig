@@ -68,14 +68,11 @@ const (
 	debugEnabledDefault            = false
 
 	oldConfigDirLinux = "/etc/osconfig"
-	cacheDirWindows   = `C:\Program Files\Google\OSConfig`
 	cacheDirLinux     = "/var/lib/google_osconfig_agent"
 
-	taskStateFileWindows  = cacheDirWindows + `\osconfig_task.state`
 	taskStateFileLinux    = cacheDirLinux + "/osconfig_task.state"
 	oldTaskStateFileLinux = oldConfigDirLinux + "/osconfig_task.state"
 
-	restartFileWindows  = cacheDirWindows + `\osconfig_agent_restart_required`
 	restartFileLinux    = cacheDirLinux + "/osconfig_agent_restart_required"
 	oldRestartFileLinux = oldConfigDirLinux + "/osconfig_agent_restart_required"
 
@@ -412,6 +409,14 @@ func getMetadata(suffix string) ([]byte, string, error) {
 	return all, resp.Header.Get("Etag"), nil
 }
 
+func getCacheDirWindows() string {
+	cacheDir, dirErr := os.UserCacheDir()
+	if dirErr == nil {
+		return cacheDir
+	}
+	return os.TempDir()
+}
+
 // WatchConfig looks for changes in metadata keys. Upon receiving successful response,
 // it create a new agent config.
 func WatchConfig(ctx context.Context) error {
@@ -686,7 +691,7 @@ func Capabilities() []string {
 // TaskStateFile is the location of the task state file.
 func TaskStateFile() string {
 	if runtime.GOOS == "windows" {
-		return taskStateFileWindows
+		return filepath.Join(getCacheDirWindows(), "osconfig_task.state")
 	}
 
 	return taskStateFileLinux
@@ -700,7 +705,8 @@ func OldTaskStateFile() string {
 // RestartFile is the location of the restart required file.
 func RestartFile() string {
 	if runtime.GOOS == "windows" {
-		return restartFileWindows
+		return filepath.Join(
+			getCacheDirWindows(), "osconfig_agent_restart_required")
 	}
 
 	return restartFileLinux
@@ -714,7 +720,7 @@ func OldRestartFile() string {
 // CacheDir is the location of the cache directory.
 func CacheDir() string {
 	if runtime.GOOS == "windows" {
-		return cacheDirWindows
+		return getCacheDirWindows()
 	}
 
 	return cacheDirLinux
