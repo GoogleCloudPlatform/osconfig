@@ -207,7 +207,7 @@ func InstallOSConfigEL(image string) string {
 
 // DowngradeAptImages is a single image that are used for testing downgrade case with apt-get
 var DowngradeAptImages = map[string]string{
-	"debian-cloud/debian-10": "projects/debian-cloud/global/images/debian-10-buster-v20231010",
+	"debian-cloud/debian-11": "projects/debian-cloud/global/images/debian-11-bullseye-v20231010",
 }
 
 // HeadAptImages is a map of names to image paths for public image families that use APT.
@@ -224,7 +224,6 @@ var HeadAptImages = map[string]string{
 // OldAptImages is a map of names to image paths for old (deprecated) images that use APT.
 var OldAptImages = map[string]string{
 	// Debian images.
-	"old/debian-10": "projects/debian-cloud/global/images/debian-10-buster-v20231010",
 
 	// Ubuntu images.
 	"old/ubuntu-2004": "projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20230918",
