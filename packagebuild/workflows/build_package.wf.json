@@ -1,0 +1,105 @@
+{
+  "Name": "build-package",
+  "DefaultTimeout": "30m",
+  "Sources": {
+    "startup.sh": "../daisy_startupscript_${type}.sh",
+    "common.sh": "../common.sh"
+  },
+  "Vars": {
+    "type": {
+      "Description": "Type of workflow: rpm,deb, or goo",
+      "Required": true
+    },
+    "sourceImage": {
+      "Description": "Source image to use for instance",
+      "Required": true
+    },
+    "gcs_path": {
+      "Required": true
+    },
+    "repo_owner": {
+      "Required": true
+    },
+    "repo_name": {
+      "Required": true
+    },
+    "git_ref": {
+      "Required": true
+    },
+    "version": {
+      "Required": true
+    },
+    "build_dir": {
+      "Required": true
+    },
+    "sbom_util_gcs_root": {
+      "Required": false
+    },
+    "machine_type": {
+      "Value": "e2-standard-2",
+      "Description": "machine type"
+    },
+    "zone": {
+      "Value": "us-central1-a",
+      "Description": "zone"
+    }
+  },
+  "Steps": {
+    "build-packages": {
+      "CreateInstances": [
+        {
+          "disks": [
+            {
+              "initializeParams": {
+                "diskType": "pd-ssd",
+                "sourceImage": "${sourceImage}"
+              }
+            }
+          ],
+          "Metadata": {
+            "repo-owner": "${repo_owner}",
+            "repo-name": "${repo_name}",
+            "git-ref": "${git_ref}",
+            "build-dir": "${build_dir}",
+            "version": "${version}",
+            "sbom-util-gcs-root": "${sbom_util_gcs_root}"
+          },
+          "machineType": "${machine_type}",
+          "zone": "${zone}",
+          "name": "inst-build-pkg",
+          "StartupScript": "startup.sh",
+          "Scopes": ["https://www.googleapis.com/auth/devstorage.read_write"]
+        }
+      ]
+    },
+    "wait-for-build": {
+      "Timeout": "30m",
+      "WaitForInstancesSignal": [
+        {
+          "Name": "inst-build-pkg",
+          "SerialOutput": {
+            "Port": 1,
+            "SuccessMatch": "Build succeeded",
+            "FailureMatch": "Build failed"
+          }
+        }
+      ]
+    },
+    "copy-packages": {
+      "CopyGCSObjects": [
+        {
+          "Source": "${OUTSPATH}/",
+          "Destination": "${gcs_path}/"
+        }
+      ]
+    }
+  },
+  "Dependencies": {
+    "wait-for-build": [
+      "build-packages"
+    ],
+    "copy-packages": [
+      "wait-for-build"
+    ]
+  }
+}
