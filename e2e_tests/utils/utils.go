@@ -217,7 +217,6 @@ var HeadAptImages = map[string]string{
 	"debian-cloud/debian-12": "projects/debian-cloud/global/images/debian-12-bookworm-v20231010",
 
 	// Ubuntu images.
-	"ubuntu-os-cloud/ubuntu-2304": "projects/ubuntu-os-cloud/global/images/ubuntu-2304-lunar-amd64-v20231020",
 	"ubuntu-os-cloud/ubuntu-2314": "projects/ubuntu-os-cloud/global/images/ubuntu-2310-mantic-amd64-v20231011",
 }
 
@@ -326,8 +325,12 @@ var HeadWindowsImages = map[string]string{
 	"windows-cloud/win-2016-dc":      "projects/windows-cloud/global/images/windows-server-2016-dc-v20231011",
 	"windows-cloud/win-2019-dc-core": "projects/windows-cloud/global/images/windows-server-2019-dc-core-v20231011",
 	"windows-cloud/win-2019-dc":      "projects/windows-cloud/global/images/windows-server-2019-dc-v20231011",
-	"windows-cloud/win-2022-dc-core": "projects/windows-cloud/global/images/windows-server-2022-dc-core-v20231011",
-	"windows-cloud/win-2022-dc":      "projects/windows-cloud/global/images/windows-server-2022-dc-v20231011",
+
+	// Testing of win-2022-dc disabled because of https://techcommunity.microsoft.com/t5/windows-server-for-it-pro/faulty-patches-on-server-2022/m-p/4028125
+
+	/*
+		"windows-cloud/win-2022-dc-core": "projects/windows-cloud/global/images/windows-server-2022-dc-core-v20231011",
+		"windows-cloud/win-2022-dc":      "projects/windows-cloud/global/images/windows-server-2022-dc-v20231011", */
 }
 
 // OldWindowsImages is a map of names to image paths for old Windows images.
