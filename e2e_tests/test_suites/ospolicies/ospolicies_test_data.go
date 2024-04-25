@@ -1383,7 +1383,7 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 										},
 										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
-												Script: fmt.Sprintf("head -c 200KB /dev/zero > %s\nexit 100", checkPaths[5]),
+												Script: fmt.Sprintf("head -c 1000KB /dev/zero > %s\nexit 100", checkPaths[5]),
 											},
 											Interpreter:    osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
 											OutputFilePath: checkPaths[5],
@@ -1457,7 +1457,7 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 						},
 						{
 							Type:         osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-							ErrorMessage: `Enforce state: resource "exec-output-too-large" error: contents of OutputFilePath greater than 100K`,
+							ErrorMessage: `Enforce state: resource "exec-output-too-large" error: contents of OutputFilePath greater than 500K`,
 						},
 						{
 							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
@@ -1466,7 +1466,7 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 					ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 					Output: &osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_ExecResourceOutput_{
 						ExecResourceOutput: &osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_ExecResourceOutput{
-							EnforcementOutput: make([]byte, 100*1024),
+							EnforcementOutput: make([]byte, 500*1024),
 						},
 					},
 				},
@@ -1725,7 +1725,7 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 										},
 										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
-												Script: fmt.Sprintf("fsutil file createnew %s 200000\nexit 100", checkPaths[7]),
+												Script: fmt.Sprintf("fsutil file createnew %s 1000000\nexit 100", checkPaths[7]),
 											},
 											Interpreter:    osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
 											OutputFilePath: checkPaths[7],
@@ -1809,7 +1809,7 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 						},
 						{
 							Type:         osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-							ErrorMessage: `Enforce state: resource "exec-output-too-large" error: contents of OutputFilePath greater than 100K`,
+							ErrorMessage: `Enforce state: resource "exec-output-too-large" error: contents of OutputFilePath greater than 500K`,
 						},
 						{
 							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
@@ -1818,7 +1818,7 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 					ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 					Output: &osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_ExecResourceOutput_{
 						ExecResourceOutput: &osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_ExecResourceOutput{
-							EnforcementOutput: make([]byte, 100*1024),
+							EnforcementOutput: make([]byte, 500*1024),
 						},
 					},
 				},
