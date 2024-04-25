@@ -254,13 +254,13 @@ func buildDebTestSetup(name, image, key string) *osPolicyTestSetup {
 											Deb: &osconfigpb.OSPolicy_Resource_PackageResource_Deb{
 												PullDeps: false,
 												Source: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
-														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
-															Bucket:     testResourceBucket,
-															Object:     "OSPolicies/osconfig-agent-test_7.0_all_f88296edfb1ebcce2e99fb9381c456138c5db86552df6530d022841bf9ac30bf.deb",
-															Generation: 1619046473027315,
-														},
-													},
+												Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
+												Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
+												Bucket:     testResourceBucket,
+												Object:     "OSPolicies/osconfig-agent-test_7.0_all_f88296edfb1ebcce2e99fb9381c456138c5db86552df6530d022841bf9ac30bf.deb",
+												Generation: 1619046473027315,
+												},
+												},
 												},
 											},
 										},
@@ -276,12 +276,12 @@ func buildDebTestSetup(name, image, key string) *osPolicyTestSetup {
 											Deb: &osconfigpb.OSPolicy_Resource_PackageResource_Deb{
 												PullDeps: true,
 												Source: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
-														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
-															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/google-chrome-stable_current_amd64.deb",
-															Sha256Checksum: "43f141970ab61d9c5a993dcf094625d9a7a1d24212a3c2443e7092b40c3a354c",
-														},
-													},
+												Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
+												Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
+												Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/google-chrome-stable_current_amd64.deb",
+												Sha256Checksum: "43f141970ab61d9c5a993dcf094625d9a7a1d24212a3c2443e7092b40c3a354c",
+												},
+												},
 												},
 											},
 										},
@@ -461,13 +461,13 @@ func buildRpmTestSetup(name, image, key string) *osPolicyTestSetup {
 											Rpm: &osconfigpb.OSPolicy_Resource_PackageResource_RPM{
 												PullDeps: false,
 												Source: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
-														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
-															Bucket:     testResourceBucket,
-															Object:     "OSPolicies/285280405927e0f9255891926f08a7ff6afe22bfb85a162452000fb9e534585b-osconfig-agent-test-0.1.0-1.el6.x86_64.rpm",
-															Generation: 1619119562326151,
-														},
-													},
+												Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
+												Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
+												Bucket:     testResourceBucket,
+												Object:     "OSPolicies/285280405927e0f9255891926f08a7ff6afe22bfb85a162452000fb9e534585b-osconfig-agent-test-0.1.0-1.el6.x86_64.rpm",
+												Generation: 1619119562326151,
+												},
+												},
 												},
 											},
 										},
@@ -483,12 +483,12 @@ func buildRpmTestSetup(name, image, key string) *osPolicyTestSetup {
 											Rpm: &osconfigpb.OSPolicy_Resource_PackageResource_RPM{
 												PullDeps: true,
 												Source: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
-														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
-															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/google-chrome-stable_current_x86_64.rpm",
-															Sha256Checksum: "8c547dc36bda13740b12e2a74aa8388e459fa53c95190327d16cb849412a0103",
-														},
-													},
+												Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
+												Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
+												Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/google-chrome-stable_current_x86_64.rpm",
+												Sha256Checksum: "8c547dc36bda13740b12e2a74aa8388e459fa53c95190327d16cb849412a0103",
+												},
+												},
 												},
 											},
 										},
@@ -605,13 +605,13 @@ func buildMsiTestSetup(name, image, key string) *osPolicyTestSetup {
 										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Msi{
 											Msi: &osconfigpb.OSPolicy_Resource_PackageResource_MSI{
 												Source: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
-														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
-															Bucket:     testResourceBucket,
-															Object:     "OSPolicies/GoogleChromeStandaloneEnterprise64.msi",
-															Generation: 1618590043841384,
-														},
-													},
+												Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
+												Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
+												Bucket:     testResourceBucket,
+												Object:     "OSPolicies/GoogleChromeStandaloneEnterprise64.msi",
+												Generation: 1618590043841384,
+												},
+												},
 												},
 											},
 										},
@@ -1025,11 +1025,11 @@ func buildFileResourceTests(name, image, pkgManager, key string) *osPolicyTestSe
 										Source: &osconfigpb.OSPolicy_Resource_FileResource_File{
 											File: &osconfigpb.OSPolicy_Resource_File{
 												Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
-													Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
-														Bucket:     testResourceBucket,
-														Object:     "OSPolicies/test_file",
-														Generation: 1617666133905437,
-													},
+												Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
+												Bucket:     testResourceBucket,
+												Object:     "OSPolicies/test_file",
+												Generation: 1617666133905437,
+												},
 												},
 											},
 										},
@@ -1045,10 +1045,10 @@ func buildFileResourceTests(name, image, pkgManager, key string) *osPolicyTestSe
 										Source: &osconfigpb.OSPolicy_Resource_FileResource_File{
 											File: &osconfigpb.OSPolicy_Resource_File{
 												Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
-													Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
-														Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/test_file",
-														Sha256Checksum: "e0ef7229e64c61596d8be928397e19fcc542ac920c4132106fb1ec2295dd73d1",
-													},
+												Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
+												Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/test_file",
+												Sha256Checksum: "e0ef7229e64c61596d8be928397e19fcc542ac920c4132106fb1ec2295dd73d1",
+												},
 												},
 											},
 										},
@@ -1064,7 +1064,7 @@ func buildFileResourceTests(name, image, pkgManager, key string) *osPolicyTestSe
 										Source: &osconfigpb.OSPolicy_Resource_FileResource_File{
 											File: &osconfigpb.OSPolicy_Resource_File{
 												Type: &osconfigpb.OSPolicy_Resource_File_LocalPath{
-													LocalPath: wantPaths[0],
+												LocalPath: wantPaths[0],
 												},
 											},
 										},
@@ -1235,13 +1235,13 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
-														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
-															Bucket:     "osconfig-agent-end2end-test-resources",
-															Object:     "OSPolicies/validate_shell",
-															Generation: 1618251880260222,
-														},
-													},
+												Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
+												Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
+												Bucket:     "osconfig-agent-end2end-test-resources",
+												Object:     "OSPolicies/validate_shell",
+												Generation: 1618251880260222,
+												},
+												},
 												},
 											},
 											Args:        []string{checkPaths[0]},
@@ -1250,13 +1250,13 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
-														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
-															Bucket:     "osconfig-agent-end2end-test-resources",
-															Object:     "OSPolicies/enforce_none",
-															Generation: 1618246663082861,
-														},
-													},
+												Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
+												Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
+												Bucket:     "osconfig-agent-end2end-test-resources",
+												Object:     "OSPolicies/enforce_none",
+												Generation: 1618246663082861,
+												},
+												},
 												},
 											},
 											Args:        []string{checkPaths[0]},
@@ -1272,12 +1272,12 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
-														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
-															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/validate_shell",
-															Sha256Checksum: "67837bf4b3be1ff84758e22d2eb46db4904dd57eb50f19de3f51a52be1c5b555",
-														},
-													},
+												Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
+												Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
+												Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/validate_shell",
+												Sha256Checksum: "67837bf4b3be1ff84758e22d2eb46db4904dd57eb50f19de3f51a52be1c5b555",
+												},
+												},
 												},
 											},
 											Args:        []string{checkPaths[1]},
@@ -1286,12 +1286,12 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
-														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
-															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/enforce_none",
-															Sha256Checksum: "6b9f3936ddc557819281d9bd933aa42be513d31447ca683a9bc26e9f14d6abf1",
-														},
-													},
+												Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
+												Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
+												Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/enforce_none",
+												Sha256Checksum: "6b9f3936ddc557819281d9bd933aa42be513d31447ca683a9bc26e9f14d6abf1",
+												},
+												},
 												},
 											},
 											Args:        []string{checkPaths[1]},
@@ -1308,9 +1308,9 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfigpb.OSPolicy_Resource_File_LocalPath{
-														LocalPath: "/validate_shell",
-													},
+												Type: &osconfigpb.OSPolicy_Resource_File_LocalPath{
+												LocalPath: "/validate_shell",
+												},
 												},
 											},
 											Args:        []string{checkPaths[2]},
@@ -1319,9 +1319,9 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfigpb.OSPolicy_Resource_File_LocalPath{
-														LocalPath: "/enforce_none",
-													},
+												Type: &osconfigpb.OSPolicy_Resource_File_LocalPath{
+												LocalPath: "/enforce_none",
+												},
 												},
 											},
 											Args:        []string{checkPaths[2]},
@@ -1383,7 +1383,7 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 										},
 										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
-												Script: fmt.Sprintf("head -c 200KB /dev/zero > %s\nexit 100", checkPaths[5]),
+												Script: fmt.Sprintf("head -c 1000KB /dev/zero > %s\nexit 100", checkPaths[5]),
 											},
 											Interpreter:    osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
 											OutputFilePath: checkPaths[5],
@@ -1457,7 +1457,7 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 						},
 						{
 							Type:         osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-							ErrorMessage: `Enforce state: resource "exec-output-too-large" error: contents of OutputFilePath greater than 100K`,
+							ErrorMessage: `Enforce state: resource "exec-output-too-large" error: contents of OutputFilePath greater than 500K`,
 						},
 						{
 							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
@@ -1466,7 +1466,7 @@ func buildLinuxExecResourceTests(name, image, pkgManager, key string) *osPolicyT
 					ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 					Output: &osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_ExecResourceOutput_{
 						ExecResourceOutput: &osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_ExecResourceOutput{
-							EnforcementOutput: make([]byte, 100*1024),
+							EnforcementOutput: make([]byte, 500*1024),
 						},
 					},
 				},
@@ -1510,13 +1510,13 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
-														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
-															Bucket:     "osconfig-agent-end2end-test-resources",
-															Object:     "OSPolicies/validate.cmd",
-															Generation: 1618340275278922,
-														},
-													},
+												Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
+												Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
+												Bucket:     "osconfig-agent-end2end-test-resources",
+												Object:     "OSPolicies/validate.cmd",
+												Generation: 1618340275278922,
+												},
+												},
 												},
 											},
 											Args:        []string{checkPaths[0]},
@@ -1525,13 +1525,13 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
-														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
-															Bucket:     "osconfig-agent-end2end-test-resources",
-															Object:     "OSPolicies/enforce.cmd",
-															Generation: 1619475023716779,
-														},
-													},
+												Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
+												Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
+												Bucket:     "osconfig-agent-end2end-test-resources",
+												Object:     "OSPolicies/enforce.cmd",
+												Generation: 1619475023716779,
+												},
+												},
 												},
 											},
 											Args:        []string{checkPaths[0]},
@@ -1547,12 +1547,12 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
-														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
-															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/validate.cmd",
-															Sha256Checksum: "1635e97b142fa9dd21bb023093ede409d242f52a535ad779bb80539db95c8f77",
-														},
-													},
+												Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
+												Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
+												Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/validate.cmd",
+												Sha256Checksum: "1635e97b142fa9dd21bb023093ede409d242f52a535ad779bb80539db95c8f77",
+												},
+												},
 												},
 											},
 											Args:        []string{checkPaths[1]},
@@ -1561,12 +1561,12 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
-														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
-															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/enforce.cmd",
-															Sha256Checksum: "08307e3de5baf1c7051c6901e798aaaf0c5f06350cc4518fbcd431dc6e6af003",
-														},
-													},
+												Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
+												Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
+												Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/enforce.cmd",
+												Sha256Checksum: "08307e3de5baf1c7051c6901e798aaaf0c5f06350cc4518fbcd431dc6e6af003",
+												},
+												},
 												},
 											},
 											Args:        []string{checkPaths[1]},
@@ -1583,9 +1583,9 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfigpb.OSPolicy_Resource_File_LocalPath{
-														LocalPath: "/validate.cmd",
-													},
+												Type: &osconfigpb.OSPolicy_Resource_File_LocalPath{
+												LocalPath: "/validate.cmd",
+												},
 												},
 											},
 											Args:        []string{checkPaths[2]},
@@ -1594,9 +1594,9 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfigpb.OSPolicy_Resource_File_LocalPath{
-														LocalPath: "/enforce.cmd",
-													},
+												Type: &osconfigpb.OSPolicy_Resource_File_LocalPath{
+												LocalPath: "/enforce.cmd",
+												},
 												},
 											},
 											Args:        []string{checkPaths[2]},
@@ -1635,13 +1635,13 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
-														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
-															Bucket:     "osconfig-agent-end2end-test-resources",
-															Object:     "OSPolicies/validate.ps1",
-															Generation: 1617995966532645,
-														},
-													},
+												Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
+												Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
+												Bucket:     "osconfig-agent-end2end-test-resources",
+												Object:     "OSPolicies/validate.ps1",
+												Generation: 1617995966532645,
+												},
+												},
 												},
 											},
 											Args:        []string{checkPaths[4]},
@@ -1650,12 +1650,12 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
-														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
-															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/enforce.ps1",
-															Sha256Checksum: "a5737e35f8a3a04785e4e0b9ffa90c5209db320c0ef9692672f5fb0b1dfe99d2",
-														},
-													},
+												Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
+												Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
+												Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/enforce.ps1",
+												Sha256Checksum: "a5737e35f8a3a04785e4e0b9ffa90c5209db320c0ef9692672f5fb0b1dfe99d2",
+												},
+												},
 												},
 											},
 											Args:        []string{checkPaths[4]},
@@ -1671,9 +1671,9 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 										Validate: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfigpb.OSPolicy_Resource_File_LocalPath{
-														LocalPath: "/validate.ps1",
-													},
+												Type: &osconfigpb.OSPolicy_Resource_File_LocalPath{
+												LocalPath: "/validate.ps1",
+												},
 												},
 											},
 											Args:        []string{checkPaths[5]},
@@ -1682,9 +1682,9 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_File{
 												File: &osconfigpb.OSPolicy_Resource_File{
-													Type: &osconfigpb.OSPolicy_Resource_File_LocalPath{
-														LocalPath: "/enforce.ps1",
-													},
+												Type: &osconfigpb.OSPolicy_Resource_File_LocalPath{
+												LocalPath: "/enforce.ps1",
+												},
 												},
 											},
 											Args:        []string{checkPaths[5]},
@@ -1725,7 +1725,7 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 										},
 										Enforce: &osconfigpb.OSPolicy_Resource_ExecResource_Exec{
 											Source: &osconfigpb.OSPolicy_Resource_ExecResource_Exec_Script{
-												Script: fmt.Sprintf("fsutil file createnew %s 200000\nexit 100", checkPaths[7]),
+												Script: fmt.Sprintf("fsutil file createnew %s 1000000\nexit 100", checkPaths[7]),
 											},
 											Interpreter:    osconfigpb.OSPolicy_Resource_ExecResource_Exec_SHELL,
 											OutputFilePath: checkPaths[7],
@@ -1809,7 +1809,7 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 						},
 						{
 							Type:         osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_ENFORCEMENT,
-							ErrorMessage: `Enforce state: resource "exec-output-too-large" error: contents of OutputFilePath greater than 100K`,
+							ErrorMessage: `Enforce state: resource "exec-output-too-large" error: contents of OutputFilePath greater than 500K`,
 						},
 						{
 							Type: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_OSPolicyResourceConfigStep_DESIRED_STATE_CHECK_POST_ENFORCEMENT,
@@ -1818,7 +1818,7 @@ func buildWindowsExecResourceTests(name, image, pkgManager, key string) *osPolic
 					ComplianceState: osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_COMPLIANT,
 					Output: &osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_ExecResourceOutput_{
 						ExecResourceOutput: &osconfigpb.OSPolicyAssignmentReport_OSPolicyCompliance_OSPolicyResourceCompliance_ExecResourceOutput{
-							EnforcementOutput: make([]byte, 100*1024),
+							EnforcementOutput: make([]byte, 500*1024),
 						},
 					},
 				},
