@@ -18,9 +18,6 @@
     },
     "build_dir": {
       "Required": true
-    },
-    "sbom_util_gcs_root": {
-      "Required": false
     }
   },
   "Steps": {
@@ -35,8 +32,7 @@
           "repo_name": "${repo_name}",
           "git_ref": "${git_ref}",
           "build_dir": "${build_dir}",
-          "version": "${version}",
-          "sbom_util_gcs_root": "${sbom_util_gcs_root}"
+          "version": "${version}"
         }
       }
     }

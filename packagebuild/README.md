@@ -3,7 +3,6 @@
 This directory contains the 'package builder', which is a set of [Daisy]
 workflows and startup scripts. A package build workflow will accept a git
 repository set up for package building, build it and produce a system package.
-Optionally, it can also generate and export the SBOM for the package.
 
 We use these packagebuild workflows from our Concourse pipelines and Prow jobs.
 
@@ -31,7 +30,6 @@ Build workflows accept the following parameters:
 * version - the version for the resulting package, for example '20221025.00'
 * build\_dir - (optional) the subdirectory in the repo to `cd` into before
   starting the build
-* sbom_util_gcs_root - (optional) the path where sbomutil is stored.
 
 ## Supported types
 
