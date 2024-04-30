@@ -30,15 +30,12 @@ GIT_REF=$(get_md git-ref)
 BUILD_DIR=$(get_md build-dir)
 VERSION=$(get_md version)
 VERSION=${VERSION:-"dummy"}
-SBOM_UTIL_GCS_ROOT=$(get_md sbom-util-gcs-root)
 
 echo "Started build..."
 
 # common.sh contains functions common to all builds.
 gsutil cp "${SRC_PATH}/common.sh" ./
 . common.sh
-
-deploy_sbomutil
 
 # Install git2 as this is not available in centos 6/7
 VERSION_ID=6
@@ -139,7 +136,6 @@ for spec in $TOBUILD; do
     -ba "${RPMDIR}/SPECS/${spec}"
 
   SRPM_FILE=$(find ${RPMDIR}/SRPMS -iname "${PKGNAME}*.src.rpm")
-  generate_and_push_sbom ./ "${SRPM_FILE}" "${PKGNAME}" "${VERSION}"
 done
 
 rpms=$(find ${RPMDIR}/{S,}RPMS -iname "${PKGNAME}*.rpm")

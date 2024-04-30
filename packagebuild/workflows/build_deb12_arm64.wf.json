@@ -19,9 +19,6 @@
     },
     "build_dir": {
       "Required": true
-    },
-    "sbom_util_gcs_root": {
-      "Required": false
     }
   },
   "Steps": {
@@ -39,9 +36,7 @@
           "build_dir": "${build_dir}",
           "machine_type": "t2a-standard-2",
           "zone": "us-central1-a",
-          "version": "${version}",
-          "sbom_util_gcs_root": "${sbom_util_gcs_root}"
-        }
+          "version": "${version}"
       }
     }
   }

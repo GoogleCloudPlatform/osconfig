@@ -22,7 +22,6 @@ GIT_REF=$(curl -f -H Metadata-Flavor:Google ${URL}/git-ref)
 BUILD_DIR=$(curl -f -H Metadata-Flavor:Google ${URL}/build-dir)
 VERSION=$(curl -f -H Metadata-Flavor:Google ${URL}/version)
 VERSION=${VERSION:="1dummy"}
-SBOM_UTIL_GCS_ROOT=$(curl -f -H Metadata-Flavor:Google ${URL}/sbom-util-gcs-root)
 
 DEBIAN_FRONTEND=noninteractive
 
@@ -30,8 +29,6 @@ echo "Started build..."
 
 gsutil cp "${SRC_PATH}/common.sh" ./
 . common.sh
-
-deploy_sbomutil
 
 # disable the backports repo for debian-10
 sed -i 's/^.*debian buster-backports main.*$//g' /etc/apt/sources.list
@@ -101,12 +98,9 @@ dch --create -M -v 1:${VERSION}-${RELEASE} --package $PKGNAME -D stable \
   "Debian packaging for ${PKGNAME}"
 DEB_BUILD_OPTIONS="noautodbgsym nocheck" debuild -e "VERSION=${VERSION}" -e "RELEASE=${RELEASE}" -us -uc
 
-SBOM_FILE="${SBOM_DIR}/${PKGNAME}-${VERSION}.sbom.json"
-
 for deb in $BUILD_DIR/*.deb; do
   dpkg-deb -I $deb
   dpkg-deb -c $deb
-  generate_and_push_sbom "${BUILD_DIR}" "${deb}" "${PKGNAME}" "${VERSION}"
 done
 
 echo "copying $BUILD_DIR/*.deb to $GCS_PATH/"
