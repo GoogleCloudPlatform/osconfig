@@ -43,7 +43,7 @@ require (
     	github.com/googleapis/gax-go/v2 v2.12.3 // indirect
     	github.com/julienschmidt/httprouter v1.3.0 // indirect
     	github.com/pkg/errors v0.9.1 // indirect
-    	github.com/sirupsen/logrus v1.9.0 // indirect
+    	github.com/sirupsen/logrus v1.9.3 // indirect
     	go.chromium.org/luci v0.0.0-20200722211809-bab0c30be68b // indirect
     	go.opencensus.io v0.24.0 // indirect
     	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.49.0 // indirect
