@@ -14,9 +14,9 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
 	github.com/ulikunitz/xz v0.5.11
-	golang.org/x/crypto v0.17.0
+	golang.org/x/crypto v0.21.0
 	golang.org/x/oauth2 v0.7.0
-	golang.org/x/sys v0.15.0
+	golang.org/x/sys v0.18.0
 	google.golang.org/api v0.114.0
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1
 	google.golang.org/grpc v1.56.3
@@ -41,7 +41,7 @@ require (
 	github.com/sirupsen/logrus v1.6.0 // indirect
 	go.chromium.org/luci v0.0.0-20201204084249-3e81ee3e83fe // indirect
 	go.opencensus.io v0.24.0 // indirect
-	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/net v0.23.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
