@@ -22,9 +22,11 @@ import (
 	"io"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
+	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/armor"
@@ -83,6 +85,52 @@ func containsEntity(es []*openpgp.Entity, e *openpgp.Entity) bool {
 	return false
 }
 
+func readInstanceOsInfo() (string, float64, error) {
+	oi, err := osinfo.Get()
+	if err != nil {
+		return "", 0, fmt.Errorf("error getting osinfo: %v", err)
+	}
+
+	osVersion, err := strconv.ParseFloat(oi.Version, 64)
+	if err != nil {
+		osVersion = 0
+	}
+
+	return oi.ShortName, osVersion, nil
+}
+
+func shouldUseSignedBy() bool {
+	osShortName, osVersion, err := readInstanceOsInfo()
+	if err != nil {
+		return false // Default to not using signed-by approach
+	}
+
+	if (osShortName == "debian" && osVersion >= 12) || (osShortName == "ubuntu" && osVersion >= 24) {
+		return true
+	}
+	return false
+}
+
+func getAptRepoLine(repo *agentendpointpb.AptRepository, useSignedBy bool) string {
+	archiveType, ok := debArchiveTypeMap[repo.ArchiveType]
+	if !ok {
+		archiveType = "deb"
+	}
+
+	line := fmt.Sprintf("\n%s", archiveType)
+
+	if useSignedBy {
+		line = fmt.Sprintf("%s [signed-by=%s]", line, aptGPGFile)
+	}
+
+	line = fmt.Sprintf("%s %s %s", line, repo.Uri, repo.Distribution)
+	for _, c := range repo.Components {
+		line = fmt.Sprintf("%s %s", line, c)
+	}
+
+	return line
+}
+
 func aptRepositories(ctx context.Context, repos []*agentendpointpb.AptRepository, repoFile string) error {
 	var es []*openpgp.Entity
 	var keys []string
@@ -124,18 +172,18 @@ func aptRepositories(ctx context.Context, repos []*agentendpointpb.AptRepository
 		# Repo file managed by Google OSConfig agent
 		deb http://repo1-url/ repo1 main
 		deb http://repo1-url/ repo2 main contrib non-free
+
+		# For now, 'signed-by' keyring approach will be used for Debian 12+ and Ubuntu 24+ only.
+		  To avoid conflicting repos for old stable OSes versions
+		  e.g. deb [signed-by=/etc/apt/trusted.gpg.d/osconfig_agent_managed.gpg] http://repo1-url/ repo1 main
+		  NOTE: suggested by ofca@
 	*/
 	var buf bytes.Buffer
 	buf.WriteString("# Repo file managed by Google OSConfig agent\n")
+
+	shouldUseSignedByBool := shouldUseSignedBy()
 	for _, repo := range repos {
-		archiveType, ok := debArchiveTypeMap[repo.ArchiveType]
-		if !ok {
-			archiveType = "deb"
-		}
-		line := fmt.Sprintf("\n%s %s %s", archiveType, repo.Uri, repo.Distribution)
-		for _, c := range repo.Components {
-			line = fmt.Sprintf("%s %s", line, c)
-		}
+		line := getAptRepoLine(repo, shouldUseSignedByBool)
 		buf.WriteString(line + "\n")
 	}
 
