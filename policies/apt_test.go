@@ -108,3 +108,31 @@ func TestGetAptGPGKey(t *testing.T) {
 		t.Errorf("Expected to find Artifact Registry key in Google Cloud Public GPG key, but its missed.")
 	}
 }
+
+func TestUseSignedBy(t *testing.T) {
+	tests := []struct {
+		desc string
+		repo *agentendpointpb.AptRepository
+		want string
+	}{
+		{
+			"1 repo",
+			&agentendpointpb.AptRepository{Uri: "http://repo1-url/", Distribution: "distribution", Components: []string{"component1"}},
+			"\ndeb [signed-by=/etc/apt/trusted.gpg.d/osconfig_agent_managed.gpg] http://repo1-url/ distribution component1",
+		},
+		{
+			"2 components",
+			&agentendpointpb.AptRepository{Uri: "http://repo2-url/", Distribution: "distribution", Components: []string{"component1", "component2"}, ArchiveType: agentendpointpb.AptRepository_DEB},
+			"\ndeb [signed-by=/etc/apt/trusted.gpg.d/osconfig_agent_managed.gpg] http://repo2-url/ distribution component1 component2",
+		},
+	}
+
+	useSignedBy := true
+	for _, tt := range tests {
+		aptRepoLine := getAptRepoLine(tt.repo, useSignedBy)
+
+		if aptRepoLine != tt.want {
+			t.Errorf("%s: got:\n%q\nwant:\n%q", tt.desc, aptRepoLine, tt.want)
+		}
+	}
+}
