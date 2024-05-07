@@ -35,6 +35,7 @@
           "git_ref": "${git_ref}",
           "build_dir": "${build_dir}",
           "version": "${version}"
+        }
       }
     }
   }
