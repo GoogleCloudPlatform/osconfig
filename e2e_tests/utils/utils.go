@@ -218,6 +218,9 @@ var HeadAptImages = map[string]string{
 
 	// Ubuntu images.
 	"ubuntu-os-cloud/ubuntu-2314": "projects/ubuntu-os-cloud/global/images/ubuntu-2310-mantic-amd64-v20231011",
+
+	// Temporary added to test latest version of osconfig-agent in Ubuntu Canonical repos
+	"temporary-canonical-latest/ubuntu-2410": "projects/compute-image-osconfig-agent/global/images/testing-ubuntu-minimal-guest-2410-oracular-amd64-v20240503",
 }
 
 // OldAptImages is a map of names to image paths for old (deprecated) images that use APT.
