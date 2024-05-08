@@ -1,20 +1,20 @@
 version: 2
 updates:
-  - package-ecosystem: gomod
+  - package-ecosystem: "gomod"
     directory: "/"
     labels:
-      - dependencies
-      - go
+      - "dependencies"
+      - "go"
     schedule:
       interval: "daily"
     allow:
       - dependency-type: "all"
-reviewers:
-  - burov
-  - dowgird
-  - Gulio
-  - michaljankowiak
-  - paulinakania
-  - ekremenetskii
-  - MahmoudOuka
-  - MarcMarc
+    reviewers:
+      - "burov"
+      - "dowgird"
+      - "ekremenetskii"
+      - "Gulio"
+      - "MahmoudOuka"
+      - "MarcMarc"
+      - "michaljankowiak"
+      - "paulinakania"
