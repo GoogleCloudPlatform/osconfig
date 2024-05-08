@@ -9,12 +9,3 @@ updates:
       interval: "daily"
     allow:
       - dependency-type: "all"
-    reviewers:
-      - "burov"
-      - "dowgird"
-      - "ekremenetskii"
-      - "Gulio"
-      - "MahmoudOuka"
-      - "MarcMarc"
-      - "michaljankowiak"
-      - "paulinakania"
