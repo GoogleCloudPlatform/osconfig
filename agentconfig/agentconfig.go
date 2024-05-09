@@ -419,6 +419,7 @@ func getMetadata(suffix string) ([]byte, string, error) {
 	return all, resp.Header.Get("Etag"), nil
 }
 
+// GetCacheDirWindows returns the folder for the temp files location on Windows.
 func GetCacheDirWindows() string {
 	cacheDir, dirErr := os.UserCacheDir()
 	if dirErr != nil {
