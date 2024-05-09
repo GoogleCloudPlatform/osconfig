@@ -115,6 +115,11 @@ func InstallOSConfigDeb() string {
 	return fmt.Sprintf(`
 sleep 10
 systemctl stop google-osconfig-agent
+
+# install gnupg2 if not exist
+apt-get update
+apt-get install -y gnupg2
+
 echo 'deb http://packages.cloud.google.com/apt google-osconfig-agent-%s main' >> /etc/apt/sources.list
 curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 apt-get update

@@ -246,6 +246,11 @@ done
 func getStartupScriptDeb() string {
 	ss := `
 echo 'Adding test repo'
+
+# install gnupg2 if not exist
+apt-get update
+apt-get install -y gnupg2
+
 echo 'deb http://packages.cloud.google.com/apt osconfig-agent-test-repository main' >> /etc/apt/sources.list
 curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do

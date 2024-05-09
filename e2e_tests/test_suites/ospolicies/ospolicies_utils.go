@@ -31,6 +31,7 @@ func getStartupScriptPackage(image, pkgManager string) *computeApi.MetadataItems
 		wantRemove := "vim"
 		ss = `set -x
 # install the package we want removed
+apt-get update
 apt-get -y install %[2]s
 # remove the package we want installed
 apt-get -y remove %[3]s
