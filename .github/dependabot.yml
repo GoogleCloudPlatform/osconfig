@@ -4,7 +4,6 @@ updates:
     directory: "/"
     labels:
       - "dependencies"
-      - "go"
     schedule:
       interval: "daily"
     allow:
