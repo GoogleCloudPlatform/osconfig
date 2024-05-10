@@ -25,8 +25,8 @@ import (
 	"unsafe"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
-	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
+	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/svc"
 )

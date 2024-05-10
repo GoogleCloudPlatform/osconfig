@@ -69,7 +69,7 @@ const (
 
 	oldConfigDirLinux = "/etc/osconfig"
 	cacheDirLinux     = "/var/lib/google_osconfig_agent"
-	windowsCacheDir = `Google\OSConfig`
+	windowsCacheDir   = `Google\OSConfig`
 
 	taskStateFileLinux    = cacheDirLinux + "/osconfig_task.state"
 	oldTaskStateFileLinux = oldConfigDirLinux + "/osconfig_task.state"
