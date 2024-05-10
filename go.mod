@@ -17,7 +17,7 @@ require (
 	golang.org/x/crypto v0.23.0
 	golang.org/x/oauth2 v0.20.0
 	golang.org/x/sys v0.20.0
-	google.golang.org/api v0.178.0
+	google.golang.org/api v0.179.0
 	google.golang.org/genproto v0.0.0-20240429193739-8cf5692501f6
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240506185236-b8a5c65736ae
 	google.golang.org/grpc v1.63.2
