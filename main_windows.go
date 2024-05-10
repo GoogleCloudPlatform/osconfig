@@ -25,6 +25,7 @@ import (
 	"unsafe"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/svc"
@@ -76,7 +77,7 @@ func unlockFileEx(hFile uintptr, nNumberOfBytesToLockLow, nNumberOfBytesToLockHi
 }
 
 func obtainLock() {
-	lockFile := `C:\Program Files\Google\OSConfig\lock`
+	lockFile := filepath.Join(agentconfig.GetCacheDirWindows(), "lock")
 
 	err := os.MkdirAll(filepath.Dir(lockFile), 0755)
 	if err != nil && !os.IsExist(err) {
