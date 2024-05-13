@@ -196,14 +196,25 @@ func InstallOSConfigEL7() string {
 	return fmt.Sprintf(yumRepoSetup+yumInstallAgent, "el7", config.AgentRepo(), 0)
 }
 
+// containsAnyOf checks if a string contains any substring from a given list.
+func containsAnyOf(str string, substrings []string) bool {
+	for _, substring := range substrings {
+		if strings.Contains(str, substring) {
+			return true
+		}
+	}
+	return false
+}
+
 // InstallOSConfigEL installs the osconfig agent on el based systems.
 func InstallOSConfigEL(image string) string {
+	imageName := path.Base(image)
 	switch {
-	case strings.Contains(path.Base(image), "9"):
+	case containsAnyOf(imageName, []string{"rhel-9", "rhel-sap-9", "centos-stream-9", "rocky-linux-9"}):
 		return InstallOSConfigEL9()
-	case strings.Contains(path.Base(image), "8"):
+	case containsAnyOf(imageName, []string{"rhel-8", "rhel-sap-8", "centos-stream-8", "rocky-linux-8"}):
 		return InstallOSConfigEL8()
-	case strings.Contains(path.Base(image), "7"):
+	case containsAnyOf(imageName, []string{"rhel-7", "rhel-sap-7", "centos-7"}):
 		return InstallOSConfigEL7()
 
 	}
