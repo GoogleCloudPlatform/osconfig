@@ -210,11 +210,11 @@ func containsAnyOf(str string, substrings []string) bool {
 func InstallOSConfigEL(image string) string {
 	imageName := path.Base(image)
 	switch {
-	case containsAnyOf(imageName, []string{"rhel-9", "rhel-sap-9", "centos-stream-9", "rocky-linux-9"}):
+	case image == "9" || containsAnyOf(imageName, []string{"rhel-9", "rhel-sap-9", "centos-stream-9", "rocky-linux-9"}):
 		return InstallOSConfigEL9()
-	case containsAnyOf(imageName, []string{"rhel-8", "rhel-sap-8", "centos-stream-8", "rocky-linux-8"}):
+	case image == "8" || containsAnyOf(imageName, []string{"rhel-8", "rhel-sap-8", "centos-stream-8", "rocky-linux-8"}):
 		return InstallOSConfigEL8()
-	case containsAnyOf(imageName, []string{"rhel-7", "rhel-sap-7", "centos-7"}):
+	case image == "7" || containsAnyOf(imageName, []string{"rhel-7", "rhel-sap-7", "centos-7"}):
 		return InstallOSConfigEL7()
 
 	}
