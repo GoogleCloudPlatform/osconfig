@@ -5,7 +5,7 @@ go 1.21.9
 require (
 	cloud.google.com/go/compute/metadata v0.3.0
 	cloud.google.com/go/osconfig v1.12.7
-	cloud.google.com/go/storage v1.40.0
+	cloud.google.com/go/storage v1.41.0
 	cos.googlesource.com/cos/tools.git v0.0.0-20240425212320-4aaa17f022fd
 	github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20221216194522-f549ad6a1730
 	github.com/StackExchange/wmi v1.2.1
