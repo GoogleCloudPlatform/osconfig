@@ -11,7 +11,7 @@ require (
 	github.com/StackExchange/wmi v1.2.1
 	github.com/go-ole/go-ole v1.2.6
 	github.com/golang/mock v1.6.0
-	github.com/google/go-cmp v0.5.9
+	github.com/google/go-cmp v0.6.0
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
 	github.com/ulikunitz/xz v0.5.11
 	golang.org/x/crypto v0.21.0
