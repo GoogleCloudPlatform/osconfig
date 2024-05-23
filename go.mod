@@ -3,7 +3,7 @@ module github.com/GoogleCloudPlatform/osconfig
 go 1.21.9
 
 require (
-	cloud.google.com/go/compute/metadata v0.2.3
+	cloud.google.com/go/compute/metadata v0.3.0
 	cloud.google.com/go/osconfig v1.11.0
 	cloud.google.com/go/storage v1.29.0
 	cos.googlesource.com/cos/tools.git v0.0.0-20210329212435-a349a79f950d
@@ -25,7 +25,6 @@ require (
 
 require (
 	cloud.google.com/go v0.110.0 // indirect
-	cloud.google.com/go/compute v1.19.1 // indirect
 	cloud.google.com/go/iam v0.13.0 // indirect
 	cloud.google.com/go/logging v1.7.0 // indirect
 	cloud.google.com/go/longrunning v0.4.1 // indirect
