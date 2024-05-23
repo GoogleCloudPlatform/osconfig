@@ -1,8 +1,7 @@
 # An OS policy to opt-out of CIS check and check compliance status once a day.
-osPolicies:
-- id: exclude-cis-check-and-check-compliance-once-a-day-policy
-  mode: ENFORCEMENT
-  resourceGroups:
+id: exclude-cis-check-and-check-compliance-once-a-day-policy
+mode: ENFORCEMENT
+resourceGroups:
   - resources:
       id: exclude-cis-check-and-check-compliance-once-a-day
       exec:
