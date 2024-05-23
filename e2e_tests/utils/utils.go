@@ -246,7 +246,7 @@ var HeadBusterAptImages = map[string]string{
 	// Debian images.
 }
 
-// HeadBookwormAptImages is a map of names to image paths for public debian-11 images
+// HeadBullseyeAptImages is a map of names to image paths for public debian-11 images
 var HeadBullseyeAptImages = map[string]string{
 	// Debian images.
 	"debian-cloud/debian-11": "projects/debian-cloud/global/images/family/debian-11",
