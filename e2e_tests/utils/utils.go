@@ -108,10 +108,11 @@ EOM`
 )
 
 // InstallOSConfigDeb installs the osconfig agent on deb based systems.
-func InstallOSConfigDeb() string {
+func InstallOSConfigDeb(image string) string {
 	if config.AgentRepo() == "" {
 		return CurlPost
 	}
+	osName := getDebOsName(image)
 	return fmt.Sprintf(`
 sleep 10
 systemctl stop google-osconfig-agent
@@ -120,11 +121,11 @@ systemctl stop google-osconfig-agent
 apt-get update
 apt-get install -y gnupg2
 
-echo 'deb http://packages.cloud.google.com/apt google-osconfig-agent-%s main' >> /etc/apt/sources.list
+echo 'deb http://packages.cloud.google.com/apt google-osconfig-agent-%s-%s main' >> /etc/apt/sources.list
 curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 apt-get update
 apt-get install -y google-osconfig-agent
-systemctl start google-osconfig-agent`+CurlPost, config.AgentRepo())
+systemctl start google-osconfig-agent`+CurlPost, osName, config.AgentRepo())
 }
 
 // InstallOSConfigGooGet installs the osconfig agent on Windows systems.
@@ -221,30 +222,40 @@ func InstallOSConfigEL(image string) string {
 	return ""
 }
 
-// DowngradeAptImages is a single image that are used for testing downgrade case with apt-get
-var DowngradeAptImages = map[string]string{
+// getDebOsType returns the equivalent os_name for deb version (e.g. debian-11 --> bullseye)
+func getDebOsName(image string) string {
+	imageName := path.Base(image)
+	switch {
+	case image == "10" || containsAnyOf(imageName, []string{"debian-10", "buster"}):
+		return "buster"
+	case image == "11" || containsAnyOf(imageName, []string{"debian-11", "bullseye"}):
+		return "bullseye"
+	case image == "12" || containsAnyOf(imageName, []string{"debian-12", "bookworm"}):
+		return "bookworm"
+	}
+	return ""
+}
+
+// DowngradeBullseyeAptImages is a single image that are used for testing downgrade case with apt-get
+var DowngradeBullseyeAptImages = map[string]string{
 	"debian-cloud/debian-11": "projects/debian-cloud/global/images/debian-11-bullseye-v20231010",
 }
 
-// HeadAptImages is a map of names to image paths for public image families that use APT.
-var HeadAptImages = map[string]string{
+// HeadBusterAptImages empty for now as debian-10 wil reach EOL and some of its repos are not reachable anymore.
+var HeadBusterAptImages = map[string]string{
 	// Debian images.
-	"debian-cloud/debian-11": "projects/debian-cloud/global/images/family/debian-11",
-	"debian-cloud/debian-12": "projects/debian-cloud/global/images/family/debian-12",
-
-	// Ubuntu images.
-	"ubuntu-os-cloud/ubuntu-2314": "projects/ubuntu-os-cloud/global/images/ubuntu-2310-mantic-amd64-v20231011",
-
-	// Temporary added to test latest version of osconfig-agent in Ubuntu Canonical repos
-	"temporary-canonical-latest/ubuntu-2410": "projects/compute-image-osconfig-agent/global/images/testing-ubuntu-minimal-guest-2410-oracular-amd64-v20240503",
 }
 
-// OldAptImages is a map of names to image paths for old (deprecated) images that use APT.
-var OldAptImages = map[string]string{
+// HeadBullseyeAptImages is a map of names to image paths for public debian-11 images
+var HeadBullseyeAptImages = map[string]string{
 	// Debian images.
+	"debian-cloud/debian-11": "projects/debian-cloud/global/images/family/debian-11",
+}
 
-	// Ubuntu images.
-	"old/ubuntu-2004": "projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20230918",
+// HeadBookwormAptImages is a map of names to image paths for public debian-12 images
+var HeadBookwormAptImages = map[string]string{
+	// Debian images.
+	"debian-cloud/debian-12": "projects/debian-cloud/global/images/family/debian-12",
 }
 
 // HeadSUSEImages is a map of names to image paths for public SUSE images.
@@ -329,6 +340,21 @@ var HeadELImages = func() (newMap map[string]string) {
 		newMap[k] = v
 	}
 	for k, v := range HeadEL9Images {
+		newMap[k] = v
+	}
+	return
+}()
+
+// HeadAptImages is a map of names to image paths for public EL image families. (RHEL, CentOS, Rocky)
+var HeadAptImages = func() (newMap map[string]string) {
+	newMap = make(map[string]string)
+	for k, v := range HeadBusterAptImages {
+		newMap[k] = v
+	}
+	for k, v := range HeadBullseyeAptImages {
+		newMap[k] = v
+	}
+	for k, v := range HeadBookwormAptImages {
 		newMap[k] = v
 	}
 	return

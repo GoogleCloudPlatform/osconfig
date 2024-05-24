@@ -100,24 +100,15 @@ echo 'Pin-priority: 9999' >> /etc/apt/preferences
 		},
 		machineType: "e2-standard-4",
 	}
-	aptSetup = &patchTestSetup{
-		assertTimeout: 30 * time.Minute,
-		metadata: []*computeApi.MetadataItems{
-			compute.BuildInstanceMetadataItem("startup-script", linuxRecordBoot+utils.InstallOSConfigDeb()+linuxLocalPrePatchScript),
-			enableOsconfig,
-			disableFeatures,
-		},
-		machineType: "e2-medium",
-	}
-	aptDowngradeSetup = &patchTestSetup{
-		assertTimeout: 30 * time.Minute,
-		metadata: []*computeApi.MetadataItems{
-			compute.BuildInstanceMetadataItem("startup-script", linuxRecordBoot+utils.InstallOSConfigDeb()+linuxLocalPrePatchScript+setUpDowngradeState),
-			enableOsconfig,
-			disableFeatures,
-		},
-		machineType: "e2-medium",
-	}
+
+	// apt setup
+	busterAptSetup   = createAptPatchTestSetup("debian-10")
+	bullseyeAptSetup = createAptPatchTestSetup("debian-11")
+	bookwormAptSetup = createAptPatchTestSetup("debian-12")
+
+	// apt Downgrade setup
+	bullseyeAptDowngradeSetup = createAptDowngradeSetup("debian-11")
+
 	el7Setup = &patchTestSetup{
 		assertTimeout: 30 * time.Minute,
 		metadata: []*computeApi.MetadataItems{
@@ -156,6 +147,30 @@ echo 'Pin-priority: 9999' >> /etc/apt/preferences
 	}
 )
 
+func createAptPatchTestSetup(image string) *patchTestSetup {
+	return &patchTestSetup{
+		assertTimeout: 30 * time.Minute,
+		metadata: []*computeApi.MetadataItems{
+			compute.BuildInstanceMetadataItem("startup-script", linuxRecordBoot+utils.InstallOSConfigDeb(image)+linuxLocalPrePatchScript),
+			enableOsconfig,
+			disableFeatures,
+		},
+		machineType: "e2-medium",
+	}
+}
+
+func createAptDowngradeSetup(image string) *patchTestSetup {
+	return &patchTestSetup{
+		assertTimeout: 30 * time.Minute,
+		metadata: []*computeApi.MetadataItems{
+			compute.BuildInstanceMetadataItem("startup-script", linuxRecordBoot+utils.InstallOSConfigDeb(image)+linuxLocalPrePatchScript+setUpDowngradeState),
+			enableOsconfig,
+			disableFeatures,
+		},
+		machineType: "e2-medium",
+	}
+}
+
 func imageTestSetup(mapping map[*patchTestSetup]map[string]string) (setup []*patchTestSetup) {
 	for s, m := range mapping {
 		for name, image := range m {
@@ -171,12 +186,14 @@ func imageTestSetup(mapping map[*patchTestSetup]map[string]string) (setup []*pat
 func headImageTestSetup() []*patchTestSetup {
 	// This maps a specific patchTestSetup to test setup names and associated images.
 	mapping := map[*patchTestSetup]map[string]string{
-		windowsSetup: utils.HeadWindowsImages,
-		el7Setup:     utils.HeadEL7Images,
-		el8Setup:     utils.HeadEL8Images,
-		el9Setup:     utils.HeadEL9Images,
-		aptSetup:     utils.HeadAptImages,
-		suseSetup:    utils.HeadSUSEImages,
+		windowsSetup:     utils.HeadWindowsImages,
+		el7Setup:         utils.HeadEL7Images,
+		el8Setup:         utils.HeadEL8Images,
+		el9Setup:         utils.HeadEL9Images,
+		busterAptSetup:   utils.HeadBusterAptImages,
+		bullseyeAptSetup: utils.HeadBullseyeAptImages,
+		bookwormAptSetup: utils.HeadBookwormAptImages,
+		suseSetup:        utils.HeadSUSEImages,
 	}
 
 	return imageTestSetup(mapping)
@@ -189,7 +206,6 @@ func oldImageTestSetup() []*patchTestSetup {
 		el7Setup:     utils.OldEL7Images,
 		el8Setup:     utils.OldEL8Images,
 		el9Setup:     utils.OldEL9Images,
-		aptSetup:     utils.OldAptImages,
 		suseSetup:    utils.OldSUSEImages,
 	}
 
@@ -199,7 +215,9 @@ func oldImageTestSetup() []*patchTestSetup {
 func aptHeadImageTestSetup() []*patchTestSetup {
 	// This maps a specific patchTestSetup to test setup names and associated images.
 	mapping := map[*patchTestSetup]map[string]string{
-		aptSetup: utils.HeadAptImages,
+		busterAptSetup:   utils.HeadBusterAptImages,
+		bullseyeAptSetup: utils.HeadBullseyeAptImages,
+		busterAptSetup:   utils.HeadBookwormAptImages,
 	}
 
 	return imageTestSetup(mapping)
@@ -208,7 +226,7 @@ func aptHeadImageTestSetup() []*patchTestSetup {
 func aptDowngradeImageTestSetup() []*patchTestSetup {
 	// This maps a specific patchTestSetup to test setup names and associated images.
 	mapping := map[*patchTestSetup]map[string]string{
-		aptDowngradeSetup: utils.DowngradeAptImages,
+		bullseyeAptDowngradeSetup: utils.DowngradeBullseyeAptImages,
 	}
 
 	return imageTestSetup(mapping)

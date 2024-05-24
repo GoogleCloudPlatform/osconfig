@@ -58,7 +58,7 @@ while true; do
   sleep 10
 done`
 
-		ss = fmt.Sprintf(ss, utils.InstallOSConfigDeb(), wantRemove, wantInstall, packageInstalled, packageNotInstalled)
+		ss = fmt.Sprintf(ss, utils.InstallOSConfigDeb(image), wantRemove, wantInstall, packageInstalled, packageNotInstalled)
 		key = "startup-script"
 
 	case "deb":
@@ -82,7 +82,7 @@ while true; do
   fi
   sleep 10
 done`
-		ss = fmt.Sprintf(ss, utils.InstallOSConfigDeb(), wantInstall[0], wantInstall[1], packageInstalled)
+		ss = fmt.Sprintf(ss, utils.InstallOSConfigDeb(image), wantInstall[0], wantInstall[1], packageInstalled)
 		key = "startup-script"
 
 	case "yum":
@@ -242,7 +242,7 @@ while true; do
   sleep 10
 done`
 
-		ss = fmt.Sprintf(ss, utils.InstallOSConfigDeb(), packageName, packageInstalled)
+		ss = fmt.Sprintf(ss, utils.InstallOSConfigDeb(image), packageName, packageInstalled)
 		key = "startup-script"
 
 	case "yum":
@@ -332,7 +332,7 @@ curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"`, fileExists)
 
 	switch pkgManager {
 	case "apt":
-		ss = fmt.Sprintf(linux, dnePath, utils.InstallOSConfigDeb(), fileDNE)
+		ss = fmt.Sprintf(linux, dnePath, utils.InstallOSConfigDeb(image), fileDNE)
 		for _, p := range wantPaths {
 			ss += fmt.Sprintf(linuxCheck, p)
 		}
@@ -425,7 +425,7 @@ curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"`, fileExists)
 
 	switch pkgManager {
 	case "apt":
-		ss = linux + utils.InstallOSConfigDeb() + linuxChecks + linuxEnd
+		ss = linux + utils.InstallOSConfigDeb(image) + linuxChecks + linuxEnd
 		key = "startup-script"
 
 	case "yum":

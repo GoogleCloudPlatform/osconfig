@@ -45,9 +45,23 @@ var (
 		timeout:     30 * time.Minute,
 	}
 
-	aptSetup = &inventoryTestSetup{
+	busterAptSetup = &inventoryTestSetup{
 		packageType: []string{"deb"},
-		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigDeb()),
+		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigDeb("debian-10")),
+		machineType: "e2-standard-2",
+		timeout:     25 * time.Minute,
+	}
+
+	bullseyeAptSetup = &inventoryTestSetup{
+		packageType: []string{"deb"},
+		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigDeb("debian-11")),
+		machineType: "e2-standard-2",
+		timeout:     25 * time.Minute,
+	}
+
+	bookwormAptSetup = &inventoryTestSetup{
+		packageType: []string{"deb"},
+		startup:     compute.BuildInstanceMetadataItem("startup-script", utils.InstallOSConfigDeb("debian-12")),
 		machineType: "e2-standard-2",
 		timeout:     25 * time.Minute,
 	}
@@ -90,12 +104,14 @@ var (
 func headImageTestSetup() (setup []*inventoryTestSetup) {
 	// This maps a specific inventoryTestSetup to test setup names and associated images.
 	headTestSetupMapping := map[*inventoryTestSetup]map[string]string{
-		windowsSetup: utils.HeadWindowsImages,
-		el7Setup:     utils.HeadEL7Images,
-		el8Setup:     utils.HeadEL8Images,
-		el9Setup:     utils.HeadEL9Images,
-		aptSetup:     utils.HeadAptImages,
-		suseSetup:    utils.HeadSUSEImages,
+		windowsSetup:     utils.HeadWindowsImages,
+		el7Setup:         utils.HeadEL7Images,
+		el8Setup:         utils.HeadEL8Images,
+		el9Setup:         utils.HeadEL9Images,
+		busterAptSetup:   utils.HeadBusterAptImages,
+		bullseyeAptSetup: utils.HeadBullseyeAptImages,
+		bookwormAptSetup: utils.HeadBookwormAptImages,
+		suseSetup:        utils.HeadSUSEImages,
 	}
 
 	// TODO: remove this hack and setup specific test suites for each test type.

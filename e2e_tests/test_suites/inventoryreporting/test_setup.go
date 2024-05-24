@@ -110,31 +110,10 @@ var (
 		},
 	}
 
-	aptSetup = &inventoryTestSetup{
-		packageType: []string{"deb"},
-		startup:     compute.BuildInstanceMetadataItem("startup-script", getStartupScriptDeb()),
-		machineType: "e2-medium",
-		timeout:     25 * time.Minute,
-		itemCheck: func(items map[string]*osconfigpb.Inventory_Item) error {
-			var bashFound bool
-			var cowsayFound bool
-			for _, item := range items {
-				if item.GetInstalledPackage().GetAptPackage().GetPackageName() == "bash" {
-					bashFound = true
-				}
-				if item.GetAvailablePackage().GetAptPackage().GetPackageName() == "cowsay" {
-					cowsayFound = true
-				}
-			}
-			if !bashFound {
-				return errors.New("did not find 'bash' in installed packages")
-			}
-			if !cowsayFound {
-				return errors.New("did not find 'cowsay' in available packages")
-			}
-			return nil
-		},
-	}
+	// apt setup
+	busterAptSetup   = createAptSetup("debian-10")
+	bullseyeAptSetup = createAptSetup("debian-11")
+	bookwormAptSetup = createAptSetup("debian-12")
 
 	yumBashInstalledCheck = func(items map[string]*osconfigpb.Inventory_Item) error {
 		var bashFound bool
@@ -221,6 +200,34 @@ var (
 	}
 )
 
+func createAptSetup(image string) *inventoryTestSetup {
+	return &inventoryTestSetup{
+		packageType: []string{"deb"},
+		startup:     compute.BuildInstanceMetadataItem("startup-script", getStartupScriptDeb(image)),
+		machineType: "e2-medium",
+		timeout:     25 * time.Minute,
+		itemCheck: func(items map[string]*osconfigpb.Inventory_Item) error {
+			var bashFound bool
+			var cowsayFound bool
+			for _, item := range items {
+				if item.GetInstalledPackage().GetAptPackage().GetPackageName() == "bash" {
+					bashFound = true
+				}
+				if item.GetAvailablePackage().GetAptPackage().GetPackageName() == "cowsay" {
+					cowsayFound = true
+				}
+			}
+			if !bashFound {
+				return errors.New("did not find 'bash' in installed packages")
+			}
+			if !cowsayFound {
+				return errors.New("did not find 'cowsay' in available packages")
+			}
+			return nil
+		},
+	}
+}
+
 func getStartupScriptEL(image string) string {
 	ss := `
 echo 'Adding test repo'
@@ -243,7 +250,7 @@ done
 	return fmt.Sprintf(ss, utils.InstallOSConfigEL(image))
 }
 
-func getStartupScriptDeb() string {
+func getStartupScriptDeb(image string) string {
 	ss := `
 echo 'Adding test repo'
 
@@ -259,7 +266,7 @@ done
 apt-get update
 apt-get -y install cowsay=3.03+dfsg1-10 || exit 1
 %s`
-	return fmt.Sprintf(ss, utils.InstallOSConfigDeb())
+	return fmt.Sprintf(ss, utils.InstallOSConfigDeb(image))
 }
 
 func getStartupScriptGoo() string {
@@ -289,12 +296,14 @@ zypper -n --no-gpg-checks install cowsay-3.03-20.el7
 func headImageTestSetup() (setup []*inventoryTestSetup) {
 	// This maps a specific inventoryTestSetup to test setup names and associated images.
 	headTestSetupMapping := map[*inventoryTestSetup]map[string]string{
-		windowsSetup: utils.HeadWindowsImages,
-		el7Setup:     utils.HeadEL7Images,
-		el8Setup:     utils.HeadEL8Images,
-		el9Setup:     utils.HeadEL9Images,
-		aptSetup:     utils.HeadAptImages,
-		suseSetup:    utils.HeadSUSEImages,
+		windowsSetup:     utils.HeadWindowsImages,
+		el7Setup:         utils.HeadEL7Images,
+		el8Setup:         utils.HeadEL8Images,
+		el9Setup:         utils.HeadEL9Images,
+		busterAptSetup:   utils.HeadBusterAptImages,
+		bullseyeAptSetup: utils.HeadBullseyeAptImages,
+		bookwormAptSetup: utils.HeadBookwormAptImages,
+		suseSetup:        utils.HeadSUSEImages,
 	}
 
 	// TODO: remove this hack and setup specific test suites for each test type.
