@@ -13,7 +13,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.6.0
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
-	github.com/ulikunitz/xz v0.5.11
+	github.com/ulikunitz/xz v0.5.12
 	golang.org/x/crypto v0.22.0
 	golang.org/x/oauth2 v0.7.0
 	golang.org/x/sys v0.19.0
