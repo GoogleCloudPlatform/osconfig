@@ -100,14 +100,14 @@ func pickTestRegionForArtifactRegistry() string {
 	randomIndex := rand.Intn(len(zones))
 
 	currentIndex := 0
-	random_zone := ""
+	randomZone := ""
 	for zone := range zones {
 		if currentIndex == randomIndex {
-			random_zone = zone
+			randomZone = zone
 		}
 	}
 
-	return getRegionFromZone(random_zone)
+	return getRegionFromZone(randomZone)
 }
 
 // getRepoLineForApt returns the repo line that should be added to apt sources.list file
@@ -162,8 +162,8 @@ c:\programdata\googet\googet.exe -noconfirm install -sources https://packages.cl
 `+windowsPost, config.AgentRepo())
 }
 
-// getYumRepoBaseUrl returns the repo baseUrl that should be added to repo file google-osconfig-agent.repo
-func getYumRepoBaseUrl(osType string) string {
+// getYumRepoBaseURL returns the repo baseUrl that should be added to repo file google-osconfig-agent.repo
+func getYumRepoBaseURL(osType string) string {
 	agentRepo := config.AgentRepo()
 	if agentRepo == "testing" {
 		testRegion := pickTestRegionForArtifactRegistry()
@@ -198,7 +198,7 @@ enabled=1
 gpgcheck=%d
 gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
 			https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-EOM`, format, getYumRepoBaseUrl(osType), gpgcheck)
+EOM`, format, getYumRepoBaseURL(osType), gpgcheck)
 
 	return repoConfig
 }
