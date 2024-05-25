@@ -30,6 +30,8 @@ import (
 )
 
 var (
+	testingPkgsProjectName = "gce-package-testing"
+
 	yumInstallAgent = `
 sed -i 's/repo_gpgcheck=1/repo_gpgcheck=0/g' /etc/yum.repos.d/google-cloud.repo
 sleep 10
@@ -83,29 +85,41 @@ Start-Sleep 10
 $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/osconfig_tests/install_done'
 Invoke-RestMethod -Method PUT -Uri $uri -Headers @{"Metadata-Flavor" = "Google"} -Body 1
 `
-
-	yumRepoSetup = `
-cat > /etc/yum.repos.d/google-osconfig-agent.repo <<EOM
-[google-osconfig-agent]
-name=Google OSConfig Agent Repository
-baseurl=https://packages.cloud.google.com/yum/repos/google-osconfig-agent-%s-%s
-enabled=1
-gpgcheck=%d
-gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
-           https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-EOM`
-
-	zypperRepoSetup = `
-cat > /etc/zypp/repos.d/google-osconfig-agent.repo <<EOM
-[google-osconfig-agent]
-name=Google OSConfig Agent Repository
-baseurl=https://packages.cloud.google.com/yum/repos/google-osconfig-agent-%s-%s
-enabled=1
-gpgcheck=%d
-gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
-           https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-EOM`
 )
+
+// getRegionFromZone extracts the region from a zone name.
+// Example: If zone is "us-central1-a", this would return "us-central1"
+func getRegionFromZone(zone string) string {
+	parts := strings.Split(zone, "-")
+	return strings.Join(parts[:len(parts)-1], "-")
+}
+
+// pickTestRegionForArtifactRegistry selects a random zone from the configured zones to pull osconfig-agent package from AR & selected-region
+func pickTestRegionForArtifactRegistry() string {
+	zones := config.Zones()
+	randomIndex := rand.Intn(len(zones))
+
+	currentIndex := 0
+	random_zone := ""
+	for zone := range zones {
+		if currentIndex == randomIndex {
+			random_zone = zone
+		}
+	}
+
+	return getRegionFromZone(random_zone)
+}
+
+// getRepoLineForApt returns the repo line that should be added to apt sources.list file
+func getRepoLineForApt(osName string) string {
+	repo := config.AgentRepo()
+	if repo == "testing" {
+		testRegion := pickTestRegionForArtifactRegistry()
+		return fmt.Sprintf("deb ar+https://%s-apt.pkg.dev/projects/%s google-osconfig-agent-%s-testing main",
+			testRegion, testingPkgsProjectName, osName)
+	}
+	return fmt.Sprintf("deb http://packages.cloud.google.com/apt google-osconfig-agent-%s-%s main", osName, repo)
+}
 
 // InstallOSConfigDeb installs the osconfig agent on deb based systems.
 func InstallOSConfigDeb(image string) string {
@@ -121,11 +135,15 @@ systemctl stop google-osconfig-agent
 apt-get update
 apt-get install -y gnupg2
 
-echo 'deb http://packages.cloud.google.com/apt google-osconfig-agent-%s-%s main' >> /etc/apt/sources.list
+# install apt-transport-artifact-registry
+apt-get install -y apt-transport-artifact-registry
+
+echo '%s' >> /etc/apt/sources.list
+
 curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 apt-get update
 apt-get install -y google-osconfig-agent
-systemctl start google-osconfig-agent`+CurlPost, osName, config.AgentRepo())
+systemctl start google-osconfig-agent`+CurlPost, getRepoLineForApt(osName))
 }
 
 // InstallOSConfigGooGet installs the osconfig agent on Windows systems.
@@ -144,15 +162,56 @@ c:\programdata\googet\googet.exe -noconfirm install -sources https://packages.cl
 `+windowsPost, config.AgentRepo())
 }
 
+// getYumRepoBaseUrl returns the repo baseUrl that should be added to repo file google-osconfig-agent.repo
+func getYumRepoBaseUrl(osType string) string {
+	agentRepo := config.AgentRepo()
+	if agentRepo == "testing" {
+		testRegion := pickTestRegionForArtifactRegistry()
+		return fmt.Sprintf("https://%s-yum.pkg.dev/projects/%s/google-osconfig-agent-%s-testing", testRegion, testingPkgsProjectName, osType)
+	}
+	return fmt.Sprintf("https://packages.cloud.google.com/yum/repos/google-osconfig-agent-%s-%s", osType, agentRepo)
+}
+
+func getYumRepoSetup(osType string) string {
+	gpgcheck := 0
+	if config.AgentRepo() == "staging" {
+		gpgcheck = 1
+	}
+
+	// According to doc, pkg name differ according to ELv version
+	// doc: https://cloud.google.com/artifact-registry/docs/os-packages/rpm/configure#prepare-yum
+	format := "dnf"
+	if osType == "el7" {
+		format = "yum"
+	}
+
+	repoConfig := fmt.Sprintf(`
+# install yum-plugin-artifact-registry
+yum makecache
+yum install -y %s-plugin-artifact-registry
+
+cat > /etc/yum.repos.d/google-osconfig-agent.repo <<EOM
+[google-osconfig-agent]
+name=Google OSConfig Agent Repository
+baseurl=%s
+enabled=1
+gpgcheck=%d
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+			https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+EOM`, format, getYumRepoBaseUrl(osType), gpgcheck)
+
+	return repoConfig
+}
+
 // InstallOSConfigSUSE installs the osconfig agent on suse systems.
 func InstallOSConfigSUSE() string {
 	if config.AgentRepo() == "" {
 		return ""
 	}
 	if config.AgentRepo() == "staging" || config.AgentRepo() == "stable" {
-		return fmt.Sprintf(zypperRepoSetup+zypperInstallAgent, "el8", config.AgentRepo(), 1)
+		return getYumRepoSetup("el8") + zypperInstallAgent
 	}
-	return fmt.Sprintf(zypperRepoSetup+zypperInstallAgent, "el8", config.AgentRepo(), 0)
+	return getYumRepoSetup("el8") + zypperInstallAgent
 }
 
 // InstallOSConfigEL9 installs the osconfig agent on el9 based systems. (RHEL)
@@ -164,9 +223,9 @@ func InstallOSConfigEL9() string {
 		return yumInstallAgent
 	}
 	if config.AgentRepo() == "staging" {
-		return fmt.Sprintf(yumRepoSetup+yumInstallAgent, "el9", config.AgentRepo(), 1)
+		return getYumRepoSetup("el9") + yumInstallAgent
 	}
-	return fmt.Sprintf(yumRepoSetup+yumInstallAgent, "el9", config.AgentRepo(), 0)
+	return getYumRepoSetup("el9") + yumInstallAgent
 }
 
 // InstallOSConfigEL8 installs the osconfig agent on el8 based systems. (RHEL)
@@ -178,9 +237,9 @@ func InstallOSConfigEL8() string {
 		return yumInstallAgent
 	}
 	if config.AgentRepo() == "staging" {
-		return fmt.Sprintf(yumRepoSetup+yumInstallAgent, "el8", config.AgentRepo(), 1)
+		return getYumRepoSetup("el8") + yumInstallAgent
 	}
-	return fmt.Sprintf(yumRepoSetup+yumInstallAgent, "el8", config.AgentRepo(), 0)
+	return getYumRepoSetup("el8") + yumInstallAgent
 }
 
 // InstallOSConfigEL7 installs the osconfig agent on el7 based systems.
@@ -192,9 +251,9 @@ func InstallOSConfigEL7() string {
 		return yumInstallAgent
 	}
 	if config.AgentRepo() == "staging" {
-		return fmt.Sprintf(yumRepoSetup+yumInstallAgent, "el7", config.AgentRepo(), 1)
+		return getYumRepoSetup("el7") + yumInstallAgent
 	}
-	return fmt.Sprintf(yumRepoSetup+yumInstallAgent, "el7", config.AgentRepo(), 0)
+	return getYumRepoSetup("el7") + yumInstallAgent
 }
 
 // containsAnyOf checks if a string contains any substring from a given list.
