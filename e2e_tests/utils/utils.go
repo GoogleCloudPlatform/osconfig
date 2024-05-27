@@ -203,17 +203,6 @@ EOM`, format, getYumRepoBaseURL(osType), gpgcheck)
 	return repoConfig
 }
 
-// InstallOSConfigSUSE installs the osconfig agent on suse systems.
-func InstallOSConfigSUSE() string {
-	if config.AgentRepo() == "" {
-		return ""
-	}
-	if config.AgentRepo() == "staging" || config.AgentRepo() == "stable" {
-		return getYumRepoSetup("el8") + zypperInstallAgent
-	}
-	return getYumRepoSetup("el8") + zypperInstallAgent
-}
-
 // InstallOSConfigEL9 installs the osconfig agent on el9 based systems. (RHEL)
 func InstallOSConfigEL9() string {
 	if config.AgentRepo() == "" {
@@ -279,6 +268,38 @@ func InstallOSConfigEL(image string) string {
 
 	}
 	return ""
+}
+
+func getZypperRepoSetup(osType string) string {
+	gpgcheck := 0
+	if config.AgentRepo() == "staging" {
+		gpgcheck = 1
+	}
+
+	// TODO: Allow SUSE tests to pull packages from test project.
+	repoConfig := fmt.Sprintf(`
+cat > /etc/zypp/repos.d/google-osconfig-agent.repo <<EOM
+[google-osconfig-agent]
+name=Google OSConfig Agent Repository
+baseurl=%s
+enabled=1
+gpgcheck=%d
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+			https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+EOM`, getYumRepoBaseURL(osType), gpgcheck)
+
+	return repoConfig
+}
+
+// InstallOSConfigSUSE installs the osconfig agent on suse systems.
+func InstallOSConfigSUSE() string {
+	if config.AgentRepo() == "" {
+		return ""
+	}
+	if config.AgentRepo() == "staging" || config.AgentRepo() == "stable" {
+		return getZypperRepoSetup("el8") + zypperInstallAgent
+	}
+	return getZypperRepoSetup("el8") + zypperInstallAgent
 }
 
 // getDebOsType returns the equivalent os_name for deb version (e.g. debian-11 --> bullseye)
