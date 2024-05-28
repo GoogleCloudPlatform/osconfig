@@ -151,15 +151,28 @@ func InstallOSConfigGooGet() string {
 	if config.AgentRepo() == "" {
 		return windowsPost
 	}
+	removeAgentCmd := `c:\programdata\googet\googet.exe -noconfirm remove google-osconfig-agent`
 	if config.AgentRepo() == "stable" {
-		return `
-c:\programdata\googet\googet.exe -noconfirm remove google-osconfig-agent
-c:\programdata\googet\googet.exe -noconfirm install google-osconfig-agent` + windowsPost
+		return fmt.Sprintf(`
+%s
+c:\programdata\googet\googet.exe -noconfirm install google-osconfig-agent`, removeAgentCmd) + windowsPost
+	} else if config.AgentRepo() == "testing" {
+		testRegion := pickTestRegionForArtifactRegistry()
+		agentRepo := config.AgentRepo()
+		return fmt.Sprintf(`
+%s
+c:\programdata\googet\googet.exe addrepo google-osconfig-agent-googet-testing https://%s-googet.pkg.dev/projects/%s/repos/google-osconfig-agent-googet-%s
+
+# set useoauth to true in repo new file
+$filePath = 'C:\ProgramData\GooGet\repos\google-osconfig-agent-googet-testing.repo'
+(Get-Content $filePath) -replace 'useoauth: false', 'useoauth: true' | Set-Content $filePath
+
+c:\programdata\googet\googet.exe -noconfirm install google-osconfig-agent`+windowsPost, removeAgentCmd, testRegion, testingPkgsProjectName, agentRepo)
 	}
 	return fmt.Sprintf(`
-c:\programdata\googet\googet.exe -noconfirm remove google-osconfig-agent
+%s
 c:\programdata\googet\googet.exe -noconfirm install -sources https://packages.cloud.google.com/yuck/repos/google-osconfig-agent-%s google-osconfig-agent
-`+windowsPost, config.AgentRepo())
+`+windowsPost, removeAgentCmd, config.AgentRepo())
 }
 
 // getYumRepoBaseURL returns the repo baseUrl that should be added to repo file google-osconfig-agent.repo
