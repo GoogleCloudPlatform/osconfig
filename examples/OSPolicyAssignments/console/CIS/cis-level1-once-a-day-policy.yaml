@@ -1,8 +1,7 @@
 # An OS policy to check CIS level 1 compliance once a day.
-osPolicies:
-- id: ensure-cis-level1-compliance-once-a-day-policy
-  mode: ENFORCEMENT
-  resourceGroups:
+id: ensure-cis-level1-compliance-once-a-day-policy
+mode: ENFORCEMENT
+resourceGroups:
   - resources:
       id: ensure-cis-level1-compliance-once-a-day
       exec:
