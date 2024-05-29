@@ -9,7 +9,7 @@ require (
 	cos.googlesource.com/cos/tools.git v0.0.0-20210329212435-a349a79f950d
 	github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20221216194522-f549ad6a1730
 	github.com/StackExchange/wmi v1.2.1
-	github.com/go-ole/go-ole v1.2.6
+	github.com/go-ole/go-ole v1.3.0
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.6.0
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
