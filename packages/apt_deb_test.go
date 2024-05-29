@@ -89,7 +89,7 @@ func TestInstalledDebPackages(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	want := []*PkgInfo{{"foo", "x86_64", "1.2.3-4"}}
+	want := []*PkgInfo{{Name: "foo", Arch: "x86_64", Version: "1.2.3-4"}}
 	if !reflect.DeepEqual(ret, want) {
 		t.Errorf("InstalledDebPackages() = %v, want %v", ret, want)
 	}
@@ -106,10 +106,10 @@ func TestParseInstalledDebpackages(t *testing.T) {
 		data []byte
 		want []*PkgInfo
 	}{
-		{"NormalCase", []byte("foo amd64 1.2.3-4 installed\nbar noarch 1.2.3-4 installed\nbaz noarch 1.2.3-4 config-files"), []*PkgInfo{{"foo", "x86_64", "1.2.3-4"}, {"bar", "all", "1.2.3-4"}}},
+		{"NormalCase", []byte("foo amd64 1.2.3-4 installed\nbar noarch 1.2.3-4 installed\nbaz noarch 1.2.3-4 config-files"), []*PkgInfo{{Name: "foo", Arch: "x86_64", Version: "1.2.3-4"}, {Name: "bar", Arch: "all", Version: "1.2.3-4"}}},
 		{"NoPackages", []byte("nothing here"), nil},
 		{"nil", nil, nil},
-		{"UnrecognizedPackage", []byte("something we dont understand\n bar noarch 1.2.3-4 installed"), []*PkgInfo{{"bar", "all", "1.2.3-4"}}},
+		{"UnrecognizedPackage", []byte("something we dont understand\n bar noarch 1.2.3-4 installed"), []*PkgInfo{{Name: "bar", Arch: "all", Version: "1.2.3-4"}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -134,11 +134,11 @@ Conf firmware-linux-free (3.4 Debian:9.9/stable [all])
 		showNew bool
 		want    []*PkgInfo
 	}{
-		{"NormalCase", []byte(normalCase), false, []*PkgInfo{{"libldap-common", "all", "2.4.45+dfsg-1ubuntu1.3"}, {"google-cloud-sdk", "x86_64", "246.0.0-0"}}},
-		{"NormalCaseShowNew", []byte(normalCase), true, []*PkgInfo{{"libldap-common", "all", "2.4.45+dfsg-1ubuntu1.3"}, {"google-cloud-sdk", "x86_64", "246.0.0-0"}, {"firmware-linux-free", "all", "3.4"}}},
+		{"NormalCase", []byte(normalCase), false, []*PkgInfo{{Name: "libldap-common", Arch: "all", Version: "2.4.45+dfsg-1ubuntu1.3"}, {Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"}}},
+		{"NormalCaseShowNew", []byte(normalCase), true, []*PkgInfo{{Name: "libldap-common", Arch: "all", Version: "2.4.45+dfsg-1ubuntu1.3"}, {Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"}, {Name: "firmware-linux-free", Arch: "all", Version: "3.4"}}},
 		{"NoPackages", []byte("nothing here"), false, nil},
 		{"nil", nil, false, nil},
-		{"UnrecognizedPackage", []byte("Inst something [we dont understand\n Inst google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [amd64])"), false, []*PkgInfo{{"google-cloud-sdk", "x86_64", "246.0.0-0"}}},
+		{"UnrecognizedPackage", []byte("Inst something [we dont understand\n Inst google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [amd64])"), false, []*PkgInfo{{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -176,7 +176,7 @@ func TestAptUpdates(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	want := []*PkgInfo{{"google-cloud-sdk", "x86_64", "246.0.0-0"}}
+	want := []*PkgInfo{{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"}}
 	if !reflect.DeepEqual(ret, want) {
 		t.Errorf("AptUpdates() = %v, want %v", ret, want)
 	}
@@ -221,7 +221,7 @@ func TestDebPkgInfo(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	want := &PkgInfo{"google-guest-agent", "x86_64", "1:1dummy-g1"}
+	want := &PkgInfo{Name: "google-guest-agent", Arch: "x86_64", Version: "1:1dummy-g1"}
 	if !reflect.DeepEqual(ret, want) {
 		t.Errorf("DebPkgInfo() = %+v, want %+v", ret, want)
 	}

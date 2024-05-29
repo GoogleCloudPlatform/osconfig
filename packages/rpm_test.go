@@ -30,10 +30,10 @@ func TestParseInstalledRPMPackages(t *testing.T) {
 		data []byte
 		want []*PkgInfo
 	}{
-		{"NormalCase", []byte("foo x86_64 1.2.3-4\nbar noarch 1.2.3-4"), []*PkgInfo{{"foo", "x86_64", "1.2.3-4"}, {"bar", "all", "1.2.3-4"}}},
+		{"NormalCase", []byte("foo x86_64 1.2.3-4\nbar noarch 1.2.3-4"), []*PkgInfo{{Name: "foo", Arch: "x86_64", Version: "1.2.3-4"}, {Name: "bar", Arch: "all", Version: "1.2.3-4"}}},
 		{"NoPackages", []byte("nothing here"), nil},
 		{"nil", nil, nil},
-		{"UnrecognizedPackage", []byte("foo.x86_64 1.2.3-4\nsomething we dont understand\n bar noarch 1.2.3-4 "), []*PkgInfo{{"bar", "all", "1.2.3-4"}}},
+		{"UnrecognizedPackage", []byte("foo.x86_64 1.2.3-4\nsomething we dont understand\n bar noarch 1.2.3-4 "), []*PkgInfo{{Name: "bar", Arch: "all", Version: "1.2.3-4"}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -59,7 +59,7 @@ func TestInstalledRPMPackages(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	want := []*PkgInfo{{"foo", "x86_64", "1.2.3-4"}}
+	want := []*PkgInfo{{Name: "foo", Arch: "x86_64", Version: "1.2.3-4"}}
 	if !reflect.DeepEqual(ret, want) {
 		t.Errorf("InstalledRPMPackages() = %v, want %v", ret, want)
 	}
@@ -85,7 +85,7 @@ func TestRPMPkgInfo(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	want := &PkgInfo{"foo", "x86_64", "1.2.3-4"}
+	want := &PkgInfo{Name: "foo", Arch: "x86_64", Version: "1.2.3-4"}
 	if !reflect.DeepEqual(ret, want) {
 		t.Errorf("RPMPkgInfo() = %v, want %v", ret, want)
 	}

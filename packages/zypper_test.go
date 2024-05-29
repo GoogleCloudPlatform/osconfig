@@ -76,7 +76,7 @@ this is junk data`
 		data []byte
 		want []*PkgInfo
 	}{
-		{"NormalCase", []byte(normalCase), []*PkgInfo{{"at", "x86_64", "3.1.14-8.3.1"}, {"autoyast2-installation", "all", "3.2.22-2.9.2"}}},
+		{"NormalCase", []byte(normalCase), []*PkgInfo{{Name: "at", Arch: "x86_64", Version: "3.1.14-8.3.1"}, {Name: "autoyast2-installation", Arch: "all", Version: "3.2.22-2.9.2"}}},
 		{"NoPackages", []byte("nothing here"), nil},
 		{"nil", nil, nil},
 	}
@@ -104,7 +104,7 @@ func TestZypperUpdates(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	want := []*PkgInfo{{"at", "x86_64", "3.1.14-8.3.1"}}
+	want := []*PkgInfo{{Name: "at", Arch: "x86_64", Version: "3.1.14-8.3.1"}}
 	if !reflect.DeepEqual(ret, want) {
 		t.Errorf("ZypperUpdates() = %v, want %v", ret, want)
 	}
