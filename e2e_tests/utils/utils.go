@@ -388,8 +388,6 @@ var OldEL7Images = map[string]string{
 
 // HeadEL8Images is a map of names to image paths for public EL8 image families. (RHEL, CentOS, Rocky)
 var HeadEL8Images = map[string]string{
-	"centos-cloud/centos-stream-8": "projects/centos-cloud/global/images/family/centos-stream-8",
-
 	"rhel-cloud/rhel-8": "projects/rhel-cloud/global/images/family/rhel-8",
 
 	"rhel-sap-cloud/rhel-8-4-sap": "projects/rhel-sap-cloud/global/images/family/rhel-8-4-sap-ha",
