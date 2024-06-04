@@ -97,15 +97,18 @@ func getRegionFromZone(zone string) string {
 // pickTestRegionForArtifactRegistry selects a random zone from the configured zones to pull osconfig-agent package from AR & selected-region
 func pickTestRegionForArtifactRegistry() string {
 	zones := config.Zones()
-	randomIndex := rand.Intn(len(zones))
 
-	currentIndex := 0
-	randomZone := ""
-	for zone := range zones {
-		if currentIndex == randomIndex {
-			randomZone = zone
-		}
+	if len(zones) == 0 {
+		// default region for tests
+		return "us-central1"
 	}
+
+	zoneKeys := make([]string, 0, len(zones))
+	for k := range zones {
+		zoneKeys = append(zoneKeys, k)
+	}
+	randomIndex := rand.Intn(len(zoneKeys))
+	randomZone := zoneKeys[randomIndex]
 
 	return getRegionFromZone(randomZone)
 }
