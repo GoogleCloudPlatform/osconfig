@@ -1,6 +1,6 @@
 {
   "name": "google-osconfig-agent",
-  {{$package_version := printf "%s.0+win@1" .version -}}
+  {{$package_version := printf "%s.0@1" .version -}}
   "version": "{{$package_version}}",
   "arch": "x86_64",
   "authors": "Google Inc.",
