@@ -355,25 +355,41 @@ var HeadBookwormAptImages = map[string]string{
 }
 
 // HeadSUSEImages is a map of names to image paths for public SUSE images.
-var HeadSUSEImages = map[string]string{
-	"suse-cloud/sles-12-sp5": "projects/suse-cloud/global/images/family/sles-12",
-	"suse-cloud/sles-15-sp5": "projects/suse-cloud/global/images/family/sles-15",
+var HeadSUSEImages = func() map[string]string {
+	imgsMap := make(map[string]string)
 
-	"suse-sap-cloud/sles-12-sp5-sap": "projects/suse-sap-cloud/global/images/family/sles-12-sp5-sap",
-	"suse-sap-cloud/sles-15-sp5-sap": "projects/suse-sap-cloud/global/images/family/sles-15-sp5-sap",
+	// TODO: enable SUSE tests to use testing pkgs after Artifact Registry supports zypper installation from private repos
+	if config.AgentRepo() != "testing" {
+		imgsMap = map[string]string{
+			"suse-cloud/sles-12-sp5": "projects/suse-cloud/global/images/family/sles-12",
+			"suse-cloud/sles-15-sp5": "projects/suse-cloud/global/images/family/sles-15",
 
-	"suse-sap-cloud/sles-15-sp5-hardened-sap": "projects/suse-sap-cloud/global/images/family/sles-sap-15-sp5-hardened",
+			"suse-sap-cloud/sles-12-sp5-sap": "projects/suse-sap-cloud/global/images/family/sles-12-sp5-sap",
+			"suse-sap-cloud/sles-15-sp5-sap": "projects/suse-sap-cloud/global/images/family/sles-15-sp5-sap",
 
-	"opensuse-cloud/opensuse-leap-15": "projects/opensuse-cloud/global/images/family/opensuse-leap",
-}
+			"suse-sap-cloud/sles-15-sp5-hardened-sap": "projects/suse-sap-cloud/global/images/family/sles-sap-15-sp5-hardened",
 
-// OldSUSEImages is a map of names to image paths for old SUSE images.
-var OldSUSEImages = map[string]string{
-	"old/sles-15-sp1-sap": "projects/suse-sap-cloud/global/images/sles-15-sp1-sap-v20221108-x86-64",
-	"old/sles-15-sp2-sap": "projects/suse-sap-cloud/global/images/sles-15-sp2-sap-v20221108-x86-64",
-	"old/sles-15-sp3-sap": "projects/suse-sap-cloud/global/images/sles-15-sp3-sap-v20221108-x86-64",
-	"old/sles-15-sp4-sap": "projects/suse-sap-cloud/global/images/sles-15-sp4-sap-v20230623-x86-64",
-}
+			"opensuse-cloud/opensuse-leap-15": "projects/opensuse-cloud/global/images/family/opensuse-leap",
+		}
+	}
+	return imgsMap
+}()
+
+// OldSUSEImages is a map of names to image paths for public SUSE images.
+var OldSUSEImages = func() map[string]string {
+	imgsMap := make(map[string]string)
+
+	// TODO: enable SUSE tests to use testing pkgs after Artifact Registry supports zypper installation from private repos
+	if config.AgentRepo() != "testing" {
+		imgsMap = map[string]string{
+			"old/sles-15-sp1-sap": "projects/suse-sap-cloud/global/images/sles-15-sp1-sap-v20221108-x86-64",
+			"old/sles-15-sp2-sap": "projects/suse-sap-cloud/global/images/sles-15-sp2-sap-v20221108-x86-64",
+			"old/sles-15-sp3-sap": "projects/suse-sap-cloud/global/images/sles-15-sp3-sap-v20221108-x86-64",
+			"old/sles-15-sp4-sap": "projects/suse-sap-cloud/global/images/sles-15-sp4-sap-v20230623-x86-64",
+		}
+	}
+	return imgsMap
+}()
 
 // HeadEL7Images is a map of names to image paths for public EL7 image families. (RHEL, CentOS)
 var HeadEL7Images = map[string]string{
