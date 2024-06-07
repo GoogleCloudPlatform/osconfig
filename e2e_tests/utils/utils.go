@@ -30,7 +30,7 @@ import (
 )
 
 var (
-	testingPkgsProjectName = "gce-package-testing"
+	testingPkgsProjectName = "gce-pkg-osconfig-testing"
 
 	yumInstallAgent = `
 sed -i 's/repo_gpgcheck=1/repo_gpgcheck=0/g' /etc/yum.repos.d/google-cloud.repo
