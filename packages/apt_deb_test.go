@@ -526,7 +526,8 @@ func TestInstalledDebPackages(t *testing.T) {
 
 	//Successfully returns result
 	dpkgQueryCmd := utilmocks.EqCmd(exec.Command(dpkgQuery, dpkgQueryArgs...))
-	stdout, stderr := []byte("foo amd64 1.2.3-4 installed"), []byte("stderr")
+	stdout := []byte(`{"package":"git","architecture":"amd64","version":"1:2.25.1-1ubuntu3.12","status":"installed","source_name":"git","source_version":"1:2.25.1-1ubuntu3.12"}`)
+	stderr := []byte("stderr")
 	mockCommandRunner.EXPECT().Run(testCtx, dpkgQueryCmd).Return(stdout, stderr, nil).Times(1)
 
 	result, err := InstalledDebPackages(testCtx)
@@ -534,7 +535,7 @@ func TestInstalledDebPackages(t *testing.T) {
 		t.Errorf("InstalledDebPackages(): got unexpected error: %v", err)
 	}
 
-	want := []*PkgInfo{{Name: "foo", Arch: "x86_64", Version: "1.2.3-4"}}
+	want := []*PkgInfo{{Name: "git", Arch: "x86_64", Version: "1:2.25.1-1ubuntu3.12", Source: Source{Name: "git", Version: "1:2.25.1-1ubuntu3.12"}}}
 	if !reflect.DeepEqual(result, want) {
 		t.Errorf("InstalledDebPackages() = %v, want %v", result, want)
 	}
@@ -553,9 +554,14 @@ func TestParseInstalledDebpackages(t *testing.T) {
 		want  []*PkgInfo
 	}{
 		{
-			name:  "Two valid packages in input",
-			input: []byte("foo amd64 1.2.3-4 installed\nbar noarch 1.2.3-4 installed\nbaz noarch 1.2.3-4 config-files"),
-			want:  []*PkgInfo{{Name: "foo", Arch: "x86_64", Version: "1.2.3-4"}, {Name: "bar", Arch: "all", Version: "1.2.3-4"}},
+			name: "two valid packages in input",
+			input: []byte("" +
+				`{"package":"python3-gi","architecture":"amd64","version":"3.36.0-1","status":"installed","source_name":"pygobject","source_version":"3.36.0-1"}` +
+				"\n" +
+				`{"package":"man-db","architecture":"amd64","version":"2.9.1-1","status":"installed","source_name":"man-db","source_version":"2.9.1-1"}`),
+			want: []*PkgInfo{
+				{Name: "python3-gi", Arch: "x86_64", Version: "3.36.0-1", Source: Source{Name: "pygobject", Version: "3.36.0-1"}},
+				{Name: "man-db", Arch: "x86_64", Version: "2.9.1-1", Source: Source{Name: "man-db", Version: "2.9.1-1"}}},
 		},
 		{
 			name:  "No lines formatted as a package info",
@@ -568,16 +574,17 @@ func TestParseInstalledDebpackages(t *testing.T) {
 			want:  nil,
 		},
 		{
-			name:  "Skip wrongly formatted lines",
-			input: []byte("something we dont understand\n bar noarch 1.2.3-4 installed"),
-			want:  []*PkgInfo{{Name: "bar", Arch: "all", Version: "1.2.3-4"}},
+			name: "Skip wrongly formatted lines",
+			input: []byte("something we dont understand\n" +
+				`{"package":"python3-gi","architecture":"amd64","version":"3.36.0-1","status":"installed","source_name":"pygobject","source_version":"3.36.0-1"}`),
+			want: []*PkgInfo{{Name: "python3-gi", Arch: "x86_64", Version: "3.36.0-1", Source: Source{Name: "pygobject", Version: "3.36.0-1"}}},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := parseInstalledDebpackages(tt.input); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseInstalledDebpackages() = %v, want %v", got, tt.want)
+			if got := parseInstalledDebPackages(testCtx, tt.input); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("parseInstalledDebPackages() = %v, want %v", got, tt.want)
 			}
 		})
 	}
