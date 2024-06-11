@@ -80,6 +80,13 @@ type Packages struct {
 // PkgInfo describes a package.
 type PkgInfo struct {
 	Name, Arch, Version string
+
+	Source Source
+}
+
+// Source represents source package from which binary package was built.
+type Source struct {
+	Name, Version string
 }
 
 func (i *PkgInfo) String() string {

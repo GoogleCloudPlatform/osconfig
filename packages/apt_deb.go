@@ -17,10 +17,12 @@ package packages
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"runtime"
+	"sort"
 	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
@@ -34,12 +36,22 @@ var (
 	dpkgDeb   string
 	aptGet    string
 
-	dpkgInstallArgs   = []string{"--install"}
-	dpkgQueryArgs     = []string{"-W", "-f", "${Package} ${Architecture} ${Version} ${db:Status-Status}\n"}
-	dpkgRepairArgs    = []string{"--configure", "-a"}
-	aptGetInstallArgs = []string{"install", "-y"}
-	aptGetRemoveArgs  = []string{"remove", "-y"}
-	aptGetUpdateArgs  = []string{"update"}
+	dpkgInstallArgs       = []string{"--install"}
+	dpkgInfoFieldsMapping = map[string]string{
+		"package":        "${Package}",
+		"architecture":   "${Architecture}",
+		"version":        "${Version}",
+		"status":         "${db:Status-Status}",
+		"source_name":    "${source:Package}",
+		"source_version": "${source:Version}",
+	}
+
+	dpkgPackageFormatJSON = formatDpkgFieldsMappingToFormatingString(dpkgInfoFieldsMapping)
+	dpkgQueryArgs         = []string{"-W", "-f", dpkgPackageFormatJSON}
+	dpkgRepairArgs        = []string{"--configure", "-a"}
+	aptGetInstallArgs     = []string{"install", "-y"}
+	aptGetRemoveArgs      = []string{"remove", "-y"}
+	aptGetUpdateArgs      = []string{"update"}
 
 	aptGetUpgradeCmd     = "upgrade"
 	aptGetFullUpgradeCmd = "full-upgrade"
@@ -88,6 +100,24 @@ func AptGetUpgradeType(upgradeType AptUpgradeType) AptGetUpgradeOption {
 	return func(args *aptGetUpgradeOpts) {
 		args.upgradeType = upgradeType
 	}
+}
+
+func formatDpkgFieldsMappingToFormatingString(fieldsMapping map[string]string) string {
+	fieldsDescriptors := make([]string, 0, len(fieldsMapping))
+
+	for name, selector := range fieldsMapping {
+		// format field name and its selector to one single entry separated by ":" and each of them wrapped in quotes
+		// name:source_name, selector:${source:Package -> ""source_name":"${source:Package}"".
+		fieldsDescriptors = append(fieldsDescriptors, fmt.Sprintf("\"%s\":\"%s\"", name, selector))
+	}
+
+	// sort descriptors to get predictable result.
+	sort.Strings(fieldsDescriptors)
+
+	// Returns string to format all information in json
+	// Example: {"package":"${Package}","architecture":"${Architecture}","version":"${Version}","status":"${db:Status-Status}"...}\n
+	// See dpkgInfoFieldsMapping for full set of fields.
+	return "{" + strings.Join(fieldsDescriptors, ",") + "}\n"
 }
 
 // AptGetUpgradeShowNew returns a AptGetUpgradeOption that indicates whether 'new' packages should be returned.
@@ -341,39 +371,61 @@ func AptUpdate(ctx context.Context) ([]byte, error) {
 	return stdout, err
 }
 
-func parseInstalledDebpackages(data []byte) []*PkgInfo {
-	/*
-	   foo amd64 1.2.3-4 installed
-	   bar noarch 1.2.3-4 installed
-	   baz noarch 1.2.3-4 config-files
-	   ...
-	*/
-	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
-
-	var pkgs []*PkgInfo
-	for _, ln := range lines {
-		pkg := strings.Fields(ln)
-		if len(pkg) != 4 {
-			continue
-		}
-
-		// Only report on installed packages.
-		if pkg[3] != "installed" {
-			continue
-		}
-
-		pkgs = append(pkgs, &PkgInfo{Name: pkg[0], Arch: osinfo.Architecture(pkg[1]), Version: pkg[2]})
-	}
-	return pkgs
-}
-
 // InstalledDebPackages queries for all installed deb packages.
 func InstalledDebPackages(ctx context.Context) ([]*PkgInfo, error) {
 	out, err := run(ctx, dpkgQuery, dpkgQueryArgs)
 	if err != nil {
 		return nil, err
 	}
-	return parseInstalledDebpackages(out), nil
+
+	return parseInstalledDebPackages(ctx, out), nil
+}
+
+type dpkgInfo struct {
+	Package       string `json:"package"`
+	Architecture  string `json:"architecture"`
+	Version       string `json:"version"`
+	Status        string `json:"status"`
+	SourceName    string `json:"source_name"`
+	SourceVersion string `json:"source_version"`
+}
+
+func parseInstalledDebPackages(ctx context.Context, data []byte) []*PkgInfo {
+	/*
+		Each line contains an entry in a json format, keep in mind that whole output is not valid json.
+
+		{"package":"adduser","architecture":"all","version":"3.118ubuntu2","status":"installed","source_name":"adduser","source_version":"3.118ubuntu2"}
+		{"package":"apt-utils","architecture":"amd64","version":"2.0.10","status":"installed","source_name":"apt","source_version":"2.0.10"}
+		{"package":"git","architecture":"amd64","version":"1:2.25.1-1ubuntu3.12","status":"installed","source_name":"git","source_version":"1:2.25.1-1ubuntu3.12"}
+		...
+	*/
+	entries := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
+
+	var result []*PkgInfo
+	for _, entry := range entries {
+		var dpkg dpkgInfo
+		if err := json.Unmarshal(entry, &dpkg); err != nil {
+			clog.Debugf(ctx, "unable to parse dpkg package info, err %s, raw - %s", err, string(entry))
+			continue
+		}
+
+		pkg := pkgInfoFromDpkgInfo(dpkg)
+		result = append(result, pkg)
+	}
+
+	return result
+}
+
+func pkgInfoFromDpkgInfo(dpkg dpkgInfo) *PkgInfo {
+	return &PkgInfo{
+		Name:    dpkg.Package,
+		Arch:    osinfo.Architecture(dpkg.Architecture),
+		Version: dpkg.Version,
+		Source: Source{
+			Name:    dpkg.SourceName,
+			Version: dpkg.SourceVersion,
+		},
+	}
 }
 
 // DpkgInstall installs a deb package.
