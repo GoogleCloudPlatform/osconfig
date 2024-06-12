@@ -30,14 +30,38 @@ func TestParseInstalledRPMPackages(t *testing.T) {
 		data []byte
 		want []*PkgInfo
 	}{
-		{"NormalCase", []byte("foo x86_64 1.2.3-4\nbar noarch 1.2.3-4"), []*PkgInfo{{Name: "foo", Arch: "x86_64", Version: "1.2.3-4"}, {Name: "bar", Arch: "all", Version: "1.2.3-4"}}},
-		{"NoPackages", []byte("nothing here"), nil},
-		{"nil", nil, nil},
-		{"UnrecognizedPackage", []byte("foo.x86_64 1.2.3-4\nsomething we dont understand\n bar noarch 1.2.3-4 "), []*PkgInfo{{Name: "bar", Arch: "all", Version: "1.2.3-4"}}},
+		{
+			name: "Two packages in input",
+			data: []byte("" +
+				`{"architecture":"x86_64","package":"gcc","source_name":"gcc-11.4.1-3.el9.src.rpm","version":"11.4.1-3.el9"}` + "\n" +
+				`{"architecture":"noarch","package":"golang-src","source_name":"golang-1.22.3-1.el9.src.rpm","version":"1.22.3-1.el9"}`),
+			want: []*PkgInfo{
+				{Name: "gcc", Arch: "x86_64", Version: "11.4.1-3.el9", Source: Source{Name: "gcc-11.4.1-3.el9.src.rpm"}},
+				{Name: "golang-src", Arch: "all", Version: "1.22.3-1.el9", Source: Source{Name: "golang-1.22.3-1.el9.src.rpm"}},
+			},
+		},
+		{
+			name: "No valid pacakges",
+			data: []byte("nothing here"),
+			want: nil,
+		},
+		{
+			name: "Function doesn't panic on nil input",
+			data: nil,
+			want: nil,
+		},
+		{
+			name: "Skip invalid packages",
+			data: []byte("" +
+				`{"architecture":"x86_64","package":"gcc","source_name":"gcc-11.4.1-3.el9.src.rpm","version":"11.4.1-3.el9"}` + "\n" +
+				"something we dont understand\n bar noarch 1.2.3-4 "),
+			want: []*PkgInfo{{Name: "gcc", Arch: "x86_64", Version: "11.4.1-3.el9", Source: Source{Name: "gcc-11.4.1-3.el9.src.rpm"}}},
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := parseInstalledRPMPackages(tt.data)
+			got := parseInstalledRPMPackages(testCtx, tt.data)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("installedRPMPackages() = %v, want %v", got, tt.want)
 			}
@@ -53,13 +77,15 @@ func TestInstalledRPMPackages(t *testing.T) {
 	runner = mockCommandRunner
 	expectedCmd := utilmocks.EqCmd(exec.Command(rpmquery, rpmqueryInstalledArgs...))
 
-	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("foo x86_64 1.2.3-4"), []byte("stderr"), nil).Times(1)
+	stdout := []byte(`{"architecture":"x86_64","package":"gcc","source_name":"gcc-11.4.1-3.el9.src.rpm","version":"11.4.1-3.el9"}`)
+	stderr := []byte("stderr")
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return(stdout, stderr, nil).Times(1)
 	ret, err := InstalledRPMPackages(testCtx)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	want := []*PkgInfo{{Name: "foo", Arch: "x86_64", Version: "1.2.3-4"}}
+	want := []*PkgInfo{{Name: "gcc", Arch: "x86_64", Version: "11.4.1-3.el9", Source: Source{Name: "gcc-11.4.1-3.el9.src.rpm"}}}
 	if !reflect.DeepEqual(ret, want) {
 		t.Errorf("InstalledRPMPackages() = %v, want %v", ret, want)
 	}
@@ -79,13 +105,15 @@ func TestRPMPkgInfo(t *testing.T) {
 	testPkg := "test.rpm"
 	expectedCmd := utilmocks.EqCmd(exec.Command(rpmquery, append(rpmqueryRPMArgs, testPkg)...))
 
-	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("foo x86_64 1.2.3-4"), []byte("stderr"), nil).Times(1)
+	stdout := []byte(`{"architecture":"x86_64","package":"gcc","source_name":"gcc-11.4.1-3.el9.src.rpm","version":"11.4.1-3.el9"}`)
+	stderr := []byte("stderr")
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return(stdout, stderr, nil).Times(1)
 	ret, err := RPMPkgInfo(testCtx, testPkg)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	want := &PkgInfo{Name: "foo", Arch: "x86_64", Version: "1.2.3-4"}
+	want := &PkgInfo{Name: "gcc", Arch: "x86_64", Version: "11.4.1-3.el9", Source: Source{Name: "gcc-11.4.1-3.el9.src.rpm"}}
 	if !reflect.DeepEqual(ret, want) {
 		t.Errorf("RPMPkgInfo() = %v, want %v", ret, want)
 	}
@@ -96,7 +124,10 @@ func TestRPMPkgInfo(t *testing.T) {
 		t.Errorf("did not get expected error")
 	}
 	// More than 1 package
-	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("foo x86_64 1.2.3-4\nbar noarch 1.0.0"), []byte("stderr"), nil).Times(1)
+	stdout = []byte("" +
+		`{"architecture":"x86_64","package":"gcc","source_name":"gcc-11.4.1-3.el9.src.rpm","version":"11.4.1-3.el9"}` + "\n" +
+		`{"architecture":"noarch","package":"golang-src","source_name":"golang-1.22.3-1.el9.src.rpm","version":"1.22.3-1.el9"}`)
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return(stdout, stderr, nil).Times(1)
 	if _, err := RPMPkgInfo(testCtx, testPkg); err == nil {
 		t.Errorf("did not get expected error")
 	}

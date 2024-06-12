@@ -235,12 +235,12 @@ func TestPackageResourceValidate(t *testing.T) {
 							Type: &agentendpointpb.OSPolicy_Resource_File_LocalPath{LocalPath: tmpFile}}}}},
 			ManagedPackage{RPM: &RPMPackage{
 				localPath: tmpFile,
-				name:      "foo",
+				name:      "gcc",
 				PackageResource: &agentendpointpb.OSPolicy_Resource_PackageResource_RPM{
 					Source: &agentendpointpb.OSPolicy_Resource_File{
 						Type: &agentendpointpb.OSPolicy_Resource_File_LocalPath{LocalPath: tmpFile}}}}},
-			exec.Command("/usr/bin/rpmquery", "--queryformat", "%{NAME} %{ARCH} %|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\n", "-p", tmpFile),
-			[]byte("foo x86_64 1.2.3-4"),
+			exec.Command("/usr/bin/rpmquery", "--queryformat", "\\{\"architecture\":\"%{ARCH}\",\"package\":\"%{NAME}\",\"source_name\":\"%{SOURCERPM}\",\"version\":\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\"\\}\n", "-p", tmpFile),
+			[]byte("{\"architecture\":\"x86_64\",\"package\":\"gcc\",\"source_name\":\"gcc-11.4.1-3.el9.src.rpm\",\"version\":\"11.4.1-3.el9\"}"),
 		},
 	}
 	for _, tt := range tests {

@@ -16,7 +16,6 @@ package packages
 import (
 	"errors"
 	"fmt"
-	"os"
 	"os/exec"
 	"reflect"
 	"slices"
@@ -25,14 +24,6 @@ import (
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"github.com/golang/mock/gomock"
 )
-
-type expectedCommand struct {
-	cmd    *exec.Cmd
-	envs   []string
-	stdout []byte
-	stderr []byte
-	err    error
-}
 
 func TestInstallAptPackages(t *testing.T) {
 	tests := []struct {
@@ -768,37 +759,4 @@ func TestDpkgInstall(t *testing.T) {
 	if err := DpkgInstall(testCtx, path); err != nil {
 		t.Errorf("DpkgInstall: got unexpected error %q", err)
 	}
-}
-
-func setExpectations(mockCommandRunner *utilmocks.MockCommandRunner, expectedCommandsChain []expectedCommand) {
-	if len(expectedCommandsChain) == 0 {
-		return
-	}
-
-	var prev *gomock.Call
-	for _, expectedCmd := range expectedCommandsChain {
-		cmd := expectedCmd.cmd
-		if len(expectedCmd.envs) > 0 {
-			cmd.Env = append(os.Environ(), expectedCmd.envs...)
-		}
-
-		if prev == nil {
-			prev = mockCommandRunner.EXPECT().
-				Run(testCtx, utilmocks.EqCmd(cmd)).
-				Return(expectedCmd.stdout, expectedCmd.stderr, expectedCmd.err).Times(1)
-		} else {
-			prev = mockCommandRunner.EXPECT().
-				Run(testCtx, utilmocks.EqCmd(cmd)).
-				After(prev).
-				Return(expectedCmd.stdout, expectedCmd.stderr, expectedCmd.err).Times(1)
-		}
-	}
-}
-
-func formatError(err error) string {
-	if err == nil {
-		return "<nil>"
-	}
-
-	return err.Error()
 }

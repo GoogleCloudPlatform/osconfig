@@ -1,15 +1,16 @@
-/*
-Copyright 2017 Google Inc. All Rights Reserved.
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+//  Copyright 2017 Google Inc. All Rights Reserved.
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
 
 // Package packages provides package management functions for Windows and Linux
 // systems.
@@ -19,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"sort"
 	"strings"
 	"time"
 
@@ -138,6 +140,47 @@ func runWithDeadline(ctx context.Context, timeout time.Duration, cmd string, arg
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	return run(ctxWithTimeout, cmd, args)
+}
+
+func formatFieldsMappingToFormattingString(fieldsMapping map[string]string) string {
+	fieldsDescriptors := make([]string, 0, len(fieldsMapping))
+
+	for name, selector := range fieldsMapping {
+		// format field name and its selector to one single entry separated by ":" and each of them wrapped in quotes
+		// Examples:
+		// name:source_name, selector:${source:Package -> ""source_name":"${source:Package}"".
+		// name:source_name, selector:%{NAME} -> ""source_name":"%{NAME}"".
+		fieldsDescriptors = append(fieldsDescriptors, fmt.Sprintf("\"%s\":\"%s\"", name, selector))
+	}
+
+	// sort descriptors to get predictable result.
+	sort.Strings(fieldsDescriptors)
+
+	// Returns string to format all information in json
+	// Example: {"package":"${Package}","architecture":"${Architecture}","version":"${Version}","status":"${db:Status-Status}"...}\n
+	// See dpkgInfoFieldsMapping for full set of fields.
+	return "\\{" + strings.Join(fieldsDescriptors, ",") + "\\}\n"
+}
+
+type packageMetadata struct {
+	Package       string `json:"package"`
+	Architecture  string `json:"architecture"`
+	Version       string `json:"version"`
+	Status        string `json:"status"`
+	SourceName    string `json:"source_name"`
+	SourceVersion string `json:"source_version"`
+}
+
+func pkgInfoFromPackageMetadata(pm packageMetadata) *PkgInfo {
+	return &PkgInfo{
+		Name:    pm.Package,
+		Arch:    osinfo.Architecture(pm.Architecture),
+		Version: pm.Version,
+		Source: Source{
+			Name:    pm.SourceName,
+			Version: pm.SourceVersion,
+		},
+	}
 }
 
 type ptyRunner struct{}
