@@ -19,8 +19,9 @@ import (
 	"context"
 	"fmt"
 	"runtime"
+	"encoding/json"
 
-	"github.com/GoogleCloudPlatform/osconfig/osinfo"
+	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
@@ -28,9 +29,17 @@ var (
 	rpmquery string
 	rpm      string
 
+	rpmqueryFields = map[string]string{
+		"package": "%{NAME}",
+		"architecture": "%{ARCH}",
+		// %|EPOCH?{%{EPOCH}:}:{}| == if EPOCH then prepend "%{EPOCH}:" to version.
+		"version": "%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}",
+		"source_name": "%{SOURCERPM}",
+	}
+
 	rpmInstallArgs = []string{"--upgrade", "--replacepkgs", "-v"}
-	// %|EPOCH?{%{EPOCH}:}:{}| == if EPOCH then prepend "%{EPOCH}:" to version.
-	rpmqueryArgs          = []string{"--queryformat", "%{NAME} %{ARCH} %|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\n"}
+	rpmqueryArgs          = []string{"--queryformat", formatFieldsMappingToFormattingString(rpmqueryFields)}
+
 	rpmqueryInstalledArgs = append(rpmqueryArgs, "-a")
 	rpmqueryRPMArgs       = append(rpmqueryArgs, "-p")
 )
@@ -44,24 +53,22 @@ func init() {
 	RPMExists = util.Exists(rpm)
 }
 
-func parseInstalledRPMPackages(data []byte) []*PkgInfo {
-	/*
-	   foo x86_64 1.2.3-4
-	   bar noarch 2:1.2.3-4
-	   ...
-	*/
+func parseInstalledRPMPackages(ctx context.Context, data []byte) []*PkgInfo {
 	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
 
-	var pkgs []*PkgInfo
-	for _, ln := range lines {
-		pkg := bytes.Fields(ln)
-		if len(pkg) != 3 {
+	var result []*PkgInfo
+	for _, entry := range lines {
+		var dpkg dpkgInfo
+		if err := json.Unmarshal(entry, &dpkg); err != nil {
+			clog.Debugf(ctx, "unable to parse dpkg package info, err %s, raw - %s", err, string(entry))
 			continue
 		}
 
-		pkgs = append(pkgs, &PkgInfo{Name: string(pkg[0]), Arch: osinfo.Architecture(string(pkg[1])), Version: string(pkg[2])})
+		pkg := pkgInfoFromDpkgInfo(dpkg)
+		result = append(result, pkg)
 	}
-	return pkgs
+
+	return result
 }
 
 // InstalledRPMPackages queries for all installed rpm packages.
@@ -71,7 +78,7 @@ func InstalledRPMPackages(ctx context.Context) ([]*PkgInfo, error) {
 		return nil, err
 	}
 
-	return parseInstalledRPMPackages(out), nil
+	return parseInstalledRPMPackages(ctx, out), nil
 }
 
 // RPMInstall installs an rpm packages.
@@ -87,7 +94,7 @@ func RPMPkgInfo(ctx context.Context, path string) (*PkgInfo, error) {
 		return nil, err
 	}
 
-	pkgs := parseInstalledRPMPackages(out)
+	pkgs := parseInstalledRPMPackages(ctx, out)
 	if len(pkgs) != 1 {
 		return nil, fmt.Errorf("unexpected number of parsed rpm packages %d: %q", len(pkgs), out)
 	}

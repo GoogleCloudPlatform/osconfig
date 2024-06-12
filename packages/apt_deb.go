@@ -22,7 +22,6 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
-	"sort"
 	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
@@ -46,8 +45,7 @@ var (
 		"source_version": "${source:Version}",
 	}
 
-	dpkgPackageFormatJSON = formatDpkgFieldsMappingToFormatingString(dpkgInfoFieldsMapping)
-	dpkgQueryArgs         = []string{"-W", "-f", dpkgPackageFormatJSON}
+	dpkgQueryArgs         = []string{"-W", "-f", formatFieldsMappingToFormattingString(dpkgInfoFieldsMapping)}
 	dpkgRepairArgs        = []string{"--configure", "-a"}
 	aptGetInstallArgs     = []string{"install", "-y"}
 	aptGetRemoveArgs      = []string{"remove", "-y"}
@@ -102,23 +100,6 @@ func AptGetUpgradeType(upgradeType AptUpgradeType) AptGetUpgradeOption {
 	}
 }
 
-func formatDpkgFieldsMappingToFormatingString(fieldsMapping map[string]string) string {
-	fieldsDescriptors := make([]string, 0, len(fieldsMapping))
-
-	for name, selector := range fieldsMapping {
-		// format field name and its selector to one single entry separated by ":" and each of them wrapped in quotes
-		// name:source_name, selector:${source:Package -> ""source_name":"${source:Package}"".
-		fieldsDescriptors = append(fieldsDescriptors, fmt.Sprintf("\"%s\":\"%s\"", name, selector))
-	}
-
-	// sort descriptors to get predictable result.
-	sort.Strings(fieldsDescriptors)
-
-	// Returns string to format all information in json
-	// Example: {"package":"${Package}","architecture":"${Architecture}","version":"${Version}","status":"${db:Status-Status}"...}\n
-	// See dpkgInfoFieldsMapping for full set of fields.
-	return "{" + strings.Join(fieldsDescriptors, ",") + "}\n"
-}
 
 // AptGetUpgradeShowNew returns a AptGetUpgradeOption that indicates whether 'new' packages should be returned.
 func AptGetUpgradeShowNew(showNew bool) AptGetUpgradeOption {

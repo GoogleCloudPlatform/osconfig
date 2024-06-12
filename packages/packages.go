@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"sort"
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
@@ -138,6 +139,26 @@ func runWithDeadline(ctx context.Context, timeout time.Duration, cmd string, arg
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	return run(ctxWithTimeout, cmd, args)
+}
+
+func formatFieldsMappingToFormattingString(fieldsMapping map[string]string) string {
+	fieldsDescriptors := make([]string, 0, len(fieldsMapping))
+
+	for name, selector := range fieldsMapping {
+		// format field name and its selector to one single entry separated by ":" and each of them wrapped in quotes
+		// Examples:
+		// name:source_name, selector:${source:Package -> ""source_name":"${source:Package}"".
+		// name:source_name, selector:%{NAME} -> ""source_name":"%{NAME}"".
+		fieldsDescriptors = append(fieldsDescriptors, fmt.Sprintf("\"%s\":\"%s\"", name, selector))
+	}
+
+	// sort descriptors to get predictable result.
+	sort.Strings(fieldsDescriptors)
+
+	// Returns string to format all information in json
+	// Example: {"package":"${Package}","architecture":"${Architecture}","version":"${Version}","status":"${db:Status-Status}"...}\n
+	// See dpkgInfoFieldsMapping for full set of fields.
+	return "\\{" + strings.Join(fieldsDescriptors, ",") + "\\}\n"
 }
 
 type ptyRunner struct{}
