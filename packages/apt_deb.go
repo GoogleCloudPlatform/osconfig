@@ -409,6 +409,10 @@ func parseInstalledDebPackages(ctx context.Context, data []byte) []*PkgInfo {
 			continue
 		}
 
+		if dpkg.Status != "installed" {
+			continue
+		}
+
 		pkg := pkgInfoFromDpkgInfo(dpkg)
 		result = append(result, pkg)
 	}
