@@ -570,6 +570,13 @@ func TestParseInstalledDebpackages(t *testing.T) {
 				`{"package":"python3-gi","architecture":"amd64","version":"3.36.0-1","status":"installed","source_name":"pygobject","source_version":"3.36.0-1"}`),
 			want: []*PkgInfo{{Name: "python3-gi", Arch: "x86_64", Version: "3.36.0-1", Source: Source{Name: "pygobject", Version: "3.36.0-1"}}},
 		},
+		{
+			name: "Skip entries that have status other than 'installed'",
+			input: []byte("" +
+				`{"package":"python3-gi","architecture":"amd64","version":"3.36.0-1","status":"installed","source_name":"pygobject","source_version":"3.36.0-1"}` + "\n" +
+				`{"package":"man-db","architecture":"amd64","version":"2.9.1-1","status":"config-files","source_name":"man-db","source_version":"2.9.1-1"}`),
+			want: []*PkgInfo{{Name: "python3-gi", Arch: "x86_64", Version: "3.36.0-1", Source: Source{Name: "pygobject", Version: "3.36.0-1"}}},
+		},
 	}
 
 	for _, tt := range tests {
