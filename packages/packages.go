@@ -146,14 +146,14 @@ func formatFieldsMappingToFormattingString(fieldsMapping map[string]string) stri
 	fieldsDescriptors := make([]string, 0, len(fieldsMapping))
 
 	for name, selector := range fieldsMapping {
-		// format field name and its selector to one single entry separated by ":" and each of them wrapped in quotes
+		// Format field name and its selector to one single entry separated by ":" and each of them wrapped in quotes
 		// Examples:
 		// name:source_name, selector:${source:Package -> ""source_name":"${source:Package}"".
 		// name:source_name, selector:%{NAME} -> ""source_name":"%{NAME}"".
 		fieldsDescriptors = append(fieldsDescriptors, fmt.Sprintf("\"%s\":\"%s\"", name, selector))
 	}
 
-	// sort descriptors to get predictable result.
+	// Sort descriptors to get predictable result.
 	sort.Strings(fieldsDescriptors)
 
 	// Returns string to format all information in json
