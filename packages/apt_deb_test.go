@@ -171,14 +171,14 @@ func TestAptUpdates(t *testing.T) {
 		name                  string
 		args                  []AptGetUpgradeOption
 		expectedCommandsChain []expectedCommand
-		expectedResult        []*PkgInfo
+		expectedResults       []*PkgInfo
 		expectedError         error
 	}{
 		{
 			name:                  "UnexpectedUpgradeType",
 			args:                  []AptGetUpgradeOption{AptGetUpgradeType(10)},
 			expectedCommandsChain: nil,
-			expectedResult:        nil,
+			expectedResults:       nil,
 			expectedError:         fmt.Errorf("unknown upgrade type: %q", 10),
 		},
 		{
@@ -193,8 +193,8 @@ func TestAptUpdates(t *testing.T) {
 					err:    errors.New("unexpected error"),
 				},
 			},
-			expectedResult: nil,
-			expectedError:  errors.New("unexpected error"),
+			expectedResults: nil,
+			expectedError:   errors.New("unexpected error"),
 		},
 		{
 			name: "apt-get upgrade fail",
@@ -215,8 +215,8 @@ func TestAptUpdates(t *testing.T) {
 					err:    errors.New("unexpected error"),
 				},
 			},
-			expectedResult: nil,
-			expectedError:  errors.New("unexpected error"),
+			expectedResults: nil,
+			expectedError:   errors.New("unexpected error"),
 		},
 		{
 			name: "Default upgrade type",
@@ -237,8 +237,8 @@ func TestAptUpdates(t *testing.T) {
 					err:    nil,
 				},
 			},
-			expectedResult: []*PkgInfo{{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"}},
-			expectedError:  nil,
+			expectedResults: []*PkgInfo{{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"}},
+			expectedError:   nil,
 		},
 		{
 			name: "Dist upgrade type",
@@ -259,8 +259,8 @@ func TestAptUpdates(t *testing.T) {
 					err:    nil,
 				},
 			},
-			expectedResult: []*PkgInfo{{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"}},
-			expectedError:  nil,
+			expectedResults: []*PkgInfo{{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"}},
+			expectedError:   nil,
 		},
 		{
 			name: "Full upgrade type",
@@ -281,8 +281,8 @@ func TestAptUpdates(t *testing.T) {
 					err:    nil,
 				},
 			},
-			expectedResult: []*PkgInfo{{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"}},
-			expectedError:  nil,
+			expectedResults: []*PkgInfo{{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"}},
+			expectedError:   nil,
 		},
 		{
 			name: "Default upgrade type with showNew equals true",
@@ -305,7 +305,7 @@ func TestAptUpdates(t *testing.T) {
 					err:    nil,
 				},
 			},
-			expectedResult: []*PkgInfo{
+			expectedResults: []*PkgInfo{
 				{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"},
 				{Name: "firmware-linux-free", Arch: "all", Version: "3.4"},
 			},
@@ -332,7 +332,7 @@ func TestAptUpdates(t *testing.T) {
 					err:    nil,
 				},
 			},
-			expectedResult: []*PkgInfo{
+			expectedResults: []*PkgInfo{
 				{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"},
 			},
 			expectedError: nil,
@@ -363,7 +363,7 @@ func TestAptUpdates(t *testing.T) {
 					err:    nil,
 				},
 			},
-			expectedResult: []*PkgInfo{
+			expectedResults: []*PkgInfo{
 				{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"},
 			},
 			expectedError: nil,
@@ -385,8 +385,8 @@ func TestAptUpdates(t *testing.T) {
 				t.Errorf("AptUpdates: unexpected error, expect %q, got %q", formatError(tt.expectedError), formatError(err))
 			}
 
-			if !reflect.DeepEqual(pkgs, tt.expectedResult) {
-				t.Errorf("AptUpdates: unexpected result, expect %v, got %v", pkgs, tt.expectedResult)
+			if !reflect.DeepEqual(pkgs, tt.expectedResults) {
+				t.Errorf("AptUpdates: unexpected result, expect %v, got %v", pkgs, tt.expectedResults)
 			}
 		})
 	}
