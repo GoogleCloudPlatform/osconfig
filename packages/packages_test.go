@@ -17,12 +17,57 @@ package packages
 import (
 	"context"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"path/filepath"
+
+	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
+	"github.com/golang/mock/gomock"
 )
 
 var pkgs = []string{"pkg1", "pkg2"}
 var testCtx = context.Background()
+
+type expectedCommand struct {
+	cmd    *exec.Cmd
+	envs   []string
+	stdout []byte
+	stderr []byte
+	err    error
+}
+
+func setExpectations(mockCommandRunner *utilmocks.MockCommandRunner, expectedCommandsChain []expectedCommand) {
+	if len(expectedCommandsChain) == 0 {
+		return
+	}
+
+	var prev *gomock.Call
+	for _, expectedCmd := range expectedCommandsChain {
+		cmd := expectedCmd.cmd
+		if len(expectedCmd.envs) > 0 {
+			cmd.Env = append(os.Environ(), expectedCmd.envs...)
+		}
+
+		if prev == nil {
+			prev = mockCommandRunner.EXPECT().
+				Run(testCtx, utilmocks.EqCmd(cmd)).
+				Return(expectedCmd.stdout, expectedCmd.stderr, expectedCmd.err).Times(1)
+		} else {
+			prev = mockCommandRunner.EXPECT().
+				Run(testCtx, utilmocks.EqCmd(cmd)).
+				After(prev).
+				Return(expectedCmd.stdout, expectedCmd.stderr, expectedCmd.err).Times(1)
+		}
+	}
+}
+
+func formatError(err error) string {
+	if err == nil {
+		return "<nil>"
+	}
+
+	return err.Error()
+}
 
 func getMockRun(content []byte, err error) func(_ context.Context, cmd *exec.Cmd) ([]byte, error) {
 	return func(_ context.Context, cmd *exec.Cmd) ([]byte, error) {

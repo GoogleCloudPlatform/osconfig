@@ -16,7 +16,6 @@ package packages
 import (
 	"errors"
 	"fmt"
-	"os"
 	"os/exec"
 	"reflect"
 	"slices"
@@ -25,14 +24,6 @@ import (
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"github.com/golang/mock/gomock"
 )
-
-type expectedCommand struct {
-	cmd    *exec.Cmd
-	envs   []string
-	stdout []byte
-	stderr []byte
-	err    error
-}
 
 func TestInstallAptPackages(t *testing.T) {
 	tests := []struct {
@@ -180,14 +171,14 @@ func TestAptUpdates(t *testing.T) {
 		name                  string
 		args                  []AptGetUpgradeOption
 		expectedCommandsChain []expectedCommand
-		expectedResult        []*PkgInfo
+		expectedResults       []*PkgInfo
 		expectedError         error
 	}{
 		{
 			name:                  "UnexpectedUpgradeType",
 			args:                  []AptGetUpgradeOption{AptGetUpgradeType(10)},
 			expectedCommandsChain: nil,
-			expectedResult:        nil,
+			expectedResults:       nil,
 			expectedError:         fmt.Errorf("unknown upgrade type: %q", 10),
 		},
 		{
@@ -202,8 +193,8 @@ func TestAptUpdates(t *testing.T) {
 					err:    errors.New("unexpected error"),
 				},
 			},
-			expectedResult: nil,
-			expectedError:  errors.New("unexpected error"),
+			expectedResults: nil,
+			expectedError:   errors.New("unexpected error"),
 		},
 		{
 			name: "apt-get upgrade fail",
@@ -224,8 +215,8 @@ func TestAptUpdates(t *testing.T) {
 					err:    errors.New("unexpected error"),
 				},
 			},
-			expectedResult: nil,
-			expectedError:  errors.New("unexpected error"),
+			expectedResults: nil,
+			expectedError:   errors.New("unexpected error"),
 		},
 		{
 			name: "Default upgrade type",
@@ -246,8 +237,8 @@ func TestAptUpdates(t *testing.T) {
 					err:    nil,
 				},
 			},
-			expectedResult: []*PkgInfo{{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"}},
-			expectedError:  nil,
+			expectedResults: []*PkgInfo{{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"}},
+			expectedError:   nil,
 		},
 		{
 			name: "Dist upgrade type",
@@ -268,8 +259,8 @@ func TestAptUpdates(t *testing.T) {
 					err:    nil,
 				},
 			},
-			expectedResult: []*PkgInfo{{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"}},
-			expectedError:  nil,
+			expectedResults: []*PkgInfo{{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"}},
+			expectedError:   nil,
 		},
 		{
 			name: "Full upgrade type",
@@ -290,8 +281,8 @@ func TestAptUpdates(t *testing.T) {
 					err:    nil,
 				},
 			},
-			expectedResult: []*PkgInfo{{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"}},
-			expectedError:  nil,
+			expectedResults: []*PkgInfo{{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"}},
+			expectedError:   nil,
 		},
 		{
 			name: "Default upgrade type with showNew equals true",
@@ -314,7 +305,7 @@ func TestAptUpdates(t *testing.T) {
 					err:    nil,
 				},
 			},
-			expectedResult: []*PkgInfo{
+			expectedResults: []*PkgInfo{
 				{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"},
 				{Name: "firmware-linux-free", Arch: "all", Version: "3.4"},
 			},
@@ -341,7 +332,7 @@ func TestAptUpdates(t *testing.T) {
 					err:    nil,
 				},
 			},
-			expectedResult: []*PkgInfo{
+			expectedResults: []*PkgInfo{
 				{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"},
 			},
 			expectedError: nil,
@@ -372,7 +363,7 @@ func TestAptUpdates(t *testing.T) {
 					err:    nil,
 				},
 			},
-			expectedResult: []*PkgInfo{
+			expectedResults: []*PkgInfo{
 				{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"},
 			},
 			expectedError: nil,
@@ -394,8 +385,8 @@ func TestAptUpdates(t *testing.T) {
 				t.Errorf("AptUpdates: unexpected error, expect %q, got %q", formatError(tt.expectedError), formatError(err))
 			}
 
-			if !reflect.DeepEqual(pkgs, tt.expectedResult) {
-				t.Errorf("AptUpdates: unexpected result, expect %v, got %v", pkgs, tt.expectedResult)
+			if !reflect.DeepEqual(pkgs, tt.expectedResults) {
+				t.Errorf("AptUpdates: unexpected result, expect %v, got %v", pkgs, tt.expectedResults)
 			}
 		})
 	}
@@ -775,37 +766,4 @@ func TestDpkgInstall(t *testing.T) {
 	if err := DpkgInstall(testCtx, path); err != nil {
 		t.Errorf("DpkgInstall: got unexpected error %q", err)
 	}
-}
-
-func setExpectations(mockCommandRunner *utilmocks.MockCommandRunner, expectedCommandsChain []expectedCommand) {
-	if len(expectedCommandsChain) == 0 {
-		return
-	}
-
-	var prev *gomock.Call
-	for _, expectedCmd := range expectedCommandsChain {
-		cmd := expectedCmd.cmd
-		if len(expectedCmd.envs) > 0 {
-			cmd.Env = append(os.Environ(), expectedCmd.envs...)
-		}
-
-		if prev == nil {
-			prev = mockCommandRunner.EXPECT().
-				Run(testCtx, utilmocks.EqCmd(cmd)).
-				Return(expectedCmd.stdout, expectedCmd.stderr, expectedCmd.err).Times(1)
-		} else {
-			prev = mockCommandRunner.EXPECT().
-				Run(testCtx, utilmocks.EqCmd(cmd)).
-				After(prev).
-				Return(expectedCmd.stdout, expectedCmd.stderr, expectedCmd.err).Times(1)
-		}
-	}
-}
-
-func formatError(err error) string {
-	if err == nil {
-		return "<nil>"
-	}
-
-	return err.Error()
 }
