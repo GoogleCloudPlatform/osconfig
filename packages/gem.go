@@ -65,7 +65,7 @@ func GemUpdates(ctx context.Context) ([]*PkgInfo, error) {
 			continue
 		}
 		ver := strings.Trim(pkg[3], ")")
-		pkgs = append(pkgs, &PkgInfo{Name: pkg[0], Arch: noarch, Version: ver})
+		pkgs = append(pkgs, &PkgInfo{Name: pkg[0], Arch: NewArchitecture(noarch), Version: ver})
 	}
 	return pkgs, nil
 }
@@ -100,7 +100,7 @@ func InstalledGemPackages(ctx context.Context) ([]*PkgInfo, error) {
 			continue
 		}
 		for _, ver := range strings.Split(strings.Trim(pkg[1], "()"), ", ") {
-			pkgs = append(pkgs, &PkgInfo{Name: pkg[0], Arch: noarch, Version: ver})
+			pkgs = append(pkgs, &PkgInfo{Name: pkg[0], Arch: NewArchitecture(noarch), Version: ver})
 		}
 	}
 	return pkgs, nil

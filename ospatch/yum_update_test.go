@@ -51,7 +51,7 @@ func TestRunYumUpdateWithSecurity(t *testing.T) {
 	packages.SetCommandRunner(mockCommandRunner)
 	checkUpdateCall := mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"check-update", "--assumeyes"}...))).Return([]byte("stdout"), []byte("stderr"), err).Times(1)
 	// yum install call to install package
-	mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"install", "--assumeyes", "foo"}...))).After(checkUpdateCall).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
+	mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"install", "--assumeyes", "foo.noarch"}...))).After(checkUpdateCall).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
 
 	packages.SetPtyCommandRunner(mockCommandRunner)
 	mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"update", "--assumeno", "--cacheonly", "--color=never", "--security"}...))).Return(data, []byte("stderr"), nil).Times(1)
@@ -93,7 +93,7 @@ func TestRunYumUpdateWithSecurityWithExclusives(t *testing.T) {
 	packages.SetCommandRunner(mockCommandRunner)
 	checkUpdateCall := mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"check-update", "--assumeyes"}...))).Return([]byte("stdout"), []byte("stderr"), err).Times(1)
 	// yum install call to install package, make sure only 2 packages are installed.
-	mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"install", "--assumeyes", "foo", "bar"}...))).After(checkUpdateCall).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
+	mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"install", "--assumeyes", "foo.noarch", "bar.x86_64"}...))).After(checkUpdateCall).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
 
 	packages.SetPtyCommandRunner(mockCommandRunner)
 	mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"update", "--assumeno", "--cacheonly", "--color=never", "--security"}...))).Return(data, []byte("stderr"), nil).Times(1)

@@ -58,7 +58,7 @@ func parseGooGetUpdates(data []byte) []*PkgInfo {
 		if len(p) != 2 {
 			continue
 		}
-		pkgs = append(pkgs, &PkgInfo{Name: p[0], Arch: strings.Trim(p[1], ","), Version: pkg[3]})
+		pkgs = append(pkgs, &PkgInfo{Name: p[0], Arch: NewArchitecture(strings.Trim(p[1], ",")), Version: pkg[3]})
 	}
 	return pkgs
 }
@@ -106,7 +106,7 @@ func parseInstalledGooGetPackages(data []byte) []*PkgInfo {
 			continue
 		}
 
-		pkgs = append(pkgs, &PkgInfo{Name: string(p[0]), Arch: string(p[1]), Version: string(pkg[1])})
+		pkgs = append(pkgs, &PkgInfo{Name: string(p[0]), Arch: NewArchitecture(string(p[1])), Version: string(pkg[1])})
 	}
 	return pkgs
 }
