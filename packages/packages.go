@@ -81,9 +81,30 @@ type Packages struct {
 
 // PkgInfo describes a package.
 type PkgInfo struct {
-	Name, Arch, Version string
+	Name, Version string
+	Arch          Architecture
+	Source        Source
+}
 
-	Source Source
+// Architecture describes a OS Architecture specified for package.
+type Architecture struct {
+	// Standardized Architecture as per OSConfig Inventory.
+	StandardArch string
+	// Raw Architecture as reported by repository.
+	RawArch string
+}
+
+// NewArchitecture constructs a new "Architecture" with the given raw architecture string.
+func NewArchitecture(rawArch string) Architecture {
+	return Architecture{
+		StandardArch: osinfo.Architecture(rawArch),
+		RawArch:      rawArch,
+	}
+}
+
+// Architecture fetches the main architecture to be reported here. StandardArch is the relevant reported architecture here.
+func (a Architecture) Architecture() string {
+	return a.StandardArch
 }
 
 // Source represents source package from which binary package was built.
@@ -174,7 +195,7 @@ type packageMetadata struct {
 func pkgInfoFromPackageMetadata(pm packageMetadata) *PkgInfo {
 	return &PkgInfo{
 		Name:    pm.Package,
-		Arch:    osinfo.Architecture(pm.Architecture),
+		Arch:    NewArchitecture(pm.Architecture),
 		Version: pm.Version,
 		Source: Source{
 			Name:    pm.SourceName,
