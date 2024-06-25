@@ -78,6 +78,15 @@ func YumDryRun(dryrun bool) YumUpdateOption {
 	}
 }
 
+// fullPackageName returns the package name with architecture if present.
+func fullPackageName(pkgInfo *packages.PkgInfo) string {
+	pkgName := pkgInfo.Name
+	if len(pkgInfo.RawArch) > 0 {
+		pkgName = pkgName + "." + pkgInfo.RawArch
+	}
+	return pkgName
+}
+
 // RunYumUpdate runs yum update.
 func RunYumUpdate(ctx context.Context, opts ...YumUpdateOption) error {
 	yumOpts := &yumUpdateOpts{
@@ -108,7 +117,7 @@ func RunYumUpdate(ctx context.Context, opts ...YumUpdateOption) error {
 
 	var pkgNames []string
 	for _, pkg := range fPkgs {
-		pkgNames = append(pkgNames, pkg.Name)
+		pkgNames = append(pkgNames, fullPackageName(pkg))
 	}
 
 	msg := fmt.Sprintf("%d packages: %q", len(pkgNames), fPkgs)
