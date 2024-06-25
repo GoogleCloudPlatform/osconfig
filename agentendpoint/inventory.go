@@ -228,7 +228,7 @@ func formatAptPackage(pkg *packages.PkgInfo) *agentendpointpb.Inventory_Software
 	return &agentendpointpb.Inventory_SoftwarePackage_AptPackage{
 		AptPackage: &agentendpointpb.Inventory_VersionedPackage{
 			PackageName:  pkg.Name,
-			Architecture: pkg.Arch.Architecture(),
+			Architecture: pkg.Arch,
 			Version:      pkg.Version,
 		}}
 }
@@ -237,7 +237,7 @@ func formatCOSPackage(pkg *packages.PkgInfo) *agentendpointpb.Inventory_Software
 	return &agentendpointpb.Inventory_SoftwarePackage_CosPackage{
 		CosPackage: &agentendpointpb.Inventory_VersionedPackage{
 			PackageName:  pkg.Name,
-			Architecture: pkg.Arch.Architecture(),
+			Architecture: pkg.Arch,
 			Version:      pkg.Version,
 		}}
 }
@@ -246,7 +246,7 @@ func formatGooGetPackage(pkg *packages.PkgInfo) *agentendpointpb.Inventory_Softw
 	return &agentendpointpb.Inventory_SoftwarePackage_GoogetPackage{
 		GoogetPackage: &agentendpointpb.Inventory_VersionedPackage{
 			PackageName:  pkg.Name,
-			Architecture: pkg.Arch.Architecture(),
+			Architecture: pkg.Arch,
 			Version:      pkg.Version,
 		}}
 }
@@ -255,7 +255,7 @@ func formatYumPackage(pkg *packages.PkgInfo) *agentendpointpb.Inventory_Software
 	return &agentendpointpb.Inventory_SoftwarePackage_YumPackage{
 		YumPackage: &agentendpointpb.Inventory_VersionedPackage{
 			PackageName:  pkg.Name,
-			Architecture: pkg.Arch.Architecture(),
+			Architecture: pkg.Arch,
 			Version:      pkg.Version}}
 }
 
@@ -263,7 +263,7 @@ func formatZypperPackage(pkg *packages.PkgInfo) *agentendpointpb.Inventory_Softw
 	return &agentendpointpb.Inventory_SoftwarePackage_ZypperPackage{
 		ZypperPackage: &agentendpointpb.Inventory_VersionedPackage{
 			PackageName:  pkg.Name,
-			Architecture: pkg.Arch.Architecture(),
+			Architecture: pkg.Arch,
 			Version:      pkg.Version}}
 }
 

@@ -49,7 +49,7 @@ func parseInstalledCOSPackages(cosPkgInfo *cos.PackageInfo) ([]*PkgInfo, error) 
 	for i, pkg := range cosPkgInfo.InstalledPackages {
 		name := pkg.Category + "/" + pkg.Name
 		version := pkg.Version
-		pkgs[i] = &PkgInfo{Name: name, Arch: NewArchitecture(arch), Version: version}
+		pkgs[i] = &PkgInfo{Name: name, Arch: arch, Version: version}
 	}
 	return pkgs, nil
 }

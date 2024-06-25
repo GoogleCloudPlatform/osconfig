@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
+	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
@@ -130,7 +131,7 @@ func parseYumUpdates(data []byte) []*PkgInfo {
 			}
 			break
 		}
-		pkgs = append(pkgs, &PkgInfo{Name: string(pkg[0]), Arch: NewArchitecture(string(pkg[1])), Version: string(pkg[2])})
+		pkgs = append(pkgs, &PkgInfo{Name: string(pkg[0]), Arch: osinfo.Architecture(string(pkg[1])), RawArch: string(pkg[1]), Version: string(pkg[2])})
 	}
 	return pkgs
 }

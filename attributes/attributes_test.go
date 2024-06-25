@@ -76,7 +76,7 @@ func TestPostAttributeCompressedhappyCase(t *testing.T) {
 			{
 				Version: "1.2.3",
 				Name:    "test-package",
-				Arch:    packages.NewArchitecture("amd64"),
+				Arch:    "amd64",
 			},
 		},
 	}
