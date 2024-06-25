@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
+	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
@@ -145,7 +146,7 @@ func parseZypperUpdates(data []byte) []*PkgInfo {
 		name := string(bytes.TrimSpace(pkg[2]))
 		arch := string(bytes.TrimSpace(pkg[5]))
 		ver := string(bytes.TrimSpace(pkg[4]))
-		pkgs = append(pkgs, &PkgInfo{Name: name, Arch: NewArchitecture(arch), Version: ver})
+		pkgs = append(pkgs, &PkgInfo{Name: name, Arch: osinfo.Architecture(arch), Version: ver})
 	}
 	return pkgs
 }

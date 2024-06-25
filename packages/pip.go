@@ -63,7 +63,7 @@ func PipUpdates(ctx context.Context) ([]*PkgInfo, error) {
 
 	var pkgs []*PkgInfo
 	for _, pkg := range pipUpdates {
-		pkgs = append(pkgs, &PkgInfo{Name: pkg.Name, Arch: NewArchitecture(noarch), Version: pkg.LatestVersion})
+		pkgs = append(pkgs, &PkgInfo{Name: pkg.Name, Arch: noarch, Version: pkg.LatestVersion})
 	}
 
 	return pkgs, nil
@@ -83,7 +83,7 @@ func InstalledPipPackages(ctx context.Context) ([]*PkgInfo, error) {
 
 	var pkgs []*PkgInfo
 	for _, pkg := range pipUpdates {
-		pkgs = append(pkgs, &PkgInfo{Name: pkg.Name, Arch: NewArchitecture(noarch), Version: pkg.Version})
+		pkgs = append(pkgs, &PkgInfo{Name: pkg.Name, Arch: noarch, Version: pkg.Version})
 	}
 
 	return pkgs, nil

@@ -78,14 +78,6 @@ func YumDryRun(dryrun bool) YumUpdateOption {
 	}
 }
 
-func fullPackageName(pkg *packages.PkgInfo) string {
-	nameWithArch := pkg.Name
-	if len(pkg.Arch.RawArch) > 0 {
-		nameWithArch = nameWithArch + "." + pkg.Arch.RawArch
-	}
-	return nameWithArch
-}
-
 // RunYumUpdate runs yum update.
 func RunYumUpdate(ctx context.Context, opts ...YumUpdateOption) error {
 	yumOpts := &yumUpdateOpts{
@@ -116,7 +108,7 @@ func RunYumUpdate(ctx context.Context, opts ...YumUpdateOption) error {
 
 	var pkgNames []string
 	for _, pkg := range fPkgs {
-		pkgNames = append(pkgNames, fullPackageName(pkg))
+		pkgNames = append(pkgNames, pkg.Name)
 	}
 
 	msg := fmt.Sprintf("%d packages: %q", len(pkgNames), fPkgs)

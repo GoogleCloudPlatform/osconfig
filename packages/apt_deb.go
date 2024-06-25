@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
+	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
@@ -176,7 +177,7 @@ func parseDpkgDeb(data []byte) (*PkgInfo, error) {
 	lines := bytes.Split(bytes.TrimSpace(data), []byte("\n"))
 	info := &PkgInfo{}
 	for _, ln := range lines {
-		if info.Name != "" && info.Version != "" && info.Arch.Architecture() != "" {
+		if info.Name != "" && info.Version != "" && info.Arch != "" {
 			break
 		}
 		fields := bytes.Fields(ln)
@@ -196,11 +197,11 @@ func parseDpkgDeb(data []byte) (*PkgInfo, error) {
 			continue
 		}
 		if bytes.Contains(fields[0], []byte("Architecture:")) {
-			info.Arch = NewArchitecture(string(fields[1]))
+			info.Arch = osinfo.Architecture(string(fields[1]))
 			continue
 		}
 	}
-	if info.Name == "" || info.Version == "" || info.Arch.Architecture() == "" {
+	if info.Name == "" || info.Version == "" || info.Arch == "" {
 		return nil, fmt.Errorf("could not parse dpkg-deb output: %q", data)
 	}
 	return info, nil
@@ -294,7 +295,7 @@ func parseAptUpdates(ctx context.Context, data []byte, showNew bool) []*PkgInfo 
 		}
 		ver := bytes.Trim(pkg[1], "(")             // (246.0.0-0 => 246.0.0-0
 		arch := bytes.Trim(pkg[len(pkg)-1], "[])") // [all]) => all
-		pkgs = append(pkgs, &PkgInfo{Name: string(pkg[0]), Arch: NewArchitecture(string(arch)), Version: string(ver)})
+		pkgs = append(pkgs, &PkgInfo{Name: string(pkg[0]), Arch: osinfo.Architecture(string(arch)), Version: string(ver)})
 	}
 	return pkgs
 }

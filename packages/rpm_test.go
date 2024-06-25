@@ -36,8 +36,8 @@ func TestParseInstalledRPMPackages(t *testing.T) {
 				`{"architecture":"x86_64","package":"gcc","source_name":"gcc-11.4.1-3.el9.src.rpm","version":"11.4.1-3.el9"}` + "\n" +
 				`{"architecture":"noarch","package":"golang-src","source_name":"golang-1.22.3-1.el9.src.rpm","version":"1.22.3-1.el9"}`),
 			want: []*PkgInfo{
-				{Name: "gcc", Arch: NewArchitecture("x86_64"), Version: "11.4.1-3.el9", Source: Source{Name: "gcc-11.4.1-3.el9.src.rpm"}},
-				{Name: "golang-src", Arch: NewArchitecture("noarch"), Version: "1.22.3-1.el9", Source: Source{Name: "golang-1.22.3-1.el9.src.rpm"}},
+				{Name: "gcc", Arch: "x86_64", Version: "11.4.1-3.el9", Source: Source{Name: "gcc-11.4.1-3.el9.src.rpm"}},
+				{Name: "golang-src", Arch: "all", Version: "1.22.3-1.el9", Source: Source{Name: "golang-1.22.3-1.el9.src.rpm"}},
 			},
 		},
 		{
@@ -55,7 +55,7 @@ func TestParseInstalledRPMPackages(t *testing.T) {
 			data: []byte("" +
 				`{"architecture":"x86_64","package":"gcc","source_name":"gcc-11.4.1-3.el9.src.rpm","version":"11.4.1-3.el9"}` + "\n" +
 				"something we dont understand\n bar noarch 1.2.3-4 "),
-			want: []*PkgInfo{{Name: "gcc", Arch: NewArchitecture("x86_64"), Version: "11.4.1-3.el9", Source: Source{Name: "gcc-11.4.1-3.el9.src.rpm"}}},
+			want: []*PkgInfo{{Name: "gcc", Arch: "x86_64", Version: "11.4.1-3.el9", Source: Source{Name: "gcc-11.4.1-3.el9.src.rpm"}}},
 		},
 	}
 
@@ -90,8 +90,8 @@ func TestInstalledRPMPackages(t *testing.T) {
 				},
 			},
 			expectedResults: []*PkgInfo{
-				{Name: "gcc", Arch: NewArchitecture("x86_64"), Version: "11.4.1-3.el9", Source: Source{Name: "gcc-11.4.1-3.el9.src.rpm"}},
-				{Name: "golang-src", Arch: NewArchitecture("noarch"), Version: "1.22.3-1.el9", Source: Source{Name: "golang-1.22.3-1.el9.src.rpm"}},
+				{Name: "gcc", Arch: "x86_64", Version: "11.4.1-3.el9", Source: Source{Name: "gcc-11.4.1-3.el9.src.rpm"}},
+				{Name: "golang-src", Arch: "all", Version: "1.22.3-1.el9", Source: Source{Name: "golang-1.22.3-1.el9.src.rpm"}},
 			},
 			expectedError: nil,
 		},
@@ -156,7 +156,7 @@ func TestRPMPkgInfo(t *testing.T) {
 			},
 			expectedResult: &PkgInfo{
 				Name:    "gcc",
-				Arch:    NewArchitecture("x86_64"),
+				Arch:    "x86_64",
 				Version: "11.4.1-3.el9",
 				Source:  Source{Name: "gcc-11.4.1-3.el9.src.rpm"},
 			},
