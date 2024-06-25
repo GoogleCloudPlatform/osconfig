@@ -508,7 +508,7 @@ func TestPackageResourceEnforceState(t *testing.T) {
 
 func TestPackageInfoCache(t *testing.T) {
 	ctx := context.Background()
-	pkgInfo := &packages.PkgInfo{Name: "name", Arch: packages.NewArchitecture("arch"), Version: "version"}
+	pkgInfo := &packages.PkgInfo{Name: "name", Arch: "arch", Version: "version"}
 	pkgFile := &agentendpointpb.OSPolicy_Resource_File{AllowInsecure: true, Type: &agentendpointpb.OSPolicy_Resource_File_Gcs_{Gcs: &agentendpointpb.OSPolicy_Resource_File_Gcs{Bucket: "bucket", Object: "object", Generation: 123456789}}}
 	wantKey := "IAESFQoGYnVja2V0EgZvYmplY3QYlZrvOg"
 
@@ -556,7 +556,7 @@ func TestUpdatePackageInfoCacheTimeout(t *testing.T) {
 
 	cache := packageInfoCache{}
 	key := "IAESFQoGYnVja2V0EgZvYmplY3QYlZrvOg"
-	info := &packages.PkgInfo{Name: "name", Arch: packages.NewArchitecture("arch"), Version: "version"}
+	info := &packages.PkgInfo{Name: "name", Arch: "arch", Version: "version"}
 	cache[key] = packageInfo{PkgInfo: info, LastLookup: time.Now().Add(packageInfoCacheTimeout).Add(-1 * time.Hour)}
 
 	data, err := json.Marshal(cache)

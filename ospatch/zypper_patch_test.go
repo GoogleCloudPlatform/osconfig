@@ -112,27 +112,27 @@ func prepareTestCase() ([]*packages.ZypperPatch, []*packages.PkgInfo, map[string
 
 	pkgUpdates = append(pkgUpdates, &packages.PkgInfo{
 		Name:    "pkg1",
-		Arch:    packages.NewArchitecture("noarch"),
+		Arch:    "noarch",
 		Version: "1.1.1",
 	})
 	pkgUpdates = append(pkgUpdates, &packages.PkgInfo{
 		Name:    "pkg2",
-		Arch:    packages.NewArchitecture("noarch"),
+		Arch:    "noarch",
 		Version: "1.1.1",
 	})
 	pkgUpdates = append(pkgUpdates, &packages.PkgInfo{
 		Name:    "pkg3",
-		Arch:    packages.NewArchitecture("noarch"),
+		Arch:    "noarch",
 		Version: "1.1.1",
 	})
 	pkgUpdates = append(pkgUpdates, &packages.PkgInfo{
 		Name:    "pkg4",
-		Arch:    packages.NewArchitecture("noarch"),
+		Arch:    "noarch",
 		Version: "1.1.1",
 	})
 	pkgUpdates = append(pkgUpdates, &packages.PkgInfo{
 		Name:    "pkg5",
-		Arch:    packages.NewArchitecture("noarch"),
+		Arch:    "noarch",
 		Version: "1.1.1",
 	})
 	// individual package update that is not a part
@@ -140,7 +140,7 @@ func prepareTestCase() ([]*packages.ZypperPatch, []*packages.PkgInfo, map[string
 	// if user specifies --with-update
 	pkgUpdates = append(pkgUpdates, &packages.PkgInfo{
 		Name:    "pkg6",
-		Arch:    packages.NewArchitecture("noarch"),
+		Arch:    "noarch",
 		Version: "1.1.1",
 	})
 

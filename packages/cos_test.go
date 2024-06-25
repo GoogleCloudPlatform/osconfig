@@ -41,9 +41,9 @@ func TestParseInstalledCOSPackages(t *testing.T) {
 	}
 
 	pkg0 := cos.Package{Category: "dev-util", Name: "foo-x", Version: "1.2.3", EbuildVersion: "someversion"}
-	expect0 := &PkgInfo{Name: "dev-util/foo-x", Arch: NewArchitecture("x86_64"), Version: "1.2.3"}
+	expect0 := &PkgInfo{Name: "dev-util/foo-x", Arch: "x86_64", Version: "1.2.3"}
 	pkg1 := cos.Package{Category: "app-admin", Name: "bar", Version: "0.1"}
-	expect1 := &PkgInfo{Name: "app-admin/bar", Arch: NewArchitecture("x86_64"), Version: "0.1"}
+	expect1 := &PkgInfo{Name: "app-admin/bar", Arch: "x86_64", Version: "0.1"}
 
 	pkgInfo := &cos.PackageInfo{InstalledPackages: []cos.Package{pkg0, pkg1}}
 	parsed, err := parseInstalledCOSPackages(pkgInfo)
@@ -145,19 +145,19 @@ func TestInstalledCOSPackages(t *testing.T) {
 	}
 
 	expected := []*PkgInfo{
-		{Name: "app-arch/gzip", Arch: NewArchitecture("x86_64"), Version: "1.9"},
-		{Name: "dev-libs/popt", Arch: NewArchitecture("x86_64"), Version: "1.16"},
-		{Name: "app-emulation/docker-credential-helpers", Arch: NewArchitecture("x86_64"), Version: "0.6.3"},
-		{Name: "_not.real-category1+/_not-real_package1", Arch: NewArchitecture("x86_64"), Version: "12.34.56.78"},
-		{Name: "_not.real-category1+/_not-real_package2", Arch: NewArchitecture("x86_64"), Version: "12.34.56.78"},
-		{Name: "_not.real-category1+/_not-real_package3", Arch: NewArchitecture("x86_64"), Version: "12.34.56.78_rc3"},
-		{Name: "_not.real-category1+/_not-real_package4", Arch: NewArchitecture("x86_64"), Version: "12.34.56.78_rc3"},
-		{Name: "_not.real-category1+/_not-real_package5", Arch: NewArchitecture("x86_64"), Version: "12.34.56.78_pre2_rc3"},
-		{Name: "_not.real-category2+/_not-real_package1", Arch: NewArchitecture("x86_64"), Version: "12.34.56.78q"},
-		{Name: "_not.real-category2+/_not-real_package2", Arch: NewArchitecture("x86_64"), Version: "12.34.56.78q"},
-		{Name: "_not.real-category2+/_not-real_package3", Arch: NewArchitecture("x86_64"), Version: "12.34.56.78q_rc3"},
-		{Name: "_not.real-category2+/_not-real_package4", Arch: NewArchitecture("x86_64"), Version: "12.34.56.78q_rc3"},
-		{Name: "_not.real-category2+/_not-real_package5", Arch: NewArchitecture("x86_64"), Version: "12.34.56.78q_pre2_rc3"},
+		{Name: "app-arch/gzip", Arch: "x86_64", Version: "1.9"},
+		{Name: "dev-libs/popt", Arch: "x86_64", Version: "1.16"},
+		{Name: "app-emulation/docker-credential-helpers", Arch: "x86_64", Version: "0.6.3"},
+		{Name: "_not.real-category1+/_not-real_package1", Arch: "x86_64", Version: "12.34.56.78"},
+		{Name: "_not.real-category1+/_not-real_package2", Arch: "x86_64", Version: "12.34.56.78"},
+		{Name: "_not.real-category1+/_not-real_package3", Arch: "x86_64", Version: "12.34.56.78_rc3"},
+		{Name: "_not.real-category1+/_not-real_package4", Arch: "x86_64", Version: "12.34.56.78_rc3"},
+		{Name: "_not.real-category1+/_not-real_package5", Arch: "x86_64", Version: "12.34.56.78_pre2_rc3"},
+		{Name: "_not.real-category2+/_not-real_package1", Arch: "x86_64", Version: "12.34.56.78q"},
+		{Name: "_not.real-category2+/_not-real_package2", Arch: "x86_64", Version: "12.34.56.78q"},
+		{Name: "_not.real-category2+/_not-real_package3", Arch: "x86_64", Version: "12.34.56.78q_rc3"},
+		{Name: "_not.real-category2+/_not-real_package4", Arch: "x86_64", Version: "12.34.56.78q_rc3"},
+		{Name: "_not.real-category2+/_not-real_package5", Arch: "x86_64", Version: "12.34.56.78q_pre2_rc3"},
 	}
 
 	readMachineArch = func() (string, error) {
