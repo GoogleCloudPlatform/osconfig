@@ -43,9 +43,9 @@ Debian workflows launch an instance of the specified Debian release and produce
 
 Available workflows:
 
-* build\_deb9.wf.json
 * build\_deb10.wf.json
 * build\_deb11.wf.json
+* build\_deb12.wf.json
 
 An ARM64 workflow is also included:
 
