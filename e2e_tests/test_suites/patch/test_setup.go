@@ -109,15 +109,6 @@ echo 'Pin-priority: 9999' >> /etc/apt/preferences
 	// apt Downgrade setup
 	bullseyeAptDowngradeSetup = createAptDowngradeSetup("debian-11")
 
-	el7Setup = &patchTestSetup{
-		assertTimeout: 30 * time.Minute,
-		metadata: []*computeApi.MetadataItems{
-			compute.BuildInstanceMetadataItem("startup-script", linuxRecordBoot+utils.InstallOSConfigEL7()+linuxLocalPrePatchScript),
-			enableOsconfig,
-			disableFeatures,
-		},
-		machineType: "e2-medium",
-	}
 	el8Setup = &patchTestSetup{
 		assertTimeout: 30 * time.Minute,
 		metadata: []*computeApi.MetadataItems{
@@ -187,7 +178,6 @@ func headImageTestSetup() []*patchTestSetup {
 	// This maps a specific patchTestSetup to test setup names and associated images.
 	mapping := map[*patchTestSetup]map[string]string{
 		windowsSetup:     utils.HeadWindowsImages,
-		el7Setup:         utils.HeadEL7Images,
 		el8Setup:         utils.HeadEL8Images,
 		el9Setup:         utils.HeadEL9Images,
 		busterAptSetup:   utils.HeadBusterAptImages,
@@ -203,7 +193,6 @@ func oldImageTestSetup() []*patchTestSetup {
 	// This maps a specific patchTestSetup to test setup names and associated images.
 	mapping := map[*patchTestSetup]map[string]string{
 		windowsSetup: utils.OldWindowsImages,
-		el7Setup:     utils.OldEL7Images,
 		el8Setup:     utils.OldEL8Images,
 		el9Setup:     utils.OldEL9Images,
 		suseSetup:    utils.OldSUSEImages,
@@ -235,7 +224,6 @@ func aptDowngradeImageTestSetup() []*patchTestSetup {
 func yumHeadImageTestSetup() []*patchTestSetup {
 	// This maps a specific patchTestSetup to test setup names and associated images.
 	mapping := map[*patchTestSetup]map[string]string{
-		el7Setup: utils.HeadEL7Images,
 		el8Setup: utils.HeadEL8Images,
 		el9Setup: utils.HeadEL9Images,
 	}

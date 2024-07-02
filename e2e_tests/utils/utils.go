@@ -281,7 +281,6 @@ func InstallOSConfigEL(image string) string {
 		return InstallOSConfigEL8()
 	case image == "7" || containsAnyOf(imageName, []string{"rhel-7", "rhel-sap-7", "centos-7"}):
 		return InstallOSConfigEL7()
-
 	}
 	return ""
 }
@@ -390,20 +389,6 @@ var OldSUSEImages = func() map[string]string {
 	return imgsMap
 }()
 
-// HeadEL7Images is a map of names to image paths for public EL7 image families. (RHEL, CentOS)
-var HeadEL7Images = map[string]string{
-	"centos-cloud/centos-7": "projects/centos-cloud/global/images/family/centos-7",
-
-	"rhel-cloud/rhel-7": "projects/rhel-cloud/global/images/family/rhel-7",
-
-	"rhel-sap-cloud/rhel-7-9-sap": "projects/rhel-sap-cloud/global/images/family/rhel-7-9-sap-ha",
-}
-
-// OldEL7Images is a map of names to image paths for old EL7 images.
-var OldEL7Images = map[string]string{
-	// Currently empty
-}
-
 // HeadEL8Images is a map of names to image paths for public EL8 image families. (RHEL, CentOS, Rocky)
 var HeadEL8Images = map[string]string{
 	"rhel-cloud/rhel-8": "projects/rhel-cloud/global/images/family/rhel-8",
@@ -442,9 +427,6 @@ var OldEL9Images = map[string]string{
 // HeadELImages is a map of names to image paths for public EL image families. (RHEL, CentOS, Rocky)
 var HeadELImages = func() (newMap map[string]string) {
 	newMap = make(map[string]string)
-	for k, v := range HeadEL7Images {
-		newMap[k] = v
-	}
 	for k, v := range HeadEL8Images {
 		newMap[k] = v
 	}
