@@ -279,7 +279,7 @@ func buildDebTestSetup(name, image, key string) *osPolicyTestSetup {
 													Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
 														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
 															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/google-chrome-stable_current_amd64.deb",
-															Sha256Checksum: "43f141970ab61d9c5a993dcf094625d9a7a1d24212a3c2443e7092b40c3a354c",
+															Sha256Checksum: "3ec1cadbb55cf66cc51f0421eace324a88836ee2d982b945b8f67a3f131b0924",
 														},
 													},
 												},
@@ -486,7 +486,7 @@ func buildRpmTestSetup(name, image, key string) *osPolicyTestSetup {
 													Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
 														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
 															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/google-chrome-stable_current_x86_64.rpm",
-															Sha256Checksum: "8c547dc36bda13740b12e2a74aa8388e459fa53c95190327d16cb849412a0103",
+															Sha256Checksum: "a324251a161cb639c3d1175ced37242acbf1032cb4b954b59063a81f0f0c7164",
 														},
 													},
 												},
@@ -608,8 +608,8 @@ func buildMsiTestSetup(name, image, key string) *osPolicyTestSetup {
 													Type: &osconfigpb.OSPolicy_Resource_File_Gcs_{
 														Gcs: &osconfigpb.OSPolicy_Resource_File_Gcs{
 															Bucket:     testResourceBucket,
-															Object:     "OSPolicies/GoogleChromeStandaloneEnterprise64.msi",
-															Generation: 1618590043841384,
+															Object:     "OSPolicies/googlechromestandaloneenterprise64.msi",
+															Generation: 1720172515592258,
 														},
 													},
 												},
