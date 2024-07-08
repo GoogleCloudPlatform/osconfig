@@ -31,7 +31,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
+	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
 )
 
 var (

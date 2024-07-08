@@ -24,7 +24,7 @@ import (
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 
-	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
+	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
 )
 
 // InstallRecipe installs a recipe.

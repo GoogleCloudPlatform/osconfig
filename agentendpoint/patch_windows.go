@@ -27,7 +27,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
 
-	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
+	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
 )
 
 func (r *patchTask) classFilter() ([]string, error) {

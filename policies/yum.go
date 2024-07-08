@@ -24,7 +24,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 
-	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
+	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
 )
 
 func yumRepositories(ctx context.Context, repos []*agentendpointpb.YumRepository, repoFile string) error {

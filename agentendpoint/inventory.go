@@ -15,7 +15,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
+	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
 	datepb "google.golang.org/genproto/googleapis/type/date"
 )
 
