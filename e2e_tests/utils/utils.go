@@ -189,10 +189,7 @@ func getYumRepoBaseURL(osType string) string {
 }
 
 func getYumRepoSetup(osType string) string {
-	gpgcheck := 0
-	if config.AgentRepo() == "staging" {
-		gpgcheck = 1
-	}
+	gpgcheck := 1
 
 	// According to doc, pkg name differ according to ELv version
 	// doc: https://cloud.google.com/artifact-registry/docs/os-packages/rpm/configure#prepare-yum
@@ -286,10 +283,8 @@ func InstallOSConfigEL(image string) string {
 }
 
 func getZypperRepoSetup(osType string) string {
-	gpgcheck := 0
-	if config.AgentRepo() == "staging" {
-		gpgcheck = 1
-	}
+
+	gpgcheck := 1
 
 	// TODO: Allow SUSE tests to pull packages from test project.
 	repoConfig := fmt.Sprintf(`
