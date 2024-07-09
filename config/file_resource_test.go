@@ -24,7 +24,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/util"
 	"github.com/google/go-cmp/cmp"
 
-	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
+	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
 )
 
 func TestFileResourceValidate(t *testing.T) {

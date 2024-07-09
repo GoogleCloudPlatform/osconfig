@@ -38,7 +38,7 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 	"google.golang.org/api/iterator"
 
-	osconfigpb "google.golang.org/genproto/googleapis/cloud/osconfig/v1beta"
+	"cloud.google.com/go/osconfig/apiv1beta/osconfigpb"
 )
 
 const (

@@ -20,7 +20,7 @@ import (
 
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 
-	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
+	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
 )
 
 func TestGetNecessaryChanges(t *testing.T) {
