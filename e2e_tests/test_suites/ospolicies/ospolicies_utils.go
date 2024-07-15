@@ -276,8 +276,6 @@ while(1) {
 	case "zypper":
 		ss = `set -x
 sleep 10
-# Update zypper since there were older versions with bugs.
-zypper -n install zypper
 %s
 while true; do
   if [[ -n $(/usr/bin/rpmquery -a %s) ]]; then
