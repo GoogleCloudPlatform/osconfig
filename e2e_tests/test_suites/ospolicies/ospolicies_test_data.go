@@ -485,8 +485,8 @@ func buildRpmTestSetup(name, image, key string) *osPolicyTestSetup {
 												Source: &osconfigpb.OSPolicy_Resource_File{
 													Type: &osconfigpb.OSPolicy_Resource_File_Remote_{
 														Remote: &osconfigpb.OSPolicy_Resource_File_Remote{
-															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/google-chrome-stable_current_x86_64.rpm",
-															Sha256Checksum: "a324251a161cb639c3d1175ced37242acbf1032cb4b954b59063a81f0f0c7164",
+															Uri:            "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/gcsfuse-2.0.1-1.x86_64.rpm",
+															Sha256Checksum: "92475edeba03e6f7870d30a063d9c19767e6a4f7b0107a2af9191849d4b7a44f",
 														},
 													},
 												},
