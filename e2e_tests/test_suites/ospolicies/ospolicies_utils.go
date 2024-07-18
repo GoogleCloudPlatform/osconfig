@@ -116,10 +116,11 @@ done`
 		key = "startup-script"
 
 	case "rpm":
-		wantInstall := []string{"google-chrome-stable", "osconfig-agent-test"}
+		wantInstall := []string{"gcsfuse", "osconfig-agent-test"}
 		ss = `set -x
 # install agent
 %[1]s
+rpm --import https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 rpm --import https://dl.google.com/linux/linux_signing_key.pub
 while true; do
   if [[ -n $(/usr/bin/rpmquery -a %[2]s) ]]; then
