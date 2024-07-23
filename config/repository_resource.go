@@ -283,17 +283,17 @@ func contentsMatch(ctx context.Context, path, chksum string) (bool, error) {
 	file, err := os.OpenFile(path, os.O_RDONLY, 0644)
 	if err != nil {
 		if os.IsNotExist(err) {
-			clog.Debugf(ctx, "contentsMatch - File not found: %s", path)
+			clog.Debugf(ctx, "File not found: %s", path)
 			return false, nil
 		}
-		clog.Debugf(ctx, "contentsMatch - Error opening file %s.", path)
+		clog.Debugf(ctx, "Error opening file %s.", path)
 		return false, err
 	}
 	defer file.Close()
 
 	actualChecksum := checksum(file)
 	if actualChecksum != chksum {
-		clog.Debugf(ctx, "contentsMatch - Checksums don't match, got: %s, actual: %s", chksum, actualChecksum)
+		clog.Debugf(ctx, "Checksums don't match, got: %s, actual: %s", chksum, actualChecksum)
 		return false, nil
 	}
 
