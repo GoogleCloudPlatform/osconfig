@@ -369,7 +369,7 @@ func TestFileResourceEnforceStatePresent(t *testing.T) {
 		t.Fatalf("Unexpected EnforceState error: %v", err)
 	}
 
-	match, err := contentsMatch(wantFile, pr.resource.(*fileResource).managedFile.checksum)
+	match, err := contentsMatch(ctx, wantFile, pr.resource.(*fileResource).managedFile.checksum)
 	if err != nil {
 		t.Fatal(err)
 	}

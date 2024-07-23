@@ -154,7 +154,7 @@ func (f *fileResource) checkState(ctx context.Context) (inDesiredState bool, err
 	case agentendpointpb.OSPolicy_Resource_FileResource_PRESENT:
 		return util.Exists(f.managedFile.Path), nil
 	case agentendpointpb.OSPolicy_Resource_FileResource_CONTENTS_MATCH:
-		return contentsMatch(f.managedFile.Path, f.managedFile.checksum)
+		return contentsMatch(ctx, f.managedFile.Path, f.managedFile.checksum)
 	default:
 		return false, fmt.Errorf("unrecognized DesiredState for FileResource: %q", f.managedFile.State)
 	}
