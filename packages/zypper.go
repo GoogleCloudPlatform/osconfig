@@ -87,6 +87,7 @@ func ZypperListPatchAll(all bool) ZypperListOption {
 
 // InstallZypperPackages Installs zypper packages
 func InstallZypperPackages(ctx context.Context, pkgs []string) error {
+	// TODO: Add retries when the it fails with exit code: 7 - which means zypper is locked by another process id.
 	_, err := run(ctx, zypper, append(zypperInstallArgs, pkgs...))
 	return err
 }

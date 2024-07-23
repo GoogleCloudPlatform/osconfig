@@ -268,7 +268,7 @@ func TestRepositoryResourceEnforceState(t *testing.T) {
 				t.Fatalf("Unexpected EnforceState error: %v", err)
 			}
 
-			match, err := contentsMatch(pr.resource.(*repositoryResource).managedRepository.RepoFilePath, pr.resource.(*repositoryResource).managedRepository.RepoChecksum)
+			match, err := contentsMatch(ctx, pr.resource.(*repositoryResource).managedRepository.RepoFilePath, pr.resource.(*repositoryResource).managedRepository.RepoChecksum)
 			if err != nil {
 				t.Fatal(err)
 			}

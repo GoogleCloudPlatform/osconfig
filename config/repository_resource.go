@@ -279,23 +279,31 @@ func (r *repositoryResource) validate(ctx context.Context) (*ManagedResources, e
 	return &ManagedResources{Repositories: []ManagedRepository{r.managedRepository}}, nil
 }
 
-func contentsMatch(path, chksum string) (bool, error) {
+func contentsMatch(ctx context.Context, path, chksum string) (bool, error) {
 	file, err := os.OpenFile(path, os.O_RDONLY, 0644)
 	if err != nil {
 		if os.IsNotExist(err) {
+			clog.Debugf(ctx, "File not found: %s", path)
 			return false, nil
 		}
+		clog.Debugf(ctx, "Error opening file %s.", path)
 		return false, err
 	}
 	defer file.Close()
 
-	return chksum == checksum(file), nil
+	actualChecksum := checksum(file)
+	if actualChecksum != chksum {
+		clog.Debugf(ctx, "Checksums don't match, got: %s, actual: %s", chksum, actualChecksum)
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func (r *repositoryResource) checkState(ctx context.Context) (inDesiredState bool, err error) {
 	// Check APT gpg key if applicable.
 	if r.managedRepository.Apt != nil && r.managedRepository.Apt.GpgFileContents != nil {
-		match, err := contentsMatch(r.managedRepository.Apt.GpgFilePath, r.managedRepository.Apt.GpgChecksum)
+		match, err := contentsMatch(ctx, r.managedRepository.Apt.GpgFilePath, r.managedRepository.Apt.GpgChecksum)
 		if err != nil {
 			return false, err
 		}
@@ -304,7 +312,7 @@ func (r *repositoryResource) checkState(ctx context.Context) (inDesiredState boo
 		}
 	}
 
-	return contentsMatch(r.managedRepository.RepoFilePath, r.managedRepository.RepoChecksum)
+	return contentsMatch(ctx, r.managedRepository.RepoFilePath, r.managedRepository.RepoChecksum)
 }
 
 func (r *repositoryResource) enforceState(ctx context.Context) (inDesiredState bool, err error) {
