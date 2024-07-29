@@ -19,7 +19,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"runtime"
 )
 
 type taskState struct {
@@ -49,12 +48,9 @@ func (s *taskState) save(path string) error {
 
 func loadState(path string) (*taskState, error) {
 	// We load the current state file first, if it does not exist we try to load the old state file.
-	d, err := ioutil.ReadFile(path)
+	d, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
-		if runtime.GOOS == "windows" {
-			return nil, nil
-		}
-		d, err = ioutil.ReadFile(oldTaskStateFile)
+		d, err = os.ReadFile(oldTaskStateFile)
 		if os.IsNotExist(err) {
 			return nil, nil
 		}
@@ -64,9 +60,7 @@ func loadState(path string) (*taskState, error) {
 	}
 
 	// Cleanup old state file if needed.
-	if runtime.GOOS != "windows" {
-		os.Remove(oldTaskStateFile)
-	}
+	os.Remove(oldTaskStateFile)
 	var st taskState
 	return &st, json.Unmarshal(d, &st)
 }
