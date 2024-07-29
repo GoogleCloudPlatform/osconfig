@@ -74,6 +74,9 @@ const (
 	taskStateFileLinux    = cacheDirLinux + "/osconfig_task.state"
 	oldTaskStateFileLinux = oldConfigDirLinux + "/osconfig_task.state"
 
+	oldCacheDirWindows      = `C:\Program Files\Google\OSConfig`
+	oldTaskStateFileWindows = oldCacheDirWindows + "\\osconfig_task.state"
+
 	restartFileLinux    = cacheDirLinux + "/osconfig_agent_restart_required"
 	oldRestartFileLinux = oldConfigDirLinux + "/osconfig_agent_restart_required"
 
@@ -715,6 +718,9 @@ func TaskStateFile() string {
 
 // OldTaskStateFile is the location of the task state file.
 func OldTaskStateFile() string {
+	if runtime.GOOS == "windows" {
+		return oldTaskStateFileWindows
+	}
 	return oldTaskStateFileLinux
 }
 
