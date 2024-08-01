@@ -30,14 +30,14 @@ import (
 )
 
 const (
-	packageInstalled    = "osconfig_tests/pkg_installed"
-	packageNotInstalled = "osconfig_tests/pkg_not_installed"
-	osconfigTestRepo    = "osconfig-agent-test-repository"
-	testResourceBucket  = "osconfig-agent-end2end-test-resources"
-	yumTestRepoBaseURL  = "https://packages.cloud.google.com/yum/repos/osconfig-agent-test-repository"
-	aptTestRepoBaseURL  = "http://packages.cloud.google.com/apt"
-	gooTestRepoURL      = "https://packages.cloud.google.com/yuck/repos/osconfig-agent-test-repository"
-	aptRaptureGpgKey    = "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+	packageInstalled      = "osconfig_tests/pkg_installed"
+	packageNotInstalled   = "osconfig_tests/pkg_not_installed"
+	gcsfuseTestRepo       = "gcsfuse"
+	testResourceBucket    = "osconfig-agent-end2end-test-resources"
+	gcsfuseYumRepoBaseURL = "https://packages.cloud.google.com/yum/repos/gcsfuse-el7-x86_64"
+	aptTestRepoBaseURL    = "http://packages.cloud.google.com/apt"
+	gooTestRepoURL        = "https://packages.cloud.google.com/yuck/repos/osconfig-agent-test-repository"
+	aptRaptureGpgKey      = "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
 )
 
 var (
@@ -198,12 +198,19 @@ func addPackageRemovalTest(key string) []*guestPolicyTestSetup {
 
 func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *guestPolicyTestSetup {
 	assertTimeout := 120 * time.Second
-	packageName := "osconfig-agent-test"
+	packageName := "gcsfuse"
 	testName := packageInstallFromNewRepoFunction
 	machineType := "e2-medium"
 	if pkgManager == "googet" {
 		machineType = "e2-standard-2"
 	}
+
+	// TODO: use another test pkg for Windows
+	if strings.Contains(image, "windows") {
+		packageName = "osconfig-agent-test"
+	}
+
+	gcsfuseAptRepoBane := fmt.Sprintf("gcsfuse-%s", utils.GetDebOsName(image))
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
 	gp := &osconfigpb.GuestPolicy{
@@ -211,9 +218,9 @@ func buildPkgInstallFromNewRepoTestSetup(name, image, pkgManager, key string) *g
 		Packages:   osconfigserver.BuildPackagePolicy(nil, nil, []string{packageName}),
 		Assignment: &osconfigpb.Assignment{InstanceNamePrefixes: []string{instanceName}},
 		PackageRepositories: []*osconfigpb.PackageRepository{
-			{Repository: osconfigserver.BuildAptRepository(osconfigpb.AptRepository_DEB, aptTestRepoBaseURL, osconfigTestRepo, aptRaptureGpgKey, []string{"main"})},
-			{Repository: osconfigserver.BuildYumRepository(osconfigTestRepo, "Google OSConfig Agent Test Repository", yumTestRepoBaseURL, yumRaptureGpgKeys)},
-			{Repository: osconfigserver.BuildZypperRepository(osconfigTestRepo, "Google OSConfig Agent Test Repository", yumTestRepoBaseURL, yumRaptureGpgKeys)},
+			{Repository: osconfigserver.BuildAptRepository(osconfigpb.AptRepository_DEB, aptTestRepoBaseURL, gcsfuseAptRepoBane, aptRaptureGpgKey, []string{"main"})},
+			{Repository: osconfigserver.BuildYumRepository(gcsfuseTestRepo, "gcsfuse", gcsfuseYumRepoBaseURL, yumRaptureGpgKeys)},
+			{Repository: osconfigserver.BuildZypperRepository(gcsfuseTestRepo, "gcsfuse", gcsfuseYumRepoBaseURL, yumRaptureGpgKeys)},
 			{Repository: osconfigserver.BuildGooRepository("Google OSConfig Agent Test Repository", gooTestRepoURL)},
 		},
 	}
