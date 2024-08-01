@@ -129,7 +129,7 @@ func InstallOSConfigDeb(image string) string {
 	if config.AgentRepo() == "" {
 		return CurlPost
 	}
-	osName := getDebOsName(image)
+	osName := GetDebOsName(image)
 	return fmt.Sprintf(`
 sleep 10
 systemctl stop google-osconfig-agent
@@ -312,8 +312,8 @@ func InstallOSConfigSUSE() string {
 	return getZypperRepoSetup("el8") + zypperInstallAgent
 }
 
-// getDebOsType returns the equivalent os_name for deb version (e.g. debian-11 --> bullseye)
-func getDebOsName(image string) string {
+// GetDebOsName returns the equivalent os_name for deb version (e.g. debian-11 --> bullseye)
+func GetDebOsName(image string) string {
 	imageName := path.Base(image)
 	switch {
 	case image == "10" || containsAnyOf(imageName, []string{"debian-10", "buster"}):
