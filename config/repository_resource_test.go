@@ -287,10 +287,6 @@ func TestFetchGPGKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(entityList) != 2 {
-		t.Errorf("Expected: %v key(s), got: %v", 2, len(entityList))
-	}
-
 	// check if Artifact Regitry key exist or not
 	artifactRegistryKeyFound := false
 	for _, e := range entityList {

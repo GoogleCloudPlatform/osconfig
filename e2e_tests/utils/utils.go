@@ -312,7 +312,7 @@ func InstallOSConfigSUSE() string {
 	return getZypperRepoSetup("el8") + zypperInstallAgent
 }
 
-// getDebOsType returns the equivalent os_name for deb version (e.g. debian-11 --> bullseye)
+// GetDebOsName returns the equivalent os_name for deb version (e.g. debian-11 --> bullseye)
 func GetDebOsName(image string) string {
 	imageName := path.Base(image)
 	switch {
