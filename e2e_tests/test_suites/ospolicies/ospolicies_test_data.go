@@ -951,6 +951,10 @@ func addRepositoryResourceTests(key string) []*osPolicyTestSetup {
 		pkgTestSetup = append(pkgTestSetup, buildYumRepositoryResourceTest(name, image, key))
 	}
 	for name, image := range utils.HeadSUSEImages {
+		// TODO: remove this if conditon after SUSE fixes repo-file overwriting issue for SLES-12
+		if strings.Contains(image, "sles-12") {
+			continue
+		}
 		pkgTestSetup = append(pkgTestSetup, buildZypperRepositoryResourceTest(name, image, key))
 	}
 	for name, image := range utils.HeadWindowsImages {
