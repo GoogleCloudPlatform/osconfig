@@ -117,20 +117,20 @@ var (
 
 	yumBashInstalledCheck = func(items map[string]*osconfigpb.Inventory_Item) error {
 		var bashFound bool
-		var cowsayFound bool
+		var gcsfuseFound bool
 		for _, item := range items {
 			if item.GetInstalledPackage().GetYumPackage().GetPackageName() == "bash" {
 				bashFound = true
 			}
-			if item.GetAvailablePackage().GetYumPackage().GetPackageName() == "cowsay" {
-				cowsayFound = true
+			if item.GetInstalledPackage().GetYumPackage().GetPackageName() == "gcsfuse" {
+				gcsfuseFound = true
 			}
 		}
 		if !bashFound {
 			return errors.New("did not find 'bash' in installed packages")
 		}
-		if !cowsayFound {
-			return errors.New("did not find 'cowsay' in available packages")
+		if !gcsfuseFound {
+			return errors.New("did not find 'gcsfuse' in installed packages")
 		}
 		return nil
 	}
@@ -158,20 +158,20 @@ var (
 		timeout:     25 * time.Minute,
 		itemCheck: func(items map[string]*osconfigpb.Inventory_Item) error {
 			var bashFound bool
-			var cowsayFound bool
+			var gcsfuseFound bool
 			for _, item := range items {
 				if item.GetInstalledPackage().GetZypperPackage().GetPackageName() == "bash" {
 					bashFound = true
 				}
-				if item.GetAvailablePackage().GetZypperPackage().GetPackageName() == "cowsay" {
-					cowsayFound = true
+				if item.GetInstalledPackage().GetZypperPackage().GetPackageName() == "gcsfuse" {
+					gcsfuseFound = true
 				}
 			}
 			if !bashFound {
 				return errors.New("did not find 'bash' in installed packages")
 			}
-			if !cowsayFound {
-				return errors.New("did not find 'cowsay' in available packages")
+			if !gcsfuseFound {
+				return errors.New("did not find 'gcsfuse' in installed packages")
 			}
 			return nil
 		},
@@ -200,20 +200,20 @@ func createAptSetup(image string) *inventoryTestSetup {
 		timeout:     25 * time.Minute,
 		itemCheck: func(items map[string]*osconfigpb.Inventory_Item) error {
 			var bashFound bool
-			var cowsayFound bool
+			var gcsfuseFound bool
 			for _, item := range items {
 				if item.GetInstalledPackage().GetAptPackage().GetPackageName() == "bash" {
 					bashFound = true
 				}
-				if item.GetAvailablePackage().GetAptPackage().GetPackageName() == "cowsay" {
-					cowsayFound = true
+				if item.GetInstalledPackage().GetAptPackage().GetPackageName() == "gcsfuse" {
+					gcsfuseFound = true
 				}
 			}
 			if !bashFound {
 				return errors.New("did not find 'bash' in installed packages")
 			}
-			if !cowsayFound {
-				return errors.New("did not find 'cowsay' in available packages")
+			if !gcsfuseFound {
+				return errors.New("did not find 'gcsfuse' in installed packages")
 			}
 			return nil
 		},
@@ -222,16 +222,16 @@ func createAptSetup(image string) *inventoryTestSetup {
 
 func getStartupScriptEL(image string) string {
 	ss := `
-echo 'Adding test repo'
-cat > /etc/yum.repos.d/osconfig-agent-test.repo <<EOM
-[test-repo]
-name=test repo
-baseurl=https://packages.cloud.google.com/yum/repos/osconfig-agent-test-repository
+echo 'Adding gcsfuse repo'
+cat > /etc/yum.repos.d/gcsfuse.repo <<EOM
+[gcsfuse]
+name=gcsfuse
+baseurl=https://packages.cloud.google.com/yum/repos/gcsfuse-el7-x86_64
 enabled=1
 gpgcheck=0
 EOM
 n=0
-while ! yum -y install cowsay-3.03-20.el7; do
+while ! yum -y install gcsfuse; do
   if [[ n -gt 5 ]]; then
     exit 1
   fi
@@ -243,22 +243,24 @@ done
 }
 
 func getStartupScriptDeb(image string) string {
+	gcsfuseAptRepoBane := fmt.Sprintf("gcsfuse-%s", utils.GetDebOsName(image))
+
 	ss := `
-echo 'Adding test repo'
+echo 'Adding gcsfuse repo'
 
 # install gnupg2 if not exist
 apt-get update
 apt-get install -y gnupg2
 
-echo 'deb http://packages.cloud.google.com/apt osconfig-agent-test-repository main' >> /etc/apt/sources.list
+echo 'deb http://packages.cloud.google.com/apt %s main' >> /etc/apt/sources.list
 curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
    sleep 5
 done
 apt-get update
-apt-get -y install cowsay=3.03+dfsg1-10 || exit 1
+apt-get -y install gcsfuse || exit 1
 %s`
-	return fmt.Sprintf(ss, utils.InstallOSConfigDeb(image))
+	return fmt.Sprintf(ss, gcsfuseAptRepoBane, utils.InstallOSConfigDeb(image))
 }
 
 func getStartupScriptGoo() string {
@@ -272,15 +274,15 @@ googet -noconfirm install cowsay.x86_64.0.1.0@1
 
 func getStartupScriptZypper() string {
 	ss := `
-echo 'Adding test repo'
+echo 'Adding gcsfuse repo'
 cat > /etc/zypp/repos.d/osconfig-agent-test.repo <<EOM
-[test-repo]
-name=test repo
-baseurl=https://packages.cloud.google.com/yum/repos/osconfig-agent-test-repository
+[gcsfuse]
+name=gcsfuse
+baseurl=https://packages.cloud.google.com/yum/repos/gcsfuse-el7-x86_64
 enabled=1
 gpgcheck=0
 EOM
-zypper -n --no-gpg-checks install cowsay-3.03-20.el7
+zypper -n --no-gpg-checks install gcsfuse
 %s`
 	return fmt.Sprintf(ss, utils.InstallOSConfigSUSE())
 }
