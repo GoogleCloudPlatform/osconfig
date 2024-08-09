@@ -147,25 +147,28 @@ func getUpdateStartupScript(image, pkgManager string) *computeApi.MetadataItems 
 	switch pkgManager {
 	case "apt":
 		ss = `
-echo 'Adding test repo'
+echo 'Adding gcsfuse repo'
 
 # install gnupg2 if not exist
 apt-get update
 apt-get install -y gnupg2
 
-echo 'deb http://packages.cloud.google.com/apt osconfig-agent-test-repository main' >> /etc/apt/sources.list
+OSTYPE=$(lsb_release -c -s)
+GCSFUSE_REPO="gcsfuse-$OSTYPE"
+
+echo "deb http://packages.cloud.google.com/apt $GCSFUSE_REPO main" >> /etc/apt/sources.list
 curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
    sleep 5
 done
 apt-get update
-apt-get -y remove ed || exit 1
-apt-get -y install ed=1.9-2 || exit 1
+apt-get -y remove gcsfuse || exit 1
+apt-get -y install gcsfuse=2.3.2 || exit 1
 %[1]s
 %[2]s
 while true; do
-  isinstalled=$(/usr/bin/dpkg-query -f '${Version}' -W ed)
-  if [[ $isinstalled == "1.9-2" ]]; then
+  isinstalled=$(/usr/bin/dpkg-query -f '${Version}' -W gcsfuse)
+  if [[ $isinstalled == "2.3.2" ]]; then
     uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[3]s
   else
     uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[4]s
@@ -179,23 +182,23 @@ done`
 
 	case "yum":
 		ss = `
-echo 'Adding test repo'
-cat > /etc/yum.repos.d/google-osconfig-agent.repo <<EOM
-[test-repo]
-name=test repo
-baseurl=https://packages.cloud.google.com/yum/repos/osconfig-agent-test-repository
+echo 'Adding gcsfuse repo'
+cat > /etc/yum.repos.d/gcsfuse.repo <<EOM
+[gcsfuse]
+name=gcsfuse
+baseurl=https://packages.cloud.google.com/yum/repos/gcsfuse-el7-x86_64
 enabled=1
 gpgcheck=0
 EOM
 n=0
-while ! yum -y remove ed; do
+while ! yum -y remove gcsfuse; do
   if [[ n -gt 5 ]]; then
     exit 1
   fi
   n=$[$n+1]
   sleep 10
 done
-while ! yum -y install ed-0.2-39.el5_2; do
+while ! yum -y install gcsfuse-2.3.2-1.x86_64; do
   if [[ n -gt 5 ]]; then
     exit 1
   fi
@@ -205,8 +208,8 @@ done
 %[1]s
 %[2]s
 while true; do
-  isinstalled=$(/usr/bin/rpmquery -a ed)
-  if [[ $isinstalled =~ 0.2-39.el5_2 ]]; then
+  isinstalled=$(/usr/bin/rpmquery -a gcsfuse)
+  if [[ $isinstalled =~ 2.3.2-1.x86_64 ]]; then
     uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[3]s
   else
     uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[4]s
@@ -241,19 +244,19 @@ while(1) {
 
 	case "zypper":
 		ss = `
-echo 'Adding test repo'
-zypper ar --no-gpgcheck -f "https://packages.cloud.google.com/yum/repos/osconfig-agent-test-repository" "test-repo"
+echo 'Adding gcsfuse repo'
+zypper ar --no-gpgcheck -f "https://packages.cloud.google.com/yum/repos/gcsfuse-el7-x86_64" "gcsfuse"
 zypper refresh
-zypper -n remove cowsay
-zypper -n --no-gpg-checks install cowsay-3.03-20.el7
+zypper -n remove gcsfuse
+zypper -n --no-gpg-checks install gcsfuse-2.3.2-1.x86_64
 %[1]s
 %[2]s
 while true; do
-  isinstalled=$(/usr/bin/rpmquery -a cowsay)
-  if [[ $isinstalled =~ 3.03-20.el7 ]]; then
+  isinstalled=$(/usr/bin/rpmquery -a gcsfuse)
+  if [[ $isinstalled =~ 2.3.2-1.x86_64 ]]; then
     uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[3]s
   else
-    # For package update tests, the new version after the agent update it should be cowsay-3.04-2.el7.noarch
+    # For package update tests, the new version after the agent update it should be gcsfuse-2.4.0-1.x86_64
     uri=http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%[4]s
   fi
   curl -X PUT --data "1" $uri -H "Metadata-Flavor: Google"
