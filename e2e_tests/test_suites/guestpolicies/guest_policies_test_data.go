@@ -86,15 +86,13 @@ func addPackageInstallTest(key string) []*guestPolicyTestSetup {
 func buildPkgUpdateTestSetup(name, image, pkgManager, key string) *guestPolicyTestSetup {
 	assertTimeout := 240 * time.Second
 	testName := packageUpdateFunction
-	packageName := "ed"
+	packageName := "gcsfuse"
 	machineType := "e2-medium"
 	if pkgManager == "googet" {
 		packageName = "cowsay"
 		machineType = "e2-standard-4"
 	}
-	if pkgManager == "zypper" {
-		packageName = "cowsay"
-	}
+
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
 	gp := &osconfigpb.GuestPolicy{
 		Packages:   osconfigserver.BuildPackagePolicy(nil, nil, []string{packageName}),
@@ -124,14 +122,11 @@ func addPackageUpdateTest(key string) []*guestPolicyTestSetup {
 func buildPkgDoesNotUpdateTestSetup(name, image, pkgManager, key string) *guestPolicyTestSetup {
 	assertTimeout := 240 * time.Second
 	testName := packageNoUpdateFunction
-	packageName := "ed"
+	packageName := "gcsfuse"
 	machineType := "e2-medium"
 	if pkgManager == "googet" {
 		packageName = "cowsay"
 		machineType = "e2-standard-4"
-	}
-	if pkgManager == "zypper" {
-		packageName = "cowsay"
 	}
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
