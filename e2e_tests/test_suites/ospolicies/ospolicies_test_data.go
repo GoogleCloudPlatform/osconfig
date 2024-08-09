@@ -27,16 +27,16 @@ import (
 )
 
 const (
-	packageInstalled    = "osconfig_tests/pkg_installed"
-	packageNotInstalled = "osconfig_tests/pkg_not_installed"
-	fileExists          = "osconfig_tests/file_exists"
-	fileDNE             = "osconfig_tests/file_does_not_exist"
-	osconfigTestRepo    = "osconfig-agent-test-repository"
-	testResourceBucket  = "osconfig-agent-end2end-test-resources"
-	yumTestRepoBaseURL  = "https://packages.cloud.google.com/yum/repos/osconfig-agent-test-repository"
-	aptTestRepoBaseURL  = "http://packages.cloud.google.com/apt"
-	gooTestRepoURL      = "https://packages.cloud.google.com/yuck/repos/osconfig-agent-test-repository"
-	aptRaptureGpgKey    = "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+	packageInstalled      = "osconfig_tests/pkg_installed"
+	packageNotInstalled   = "osconfig_tests/pkg_not_installed"
+	fileExists            = "osconfig_tests/file_exists"
+	fileDNE               = "osconfig_tests/file_does_not_exist"
+	gcsfuseTestRepo       = "gcsfuse"
+	testResourceBucket    = "osconfig-agent-end2end-test-resources"
+	gcsfuseYumRepoBaseURL = "https://packages.cloud.google.com/yum/repos/gcsfuse-el7-x86_64"
+	aptTestRepoBaseURL    = "http://packages.cloud.google.com/apt"
+	gooTestRepoURL        = "https://packages.cloud.google.com/yuck/repos/osconfig-agent-test-repository"
+	aptRaptureGpgKey      = "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
 )
 
 var (
@@ -677,9 +677,11 @@ func addPackageResourceTests(key string) []*osPolicyTestSetup {
 
 func buildAptRepositoryResourceTest(name, image, key string) *osPolicyTestSetup {
 	assertTimeout := 360 * time.Second
-	packageName := "osconfig-agent-test"
+	packageName := "gcsfuse"
 	testName := repositoryResourceApt
 	machineType := "e2-medium"
+
+	gcsfuseAptRepoBane := fmt.Sprintf("gcsfuse-%s", utils.GetDebOsName(image))
 
 	instanceName := fmt.Sprintf("%s-%s-%s-%s", path.Base(name), testName, key, utils.RandString(3))
 	ospa := &osconfigpb.OSPolicyAssignment{
@@ -707,7 +709,7 @@ func buildAptRepositoryResourceTest(name, image, key string) *osPolicyTestSetup 
 											Apt: &osconfigpb.OSPolicy_Resource_RepositoryResource_AptRepository{
 												ArchiveType:  osconfigpb.OSPolicy_Resource_RepositoryResource_AptRepository_DEB,
 												Uri:          aptTestRepoBaseURL,
-												Distribution: osconfigTestRepo,
+												Distribution: gcsfuseAptRepoBane,
 												Components:   []string{"main"},
 												GpgKey:       aptRaptureGpgKey,
 											},
@@ -745,7 +747,7 @@ func buildAptRepositoryResourceTest(name, image, key string) *osPolicyTestSetup 
 
 func buildYumRepositoryResourceTest(name, image, key string) *osPolicyTestSetup {
 	assertTimeout := 360 * time.Second
-	packageName := "osconfig-agent-test"
+	packageName := "gcsfuse"
 	testName := repositoryResourceYum
 	machineType := "e2-medium"
 
@@ -773,9 +775,9 @@ func buildYumRepositoryResourceTest(name, image, key string) *osPolicyTestSetup 
 									Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource{
 										Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource_Yum{
 											Yum: &osconfigpb.OSPolicy_Resource_RepositoryResource_YumRepository{
-												Id:          osconfigTestRepo,
-												DisplayName: "Google OSConfig Agent Test Repository",
-												BaseUrl:     yumTestRepoBaseURL,
+												Id:          gcsfuseTestRepo,
+												DisplayName: "gcsfuse",
+												BaseUrl:     gcsfuseYumRepoBaseURL,
 												GpgKeys:     yumRaptureGpgKeys,
 											},
 										},
@@ -812,7 +814,7 @@ func buildYumRepositoryResourceTest(name, image, key string) *osPolicyTestSetup 
 
 func buildZypperRepositoryResourceTest(name, image, key string) *osPolicyTestSetup {
 	assertTimeout := 360 * time.Second
-	packageName := "osconfig-agent-test"
+	packageName := "gcsfuse"
 	testName := repositoryResourceZypper
 	machineType := "e2-medium"
 
@@ -840,9 +842,9 @@ func buildZypperRepositoryResourceTest(name, image, key string) *osPolicyTestSet
 									Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource{
 										Repository: &osconfigpb.OSPolicy_Resource_RepositoryResource_Zypper{
 											Zypper: &osconfigpb.OSPolicy_Resource_RepositoryResource_ZypperRepository{
-												Id:          osconfigTestRepo,
-												DisplayName: "Google OSConfig Agent Test Repository",
-												BaseUrl:     yumTestRepoBaseURL,
+												Id:          gcsfuseTestRepo,
+												DisplayName: "gcsfuse",
+												BaseUrl:     gcsfuseYumRepoBaseURL,
 												GpgKeys:     yumRaptureGpgKeys,
 											},
 										},
