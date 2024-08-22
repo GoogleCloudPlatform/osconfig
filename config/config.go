@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
+	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
 )
 
 var goos = runtime.GOOS

@@ -28,7 +28,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/external"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 
-	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
+	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
 // fetchArtifacts takes in a slice of artifacts and downloads them into the specified directory,

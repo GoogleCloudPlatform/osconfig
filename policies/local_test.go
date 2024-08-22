@@ -17,7 +17,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
+	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 	"google.golang.org/protobuf/encoding/prototext"
 )
 

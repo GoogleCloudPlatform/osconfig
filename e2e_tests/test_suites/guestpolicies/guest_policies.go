@@ -35,7 +35,7 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 	computeApi "google.golang.org/api/compute/v1"
 
-	"cloud.google.com/go/osconfig/apiv1beta/osconfigpb"
+	osconfigpb "google.golang.org/genproto/googleapis/cloud/osconfig/v1beta"
 )
 
 var (

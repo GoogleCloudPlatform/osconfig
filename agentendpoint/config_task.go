@@ -26,7 +26,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/config"
 	"github.com/GoogleCloudPlatform/osconfig/pretty"
 
-	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
+	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
 )
 
 // This is the maximum size in bytes of the OSPolicyResourceConfigStep ErrorMessage field.
