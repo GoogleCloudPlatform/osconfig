@@ -37,7 +37,7 @@ import (
 	"github.com/ulikunitz/xz"
 	"github.com/ulikunitz/xz/lzma"
 
-	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
+	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
 var extensionMap = map[agentendpointpb.SoftwareRecipe_Step_RunScript_Interpreter]string{

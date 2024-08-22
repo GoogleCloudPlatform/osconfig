@@ -31,7 +31,7 @@ import (
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/armor"
 
-	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
+	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
 var debArchiveTypeMap = map[agentendpointpb.AptRepository_ArchiveType]string{

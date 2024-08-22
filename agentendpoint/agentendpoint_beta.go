@@ -30,7 +30,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
+	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
 // BetaClient is a an agentendpoint client.

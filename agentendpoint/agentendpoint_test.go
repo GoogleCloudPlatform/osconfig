@@ -41,7 +41,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 
-	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
+	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
 )
 
 var testIDToken string

@@ -33,7 +33,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/tasker"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 
-	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
+	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
 func run(ctx context.Context) {

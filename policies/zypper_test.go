@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
+	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
 )
 
 func runZypperRepositories(ctx context.Context, repos []*agentendpointpb.ZypperRepository) (string, error) {

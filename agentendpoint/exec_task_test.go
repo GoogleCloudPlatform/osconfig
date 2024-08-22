@@ -24,7 +24,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
+	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
 )
 
 type agentEndpointServiceExecTestServer struct {
