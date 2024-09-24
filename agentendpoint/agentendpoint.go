@@ -39,6 +39,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/grpc/keepalive"
 
 	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
 )
@@ -65,9 +66,18 @@ type Client struct {
 
 // NewClient a new agentendpoint Client.
 func NewClient(ctx context.Context) (*Client, error) {
+	keepAliveConf := keepalive.ClientParameters{
+		Time:                100 * time.Second,
+		Timeout:             5 * time.Second,
+		PermitWithoutStream: true,
+	}
+
 	opts := []option.ClientOption{
-		option.WithoutAuthentication(), // Do not use oauth.
-		option.WithGRPCDialOption(grpc.WithTransportCredentials(credentials.NewTLS(nil))), // Because we disabled Auth we need to specifically enable TLS.
+		// Do not use oauth.
+		option.WithoutAuthentication(),
+		// Because we disabled Auth we need to specifically enable TLS.
+		option.WithGRPCDialOption(grpc.WithTransportCredentials(credentials.NewTLS(nil))),
+		option.WithGRPCDialOption(grpc.WithKeepaliveParams(keepAliveConf)),
 		option.WithEndpoint(agentconfig.SvcEndpoint()),
 		option.WithUserAgent(agentconfig.UserAgent()),
 	}
