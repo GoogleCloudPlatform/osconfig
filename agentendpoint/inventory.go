@@ -15,7 +15,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
+	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
 	datepb "google.golang.org/genproto/googleapis/type/date"
 )
 
@@ -225,12 +225,23 @@ func formatPackages(ctx context.Context, pkgs *packages.Packages, shortName stri
 }
 
 func formatAptPackage(pkg *packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_AptPackage {
-	return &agentendpointpb.Inventory_SoftwarePackage_AptPackage{
+	fPkg := &agentendpointpb.Inventory_SoftwarePackage_AptPackage{
 		AptPackage: &agentendpointpb.Inventory_VersionedPackage{
 			PackageName:  pkg.Name,
 			Architecture: pkg.Arch,
 			Version:      pkg.Version,
-		}}
+		},
+	}
+
+	// for some of the APT packages source package might be available.
+	if pkg.Source.Name != "" {
+		fPkg.AptPackage.Source = &agentendpointpb.Inventory_VersionedPackage_Source{
+			Name:    pkg.Source.Name,
+			Version: pkg.Source.Version,
+		}
+	}
+
+	return fPkg
 }
 
 func formatCOSPackage(pkg *packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_CosPackage {
@@ -252,11 +263,23 @@ func formatGooGetPackage(pkg *packages.PkgInfo) *agentendpointpb.Inventory_Softw
 }
 
 func formatYumPackage(pkg *packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_YumPackage {
-	return &agentendpointpb.Inventory_SoftwarePackage_YumPackage{
+	fPkg := &agentendpointpb.Inventory_SoftwarePackage_YumPackage{
 		YumPackage: &agentendpointpb.Inventory_VersionedPackage{
 			PackageName:  pkg.Name,
 			Architecture: pkg.Arch,
-			Version:      pkg.Version}}
+			Version:      pkg.Version,
+		},
+	}
+
+	// for some of the YUM packages source package might be available.
+	if pkg.Source.Name != "" {
+		fPkg.YumPackage.Source = &agentendpointpb.Inventory_VersionedPackage_Source{
+			Name:    pkg.Source.Name,
+			Version: pkg.Source.Version,
+		}
+	}
+
+	return fPkg
 }
 
 func formatZypperPackage(pkg *packages.PkgInfo) *agentendpointpb.Inventory_SoftwarePackage_ZypperPackage {

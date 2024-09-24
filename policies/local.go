@@ -24,7 +24,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
-	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
+	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
 )
 
 // localConfig represents the structure of the config to the JSON parser.

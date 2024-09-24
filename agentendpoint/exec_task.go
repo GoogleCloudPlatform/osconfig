@@ -30,7 +30,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/external"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 
-	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
+	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
 )
 
 var (
