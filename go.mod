@@ -5,7 +5,7 @@ go 1.21
 require (
 	cloud.google.com/go/compute/metadata v0.5.2
 	cloud.google.com/go/osconfig v1.13.0
-	cloud.google.com/go/storage v1.41.0
+	cloud.google.com/go/storage v1.43.0
 	cos.googlesource.com/cos/tools.git v0.0.0-20210329212435-a349a79f950d
 	github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20221216194522-f549ad6a1730
 	github.com/StackExchange/wmi v1.2.1
