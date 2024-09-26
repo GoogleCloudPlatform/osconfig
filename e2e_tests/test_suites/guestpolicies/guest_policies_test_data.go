@@ -26,7 +26,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
 	"github.com/golang/protobuf/jsonpb"
 
-	osconfigpb "google.golang.org/genproto/googleapis/cloud/osconfig/v1beta"
+	"cloud.google.com/go/osconfig/apiv1beta/osconfigpb"
 )
 
 const (

@@ -17,7 +17,7 @@ package osconfigserver
 import (
 	"fmt"
 
-	osconfigpb "google.golang.org/genproto/googleapis/cloud/osconfig/v1beta"
+	"cloud.google.com/go/osconfig/apiv1beta/osconfigpb"
 )
 
 // BuildPackagePolicy creates an package policy.

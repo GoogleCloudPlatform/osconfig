@@ -23,7 +23,7 @@ import (
 	"strings"
 	"testing"
 
-	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1beta"
+	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
 )
 
 func runAptRepositories(ctx context.Context, repos []*agentendpointpb.AptRepository) (string, error) {

@@ -36,7 +36,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	agentendpointpb "google.golang.org/genproto/googleapis/cloud/osconfig/agentendpoint/v1"
+	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
 )
 
 type agentEndpointServiceInventoryTestServer struct {
@@ -84,10 +84,28 @@ func generateInventoryState() *inventory.InstanceInventory {
 		KernelRelease:        "KernelRelease",
 		OSConfigAgentVersion: "OSConfigAgentVersion",
 		InstalledPackages: &packages.Packages{
-			Yum:           []*packages.PkgInfo{{Name: "YumInstalledPkg", Arch: "Arch", Version: "Version"}},
-			Rpm:           []*packages.PkgInfo{{Name: "RpmInstalledPkg", Arch: "Arch", Version: "Version"}},
-			Apt:           []*packages.PkgInfo{{Name: "AptInstalledPkg", Arch: "Arch", Version: "Version"}},
-			Deb:           []*packages.PkgInfo{{Name: "DebInstalledPkg", Arch: "Arch", Version: "Version"}},
+			Yum: []*packages.PkgInfo{{
+				Name:    "YumInstalledPkg",
+				Arch:    "Arch",
+				Version: "Version",
+				Source:  packages.Source{Name: "SourceName", Version: "SourceVersion"}}},
+
+			Rpm: []*packages.PkgInfo{{
+				Name:    "RpmInstalledPkg",
+				Arch:    "Arch",
+				Version: "Version",
+				Source:  packages.Source{Name: "SourceName", Version: "SourceVersion"}}},
+
+			Apt: []*packages.PkgInfo{{
+				Name:    "AptInstalledPkg",
+				Arch:    "Arch",
+				Version: "Version",
+				Source:  packages.Source{Name: "SourceName", Version: "SourceVersion"}}},
+			Deb: []*packages.PkgInfo{{
+				Name:    "DebInstalledPkg",
+				Arch:    "Arch",
+				Version: "Version",
+				Source:  packages.Source{Name: "SourceName", Version: "SourceVersion"}}},
 			Zypper:        []*packages.PkgInfo{{Name: "ZypperInstalledPkg", Arch: "Arch", Version: "Version"}},
 			ZypperPatches: []*packages.ZypperPatch{{Name: "ZypperInstalledPatch", Category: "Category", Severity: "Severity", Summary: "Summary"}},
 			Gem:           []*packages.PkgInfo{{Name: "GemInstalledPkg", Arch: "Arch", Version: "Version"}},
@@ -148,13 +166,23 @@ func generateInventory() *agentendpointpb.Inventory {
 					AptPackage: &agentendpointpb.Inventory_VersionedPackage{
 						PackageName:  "AptInstalledPkg",
 						Architecture: "Arch",
-						Version:      "Version"}}},
+						Version:      "Version",
+						Source: &agentendpointpb.Inventory_VersionedPackage_Source{
+							Name:    "SourceName",
+							Version: "SourceVersion",
+						},
+					}}},
 			{
 				Details: &agentendpointpb.Inventory_SoftwarePackage_AptPackage{
 					AptPackage: &agentendpointpb.Inventory_VersionedPackage{
 						PackageName:  "DebInstalledPkg",
 						Architecture: "Arch",
-						Version:      "Version"}}},
+						Version:      "Version",
+						Source: &agentendpointpb.Inventory_VersionedPackage_Source{
+							Name:    "SourceName",
+							Version: "SourceVersion",
+						},
+					}}},
 			{
 				Details: &agentendpointpb.Inventory_SoftwarePackage_GoogetPackage{
 					GoogetPackage: &agentendpointpb.Inventory_VersionedPackage{
@@ -166,7 +194,12 @@ func generateInventory() *agentendpointpb.Inventory {
 					YumPackage: &agentendpointpb.Inventory_VersionedPackage{
 						PackageName:  "YumInstalledPkg",
 						Architecture: "Arch",
-						Version:      "Version"}}},
+						Version:      "Version",
+						Source: &agentendpointpb.Inventory_VersionedPackage_Source{
+							Name:    "SourceName",
+							Version: "SourceVersion",
+						},
+					}}},
 			{
 				Details: &agentendpointpb.Inventory_SoftwarePackage_ZypperPackage{
 					ZypperPackage: &agentendpointpb.Inventory_VersionedPackage{
@@ -178,7 +211,12 @@ func generateInventory() *agentendpointpb.Inventory {
 					YumPackage: &agentendpointpb.Inventory_VersionedPackage{
 						PackageName:  "RpmInstalledPkg",
 						Architecture: "Arch",
-						Version:      "Version"}}},
+						Version:      "Version",
+						Source: &agentendpointpb.Inventory_VersionedPackage_Source{
+							Name:    "SourceName",
+							Version: "SourceVersion",
+						},
+					}}},
 			{
 				Details: &agentendpointpb.Inventory_SoftwarePackage_ZypperPatch{
 					ZypperPatch: &agentendpointpb.Inventory_ZypperPatch{
