@@ -27,7 +27,7 @@ COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.
 # Must be built from root of repo, where packagebuild dir is.
 COPY packagebuild packagebuild
 # Copy this Dockerfile for debugging.
-COPY container_images/daisy-builder/Dockerfile Dockerfile
-COPY container_images/daisy-builder/main.sh main.sh
+COPY presubmit_packagebuild/docker-image/Dockerfile Dockerfile
+COPY presubmit_packagebuild/docker-image/main.sh main.sh
 
 ENTRYPOINT ["/main.sh"]

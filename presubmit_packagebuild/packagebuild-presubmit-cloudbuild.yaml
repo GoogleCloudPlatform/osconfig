@@ -1,0 +1,9 @@
+timeout: 5400s
+
+steps:
+- name: 'europe-docker.pkg.dev/osconfig-agent-presubmits/osconfig-package-build-presubmit/osconfig-package-build-presubmit:latest'
+  args: ["osconfig-agent-presubmits", "europe-west4-a", "deb11,el8,el8_arm64,el9,el9_arm64,goo"]
+  env: ['REPO_OWNER=GoogleCloudPlatform', 'REPO_NAME=osconfig', 'JOB_TYPE=presubmit', 'PULL_NUMBER=$_PR_NUMBER']
+
+options:
+  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
