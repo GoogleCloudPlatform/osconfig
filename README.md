@@ -1,6 +1,6 @@
 # Google OS Config Agent.
 
-This repository contains the OS Config agent and associated end to end tests.
+This repository contains the OSConfig agent and associated end to end tests.
 
 The OS Config agent currently supports the following three main features:
 - [OS inventory management](https://cloud.google.com/compute/docs/instances/os-inventory-management)
