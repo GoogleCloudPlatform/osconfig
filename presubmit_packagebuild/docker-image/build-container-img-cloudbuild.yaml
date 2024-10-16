@@ -1,0 +1,11 @@
+timeout: 5400s
+
+steps:
+- name: 'gcr.io/kaniko-project/executor:v1.23.2'
+  args:
+  - --destination=europe-docker.pkg.dev/osconfig-agent-presubmits/osconfig-package-build-presubmit/osconfig-package-build-presubmit:latest
+  - --context=/workspace
+  - --dockerfile=presubmit_packagebuild/docker-image/Dockerfile
+
+options:
+  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
