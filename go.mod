@@ -28,7 +28,7 @@ require (
 	cloud.google.com/go v0.116.0 // indirect
 	cloud.google.com/go/auth v0.9.9 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.4 // indirect
-	cloud.google.com/go/iam v1.2.1 // indirect
+	cloud.google.com/go/iam v1.2.2 // indirect
 	cloud.google.com/go/logging v1.11.0 // indirect
 	cloud.google.com/go/longrunning v0.6.2 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
