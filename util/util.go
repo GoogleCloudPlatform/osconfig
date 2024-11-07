@@ -46,7 +46,7 @@ type Logger struct {
 // SanitizePath ensures that relative path does not contains ".." to avoid directory traversal attacks.
 // As well run filepath.Clean to remove redundant path segments.
 func SanitizePath(path string) (string) {
-	sanitized := strings.ReplaceAll(path, "..", "")
+	sanitized := strings.ReplaceAll(path, "../", "")
 
 	return filepath.Clean(sanitized)
 }
