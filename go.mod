@@ -15,7 +15,7 @@ require (
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
 	github.com/ulikunitz/xz v0.5.12
 	golang.org/x/crypto v0.28.0
-	golang.org/x/oauth2 v0.23.0
+	golang.org/x/oauth2 v0.24.0
 	golang.org/x/sys v0.26.0
 	google.golang.org/api v0.205.0
 	google.golang.org/genproto v0.0.0-20241021214115-324edc3d5d38
