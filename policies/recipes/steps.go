@@ -289,7 +289,7 @@ func extractTar(ctx context.Context, tarName string, dst string, archiveType age
 		if err != nil {
 			return err
 		}
-		filen, err := util.NormPath(util.SanitizePath(filepath.Join(dst, header.Name)))
+		filen, err := util.NormPath(filepath.Join(dst, util.SanitizePath(header.Name)))
 		if err != nil {
 			return err
 		}
