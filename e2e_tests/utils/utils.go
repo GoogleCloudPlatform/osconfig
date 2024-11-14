@@ -360,6 +360,7 @@ var HeadSUSEImages = func() map[string]string {
 
 			"suse-sap-cloud/sles-12-sp5-sap": "projects/suse-sap-cloud/global/images/family/sles-12-sp5-sap",
 			"suse-sap-cloud/sles-15-sp5-sap": "projects/suse-sap-cloud/global/images/family/sles-15-sp5-sap",
+			"suse-sap-cloud/sles-15-sp6-sap": "projects/suse-sap-cloud/global/images/family/sles-15-sp6-sap",
 
 			"suse-sap-cloud/sles-15-sp5-hardened-sap": "projects/suse-sap-cloud/global/images/family/sles-sap-15-sp5-hardened",
 
@@ -376,7 +377,6 @@ var OldSUSEImages = func() map[string]string {
 	// TODO: enable SUSE tests to use testing pkgs after Artifact Registry supports zypper installation from private repos
 	if config.AgentRepo() != "testing" {
 		imgsMap = map[string]string{
-			"old/sles-15-sp2-sap": "projects/suse-sap-cloud/global/images/sles-15-sp2-sap-v20231214-x86-64",
 			"old/sles-15-sp3-sap": "projects/suse-sap-cloud/global/images/sles-15-sp3-sap-v20231214-x86-64",
 			"old/sles-15-sp4-sap": "projects/suse-sap-cloud/global/images/sles-15-sp4-sap-v20240208-x86-64",
 		}
