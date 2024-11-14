@@ -1,0 +1,28 @@
+# An OS policy that ensures Apache web server is running on Linux OSes.
+id: gcs-test-apache-always-up-policy
+mode: ENFORCEMENT
+resourceGroups:
+  - resources:
+      id: ensure-apache-is-up
+      exec:
+        validate:
+          interpreter: SHELL
+          # If Apache web server is already running, return an exit code 100 to indicate
+          # that exec resource is already in desired state. In this scenario,
+          # the enforce step will not be run.
+          # Otherwise return an exit code of 101 to indicate that exec resource is not in
+          # desired state. In this scenario, the enforce step will be run.
+          file:
+            gcs:
+              bucket: my-gcs-bucket
+              object: apache-validate.sh
+              generation: 1726747503303299
+        enforce:
+          interpreter: SHELL
+          # Start Apache web server and return an exit code of 100 to indicate that the
+          # resource is now in its desired state.
+          file:
+            gcs:
+              bucket: my-gcs-bucket
+              object: apache-enforce.sh
+              generation: 1726747503250884
