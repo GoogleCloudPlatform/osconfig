@@ -85,8 +85,8 @@ func convertVersion(version string) ([]int, error) {
 		if idx > 3 {
 			return nil, fmt.Errorf("invalid Version string")
 		}
-		val, err := strconv.ParseUint(element, 10, 0)
-		if err != nil {
+		val, err := strconv.ParseInt(element, 10, 0)
+		if err != nil || val < 0 {
 			return nil, fmt.Errorf("invalid Version string")
 		}
 		ret = append(ret, int(val))

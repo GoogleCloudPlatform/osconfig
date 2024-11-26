@@ -136,7 +136,7 @@ func extractZip(zipPath string, dst string) error {
 
 	// Check for conflicts
 	for _, f := range zr.File {
-		filen, err := util.NormPath(filepath.Join(dst, f.Name))
+		filen, err := util.NormPath(util.SanitizePath(filepath.Join(dst, f.Name)))
 		if err != nil {
 			return err
 		}
@@ -156,7 +156,7 @@ func extractZip(zipPath string, dst string) error {
 
 	// Create files.
 	for _, f := range zr.File {
-		filen, err := util.NormPath(filepath.Join(dst, f.Name))
+		filen, err := util.NormPath(util.SanitizePath(filepath.Join(dst, f.Name)))
 		if err != nil {
 			return err
 		}
@@ -289,7 +289,7 @@ func extractTar(ctx context.Context, tarName string, dst string, archiveType age
 		if err != nil {
 			return err
 		}
-		filen, err := util.NormPath(filepath.Join(dst, header.Name))
+		filen, err := util.NormPath(filepath.Join(dst, util.SanitizePath(header.Name)))
 		if err != nil {
 			return err
 		}
