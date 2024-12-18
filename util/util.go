@@ -43,6 +43,14 @@ type Logger struct {
 	Fatalf   func(string, ...any)
 }
 
+// SanitizePath ensures that relative path does not contains ".." to avoid directory traversal attacks.
+// As well run filepath.Clean to remove redundant path segments.
+func SanitizePath(path string) string {
+	sanitized := strings.ReplaceAll(path, "../", "")
+
+	return filepath.Clean(sanitized)
+}
+
 // NormPath transforms a windows path into an extended-length path as described in
 // https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx#maxpath
 // when not running on windows it will just return the input path.
