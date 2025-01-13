@@ -19,16 +19,16 @@ require (
 	golang.org/x/sys v0.29.0
 	google.golang.org/api v0.205.0
 	google.golang.org/genproto v0.0.0-20241021214115-324edc3d5d38
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20241104194629-dd2ea8efbc28
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241206012308-a4fef0638583
 	google.golang.org/grpc v1.68.0
-	google.golang.org/protobuf v1.35.1
+	google.golang.org/protobuf v1.35.2
 )
 
 require (
 	cel.dev/expr v0.18.0 // indirect
 	cloud.google.com/go v0.116.0 // indirect
-	cloud.google.com/go/auth v0.10.2 // indirect
-	cloud.google.com/go/auth/oauth2adapt v0.2.5 // indirect
+	cloud.google.com/go/auth v0.12.1 // indirect
+	cloud.google.com/go/auth/oauth2adapt v0.2.7 // indirect
 	cloud.google.com/go/iam v1.2.2 // indirect
 	cloud.google.com/go/logging v1.12.0 // indirect
 	cloud.google.com/go/longrunning v0.6.3 // indirect
