@@ -50,7 +50,7 @@ func buildPkgInstallTestSetup(name, image, pkgManager, key string) *guestPolicyT
 	packageName := "ed"
 	machineType := "e2-medium"
 	if pkgManager == "googet" {
-		packageName = "cowsay"
+		packageName = "google-compute-engine-ssh"
 		machineType = "e2-standard-4"
 	}
 	if strings.Contains(image, "rhel-6") || strings.Contains(image, "centos-6") {
@@ -89,7 +89,7 @@ func buildPkgUpdateTestSetup(name, image, pkgManager, key string) *guestPolicyTe
 	packageName := "gcsfuse"
 	machineType := "e2-medium"
 	if pkgManager == "googet" {
-		packageName = "cowsay"
+		packageName = "google-compute-engine-ssh"
 		machineType = "e2-standard-4"
 	}
 
@@ -125,7 +125,7 @@ func buildPkgDoesNotUpdateTestSetup(name, image, pkgManager, key string) *guestP
 	packageName := "gcsfuse"
 	machineType := "e2-medium"
 	if pkgManager == "googet" {
-		packageName = "cowsay"
+		packageName = "google-compute-engine-ssh"
 		machineType = "e2-standard-4"
 	}
 

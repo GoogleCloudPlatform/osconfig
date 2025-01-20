@@ -144,7 +144,7 @@ done`
 		key = "startup-script"
 
 	case "googet":
-		wantInstall := "cowsay"
+		wantInstall := "google-compute-engine-ssh"
 		wantRemove := "certgen"
 		ss = `
 googet addrepo test https://packages.cloud.google.com/yuck/repos/osconfig-agent-test-repository
