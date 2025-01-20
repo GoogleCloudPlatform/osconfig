@@ -541,7 +541,7 @@ func buildGooGetTestSetup(name, image, key string) *osPolicyTestSetup {
 									Pkg: &osconfigpb.OSPolicy_Resource_PackageResource{
 										DesiredState: osconfigpb.OSPolicy_Resource_PackageResource_INSTALLED,
 										SystemPackage: &osconfigpb.OSPolicy_Resource_PackageResource_Googet{
-											Googet: &osconfigpb.OSPolicy_Resource_PackageResource_GooGet{Name: "cowsay"},
+											Googet: &osconfigpb.OSPolicy_Resource_PackageResource_GooGet{Name: "google-compute-engine-ssh"},
 										},
 									},
 								},
