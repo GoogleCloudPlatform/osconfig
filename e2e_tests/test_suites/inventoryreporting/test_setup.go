@@ -50,7 +50,7 @@ var (
 		timeout:     30 * time.Minute,
 		itemCheck: func(items map[string]*osconfigpb.Inventory_Item) error {
 			var foundGooget bool
-			var foundCowsay bool
+			var foundGoogleComputeEngineSSH bool
 			var qfeExists bool
 			var wuaExists bool
 			var windowsApplicationExist bool
@@ -64,8 +64,8 @@ var (
 				if item.GetInstalledPackage().GetGoogetPackage().GetPackageName() == "googet" {
 					foundGooget = true
 				}
-				if item.GetAvailablePackage().GetGoogetPackage().GetPackageName() == "cowsay" {
-					foundCowsay = true
+				if item.GetAvailablePackage().GetGoogetPackage().GetPackageName() == "google-compute-engine-ssh" {
+					foundGoogleComputeEngineSSH = true
 				}
 				if item.GetInstalledPackage().GetQfePackage() != nil {
 					qfeExists = true
@@ -86,8 +86,8 @@ var (
 			if !foundGooget {
 				return errors.New("did not find 'googet' in installed packages")
 			}
-			if !foundCowsay {
-				return errors.New("did not find 'cowsay' in available packages")
+			if !foundGoogleComputeEngineSSH {
+				return errors.New("did not find 'google-compute-engine-ssh' in available packages")
 			}
 			if !qfeExists {
 				return errors.New("did not find any QFE installed package")
@@ -267,7 +267,7 @@ func getStartupScriptGoo() string {
 	ss := `
 echo 'Adding test repo'
 googet addrepo test https://packages.cloud.google.com/yuck/repos/osconfig-agent-test-repository
-googet -noconfirm install cowsay.x86_64.0.1.0@1
+googet -noconfirm install google-compute-engine-ssh
 %s`
 	return fmt.Sprintf(ss, utils.InstallOSConfigGooGet())
 }
