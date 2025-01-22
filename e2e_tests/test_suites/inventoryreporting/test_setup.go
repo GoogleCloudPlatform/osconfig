@@ -50,7 +50,7 @@ var (
 		timeout:     30 * time.Minute,
 		itemCheck: func(items map[string]*osconfigpb.Inventory_Item) error {
 			var foundGooget bool
-			var foundGoogleComputeEngineSSH bool
+			var foundGoogleComputeEngineDriverGvnic bool
 			var qfeExists bool
 			var wuaExists bool
 			var windowsApplicationExist bool
@@ -60,12 +60,13 @@ var (
 				"Google Cloud SDK":               false,
 			}
 
+			fmt.Println(items)
 			for _, item := range items {
 				if item.GetInstalledPackage().GetGoogetPackage().GetPackageName() == "googet" {
 					foundGooget = true
 				}
-				if item.GetAvailablePackage().GetGoogetPackage().GetPackageName() == "google-compute-engine-ssh" {
-					foundGoogleComputeEngineSSH = true
+				if item.GetAvailablePackage().GetGoogetPackage().GetPackageName() == "google-compute-engine-driver-gvnic" {
+					foundGoogleComputeEngineDriverGvnic = true
 				}
 				if item.GetInstalledPackage().GetQfePackage() != nil {
 					qfeExists = true
@@ -86,8 +87,8 @@ var (
 			if !foundGooget {
 				return errors.New("did not find 'googet' in installed packages")
 			}
-			if !foundGoogleComputeEngineSSH {
-				return errors.New("did not find 'google-compute-engine-ssh' in available packages")
+			if !foundGoogleComputeEngineDriverGvnic {
+				return errors.New("did not find 'google-compute-engine-driver-gvnic' in available packages")
 			}
 			if !qfeExists {
 				return errors.New("did not find any QFE installed package")
@@ -267,7 +268,6 @@ func getStartupScriptGoo() string {
 	ss := `
 echo 'Adding test repo'
 googet addrepo test https://packages.cloud.google.com/yuck/repos/osconfig-agent-test-repository
-googet -noconfirm install google-compute-engine-ssh
 %s`
 	return fmt.Sprintf(ss, utils.InstallOSConfigGooGet())
 }
