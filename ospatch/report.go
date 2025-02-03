@@ -55,7 +55,7 @@ func logOps(ctx context.Context, ops opsToReport) {
 		msg = msg + fmt.Sprintf("%sInstalling %d patches: %s", sep, len(ops.patches), formatPatches(ops.patches))
 	}
 
-	clog.Infof(clog.WithLabels(ctx, repLabels), msg)
+	clog.Infof(clog.WithLabels(ctx, repLabels), "%v", msg)
 }
 
 // logSuccess logs the success of patching the packages in pkgs
@@ -72,7 +72,7 @@ func logSuccess(ctx context.Context, ops opsToReport) {
 		msg = msg + fmt.Sprintf("%sApplied %d patches: %s", sep, len(patches), formatPatches(patches))
 	}
 	msg = fmt.Sprintf("Success. %s", msg)
-	clog.Infof(clog.WithLabels(ctx, repLabels), msg)
+	clog.Infof(clog.WithLabels(ctx, repLabels), "%v", msg)
 }
 
 // logFailure logs the failure of patching the packages in pkgs caused by err,
@@ -89,5 +89,5 @@ func logFailure(ctx context.Context, ops opsToReport, err error) {
 		msg = msg + fmt.Sprintf("%sTried to apply %d patches: %s", sep, len(patches), formatPatches(patches))
 	}
 	msg = fmt.Sprintf("Failure: %s. Error: %v", msg, err)
-	clog.Infof(clog.WithLabels(ctx, repLabels), msg)
+	clog.Infof(clog.WithLabels(ctx, repLabels), "%v", msg)
 }

@@ -381,7 +381,7 @@ func (c *Client) WaitForTaskNotification(ctx context.Context) {
 
 	clog.Debugf(ctx, "Checking local state file for saved task.")
 	if err := c.loadTaskFromState(ctx); err != nil {
-		clog.Errorf(ctx, err.Error())
+		clog.Errorf(ctx, "%v", err.Error())
 	}
 
 	clog.Debugf(ctx, "Setting up ReceiveTaskNotification stream watcher.")

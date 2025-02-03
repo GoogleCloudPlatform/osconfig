@@ -167,7 +167,7 @@ func (e *execTask) run(ctx context.Context) error {
 		localPath, err = getGCSObject(ctx, gcsObject.GetBucket(), gcsObject.GetObject(), gcsObject.GetGenerationNumber())
 		if err != nil {
 			msg := fmt.Sprintf("Error downloading GCS object: %v", err)
-			clog.Errorf(ctx, msg)
+			clog.Errorf(ctx, "%v", msg)
 			return e.reportCompletedState(ctx, msg, &agentendpointpb.ReportTaskCompleteRequest_ExecStepTaskOutput{
 				ExecStepTaskOutput: &agentendpointpb.ExecStepTaskOutput{
 					State:    agentendpointpb.ExecStepTaskOutput_COMPLETED,
@@ -207,7 +207,7 @@ func (e *execTask) run(ctx context.Context) error {
 	}
 	if err != nil {
 		msg := fmt.Sprintf("Error running ExecStepTask: %v", err)
-		clog.Errorf(ctx, msg)
+		clog.Errorf(ctx, "%v", msg)
 		return e.reportCompletedState(ctx, msg, &agentendpointpb.ReportTaskCompleteRequest_ExecStepTaskOutput{
 			ExecStepTaskOutput: &agentendpointpb.ExecStepTaskOutput{
 				State:    agentendpointpb.ExecStepTaskOutput_COMPLETED,
