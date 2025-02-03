@@ -99,7 +99,7 @@ func DisableAutoUpdates(ctx context.Context) {
 	if _, err := os.Stat("/usr/bin/unattended-upgrades"); err == nil {
 		clog.Debugf(ctx, "Removing unattended-upgrades package")
 		if err := packages.RemoveAptPackages(ctx, []string{"unattended-upgrades"}); err != nil {
-			clog.Errorf(ctx, err.Error())
+			clog.Errorf(ctx, "%v", err.Error())
 		}
 	}
 }

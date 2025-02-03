@@ -98,7 +98,7 @@ func (r *patchTask) handleErrorState(ctx context.Context, msg string, err error)
 }
 
 func (r *patchTask) reportFailed(ctx context.Context, msg string) error {
-	clog.Errorf(ctx, msg)
+	clog.Errorf(ctx, "%v", msg)
 	return r.reportCompletedState(ctx, msg, &agentendpointpb.ReportTaskCompleteRequest_ApplyPatchesTaskOutput{
 		ApplyPatchesTaskOutput: &agentendpointpb.ApplyPatchesTaskOutput{State: agentendpointpb.ApplyPatchesTaskOutput_FAILED},
 	})

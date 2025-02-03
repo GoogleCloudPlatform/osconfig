@@ -95,7 +95,7 @@ func (c *configTask) handleErrorState(ctx context.Context, msg string, err error
 		return c.reportCompletedState(ctx, errServerCancel.Error(), agentendpointpb.ApplyConfigTaskOutput_CANCELLED)
 	}
 	msg = fmt.Sprintf("%s: %v", msg, err)
-	clog.Errorf(ctx, msg)
+	clog.Errorf(ctx, "%v", msg)
 	return c.reportCompletedState(ctx, msg, agentendpointpb.ApplyConfigTaskOutput_FAILED)
 }
 
@@ -153,14 +153,14 @@ func validateConfigResource(ctx context.Context, res *resource, policyMR *config
 		outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 		hasError = true
 		errMessage = truncateMessage(fmt.Sprintf("Validate: resource %q error: %v", configResource.GetId(), err), maxErrorMessage)
-		clog.Errorf(ctx, errMessage)
+		clog.Errorf(ctx, "%v", errMessage)
 	} else {
 		// Detect any resource conflicts within this policy.
 		if err := detectPolicyConflicts(res.ManagedResources(), policyMR); err != nil {
 			outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 			hasError = true
 			errMessage = truncateMessage(fmt.Sprintf("Validate: resource conflict in policy: %v", err), maxErrorMessage)
-			clog.Errorf(ctx, errMessage)
+			clog.Errorf(ctx, "%v", errMessage)
 		} else {
 			clog.Infof(ctx, "Validate: resource %q validation successful.", configResource.GetId())
 		}
@@ -187,7 +187,7 @@ func checkConfigResourceState(ctx context.Context, res *resource, rCompliance *a
 		outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 		hasError = true
 		errMessage = truncateMessage(fmt.Sprintf("Check state: resource %q error: %v", configResource.GetId(), err), maxErrorMessage)
-		clog.Errorf(ctx, errMessage)
+		clog.Errorf(ctx, "%v", errMessage)
 	} else if res.InDesiredState() {
 		state = agentendpointpb.OSPolicyComplianceState_COMPLIANT
 	} else {
@@ -220,7 +220,7 @@ func enforceConfigResourceState(ctx context.Context, res *resource, rCompliance 
 		outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 		hasError = true
 		errMessage = truncateMessage(fmt.Sprintf("Enforce state: resource %q error: %v", configResource.GetId(), err), maxErrorMessage)
-		clog.Errorf(ctx, errMessage)
+		clog.Errorf(ctx, "%v", errMessage)
 	} else {
 		clog.Infof(ctx, "Enforce state: resource %q enforcement successful.", configResource.GetId())
 	}
@@ -251,7 +251,7 @@ func postCheckConfigResourceState(ctx context.Context, res *resource, rComplianc
 	if err != nil {
 		outcome = agentendpointpb.OSPolicyResourceConfigStep_FAILED
 		errMessage = truncateMessage(fmt.Sprintf("Check state post enforcement: resource %q error: %v", configResource.GetId(), err), maxErrorMessage)
-		clog.Errorf(ctx, errMessage)
+		clog.Errorf(ctx, "%v", errMessage)
 	} else if res.InDesiredState() {
 		state = agentendpointpb.OSPolicyComplianceState_COMPLIANT
 	} else {

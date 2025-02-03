@@ -83,9 +83,9 @@ var deferredFuncs []func()
 func registerAgent(ctx context.Context) {
 	for {
 		if client, err := agentendpoint.NewClient(ctx); err != nil {
-			logger.Errorf(err.Error())
+			logger.Errorf("%v", err.Error())
 		} else if err := client.RegisterAgent(ctx); err != nil {
-			logger.Errorf(err.Error())
+			logger.Errorf("%v", err.Error())
 			client.Close()
 		} else {
 			// RegisterAgent completed successfully.
@@ -167,7 +167,7 @@ func run(ctx context.Context) {
 	case "inventory", "osinventory":
 		client, err := agentendpoint.NewClient(ctx)
 		if err != nil {
-			logger.Fatalf(err.Error())
+			logger.Fatalf("%v", err.Error())
 		}
 		tasker.Enqueue(ctx, "Report OSInventory", func() {
 			client.ReportInventory(ctx)
@@ -181,7 +181,7 @@ func run(ctx context.Context) {
 	case "w", "waitfortasknotification", "ospatch":
 		client, err := agentendpoint.NewClient(ctx)
 		if err != nil {
-			logger.Fatalf(err.Error())
+			logger.Fatalf("%v", err.Error())
 		}
 		client.WaitForTaskNotification(ctx)
 		select {
@@ -208,7 +208,7 @@ func runTaskLoop(ctx context.Context, c chan struct{}) {
 			// Start WaitForTaskNotification if we need to.
 			taskNotificationClient, err = agentendpoint.NewClient(ctx)
 			if err != nil {
-				clog.Errorf(ctx, err.Error())
+				clog.Errorf(ctx, "%v", err.Error())
 			} else {
 				taskNotificationClient.WaitForTaskNotification(ctx)
 			}
@@ -216,7 +216,7 @@ func runTaskLoop(ctx context.Context, c chan struct{}) {
 			// Cancel WaitForTaskNotification if we need to, this will block if there is
 			// an existing current task running.
 			if err := taskNotificationClient.Close(); err != nil {
-				clog.Errorf(ctx, err.Error())
+				clog.Errorf(ctx, "%v", err.Error())
 			}
 		}
 
@@ -228,7 +228,7 @@ func runTaskLoop(ctx context.Context, c chan struct{}) {
 
 		// Wait on any metadata config change.
 		if err := agentconfig.WatchConfig(ctx); err != nil {
-			clog.Errorf(ctx, err.Error())
+			clog.Errorf(ctx, "%v", err.Error())
 		}
 		select {
 		case <-ctx.Done():
@@ -302,7 +302,7 @@ func runServiceLoop(ctx context.Context) {
 			tasker.Enqueue(ctx, "Report OSInventory", func() {
 				client, err := agentendpoint.NewClient(ctx)
 				if err != nil {
-					logger.Errorf(err.Error())
+					logger.Errorf("%v", err.Error())
 				}
 				client.ReportInventory(ctx)
 				client.Close()
