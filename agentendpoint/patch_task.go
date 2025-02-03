@@ -34,9 +34,10 @@ func systemRebootRequired(ctx context.Context) (bool, error) {
 type patchStep string
 
 const (
-	prePatch  = "PrePatch"
-	patching  = "Patching"
-	postPatch = "PostPatch"
+	prePatch              = "PrePatch"
+	patching              = "Patching"
+	postPatch             = "PostPatch"
+	totalRebootCountLimit = 5
 )
 
 type patchTask struct {
@@ -45,11 +46,12 @@ type patchTask struct {
 	lastProgressState map[agentendpointpb.ApplyPatchesTaskProgress_State]time.Time
 	state             *taskState
 
-	TaskID      string
-	Task        *applyPatchesTask
-	StartedAt   time.Time `json:",omitempty"`
-	PatchStep   patchStep `json:",omitempty"`
-	RebootCount int
+	TaskID               string
+	Task                 *applyPatchesTask
+	StartedAt            time.Time `json:",omitempty"`
+	PatchStep            patchStep `json:",omitempty"`
+	PrePatchRebootCount  int
+	PostPatchRebootCount int
 
 	// TODO: add Attempts and track number of retries with backoff, jitter, etc.
 }
@@ -154,8 +156,6 @@ func (r *patchTask) reportContinuingState(ctx context.Context, patchState agente
 	return r.saveState()
 }
 
-// TODO: Add MaxRebootCount so we don't loop endlessly.
-
 func (r *patchTask) prePatchReboot(ctx context.Context) error {
 	return r.rebootIfNeeded(ctx, true)
 }
@@ -167,7 +167,7 @@ func (r *patchTask) postPatchReboot(ctx context.Context) error {
 func (r *patchTask) rebootIfNeeded(ctx context.Context, prePatch bool) error {
 	var reboot bool
 	var err error
-	if r.Task.GetPatchConfig().GetRebootConfig() == agentendpointpb.PatchConfig_ALWAYS && !prePatch && r.RebootCount == 0 {
+	if r.Task.GetPatchConfig().GetRebootConfig() == agentendpointpb.PatchConfig_ALWAYS && !prePatch && r.PostPatchRebootCount == 0 {
 		reboot = true
 		clog.Infof(ctx, "PatchConfig RebootConfig set to %s.", agentendpointpb.PatchConfig_ALWAYS)
 	} else {
@@ -177,6 +177,11 @@ func (r *patchTask) rebootIfNeeded(ctx context.Context, prePatch bool) error {
 		}
 		if reboot {
 			clog.Infof(ctx, "System indicates a reboot is required.")
+			totalRebootCount := r.PrePatchRebootCount + r.PostPatchRebootCount
+			if totalRebootCount >= totalRebootCountLimit {
+				clog.Infof(ctx, "Detected abnormal number of reboots for a single patch task (%d). Not rebooting to prevent a possible boot loop", totalRebootCount)
+				return nil
+			}
 		} else {
 			clog.Infof(ctx, "System indicates a reboot is not required.")
 		}
@@ -200,7 +205,12 @@ func (r *patchTask) rebootIfNeeded(ctx context.Context, prePatch bool) error {
 		return nil
 	}
 
-	r.RebootCount++
+	if prePatch {
+		r.PrePatchRebootCount++
+	} else {
+		r.PostPatchRebootCount++
+	}
+
 	if err := r.saveState(); err != nil {
 		return fmt.Errorf("error saving state: %v", err)
 	}
