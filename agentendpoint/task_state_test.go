@@ -28,7 +28,7 @@ import (
 )
 
 var (
-	testPatchTaskStateString = "{\"PatchTask\":{\"TaskID\":\"foo\",\"Task\":{\"patchConfig\":{\"apt\":{\"type\":\"DIST\",\"excludes\":[\"foo\",\"bar\"],\"exclusivePackages\":[\"foo\",\"bar\"]},\"windowsUpdate\":{\"classifications\":[\"CRITICAL\",\"SECURITY\"],\"excludes\":[\"foo\",\"bar\"],\"exclusivePatches\":[\"foo\",\"bar\"]}}},\"StartedAt\":\"0001-01-01T00:00:00Z\",\"RebootCount\":0},\"Labels\":{\"foo\":\"bar\"}}"
+	testPatchTaskStateString = "{\"PatchTask\":{\"TaskID\":\"foo\",\"Task\":{\"patchConfig\":{\"apt\":{\"type\":\"DIST\",\"excludes\":[\"foo\",\"bar\"],\"exclusivePackages\":[\"foo\",\"bar\"]},\"windowsUpdate\":{\"classifications\":[\"CRITICAL\",\"SECURITY\"],\"excludes\":[\"foo\",\"bar\"],\"exclusivePatches\":[\"foo\",\"bar\"]}}},\"StartedAt\":\"0001-01-01T00:00:00Z\",\"PrePatchRebootCount\":2,\"PostPatchRebootCount\":1},\"Labels\":{\"foo\":\"bar\"}}"
 	testPatchTaskState       = &taskState{
 		Labels: map[string]string{"foo": "bar"},
 		PatchTask: &patchTask{
@@ -41,6 +41,8 @@ var (
 					},
 				},
 			},
+			PrePatchRebootCount:  2,
+			PostPatchRebootCount: 1,
 		},
 	}
 )
@@ -82,6 +84,20 @@ func TestLoadState(t *testing.T) {
 			[]byte(testPatchTaskStateString),
 			false,
 			testPatchTaskState,
+		},
+		{
+			"IgnoresOldRebootFieldName",
+			[]byte("{\"PatchTask\":{\"Task\":{},\"RebootCount\":1}}"),
+			false,
+			&taskState{
+				PatchTask: &patchTask{
+					Task: &applyPatchesTask{
+						&agentendpointpb.ApplyPatchesTask{},
+					},
+					PrePatchRebootCount:  0,
+					PostPatchRebootCount: 0,
+				},
+			},
 		},
 	}
 	for _, tt := range tests {
