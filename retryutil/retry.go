@@ -29,6 +29,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+var currentSleeper sleeper = defaultSleeper{}
+
 // RetrySleep returns a pseudo-random sleep duration.
 func RetrySleep(base int, extra int) time.Duration {
 	// base=1 and extra=0 => 1*1+[0,1] => 1-2s
@@ -63,7 +65,7 @@ func RetryFunc(ctx context.Context, maxRetryTime time.Duration, desc string, f f
 		}
 
 		clog.Errorf(ctx, "Error %s, attempt %d, retrying in %s: %v", desc, i, ns, err)
-		time.Sleep(ns)
+		currentSleeper.Sleep(ns)
 	}
 }
 
@@ -72,36 +74,71 @@ func RetryAPICall(ctx context.Context, maxRetryTime time.Duration, name string, 
 	var tot time.Duration
 	for i := 1; ; i++ {
 		extra := 1
+
 		err := f()
 		if err == nil {
 			return nil
 		}
-		if s, ok := status.FromError(err); ok {
-			err := fmt.Errorf("code: %q, message: %q, details: %q", s.Code(), s.Message(), s.Details())
-			switch s.Code() {
-			// Errors we should retry.
-			case codes.DeadlineExceeded, codes.Unavailable, codes.Aborted, codes.Internal:
-			// Add additional sleep.
-			case codes.ResourceExhausted:
-				extra = 10
-			default:
-				var ndr *metadata.NotDefinedError
-				if errors.As(err, &ndr) {
-					return fmt.Errorf("no service account set for instance")
-				}
-				return err
-			}
-		} else {
+
+		s, ok := status.FromError(err)
+		if !ok {
+			// Non API errors are not retried
 			return err
+		}
+
+		if !isRetriable(s) {
+			return humanReadableError(err, s)
+		}
+
+		if isResourceExhausted(s) {
+			extra = 10
 		}
 
 		ns := RetrySleep(i, extra)
 		tot += ns
 		if tot > maxRetryTime {
-			return err
+			// Return human readable error
+			return errorFromStatus(s)
 		}
 
 		clog.Warningf(ctx, "Error calling %s, attempt %d, retrying in %s: %v", name, i, ns, err)
-		time.Sleep(ns)
+		currentSleeper.Sleep(ns)
 	}
+}
+
+func humanReadableError(err error, s *status.Status) error {
+	var ndr *metadata.NotDefinedError
+	if errors.As(err, &ndr) {
+		return fmt.Errorf("no service account set for instance")
+	}
+
+	return errorFromStatus(s)
+}
+
+func errorFromStatus(s *status.Status) error {
+	return fmt.Errorf("code: %q, message: %q, details: %q", s.Code(), s.Message(), s.Details())
+}
+
+func isRetriable(s *status.Status) bool {
+	switch s.Code() {
+	case codes.Aborted, codes.DeadlineExceeded, codes.Internal, codes.ResourceExhausted, codes.Unavailable:
+		return true
+	default:
+		return false
+
+	}
+}
+
+func isResourceExhausted(s *status.Status) bool {
+	return s.Code() == codes.ResourceExhausted
+}
+
+type sleeper interface {
+	Sleep(d time.Duration)
+}
+
+type defaultSleeper struct{}
+
+func (ds defaultSleeper) Sleep(d time.Duration) {
+	time.Sleep(d)
 }
