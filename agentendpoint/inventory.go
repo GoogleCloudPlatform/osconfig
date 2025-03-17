@@ -1,9 +1,14 @@
 package agentendpoint
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"reflect"
+	"sort"
 	"strings"
 	"time"
 
@@ -13,6 +18,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
@@ -358,4 +364,58 @@ func formatWindowsApplication(pkg *packages.WindowsApplication) *agentendpointpb
 			InstallDate:    &d,
 			HelpLink:       pkg.HelpLink,
 		}}
+}
+
+func computeFingerprint(ctx context.Context, inventory *agentendpointpb.Inventory) (string, error) {
+	fingerprint := sha256.New()
+	b, err := proto.Marshal(inventory)
+	if err != nil {
+		return "", err
+	}
+	io.Copy(fingerprint, bytes.NewReader(b))
+
+	return hex.EncodeToString(fingerprint.Sum(nil)), nil
+}
+
+func computeStableFingerprint(ctx context.Context, inventory *agentendpointpb.Inventory) (string, error) {
+	fingerprint := sha256.New()
+	b, err := proto.Marshal(inventory.GetOsInfo())
+	if err != nil {
+		return "", err
+	}
+	io.Copy(fingerprint, bytes.NewReader(b))
+
+	installedPackages := inventory.GetInstalledPackages()
+	availablePackages := inventory.GetAvailablePackages()
+
+	entries := make([]string, 0, len(installedPackages)+len(availablePackages))
+
+	for _, pkg := range installedPackages {
+		entries = append(entries, fingerprintForPackage(pkg))
+	}
+
+	for _, pkg := range availablePackages {
+		entries = append(entries, fingerprintForPackage(pkg))
+	}
+
+	sort.Strings(entries)
+
+	for _, entry := range entries {
+		if _, err := io.WriteString(fingerprint, entry); err != nil {
+			return "", err
+		}
+	}
+
+	return hex.EncodeToString(fingerprint.Sum(nil)), nil
+}
+
+func fingerprintForPackage(pkg *agentendpointpb.Inventory_SoftwarePackage) string {
+	//Inventory_WindowsUpdatePackage struct contains repeated fields
+	//we should rely on fields that are stable and sufficient enough to uniquely identify the package.
+	if wua := pkg.GetWuaPackage(); wua != nil {
+		return fmt.Sprintf("%s-%s-%d", wua.GetTitle(), wua.GetUpdateId(), wua.GetRevisionNumber())
+	}
+
+	// For all packages other then wua we can just rely on proto String() method.
+	return pkg.String()
 }

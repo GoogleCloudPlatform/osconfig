@@ -16,10 +16,7 @@
 package agentendpoint
 
 import (
-	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -39,7 +36,6 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
 )
@@ -151,14 +147,11 @@ func (c *Client) reportInventory(ctx context.Context, inventory *agentendpointpb
 		return nil, err
 	}
 
-	hash := sha256.New()
-	b, err := proto.Marshal(inventory)
+	checksum, err := computeStableFingerprint(ctx, inventory)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to compute hash, err: %w", err)
 	}
-	io.Copy(hash, bytes.NewReader(b))
 
-	checksum := hex.EncodeToString(hash.Sum(nil))
 	req := &agentendpointpb.ReportInventoryRequest{InventoryChecksum: checksum}
 	if reportFull {
 		req = &agentendpointpb.ReportInventoryRequest{InventoryChecksum: checksum, Inventory: inventory}
