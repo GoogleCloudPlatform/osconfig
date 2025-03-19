@@ -33,7 +33,7 @@ require (
 	cloud.google.com/go/logging v1.13.0 // indirect
 	cloud.google.com/go/longrunning v0.6.3 // indirect
 	cloud.google.com/go/monitoring v1.21.2 // indirect
-	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.25.0 // indirect
+	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.27.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.49.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.49.0 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.4.1 // indirect
