@@ -1,9 +1,14 @@
 package agentendpoint
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"reflect"
+	"sort"
 	"strings"
 	"time"
 
@@ -13,6 +18,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
@@ -358,4 +364,47 @@ func formatWindowsApplication(pkg *packages.WindowsApplication) *agentendpointpb
 			InstallDate:    &d,
 			HelpLink:       pkg.HelpLink,
 		}}
+}
+
+func computeHash(ctx context.Context, inventory *agentendpointpb.Inventory) (string, error) {
+	hash := sha256.New()
+	b, err := proto.Marshal(inventory)
+	if err != nil {
+		return "", err
+	}
+	io.Copy(hash, bytes.NewReader(b))
+
+	return hex.EncodeToString(hash.Sum(nil)), nil
+}
+
+func computeStableHash(ctx context.Context, inventory *agentendpointpb.Inventory) (string, error) {
+	hash := sha256.New()
+	b, err := proto.Marshal(inventory.GetOsInfo())
+	if err != nil {
+		return "", err
+	}
+	io.Copy(hash, bytes.NewReader(b))
+
+	installedPackages := inventory.GetInstalledPackages()
+	availablePackages := inventory.GetAvailablePackages()
+
+	entries := make([]string, 0, len(installedPackages)+len(availablePackages))
+
+	for _, pkg := range installedPackages {
+		entries = append(entries, pkg.String())
+	}
+
+	for _, pkg := range availablePackages {
+		entries = append(entries, pkg.String())
+	}
+
+	sort.Strings(entries)
+
+	for _, entry := range entries {
+		if _, err := io.WriteString(hash, entry); err != nil {
+			return "", err
+		}
+	}
+
+	return hex.EncodeToString(hash.Sum(nil)), nil
 }

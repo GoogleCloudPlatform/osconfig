@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -462,5 +463,89 @@ func TestReport(t *testing.T) {
 				t.Fatalf("ReportInventoryRequest.Inventory mismatch (-want +got):\n%s", diff)
 			}
 		})
+	}
+}
+
+func Test_computeHash(t *testing.T) {
+	ctx := context.Background()
+
+	expectedHash := "ebbafb112c34d2eed453bdf8748be7a8ae69ec05719b0a61618640f286754181"
+	hash, err := computeHash(ctx, generateInventory())
+	if err != nil {
+		t.Fatalf("unable to generate hash, err - %s", err)
+	}
+
+	if hash != expectedHash {
+		t.Fatalf("got unexpected hash, expected %q, got %q", expectedHash, hash)
+	}
+}
+
+func Test_computeStableHash_testHashStability(t *testing.T) {
+	ctx := context.Background()
+	inventory := generateInventory()
+
+	n := 100
+	for i := 0; i < n; i++ {
+		t.Run(fmt.Sprintf("Run %d", i), func(t *testing.T) {
+			unstableHashBefore, err := computeHash(ctx, inventory)
+			if err != nil {
+				t.Errorf("unexpected error while calculating hash, err %v", err)
+			}
+			stableHashBefore, err := computeStableHash(ctx, inventory)
+			if err != nil {
+				t.Errorf("unexpected error while calculating hash, err %v", err)
+			}
+
+			installedPackages := inventory.GetInstalledPackages()
+			availablePackages := inventory.GetAvailablePackages()
+
+			rand.Shuffle(len(installedPackages), func(i, j int) {
+				inventory.InstalledPackages[i], inventory.InstalledPackages[j] = inventory.InstalledPackages[j], inventory.InstalledPackages[i]
+			})
+
+			rand.Shuffle(len(availablePackages), func(i, j int) {
+				inventory.AvailablePackages[i], inventory.AvailablePackages[j] = inventory.AvailablePackages[j], inventory.AvailablePackages[i]
+			})
+
+			unstableHashAfter, err := computeHash(ctx, inventory)
+			if err != nil {
+				t.Errorf("unexpected error while calculating hash, err %v", err)
+			}
+			stableHashAfter, err := computeStableHash(ctx, inventory)
+			if err != nil {
+				t.Errorf("unexpected error while calculating hash, err %v", err)
+			}
+
+			if unstableHashBefore == unstableHashAfter {
+				t.Errorf("unstable hash is equal for different inventories")
+			}
+
+			if stableHashBefore != stableHashAfter {
+				t.Errorf("stable hash is not equal for identical inventories")
+			}
+		})
+
+	}
+}
+
+func Benchmark_computeHash(b *testing.B) {
+	ctx, inventory := context.Background(), generateInventory()
+
+	for i := 0; i < b.N; i++ {
+		_, err := computeHash(ctx, inventory)
+		if err != nil {
+			b.Fatalf("unable to generate hash, err - %s", err)
+		}
+	}
+}
+
+func Benchmark_computeStableHash(b *testing.B) {
+	ctx, inventory := context.Background(), generateInventory()
+
+	for i := 0; i < b.N; i++ {
+		_, err := computeStableHash(ctx, inventory)
+		if err != nil {
+			b.Fatalf("unable to generate hash, err - %s", err)
+		}
 	}
 }
