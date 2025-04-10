@@ -5,10 +5,12 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var marshalOptions protojson.MarshalOptions
-
-func init() {
-	marshalOptions = protojson.MarshalOptions{Indent: "  ", AllowPartial: true, UseProtoNames: true, EmitUnpopulated: true, UseEnumNumbers: false}
+var marshalOptions protojson.MarshalOptions = protojson.MarshalOptions{
+	Indent:          "  ",
+	AllowPartial:    true,
+	UseProtoNames:   true,
+	EmitUnpopulated: true,
+	UseEnumNumbers:  false,
 }
 
 // MarshalOptions returns protojson options used in Format.
