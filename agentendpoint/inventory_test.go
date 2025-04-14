@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -114,10 +115,10 @@ func generateInventoryState() *inventory.InstanceInventory {
 			WUA: []*packages.WUAPackage{{
 				Title:                    "WUAInstalled",
 				Description:              "Description",
-				Categories:               []string{"Category"},
-				CategoryIDs:              []string{"CategoryID"},
-				KBArticleIDs:             []string{"KB"},
-				MoreInfoURLs:             []string{"MoreInfoURL"},
+				Categories:               []string{"Category1", "Category2", "Category3", "Category4"},
+				CategoryIDs:              []string{"CategoryID1", "CategoryID2", "CategoryID3", "CategoryID4"},
+				KBArticleIDs:             []string{"KB1", "KB2", "KB3", "KB4"},
+				MoreInfoURLs:             []string{"MoreInfoURL1", "MoreInfoURL2", "MoreInfoURL3", "MoreInfoURL4"},
 				SupportURL:               "SupportURL",
 				UpdateID:                 "UpdateID",
 				RevisionNumber:           1,
@@ -134,12 +135,14 @@ func generateInventoryState() *inventory.InstanceInventory {
 			Pip:           []*packages.PkgInfo{{Name: "PipPkgUpdate", Arch: "Arch", Version: "Version"}},
 			GooGet:        []*packages.PkgInfo{{Name: "GooGetPkgUpdate", Arch: "Arch", Version: "Version"}},
 			WUA: []*packages.WUAPackage{{
-				Title:                    "WUAUpdate",
-				Description:              "Description",
-				Categories:               []string{"Category"},
-				CategoryIDs:              []string{"CategoryID"},
-				KBArticleIDs:             []string{"KB"},
-				MoreInfoURLs:             []string{"MoreInfoURL"},
+				Title:       "WUAUpdate",
+				Description: "Description",
+
+				Categories:   []string{"Category1", "Category2", "Category3", "Category4"},
+				CategoryIDs:  []string{"CategoryID1", "CategoryID2", "CategoryID3", "CategoryID4"},
+				KBArticleIDs: []string{"KB1", "KB2", "KB3", "KB4"},
+				MoreInfoURLs: []string{"MoreInfoURL1", "MoreInfoURL2", "MoreInfoURL3", "MoreInfoURL4"},
+
 				SupportURL:               "SupportURL",
 				UpdateID:                 "UpdateID",
 				RevisionNumber:           1,
@@ -229,12 +232,15 @@ func generateInventory() *agentendpointpb.Inventory {
 					WuaPackage: &agentendpointpb.Inventory_WindowsUpdatePackage{
 						Title:       "WUAInstalled",
 						Description: "Description",
-						Categories: []*agentendpointpb.Inventory_WindowsUpdatePackage_WindowsUpdateCategory{{
-							Id:   "CategoryID",
-							Name: "Category"}},
-						KbArticleIds:             []string{"KB"},
+						Categories: []*agentendpointpb.Inventory_WindowsUpdatePackage_WindowsUpdateCategory{
+							{Id: "CategoryID1", Name: "Category1"},
+							{Id: "CategoryID2", Name: "Category2"},
+							{Id: "CategoryID3", Name: "Category3"},
+							{Id: "CategoryID4", Name: "Category4"},
+						},
+						KbArticleIds:             []string{"KB1", "KB2", "KB3", "KB4"},
 						SupportUrl:               "SupportURL",
-						MoreInfoUrls:             []string{"MoreInfoURL"},
+						MoreInfoUrls:             []string{"MoreInfoURL1", "MoreInfoURL2", "MoreInfoURL3", "MoreInfoURL4"},
 						UpdateId:                 "UpdateID",
 						RevisionNumber:           1,
 						LastDeploymentChangeTime: timestamppb.New(time.Date(2020, time.November, 10, 23, 0, 0, 0, time.UTC)),
@@ -290,12 +296,16 @@ func generateInventory() *agentendpointpb.Inventory {
 					WuaPackage: &agentendpointpb.Inventory_WindowsUpdatePackage{
 						Title:       "WUAUpdate",
 						Description: "Description",
-						Categories: []*agentendpointpb.Inventory_WindowsUpdatePackage_WindowsUpdateCategory{{
-							Id:   "CategoryID",
-							Name: "Category"}},
-						KbArticleIds:             []string{"KB"},
+						Categories: []*agentendpointpb.Inventory_WindowsUpdatePackage_WindowsUpdateCategory{
+
+							{Id: "CategoryID1", Name: "Category1"},
+							{Id: "CategoryID2", Name: "Category2"},
+							{Id: "CategoryID3", Name: "Category3"},
+							{Id: "CategoryID4", Name: "Category4"},
+						},
+						KbArticleIds:             []string{"KB1", "KB2", "KB3", "KB4"},
 						SupportUrl:               "SupportURL",
-						MoreInfoUrls:             []string{"MoreInfoURL"},
+						MoreInfoUrls:             []string{"MoreInfoURL1", "MoreInfoURL2", "MoreInfoURL3", "MoreInfoURL4"},
 						UpdateId:                 "UpdateID",
 						RevisionNumber:           1,
 						LastDeploymentChangeTime: timestamppb.New(time.Time{})}}},
@@ -448,8 +458,18 @@ func TestReport(t *testing.T) {
 		inventoryState      *inventory.InstanceInventory
 		wantInventory       *agentendpointpb.Inventory
 	}{
-		{"ReportChecksumOnly", false, generateInventoryState(), nil},
-		{"ReportFullInventory", true, generateInventoryState(), generateInventory()},
+		{
+			name:                "ReportChecksumOnly",
+			reportFullInventory: false,
+			inventoryState:      generateInventoryState(),
+			wantInventory:       nil,
+		},
+		{
+			name:                "ReportFullInventory",
+			reportFullInventory: true,
+			inventoryState:      generateInventoryState(),
+			wantInventory:       generateInventory(),
+		},
 	}
 
 	for _, tt := range tests {
@@ -462,5 +482,173 @@ func TestReport(t *testing.T) {
 				t.Fatalf("ReportInventoryRequest.Inventory mismatch (-want +got):\n%s", diff)
 			}
 		})
+	}
+}
+
+func Test_computeFingerprint_gotExpectedFingerprintFormat(t *testing.T) {
+	ctx := context.Background()
+	fingerprint, err := computeFingerprint(ctx, generateInventory())
+	if err != nil {
+		t.Fatalf("unable to generate fingerprint, err - %s", err)
+	}
+
+	if !validFingerprint(fingerprint) {
+		t.Fatalf("got fingerprint %q in unexpected format", fingerprint)
+	}
+}
+
+func Test_computeFingerprint_fingerprintChangedAfterReshuffle(t *testing.T) {
+	ctx := context.Background()
+	inventory := generateInventory()
+	initialFingerprint, err := computeFingerprint(ctx, inventory)
+	if err != nil {
+		t.Fatalf("unable to generate initial fingerprint, err - %s", err)
+	}
+
+	inventoryPackagesMixer(time.Now().UnixNano())(inventory)
+
+	finalFingerprint, err := computeFingerprint(ctx, inventory)
+	if err != nil {
+		t.Fatalf("unable to generate final fingerprint, err - %s", err)
+	}
+
+	if initialFingerprint == finalFingerprint {
+		t.Errorf("unstable fingerprint is equal for different inventories")
+	}
+}
+
+func Test_computeStableFingerprint_fingerprintNotChangedAfterReshuffle(t *testing.T) {
+	ctx := context.Background()
+	inventory := generateInventory()
+	initialFingerprint, err := computeStableFingerprint(ctx, inventory)
+	if err != nil {
+		t.Fatalf("unable to generate initial fingerprint, err - %s", err)
+	}
+
+	inventoryPackagesMixer(time.Now().UnixNano())(inventory)
+
+	finalFingerprint, err := computeStableFingerprint(ctx, inventory)
+	if err != nil {
+		t.Fatalf("unable to generate final fingerprint, err - %s", err)
+	}
+
+	if initialFingerprint != finalFingerprint {
+		t.Errorf("stable fingerprint is not equal for inventory with different order")
+	}
+}
+
+func Test_computeStableFingerprint_fingerprintChangedAfterChanging(t *testing.T) {
+	ctx := context.Background()
+	inventory := generateInventory()
+	initialFingerprint, err := computeStableFingerprint(ctx, inventory)
+	if err != nil {
+		t.Fatalf("unable to generate initial fingerprint, err - %s", err)
+	}
+
+	inventory.AvailablePackages = nil
+
+	finalFingerprint, err := computeStableFingerprint(ctx, inventory)
+	if err != nil {
+		t.Fatalf("unable to generate final fingerprint, err - %s", err)
+	}
+
+	if initialFingerprint == finalFingerprint {
+		t.Errorf("stable fingerprint should not be equal if inventory is actually changed")
+	}
+}
+
+func validFingerprint(fingerprint string) bool {
+	if fingerprint == "" {
+		return false
+	}
+
+	if len(fingerprint) != 64 {
+		return false
+	}
+
+	return true
+}
+
+func Test_computeStableFingerprint_testFingerprintStability(t *testing.T) {
+	ctx := context.Background()
+	inventory := generateInventory()
+
+	mixer := inventoryPackagesMixer(time.Now().UnixNano())
+
+	n := 100
+	for i := 0; i < n; i++ {
+		t.Run(fmt.Sprintf("Run %d", i), func(t *testing.T) {
+			// Compute initial fingerprints.
+			unstableFingerprintBefore, err := computeFingerprint(ctx, inventory)
+			if err != nil {
+				t.Errorf("unexpected error while calculating fingerprint, err %v", err)
+			}
+			stableFingerprintBefore, err := computeStableFingerprint(ctx, inventory)
+			if err != nil {
+				t.Errorf("unexpected error while calculating fingerprint, err %v", err)
+			}
+
+			// Reorder pacakges in the inventory, that should change result of computeFingerprint
+			// and do not change the result of computeStableFingerptint.
+			mixer(inventory)
+
+			// Generate new fingerprints after reshufling of the packages.
+			unstableFingerprintAfter, err := computeFingerprint(ctx, inventory)
+			if err != nil {
+				t.Errorf("unexpected error while calculating fingerprint, err %v", err)
+			}
+			stableFingerprintAfter, err := computeStableFingerprint(ctx, inventory)
+			if err != nil {
+				t.Errorf("unexpected error while calculating fingerprint, err %v", err)
+			}
+
+			//Confirm that unstable fingerprint changed and stable fingerprint not.
+			if unstableFingerprintBefore == unstableFingerprintAfter {
+				t.Errorf("unstable fingerprint is equal for different inventories")
+			}
+			if stableFingerprintBefore != stableFingerprintAfter {
+				t.Errorf("stable fingerprint is not equal for identical inventories")
+			}
+		})
+
+	}
+}
+
+func inventoryPackagesMixer(source int64) func(inventory *agentendpointpb.Inventory) {
+	fmt.Printf("Inventory packages mixer initialized with source %d\n", source)
+
+	rng := rand.New(rand.NewSource(source))
+
+	return func(inventory *agentendpointpb.Inventory) {
+		rng.Shuffle(len(inventory.InstalledPackages), func(i, j int) {
+			inventory.InstalledPackages[i], inventory.InstalledPackages[j] = inventory.InstalledPackages[j], inventory.InstalledPackages[i]
+		})
+
+		rng.Shuffle(len(inventory.AvailablePackages), func(i, j int) {
+			inventory.AvailablePackages[i], inventory.AvailablePackages[j] = inventory.AvailablePackages[j], inventory.AvailablePackages[i]
+		})
+
+	}
+}
+
+func Benchmark_computeFingerprint(b *testing.B) {
+	ctx, inventory := context.Background(), generateInventory()
+
+	for i := 0; i < b.N; i++ {
+		_, err := computeFingerprint(ctx, inventory)
+		if err != nil {
+			b.Fatalf("unable to generate fingerprint, err - %s", err)
+		}
+	}
+}
+
+func Benchmark_computeStableFingerprint(b *testing.B) {
+	ctx, inventory := context.Background(), generateInventory()
+
+	for i := 0; i < b.N; i++ {
+		_, err := computeStableFingerprint(ctx, inventory)
+		if err != nil {
+			b.Fatalf("unable to generate fingerprint, err - %s", err)
+		}
 	}
 }
