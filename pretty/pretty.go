@@ -20,5 +20,5 @@ func MarshalOptions() protojson.MarshalOptions {
 
 // Format uses jsonpb to marshal a proto for pretty printing.
 func Format(pb proto.Message) string {
-	return marshalOptions.Format(pb)
+	return MarshalOptions().Format(pb)
 }

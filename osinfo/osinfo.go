@@ -15,20 +15,29 @@ limitations under the License.
 // Linux.
 package osinfo
 
+import (
+	"context"
+)
+
 const (
-	// Linux is the default shortname used for a Linux system.
-	Linux = "linux"
+	// DefaultShortNameLinux is the default shortname used for a Linux system.
+	DefaultShortNameLinux = "linux"
 	// Windows is the default shortname used for Windows system.
 	Windows = "windows"
 )
+
+// Provider is an interface for OSInfo extraction on different systems.
+type Provider interface {
+	Get(context.Context) (OSInfo, error)
+}
 
 // OSInfo describes an operating system.
 type OSInfo struct {
 	Hostname, LongName, ShortName, Version, KernelVersion, KernelRelease, Architecture string
 }
 
-// Architecture attempts to standardize architecture naming.
-func Architecture(arch string) string {
+// NormalizeArchitecture attempts to standardize architecture naming.
+func NormalizeArchitecture(arch string) string {
 	switch arch {
 	case "amd64", "64-bit":
 		arch = "x86_64"
@@ -39,3 +48,5 @@ func Architecture(arch string) string {
 	}
 	return arch
 }
+
+type osNameAndVersionProvider func() (shortName string, longName string, version string)
