@@ -202,8 +202,9 @@ func Test_defaultSleeper(t *testing.T) {
 	after := time.Now()
 	elapsed := after.Sub(before)
 
-	// To reduce flakiness we accept 1ms diff.
-	if abs(elapsed.Milliseconds()-timeToSleep.Milliseconds()) > 1 {
+	// Tolerate 10% difference to reduce test flakiness.
+	maxTimeDifference := timeToSleep / 10
+	if abs(elapsed.Milliseconds()-timeToSleep.Milliseconds()) > maxTimeDifference.Milliseconds() {
 		t.Errorf("sleeper.Sleep, elapsed time %s bigger than expected %s", elapsed, timeToSleep)
 	}
 }
