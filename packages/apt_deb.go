@@ -197,7 +197,7 @@ func parseDpkgDeb(data []byte) (*PkgInfo, error) {
 			continue
 		}
 		if bytes.Contains(fields[0], []byte("Architecture:")) {
-			info.Arch = osinfo.Architecture(string(fields[1]))
+			info.Arch = osinfo.NormalizeArchitecture(string(fields[1]))
 			continue
 		}
 	}
@@ -295,7 +295,7 @@ func parseAptUpdates(ctx context.Context, data []byte, showNew bool) []*PkgInfo 
 		}
 		ver := bytes.Trim(pkg[1], "(")             // (246.0.0-0 => 246.0.0-0
 		arch := bytes.Trim(pkg[len(pkg)-1], "[])") // [all]) => all
-		pkgs = append(pkgs, &PkgInfo{Name: string(pkg[0]), Arch: osinfo.Architecture(string(arch)), Version: string(ver)})
+		pkgs = append(pkgs, &PkgInfo{Name: string(pkg[0]), Arch: osinfo.NormalizeArchitecture(string(arch)), Version: string(ver)})
 	}
 	return pkgs
 }

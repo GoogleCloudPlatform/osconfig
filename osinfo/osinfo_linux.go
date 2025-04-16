@@ -16,6 +16,7 @@ package osinfo
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"regexp"
@@ -29,94 +30,167 @@ var (
 	entRelVerRgx = regexp.MustCompile(`\d+(\.\d+)?(\.\d+)?`)
 )
 
-const (
-	osRelease = "/etc/os-release"
-	oRelease  = "/etc/oracle-release"
-	rhRelease = "/etc/redhat-release"
+var _ Provider = &LinuxOsInfoProvider{}
+
+var (
+	defaultReleaseFilepath = "/etc/os-release"
+	oracleReleaseFilepath  = "/etc/oracle-release"
+	redHatReleaseFilepath  = "/etc/redhat-release"
 )
 
-func parseOsRelease(releaseDetails string) *OSInfo {
-	oi := &OSInfo{}
+// Get reports OSInfo.
+func Get() (*OSInfo, error) {
+	// Eventually we will get rid of this function and will use providers directly
+	// Providers should support context to be able to handle cancelation and logging
+	// so far we just create empty context to connect the API.
+	ctx := context.TODO()
 
-	scanner := bufio.NewScanner(bytes.NewReader([]byte(releaseDetails)))
+	osInfoProvider, err := NewLinuxOsInfoProvider(getOsNameAndVersionProvider(ctx))
+	if err != nil {
+		return nil, fmt.Errorf("unable to extract osinfo, err:  %w", err)
+	}
+
+	osInfo, err := osInfoProvider.Get(ctx)
+	if err != nil {
+		return &osInfo, err
+	}
+
+	return &osInfo, nil
+}
+
+// LinuxOsInfoProvider is a provider of OSInfo for the linux based systems.
+type LinuxOsInfoProvider struct {
+	nameAndVersionProvider osNameAndVersionProvider
+	uts                    unix.Utsname
+}
+
+// NewLinuxOsInfoProvider is a constructor function for LinuxOsInfoProvider.
+func NewLinuxOsInfoProvider(nameAndVersionProvider osNameAndVersionProvider) (*LinuxOsInfoProvider, error) {
+	var uts unix.Utsname
+	if err := unix.Uname(&uts); err != nil {
+		return nil, fmt.Errorf("unable to get unix.Uname, err: %w", err)
+	}
+
+	return &LinuxOsInfoProvider{
+		nameAndVersionProvider: nameAndVersionProvider,
+		uts:                    uts,
+	}, nil
+}
+
+// Get gather all required information and returns OSInfo.
+func (oip *LinuxOsInfoProvider) Get(ctx context.Context) (OSInfo, error) {
+	short, long, version := oip.nameAndVersionProvider()
+
+	return OSInfo{
+		ShortName: short,
+		LongName:  long,
+		Version:   version,
+
+		Hostname:      oip.hostName(),
+		Architecture:  oip.architecture(),
+		KernelRelease: oip.kernelRelease(),
+		KernelVersion: oip.kernelVersion(),
+	}, nil
+}
+
+func (oip *LinuxOsInfoProvider) hostName() string {
+	return stringFromUtsField(oip.uts.Nodename)
+}
+
+func (oip *LinuxOsInfoProvider) architecture() string {
+	return NormalizeArchitecture(stringFromUtsField(oip.uts.Machine))
+}
+func (oip *LinuxOsInfoProvider) kernelRelease() string {
+	return stringFromUtsField(oip.uts.Release)
+}
+
+func (oip *LinuxOsInfoProvider) kernelVersion() string {
+	return stringFromUtsField(oip.uts.Version)
+}
+
+func stringFromUtsField(field [65]byte) string {
+	// unix.Utsname Fields are [65]byte so we need to trim any trailing null characters.
+	return string(bytes.TrimRight(field[:], "\x00"))
+}
+
+func getOsNameAndVersionProvider(_ context.Context) osNameAndVersionProvider {
+	return func() (string, string, string) {
+		var (
+			extractNameAndVersion func(string) (string, string, string)
+			releaseFile           string
+		)
+
+		defaultShortName, defaultLongName, defaultVersion := DefaultShortNameLinux, "", ""
+
+		switch {
+		// Check for /etc/os-release first.
+		case util.Exists(defaultReleaseFilepath):
+			releaseFile = defaultReleaseFilepath
+			extractNameAndVersion = parseOsRelease
+		case util.Exists(oracleReleaseFilepath):
+			releaseFile = oracleReleaseFilepath
+			extractNameAndVersion = parseEnterpriseRelease
+		case util.Exists(redHatReleaseFilepath):
+			releaseFile = redHatReleaseFilepath
+			extractNameAndVersion = parseEnterpriseRelease
+		default:
+			return defaultShortName, defaultLongName, defaultVersion
+		}
+
+		b, err := ioutil.ReadFile(releaseFile)
+		if err != nil {
+			// TODO: log an error
+			return defaultShortName, defaultLongName, defaultVersion
+		}
+
+		return extractNameAndVersion(string(b))
+	}
+}
+
+func parseOsRelease(releaseDetails string) (shortName, longName, version string) {
+	scanner := bufio.NewScanner(strings.NewReader(releaseDetails))
+
 	for scanner.Scan() {
 		entry := strings.Split(scanner.Text(), "=")
 		switch entry[0] {
 		case "":
 			continue
 		case "PRETTY_NAME":
-			oi.LongName = strings.Trim(entry[1], `"`)
+			longName = strings.Trim(entry[1], `"`)
 		case "VERSION_ID":
-			oi.Version = strings.Trim(entry[1], `"`)
+			version = strings.Trim(entry[1], `"`)
 		case "ID":
-			oi.ShortName = strings.Trim(entry[1], `"`)
+			shortName = strings.Trim(entry[1], `"`)
 		}
-		if oi.LongName != "" && oi.Version != "" && oi.ShortName != "" {
+
+		// TODO: Replace with binary mask
+		if longName != "" && version != "" && shortName != "" {
 			break
 		}
 	}
 
-	if oi.ShortName == "" {
-		oi.ShortName = Linux
+	if shortName == "" {
+		shortName = DefaultShortNameLinux
 	}
 
-	return oi
+	return shortName, longName, version
 }
 
-func parseEnterpriseRelease(releaseDetails string) *OSInfo {
-	rel := releaseDetails
+func parseEnterpriseRelease(releaseDetails string) (shortName string, longName string, version string) {
+	shortName = DefaultShortNameLinux
 
-	var sn string
 	switch {
-	case strings.Contains(rel, "CentOS"):
-		sn = "centos"
-	case strings.Contains(rel, "Red Hat"):
-		sn = "rhel"
-	case strings.Contains(rel, "Oracle"):
-		sn = "ol"
+	case strings.Contains(releaseDetails, "CentOS"):
+		shortName = "centos"
+	case strings.Contains(releaseDetails, "Red Hat"):
+		shortName = "rhel"
+	case strings.Contains(releaseDetails, "Oracle"):
+		shortName = "ol"
 	}
 
-	return &OSInfo{
-		ShortName: sn,
-		LongName:  strings.Replace(rel, " release ", " ", 1),
-		Version:   entRelVerRgx.FindString(rel),
-	}
-}
+	longName = strings.Replace(releaseDetails, " release ", " ", 1)
 
-// Get reports OSInfo.
-func Get() (*OSInfo, error) {
-	var oi *OSInfo
-	var parseReleaseFunc func(string) *OSInfo
-	var releaseFile string
-	switch {
-	// Check for /etc/os-release first.
-	case util.Exists(osRelease):
-		releaseFile = osRelease
-		parseReleaseFunc = parseOsRelease
-	case util.Exists(oRelease):
-		releaseFile = oRelease
-		parseReleaseFunc = parseEnterpriseRelease
-	case util.Exists(rhRelease):
-		releaseFile = rhRelease
-		parseReleaseFunc = parseEnterpriseRelease
-	}
+	version = entRelVerRgx.FindString(releaseDetails)
 
-	b, err := ioutil.ReadFile(releaseFile)
-	if err != nil {
-		oi = &OSInfo{ShortName: Linux}
-	} else {
-		oi = parseReleaseFunc(string(b))
-	}
-
-	var uts unix.Utsname
-	if err := unix.Uname(&uts); err != nil {
-		return oi, fmt.Errorf("unix.Uname error: %v", err)
-	}
-	// unix.Utsname Fields are [65]byte so we need to trim any trailing null characters.
-	oi.Hostname = string(bytes.TrimRight(uts.Nodename[:], "\x00"))
-	oi.Architecture = Architecture(string(bytes.TrimRight(uts.Machine[:], "\x00")))
-	oi.KernelVersion = string(bytes.TrimRight(uts.Version[:], "\x00"))
-	oi.KernelRelease = string(bytes.TrimRight(uts.Release[:], "\x00"))
-
-	return oi, nil
+	return shortName, longName, version
 }

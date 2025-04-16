@@ -55,7 +55,7 @@ var (
 	// MSIExists indicates whether MSIs can be installed.
 	MSIExists bool
 
-	noarch = osinfo.Architecture("noarch")
+	noarch = osinfo.NormalizeArchitecture("noarch")
 
 	runner = util.CommandRunner(&util.DefaultRunner{})
 
@@ -174,7 +174,7 @@ type packageMetadata struct {
 func pkgInfoFromPackageMetadata(pm packageMetadata) *PkgInfo {
 	return &PkgInfo{
 		Name:    pm.Package,
-		Arch:    osinfo.Architecture(pm.Architecture),
+		Arch:    osinfo.NormalizeArchitecture(pm.Architecture),
 		Version: pm.Version,
 		Source: Source{
 			Name:    pm.SourceName,

@@ -147,7 +147,7 @@ func parseZypperUpdates(data []byte) []*PkgInfo {
 		name := string(bytes.TrimSpace(pkg[2]))
 		arch := string(bytes.TrimSpace(pkg[5]))
 		ver := string(bytes.TrimSpace(pkg[4]))
-		pkgs = append(pkgs, &PkgInfo{Name: name, Arch: osinfo.Architecture(arch), Version: ver})
+		pkgs = append(pkgs, &PkgInfo{Name: name, Arch: osinfo.NormalizeArchitecture(arch), Version: ver})
 	}
 	return pkgs
 }

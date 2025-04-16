@@ -139,7 +139,7 @@ type win32OperatingSystem struct {
 
 // Get reports OSInfo.
 func Get() (*OSInfo, error) {
-	oi := &OSInfo{ShortName: Windows, Architecture: Architecture(runtime.GOARCH)}
+	oi := &OSInfo{ShortName: DefaultShortNameWindows, Architecture: NormalizeArchitecture(runtime.GOARCH)}
 
 	hn, err := os.Hostname()
 	if err != nil {
