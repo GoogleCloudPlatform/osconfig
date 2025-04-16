@@ -165,13 +165,13 @@ func formatPackages(ctx context.Context, pkgs *packages.Packages, shortName stri
 	}
 	if pkgs.Rpm != nil {
 		temp := make([]*agentendpointpb.Inventory_SoftwarePackage, len(pkgs.Rpm))
-		if packages.YumExists {
+		if packages.YumExists || !packages.ZypperExists {
 			for i, pkg := range pkgs.Rpm {
 				temp[i] = &agentendpointpb.Inventory_SoftwarePackage{
 					Details: formatYumPackage(pkg),
 				}
 			}
-		} else if packages.ZypperExists {
+		} else {
 			for i, pkg := range pkgs.Rpm {
 				temp[i] = &agentendpointpb.Inventory_SoftwarePackage{
 					Details: formatZypperPackage(pkg),

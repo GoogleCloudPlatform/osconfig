@@ -444,7 +444,6 @@ func TestWrite(t *testing.T) {
 
 func TestReport(t *testing.T) {
 	ctx := context.Background()
-	packages.YumExists = true
 	srv := &agentEndpointServiceInventoryTestServer{}
 	tc, err := newTestClient(ctx, srv)
 	if err != nil {
@@ -478,7 +477,8 @@ func TestReport(t *testing.T) {
 
 			tc.client.report(ctx, tt.inventoryState)
 
-			if diff := cmp.Diff(srv.lastReportInventoryRequest.Inventory, tt.wantInventory, protocmp.Transform()); diff != "" {
+			actualInventory := srv.lastReportInventoryRequest.Inventory
+			if diff := cmp.Diff(tt.wantInventory, actualInventory, protocmp.Transform()); diff != "" {
 				t.Fatalf("ReportInventoryRequest.Inventory mismatch (-want +got):\n%s", diff)
 			}
 		})
