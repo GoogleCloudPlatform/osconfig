@@ -22,8 +22,8 @@ import (
 const (
 	// DefaultShortNameLinux is the default shortname used for a Linux system.
 	DefaultShortNameLinux = "linux"
-	// Windows is the default shortname used for Windows system.
-	Windows = "windows"
+	// DefaultShortNameWindows is the default shortname used for Windows system.
+	DefaultShortNameWindows = "windows"
 )
 
 // Provider is an interface for OSInfo extraction on different systems.

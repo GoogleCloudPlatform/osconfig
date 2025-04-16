@@ -161,7 +161,7 @@ func Test_parseEnterpriseRelease(t *testing.T) {
 			expectedVersion:   "7.6.1810",
 		},
 		{
-			name: "",
+			name: "Oracle Linux Server, normal case",
 
 			input:             `Oracle Linux Server release 9.5`,
 			expectedShortName: "ol",
@@ -191,7 +191,7 @@ func Test_parseEnterpriseRelease(t *testing.T) {
 func Test_osNameAndVersionProvider(t *testing.T) {
 	tests := []struct {
 		name                      string
-		enforceTestingEnvironment func() func()
+		enforceTestingEnvironment func(t *testing.T)
 
 		expectedShortName string
 		expectedLongName  string
@@ -199,20 +199,12 @@ func Test_osNameAndVersionProvider(t *testing.T) {
 	}{
 		{
 			name: "no file exists",
-			enforceTestingEnvironment: func() func() {
-				var cleanups []func()
-
+			enforceTestingEnvironment: func(t *testing.T) {
 				doesNotExists := filepath.Join(os.TempDir(), "does_not_exists")
 
-				cleanups = append(cleanups, overrideDefaultReleaseFilepath(doesNotExists))
-				cleanups = append(cleanups, overrideOracleReleaseFilepath(doesNotExists))
-				cleanups = append(cleanups, overrideRedHatReleaseFilepath(doesNotExists))
-
-				return func() {
-					for _, cleanup := range cleanups {
-						cleanup()
-					}
-				}
+				overrideDefaultReleaseFilepath(t, doesNotExists)
+				overrideOracleReleaseFilepath(t, doesNotExists)
+				overrideRedHatReleaseFilepath(t, doesNotExists)
 			},
 			expectedShortName: "linux",
 			expectedLongName:  "",
@@ -220,22 +212,14 @@ func Test_osNameAndVersionProvider(t *testing.T) {
 		},
 		{
 			name: "default release file exists, but empty",
-			enforceTestingEnvironment: func() func() {
-				var cleanups []func()
-
+			enforceTestingEnvironment: func(t *testing.T) {
 				doesNotExists := filepath.Join(os.TempDir(), "does_not_exists")
 				defaultReleaseFile := filepath.Join(os.TempDir(), "default_release_file")
 				enforceFileWithContent(t, defaultReleaseFile, []byte(""))
 
-				cleanups = append(cleanups, overrideDefaultReleaseFilepath(defaultReleaseFile))
-				cleanups = append(cleanups, overrideOracleReleaseFilepath(doesNotExists))
-				cleanups = append(cleanups, overrideRedHatReleaseFilepath(doesNotExists))
-
-				return func() {
-					for _, cleanup := range cleanups {
-						cleanup()
-					}
-				}
+				overrideDefaultReleaseFilepath(t, defaultReleaseFile)
+				overrideOracleReleaseFilepath(t, doesNotExists)
+				overrideRedHatReleaseFilepath(t, doesNotExists)
 			},
 			expectedShortName: "linux",
 			expectedLongName:  "",
@@ -243,21 +227,13 @@ func Test_osNameAndVersionProvider(t *testing.T) {
 		},
 		{
 			name: "default release path exists, but it not a file",
-			enforceTestingEnvironment: func() func() {
-				var cleanups []func()
-
+			enforceTestingEnvironment: func(t *testing.T) {
 				tmpDir := os.TempDir()
 				doesNotExists := filepath.Join(os.TempDir(), "does_not_exists")
 
-				cleanups = append(cleanups, overrideDefaultReleaseFilepath(tmpDir))
-				cleanups = append(cleanups, overrideOracleReleaseFilepath(doesNotExists))
-				cleanups = append(cleanups, overrideRedHatReleaseFilepath(doesNotExists))
-
-				return func() {
-					for _, cleanup := range cleanups {
-						cleanup()
-					}
-				}
+				overrideDefaultReleaseFilepath(t, tmpDir)
+				overrideOracleReleaseFilepath(t, doesNotExists)
+				overrideRedHatReleaseFilepath(t, doesNotExists)
 			},
 			expectedShortName: "linux",
 			expectedLongName:  "",
@@ -265,23 +241,15 @@ func Test_osNameAndVersionProvider(t *testing.T) {
 		},
 		{
 			name: "Debian release file exists",
-			enforceTestingEnvironment: func() func() {
-				var cleanups []func()
-
+			enforceTestingEnvironment: func(t *testing.T) {
 				doesNotExists := filepath.Join(os.TempDir(), "does_not_exists")
 				debianReleaseFile := filepath.Join(os.TempDir(), "debian_release_file")
 
 				enforceFileWithContent(t, debianReleaseFile, []byte(debianReleaseFileContent))
 
-				cleanups = append(cleanups, overrideDefaultReleaseFilepath(debianReleaseFile))
-				cleanups = append(cleanups, overrideOracleReleaseFilepath(doesNotExists))
-				cleanups = append(cleanups, overrideRedHatReleaseFilepath(doesNotExists))
-
-				return func() {
-					for _, cleanup := range cleanups {
-						cleanup()
-					}
-				}
+				overrideDefaultReleaseFilepath(t, debianReleaseFile)
+				overrideOracleReleaseFilepath(t, doesNotExists)
+				overrideRedHatReleaseFilepath(t, doesNotExists)
 			},
 
 			expectedShortName: "debian",
@@ -290,24 +258,16 @@ func Test_osNameAndVersionProvider(t *testing.T) {
 		},
 		{
 			name: "Oracle Linux release file exists",
-			enforceTestingEnvironment: func() func() {
-				var cleanups []func()
-
+			enforceTestingEnvironment: func(t *testing.T) {
 				doesNotExists := filepath.Join(os.TempDir(), "does_not_exists")
 				oracleReleaseFile := filepath.Join(os.TempDir(), "oracle_release_file")
 
 				oracleReleaseFileContent := `Oracle Linux Server release 9.5`
 				enforceFileWithContent(t, oracleReleaseFile, []byte(oracleReleaseFileContent))
 
-				cleanups = append(cleanups, overrideDefaultReleaseFilepath(doesNotExists))
-				cleanups = append(cleanups, overrideOracleReleaseFilepath(oracleReleaseFile))
-				cleanups = append(cleanups, overrideRedHatReleaseFilepath(doesNotExists))
-
-				return func() {
-					for _, cleanup := range cleanups {
-						cleanup()
-					}
-				}
+				overrideDefaultReleaseFilepath(t, doesNotExists)
+				overrideOracleReleaseFilepath(t, oracleReleaseFile)
+				overrideRedHatReleaseFilepath(t, doesNotExists)
 			},
 
 			expectedShortName: "ol",
@@ -316,24 +276,16 @@ func Test_osNameAndVersionProvider(t *testing.T) {
 		},
 		{
 			name: "Red Hat release file exists",
-			enforceTestingEnvironment: func() func() {
-				var cleanups []func()
-
+			enforceTestingEnvironment: func(t *testing.T) {
 				doesNotExists := filepath.Join(os.TempDir(), "does_not_exists")
 				redHatReleaseFile := filepath.Join(os.TempDir(), "redhat_release_file")
 
 				redHatReleaseFileContent := `Red Hat Enterprise Linux release 8.0 (Ootpa)`
 				enforceFileWithContent(t, redHatReleaseFile, []byte(redHatReleaseFileContent))
 
-				cleanups = append(cleanups, overrideDefaultReleaseFilepath(doesNotExists))
-				cleanups = append(cleanups, overrideOracleReleaseFilepath(doesNotExists))
-				cleanups = append(cleanups, overrideRedHatReleaseFilepath(redHatReleaseFile))
-
-				return func() {
-					for _, cleanup := range cleanups {
-						cleanup()
-					}
-				}
+				overrideDefaultReleaseFilepath(t, doesNotExists)
+				overrideOracleReleaseFilepath(t, doesNotExists)
+				overrideRedHatReleaseFilepath(t, redHatReleaseFile)
 			},
 
 			expectedShortName: "rhel",
@@ -344,8 +296,7 @@ func Test_osNameAndVersionProvider(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cleanup := tt.enforceTestingEnvironment()
-			defer cleanup()
+			tt.enforceTestingEnvironment(t)
 
 			osNameAndVersionProvider := getOsNameAndVersionProvider(context.Background())
 
@@ -389,34 +340,34 @@ func TestNewLinuxOsInfoProvider(t *testing.T) {
 	}
 }
 
-func overrideDefaultReleaseFilepath(filepath string) (clean func()) {
+func overrideDefaultReleaseFilepath(t *testing.T, filepath string) {
 	prev := defaultReleaseFilepath
 
 	defaultReleaseFilepath = filepath
 
-	return func() {
+	t.Cleanup(func() {
 		defaultReleaseFilepath = prev
-	}
+	})
 }
 
-func overrideOracleReleaseFilepath(filepath string) (clean func()) {
+func overrideOracleReleaseFilepath(t *testing.T, filepath string) {
 	prev := oracleReleaseFilepath
 
 	oracleReleaseFilepath = filepath
 
-	return func() {
+	t.Cleanup(func() {
 		oracleReleaseFilepath = prev
-	}
+	})
 }
 
-func overrideRedHatReleaseFilepath(filepath string) (clean func()) {
+func overrideRedHatReleaseFilepath(t *testing.T, filepath string) {
 	prev := redHatReleaseFilepath
 
 	redHatReleaseFilepath = filepath
 
-	return func() {
+	t.Cleanup(func() {
 		redHatReleaseFilepath = prev
-	}
+	})
 }
 
 func enforceFileWithContent(t *testing.T, filepath string, content []byte) {
