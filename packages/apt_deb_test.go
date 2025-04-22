@@ -23,7 +23,7 @@ import (
 	"testing"
 
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
-	utilsnapshot "github.com/GoogleCloudPlatform/osconfig/util/snapshot"
+	utiltest "github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/golang/mock/gomock"
 )
 
@@ -463,7 +463,7 @@ func TestAptUpdates(t *testing.T) {
 			}
 
 			if tt.expectedResultsFile != "" {
-				utilsnapshot.MatchSnapshot(t, pkgs, tt.expectedResultsFile)
+				utiltest.MatchSnapshot(t, pkgs, tt.expectedResultsFile)
 			} else if !reflect.DeepEqual(pkgs, tt.expectedResults) {
 				t.Errorf("AptUpdates: unexpected result, expect %v, got %v", tt.expectedResults, pkgs)
 			}

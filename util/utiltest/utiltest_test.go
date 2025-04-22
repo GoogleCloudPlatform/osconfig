@@ -1,4 +1,4 @@
-package utilsnapshot
+package utiltest
 
 import (
 	"errors"
@@ -104,7 +104,7 @@ func Test_ExistingNonEqualSnapshot_FailsAndWritesDraft(t *testing.T) {
 
 	// When matching an existing non-equal snapshot
 	MatchSnapshot(spyT, NamedStruct{}, snapshotFilepath)
-	expectedSnapshotContent := "utilsnapshot.NamedStruct{}"
+	expectedSnapshotContent := "utiltest.NamedStruct{}"
 
 	// Then a present snapshot remains unchanged
 	bytes, err := os.ReadFile(snapshotFilepath)
@@ -138,7 +138,7 @@ func Test_ExistingEqualSnapshot_PassesAndRemovesOutdatedDraft(t *testing.T) {
 	os.WriteFile(snapshotFilepath, []byte(snapshotContent), 0644)
 	defer os.Remove(snapshotFilepath)
 	// And outdated draft snapshot present on disk
-	draftSnapshotContent := "utilsnapshot.NamedStruct{}"
+	draftSnapshotContent := "utiltest.NamedStruct{}"
 	os.WriteFile(makeSnapshotDraftFilepath(snapshotFilepath), []byte(draftSnapshotContent), 0644)
 	defer os.Remove(makeSnapshotDraftFilepath(snapshotFilepath))
 
