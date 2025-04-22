@@ -16,7 +16,6 @@ package packages
 import (
 	"errors"
 	"fmt"
-	"os"
 	"os/exec"
 	"reflect"
 	"slices"
@@ -168,14 +167,6 @@ func TestInstallAptPackages(t *testing.T) {
 	}
 }
 
-func bytesFromFile(t *testing.T, filepath string) []byte {
-	bytes, err := os.ReadFile(filepath)
-	if err != nil {
-		t.Fatalf("readFile(%q) err: %v", filepath, err)
-	}
-	return bytes
-}
-
 func TestAptUpdates(t *testing.T) {
 	tests := []struct {
 		name                  string
@@ -309,7 +300,7 @@ func TestAptUpdates(t *testing.T) {
 				{
 					cmd:    exec.Command(aptGet, append(slices.Clone(aptGetUpgradableArgs), aptGetFullUpgradeCmd)...),
 					envs:   []string{"DEBIAN_FRONTEND=noninteractive"},
-					stdout: bytesFromFile(t, "./testdata/ubuntu_20_apt_get_full_upgrade.stdout"),
+					stdout: utiltest.BytesFromFile(t, "./testdata/ubuntu_20_apt_get_full_upgrade.stdout"),
 					stderr: []byte(""),
 					err:    nil,
 				},
@@ -331,7 +322,7 @@ func TestAptUpdates(t *testing.T) {
 				{
 					cmd:    exec.Command(aptGet, append(slices.Clone(aptGetUpgradableArgs), aptGetFullUpgradeCmd)...),
 					envs:   []string{"DEBIAN_FRONTEND=noninteractive"},
-					stdout: bytesFromFile(t, "./testdata/ubuntu_22_apt_get_full_upgrade.stdout"),
+					stdout: utiltest.BytesFromFile(t, "./testdata/ubuntu_22_apt_get_full_upgrade.stdout"),
 					stderr: []byte(""),
 					err:    nil,
 				},
@@ -353,7 +344,7 @@ func TestAptUpdates(t *testing.T) {
 				{
 					cmd:    exec.Command(aptGet, append(slices.Clone(aptGetUpgradableArgs), aptGetFullUpgradeCmd)...),
 					envs:   []string{"DEBIAN_FRONTEND=noninteractive"},
-					stdout: bytesFromFile(t, "./testdata/ubuntu_24_apt_get_full_upgrade.stdout"),
+					stdout: utiltest.BytesFromFile(t, "./testdata/ubuntu_24_apt_get_full_upgrade.stdout"),
 					stderr: []byte(""),
 					err:    nil,
 				},

@@ -3,10 +3,19 @@ package utiltest
 import (
 	"errors"
 	"os"
+	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/kr/pretty"
 )
+
+func BytesFromFile(t *testing.T, filepath string) []byte {
+	bytes, err := os.ReadFile(filepath)
+	if err != nil {
+		t.Fatalf("readFile(%q) err: %v", filepath, err)
+	}
+	return bytes
+}
 
 const draftSnapshotFileSuffix = ".draft"
 
