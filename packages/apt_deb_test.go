@@ -23,7 +23,7 @@ import (
 	"testing"
 
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
-	"github.com/GoogleCloudPlatform/osconfig/util/snapshot"
+	utilsnapshot "github.com/GoogleCloudPlatform/osconfig/util/snapshot"
 	"github.com/golang/mock/gomock"
 )
 
@@ -309,7 +309,7 @@ func TestAptUpdates(t *testing.T) {
 				{
 					cmd:    exec.Command(aptGet, append(slices.Clone(aptGetUpgradableArgs), aptGetFullUpgradeCmd)...),
 					envs:   []string{"DEBIAN_FRONTEND=noninteractive"},
-					stdout: bytesFromFile(t, "./testdata/ubuntu_20_apt_get_full_upgrade"),
+					stdout: bytesFromFile(t, "./testdata/ubuntu_20_apt_get_full_upgrade.stdout"),
 					stderr: []byte(""),
 					err:    nil,
 				},
@@ -331,7 +331,7 @@ func TestAptUpdates(t *testing.T) {
 				{
 					cmd:    exec.Command(aptGet, append(slices.Clone(aptGetUpgradableArgs), aptGetFullUpgradeCmd)...),
 					envs:   []string{"DEBIAN_FRONTEND=noninteractive"},
-					stdout: bytesFromFile(t, "./testdata/ubuntu_22_apt_get_full_upgrade"),
+					stdout: bytesFromFile(t, "./testdata/ubuntu_22_apt_get_full_upgrade.stdout"),
 					stderr: []byte(""),
 					err:    nil,
 				},
@@ -353,7 +353,7 @@ func TestAptUpdates(t *testing.T) {
 				{
 					cmd:    exec.Command(aptGet, append(slices.Clone(aptGetUpgradableArgs), aptGetFullUpgradeCmd)...),
 					envs:   []string{"DEBIAN_FRONTEND=noninteractive"},
-					stdout: bytesFromFile(t, "./testdata/ubuntu_24_apt_get_full_upgrade"),
+					stdout: bytesFromFile(t, "./testdata/ubuntu_24_apt_get_full_upgrade.stdout"),
 					stderr: []byte(""),
 					err:    nil,
 				},
