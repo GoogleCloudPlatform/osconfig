@@ -10,8 +10,9 @@ import (
 
 const draftSnapshotFileSuffix = ".draft"
 
-// TestReporter is a subset of *testing.T, defines minimum interface for reporting test failures and logging.
-type TestReporter interface {
+// testReporter is a subset of *testing.T,
+// defines minimum interface for reporting test failures and logging.
+type testReporter interface {
 	Logf(format string, args ...interface{})
 	Errorf(format string, args ...interface{})
 	Error(args ...any)
@@ -31,7 +32,7 @@ func makeSnapshotDraftFilepath(snapshotFilepath string) string {
 	return snapshotFilepath + draftSnapshotFileSuffix
 }
 
-func writeSnapshotDraft(t TestReporter, filepath string, snapshot string) {
+func writeSnapshotDraft(t testReporter, filepath string, snapshot string) {
 	t.Helper()
 	draftFilepath := makeSnapshotDraftFilepath(filepath)
 	if err := os.WriteFile(draftFilepath, []byte(snapshot), 0644); err != nil {
@@ -57,7 +58,7 @@ func removeSnapshotDraft(filepath string) {
 //
 // If the snapshot file exists and matches the actual data, it ensures
 // any existing draft file is removed and the test passes for this check.
-func MatchSnapshot(t TestReporter, actual any, snapshotFilepath string) {
+func MatchSnapshot(t testReporter, actual any, snapshotFilepath string) {
 	t.Helper()
 
 	nextSnapshot := pretty.Sprint(actual)
