@@ -19,15 +19,6 @@ type testReporter interface {
 	Helper()
 }
 
-func readSnapshot(filepath string) (string, error) {
-	bytes, err := os.ReadFile(filepath)
-	if err != nil {
-		return "", err
-	}
-
-	return string(bytes), nil
-}
-
 func makeSnapshotDraftFilepath(snapshotFilepath string) string {
 	return snapshotFilepath + draftSnapshotFileSuffix
 }
@@ -63,7 +54,7 @@ func MatchSnapshot(t testReporter, actual any, snapshotFilepath string) {
 
 	nextSnapshot := pretty.Sprint(actual)
 
-	prevSnapshot, err := readSnapshot(snapshotFilepath)
+	prevSnapshotBytes, err := os.ReadFile(snapshotFilepath)
 	if errors.Is(err, os.ErrNotExist) {
 		writeSnapshotDraft(t, snapshotFilepath, nextSnapshot)
 		t.Errorf("Snapshot file %q does not exist", snapshotFilepath)
@@ -73,7 +64,7 @@ func MatchSnapshot(t testReporter, actual any, snapshotFilepath string) {
 		return
 	}
 
-	if diff := cmp.Diff(prevSnapshot, nextSnapshot); diff != "" {
+	if diff := cmp.Diff(string(prevSnapshotBytes), nextSnapshot); diff != "" {
 		writeSnapshotDraft(t, snapshotFilepath, nextSnapshot)
 		t.Errorf("Snapshot file %q is different from actual data:\n%s", snapshotFilepath, diff)
 	} else {
