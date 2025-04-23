@@ -3,6 +3,7 @@ package utiltest
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/GoogleCloudPlatform/osconfig/util"
@@ -30,7 +31,7 @@ func (m *TestReporterSpy) Error(args ...any) {
 
 func Test_NoSnapshot_FailsAndWritesDraft(t *testing.T) {
 	// Given snapshot does not exist on disk
-	snapshotFilepath := "./does-not-exist"
+	snapshotFilepath := filepath.Join(os.TempDir(), "does-not-exist")
 	defer os.Remove(makeSnapshotDraftFilepath(snapshotFilepath))
 
 	spyT := &TestReporterSpy{}
@@ -45,22 +46,22 @@ func Test_NoSnapshot_FailsAndWritesDraft(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if diff := cmp.Diff(string(bytes), expectedSnapshotContent); diff != "" {
+	if diff := cmp.Diff(expectedSnapshotContent, string(bytes)); diff != "" {
 		t.Errorf("unexpected draft snapshot content, diff: %s", diff)
 	}
 
 	// And test is marked as failed
-	if diff := cmp.Diff(spyT.calls, []string{
-		"[Logf] Remove \".draft\" suffix from \"./does-not-exist.draft\" actual data snapshot to make test pass.",
-		"[Errorf] Snapshot file \"./does-not-exist\" does not exist",
-	}); diff != "" {
+	if diff := cmp.Diff([]string{
+		"[Logf] Remove \"" + draftSnapshotFileSuffix + "\" suffix from \"" + makeSnapshotDraftFilepath(snapshotFilepath) + "\" actual data snapshot to make test pass.",
+		"[Errorf] Snapshot file \"" + snapshotFilepath + "\" does not exist",
+	}, spyT.calls); diff != "" {
 		t.Errorf("unexpected testing.T calls diff: %s", diff)
 	}
 }
 
 func Test_ExistingEqualSnapshot_Passes(t *testing.T) {
 	// Given snapshot is present on disk
-	snapshotFilepath := "./existing-equal-snapshot"
+	snapshotFilepath := filepath.Join(os.TempDir(), "existing-equal-snapshot")
 	snapshotContent := "struct {}{}"
 	os.WriteFile(snapshotFilepath, []byte(snapshotContent), 0644)
 	defer os.Remove(snapshotFilepath)
@@ -76,7 +77,7 @@ func Test_ExistingEqualSnapshot_Passes(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if diff := cmp.Diff(string(bytes), snapshotContent); diff != "" {
+	if diff := cmp.Diff(snapshotContent, string(bytes)); diff != "" {
 		t.Errorf("unexpected snapshot file content diff: %s", diff)
 	}
 	// And there is no draft snapshot created
@@ -92,7 +93,7 @@ func Test_ExistingEqualSnapshot_Passes(t *testing.T) {
 
 func Test_ExistingNonEqualSnapshot_FailsAndWritesDraft(t *testing.T) {
 	// Given snapshot is present on disk
-	snapshotFilepath := "./existing-non-equal-snapshot"
+	snapshotFilepath := filepath.Join(os.TempDir(), "existing-non-equal-snapshot")
 	snapshotContent := "struct {}{}"
 	os.WriteFile(snapshotFilepath, []byte(snapshotContent), 0644)
 	defer os.Remove(snapshotFilepath)
@@ -111,28 +112,28 @@ func Test_ExistingNonEqualSnapshot_FailsAndWritesDraft(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if diff := cmp.Diff(string(bytes), snapshotContent); diff != "" {
+	if diff := cmp.Diff(snapshotContent, string(bytes)); diff != "" {
 		t.Errorf("unexpected snapshot file content diff: %s", diff)
 	}
 
 	// And draft snapshot is written for review
 	draftBytes, err := os.ReadFile(makeSnapshotDraftFilepath(snapshotFilepath))
-	if diff := cmp.Diff(string(draftBytes), expectedSnapshotContent); diff != "" {
+	if diff := cmp.Diff(expectedSnapshotContent, string(draftBytes)); diff != "" {
 		t.Errorf("unexpected draft snapshot content, diff: %s, err: %v", diff, err)
 	}
 
 	// And test is marked as failed
-	if diff := cmp.Diff(spyT.calls, []string{
-		"[Logf] Remove \".draft\" suffix from \"./existing-non-equal-snapshot.draft\" actual data snapshot to make test pass.",
-		"[Errorf] Snapshot file \"./existing-non-equal-snapshot\" is different from actual data:\n" + cmp.Diff(snapshotContent, expectedSnapshotContent),
-	}); diff != "" {
+	if diff := cmp.Diff([]string{
+		"[Logf] Remove \"" + draftSnapshotFileSuffix + "\" suffix from \"" + makeSnapshotDraftFilepath(snapshotFilepath) + "\" actual data snapshot to make test pass.",
+		"[Errorf] Snapshot file \"" + snapshotFilepath + "\" is different from actual data:\n" + cmp.Diff(snapshotContent, expectedSnapshotContent),
+	}, spyT.calls); diff != "" {
 		t.Errorf("unexpected testing.T calls diff: %s", diff)
 	}
 }
 
 func Test_ExistingEqualSnapshot_PassesAndRemovesOutdatedDraft(t *testing.T) {
 	// Given snapshot is present on disk
-	snapshotFilepath := "./existing-equal-snapshot"
+	snapshotFilepath := filepath.Join(os.TempDir(), "existing-equal-snapshot")
 	snapshotContent := "struct {}{}"
 	os.WriteFile(snapshotFilepath, []byte(snapshotContent), 0644)
 	defer os.Remove(snapshotFilepath)
