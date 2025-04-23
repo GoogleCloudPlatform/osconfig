@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
+	utiltest "github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/golang/mock/gomock"
 )
 
@@ -172,6 +173,7 @@ func TestAptUpdates(t *testing.T) {
 		args                  []AptGetUpgradeOption
 		expectedCommandsChain []expectedCommand
 		expectedResults       []*PkgInfo
+		expectedResultsFile   string
 		expectedError         error
 	}{
 		{
@@ -285,6 +287,72 @@ func TestAptUpdates(t *testing.T) {
 			expectedError:   nil,
 		},
 		{
+			name: "Full upgrade type (ubuntu 20)",
+			args: []AptGetUpgradeOption{AptGetUpgradeType(AptGetFullUpgrade)},
+			expectedCommandsChain: []expectedCommand{
+				{
+					cmd:    exec.Command(aptGet, aptGetUpdateArgs...),
+					envs:   []string{"DEBIAN_FRONTEND=noninteractive"},
+					stdout: []byte(""),
+					stderr: []byte(""),
+					err:    nil,
+				},
+				{
+					cmd:    exec.Command(aptGet, append(slices.Clone(aptGetUpgradableArgs), aptGetFullUpgradeCmd)...),
+					envs:   []string{"DEBIAN_FRONTEND=noninteractive"},
+					stdout: utiltest.BytesFromFile(t, "./testdata/ubuntu_20_apt_get_full_upgrade.stdout"),
+					stderr: []byte(""),
+					err:    nil,
+				},
+			},
+			expectedResultsFile: "./testdata/ubuntu_20_apt_get_full_upgrade.expected",
+			expectedError:       nil,
+		},
+		{
+			name: "Full upgrade type (ubuntu 22)",
+			args: []AptGetUpgradeOption{AptGetUpgradeType(AptGetFullUpgrade)},
+			expectedCommandsChain: []expectedCommand{
+				{
+					cmd:    exec.Command(aptGet, aptGetUpdateArgs...),
+					envs:   []string{"DEBIAN_FRONTEND=noninteractive"},
+					stdout: []byte(""),
+					stderr: []byte(""),
+					err:    nil,
+				},
+				{
+					cmd:    exec.Command(aptGet, append(slices.Clone(aptGetUpgradableArgs), aptGetFullUpgradeCmd)...),
+					envs:   []string{"DEBIAN_FRONTEND=noninteractive"},
+					stdout: utiltest.BytesFromFile(t, "./testdata/ubuntu_22_apt_get_full_upgrade.stdout"),
+					stderr: []byte(""),
+					err:    nil,
+				},
+			},
+			expectedResultsFile: "./testdata/ubuntu_22_apt_get_full_upgrade.expected",
+			expectedError:       nil,
+		},
+		{
+			name: "Full upgrade type (ubuntu 24)",
+			args: []AptGetUpgradeOption{AptGetUpgradeType(AptGetFullUpgrade)},
+			expectedCommandsChain: []expectedCommand{
+				{
+					cmd:    exec.Command(aptGet, aptGetUpdateArgs...),
+					envs:   []string{"DEBIAN_FRONTEND=noninteractive"},
+					stdout: []byte(""),
+					stderr: []byte(""),
+					err:    nil,
+				},
+				{
+					cmd:    exec.Command(aptGet, append(slices.Clone(aptGetUpgradableArgs), aptGetFullUpgradeCmd)...),
+					envs:   []string{"DEBIAN_FRONTEND=noninteractive"},
+					stdout: utiltest.BytesFromFile(t, "./testdata/ubuntu_24_apt_get_full_upgrade.stdout"),
+					stderr: []byte(""),
+					err:    nil,
+				},
+			},
+			expectedResultsFile: "./testdata/ubuntu_24_apt_get_full_upgrade.expected",
+			expectedError:       nil,
+		},
+		{
 			name: "Default upgrade type with showNew equals true",
 			args: []AptGetUpgradeOption{AptGetUpgradeShowNew(true)},
 			expectedCommandsChain: []expectedCommand{
@@ -385,8 +453,10 @@ func TestAptUpdates(t *testing.T) {
 				t.Errorf("AptUpdates: unexpected error, expect %q, got %q", formatError(tt.expectedError), formatError(err))
 			}
 
-			if !reflect.DeepEqual(pkgs, tt.expectedResults) {
-				t.Errorf("AptUpdates: unexpected result, expect %v, got %v", pkgs, tt.expectedResults)
+			if tt.expectedResultsFile != "" {
+				utiltest.MatchSnapshot(t, pkgs, tt.expectedResultsFile)
+			} else if !reflect.DeepEqual(pkgs, tt.expectedResults) {
+				t.Errorf("AptUpdates: unexpected result, expect %v, got %v", tt.expectedResults, pkgs)
 			}
 		})
 	}
