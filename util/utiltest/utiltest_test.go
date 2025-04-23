@@ -1,11 +1,11 @@
 package utiltest
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"testing"
 
+	"github.com/GoogleCloudPlatform/osconfig/util"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -46,7 +46,7 @@ func Test_NoSnapshot_FailsAndWritesDraft(t *testing.T) {
 		return
 	}
 	if diff := cmp.Diff(string(bytes), expectedSnapshotContent); diff != "" {
-		t.Errorf("unexpected draft snapshot file content diff: %s", diff)
+		t.Errorf("unexpected draft snapshot content, diff: %s", diff)
 	}
 
 	// And test is marked as failed
@@ -80,8 +80,8 @@ func Test_ExistingEqualSnapshot_Passes(t *testing.T) {
 		t.Errorf("unexpected snapshot file content diff: %s", diff)
 	}
 	// And there is no draft snapshot created
-	if bytes, err := os.ReadFile(makeSnapshotDraftFilepath(snapshotFilepath)); !errors.Is(err, os.ErrNotExist) {
-		t.Errorf("expected draft snapshot file read ErrNotExist, but got: err %v, content %v", err, bytes)
+	if util.Exists(makeSnapshotDraftFilepath(snapshotFilepath)) {
+		t.Errorf("expected draft snapshot file does not exist")
 	}
 
 	// And test passes
@@ -89,8 +89,6 @@ func Test_ExistingEqualSnapshot_Passes(t *testing.T) {
 		t.Errorf("unexpected testing.T calls: %v", spyT.calls)
 	}
 }
-
-type NamedStruct struct{}
 
 func Test_ExistingNonEqualSnapshot_FailsAndWritesDraft(t *testing.T) {
 	// Given snapshot is present on disk
@@ -103,6 +101,7 @@ func Test_ExistingNonEqualSnapshot_FailsAndWritesDraft(t *testing.T) {
 	spyT := &TestReporterSpy{}
 
 	// When matching an existing non-equal snapshot
+	type NamedStruct struct{}
 	MatchSnapshot(spyT, NamedStruct{}, snapshotFilepath)
 	expectedSnapshotContent := "utiltest.NamedStruct{}"
 
@@ -119,7 +118,7 @@ func Test_ExistingNonEqualSnapshot_FailsAndWritesDraft(t *testing.T) {
 	// And draft snapshot is written for review
 	draftBytes, err := os.ReadFile(makeSnapshotDraftFilepath(snapshotFilepath))
 	if diff := cmp.Diff(string(draftBytes), expectedSnapshotContent); diff != "" {
-		t.Errorf("unexpected draft snapshot file content diff: %s, err: %v", diff, err)
+		t.Errorf("unexpected draft snapshot content, diff: %s, err: %v", diff, err)
 	}
 
 	// And test is marked as failed
@@ -148,8 +147,8 @@ func Test_ExistingEqualSnapshot_PassesAndRemovesOutdatedDraft(t *testing.T) {
 	MatchSnapshot(spyT, struct{}{}, snapshotFilepath)
 
 	// Then outdated draft snapshot is removed
-	if bytes, err := os.ReadFile(makeSnapshotDraftFilepath(snapshotFilepath)); !errors.Is(err, os.ErrNotExist) {
-		t.Errorf("expected draft snapshot file read ErrNotExist, but got: err %v, content %v", err, bytes)
+	if util.Exists(makeSnapshotDraftFilepath(snapshotFilepath)) {
+		t.Errorf("expected draft snapshot file does not exist")
 	}
 
 	// And test passes
