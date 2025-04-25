@@ -1,0 +1,23 @@
+S | Repository                        | Name             | Current Version       | Available Version     | Arch  
+--+-----------------------------------+------------------+-----------------------+-----------------------+-------
+v | SLES12-SP5-Updates                | autofs           | 5.1.3-3.14.1          | 5.1.3-3.17.1          | x86_64
+v | SLE-Module-Containers12-Updates   | containerd       | 1.7.7-16.85.1         | 1.7.8-16.88.1         | x86_64
+v | SLES12-SP5-Updates                | curl             | 8.0.1-11.74.1         | 8.0.1-11.80.1         | x86_64
+v | SLE-Module-Containers12-Updates   | docker           | 24.0.6_ce-98.100.2    | 24.0.7_ce-98.103.1    | x86_64
+v | SLES12-SP5-Updates                | libavahi-client3 | 0.6.32-32.18.1        | 0.6.32-32.21.1        | x86_64
+v | SLES12-SP5-Updates                | libavahi-common3 | 0.6.32-32.18.1        | 0.6.32-32.21.1        | x86_64
+v | SLES12-SP5-Updates                | libcurl4         | 8.0.1-11.74.1         | 8.0.1-11.80.1         | x86_64
+v | SLES12-SP5-Updates                | libgcc_s1        | 12.3.0+git1204-1.13.1 | 13.2.1+git7813-1.10.1 | x86_64
+v | SLES12-SP5-Updates                | libopenssl1_0_0  | 1.0.2p-3.84.1         | 1.0.2p-3.87.1         | x86_64
+v | SLES12-SP5-Updates                | libopenssl1_1    | 1.1.1d-2.98.1         | 1.1.1d-2.101.1        | x86_64
+v | SLES12-SP5-Updates                | libsqlite3-0     | 3.39.3-9.26.1         | 3.44.0-9.29.1         | x86_64
+v | SLES12-SP5-Updates                | libstdc++6       | 12.3.0+git1204-1.13.1 | 13.2.1+git7813-1.10.1 | x86_64
+v | SLES12-SP5-Updates                | libxml2-2        | 2.9.4-46.65.1         | 2.9.4-46.68.2         | x86_64
+v | SLES12-SP5-Updates                | openssl-1_0_0    | 1.0.2p-3.84.1         | 1.0.2p-3.87.1         | x86_64
+v | SLE-Module-Public-Cloud12-Updates | python3-six      | 1.14.0-13.6.1         | 1.14.0-13.10.3        | noarch
+v | SLE-Module-Public-Cloud12-Updates | python3-urllib3  | 1.25.10-3.34.1        | 1.25.10-3.37.1        | noarch
+v | SLES12-SP5-Updates                | rsyslog          | 8.2106.0-8.14.1       | 8.2106.0-8.17.4       | x86_64
+v | SLE-Module-Containers12-Updates   | runc             | 1.1.9-16.37.1         | 1.1.10-16.40.1        | x86_64
+v | SLES12-SP5-Updates                | sqlite3-tcl      | 3.39.3-9.26.1         | 3.44.0-9.29.1         | x86_64
+v | SLES12-SP5-Updates                | vim              | 9.0.1894-17.23.2      | 9.0.2103-17.26.1      | x86_64
+v | SLES12-SP5-Updates                | vim-data-common  | 9.0.1894-17.23.2      | 9.0.2103-17.26.1      | noarch
