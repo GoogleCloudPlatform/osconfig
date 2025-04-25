@@ -236,28 +236,94 @@ some junk data`
 }
 
 func TestZypperPatches(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
+	tests := []struct {
+		name string
+		pkgs []string
 
-	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
-	runner = mockCommandRunner
-	expectedCmd := utilmocks.EqCmd(exec.Command(zypper, append(zypperListPatchesArgs, "--all")...))
-
-	data := []byte("SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1258 | recommended | moderate  | ---         | needed     | Recommended update for postfix")
-	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return(data, []byte("stderr"), nil).Times(1)
-	ret, err := ZypperPatches(testCtx)
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
+		expectedCommandsChain []expectedCommand
+		expectedError         error
+		expectedResults       []*ZypperPatch
+		expectedResultsFile   string
+	}{
+		{
+			name: "empty output maps to nil result",
+			expectedCommandsChain: []expectedCommand{
+				{
+					cmd:    exec.Command(zypper, append(zypperListPatchesArgs, "--all")...),
+					stdout: []byte{},
+					stderr: []byte("stderr"),
+				},
+			},
+			expectedResults: nil,
+		},
+		{
+			name: "`zypper list-patches` error propagates",
+			expectedCommandsChain: []expectedCommand{
+				{
+					cmd:    exec.Command(zypper, append(zypperListPatchesArgs, "--all")...),
+					stdout: []byte("stdout"),
+					stderr: []byte("stderr"),
+					err:    errors.New("error"),
+				},
+			},
+			expectedError: errors.New("error running /usr/bin/zypper with args [\"--gpg-auto-import-keys\" \"-q\" \"list-patches\" \"--all\"]: error, stdout: \"stdout\", stderr: \"stderr\""),
+		},
+		{
+			name: "single package maps correctly",
+			expectedCommandsChain: []expectedCommand{
+				{
+					cmd:    exec.Command(zypper, append(zypperListPatchesArgs, "--all")...),
+					stdout: []byte("SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1258 | recommended | moderate  | ---         | needed     | Recommended update for postfix"),
+					stderr: []byte("stderr"),
+				},
+			},
+			expectedResults: []*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix"}},
+		},
+		{
+			name: "sles-12 mapped list-patches stdout matches snapshot",
+			expectedCommandsChain: []expectedCommand{
+				{
+					cmd:    exec.Command(zypper, append(zypperListPatchesArgs, "--all")...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/sles_12_zypper_list_patches.stdout"),
+					stderr: []byte("stderr"),
+				},
+			},
+			expectedResultsFile: "./testdata/sles_12_zypper_list_patches.expected",
+		},
+		{
+			name: "sles-15 mapped list-patches stdout matches snapshot",
+			expectedCommandsChain: []expectedCommand{
+				{
+					cmd:    exec.Command(zypper, append(zypperListPatchesArgs, "--all")...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/sles_15_zypper_list_patches.stdout"),
+					stderr: []byte("stderr"),
+				},
+			},
+			expectedResultsFile: "./testdata/sles_15_zypper_list_patches.expected",
+		},
 	}
 
-	want := []*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix"}}
-	if !reflect.DeepEqual(ret, want) {
-		t.Errorf("ZypperPatches() = %v, want %v", ret, want)
-	}
+	for _, tt := range tests {
+		mockCtrl := gomock.NewController(t)
+		defer mockCtrl.Finish()
 
-	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), errors.New("error")).Times(1)
-	if _, err := ZypperPatches(testCtx); err == nil {
-		t.Errorf("did not get expected error")
+		mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+		SetCommandRunner(mockCommandRunner)
+
+		t.Run(tt.name, func(t *testing.T) {
+			setExpectations(mockCommandRunner, tt.expectedCommandsChain)
+
+			pkgs, err := ZypperPatches(testCtx)
+
+			if !reflect.DeepEqual(err, tt.expectedError) {
+				t.Errorf("unexpected err: expected %q, got %q", tt.expectedError, err)
+			}
+			if tt.expectedResultsFile != "" {
+				utiltest.MatchSnapshot(t, pkgs, tt.expectedResultsFile)
+			} else if !reflect.DeepEqual(pkgs, tt.expectedResults) {
+				t.Errorf("unexpected pkgs, expected %v, got %v", tt.expectedResults, pkgs)
+			}
+		})
 	}
 }
 
