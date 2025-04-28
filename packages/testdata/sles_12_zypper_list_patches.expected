@@ -1,0 +1,17 @@
+[]*packages.ZypperPatch{
+    &packages.ZypperPatch{Name:"SUSE-SLE-Module-Containers-12-2023-4625", Category:"security", Severity:"important", Summary:"Security update for containerd, docker, runc"},
+    &packages.ZypperPatch{Name:"SUSE-SLE-Module-Public-Cloud-12-2021-2194", Category:"recommended", Severity:"important", Summary:"Recommended update for the Azure and AWS SDKs"},
+    &packages.ZypperPatch{Name:"SUSE-SLE-Module-Public-Cloud-12-2023-4468", Category:"security", Severity:"moderate", Summary:"Security update for python-urllib3"},
+    &packages.ZypperPatch{Name:"SUSE-SLE-SDK-12-SP5-2023-4468", Category:"security", Severity:"moderate", Summary:"Security update for python-urllib3"},
+    &packages.ZypperPatch{Name:"SUSE-SLE-SERVER-12-SP5-2023-4452", Category:"recommended", Severity:"important", Summary:"Recommended update for rsyslog"},
+    &packages.ZypperPatch{Name:"SUSE-SLE-SERVER-12-SP5-2023-4468", Category:"security", Severity:"moderate", Summary:"Security update for python-urllib3"},
+    &packages.ZypperPatch{Name:"SUSE-SLE-SERVER-12-SP5-2023-4480", Category:"security", Severity:"important", Summary:"Security update for gcc13"},
+    &packages.ZypperPatch{Name:"SUSE-SLE-SERVER-12-SP5-2023-4499", Category:"security", Severity:"moderate", Summary:"Security update for avahi"},
+    &packages.ZypperPatch{Name:"SUSE-SLE-SERVER-12-SP5-2023-4505", Category:"security", Severity:"moderate", Summary:"Security update for libxml2"},
+    &packages.ZypperPatch{Name:"SUSE-SLE-SERVER-12-SP5-2023-4521", Category:"security", Severity:"important", Summary:"Security update for openssl-1_1"},
+    &packages.ZypperPatch{Name:"SUSE-SLE-SERVER-12-SP5-2023-4523", Category:"security", Severity:"important", Summary:"Security update for openssl-1_0_0"},
+    &packages.ZypperPatch{Name:"SUSE-SLE-SERVER-12-SP5-2023-4541", Category:"recommended", Severity:"moderate", Summary:"Recommended update for autofs"},
+    &packages.ZypperPatch{Name:"SUSE-SLE-SERVER-12-SP5-2023-4560", Category:"security", Severity:"important", Summary:"Security update for vim"},
+    &packages.ZypperPatch{Name:"SUSE-SLE-SERVER-12-SP5-2023-4576", Category:"security", Severity:"important", Summary:"Security update for sqlite3"},
+    &packages.ZypperPatch{Name:"SUSE-SLE-SERVER-12-SP5-2023-4653", Category:"security", Severity:"moderate", Summary:"Security update for curl"},
+}

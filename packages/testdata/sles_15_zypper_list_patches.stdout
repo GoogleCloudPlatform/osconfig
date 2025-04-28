@@ -1,0 +1,123 @@
+
+Repository                                    | Name                                                  | Category    | Severity  | Interactive | Status     | Summary
+----------------------------------------------+-------------------------------------------------------+-------------+-----------+-------------+------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-335            | recommended | moderate  | ---         | not needed | Recommended update for hyper-v
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-2233           | security    | important | ---         | not needed | Security update for cups-filters
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-2236           | recommended | critical  | ---         | not needed | Security update for python-looseversion
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-2239           | recommended | low       | ---         | not needed | Recommended update for zram-generator
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-2240           | recommended | moderate  | ---         | applied    | Recommended update for systemd
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-2243           | security    | important | reboot      | not needed | Security update for ucode-intel
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-2245           | recommended | moderate  | restart     | applied    | Recommended update for libzypp, zypper
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-2269           | feature     | moderate  | ---         | not needed | Feature update for javapackages-tools
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-2307           | recommended | low       | ---         | applied    | Recommended update for kbd
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-2313           | security    | important | ---         | applied    | Security update for c-ares
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-2320           | security    | moderate  | ---         | not needed | Security update for wireshark
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-2484           | security    | moderate  | ---         | applied    | Security update for openldap2
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-2495           | recommended | important | restart     | applied    | Recommended update for libzypp
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-2535           | security    | important | reboot      | applied    | Security update for xen
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-2571           | security    | moderate  | restart     | applied    | Security update for Salt
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-2582           | recommended | moderate  | restart     | not needed | Recommended update for salt
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-2585           | security    | moderate  | restart     | not needed | Security update for salt and python-pyzmq
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-2615           | recommended | important | ---         | not needed | Recommended update for mdadm
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-2901           | recommended | important | ---         | applied    | Recommended update for lvm2
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3019           | security    | moderate  | reboot      | not needed | Security update for kernel-firmware
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3146           | optional    | low       | ---         | not needed | Optional update for mono-core, ghc, ghc-xml-conduit, gstreamer, poppler and python-mccabe
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3190           | security    | low       | ---         | not needed | Security update for xtrans
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3413           | feature     | important | ---         | not needed | Feature update for LibreOffice and xmlsec1
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3440           | security    | low       | ---         | applied    | Security update for gawk
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3451           | recommended | moderate  | reboot      | applied    | Recommended update for systemd
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3634           | security    | critical  | ---         | not needed | Security update for libwebp
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3704           | security    | important | reboot      | retracted  | Security update for the Linux Kernel
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3716           | recommended | moderate  | ---         | needed     | Recommended update for libnvme, nvme-cli
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3717           | recommended | moderate  | ---         | needed     | Recommended update for apparmor
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3780           | recommended | moderate  | ---         | needed     | Recommended update hidapi
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3814           | recommended | moderate  | ---         | needed     | Recommended update for glibc
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3821           | security    | important | ---         | needed     | Security update for bind
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3822           | security    | moderate  | ---         | needed     | Security update for supportutils
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3823           | security    | important | ---         | needed     | Security update for curl
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3825           | security    | important | ---         | needed     | Security update for binutils
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3828           | security    | important | ---         | needed     | Security update for python3
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3831           | security    | important | reboot      | needed     | Security update for xen
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3843           | recommended | important | ---         | needed     | Recommended update for suse-build-key
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3951           | recommended | moderate  | ---         | needed     | Recommended update for python3-jmespath, python3-ply
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3954           | security    | important | ---         | needed     | Security update for libeconf
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3963           | security    | moderate  | ---         | needed     | Security update for libX11
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3970           | recommended | moderate  | ---         | needed     | Recommended update for dracut
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3971           | security    | important | reboot      | needed     | Security update for the Linux Kernel
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3973           | recommended | moderate  | restart     | needed     | Recommended update for zypper
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3978           | recommended | moderate  | ---         | needed     | Recommended update for nfs-utils
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3985           | recommended | important | ---         | needed     | Recommended update for suse-module-tools
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-3997           | security    | important | ---         | needed     | Security update for nghttp2
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4003           | recommended | moderate  | ---         | needed     | Recommended update for apparmor
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4024           | security    | low       | ---         | needed     | Security update for shadow
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4044           | security    | important | ---         | needed     | Security update for curl
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4046           | security    | important | ---         | needed     | Security update for samba
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4054           | security    | important | ---         | needed     | Security update for xen
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4071           | security    | important | reboot      | needed     | Security update for the Linux Kernel
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4073           | recommended | low       | ---         | needed     | Recommended update for rpm
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4105           | recommended | moderate  | ---         | needed     | Recommended update for openssl-1_1
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4108           | security    | moderate  | ---         | needed     | Security update for python-urllib3
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4110           | security    | important | ---         | needed     | Security update for glibc
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4136           | security    | important | ---         | needed     | Security update for suse-module-tools
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4138           | recommended | moderate  | ---         | needed     | Recommended update for systemd-rpm-macros
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4141           | security    | important | ---         | needed     | Security update for grub2
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4153           | recommended | moderate  | ---         | needed     | Recommended update for systemd
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4154           | recommended | moderate  | ---         | needed     | Recommended update for aaa_base
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4162           | security    | important | ---         | needed     | Security update for gcc13
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4176           | security    | important | ---         | needed     | Security update for ruby2.5
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4191           | recommended | moderate  | ---         | needed     | Recommended update for yast2-iscsi-client
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4194           | feature     | low       | ---         | optional   | Feature update for python3
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4200           | security    | important | ---         | needed     | Security update for nghttp2
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4215           | security    | moderate  | ---         | needed     | Security update for zlib
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4225           | security    | important | ---         | needed     | Security update for zchunk
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4268           | recommended | important | ---         | needed     | Recommended update for pciutils
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4310           | recommended | moderate  | ---         | needed     | Recommended update for libtirpc
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4375           | security    | important | reboot      | needed     | Security update for the Linux Kernel
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4386           | security    | important | restart     | not needed | Security update for salt
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4450           | recommended | moderate  | ---         | needed     | Recommended update for crypto-policies
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4457           | recommended | important | ---         | needed     | Recommended update for nvme-cli
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4458           | security    | important | ---         | needed     | Security update for gcc13
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4460           | recommended | moderate  | ---         | needed     | Recommended update for rsyslog
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4467           | security    | moderate  | ---         | needed     | Security update for python-urllib3
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4475           | security    | important | reboot      | needed     | Security update for xen
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4478           | recommended | moderate  | ---         | needed     | Recommended update for grub2
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4502           | feature     | low       | ---         | not needed | Feature update for python3
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4503           | security    | moderate  | ---         | needed     | Security update for avahi
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4504           | security    | moderate  | ---         | needed     | Security update for libxml2
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4517           | security    | moderate  | ---         | needed     | Security update for python3-setuptools
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4518           | security    | important | ---         | needed     | Security update for openssl-1_1
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4525           | recommended | moderate  | ---         | needed     | Recommended update for samba
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4534           | recommended | moderate  | restart     | needed     | Recommended update for libzypp, zypper
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4538           | recommended | moderate  | ---         | needed     | Recommended update for screen
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4556           | recommended | moderate  | ---         | needed     | Recommended update for libstorage-ng
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4557           | security    | important | ---         | needed     | Security update for vim
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4583           | feature     | moderate  | ---         | optional   | Feature update for python-psutil
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4601           | recommended | moderate  | ---         | needed     | Recommended update for suseconnect-ng
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4615           | recommended | moderate  | ---         | needed     | Recommended update for icu
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4619           | security    | important | ---         | needed     | Security update for sqlite3
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4620           | recommended | moderate  | ---         | needed     | Recommended update for libhugetlbfs
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4627           | recommended | moderate  | ---         | needed     | Recommended update for man-pages
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4644           | recommended | moderate  | ---         | needed     | Recommended update for psmisc
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4659           | security    | moderate  | ---         | needed     | Security update for curl
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4671           | recommended | moderate  | ---         | needed     | Recommended update for man
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4672           | security    | important | ---         | needed     | Security update for suse-build-key
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4678           | feature     | important | ---         | optional   | Feature update for lvm2
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4685           | recommended | moderate  | ---         | needed     | Recommended update for yast2-storage-ng
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4699           | recommended | moderate  | ---         | needed     | Recommended update for gpg2
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4700           | recommended | moderate  | ---         | needed     | Recommended update for p11-kit
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4703           | recommended | moderate  | ---         | needed     | Recommended update for dracut
+SLE-Module-Basesystem15-SP5-Updates           | SUSE-SLE-Module-Basesystem-15-SP5-2023-4706           | recommended | moderate  | ---         | needed     | Recommended update for yast2-installation
+SLE-Module-Desktop-Applications15-SP5-Updates | SUSE-SLE-Module-Desktop-Applications-15-SP5-2023-3550 | optional    | moderate  | ---         | not needed | Optional update for ibus
+SLE-Module-DevTools15-SP5-Updates             | SUSE-SLE-Module-Development-Tools-15-SP5-2023-3704    | security    | important | reboot      | retracted  | Security update for the Linux Kernel
+SLE-Module-Public-Cloud15-SP5-Updates         | SUSE-SLE-Module-Public-Cloud-15-SP5-2023-2430         | recommended | critical  | ---         | applied    | Recommended update for supportutils-plugin-suse-public-cloud
+SLE-Module-Public-Cloud15-SP5-Updates         | SUSE-SLE-Module-Public-Cloud-15-SP5-2023-2898         | feature     | critical  | ---         | applied    | Recommended update for python-instance-billing-flavor-check
+SLE-Module-Public-Cloud15-SP5-Updates         | SUSE-SLE-Module-Public-Cloud-15-SP5-2023-4073         | recommended | low       | ---         | needed     | Recommended update for rpm
+SLE-Module-Public-Cloud15-SP5-Updates         | SUSE-SLE-Module-Public-Cloud-15-SP5-2023-4304         | recommended | moderate  | ---         | needed     | Recommended update for cloud-regionsrv-client
+SLE-Module-Public-Cloud15-SP5-Updates         | SUSE-SLE-Module-Public-Cloud-15-SP5-2023-4610         | recommended | moderate  | ---         | needed     | Recommended update for google-guest-configs
+SLE-Module-Public-Cloud15-SP5-Updates         | SUSE-SLE-Module-Public-Cloud-15-SP5-2023-4670         | recommended | critical  | ---         | needed     | Recommended update for regionServiceClientConfigGCE
+SLE-Product-SLES15-SP5-Updates                | SUSE-SLE-Product-SLES-15-SP5-2023-4223                | recommended | low       | ---         | needed     | Recommended update for release-notes-sles
+SLE-Product-SLES15-SP5-Updates                | SUSE-SLE-Product-SLES-15-SP5-2023-4382                | recommended | important | ---         | needed     | Recommended update for release-notes-sles
+
+3 patches optional (use '--with-optional' to include optional patches)
+80 patches needed (36 security patches)
+
