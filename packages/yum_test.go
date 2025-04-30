@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
+	utiltest "github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/golang/mock/gomock"
 )
 
@@ -154,28 +155,106 @@ func TestYumUpdates(t *testing.T) {
 		}
 	})
 
-	/*	// Test WithSecurityWithExcludes
-		t.Run("WithSecurityWithExcludes", func(t *testing.T) {
-			// the mock data returned by mockcommandrunner will not include this
-			// package anyways. The purpose of this test is to make sure that
-			// when customer specifies excluded packages, we set the --exclude flag
-			// in the yum command.
-			expectedCmd := exec.CommandContext(context.Background(), yum, append(yumListUpdatesArgs, "--security")...)
+	tests := []struct {
+		name                  string
+		expectedCommandsChain []expectedCommand
+		expectedError         error
+		expectedResultsFile   string
+	}{
+		{
+			name: "centos-7-1 mapped output matches snapshot",
+			expectedCommandsChain: []expectedCommand{
+				{
+					cmd:    exec.Command(yum, yumCheckUpdateArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/centos-7-1.yum-check-update.stdout"),
+					stderr: utiltest.BytesFromFile(t, "./testdata/centos-7-1.yum-check-update.stderr"),
+					err:    errExit100,
+				},
+				{
+					cmd:    exec.Command(yum, yumListUpdatesArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/centos-7-1.yum-update.stdout"),
+					stderr: utiltest.BytesFromFile(t, "./testdata/centos-7-1.yum-update.stderr"),
+					err:    nil,
+				},
+			},
+			expectedResultsFile: "./testdata/centos-7-1.yum-update.expected",
+		},
+		{
+			name: "oracle-linux-8 mapped output matches snapshot",
+			expectedCommandsChain: []expectedCommand{
+				{
+					cmd:    exec.Command(yum, yumCheckUpdateArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/oracle-linux-8.yum-check-update.stdout"),
+					stderr: utiltest.BytesFromFile(t, "./testdata/oracle-linux-8.yum-check-update.stderr"),
+					err:    errExit100,
+				},
+				{
+					cmd:    exec.Command(yum, yumListUpdatesArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/oracle-linux-8.yum-update.stdout"),
+					stderr: utiltest.BytesFromFile(t, "./testdata/oracle-linux-8.yum-update.stderr"),
+					err:    nil,
+				},
+			},
+			expectedResultsFile: "./testdata/oracle-linux-8.yum-update.expected",
+		},
+		{
+			name: "rhel-7-1 mapped output matches snapshot",
+			expectedCommandsChain: []expectedCommand{
+				{
+					cmd:    exec.Command(yum, yumCheckUpdateArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/rhel-7-1.yum-check-update.stdout"),
+					stderr: utiltest.BytesFromFile(t, "./testdata/rhel-7-1.yum-check-update.stderr"),
+					err:    errExit100,
+				},
+				{
+					cmd:    exec.Command(yum, yumListUpdatesArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/rhel-7-1.yum-update.stdout"),
+					stderr: utiltest.BytesFromFile(t, "./testdata/rhel-7-1.yum-update.stderr"),
+					err:    nil,
+				},
+			},
+			expectedResultsFile: "./testdata/rhel-7-1.yum-update.expected",
+		},
+		{
+			name: "rocky8-8 mapped output matches snapshot",
+			expectedCommandsChain: []expectedCommand{
+				{
+					cmd:    exec.Command(yum, yumCheckUpdateArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/rocky8-8.yum-check-update.stdout"),
+					stderr: utiltest.BytesFromFile(t, "./testdata/rocky8-8.yum-check-update.stderr"),
+					err:    errExit100,
+				},
+				{
+					cmd:    exec.Command(yum, yumListUpdatesArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/rocky8-8.yum-update.stdout"),
+					stderr: utiltest.BytesFromFile(t, "./testdata/rocky8-8.yum-update.stderr"),
+					err:    nil,
+				},
+			},
+			expectedResultsFile: "./testdata/rocky8-8.yum-update.expected",
+		},
+	}
 
-			first := mockCommandRunner.EXPECT().Run(testCtx, expectedCheckUpdate).Return(data, []byte("stderr"), errExit100).Times(1)
-			mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).After(first).Return(data, []byte("stderr"), nil).Times(1)
-			ret, err := YumUpdates(testCtx, YumUpdateMinimal(false), YumUpdateSecurity(true))
-			if err != nil {
-				t.Errorf("did not expect error: %v", err)
-			}
+	for _, tt := range tests {
+		mockCtrl := gomock.NewController(t)
+		defer mockCtrl.Finish()
 
-			allPackageNames := []string{"kernel", "foo", "bar"}
-			for _, pkg := range ret {
-				if !contains(allPackageNames, pkg.Name) {
-					t.Errorf("package %s expected to be present.", pkg.Name)
-				}
+		mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+		SetCommandRunner(mockCommandRunner)
+		SetPtyCommandRunner(mockCommandRunner)
+
+		t.Run(tt.name, func(t *testing.T) {
+			setExpectations(mockCommandRunner, tt.expectedCommandsChain)
+
+			pkgs, err := YumUpdates(testCtx)
+
+			if !reflect.DeepEqual(err, tt.expectedError) {
+				t.Errorf("unexpected err: expected %v, got %q", tt.expectedError, err)
+			} else {
+				utiltest.MatchSnapshot(t, pkgs, tt.expectedResultsFile)
 			}
-		})*/
+		})
+	}
 }
 
 func contains(names []string, name string) bool {

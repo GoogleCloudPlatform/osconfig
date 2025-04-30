@@ -1,0 +1,26 @@
+http://abqix.mm.fcix.net/centos/7.9.2009/os/x86_64/repodata/repomd.xml: [Errno 14] HTTP Error 404 - Not Found
+Trying other mirror.
+To address this issue please refer to the below wiki article 
+
+https://wiki.centos.org/yum-errors
+
+If above article doesn't help to resolve this issue please use https://bugs.centos.org/.
+
+http://mirrors.raystedman.org/centos/7.9.2009/os/x86_64/repodata/repomd.xml: [Errno 14] curl#7 - "Failed connect to mirrors.raystedman.org:80; Connection refused"
+Trying other mirror.
+http://linux.cc.lehigh.edu/centos/7.9.2009/os/x86_64/repodata/repomd.xml: [Errno 14] curl#6 - "Could not resolve host: linux.cc.lehigh.edu; Name or service not known"
+Trying other mirror.
+http://nnenix.mm.fcix.net/centos/7.9.2009/os/x86_64/repodata/repomd.xml: [Errno 14] HTTP Error 404 - Not Found
+Trying other mirror.
+http://mirror.web-ster.com/centos/7.9.2009/os/x86_64/repodata/repomd.xml: [Errno 14] HTTP Error 404 - Not Found
+Trying other mirror.
+http://mirror.keystealth.org/centos/7.9.2009/os/x86_64/repodata/repomd.xml: [Errno 14] HTTP Error 404 - Not Found
+Trying other mirror.
+http://us.mirrors.virtono.com/centos/7.9.2009/os/x86_64/repodata/repomd.xml: [Errno 12] Timeout on http://us.mirrors.virtono.com/centos/7.9.2009/os/x86_64/repodata/repomd.xml: (28, 'Connection timed out after 30001 milliseconds')
+Trying other mirror.
+http://mirror.nodesdirect.com/centos/7.9.2009/os/x86_64/repodata/repomd.xml: [Errno 14] HTTP Error 404 - Not Found
+Trying other mirror.
+http://mirror.math.princeton.edu/pub/centos/7.9.2009/os/x86_64/repodata/repomd.xml: [Errno 14] HTTP Error 404 - Not Found
+Trying other mirror.
+http://mirror.umd.edu/centos/7.9.2009/os/x86_64/repodata/repomd.xml: [Errno 14] HTTP Error 404 - Not Found
+Trying other mirror.

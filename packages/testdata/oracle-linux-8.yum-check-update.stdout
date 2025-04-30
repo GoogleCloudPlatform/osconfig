@@ -1,0 +1,90 @@
+Last metadata expiration check: 0:34:17 ago on Mon 28 Apr 2025 03:31:47 PM UTC.
+
+bpftool.x86_64                      5.15.0-307.178.5.el8uek             ol8_UEKR7            
+cpp.x86_64                          8.5.0-26.0.1.el8_10                 ol8_appstream        
+device-mapper-multipath.x86_64      0.8.4-42.el8_10                     ol8_baseos_latest    
+device-mapper-multipath-libs.x86_64 0.8.4-42.el8_10                     ol8_baseos_latest    
+expat.x86_64                        2.2.5-17.0.1.el8_10                 ol8_baseos_latest    
+freetype.x86_64                     2.9.1-10.el8_10                     ol8_baseos_latest    
+gcc.x86_64                          8.5.0-26.0.1.el8_10                 ol8_appstream        
+glibc.x86_64                        2.28-251.0.3.el8_10.16              ol8_baseos_latest    
+glibc-common.x86_64                 2.28-251.0.3.el8_10.16              ol8_baseos_latest    
+glibc-devel.x86_64                  2.28-251.0.3.el8_10.16              ol8_baseos_latest    
+glibc-gconv-extra.x86_64            2.28-251.0.3.el8_10.16              ol8_baseos_latest    
+glibc-headers.x86_64                2.28-251.0.3.el8_10.16              ol8_baseos_latest    
+glibc-langpack-en.x86_64            2.28-251.0.3.el8_10.16              ol8_baseos_latest    
+gnutls.x86_64                       3.6.16-8.el8_10.3                   ol8_baseos_latest    
+google-guest-agent.x86_64           1:20250327.01-g1.el8                google-compute-engine
+google-osconfig-agent.x86_64        1:20250320.00-g1.el8                google-compute-engine
+grub2-common.noarch                 1:2.02-164.0.2.el8_10               ol8_baseos_latest    
+grub2-efi-x64.x86_64                1:2.02-164.0.2.el8_10               ol8_baseos_latest    
+grub2-tools.x86_64                  1:2.02-164.0.2.el8_10               ol8_baseos_latest    
+grub2-tools-efi.x86_64              1:2.02-164.0.2.el8_10               ol8_baseos_latest    
+grub2-tools-extra.x86_64            1:2.02-164.0.2.el8_10               ol8_baseos_latest    
+grub2-tools-minimal.x86_64          1:2.02-164.0.2.el8_10               ol8_baseos_latest    
+iwl100-firmware.noarch              999:39.31.5.1-999.39.el8            ol8_baseos_latest    
+iwl1000-firmware.noarch             999:39.31.5.1-999.39.el8            ol8_baseos_latest    
+iwl105-firmware.noarch              999:18.168.6.1-999.39.el8           ol8_baseos_latest    
+iwl135-firmware.noarch              999:18.168.6.1-999.39.el8           ol8_baseos_latest    
+iwl2000-firmware.noarch             999:18.168.6.1-999.39.el8           ol8_baseos_latest    
+iwl2030-firmware.noarch             999:18.168.6.1-999.39.el8           ol8_baseos_latest    
+iwl3160-firmware.noarch             999:25.30.13.0-999.39.el8           ol8_baseos_latest    
+iwl5000-firmware.noarch             999:8.83.5.1_1-999.39.el8           ol8_baseos_latest    
+iwl5150-firmware.noarch             999:8.24.2.2-999.39.el8             ol8_baseos_latest    
+iwl6000-firmware.noarch             999:9.221.4.1-999.39.el8            ol8_baseos_latest    
+iwl6000g2a-firmware.noarch          999:18.168.6.1-999.39.el8           ol8_baseos_latest    
+iwl6050-firmware.noarch             999:41.28.5.1-999.39.el8            ol8_baseos_latest    
+iwl7260-firmware.noarch             999:25.30.13.0-999.39.el8           ol8_baseos_latest    
+iwlax2xx-firmware.noarch            999:20250319-999.39.el8             ol8_baseos_latest    
+kernel.x86_64                       4.18.0-553.50.1.el8_10              ol8_baseos_latest    
+kernel-core.x86_64                  4.18.0-553.50.1.el8_10              ol8_baseos_latest    
+kernel-devel.x86_64                 4.18.0-553.50.1.el8_10              ol8_baseos_latest    
+kernel-headers.x86_64               4.18.0-553.50.1.el8_10              ol8_baseos_latest    
+kernel-modules.x86_64               4.18.0-553.50.1.el8_10              ol8_baseos_latest    
+kernel-tools.x86_64                 4.18.0-553.50.1.el8_10              ol8_baseos_latest    
+kernel-tools-libs.x86_64            4.18.0-553.50.1.el8_10              ol8_baseos_latest    
+kernel-uek.x86_64                   5.15.0-307.178.5.el8uek             ol8_UEKR7            
+kernel-uek-core.x86_64              5.15.0-307.178.5.el8uek             ol8_UEKR7            
+kernel-uek-devel.x86_64             5.15.0-307.178.5.el8uek             ol8_UEKR7            
+kernel-uek-modules.x86_64           5.15.0-307.178.5.el8uek             ol8_UEKR7            
+kernel-uek-modules-extra.x86_64     5.15.0-307.178.5.el8uek             ol8_UEKR7            
+kexec-tools.x86_64                  2.0.28-1.0.9.el8_10                 ol8_baseos_latest    
+kpartx.x86_64                       0.8.4-42.el8_10                     ol8_baseos_latest    
+libgcc.x86_64                       8.5.0-26.0.1.el8_10                 ol8_baseos_latest    
+libgfortran.x86_64                  8.5.0-26.0.1.el8_10                 ol8_baseos_latest    
+libgomp.x86_64                      8.5.0-26.0.1.el8_10                 ol8_baseos_latest    
+libquadmath.x86_64                  8.5.0-26.0.1.el8_10                 ol8_baseos_latest    
+libsmbclient.x86_64                 4.19.4-7.0.1.el8_10                 ol8_baseos_latest    
+libstdc++.x86_64                    8.5.0-26.0.1.el8_10                 ol8_baseos_latest    
+libtasn1.x86_64                     4.13-5.el8_10                       ol8_baseos_latest    
+libwbclient.x86_64                  4.19.4-7.0.1.el8_10                 ol8_baseos_latest    
+linux-firmware.noarch               999:20250319-999.39.git430633ec.el8 ol8_baseos_latest    
+linux-firmware-core.noarch          999:20250319-999.39.git430633ec.el8 ol8_baseos_latest    
+microcode_ctl.x86_64                4:20250211-1.0.1.el8_10             ol8_baseos_latest    
+perf.x86_64                         4.18.0-553.50.1.el8_10              ol8_baseos_latest    
+python3-perf.x86_64                 4.18.0-553.50.1.el8_10              ol8_baseos_latest    
+samba-client-libs.x86_64            4.19.4-7.0.1.el8_10                 ol8_baseos_latest    
+samba-common.noarch                 4.19.4-7.0.1.el8_10                 ol8_baseos_latest    
+samba-common-libs.x86_64            4.19.4-7.0.1.el8_10                 ol8_baseos_latest    
+shim-x64.x86_64                     15.8-4.0.2.el8_10                   ol8_baseos_latest    
+sos.noarch                          4.8.2-1.0.2.el8_10                  ol8_baseos_latest    
+systemd.x86_64                      239-82.0.3.el8_10.5                 ol8_baseos_latest    
+systemd-libs.x86_64                 239-82.0.3.el8_10.5                 ol8_baseos_latest    
+systemd-pam.x86_64                  239-82.0.3.el8_10.5                 ol8_baseos_latest    
+systemd-udev.x86_64                 239-82.0.3.el8_10.5                 ol8_baseos_latest    
+tzdata.noarch                       2025b-1.0.1.el8                     ol8_baseos_latest    
+Obsoleting Packages
+grub2-tools.x86_64                  1:2.02-164.0.2.el8_10               ol8_baseos_latest    
+    grub2-tools.x86_64              1:2.02-160.0.1.el8_10               @System              
+grub2-tools-efi.x86_64              1:2.02-164.0.2.el8_10               ol8_baseos_latest    
+    grub2-tools.x86_64              1:2.02-160.0.1.el8_10               @System              
+grub2-tools-extra.x86_64            1:2.02-164.0.2.el8_10               ol8_baseos_latest    
+    grub2-tools.x86_64              1:2.02-160.0.1.el8_10               @System              
+grub2-tools-minimal.x86_64          1:2.02-164.0.2.el8_10               ol8_baseos_latest    
+    grub2-tools.x86_64              1:2.02-160.0.1.el8_10               @System              
+kernel-headers.x86_64               4.18.0-553.46.1.el8_10              ol8_baseos_latest    
+    kernel-headers.x86_64           4.18.0-553.45.1.el8_10              @System              
+kernel-headers.x86_64               4.18.0-553.47.1.el8_10              ol8_baseos_latest    
+    kernel-headers.x86_64           4.18.0-553.45.1.el8_10              @System              
+kernel-headers.x86_64               4.18.0-553.50.1.el8_10              ol8_baseos_latest    
+    kernel-headers.x86_64           4.18.0-553.45.1.el8_10              @System              
