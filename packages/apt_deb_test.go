@@ -287,7 +287,7 @@ func TestAptUpdates(t *testing.T) {
 			expectedError:   nil,
 		},
 		{
-			name: "Full upgrade type (ubuntu 20)",
+			name: "ubuntu-20 mapped full-upgrade stdout matches snapshot",
 			args: []AptGetUpgradeOption{AptGetUpgradeType(AptGetFullUpgrade)},
 			expectedCommandsChain: []expectedCommand{
 				{
@@ -300,16 +300,16 @@ func TestAptUpdates(t *testing.T) {
 				{
 					cmd:    exec.Command(aptGet, append(slices.Clone(aptGetUpgradableArgs), aptGetFullUpgradeCmd)...),
 					envs:   []string{"DEBIAN_FRONTEND=noninteractive"},
-					stdout: utiltest.BytesFromFile(t, "./testdata/ubuntu_20_apt_get_full_upgrade.stdout"),
+					stdout: utiltest.BytesFromFile(t, "./testdata/ubuntu-20.apt-get-full-upgrade.stdout"),
 					stderr: []byte(""),
 					err:    nil,
 				},
 			},
-			expectedResultsFile: "./testdata/ubuntu_20_apt_get_full_upgrade.expected",
+			expectedResultsFile: "./testdata/ubuntu-20.apt-get-full-upgrade.expected",
 			expectedError:       nil,
 		},
 		{
-			name: "Full upgrade type (ubuntu 22)",
+			name: "ubuntu-22 mapped full-upgrade stdout matches snapshot",
 			args: []AptGetUpgradeOption{AptGetUpgradeType(AptGetFullUpgrade)},
 			expectedCommandsChain: []expectedCommand{
 				{
@@ -322,16 +322,16 @@ func TestAptUpdates(t *testing.T) {
 				{
 					cmd:    exec.Command(aptGet, append(slices.Clone(aptGetUpgradableArgs), aptGetFullUpgradeCmd)...),
 					envs:   []string{"DEBIAN_FRONTEND=noninteractive"},
-					stdout: utiltest.BytesFromFile(t, "./testdata/ubuntu_22_apt_get_full_upgrade.stdout"),
+					stdout: utiltest.BytesFromFile(t, "./testdata/ubuntu-22.apt-get-full-upgrade.stdout"),
 					stderr: []byte(""),
 					err:    nil,
 				},
 			},
-			expectedResultsFile: "./testdata/ubuntu_22_apt_get_full_upgrade.expected",
+			expectedResultsFile: "./testdata/ubuntu-22.apt-get-full-upgrade.expected",
 			expectedError:       nil,
 		},
 		{
-			name: "Full upgrade type (ubuntu 24)",
+			name: "ubuntu-24 mapped full-upgrade stdout matches snapshot",
 			args: []AptGetUpgradeOption{AptGetUpgradeType(AptGetFullUpgrade)},
 			expectedCommandsChain: []expectedCommand{
 				{
@@ -344,12 +344,12 @@ func TestAptUpdates(t *testing.T) {
 				{
 					cmd:    exec.Command(aptGet, append(slices.Clone(aptGetUpgradableArgs), aptGetFullUpgradeCmd)...),
 					envs:   []string{"DEBIAN_FRONTEND=noninteractive"},
-					stdout: utiltest.BytesFromFile(t, "./testdata/ubuntu_24_apt_get_full_upgrade.stdout"),
+					stdout: utiltest.BytesFromFile(t, "./testdata/ubuntu-24.apt-get-full-upgrade.stdout"),
 					stderr: []byte(""),
 					err:    nil,
 				},
 			},
-			expectedResultsFile: "./testdata/ubuntu_24_apt_get_full_upgrade.expected",
+			expectedResultsFile: "./testdata/ubuntu-24.apt-get-full-upgrade.expected",
 			expectedError:       nil,
 		},
 		{

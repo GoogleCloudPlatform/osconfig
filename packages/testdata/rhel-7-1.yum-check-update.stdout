@@ -1,0 +1,22 @@
+
+google-cloud-sdk.x86_64       468.0.0-1             google-cloud-sdk            
+google-compute-engine.noarch  1:20240607.00-g1.el7  google-compute-engine       
+google-compute-engine-oslogin.x86_64
+                              1:20240415.00-g1.el7  google-compute-engine       
+google-guest-agent.x86_64     1:20240528.00-g1.el7  google-compute-engine       
+google-osconfig-agent.x86_64  1:20240524.03-g1.el7  google-compute-engine       
+kernel.x86_64                 3.10.0-1160.119.1.el7 rhui-rhel-7-server-rhui-rpms
+kernel-tools.x86_64           3.10.0-1160.119.1.el7 rhui-rhel-7-server-rhui-rpms
+kernel-tools-libs.x86_64      3.10.0-1160.119.1.el7 rhui-rhel-7-server-rhui-rpms
+python-perf.x86_64            3.10.0-1160.119.1.el7 rhui-rhel-7-server-rhui-rpms
+redhat-release-server.x86_64  7.9-12.el7_9          rhui-rhel-7-server-rhui-rpms
+redhat-support-lib-python.noarch
+                              0.14.0-1.el7_9        rhui-rhel-7-server-rhui-rpms
+redhat-support-tool.noarch    0.14.0-1.el7_9        rhui-rhel-7-server-rhui-rpms
+systemd.x86_64                219-78.el7_9.9        rhui-rhel-7-server-rhui-rpms
+systemd-libs.x86_64           219-78.el7_9.9        rhui-rhel-7-server-rhui-rpms
+systemd-sysv.x86_64           219-78.el7_9.9        rhui-rhel-7-server-rhui-rpms
+tzdata.noarch                 2024a-1.el7           rhui-rhel-7-server-rhui-rpms
+Obsoleting Packages
+google-cloud-cli.x86_64       519.0.0-1             google-cloud-sdk            
+    google-cloud-sdk.x86_64   455.0.0-1             @google-cloud-sdk           

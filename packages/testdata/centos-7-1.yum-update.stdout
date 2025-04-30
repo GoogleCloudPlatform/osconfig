@@ -1,0 +1,150 @@
+Loaded plugins: fastestmirror
+Resolving Dependencies
+--> Running transaction check
+---> Package bind-export-libs.x86_64 32:9.11.4-26.P2.el7_9.15 will be updated
+---> Package bind-export-libs.x86_64 32:9.11.4-26.P2.el7_9.16 will be an update
+---> Package centos-release.x86_64 0:7-9.2009.1.el7.centos will be updated
+---> Package centos-release.x86_64 0:7-9.2009.2.el7.centos will be an update
+---> Package curl.x86_64 0:7.29.0-59.el7_9.1 will be updated
+---> Package curl.x86_64 0:7.29.0-59.el7_9.2 will be an update
+---> Package dhclient.x86_64 12:4.2.5-83.el7.centos.1 will be updated
+---> Package dhclient.x86_64 12:4.2.5-83.el7.centos.2 will be an update
+---> Package dhcp-common.x86_64 12:4.2.5-83.el7.centos.1 will be updated
+---> Package dhcp-common.x86_64 12:4.2.5-83.el7.centos.2 will be an update
+---> Package dhcp-libs.x86_64 12:4.2.5-83.el7.centos.1 will be updated
+---> Package dhcp-libs.x86_64 12:4.2.5-83.el7.centos.2 will be an update
+---> Package glibc.x86_64 0:2.17-326.el7_9 will be updated
+---> Package glibc.x86_64 0:2.17-326.el7_9.3 will be an update
+---> Package glibc-common.x86_64 0:2.17-326.el7_9 will be updated
+---> Package glibc-common.x86_64 0:2.17-326.el7_9.3 will be an update
+---> Package google-cloud-cli.x86_64 0:519.0.0-1 will be obsoleting
+--> Processing Dependency: google-cloud-cli-anthoscli for package: google-cloud-cli-519.0.0-1.x86_64
+---> Package google-cloud-sdk.x86_64 0:455.0.0-1 will be obsoleted
+---> Package google-compute-engine.noarch 1:20230801.00-g1.el7 will be updated
+---> Package google-compute-engine.noarch 1:20240607.00-g1.el7 will be an update
+---> Package google-compute-engine-oslogin.x86_64 1:20231004.00-g1.el7 will be updated
+---> Package google-compute-engine-oslogin.x86_64 1:20240415.00-g1.el7 will be an update
+---> Package google-guest-agent.x86_64 1:20231115.00-g1.el7 will be updated
+---> Package google-guest-agent.x86_64 1:20240528.00-g1.el7 will be an update
+---> Package google-osconfig-agent.x86_64 1:20231010.00-g1.el7 will be updated
+---> Package google-osconfig-agent.x86_64 1:20240524.03-g1.el7 will be an update
+---> Package grub2.x86_64 1:2.02-0.87.0.2.el7.centos.11 will be updated
+---> Package grub2.x86_64 1:2.02-0.87.0.2.el7.centos.14 will be an update
+---> Package grub2-common.noarch 1:2.02-0.87.0.2.el7.centos.11 will be updated
+---> Package grub2-common.noarch 1:2.02-0.87.0.2.el7.centos.14 will be an update
+---> Package grub2-efi-x64.x86_64 1:2.02-0.87.0.2.el7.centos.11 will be updated
+---> Package grub2-efi-x64.x86_64 1:2.02-0.87.0.2.el7.centos.14 will be an update
+---> Package grub2-pc.x86_64 1:2.02-0.87.0.2.el7.centos.11 will be updated
+---> Package grub2-pc.x86_64 1:2.02-0.87.0.2.el7.centos.14 will be an update
+---> Package grub2-pc-modules.noarch 1:2.02-0.87.0.2.el7.centos.11 will be updated
+---> Package grub2-pc-modules.noarch 1:2.02-0.87.0.2.el7.centos.14 will be an update
+---> Package grub2-tools.x86_64 1:2.02-0.87.0.2.el7.centos.11 will be updated
+---> Package grub2-tools.x86_64 1:2.02-0.87.0.2.el7.centos.14 will be an update
+---> Package grub2-tools-extra.x86_64 1:2.02-0.87.0.2.el7.centos.11 will be updated
+---> Package grub2-tools-extra.x86_64 1:2.02-0.87.0.2.el7.centos.14 will be an update
+---> Package grub2-tools-minimal.x86_64 1:2.02-0.87.0.2.el7.centos.11 will be updated
+---> Package grub2-tools-minimal.x86_64 1:2.02-0.87.0.2.el7.centos.14 will be an update
+---> Package iwl105-firmware.noarch 0:18.168.6.1-80.el7_9 will be updated
+---> Package iwl105-firmware.noarch 0:18.168.6.1-83.el7_9 will be an update
+---> Package iwl135-firmware.noarch 0:18.168.6.1-80.el7_9 will be updated
+---> Package iwl135-firmware.noarch 0:18.168.6.1-83.el7_9 will be an update
+---> Package iwl2000-firmware.noarch 0:18.168.6.1-80.el7_9 will be updated
+---> Package iwl2000-firmware.noarch 0:18.168.6.1-83.el7_9 will be an update
+---> Package iwl2030-firmware.noarch 0:18.168.6.1-80.el7_9 will be updated
+---> Package iwl2030-firmware.noarch 0:18.168.6.1-83.el7_9 will be an update
+---> Package iwl3160-firmware.noarch 0:25.30.13.0-80.el7_9 will be updated
+---> Package iwl3160-firmware.noarch 0:25.30.13.0-83.el7_9 will be an update
+---> Package iwl6000g2b-firmware.noarch 0:18.168.6.1-80.el7_9 will be updated
+---> Package iwl6000g2b-firmware.noarch 0:18.168.6.1-83.el7_9 will be an update
+---> Package iwl7260-firmware.noarch 0:25.30.13.0-80.el7_9 will be updated
+---> Package iwl7260-firmware.noarch 0:25.30.13.0-83.el7_9 will be an update
+---> Package kernel.x86_64 0:3.10.0-1160.119.1.el7 will be installed
+---> Package kernel-tools.x86_64 0:3.10.0-1160.102.1.el7 will be updated
+---> Package kernel-tools.x86_64 0:3.10.0-1160.119.1.el7 will be an update
+---> Package kernel-tools-libs.x86_64 0:3.10.0-1160.102.1.el7 will be updated
+---> Package kernel-tools-libs.x86_64 0:3.10.0-1160.119.1.el7 will be an update
+---> Package less.x86_64 0:458-9.el7 will be updated
+---> Package less.x86_64 0:458-10.el7_9 will be an update
+---> Package libcurl.x86_64 0:7.29.0-59.el7_9.1 will be updated
+---> Package libcurl.x86_64 0:7.29.0-59.el7_9.2 will be an update
+---> Package linux-firmware.noarch 0:20200421-80.git78c0348.el7_9 will be updated
+---> Package linux-firmware.noarch 0:20200421-83.git78c0348.el7_9 will be an update
+---> Package python.x86_64 0:2.7.5-93.el7_9 will be updated
+---> Package python.x86_64 0:2.7.5-94.el7_9 will be an update
+---> Package python-libs.x86_64 0:2.7.5-93.el7_9 will be updated
+---> Package python-libs.x86_64 0:2.7.5-94.el7_9 will be an update
+---> Package python-perf.x86_64 0:3.10.0-1160.102.1.el7 will be updated
+---> Package python-perf.x86_64 0:3.10.0-1160.119.1.el7 will be an update
+---> Package systemd.x86_64 0:219-78.el7_9.7 will be updated
+---> Package systemd.x86_64 0:219-78.el7_9.9 will be an update
+---> Package systemd-libs.x86_64 0:219-78.el7_9.7 will be updated
+---> Package systemd-libs.x86_64 0:219-78.el7_9.9 will be an update
+---> Package systemd-sysv.x86_64 0:219-78.el7_9.7 will be updated
+---> Package systemd-sysv.x86_64 0:219-78.el7_9.9 will be an update
+---> Package tzdata.noarch 0:2023c-1.el7 will be updated
+---> Package tzdata.noarch 0:2024a-1.el7 will be an update
+--> Running transaction check
+---> Package google-cloud-cli-anthoscli.x86_64 0:518.0.0-1 will be installed
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+====================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+ Package                                                                                                                            Arch                                                                                                        Version                                                                                                                            Repository                                                                                                                  Size
+====================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+Installing:
+ google-cloud-cli                                                                                                                   x86_64                                                                                                      519.0.0-1                                                                                                                          google-cloud-sdk                                                                                                            98 M
+     replacing  google-cloud-sdk.x86_64 455.0.0-1
+ kernel                                                                                                                             x86_64                                                                                                      3.10.0-1160.119.1.el7                                                                                                              updates                                                                                                                     52 M
+Updating:
+ bind-export-libs                                                                                                                   x86_64                                                                                                      32:9.11.4-26.P2.el7_9.16                                                                                                           updates                                                                                                                    1.1 M
+ centos-release                                                                                                                     x86_64                                                                                                      7-9.2009.2.el7.centos                                                                                                              updates                                                                                                                     27 k
+ curl                                                                                                                               x86_64                                                                                                      7.29.0-59.el7_9.2                                                                                                                  updates                                                                                                                    271 k
+ dhclient                                                                                                                           x86_64                                                                                                      12:4.2.5-83.el7.centos.2                                                                                                           updates                                                                                                                    286 k
+ dhcp-common                                                                                                                        x86_64                                                                                                      12:4.2.5-83.el7.centos.2                                                                                                           updates                                                                                                                    177 k
+ dhcp-libs                                                                                                                          x86_64                                                                                                      12:4.2.5-83.el7.centos.2                                                                                                           updates                                                                                                                    133 k
+ glibc                                                                                                                              x86_64                                                                                                      2.17-326.el7_9.3                                                                                                                   updates                                                                                                                    3.6 M
+ glibc-common                                                                                                                       x86_64                                                                                                      2.17-326.el7_9.3                                                                                                                   updates                                                                                                                     12 M
+ google-compute-engine                                                                                                              noarch                                                                                                      1:20240607.00-g1.el7                                                                                                               google-compute-engine                                                                                                       15 k
+ google-compute-engine-oslogin                                                                                                      x86_64                                                                                                      1:20240415.00-g1.el7                                                                                                               google-compute-engine                                                                                                      2.1 M
+ google-guest-agent                                                                                                                 x86_64                                                                                                      1:20240528.00-g1.el7                                                                                                               google-compute-engine                                                                                                       13 M
+ google-osconfig-agent                                                                                                              x86_64                                                                                                      1:20240524.03-g1.el7                                                                                                               google-compute-engine                                                                                                      5.2 M
+ grub2                                                                                                                              x86_64                                                                                                      1:2.02-0.87.0.2.el7.centos.14                                                                                                      updates                                                                                                                     35 k
+ grub2-common                                                                                                                       noarch                                                                                                      1:2.02-0.87.0.2.el7.centos.14                                                                                                      updates                                                                                                                    733 k
+ grub2-efi-x64                                                                                                                      x86_64                                                                                                      1:2.02-0.87.0.2.el7.centos.14                                                                                                      updates                                                                                                                    1.1 M
+ grub2-pc                                                                                                                           x86_64                                                                                                      1:2.02-0.87.0.2.el7.centos.14                                                                                                      updates                                                                                                                     35 k
+ grub2-pc-modules                                                                                                                   noarch                                                                                                      1:2.02-0.87.0.2.el7.centos.14                                                                                                      updates                                                                                                                    861 k
+ grub2-tools                                                                                                                        x86_64                                                                                                      1:2.02-0.87.0.2.el7.centos.14                                                                                                      updates                                                                                                                    1.8 M
+ grub2-tools-extra                                                                                                                  x86_64                                                                                                      1:2.02-0.87.0.2.el7.centos.14                                                                                                      updates                                                                                                                    1.0 M
+ grub2-tools-minimal                                                                                                                x86_64                                                                                                      1:2.02-0.87.0.2.el7.centos.14                                                                                                      updates                                                                                                                    178 k
+ iwl105-firmware                                                                                                                    noarch                                                                                                      18.168.6.1-83.el7_9                                                                                                                updates                                                                                                                    235 k
+ iwl135-firmware                                                                                                                    noarch                                                                                                      18.168.6.1-83.el7_9                                                                                                                updates                                                                                                                    243 k
+ iwl2000-firmware                                                                                                                   noarch                                                                                                      18.168.6.1-83.el7_9                                                                                                                updates                                                                                                                    237 k
+ iwl2030-firmware                                                                                                                   noarch                                                                                                      18.168.6.1-83.el7_9                                                                                                                updates                                                                                                                    246 k
+ iwl3160-firmware                                                                                                                   noarch                                                                                                      25.30.13.0-83.el7_9                                                                                                                updates                                                                                                                    1.5 M
+ iwl6000g2b-firmware                                                                                                                noarch                                                                                                      18.168.6.1-83.el7_9                                                                                                                updates                                                                                                                    305 k
+ iwl7260-firmware                                                                                                                   noarch                                                                                                      25.30.13.0-83.el7_9                                                                                                                updates                                                                                                                     14 M
+ kernel-tools                                                                                                                       x86_64                                                                                                      3.10.0-1160.119.1.el7                                                                                                              updates                                                                                                                    8.2 M
+ kernel-tools-libs                                                                                                                  x86_64                                                                                                      3.10.0-1160.119.1.el7                                                                                                              updates                                                                                                                    8.1 M
+ less                                                                                                                               x86_64                                                                                                      458-10.el7_9                                                                                                                       updates                                                                                                                    120 k
+ libcurl                                                                                                                            x86_64                                                                                                      7.29.0-59.el7_9.2                                                                                                                  updates                                                                                                                    223 k
+ linux-firmware                                                                                                                     noarch                                                                                                      20200421-83.git78c0348.el7_9                                                                                                       updates                                                                                                                     80 M
+ python                                                                                                                             x86_64                                                                                                      2.7.5-94.el7_9                                                                                                                     updates                                                                                                                     97 k
+ python-libs                                                                                                                        x86_64                                                                                                      2.7.5-94.el7_9                                                                                                                     updates                                                                                                                    5.6 M
+ python-perf                                                                                                                        x86_64                                                                                                      3.10.0-1160.119.1.el7                                                                                                              updates                                                                                                                    8.2 M
+ systemd                                                                                                                            x86_64                                                                                                      219-78.el7_9.9                                                                                                                     updates                                                                                                                    5.1 M
+ systemd-libs                                                                                                                       x86_64                                                                                                      219-78.el7_9.9                                                                                                                     updates                                                                                                                    419 k
+ systemd-sysv                                                                                                                       x86_64                                                                                                      219-78.el7_9.9                                                                                                                     updates                                                                                                                     98 k
+ tzdata                                                                                                                             noarch                                                                                                      2024a-1.el7                                                                                                                        updates                                                                                                                    497 k
+Installing for dependencies:
+ google-cloud-cli-anthoscli                                                                                                         x86_64                                                                                                      518.0.0-1                                                                                                                          google-cloud-sdk                                                                                                            27 M
+
+Transaction Summary
+====================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+Install   2 Packages (+1 Dependent package)
+Upgrade  39 Packages
+
+Total download size: 355 M
+Exiting on user command
+Your transaction was saved, rerun it with:
+ yum load-transaction /tmp/yum_save_tx.2025-04-28.16-01.gD2edz.yumtx

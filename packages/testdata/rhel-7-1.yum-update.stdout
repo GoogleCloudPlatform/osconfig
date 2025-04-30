@@ -1,0 +1,117 @@
+Resolving Dependencies
+--> Running transaction check
+---> Package google-cloud-cli.x86_64 0:519.0.0-1 will be obsoleting
+--> Processing Dependency: google-cloud-cli-anthoscli for package: google-cloud-cli-519.0.0-1.x86_64
+---> Package google-cloud-sdk.x86_64 0:455.0.0-1 will be obsoleted
+---> Package google-compute-engine.noarch 1:20230801.00-g1.el7 will be updated
+---> Package google-compute-engine.noarch 1:20240607.00-g1.el7 will be an update
+---> Package google-compute-engine-oslogin.x86_64 1:20231004.00-g1.el7 will be updated
+---> Package google-compute-engine-oslogin.x86_64 1:20240415.00-g1.el7 will be an update
+---> Package google-guest-agent.x86_64 1:20231115.00-g1.el7 will be updated
+---> Package google-guest-agent.x86_64 1:20240528.00-g1.el7 will be an update
+---> Package google-osconfig-agent.x86_64 1:20231010.00-g1.el7 will be updated
+---> Package google-osconfig-agent.x86_64 1:20240524.03-g1.el7 will be an update
+---> Package kernel.x86_64 0:3.10.0-1160.119.1.el7 will be installed
+---> Package kernel-tools.x86_64 0:3.10.0-1160.118.1.el7 will be updated
+---> Package kernel-tools.x86_64 0:3.10.0-1160.119.1.el7 will be an update
+---> Package kernel-tools-libs.x86_64 0:3.10.0-1160.118.1.el7 will be updated
+---> Package kernel-tools-libs.x86_64 0:3.10.0-1160.119.1.el7 will be an update
+---> Package python-perf.x86_64 0:3.10.0-1160.118.1.el7 will be updated
+---> Package python-perf.x86_64 0:3.10.0-1160.119.1.el7 will be an update
+---> Package redhat-release-server.x86_64 0:7.9-8.el7_9 will be updated
+---> Package redhat-release-server.x86_64 0:7.9-12.el7_9 will be an update
+---> Package redhat-support-lib-python.noarch 0:0.13.0-0.el7_9 will be updated
+---> Package redhat-support-lib-python.noarch 0:0.14.0-1.el7_9 will be an update
+--> Processing Dependency: python-jwcrypto for package: redhat-support-lib-python-0.14.0-1.el7_9.noarch
+---> Package redhat-support-tool.noarch 0:0.13.0-0.el7_9 will be updated
+---> Package redhat-support-tool.noarch 0:0.14.0-1.el7_9 will be an update
+---> Package systemd.x86_64 0:219-78.el7_9.7 will be updated
+---> Package systemd.x86_64 0:219-78.el7_9.9 will be an update
+---> Package systemd-libs.x86_64 0:219-78.el7_9.7 will be updated
+---> Package systemd-libs.x86_64 0:219-78.el7_9.9 will be an update
+---> Package systemd-sysv.x86_64 0:219-78.el7_9.7 will be updated
+---> Package systemd-sysv.x86_64 0:219-78.el7_9.9 will be an update
+---> Package tzdata.noarch 0:2023c-1.el7 will be updated
+---> Package tzdata.noarch 0:2024a-1.el7 will be an update
+--> Running transaction check
+---> Package google-cloud-cli-anthoscli.x86_64 0:518.0.0-1 will be installed
+---> Package python-jwcrypto.noarch 0:0.4.2-1.el7 will be installed
+--> Processing Dependency: python-cryptography >= 1.5 for package: python-jwcrypto-0.4.2-1.el7.noarch
+--> Running transaction check
+---> Package python2-cryptography.x86_64 0:1.7.2-2.el7 will be installed
+--> Processing Dependency: python-cffi >= 1.4.1 for package: python2-cryptography-1.7.2-2.el7.x86_64
+--> Processing Dependency: python-idna >= 2.0 for package: python2-cryptography-1.7.2-2.el7.x86_64
+--> Processing Dependency: python-pyasn1 >= 0.1.8 for package: python2-cryptography-1.7.2-2.el7.x86_64
+--> Processing Dependency: openssl for package: python2-cryptography-1.7.2-2.el7.x86_64
+--> Processing Dependency: python-enum34 for package: python2-cryptography-1.7.2-2.el7.x86_64
+--> Processing Dependency: python-setuptools for package: python2-cryptography-1.7.2-2.el7.x86_64
+--> Running transaction check
+---> Package openssl.x86_64 1:1.0.2k-26.el7_9 will be installed
+--> Processing Dependency: make for package: 1:openssl-1.0.2k-26.el7_9.x86_64
+---> Package python-cffi.x86_64 0:1.6.0-5.el7 will be installed
+--> Processing Dependency: python-pycparser for package: python-cffi-1.6.0-5.el7.x86_64
+---> Package python-enum34.noarch 0:1.0.4-1.el7 will be installed
+---> Package python-idna.noarch 0:2.4-1.el7 will be installed
+---> Package python-setuptools.noarch 0:0.9.8-7.el7 will be installed
+---> Package python2-pyasn1.noarch 0:0.1.9-7.el7 will be installed
+--> Running transaction check
+---> Package make.x86_64 1:3.82-24.el7 will be installed
+---> Package python-pycparser.noarch 0:2.14-1.el7 will be installed
+--> Processing Dependency: python-ply for package: python-pycparser-2.14-1.el7.noarch
+--> Running transaction check
+---> Package python-ply.noarch 0:3.4-11.el7 will be installed
+--> Finished Dependency Resolution
+--> Running transaction check
+---> Package kernel.x86_64 0:3.10.0-1160.102.1.el7 will be erased
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+====================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+ Package                                                                                                                            Arch                                                                                                        Version                                                                                                                    Repository                                                                                                                          Size
+====================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+Installing:
+ google-cloud-cli                                                                                                                   x86_64                                                                                                      519.0.0-1                                                                                                                  google-cloud-sdk                                                                                                                    98 M
+     replacing  google-cloud-sdk.x86_64 455.0.0-1
+ kernel                                                                                                                             x86_64                                                                                                      3.10.0-1160.119.1.el7                                                                                                      rhui-rhel-7-server-rhui-rpms                                                                                                        52 M
+Updating:
+ google-compute-engine                                                                                                              noarch                                                                                                      1:20240607.00-g1.el7                                                                                                       google-compute-engine                                                                                                               15 k
+ google-compute-engine-oslogin                                                                                                      x86_64                                                                                                      1:20240415.00-g1.el7                                                                                                       google-compute-engine                                                                                                              2.1 M
+ google-guest-agent                                                                                                                 x86_64                                                                                                      1:20240528.00-g1.el7                                                                                                       google-compute-engine                                                                                                               13 M
+ google-osconfig-agent                                                                                                              x86_64                                                                                                      1:20240524.03-g1.el7                                                                                                       google-compute-engine                                                                                                              5.2 M
+ kernel-tools                                                                                                                       x86_64                                                                                                      3.10.0-1160.119.1.el7                                                                                                      rhui-rhel-7-server-rhui-rpms                                                                                                       8.2 M
+ kernel-tools-libs                                                                                                                  x86_64                                                                                                      3.10.0-1160.119.1.el7                                                                                                      rhui-rhel-7-server-rhui-rpms                                                                                                       8.1 M
+ python-perf                                                                                                                        x86_64                                                                                                      3.10.0-1160.119.1.el7                                                                                                      rhui-rhel-7-server-rhui-rpms                                                                                                       8.2 M
+ redhat-release-server                                                                                                              x86_64                                                                                                      7.9-12.el7_9                                                                                                               rhui-rhel-7-server-rhui-rpms                                                                                                        32 k
+ redhat-support-lib-python                                                                                                          noarch                                                                                                      0.14.0-1.el7_9                                                                                                             rhui-rhel-7-server-rhui-rpms                                                                                                       277 k
+ redhat-support-tool                                                                                                                noarch                                                                                                      0.14.0-1.el7_9                                                                                                             rhui-rhel-7-server-rhui-rpms                                                                                                       254 k
+ systemd                                                                                                                            x86_64                                                                                                      219-78.el7_9.9                                                                                                             rhui-rhel-7-server-rhui-rpms                                                                                                       5.1 M
+ systemd-libs                                                                                                                       x86_64                                                                                                      219-78.el7_9.9                                                                                                             rhui-rhel-7-server-rhui-rpms                                                                                                       419 k
+ systemd-sysv                                                                                                                       x86_64                                                                                                      219-78.el7_9.9                                                                                                             rhui-rhel-7-server-rhui-rpms                                                                                                        98 k
+ tzdata                                                                                                                             noarch                                                                                                      2024a-1.el7                                                                                                                rhui-rhel-7-server-rhui-rpms                                                                                                       497 k
+Removing:
+ kernel                                                                                                                             x86_64                                                                                                      3.10.0-1160.102.1.el7                                                                                                      @rhui-rhel-7-server-rhui-rpms                                                                                                       66 M
+Installing for dependencies:
+ google-cloud-cli-anthoscli                                                                                                         x86_64                                                                                                      518.0.0-1                                                                                                                  google-cloud-sdk                                                                                                                    27 M
+ make                                                                                                                               x86_64                                                                                                      1:3.82-24.el7                                                                                                              rhui-rhel-7-server-rhui-rpms                                                                                                       421 k
+ openssl                                                                                                                            x86_64                                                                                                      1:1.0.2k-26.el7_9                                                                                                          rhui-rhel-7-server-rhui-rpms                                                                                                       494 k
+ python-cffi                                                                                                                        x86_64                                                                                                      1.6.0-5.el7                                                                                                                rhui-rhel-7-server-rhui-rpms                                                                                                       218 k
+ python-enum34                                                                                                                      noarch                                                                                                      1.0.4-1.el7                                                                                                                rhui-rhel-7-server-rhui-rpms                                                                                                        52 k
+ python-idna                                                                                                                        noarch                                                                                                      2.4-1.el7                                                                                                                  rhui-rhel-7-server-rhui-rpms                                                                                                        94 k
+ python-jwcrypto                                                                                                                    noarch                                                                                                      0.4.2-1.el7                                                                                                                rhui-rhel-7-server-rhui-rpms                                                                                                        57 k
+ python-ply                                                                                                                         noarch                                                                                                      3.4-11.el7                                                                                                                 rhui-rhel-7-server-rhui-rpms                                                                                                       123 k
+ python-pycparser                                                                                                                   noarch                                                                                                      2.14-1.el7                                                                                                                 rhui-rhel-7-server-rhui-rpms                                                                                                       105 k
+ python-setuptools                                                                                                                  noarch                                                                                                      0.9.8-7.el7                                                                                                                rhui-rhel-7-server-rhui-rpms                                                                                                       397 k
+ python2-cryptography                                                                                                               x86_64                                                                                                      1.7.2-2.el7                                                                                                                rhui-rhel-7-server-rhui-rpms                                                                                                       503 k
+ python2-pyasn1                                                                                                                     noarch                                                                                                      0.1.9-7.el7                                                                                                                rhui-rhel-7-server-rhui-rpms                                                                                                       100 k
+
+Transaction Summary
+====================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+Install   2 Packages (+12 Dependent packages)
+Upgrade  14 Packages
+Remove    1 Package
+
+Total download size: 231 M
+Exiting on user command
+Your transaction was saved, rerun it with:
+ yum load-transaction /tmp/yum_save_tx.2025-04-28.16-07.r4Eouz.yumtx

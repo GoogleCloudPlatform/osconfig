@@ -1,0 +1,52 @@
+Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+ * base: abqix.mm.fcix.net
+ * epel: mirror.math.princeton.edu
+ * extras: mirrors.xmission.com
+ * updates: mirrors.cmich.edu
+
+bind-export-libs.x86_64      32:9.11.4-26.P2.el7_9.16      updates              
+centos-release.x86_64        7-9.2009.2.el7.centos         updates              
+curl.x86_64                  7.29.0-59.el7_9.2             updates              
+dhclient.x86_64              12:4.2.5-83.el7.centos.2      updates              
+dhcp-common.x86_64           12:4.2.5-83.el7.centos.2      updates              
+dhcp-libs.x86_64             12:4.2.5-83.el7.centos.2      updates              
+glibc.x86_64                 2.17-326.el7_9.3              updates              
+glibc-common.x86_64          2.17-326.el7_9.3              updates              
+google-cloud-sdk.x86_64      468.0.0-1                     google-cloud-sdk     
+google-compute-engine.noarch 1:20240607.00-g1.el7          google-compute-engine
+google-compute-engine-oslogin.x86_64
+                             1:20240415.00-g1.el7          google-compute-engine
+google-guest-agent.x86_64    1:20240528.00-g1.el7          google-compute-engine
+google-osconfig-agent.x86_64 1:20240524.03-g1.el7          google-compute-engine
+grub2.x86_64                 1:2.02-0.87.0.2.el7.centos.14 updates              
+grub2-common.noarch          1:2.02-0.87.0.2.el7.centos.14 updates              
+grub2-efi-x64.x86_64         1:2.02-0.87.0.2.el7.centos.14 updates              
+grub2-pc.x86_64              1:2.02-0.87.0.2.el7.centos.14 updates              
+grub2-pc-modules.noarch      1:2.02-0.87.0.2.el7.centos.14 updates              
+grub2-tools.x86_64           1:2.02-0.87.0.2.el7.centos.14 updates              
+grub2-tools-extra.x86_64     1:2.02-0.87.0.2.el7.centos.14 updates              
+grub2-tools-minimal.x86_64   1:2.02-0.87.0.2.el7.centos.14 updates              
+iwl105-firmware.noarch       18.168.6.1-83.el7_9           updates              
+iwl135-firmware.noarch       18.168.6.1-83.el7_9           updates              
+iwl2000-firmware.noarch      18.168.6.1-83.el7_9           updates              
+iwl2030-firmware.noarch      18.168.6.1-83.el7_9           updates              
+iwl3160-firmware.noarch      25.30.13.0-83.el7_9           updates              
+iwl6000g2b-firmware.noarch   18.168.6.1-83.el7_9           updates              
+iwl7260-firmware.noarch      25.30.13.0-83.el7_9           updates              
+kernel.x86_64                3.10.0-1160.119.1.el7         updates              
+kernel-tools.x86_64          3.10.0-1160.119.1.el7         updates              
+kernel-tools-libs.x86_64     3.10.0-1160.119.1.el7         updates              
+less.x86_64                  458-10.el7_9                  updates              
+libcurl.x86_64               7.29.0-59.el7_9.2             updates              
+linux-firmware.noarch        20200421-83.git78c0348.el7_9  updates              
+python.x86_64                2.7.5-94.el7_9                updates              
+python-libs.x86_64           2.7.5-94.el7_9                updates              
+python-perf.x86_64           3.10.0-1160.119.1.el7         updates              
+systemd.x86_64               219-78.el7_9.9                updates              
+systemd-libs.x86_64          219-78.el7_9.9                updates              
+systemd-sysv.x86_64          219-78.el7_9.9                updates              
+tzdata.noarch                2024a-1.el7                   updates              
+Obsoleting Packages
+google-cloud-cli.x86_64      519.0.0-1                     google-cloud-sdk     
+    google-cloud-sdk.x86_64  455.0.0-1                     @google-cloud-sdk    
