@@ -135,26 +135,26 @@ func TestZypperUpdates(t *testing.T) {
 			expectedResults: []*PkgInfo{{Name: "at", Arch: "x86_64", Version: "3.1.14-8.3.1"}},
 		},
 		{
-			name: "sles-12 mapped list-updates stdout matches snapshot",
+			name: "sles-12-1 mapped list-updates stdout matches snapshot",
 			expectedCommandsChain: []expectedCommand{
 				{
 					cmd:    exec.Command(zypper, zypperListUpdatesArgs...),
-					stdout: utiltest.BytesFromFile(t, "./testdata/sles_12_zypper_list_updates.stdout"),
+					stdout: utiltest.BytesFromFile(t, "./testdata/sles-12-1.zypper-list-updates.stdout"),
 					stderr: []byte("stderr"),
 				},
 			},
-			expectedResultsFile: "./testdata/sles_12_zypper_list_updates.expected",
+			expectedResultsFile: "./testdata/sles-12-1.zypper-list-updates.expected",
 		},
 		{
-			name: "sles-15 mapped list-updates stdout matches snapshot",
+			name: "sles-15-1 mapped list-updates stdout matches snapshot",
 			expectedCommandsChain: []expectedCommand{
 				{
 					cmd:    exec.Command(zypper, zypperListUpdatesArgs...),
-					stdout: utiltest.BytesFromFile(t, "./testdata/sles_15_zypper_list_updates.stdout"),
+					stdout: utiltest.BytesFromFile(t, "./testdata/sles-15-1.zypper-list-updates.stdout"),
 					stderr: []byte("stderr"),
 				},
 			},
-			expectedResultsFile: "./testdata/sles_15_zypper_list_updates.expected",
+			expectedResultsFile: "./testdata/sles-15-1.zypper-list-updates.expected",
 		},
 	}
 
@@ -280,26 +280,26 @@ func TestZypperPatches(t *testing.T) {
 			expectedResults: []*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix"}},
 		},
 		{
-			name: "sles-12 mapped list-patches stdout matches snapshot",
+			name: "sles-12-1 mapped list-patches stdout matches snapshot",
 			expectedCommandsChain: []expectedCommand{
 				{
 					cmd:    exec.Command(zypper, append(zypperListPatchesArgs, "--all")...),
-					stdout: utiltest.BytesFromFile(t, "./testdata/sles_12_zypper_list_patches.stdout"),
+					stdout: utiltest.BytesFromFile(t, "./testdata/sles-12-1.zypper-list-patches.stdout"),
 					stderr: []byte("stderr"),
 				},
 			},
-			expectedResultsFile: "./testdata/sles_12_zypper_list_patches.expected",
+			expectedResultsFile: "./testdata/sles-12-1.zypper-list-patches.expected",
 		},
 		{
-			name: "sles-15 mapped list-patches stdout matches snapshot",
+			name: "sles-15-1 mapped list-patches stdout matches snapshot",
 			expectedCommandsChain: []expectedCommand{
 				{
 					cmd:    exec.Command(zypper, append(zypperListPatchesArgs, "--all")...),
-					stdout: utiltest.BytesFromFile(t, "./testdata/sles_15_zypper_list_patches.stdout"),
+					stdout: utiltest.BytesFromFile(t, "./testdata/sles-15-1.zypper-list-patches.stdout"),
 					stderr: []byte("stderr"),
 				},
 			},
-			expectedResultsFile: "./testdata/sles_15_zypper_list_patches.expected",
+			expectedResultsFile: "./testdata/sles-15-1.zypper-list-patches.expected",
 		},
 	}
 
