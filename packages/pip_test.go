@@ -21,7 +21,7 @@ func TestInstalledPipPackages(t *testing.T) {
 		expectedError         error
 	}{
 		{
-			name: "Snapshot pip list --format=json",
+			name: "`pip list` mapped output matches snapshot",
 			expectedCommandsChain: []expectedCommand{
 				{
 					cmd:    exec.Command("/usr/bin/pip", "list", "--format=json"),
@@ -34,7 +34,7 @@ func TestInstalledPipPackages(t *testing.T) {
 			expectedError:       nil,
 		},
 		{
-			name: "CLI throw an error",
+			name: "`pip list` non-zero exit code propagates as error",
 			expectedCommandsChain: []expectedCommand{
 				{
 					cmd:    exec.Command("/usr/bin/pip", "list", "--format=json"),
@@ -46,7 +46,7 @@ func TestInstalledPipPackages(t *testing.T) {
 			expectedError: fmt.Errorf("error running /usr/bin/pip with args [\"list\" \"--format=json\"]: unexpected error, stdout: \"\", stderr: \"\""),
 		},
 		{
-			name: "Output from CLI is invalid JSON",
+			name: "`pip list` invalid json output propagates as error",
 			expectedCommandsChain: []expectedCommand{
 				{
 					cmd:    exec.Command("/usr/bin/pip", "list", "--format=json"),
@@ -58,7 +58,7 @@ func TestInstalledPipPackages(t *testing.T) {
 			expectedError: fmt.Errorf("unexpected end of JSON input"),
 		},
 		{
-			name: "Empty json",
+			name: "`pip list` empty json output maps to nil",
 			expectedCommandsChain: []expectedCommand{
 				{
 					cmd:    exec.Command("/usr/bin/pip", "list", "--format=json"),
@@ -107,7 +107,7 @@ func TestPipUpdates(t *testing.T) {
 		expectedError         error
 	}{
 		{
-			name: "Snapshot pip list --format=json",
+			name: "`pip list outdated` mapped output matches snapshot",
 			expectedCommandsChain: []expectedCommand{
 				{
 					cmd:    exec.Command("/usr/bin/pip", "list", "--format=json", "--outdated"),
@@ -120,7 +120,7 @@ func TestPipUpdates(t *testing.T) {
 			expectedError:       nil,
 		},
 		{
-			name: "CLI throw an error",
+			name: "`pip list outdated` non-zero exit code propagates as error",
 			expectedCommandsChain: []expectedCommand{
 				{
 					cmd:    exec.Command("/usr/bin/pip", "list", "--format=json", "--outdated"),
@@ -132,7 +132,7 @@ func TestPipUpdates(t *testing.T) {
 			expectedError: fmt.Errorf("error running /usr/bin/pip with args [\"list\" \"--format=json\" \"--outdated\"]: unexpected error, stdout: \"\", stderr: \"\""),
 		},
 		{
-			name: "Output from CLI is invalid JSON",
+			name: "`pip list outdated` invalid json output propagates as error",
 			expectedCommandsChain: []expectedCommand{
 				{
 					cmd:    exec.Command("/usr/bin/pip", "list", "--format=json", "--outdated"),
@@ -144,7 +144,7 @@ func TestPipUpdates(t *testing.T) {
 			expectedError: fmt.Errorf("unexpected end of JSON input"),
 		},
 		{
-			name: "Empty json",
+			name: "`pip list outdated` empty json output maps to nil",
 			expectedCommandsChain: []expectedCommand{
 				{
 					cmd:    exec.Command("/usr/bin/pip", "list", "--format=json", "--outdated"),
