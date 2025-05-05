@@ -50,11 +50,11 @@ func setExpectations(mockCommandRunner *utilmocks.MockCommandRunner, expectedCom
 
 		if prev == nil {
 			prev = mockCommandRunner.EXPECT().
-				Run(testCtx, utilmocks.EqCmd(cmd)).
+				Run(gomock.Any(), utilmocks.EqCmd(cmd)).
 				Return(expectedCmd.stdout, expectedCmd.stderr, expectedCmd.err).Times(1)
 		} else {
 			prev = mockCommandRunner.EXPECT().
-				Run(testCtx, utilmocks.EqCmd(cmd)).
+				Run(gomock.Any(), utilmocks.EqCmd(cmd)).
 				After(prev).
 				Return(expectedCmd.stdout, expectedCmd.stderr, expectedCmd.err).Times(1)
 		}
