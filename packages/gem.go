@@ -52,10 +52,12 @@ func GemUpdates(ctx context.Context) ([]*PkgInfo, error) {
 	   ...
 	*/
 
-	lines := strings.Split(strings.TrimSpace(string(stdout)), "\n")
-	if len(lines) == 0 {
+	input := strings.TrimSpace(string(stdout))
+	if input == "" {
 		return nil, nil
 	}
+
+	lines := strings.Split(input, "\n")
 
 	var pkgs []*PkgInfo
 	for _, ln := range lines {
@@ -67,6 +69,7 @@ func GemUpdates(ctx context.Context) ([]*PkgInfo, error) {
 		ver := strings.Trim(pkg[3], ")")
 		pkgs = append(pkgs, &PkgInfo{Name: pkg[0], Arch: noarch, Version: ver})
 	}
+
 	return pkgs, nil
 }
 
@@ -83,25 +86,44 @@ func InstalledGemPackages(ctx context.Context) ([]*PkgInfo, error) {
 
 	   foo (1.2.3, 1.2.4)
 	   bar (1.2.3)
+	   csv (default: 3.1.2)
+	   csv (default: 3.1.2, 1.5.8)
 	   ...
 	*/
 	lines := strings.Split(strings.TrimSpace(string(stdout)), "\n")
 
-	if len(lines) == 0 {
+	redundantLinesCount := 3
+	if len(lines) < redundantLinesCount {
 		clog.Debugf(ctx, "No gems installed.")
 		return nil, nil
 	}
 
+	redundantLinesEndPosition := redundantLinesCount - 1
+	gems := lines[redundantLinesEndPosition:]
+
 	var pkgs []*PkgInfo
-	for _, ln := range lines[2:] {
-		pkg := strings.Fields(ln)
-		if len(pkg) < 2 {
-			clog.Debugf(ctx, "'%s' does not represent a gem", ln)
-			continue
-		}
-		for _, ver := range strings.Split(strings.Trim(pkg[1], "()"), ", ") {
-			pkgs = append(pkgs, &PkgInfo{Name: pkg[0], Arch: noarch, Version: ver})
-		}
+	for _, ln := range gems {
+		gems := parseGemEntry(ln)
+
+		pkgs = append(pkgs, gems...)
 	}
+
 	return pkgs, nil
+}
+
+func parseGemEntry(entry string) []*PkgInfo {
+	versionStarter := strings.Index(entry, "(")
+
+	name := strings.TrimSpace(entry[:versionStarter])
+	versions := strings.Split(strings.Trim(entry[versionStarter:], "()"), ",")
+
+	var pkgs []*PkgInfo
+	for _, ver := range versions {
+		ver = strings.TrimSpace(ver)
+		ver = strings.TrimPrefix(ver, "default: ")
+
+		pkgs = append(pkgs, &PkgInfo{Name: name, Arch: noarch, Version: ver})
+	}
+
+	return pkgs
 }
