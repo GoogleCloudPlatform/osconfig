@@ -17,7 +17,6 @@ package packages
 import (
 	"context"
 	"errors"
-	"os"
 	"os/exec"
 	"reflect"
 	"testing"
@@ -81,13 +80,7 @@ func TestYumUpdates(t *testing.T) {
 	  baz                                       noarch                         2.0.0-1                                              repo                                      10 M
 `)
 
-	if os.Getenv("EXIT100") == "1" {
-		os.Exit(100)
-	}
-
-	cmd := exec.CommandContext(context.Background(), os.Args[0], "-test.run=TestYumUpdates")
-	cmd.Env = append(os.Environ(), "EXIT100=1")
-	errExit100 := cmd.Run()
+	errExit100 := exec.Command("/bin/bash", "-c", "exit 100").Run()
 
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()

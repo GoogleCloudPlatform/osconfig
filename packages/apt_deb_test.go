@@ -184,7 +184,7 @@ func TestAptUpdates(t *testing.T) {
 			expectedError:         fmt.Errorf("unknown upgrade type: %q", 10),
 		},
 		{
-			name: "apt-get update",
+			name: "apt-get updates",
 			args: nil,
 			expectedCommandsChain: []expectedCommand{
 				{
