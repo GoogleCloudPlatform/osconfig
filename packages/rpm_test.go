@@ -16,7 +16,6 @@ package packages
 
 import (
 	"errors"
-	"fmt"
 	"os/exec"
 	"reflect"
 	"testing"
@@ -72,28 +71,14 @@ func TestParseInstalledRPMPackages(t *testing.T) {
 }
 
 func TestInstalledRPMPackages(t *testing.T) {
-	type test struct {
+	tests := []struct {
 		name string
 
 		cmds             []expectedCommand
 		wantPkgs         []*PkgInfo
 		wantPkgsSnapshot string
 		wantErr          error
-	}
-	matchesSnapshot := func(hostname string) test {
-		return test{
-			name: fmt.Sprintf("%s mapped stdout matches snapshot", hostname),
-			cmds: []expectedCommand{
-				{
-					cmd:    exec.Command(rpmquery, rpmqueryInstalledArgs...),
-					stdout: utiltest.BytesFromFile(t, fmt.Sprintf("./testdata/%s.rpm-query-all.stdout", hostname)),
-					stderr: []byte(""),
-				},
-			},
-			wantPkgsSnapshot: fmt.Sprintf("./testdata/%s.rpm-query-all.want", hostname),
-		}
-	}
-	tests := []test{
+	}{
 		{
 			name: "success path",
 			cmds: []expectedCommand{
@@ -124,11 +109,61 @@ func TestInstalledRPMPackages(t *testing.T) {
 			wantPkgs: nil,
 			wantErr:  errors.New("error running /usr/bin/rpmquery with args [\"--queryformat\" \"\\\\{\\\"architecture\\\":\\\"%{ARCH}\\\",\\\"package\\\":\\\"%{NAME}\\\",\\\"source_name\\\":\\\"%{SOURCERPM}\\\",\\\"version\\\":\\\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\\\"\\\\}\\n\" \"-a\"]: unexpected error, stdout: \"stdout\", stderr: \"stderr\""),
 		},
-		matchesSnapshot("centos-7-1"),
-		matchesSnapshot("oracle-linux-8"),
-		matchesSnapshot("sles-12-1"),
-		matchesSnapshot("rocky-8-1"),
-		matchesSnapshot("rhel-9-1"),
+		{
+			name: "centos-7-1 mapped stdout matches snapshot",
+			cmds: []expectedCommand{
+				{
+					cmd:    exec.Command(rpmquery, rpmqueryInstalledArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/centos-7-1.rpm-query-all.stdout"),
+					stderr: []byte(""),
+				},
+			},
+			wantPkgsSnapshot: "./testdata/centos-7-1.rpm-query-all.want",
+		},
+		{
+			name: "oracle-linux-8 mapped stdout matches snapshot",
+			cmds: []expectedCommand{
+				{
+					cmd:    exec.Command(rpmquery, rpmqueryInstalledArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/oracle-linux-8.rpm-query-all.stdout"),
+					stderr: []byte(""),
+				},
+			},
+			wantPkgsSnapshot: "./testdata/oracle-linux-8.rpm-query-all.want",
+		},
+		{
+			name: "sles-12-1 mapped stdout matches snapshot",
+			cmds: []expectedCommand{
+				{
+					cmd:    exec.Command(rpmquery, rpmqueryInstalledArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/sles-12-1.rpm-query-all.stdout"),
+					stderr: []byte(""),
+				},
+			},
+			wantPkgsSnapshot: "./testdata/sles-12-1.rpm-query-all.want",
+		},
+		{
+			name: "rocky-8-1 mapped stdout matches snapshot",
+			cmds: []expectedCommand{
+				{
+					cmd:    exec.Command(rpmquery, rpmqueryInstalledArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/rocky-8-1.rpm-query-all.stdout"),
+					stderr: []byte(""),
+				},
+			},
+			wantPkgsSnapshot: "./testdata/rocky-8-1.rpm-query-all.want",
+		},
+		{
+			name: "rhel-9-1 mapped stdout matches snapshot",
+			cmds: []expectedCommand{
+				{
+					cmd:    exec.Command(rpmquery, rpmqueryInstalledArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/rhel-9-1.rpm-query-all.stdout"),
+					stderr: []byte(""),
+				},
+			},
+			wantPkgsSnapshot: "./testdata/rhel-9-1.rpm-query-all.want",
+		},
 	}
 
 	for _, tt := range tests {
