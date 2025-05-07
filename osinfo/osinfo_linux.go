@@ -52,10 +52,10 @@ func Get() (*OSInfo, error) {
 
 	osInfo, err := osInfoProvider.Get(ctx)
 	if err != nil {
-		return &osInfo, err
+		return osInfo, err
 	}
 
-	return &osInfo, nil
+	return osInfo, nil
 }
 
 // LinuxOsInfoProvider is a provider of OSInfo for the linux based systems.
@@ -78,10 +78,10 @@ func NewLinuxOsInfoProvider(nameAndVersionProvider osNameAndVersionProvider) (*L
 }
 
 // Get gather all required information and returns OSInfo.
-func (oip *LinuxOsInfoProvider) Get(ctx context.Context) (OSInfo, error) {
+func (oip *LinuxOsInfoProvider) Get(ctx context.Context) (*OSInfo, error) {
 	short, long, version := oip.nameAndVersionProvider()
 
-	return OSInfo{
+	return &OSInfo{
 		ShortName: short,
 		LongName:  long,
 		Version:   version,

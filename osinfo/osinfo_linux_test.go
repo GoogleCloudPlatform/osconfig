@@ -56,7 +56,7 @@ func TestLinuxOsInfoProvider(t *testing.T) {
 		t.Errorf("Unexpected error, err: %v", err)
 	}
 
-	expectedOsInfo := OSInfo{
+	expectedOsInfo := &OSInfo{
 		Hostname:      "testhost",
 		LongName:      "testLong",
 		ShortName:     "testShort",

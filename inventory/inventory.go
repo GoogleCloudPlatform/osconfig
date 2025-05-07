@@ -41,21 +41,42 @@ type InstanceInventory struct {
 	LastUpdated          string
 }
 
-// Get generates inventory data.
-func Get(ctx context.Context) *InstanceInventory {
+// Provider extract all inventormation and returns InstanceInventory aggregate
+type Provider interface {
+	Get(context.Context) *InstanceInventory
+}
+
+type defaultInventoryProvider struct {
+	osInfoProvider osinfo.Provider
+
+	packageUpdatesProvider    packages.PackageUpdatesProvider
+	installedPackagesProvider packages.InstalledPackagesProvider
+}
+
+// NewProvider returns ready to work default provider
+func NewProvider() Provider {
+	return &defaultInventoryProvider{
+		osInfoProvider:            osinfo.NewProvider(),
+		packageUpdatesProvider:    packages.NewPackageUpdatesProvider(),
+		installedPackagesProvider: packages.NewInstalledPackagesProvider(),
+	}
+}
+
+// Get extracts all required data from the VM and returns it as InstanceInventory aggregate
+func (p *defaultInventoryProvider) Get(ctx context.Context) *InstanceInventory {
 	clog.Debugf(ctx, "Gathering instance inventory.")
 
-	installedPackages, err := packages.GetInstalledPackages(ctx)
+	installedPackages, err := p.installedPackagesProvider.Get(ctx)
 	if err != nil {
 		clog.Errorf(ctx, "packages.GetInstalledPackages() error: %v", err)
 	}
 
-	packageUpdates, err := packages.GetPackageUpdates(ctx)
+	packageUpdates, err := p.packageUpdatesProvider.Get(ctx)
 	if err != nil {
 		clog.Errorf(ctx, "packages.GetPackageUpdates() error: %v", err)
 	}
 
-	oi, err := osinfo.Get()
+	oi, err := p.osInfoProvider.Get(ctx)
 	if err != nil {
 		clog.Errorf(ctx, "osinfo.Get() error: %v", err)
 	}
