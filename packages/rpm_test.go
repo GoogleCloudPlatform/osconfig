@@ -16,11 +16,13 @@ package packages
 
 import (
 	"errors"
+	"fmt"
 	"os/exec"
 	"reflect"
 	"testing"
 
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
+	utiltest "github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/golang/mock/gomock"
 )
 
@@ -70,16 +72,31 @@ func TestParseInstalledRPMPackages(t *testing.T) {
 }
 
 func TestInstalledRPMPackages(t *testing.T) {
-	tests := []struct {
+	type test struct {
 		name string
 
-		expectedCommandsChain []expectedCommand
-		expectedResults       []*PkgInfo
-		expectedError         error
-	}{
+		cmds             []expectedCommand
+		wantPkgs         []*PkgInfo
+		wantPkgsSnapshot string
+		wantErr          error
+	}
+	matchesSnapshot := func(hostname string) test {
+		return test{
+			name: fmt.Sprintf("%s mapped stdout matches snapshot", hostname),
+			cmds: []expectedCommand{
+				{
+					cmd:    exec.Command(rpmquery, rpmqueryInstalledArgs...),
+					stdout: utiltest.BytesFromFile(t, fmt.Sprintf("./testdata/%s.rpm-query-all.stdout", hostname)),
+					stderr: []byte(""),
+				},
+			},
+			wantPkgsSnapshot: fmt.Sprintf("./testdata/%s.rpm-query-all.want", hostname),
+		}
+	}
+	tests := []test{
 		{
 			name: "success path",
-			expectedCommandsChain: []expectedCommand{
+			cmds: []expectedCommand{
 				{
 					cmd: exec.Command(rpmquery, rpmqueryInstalledArgs...),
 					stdout: []byte("" +
@@ -89,24 +106,29 @@ func TestInstalledRPMPackages(t *testing.T) {
 					err:    nil,
 				},
 			},
-			expectedResults: []*PkgInfo{
+			wantPkgs: []*PkgInfo{
 				{Name: "gcc", Arch: "x86_64", Version: "11.4.1-3.el9", Source: Source{Name: "gcc-11.4.1-3.el9.src.rpm"}},
 				{Name: "golang-src", Arch: "all", Version: "1.22.3-1.el9", Source: Source{Name: "golang-1.22.3-1.el9.src.rpm"}},
 			},
-			expectedError: nil,
+			wantErr: nil,
 		},
 		{
 			name: "rpmquery command failed",
-			expectedCommandsChain: []expectedCommand{{
+			cmds: []expectedCommand{{
 				cmd:    exec.Command(rpmquery, rpmqueryInstalledArgs...),
 				stdout: []byte("stdout"),
 				stderr: []byte("stderr"),
 				err:    errors.New("unexpected error"),
 			},
 			},
-			expectedResults: nil,
-			expectedError:   errors.New("error running /usr/bin/rpmquery with args [\"--queryformat\" \"\\\\{\\\"architecture\\\":\\\"%{ARCH}\\\",\\\"package\\\":\\\"%{NAME}\\\",\\\"source_name\\\":\\\"%{SOURCERPM}\\\",\\\"version\\\":\\\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\\\"\\\\}\\n\" \"-a\"]: unexpected error, stdout: \"stdout\", stderr: \"stderr\""),
+			wantPkgs: nil,
+			wantErr:  errors.New("error running /usr/bin/rpmquery with args [\"--queryformat\" \"\\\\{\\\"architecture\\\":\\\"%{ARCH}\\\",\\\"package\\\":\\\"%{NAME}\\\",\\\"source_name\\\":\\\"%{SOURCERPM}\\\",\\\"version\\\":\\\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\\\"\\\\}\\n\" \"-a\"]: unexpected error, stdout: \"stdout\", stderr: \"stderr\""),
 		},
+		matchesSnapshot("centos-7-1"),
+		matchesSnapshot("oracle-linux-8"),
+		matchesSnapshot("sles-12-1"),
+		matchesSnapshot("rocky-8-1"),
+		matchesSnapshot("rhel-9-1"),
 	}
 
 	for _, tt := range tests {
@@ -117,15 +139,17 @@ func TestInstalledRPMPackages(t *testing.T) {
 		runner = mockCommandRunner
 
 		t.Run(tt.name, func(t *testing.T) {
-			setExpectations(mockCommandRunner, tt.expectedCommandsChain)
+			setExpectations(mockCommandRunner, tt.cmds)
 
-			results, err := InstalledRPMPackages(testCtx)
-			if !reflect.DeepEqual(err, tt.expectedError) {
-				t.Errorf("InstalledRPMPackages: unexpected error, expect %q, got %q", formatError(tt.expectedError), formatError(err))
+			pkgs, err := InstalledRPMPackages(testCtx)
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Errorf("InstalledRPMPackages err: want %v, got %v", tt.wantErr, err)
 			}
 
-			if !reflect.DeepEqual(results, tt.expectedResults) {
-				t.Errorf("InstalledRPMPackages: unexpected result, expect %v, got %v", pkgs, tt.expectedResults)
+			if tt.wantPkgsSnapshot != "" {
+				utiltest.MatchSnapshot(t, pkgs, tt.wantPkgsSnapshot)
+			} else if !reflect.DeepEqual(pkgs, tt.wantPkgs) {
+				t.Errorf("InstalledRPMPackages pkgs: want %v, got %v", tt.wantPkgs, pkgs)
 			}
 		})
 	}
