@@ -580,27 +580,13 @@ func TestRemoveAptPackages(t *testing.T) {
 }
 
 func TestInstalledDebPackages(t *testing.T) {
-	type test struct {
+	tests := []struct {
 		name             string
 		cmds             []expectedCommand
 		wantErr          error
 		wantPkgs         []*PkgInfo
 		wantPkgsSnapshot string
-	}
-	matchesSnapshot := func(hostname string) test {
-		return test{
-			name: fmt.Sprintf("%s mapped stdout matches snapshot", hostname),
-			cmds: []expectedCommand{
-				{
-					cmd:    exec.Command(dpkgQuery, dpkgQueryArgs...),
-					stdout: utiltest.BytesFromFile(t, fmt.Sprintf("./testdata/%s.dpkg-query-show.stdout", hostname)),
-					stderr: []byte(""),
-				},
-			},
-			wantPkgsSnapshot: fmt.Sprintf("./testdata/%s.dpkg-query-show.want", hostname),
-		}
-	}
-	tests := []test{
+	}{
 		{
 			name: "single entry maps to package",
 			cmds: []expectedCommand{
@@ -635,12 +621,72 @@ func TestInstalledDebPackages(t *testing.T) {
 			},
 			wantErr: fmt.Errorf("error running %s with args %q: %v, stdout: %q, stderr: %q", dpkgQuery, dpkgQueryArgs, errors.New("error"), []byte(""), []byte("stderr")),
 		},
-		matchesSnapshot("debian-10-1"),
-		matchesSnapshot("debian-11-1"),
-		matchesSnapshot("debian-12-1"),
-		matchesSnapshot("ubuntu-20-1"),
-		matchesSnapshot("ubuntu-22-1"),
-		matchesSnapshot("ubuntu-24-1"),
+		{
+			name: "debian-10-1 mapped stdout matches snapshot",
+			cmds: []expectedCommand{
+				{
+					cmd:    exec.Command(dpkgQuery, dpkgQueryArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/debian-10-1.dpkg-query-show.stdout"),
+					stderr: []byte(""),
+				},
+			},
+			wantPkgsSnapshot: "./testdata/debian-10-1.dpkg-query-show.want",
+		},
+		{
+			name: "debian-11-1 mapped stdout matches snapshot",
+			cmds: []expectedCommand{
+				{
+					cmd:    exec.Command(dpkgQuery, dpkgQueryArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/debian-11-1.dpkg-query-show.stdout"),
+					stderr: []byte(""),
+				},
+			},
+			wantPkgsSnapshot: "./testdata/debian-11-1.dpkg-query-show.want",
+		},
+		{
+			name: "debian-12-1 mapped stdout matches snapshot",
+			cmds: []expectedCommand{
+				{
+					cmd:    exec.Command(dpkgQuery, dpkgQueryArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/debian-12-1.dpkg-query-show.stdout"),
+					stderr: []byte(""),
+				},
+			},
+			wantPkgsSnapshot: "./testdata/debian-12-1.dpkg-query-show.want",
+		},
+		{
+			name: "ubuntu-20-1 mapped stdout matches snapshot",
+			cmds: []expectedCommand{
+				{
+					cmd:    exec.Command(dpkgQuery, dpkgQueryArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/ubuntu-20-1.dpkg-query-show.stdout"),
+					stderr: []byte(""),
+				},
+			},
+			wantPkgsSnapshot: "./testdata/ubuntu-20-1.dpkg-query-show.want",
+		},
+		{
+			name: "ubuntu-22-1 mapped stdout matches snapshot",
+			cmds: []expectedCommand{
+				{
+					cmd:    exec.Command(dpkgQuery, dpkgQueryArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/ubuntu-22-1.dpkg-query-show.stdout"),
+					stderr: []byte(""),
+				},
+			},
+			wantPkgsSnapshot: "./testdata/ubuntu-22-1.dpkg-query-show.want",
+		},
+		{
+			name: "ubuntu-24-1 mapped stdout matches snapshot",
+			cmds: []expectedCommand{
+				{
+					cmd:    exec.Command(dpkgQuery, dpkgQueryArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/ubuntu-24-1.dpkg-query-show.stdout"),
+					stderr: []byte(""),
+				},
+			},
+			wantPkgsSnapshot: "./testdata/ubuntu-24-1.dpkg-query-show.want",
+		},
 	}
 
 	for _, tt := range tests {
