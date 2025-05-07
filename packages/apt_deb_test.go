@@ -646,31 +646,136 @@ func TestRemoveAptPackages(t *testing.T) {
 }
 
 func TestInstalledDebPackages(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
-	runner = mockCommandRunner
-
-	//Successfully returns result
-	dpkgQueryCmd := utilmocks.EqCmd(exec.Command(dpkgQuery, dpkgQueryArgs...))
-	stdout := []byte(`{"package":"git","architecture":"amd64","version":"1:2.25.1-1ubuntu3.12","status":"installed","source_name":"git","source_version":"1:2.25.1-1ubuntu3.12"}`)
-	stderr := []byte("stderr")
-	mockCommandRunner.EXPECT().Run(testCtx, dpkgQueryCmd).Return(stdout, stderr, nil).Times(1)
-
-	result, err := InstalledDebPackages(testCtx)
-	if err != nil {
-		t.Errorf("InstalledDebPackages(): got unexpected error: %v", err)
+	tests := []struct {
+		name             string
+		cmds             []expectedCommand
+		wantErr          error
+		wantPkgs         []*PkgInfo
+		wantPkgsSnapshot string
+	}{
+		{
+			name: "single entry maps to package",
+			cmds: []expectedCommand{
+				{
+					cmd:    exec.Command(dpkgQuery, dpkgQueryArgs...),
+					stdout: []byte(`{"package":"git","architecture":"amd64","version":"1:2.25.1-1ubuntu3.12","status":"installed","source_name":"git","source_version":"1:2.25.1-1ubuntu3.12"}`),
+					stderr: []byte(""),
+				},
+			},
+			wantPkgs: []*PkgInfo{{Name: "git", Arch: "x86_64", Version: "1:2.25.1-1ubuntu3.12", Source: Source{Name: "git", Version: "1:2.25.1-1ubuntu3.12"}}},
+		},
+		{
+			name: "empty package list maps to nil",
+			cmds: []expectedCommand{
+				{
+					cmd:    exec.Command(dpkgQuery, dpkgQueryArgs...),
+					stdout: []byte(""),
+					stderr: []byte(""),
+				},
+			},
+			wantPkgs: nil,
+		},
+		{
+			name: "non-zero exit code propagates as error",
+			cmds: []expectedCommand{
+				{
+					cmd:    exec.Command(dpkgQuery, dpkgQueryArgs...),
+					stdout: []byte(""),
+					stderr: []byte("stderr"),
+					err:    errors.New("error"),
+				},
+			},
+			wantErr: fmt.Errorf("error running %s with args %q: %v, stdout: %q, stderr: %q", dpkgQuery, dpkgQueryArgs, errors.New("error"), []byte(""), []byte("stderr")),
+		},
+		{
+			name: "debian-10-1 mapped stdout matches snapshot",
+			cmds: []expectedCommand{
+				{
+					cmd:    exec.Command(dpkgQuery, dpkgQueryArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/debian-10-1.dpkg-query-show.stdout"),
+					stderr: []byte(""),
+				},
+			},
+			wantPkgsSnapshot: "./testdata/debian-10-1.dpkg-query-show.want",
+		},
+		{
+			name: "debian-11-1 mapped stdout matches snapshot",
+			cmds: []expectedCommand{
+				{
+					cmd:    exec.Command(dpkgQuery, dpkgQueryArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/debian-11-1.dpkg-query-show.stdout"),
+					stderr: []byte(""),
+				},
+			},
+			wantPkgsSnapshot: "./testdata/debian-11-1.dpkg-query-show.want",
+		},
+		{
+			name: "debian-12-1 mapped stdout matches snapshot",
+			cmds: []expectedCommand{
+				{
+					cmd:    exec.Command(dpkgQuery, dpkgQueryArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/debian-12-1.dpkg-query-show.stdout"),
+					stderr: []byte(""),
+				},
+			},
+			wantPkgsSnapshot: "./testdata/debian-12-1.dpkg-query-show.want",
+		},
+		{
+			name: "ubuntu-20-1 mapped stdout matches snapshot",
+			cmds: []expectedCommand{
+				{
+					cmd:    exec.Command(dpkgQuery, dpkgQueryArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/ubuntu-20-1.dpkg-query-show.stdout"),
+					stderr: []byte(""),
+				},
+			},
+			wantPkgsSnapshot: "./testdata/ubuntu-20-1.dpkg-query-show.want",
+		},
+		{
+			name: "ubuntu-22-1 mapped stdout matches snapshot",
+			cmds: []expectedCommand{
+				{
+					cmd:    exec.Command(dpkgQuery, dpkgQueryArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/ubuntu-22-1.dpkg-query-show.stdout"),
+					stderr: []byte(""),
+				},
+			},
+			wantPkgsSnapshot: "./testdata/ubuntu-22-1.dpkg-query-show.want",
+		},
+		{
+			name: "ubuntu-24-1 mapped stdout matches snapshot",
+			cmds: []expectedCommand{
+				{
+					cmd:    exec.Command(dpkgQuery, dpkgQueryArgs...),
+					stdout: utiltest.BytesFromFile(t, "./testdata/ubuntu-24-1.dpkg-query-show.stdout"),
+					stderr: []byte(""),
+				},
+			},
+			wantPkgsSnapshot: "./testdata/ubuntu-24-1.dpkg-query-show.want",
+		},
 	}
 
-	want := []*PkgInfo{{Name: "git", Arch: "x86_64", Version: "1:2.25.1-1ubuntu3.12", Source: Source{Name: "git", Version: "1:2.25.1-1ubuntu3.12"}}}
-	if !reflect.DeepEqual(result, want) {
-		t.Errorf("InstalledDebPackages() = %v, want %v", result, want)
-	}
+	for _, tt := range tests {
+		mockCtrl := gomock.NewController(t)
+		defer mockCtrl.Finish()
 
-	//Returns error if any
-	mockCommandRunner.EXPECT().Run(testCtx, dpkgQueryCmd).Return(stdout, stderr, errors.New("error")).Times(1)
-	if _, err := InstalledDebPackages(testCtx); err == nil {
-		t.Errorf("did not get expected error")
+		mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+		runner = mockCommandRunner
+
+		t.Run(tt.name, func(t *testing.T) {
+			setExpectations(mockCommandRunner, tt.cmds)
+
+			pkgs, err := InstalledDebPackages(testCtx)
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Errorf("InstalledDebPackages err: want %v, got %v", tt.wantErr, err)
+			}
+
+			if tt.wantPkgsSnapshot != "" {
+				utiltest.MatchSnapshot(t, pkgs, tt.wantPkgsSnapshot)
+			} else if !reflect.DeepEqual(pkgs, tt.wantPkgs) {
+				t.Errorf("InstalledDebPackages pkgs: want %v, got %v", tt.wantPkgs, pkgs)
+			}
+		})
 	}
 }
 
