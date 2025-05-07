@@ -1,0 +1,44 @@
+[]*packages.PkgInfo{
+    &packages.PkgInfo{
+        Name:    "google-cloud-cli",
+        Arch:    "x86_64",
+        RawArch: "",
+        Version: "520.0.0-0",
+        Source:  packages.Source{},
+    },
+    &packages.PkgInfo{
+        Name:    "google-cloud-packages-archive-keyring",
+        Arch:    "all",
+        RawArch: "",
+        Version: "1.2-629101324",
+        Source:  packages.Source{},
+    },
+    &packages.PkgInfo{
+        Name:    "google-guest-agent",
+        Arch:    "x86_64",
+        RawArch: "",
+        Version: "1:20250327.01-g1",
+        Source:  packages.Source{},
+    },
+    &packages.PkgInfo{
+        Name:    "google-compute-engine-oslogin",
+        Arch:    "x86_64",
+        RawArch: "",
+        Version: "1:20240701.00-g1+deb11",
+        Source:  packages.Source{},
+    },
+    &packages.PkgInfo{
+        Name:    "google-compute-engine",
+        Arch:    "all",
+        RawArch: "",
+        Version: "1:20250207.00-g1",
+        Source:  packages.Source{},
+    },
+    &packages.PkgInfo{
+        Name:    "google-osconfig-agent",
+        Arch:    "x86_64",
+        RawArch: "",
+        Version: "1:20250320.00-g1",
+        Source:  packages.Source{},
+    },
+}

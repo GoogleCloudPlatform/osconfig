@@ -287,6 +287,72 @@ func TestAptUpdates(t *testing.T) {
 			expectedError:   nil,
 		},
 		{
+			name: "debian-10-1 mapped full-upgrade stdout matches snapshot",
+			args: []AptGetUpgradeOption{AptGetUpgradeType(AptGetFullUpgrade)},
+			expectedCommandsChain: []expectedCommand{
+				{
+					cmd:    exec.Command(aptGet, aptGetUpdateArgs...),
+					envs:   []string{"DEBIAN_FRONTEND=noninteractive"},
+					stdout: []byte(""),
+					stderr: []byte(""),
+					err:    nil,
+				},
+				{
+					cmd:    exec.Command(aptGet, append(slices.Clone(aptGetUpgradableArgs), aptGetFullUpgradeCmd)...),
+					envs:   []string{"DEBIAN_FRONTEND=noninteractive"},
+					stdout: utiltest.BytesFromFile(t, "./testdata/debian-10-1.apt-get-full-upgrade.stdout"),
+					stderr: []byte(""),
+					err:    nil,
+				},
+			},
+			expectedResultsFile: "./testdata/debian-10-1.apt-get-full-upgrade.expected",
+			expectedError:       nil,
+		},
+		{
+			name: "debian-11-1 mapped full-upgrade stdout matches snapshot",
+			args: []AptGetUpgradeOption{AptGetUpgradeType(AptGetFullUpgrade)},
+			expectedCommandsChain: []expectedCommand{
+				{
+					cmd:    exec.Command(aptGet, aptGetUpdateArgs...),
+					envs:   []string{"DEBIAN_FRONTEND=noninteractive"},
+					stdout: []byte(""),
+					stderr: []byte(""),
+					err:    nil,
+				},
+				{
+					cmd:    exec.Command(aptGet, append(slices.Clone(aptGetUpgradableArgs), aptGetFullUpgradeCmd)...),
+					envs:   []string{"DEBIAN_FRONTEND=noninteractive"},
+					stdout: utiltest.BytesFromFile(t, "./testdata/debian-11-1.apt-get-full-upgrade.stdout"),
+					stderr: []byte(""),
+					err:    nil,
+				},
+			},
+			expectedResultsFile: "./testdata/debian-11-1.apt-get-full-upgrade.expected",
+			expectedError:       nil,
+		},
+		{
+			name: "debian-12-1 mapped full-upgrade stdout matches snapshot",
+			args: []AptGetUpgradeOption{AptGetUpgradeType(AptGetFullUpgrade)},
+			expectedCommandsChain: []expectedCommand{
+				{
+					cmd:    exec.Command(aptGet, aptGetUpdateArgs...),
+					envs:   []string{"DEBIAN_FRONTEND=noninteractive"},
+					stdout: []byte(""),
+					stderr: []byte(""),
+					err:    nil,
+				},
+				{
+					cmd:    exec.Command(aptGet, append(slices.Clone(aptGetUpgradableArgs), aptGetFullUpgradeCmd)...),
+					envs:   []string{"DEBIAN_FRONTEND=noninteractive"},
+					stdout: utiltest.BytesFromFile(t, "./testdata/debian-12-1.apt-get-full-upgrade.stdout"),
+					stderr: []byte(""),
+					err:    nil,
+				},
+			},
+			expectedResultsFile: "./testdata/debian-12-1.apt-get-full-upgrade.expected",
+			expectedError:       nil,
+		},
+		{
 			name: "ubuntu-20 mapped full-upgrade stdout matches snapshot",
 			args: []AptGetUpgradeOption{AptGetUpgradeType(AptGetFullUpgrade)},
 			expectedCommandsChain: []expectedCommand{
