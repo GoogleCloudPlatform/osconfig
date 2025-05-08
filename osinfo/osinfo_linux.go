@@ -39,7 +39,7 @@ var (
 )
 
 // Get reports OSInfo.
-func Get() (*OSInfo, error) {
+func Get() (OSInfo, error) {
 	// Eventually we will get rid of this function and will use providers directly
 	// Providers should support context to be able to handle cancelation and logging
 	// so far we just create empty context to connect the API.
@@ -47,15 +47,15 @@ func Get() (*OSInfo, error) {
 
 	osInfoProvider, err := NewLinuxOsInfoProvider(getOsNameAndVersionProvider(ctx))
 	if err != nil {
-		return nil, fmt.Errorf("unable to extract osinfo, err:  %w", err)
+		return OSInfo{}, fmt.Errorf("unable to extract osinfo, err:  %w", err)
 	}
 
-	osInfo, err := osInfoProvider.Get(ctx)
+	osInfo, err := osInfoProvider.GetOSInfo(ctx)
 	if err != nil {
-		return &osInfo, err
+		return osInfo, err
 	}
 
-	return &osInfo, nil
+	return osInfo, nil
 }
 
 // LinuxOsInfoProvider is a provider of OSInfo for the linux based systems.
@@ -77,8 +77,8 @@ func NewLinuxOsInfoProvider(nameAndVersionProvider osNameAndVersionProvider) (*L
 	}, nil
 }
 
-// Get gather all required information and returns OSInfo.
-func (oip *LinuxOsInfoProvider) Get(ctx context.Context) (OSInfo, error) {
+// GetOSInfo gather all required information and returns OSInfo.
+func (oip *LinuxOsInfoProvider) GetOSInfo(ctx context.Context) (OSInfo, error) {
 	short, long, version := oip.nameAndVersionProvider()
 
 	return OSInfo{

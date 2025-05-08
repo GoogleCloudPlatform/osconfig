@@ -28,7 +28,24 @@ const (
 
 // Provider is an interface for OSInfo extraction on different systems.
 type Provider interface {
-	Get(context.Context) (OSInfo, error)
+	GetOSInfo(context.Context) (OSInfo, error)
+}
+
+// NewProvider returns fully function provider.
+func NewProvider() Provider {
+	return defaultProvider{}
+}
+
+type defaultProvider struct{}
+
+// GetOSInfo extract return OSInfo for current platform.
+func (defaultProvider) GetOSInfo(ctx context.Context) (OSInfo, error) {
+	osinfo, err := Get()
+	if err != nil {
+		return OSInfo{}, err
+	}
+
+	return osinfo, nil
 }
 
 // OSInfo describes an operating system.

@@ -41,21 +41,59 @@ type InstanceInventory struct {
 	LastUpdated          string
 }
 
-// Get generates inventory data.
-func Get(ctx context.Context) *InstanceInventory {
+type clock interface {
+	Now() time.Time
+}
+
+type defaultClock struct{}
+
+func newDefaultClock() clock {
+	return defaultClock{}
+}
+
+func (dc defaultClock) Now() time.Time {
+	return time.Now()
+}
+
+// Provider extract all inventormation and returns InstanceInventory aggregate
+type Provider interface {
+	Get(context.Context) *InstanceInventory
+}
+
+type defaultInventoryProvider struct {
+	osInfoProvider osinfo.Provider
+
+	packageUpdatesProvider    packages.PackageUpdatesProvider
+	installedPackagesProvider packages.InstalledPackagesProvider
+
+	clock clock
+}
+
+// NewProvider returns ready to work default provider
+func NewProvider() Provider {
+	return &defaultInventoryProvider{
+		osInfoProvider:            osinfo.NewProvider(),
+		packageUpdatesProvider:    packages.NewPackageUpdatesProvider(),
+		installedPackagesProvider: packages.NewInstalledPackagesProvider(),
+		clock:                     newDefaultClock(),
+	}
+}
+
+// Get extracts all required data from the VM and returns it as InstanceInventory aggregate
+func (p *defaultInventoryProvider) Get(ctx context.Context) *InstanceInventory {
 	clog.Debugf(ctx, "Gathering instance inventory.")
 
-	installedPackages, err := packages.GetInstalledPackages(ctx)
+	installedPackages, err := p.installedPackagesProvider.GetInstalledPackages(ctx)
 	if err != nil {
 		clog.Errorf(ctx, "packages.GetInstalledPackages() error: %v", err)
 	}
 
-	packageUpdates, err := packages.GetPackageUpdates(ctx)
+	packageUpdates, err := p.packageUpdatesProvider.GetPackageUpdates(ctx)
 	if err != nil {
 		clog.Errorf(ctx, "packages.GetPackageUpdates() error: %v", err)
 	}
 
-	oi, err := osinfo.Get()
+	oi, err := p.osInfoProvider.GetOSInfo(ctx)
 	if err != nil {
 		clog.Errorf(ctx, "osinfo.Get() error: %v", err)
 	}
@@ -69,8 +107,8 @@ func Get(ctx context.Context) *InstanceInventory {
 		KernelRelease:        oi.KernelRelease,
 		Architecture:         oi.Architecture,
 		OSConfigAgentVersion: agentconfig.Version(),
-		InstalledPackages:    installedPackages,
-		PackageUpdates:       packageUpdates,
-		LastUpdated:          time.Now().UTC().Format(time.RFC3339),
+		InstalledPackages:    &installedPackages,
+		PackageUpdates:       &packageUpdates,
+		LastUpdated:          p.clock.Now().UTC().Format(time.RFC3339),
 	}
 }

@@ -62,6 +62,38 @@ var (
 	ptyrunner = util.CommandRunner(&ptyRunner{})
 )
 
+// PackageUpdatesProvider define contract to extract available updates from the VM.
+type PackageUpdatesProvider interface {
+	GetPackageUpdates(context.Context) (Packages, error)
+}
+
+// InstalledPackagesProvider define contract to extract installed packages from the VM.
+type InstalledPackagesProvider interface {
+	GetInstalledPackages(context.Context) (Packages, error)
+}
+
+type defaultUpdatesProvider struct{}
+
+// NewPackageUpdatesProvider return fully initialize provider.
+func NewPackageUpdatesProvider() PackageUpdatesProvider {
+	return defaultUpdatesProvider{}
+}
+
+func (p defaultUpdatesProvider) GetPackageUpdates(ctx context.Context) (Packages, error) {
+	return GetPackageUpdates(ctx)
+}
+
+type defaultInstalledPackagesProvider struct{}
+
+// NewInstalledPackagesProvider returns fully initialized provider.
+func NewInstalledPackagesProvider() InstalledPackagesProvider {
+	return defaultInstalledPackagesProvider{}
+}
+
+func (p defaultInstalledPackagesProvider) GetInstalledPackages(ctx context.Context) (Packages, error) {
+	return GetInstalledPackages(ctx)
+}
+
 // Packages is a selection of packages based on their manager.
 type Packages struct {
 	Yum                []*PkgInfo            `json:"yum,omitempty"`
