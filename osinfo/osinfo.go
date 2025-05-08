@@ -40,12 +40,7 @@ type defaultProvider struct{}
 
 // GetOSInfo extract return OSInfo for current platform.
 func (defaultProvider) GetOSInfo(ctx context.Context) (OSInfo, error) {
-	osinfo, err := Get()
-	if err != nil {
-		return OSInfo{}, err
-	}
-
-	return osinfo, nil
+	return Get()
 }
 
 // OSInfo describes an operating system.

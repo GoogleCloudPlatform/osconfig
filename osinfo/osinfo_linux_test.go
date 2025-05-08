@@ -36,40 +36,95 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 `
 
 func TestLinuxOsInfoProvider(t *testing.T) {
-	mockNameVersionProvidor := func() (string, string, string) {
+	stubProvider := func() (string, string, string) {
 		return "testShort", "testLong", "testVersion"
 	}
 
-	linuxOsinfoProvider := LinuxOsInfoProvider{
-		nameAndVersionProvider: mockNameVersionProvidor,
-		uts: unix.Utsname{
-			Nodename: toUtsField("testhost"),
-			Machine:  toUtsField("amd64"),
-			Release:  toUtsField("6.1.0-29-cloud-amd64"),
-			Version:  toUtsField("#1 SMP PREEMPT_DYNAMIC Debian 6.1.123-1 (2025-01-02)"),
+	tests := []struct {
+		name                string
+		uts                 unix.Utsname
+		nameVersionProvider func() (string, string, string)
+		want                OSInfo
+	}{
+		{
+			name: "debian system",
+			uts: unix.Utsname{
+				Nodename: toUtsField("testhost"),
+				Machine:  toUtsField("amd64"),
+				Release:  toUtsField("6.1.0-29-cloud-amd64"),
+				Version:  toUtsField("#1 SMP PREEMPT_DYNAMIC Debian 6.1.123-1 (2025-01-02)"),
+			},
+			nameVersionProvider: stubProvider,
+			want: OSInfo{
+				Hostname:      "testhost",
+				LongName:      "testLong",
+				ShortName:     "testShort",
+				Version:       "testVersion",
+				KernelVersion: "#1 SMP PREEMPT_DYNAMIC Debian 6.1.123-1 (2025-01-02)",
+				KernelRelease: "6.1.0-29-cloud-amd64",
+				Architecture:  "x86_64",
+			},
+		},
+		{
+			name: "ubuntu system",
+			uts: unix.Utsname{
+				Nodename: toUtsField("testhost"),
+				Machine:  toUtsField("i386"),
+				Release:  toUtsField("6.1.0-29-cloud-i386"),
+				Version:  toUtsField("#17~22.04.1-Ubuntu SMP Tue Sep  3 16:11:52 UTC 2024"),
+			},
+			nameVersionProvider: stubProvider,
+			want: OSInfo{
+				Hostname:      "testhost",
+				LongName:      "testLong",
+				ShortName:     "testShort",
+				Version:       "testVersion",
+				KernelVersion: "#17~22.04.1-Ubuntu SMP Tue Sep  3 16:11:52 UTC 2024",
+				KernelRelease: "6.1.0-29-cloud-i386",
+				Architecture:  "x86_32",
+			},
+		},
+		{
+			name: "ubuntu system noarch",
+			uts: unix.Utsname{
+				Nodename: toUtsField("testhost"),
+				Machine:  toUtsField("noarch"),
+				Release:  toUtsField("6.1.0-29-cloud"),
+				Version:  toUtsField("#17~22.04.1-Ubuntu SMP Tue Sep  3 16:11:52 UTC 2024"),
+			},
+			nameVersionProvider: stubProvider,
+			want: OSInfo{
+				Hostname:      "testhost",
+				LongName:      "testLong",
+				ShortName:     "testShort",
+				Version:       "testVersion",
+				KernelVersion: "#17~22.04.1-Ubuntu SMP Tue Sep  3 16:11:52 UTC 2024",
+				KernelRelease: "6.1.0-29-cloud",
+				Architecture:  "all",
+			},
 		},
 	}
 
-	ctx := context.Background()
-	osInfo, err := linuxOsinfoProvider.GetOSInfo(ctx)
-	if err != nil {
-		t.Errorf("Unexpected error, err: %v", err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			linuxOsinfoProvider := LinuxOsInfoProvider{
+				nameAndVersionProvider: tt.nameVersionProvider,
+				uts:                    tt.uts,
+			}
+
+			ctx := context.Background()
+			got, err := linuxOsinfoProvider.GetOSInfo(ctx)
+			if err != nil {
+				t.Errorf("Unexpected error, err: %v", err)
+			}
+			if diff := cmp.Diff(tt.want, got); diff != "" {
+				t.Errorf("Unexpected OsInfo (-want,+got):\n%s", diff)
+
+			}
+
+		})
 	}
 
-	expectedOsInfo := OSInfo{
-		Hostname:      "testhost",
-		LongName:      "testLong",
-		ShortName:     "testShort",
-		Version:       "testVersion",
-		KernelVersion: "#1 SMP PREEMPT_DYNAMIC Debian 6.1.123-1 (2025-01-02)",
-		KernelRelease: "6.1.0-29-cloud-amd64",
-		Architecture:  "x86_64",
-	}
-
-	if diff := cmp.Diff(expectedOsInfo, osInfo); diff != "" {
-		t.Errorf("Unexpected OsInfo (-want,+got):\n%s", diff)
-
-	}
 }
 
 func Test_parseOsRelease(t *testing.T) {
