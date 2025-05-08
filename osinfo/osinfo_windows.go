@@ -138,8 +138,8 @@ type win32OperatingSystem struct {
 }
 
 // Get reports OSInfo.
-func Get() (*OSInfo, error) {
-	oi := &OSInfo{ShortName: DefaultShortNameWindows, Architecture: NormalizeArchitecture(runtime.GOARCH)}
+func Get() (OSInfo, error) {
+	oi := OSInfo{ShortName: DefaultShortNameWindows, Architecture: NormalizeArchitecture(runtime.GOARCH)}
 
 	hn, err := os.Hostname()
 	if err != nil {

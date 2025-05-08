@@ -25,7 +25,7 @@ import (
 
 // GetPackageUpdates gets all available package updates from any known
 // installed package manager.
-func GetPackageUpdates(ctx context.Context) (*Packages, error) {
+func GetPackageUpdates(ctx context.Context) (Packages, error) {
 	pkgs, errs := getPackageUpdates(ctx)
 
 	var err error
@@ -36,8 +36,9 @@ func GetPackageUpdates(ctx context.Context) (*Packages, error) {
 	return pkgs, err
 }
 
-func getPackageUpdates(ctx context.Context) (*Packages, []string) {
+func getPackageUpdates(ctx context.Context) (Packages, []string) {
 	pkgs := Packages{}
+
 	var errs []string
 	if AptExists {
 		apt, err := AptUpdates(ctx, AptGetUpgradeType(AptGetFullUpgrade), AptGetUpgradeShowNew(false))
@@ -96,12 +97,12 @@ func getPackageUpdates(ctx context.Context) (*Packages, []string) {
 		}
 	}
 
-	return &pkgs, errs
+	return pkgs, errs
 }
 
 // GetInstalledPackages gets all installed packages from any known installed
 // package manager.
-func GetInstalledPackages(ctx context.Context) (*Packages, error) {
+func GetInstalledPackages(ctx context.Context) (Packages, error) {
 	pkgs, errs := getInstalledPackages(ctx)
 	var err error
 	if len(errs) != 0 {
@@ -111,8 +112,9 @@ func GetInstalledPackages(ctx context.Context) (*Packages, error) {
 	return pkgs, err
 }
 
-func getInstalledPackages(ctx context.Context) (*Packages, []string) {
-	pkgs := &Packages{}
+func getInstalledPackages(ctx context.Context) (Packages, []string) {
+	pkgs := Packages{}
+
 	var errs []string
 	if RPMQueryExists {
 		rpm, err := InstalledRPMPackages(ctx)

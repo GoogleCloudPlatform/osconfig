@@ -116,7 +116,7 @@ func (c *Client) RegisterAgent(ctx context.Context) error {
 		return err
 	}
 
-	oi := &osinfo.OSInfo{}
+	oi := osinfo.OSInfo{}
 	if agentconfig.OSInventoryEnabled() {
 		oi, err = osinfo.Get()
 		if err != nil {
