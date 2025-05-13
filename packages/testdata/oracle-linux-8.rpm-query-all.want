@@ -141,10 +141,10 @@
     },
     &packages.PkgInfo{
         Name:    "gpg-pubkey",
-        Arch:    "(none)",
+        Arch:    "all",
         RawArch: "",
         Version: "3e1ba8d5-558ab6a8",
-        Source:  packages.Source{Name:"(none)", Version:""},
+        Source:  packages.Source{Name:"gpg-pubkey", Version:""},
     },
     &packages.PkgInfo{
         Name:    "vim-filesystem",

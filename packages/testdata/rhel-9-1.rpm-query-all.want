@@ -99,10 +99,10 @@
     },
     &packages.PkgInfo{
         Name:    "gpg-pubkey",
-        Arch:    "(none)",
+        Arch:    "all",
         RawArch: "",
         Version: "13edef05-6288b5d4",
-        Source:  packages.Source{Name:"(none)", Version:""},
+        Source:  packages.Source{Name:"gpg-pubkey", Version:""},
     },
     &packages.PkgInfo{
         Name:    "linux-firmware-whence",

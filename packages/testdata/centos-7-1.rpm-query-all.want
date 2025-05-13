@@ -106,10 +106,10 @@
     },
     &packages.PkgInfo{
         Name:    "gpg-pubkey",
-        Arch:    "(none)",
+        Arch:    "all",
         RawArch: "",
         Version: "b6792c39-53c4fbdd",
-        Source:  packages.Source{Name:"(none)", Version:""},
+        Source:  packages.Source{Name:"gpg-pubkey", Version:""},
     },
     &packages.PkgInfo{
         Name:    "perl-Text-ParseWords",

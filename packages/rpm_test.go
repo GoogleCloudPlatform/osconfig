@@ -42,6 +42,13 @@ func TestParseInstalledRPMPackages(t *testing.T) {
 			},
 		},
 		{
+			name: "(none) value correctly handled",
+			data: []byte(`{"architecture":"(none)","package":"gpg-pubkey","source_name":"(none)","version":"b6792c39-53c4fbdd"}`),
+			want: []*PkgInfo{
+				{Name: "gpg-pubkey", Arch: "all", Version: "b6792c39-53c4fbdd", Source: Source{Name: "gpg-pubkey"}},
+			},
+		},
+		{
 			name: "No valid pacakges",
 			data: []byte("nothing here"),
 			want: nil,
