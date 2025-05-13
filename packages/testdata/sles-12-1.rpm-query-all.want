@@ -15,10 +15,10 @@
     },
     &packages.PkgInfo{
         Name:    "gpg-pubkey",
-        Arch:    "(none)",
+        Arch:    "all",
         RawArch: "",
         Version: "50a3dd1c-50f35137",
-        Source:  packages.Source{Name:"(none)", Version:""},
+        Source:  packages.Source{Name:"gpg-pubkey", Version:""},
     },
     &packages.PkgInfo{
         Name:    "libXext6",

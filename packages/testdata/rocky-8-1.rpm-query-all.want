@@ -92,10 +92,10 @@
     },
     &packages.PkgInfo{
         Name:    "gpg-pubkey",
-        Arch:    "(none)",
+        Arch:    "all",
         RawArch: "",
         Version: "3a893e63-627cbc0e",
-        Source:  packages.Source{Name:"(none)", Version:""},
+        Source:  packages.Source{Name:"gpg-pubkey", Version:""},
     },
     &packages.PkgInfo{
         Name:    "kernel-core",

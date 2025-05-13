@@ -71,11 +71,23 @@ func parseInstalledRPMPackages(ctx context.Context, data []byte) []*PkgInfo {
 			continue
 		}
 
+		normalizeRpmMetadata(&rpm)
+
 		pkg := pkgInfoFromPackageMetadata(rpm)
 		result = append(result, pkg)
 	}
 
 	return result
+}
+
+func normalizeRpmMetadata(rpm *packageMetadata) {
+	if rpm.Architecture == "(none)" {
+		rpm.Architecture = "noarch"
+	}
+
+	if rpm.SourceName == "(none)" {
+		rpm.SourceName = rpm.Package
+	}
 }
 
 // InstalledRPMPackages queries for all installed rpm packages.
