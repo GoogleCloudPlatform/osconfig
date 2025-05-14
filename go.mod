@@ -14,6 +14,7 @@ require (
 	github.com/go-ole/go-ole v1.3.0
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.7.0
+	github.com/google/osv-scalibr v0.2.0
 	github.com/kr/pretty v0.3.1
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
 	github.com/ulikunitz/xz v0.5.12
@@ -89,7 +90,6 @@ require (
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/go-containerregistry v0.19.1 // indirect
-	github.com/google/osv-scalibr v0.2.0 // indirect
 	github.com/google/s2a-go v0.1.8 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
@@ -147,7 +147,6 @@ require (
 	golang.org/x/time v0.9.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241202173237-19429a94021a // indirect
-	google.golang.org/grpc/stats/opentelemetry v0.0.0-20240907200651-3ffb98b2c93a // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
