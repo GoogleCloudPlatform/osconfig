@@ -34,7 +34,7 @@ func TestTraceMemory(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
-			mockMemoryApi(t, tt.memoryLevels, cancel)
+			mockMemoryAPI(t, tt.memoryLevels, cancel)
 
 			gotChannel := make(chan TraceMemoryResult)
 			go TraceMemory(ctx, time.Millisecond, gotChannel)
@@ -47,7 +47,7 @@ func TestTraceMemory(t *testing.T) {
 	}
 }
 
-func mockMemoryApi(t *testing.T, levels []float64, cancel context.CancelFunc) {
+func mockMemoryAPI(t *testing.T, levels []float64, cancel context.CancelFunc) {
 	prevMemoryUsageMB, prevCompactMemory := memoryUsageMB, compactMemory
 	t.Cleanup(func() { memoryUsageMB, compactMemory = prevMemoryUsageMB, prevCompactMemory })
 
@@ -61,7 +61,7 @@ func mockMemoryApi(t *testing.T, levels []float64, cancel context.CancelFunc) {
 	memoryUsageMB = func() float64 {
 		usage := levels[levelIdx]
 		if levelIdx < afterLevelIdx {
-			levelIdx += 1
+			levelIdx++
 		}
 		if levelIdx == afterLevelIdx && !cancelled {
 			cancelled = true
@@ -75,7 +75,7 @@ func mockMemoryApi(t *testing.T, levels []float64, cancel context.CancelFunc) {
 		if !(levelIdx == beforeLevelIdx || levelIdx == afterLevelIdx) {
 			t.Errorf("compactMemory() must only be called for measuring before/after (levels[%d], levels[%d]) memory levels, was called for in-between levels[%d], levels: %v", beforeLevelIdx, afterLevelIdx, levelIdx, levels)
 		}
-		compactMemoryCallsCount += 1
+		compactMemoryCallsCount++
 	}
 
 	t.Cleanup(func() {

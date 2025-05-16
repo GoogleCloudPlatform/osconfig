@@ -46,7 +46,7 @@ func TraceMemory(ctx context.Context, interval time.Duration, resultChannel chan
 		select {
 		case <-ticker.C:
 			currentMB := memoryUsageMB()
-			result.SampleCount += 1
+			result.SampleCount++
 			runningAverageMB += (currentMB - runningAverageMB) / float64(result.SampleCount)
 			if result.MemPeakMB < currentMB {
 				result.MemPeakMB = currentMB
