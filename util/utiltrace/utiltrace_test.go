@@ -1,6 +1,7 @@
 package utiltrace
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -32,11 +33,12 @@ func TestTraceMemory(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			done := make(chan bool)
-			mockMemoryApi(t, tt.memoryLevels, done)
+			ctx, cancel := context.WithCancel(context.Background())
+			mockMemoryApi(t, tt.memoryLevels, cancel)
 
-			got := TraceMemoryResult{}
-			TraceMemory(done, time.Millisecond, &got)
+			gotChannel := make(chan TraceMemoryResult)
+			go TraceMemory(ctx, time.Millisecond, gotChannel)
+			got := <-gotChannel
 
 			if diff := cmp.Diff(tt.want, got); diff != "" {
 				t.Errorf("mismatch (-want +got):\n%s", diff)
@@ -45,7 +47,7 @@ func TestTraceMemory(t *testing.T) {
 	}
 }
 
-func mockMemoryApi(t *testing.T, levels []float64, done chan bool) {
+func mockMemoryApi(t *testing.T, levels []float64, cancel context.CancelFunc) {
 	prevMemoryUsageMB, prevCompactMemory := memoryUsageMB, compactMemory
 	t.Cleanup(func() { memoryUsageMB, compactMemory = prevMemoryUsageMB, prevCompactMemory })
 
@@ -55,15 +57,15 @@ func mockMemoryApi(t *testing.T, levels []float64, done chan bool) {
 	beforeLevelIdx := 0
 	afterLevelIdx := len(levels) - 1
 	levelIdx := beforeLevelIdx
-	closed := false
+	cancelled := false
 	memoryUsageMB = func() float64 {
 		usage := levels[levelIdx]
 		if levelIdx < afterLevelIdx {
 			levelIdx += 1
 		}
-		if levelIdx == afterLevelIdx && !closed {
-			closed = true
-			close(done)
+		if levelIdx == afterLevelIdx && !cancelled {
+			cancelled = true
+			cancel()
 		}
 		return usage
 	}

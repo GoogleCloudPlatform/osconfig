@@ -1,6 +1,7 @@
 package utiltrace
 
 import (
+	"context"
 	"runtime"
 	"runtime/debug"
 	"time"
@@ -28,14 +29,15 @@ type TraceMemoryResult struct {
 }
 
 // TraceMemory collects memory usage with specified interval until done channel is closed
-func TraceMemory(done chan bool, interval time.Duration, result *TraceMemoryResult) {
+func TraceMemory(ctx context.Context, interval time.Duration, resultChannel chan TraceMemoryResult) {
 	compactMemory()
 	startMB := memoryUsageMB()
-
+	result := TraceMemoryResult{
+		MemBeforeMB: startMB,
+		MemPeakMB:   startMB,
+		SampleCount: 1,
+	}
 	runningAverageMB := startMB
-	result.MemBeforeMB = startMB
-	result.MemPeakMB = startMB
-	result.SampleCount = 1
 
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -49,10 +51,11 @@ func TraceMemory(done chan bool, interval time.Duration, result *TraceMemoryResu
 			if result.MemPeakMB < currentMB {
 				result.MemPeakMB = currentMB
 			}
-		case <-done:
+		case <-ctx.Done():
 			compactMemory()
 			result.MemAfterMB = memoryUsageMB()
 			result.MemMeanMB = runningAverageMB
+			resultChannel <- result
 			return
 		}
 	}
