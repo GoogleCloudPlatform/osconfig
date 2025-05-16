@@ -24,6 +24,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltrace"
 )
 
 // InstanceInventory is an instances inventory data.
@@ -71,10 +72,31 @@ type defaultInventoryProvider struct {
 
 // NewProvider returns ready to work default provider
 func NewProvider() Provider {
+	osInfoProvider := osinfo.NewProvider()
+	installedPackagesProvider := packages.NewInstalledPackagesProvider()
+	if agentconfig.TraceGetInventory() {
+		ctx := context.Background()
+		installedPackagesProvider = packages.TracingInstalledPackagesProvider(installedPackagesProvider, func(stats utiltrace.TraceMemoryResult, duration time.Duration) {
+			osinfo, _ := osInfoProvider.GetOSInfo(ctx)
+			clog.Infof(
+				ctx,
+				"GetInstalledPackages: %.3fs, memory %+.2f MB (=%.2f-%.2f), peak %.2f MB, mean %.2f MB (%d samples), OS: %s@%s",
+				duration.Seconds(),
+				stats.MemAfterMB-stats.MemBeforeMB,
+				stats.MemAfterMB,
+				stats.MemBeforeMB,
+				stats.MemPeakMB,
+				stats.MemMeanMB,
+				stats.SampleCount,
+				osinfo.ShortName,
+				osinfo.KernelRelease,
+			)
+		})
+	}
 	return &defaultInventoryProvider{
-		osInfoProvider:            osinfo.NewProvider(),
+		osInfoProvider:            osInfoProvider,
 		packageUpdatesProvider:    packages.NewPackageUpdatesProvider(),
-		installedPackagesProvider: packages.NewInstalledPackagesProvider(),
+		installedPackagesProvider: installedPackagesProvider,
 		clock:                     newDefaultClock(),
 	}
 }
