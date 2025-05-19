@@ -36,7 +36,7 @@ func (p tracingInstalledPackagesProvider) GetInstalledPackages(ctx context.Conte
 		clog.Errorf(ctx, "GetOSInfo() error: %v", osinfoErr)
 	}
 
-	clog.Infof(
+	clog.Debugf(
 		ctx,
 		"GetInstalledPackages: %.3fs, memory %+.2f MB (=%.2f-%.2f), peak %.2f MB, mean %.2f MB (%d samples), OS: %s@%s",
 		duration.Seconds(),
