@@ -35,7 +35,12 @@ func (p tracingInstalledPackagesProvider) GetInstalledPackages(ctx context.Conte
 	if osinfoErr != nil {
 		clog.Errorf(ctx, "GetOSInfo() error: %v", osinfoErr)
 	}
+	logTraceResult(ctx, result, duration, osinfo)
 
+	return pkgs, err
+}
+
+func logTraceResult(ctx context.Context, result utiltrace.TraceMemoryResult, duration time.Duration, osinfo osinfo.OSInfo) {
 	clog.Debugf(
 		ctx,
 		"GetInstalledPackages: %.3fs, memory %+.2f MB (=%.2f-%.2f), peak %.2f MB, mean %.2f MB (%d samples), OS: %s@%s",
@@ -49,6 +54,4 @@ func (p tracingInstalledPackagesProvider) GetInstalledPackages(ctx context.Conte
 		osinfo.ShortName,
 		osinfo.KernelRelease,
 	)
-
-	return pkgs, err
 }
