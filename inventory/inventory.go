@@ -71,13 +71,12 @@ type defaultInventoryProvider struct {
 
 // NewProvider returns ready to work default provider
 func NewProvider() Provider {
-	osInfoProvider := osinfo.NewProvider()
 	installedPackagesProvider := packages.NewInstalledPackagesProvider()
 	if agentconfig.TraceGetInventory() {
-		installedPackagesProvider = packages.TracingInstalledPackagesProvider(context.Background(), installedPackagesProvider, osInfoProvider)
+		installedPackagesProvider = packages.TracingInstalledPackagesProvider(context.Background(), installedPackagesProvider, osinfo.NewProvider())
 	}
 	return &defaultInventoryProvider{
-		osInfoProvider:            osInfoProvider,
+		osInfoProvider:            osinfo.NewProvider(),
 		packageUpdatesProvider:    packages.NewPackageUpdatesProvider(),
 		installedPackagesProvider: installedPackagesProvider,
 		clock:                     newDefaultClock(),
