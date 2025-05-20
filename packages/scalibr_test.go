@@ -14,12 +14,12 @@ import (
 	"github.com/google/osv-scalibr/inventory"
 )
 
-func TestDpkgExtractedPackage(t *testing.T) {
+func TestExtractedPackageMappings(t *testing.T) {
 	tests := []struct {
 		name string
 		arch string
 		pkgs []*extractor.Package
-		want []*PkgInfo
+		want Packages
 	}{
 		{
 			name: "os/dpkg extractor maps correctly",
@@ -33,10 +33,10 @@ func TestDpkgExtractedPackage(t *testing.T) {
 					Metadata: &scalibrdpkg.Metadata{PackageName: "llvm-16", Status: "install ok installed", SourceName: "llvm-toolchain-16", SourceVersion: "", PackageVersion: "1:16.0.6-27+build3", OSID: "debian", OSVersionCodename: "rodete", OSVersionID: "", Maintainer: "LLVM Packaging Team <pkg-llvm-team@lists.alioth.debian.org>", Architecture: "amd64"},
 				},
 			},
-			want: []*PkgInfo{
+			want: Packages{Deb: []*PkgInfo{
 				{Name: "7zip", Version: "24.09+dfsg-4", Arch: "x86_64", Source: Source{Name: "7zip", Version: "24.09+dfsg-4"}},
 				{Name: "llvm-16", Version: "1:16.0.6-27+build3", Arch: "x86_64", Source: Source{Name: "llvm-toolchain-16", Version: "1:16.0.6-27+build3"}},
-			},
+			}},
 		},
 		{
 			name: "os/rpm extractor maps correctly",
@@ -52,10 +52,10 @@ func TestDpkgExtractedPackage(t *testing.T) {
 					Metadata: &scalibrrpm.Metadata{PackageName: "gpg-pubkey", SourceRPM: "", Epoch: 0, OSName: "CentOS Linux", OSID: "centos", OSVersionID: "7", OSBuildID: "", Vendor: "", Architecture: "", License: "pubkey"},
 				},
 			},
-			want: []*PkgInfo{
+			want: Packages{Rpm: []*PkgInfo{
 				{Name: "acl", Version: "2.2.51-15.el7", Arch: "x86_64", Source: Source{Name: "acl-2.2.51-15.el7.src.rpm", Version: ""}},
 				{Name: "gpg-pubkey", Version: "352c64e5-52ae6884", Arch: "all", Source: Source{Name: "gpg-pubkey", Version: ""}},
-			},
+			}},
 		},
 		{
 			name: "os/cos extractor maps correctly",
@@ -67,9 +67,9 @@ func TestDpkgExtractedPackage(t *testing.T) {
 					Metadata: &scalibrcos.Metadata{Name: "PySocks", Version: "17412.448.8", Category: "dev-python", OSVersion: "105", OSVersionID: "105", EbuildVersion: "1.6.7-r1"},
 				},
 			},
-			want: []*PkgInfo{
+			want: Packages{COS: []*PkgInfo{
 				{Name: "dev-python/PySocks", Version: "17412.448.8", Arch: "x86_64"},
-			},
+			}},
 		},
 	}
 	for _, tt := range tests {

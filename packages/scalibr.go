@@ -7,10 +7,14 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	scalibr "github.com/google/osv-scalibr"
+	"github.com/google/osv-scalibr/binary/platform"
 	extractor "github.com/google/osv-scalibr/extractor"
+	fslist "github.com/google/osv-scalibr/extractor/filesystem/list"
 	scalibrcos "github.com/google/osv-scalibr/extractor/filesystem/os/cos"
 	scalibrdpkg "github.com/google/osv-scalibr/extractor/filesystem/os/dpkg"
 	scalibrrpm "github.com/google/osv-scalibr/extractor/filesystem/os/rpm"
+	scalibrfs "github.com/google/osv-scalibr/fs"
+	"github.com/google/osv-scalibr/plugin"
 )
 
 func pkgInfoFromDpkgExtractorPackage(pkg *extractor.Package, metadata *scalibrdpkg.Metadata) *PkgInfo {
@@ -65,18 +69,95 @@ func pkgInfoFromCosExtractorPackage(pkg *extractor.Package, metadata *scalibrcos
 	}
 }
 
-func pkgInfosFromExtractorPackages(ctx context.Context, scan *scalibr.ScanResult, osinfo *osinfo.OSInfo) []*PkgInfo {
-	pkgs := make([]*PkgInfo, 0, len(scan.Inventory.Packages))
+func pkgInfosFromExtractorPackages(ctx context.Context, scan *scalibr.ScanResult, osinfo *osinfo.OSInfo) Packages {
+	var packages Packages
 	for _, pkg := range scan.Inventory.Packages {
 		if metadata, ok := pkg.Metadata.(*scalibrdpkg.Metadata); ok {
-			pkgs = append(pkgs, pkgInfoFromDpkgExtractorPackage(pkg, metadata))
+			packages.Deb = append(packages.Deb, pkgInfoFromDpkgExtractorPackage(pkg, metadata))
 		} else if metadata, ok := pkg.Metadata.(*scalibrrpm.Metadata); ok {
-			pkgs = append(pkgs, pkgInfoFromRpmExtractorPackage(pkg, metadata))
+			packages.Rpm = append(packages.Rpm, pkgInfoFromRpmExtractorPackage(pkg, metadata))
 		} else if metadata, ok := pkg.Metadata.(*scalibrcos.Metadata); ok {
-			pkgs = append(pkgs, pkgInfoFromCosExtractorPackage(pkg, metadata, osinfo))
+			packages.COS = append(packages.COS, pkgInfoFromCosExtractorPackage(pkg, metadata, osinfo))
 		} else {
-			clog.Warningf(ctx, "Ignored package kind: %v", pkg)
+			clog.Errorf(ctx, "Package type not implemented: %v", pkg)
 		}
 	}
-	return pkgs
+	return packages
+}
+
+func gatherScanRoots() ([]*scalibrfs.ScanRoot, error) {
+	scanRootPaths, err := platform.DefaultScanRoots(true)
+	if err != nil {
+		return nil, err
+	}
+	var scanRoots []*scalibrfs.ScanRoot
+	for _, path := range scanRootPaths {
+		scanRoots = append(scanRoots, scalibrfs.RealFSScanRoot(path))
+	}
+	return scanRoots, nil
+}
+
+func gatherConfig() (*scalibr.ScanConfig, []error) {
+	var errs []error
+	extractors := []string{
+		"os/dpkg",
+		"os/rpm",
+		"os/cos",
+		// TODO: implement "os/zypper" for `zypper patches` — excluded from scan till then
+	}
+
+	filesystemExtractors, err := fslist.ExtractorsFromNames(extractors)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	scanRoots, err := gatherScanRoots()
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	dirsToSkip, err := platform.DefaultIgnoredDirectories()
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	return &scalibr.ScanConfig{
+		FilesystemExtractors: filesystemExtractors,
+		ScanRoots:            scanRoots,
+		DirsToSkip:           dirsToSkip,
+	}, errs
+}
+
+type scalibrInstalledPackagesProvider struct {
+	osinfoProvider osinfo.Provider
+}
+
+// NewScalibrInstalledPackagesProvider makes provider that uses osv-scalibr as its implementation.
+func NewScalibrInstalledPackagesProvider(osinfoProvider osinfo.Provider) InstalledPackagesProvider {
+	return scalibrInstalledPackagesProvider{osinfoProvider: osinfoProvider}
+}
+
+func combineErrors(errors []error) error {
+	if len(errors) > 0 {
+		return fmt.Errorf("erroneous scan: %v", errors)
+	}
+	return nil
+}
+
+func (p scalibrInstalledPackagesProvider) GetInstalledPackages(ctx context.Context) (Packages, error) {
+	config, errs := gatherConfig()
+
+	scan := scalibr.New().Scan(ctx, config)
+
+	if scan.Status.Status != plugin.ScanStatusSucceeded {
+		errs = append(errs, fmt.Errorf("scan.Status is unhealthy: %v", scan.Status))
+	}
+
+	osinfo, err := p.osinfoProvider.GetOSInfo(ctx)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	pkgs := pkgInfosFromExtractorPackages(ctx, scan, &osinfo)
+	return pkgs, combineErrors(errs)
 }
