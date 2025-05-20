@@ -20,9 +20,9 @@ func TracingInstalledPackagesProvider(tracedProvider InstalledPackagesProvider, 
 }
 
 func (p tracingInstalledPackagesProvider) GetInstalledPackages(ctx context.Context) (Packages, error) {
-	traceCtx, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithCancel(ctx)
 	resultChannel := make(chan utiltrace.TraceMemoryResult)
-	go utiltrace.TraceMemory(traceCtx, 100*time.Millisecond, resultChannel)
+	go utiltrace.TraceMemory(ctx, 100*time.Millisecond, resultChannel)
 
 	startTime := time.Now()
 	pkgs, err := p.tracedProvider.GetInstalledPackages(ctx)
