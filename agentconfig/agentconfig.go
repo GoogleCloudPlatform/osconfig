@@ -132,6 +132,7 @@ type config struct {
 	guestPoliciesEnabled    bool
 	osInventoryEnabled      bool
 	guestAttributesEnabled  bool
+	traceGetInventory       bool
 }
 
 func (c *config) parseFeatures(features string, enabled bool) {
@@ -219,6 +220,7 @@ type attributesJSON struct {
 	OSConfigEnabled       string       `json:"enable-osconfig"`
 	DisabledFeatures      string       `json:"osconfig-disabled-features"`
 	EnableGuestAttributes string       `json:"enable-guest-attributes"`
+	TraceGetInventory     string       `json:"trace-get-inventory"`
 }
 
 func createConfigFromMetadata(md metadataJSON) *config {
@@ -350,6 +352,7 @@ func createConfigFromMetadata(md metadataJSON) *config {
 	}
 
 	setSVCEndpoint(md, c)
+	setTraceGetInventory(md, c)
 
 	return c
 }
@@ -372,6 +375,17 @@ func setSVCEndpoint(md metadataJSON, c *config) {
 	parts := strings.Split(c.instanceZone, "/")
 	zone := parts[len(parts)-1]
 	c.svcEndpoint = strings.ReplaceAll(c.svcEndpoint, "{zone}", zone)
+}
+
+func setTraceGetInventory(md metadataJSON, c *config) {
+	projectSetting := md.Project.Attributes.TraceGetInventory
+	instanceSetting := md.Instance.Attributes.TraceGetInventory
+	if projectSetting != "" {
+		c.traceGetInventory = parseBool(projectSetting)
+	}
+	if instanceSetting != "" {
+		c.traceGetInventory = parseBool(instanceSetting)
+	}
 }
 
 func formatMetadataError(err error) error {
@@ -538,6 +552,11 @@ func DisableLocalLogging() bool {
 // SvcEndpoint is the OS Config service endpoint.
 func SvcEndpoint() string {
 	return getAgentConfig().svcEndpoint
+}
+
+// TraceGetInventory turns on memory tracing while gathering inventory.
+func TraceGetInventory() bool {
+	return getAgentConfig().traceGetInventory
 }
 
 // ZypperRepoDir is the location of the zypper repo files.
