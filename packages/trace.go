@@ -53,6 +53,6 @@ func logTraceResult(ctx context.Context, result utiltrace.TraceMemoryResult, dur
 		result.SampleCount,
 		osinfo.ShortName,
 		osinfo.KernelRelease,
-		osinfo.Hostname
+		osinfo.Hostname,
 	)
 }
