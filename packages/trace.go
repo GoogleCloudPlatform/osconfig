@@ -43,7 +43,7 @@ func (p tracingInstalledPackagesProvider) GetInstalledPackages(ctx context.Conte
 func logTraceResult(ctx context.Context, result utiltrace.TraceMemoryResult, duration time.Duration, osinfo osinfo.OSInfo) {
 	clog.Debugf(
 		ctx,
-		"GetInstalledPackages: %.3fs, memory %+.2f MB (=%.2f-%.2f), peak %.2f MB, mean %.2f MB (%d samples), OS: %s@%s",
+		"GetInstalledPackages: %.3fs, memory %+.2f MB (=%.2f-%.2f), peak %.2f MB, mean %.2f MB (%d samples), OS: %s@%s, hostname: %s",
 		duration.Seconds(),
 		result.MemAfterMB-result.MemBeforeMB,
 		result.MemAfterMB,
@@ -53,5 +53,6 @@ func logTraceResult(ctx context.Context, result utiltrace.TraceMemoryResult, dur
 		result.SampleCount,
 		osinfo.ShortName,
 		osinfo.KernelRelease,
+		osinfo.Hostname
 	)
 }
