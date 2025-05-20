@@ -131,6 +131,7 @@ type config struct {
 	taskNotificationEnabled bool
 	guestPoliciesEnabled    bool
 	osInventoryEnabled      bool
+	scalibrInventoryEnabled bool
 	guestAttributesEnabled  bool
 	traceGetInventory       bool
 }
@@ -219,6 +220,7 @@ type attributesJSON struct {
 	OSConfigEndpoint      string       `json:"osconfig-endpoint"`
 	OSConfigEnabled       string       `json:"enable-osconfig"`
 	DisabledFeatures      string       `json:"osconfig-disabled-features"`
+	InventoryExtractor    string       `json:"inventory-extractor"`
 	EnableGuestAttributes string       `json:"enable-guest-attributes"`
 	TraceGetInventory     string       `json:"trace-get-inventory"`
 }
@@ -351,10 +353,22 @@ func createConfigFromMetadata(md metadataJSON) *config {
 		c.debugEnabled = true
 	}
 
+	setInventoryExtractor(md, c)
 	setSVCEndpoint(md, c)
 	setTraceGetInventory(md, c)
 
 	return c
+}
+
+func setInventoryExtractor(md metadataJSON, c *config) {
+	projectSetting := md.Project.Attributes.InventoryExtractor
+	instanceSetting := md.Instance.Attributes.InventoryExtractor
+	if projectSetting != "" {
+		c.scalibrInventoryEnabled = projectSetting == "scalibr"
+	}
+	if instanceSetting != "" {
+		c.scalibrInventoryEnabled = instanceSetting == "scalibr"
+	}
 }
 
 func setSVCEndpoint(md metadataJSON, c *config) {
@@ -547,6 +561,11 @@ func Stdout() bool {
 // DisableLocalLogging flag.
 func DisableLocalLogging() bool {
 	return *disableLocalLogging
+}
+
+// ScalibrInventoryEnabled answers whether scalibr or legacy inventory extractors should be used.
+func ScalibrInventoryEnabled() bool {
+	return getAgentConfig().scalibrInventoryEnabled
 }
 
 // SvcEndpoint is the OS Config service endpoint.
