@@ -15,7 +15,7 @@ type tracingInstalledPackagesProvider struct {
 }
 
 // TracingInstalledPackagesProvider creates an InstalledPackagesProvider decorator that traces the execution time, memory usage, and OS information for each call.
-func TracingInstalledPackagesProvider(ctx context.Context, tracedProvider InstalledPackagesProvider, osInfoProvider osinfo.Provider) InstalledPackagesProvider {
+func TracingInstalledPackagesProvider(tracedProvider InstalledPackagesProvider, osInfoProvider osinfo.Provider) InstalledPackagesProvider {
 	return tracingInstalledPackagesProvider{tracedProvider: tracedProvider, osInfoProvider: osInfoProvider}
 }
 
