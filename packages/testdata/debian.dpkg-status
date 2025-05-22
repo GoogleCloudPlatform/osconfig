@@ -1,0 +1,29 @@
+Package: 7zip
+Status: install ok installed
+Priority: optional
+Section: utils
+Installed-Size: 7002
+Maintainer: YOKOTA Hiroshi <yokota.hgml@gmail.com>
+Architecture: amd64
+Version: 24.09+dfsg-4
+Replaces: p7zip (<= 16.02+dfsg-8), p7zip-full (<= 16.02+dfsg-8)
+Provides: p7zip, p7zip-full
+Depends: libc6 (>= 2.34), libgcc-s1 (>= 3.0), libstdc++6 (>= 14)
+Suggests: 7zip-standalone, 7zip-rar
+Breaks: p7zip (<= 16.02+dfsg-8), p7zip-full (<= 16.02+dfsg-8)
+Homepage: https://www.7-zip.org/
+
+Package: llvm-16
+Status: install ok installed
+Priority: optional
+Section: devel
+Installed-Size: 117327
+Maintainer: LLVM Packaging Team <pkg-llvm-team@lists.alioth.debian.org>
+Architecture: amd64
+Source: llvm-toolchain-16
+Version: 1:16.0.6-27+build3
+Depends: llvm-16-runtime (= 1:16.0.6-27+build3), llvm-16-linker-tools (= 1:16.0.6-27+build3), libc6 (>= 2.38), libcurl4t64 (>= 7.16.2), libgcc-s1 (>= 3.3), libllvm16t64, libpfm4, libstdc++6 (>= 13.1), libtinfo6 (>= 6), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.2.0)
+Recommends: llvm-16-dev
+Suggests: llvm-16-doc
+Homepage: https://www.llvm.org/
+

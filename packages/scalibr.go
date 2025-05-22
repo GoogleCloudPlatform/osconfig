@@ -85,32 +85,33 @@ func pkgInfosFromExtractorPackages(ctx context.Context, scan *scalibr.ScanResult
 	return packages
 }
 
-func gatherScanRoots() ([]*scalibrfs.ScanRoot, error) {
-	scanRootPaths, err := platform.DefaultScanRoots(true)
-	if err != nil {
-		return nil, err
+func (p scalibrInstalledPackagesProvider) getScanConfig() (*scalibr.ScanConfig, error) {
+	var err error
+
+	scanRootPaths := p.scanRootPaths
+	if scanRootPaths == nil {
+		scanRootPaths, err = platform.DefaultScanRoots(true)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	var scanRoots []*scalibrfs.ScanRoot
 	for _, path := range scanRootPaths {
 		scanRoots = append(scanRoots, scalibrfs.RealFSScanRoot(path))
 	}
-	return scanRoots, nil
-}
 
-func gatherConfig(extractors []string) (*scalibr.ScanConfig, error) {
-	filesystemExtractors, err := fslist.ExtractorsFromNames(extractors)
+	filesystemExtractors, err := fslist.ExtractorsFromNames(p.extractors)
 	if err != nil {
 		return nil, err
 	}
 
-	scanRoots, err := gatherScanRoots()
-	if err != nil {
-		return nil, err
-	}
-
-	dirsToSkip, err := platform.DefaultIgnoredDirectories()
-	if err != nil {
-		return nil, err
+	dirsToSkip := p.dirsToSkip
+	if dirsToSkip == nil {
+		dirsToSkip, err = platform.DefaultIgnoredDirectories()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &scalibr.ScanConfig{
@@ -123,10 +124,12 @@ func gatherConfig(extractors []string) (*scalibr.ScanConfig, error) {
 type scalibrInstalledPackagesProvider struct {
 	extractors     []string
 	osinfoProvider osinfo.Provider
+	scanRootPaths  []string
+	dirsToSkip     []string
 }
 
 func (p scalibrInstalledPackagesProvider) GetInstalledPackages(ctx context.Context) (Packages, error) {
-	config, err := gatherConfig(p.extractors)
+	config, err := p.getScanConfig()
 	if err != nil {
 		return Packages{}, err
 	}

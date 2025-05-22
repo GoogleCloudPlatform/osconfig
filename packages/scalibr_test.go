@@ -2,6 +2,9 @@ package packages
 
 import (
 	"context"
+	"os"
+	"path"
+	"reflect"
 	"testing"
 
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
@@ -79,5 +82,66 @@ func TestExtractedPackageMappings(t *testing.T) {
 				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}
 		})
+	}
+}
+
+func arrangeVirtualRoot(t *testing.T, dbFilepath string, targetFilepath string) string {
+	virtualRootPath := "./testdata/virtualTestRoot"
+	if err := os.RemoveAll(virtualRootPath); err != nil {
+		t.Error(err)
+	}
+	t.Cleanup(func() {
+		if err := os.RemoveAll(virtualRootPath); err != nil {
+			t.Error(err)
+		}
+	})
+
+	targetFilepathInsideVirtualRoot := path.Join(virtualRootPath, targetFilepath)
+	if err := os.MkdirAll(path.Dir(targetFilepathInsideVirtualRoot), 0700); err != nil {
+		t.Error(err)
+	}
+
+	if err := os.Link(dbFilepath, targetFilepathInsideVirtualRoot); err != nil {
+		t.Error(err)
+	}
+	return virtualRootPath
+}
+
+type stubProvider struct {
+}
+
+func (stubProvider) GetOSInfo(ctx context.Context) (osinfo.OSInfo, error) {
+	return osinfo.OSInfo{}, nil
+}
+
+func TestScalibrIntegration(t *testing.T) {
+	tests := []struct {
+		provider InstalledPackagesProvider
+		wantErr  error
+		wantPkgs Packages
+	}{
+		{
+			provider: scalibrInstalledPackagesProvider{
+				osinfoProvider: stubProvider{},
+				extractors:     []string{"os/dpkg"},
+				scanRootPaths:  []string{arrangeVirtualRoot(t, "./testdata/debian.dpkg-status", "/var/lib/dpkg/status")},
+				dirsToSkip:     []string{},
+			},
+			wantPkgs: Packages{Deb: []*PkgInfo{
+				{Name: "7zip", Version: "24.09+dfsg-4", Arch: "x86_64", Source: Source{Name: "7zip", Version: "24.09+dfsg-4"}},
+				{Name: "llvm-16", Version: "1:16.0.6-27+build3", Arch: "x86_64", Source: Source{Name: "llvm-toolchain-16", Version: "1:16.0.6-27+build3"}},
+			}},
+		},
+	}
+	for _, tt := range tests {
+		pkgs, err := tt.provider.GetInstalledPackages(context.Background())
+
+		if !reflect.DeepEqual(err, tt.wantErr) {
+			t.Errorf("err: want %v, got %v", tt.wantErr, err)
+		}
+
+		if !reflect.DeepEqual(pkgs, tt.wantPkgs) {
+			t.Errorf("pkgs: want %v, got %v", tt.wantPkgs, pkgs)
+		}
 	}
 }
