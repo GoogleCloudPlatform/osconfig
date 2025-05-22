@@ -6,7 +6,7 @@ import (
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
-	"github.com/google/osv-scalibr"
+	scalibr "github.com/google/osv-scalibr"
 	"github.com/google/osv-scalibr/binary/platform"
 	"github.com/google/osv-scalibr/extractor"
 	fslist "github.com/google/osv-scalibr/extractor/filesystem/list"
@@ -97,29 +97,27 @@ func gatherScanRoots() ([]*scalibrfs.ScanRoot, error) {
 	return scanRoots, nil
 }
 
-func gatherConfig(extractors []string) (*scalibr.ScanConfig, []error) {
-	var errs []error
-
+func gatherConfig(extractors []string) (*scalibr.ScanConfig, error) {
 	filesystemExtractors, err := fslist.ExtractorsFromNames(extractors)
 	if err != nil {
-		errs = append(errs, err)
+		return nil, err
 	}
 
 	scanRoots, err := gatherScanRoots()
 	if err != nil {
-		errs = append(errs, err)
+		return nil, err
 	}
 
 	dirsToSkip, err := platform.DefaultIgnoredDirectories()
 	if err != nil {
-		errs = append(errs, err)
+		return nil, err
 	}
 
 	return &scalibr.ScanConfig{
 		FilesystemExtractors: filesystemExtractors,
 		ScanRoots:            scanRoots,
 		DirsToSkip:           dirsToSkip,
-	}, errs
+	}, nil
 }
 
 type scalibrInstalledPackagesProvider struct {
@@ -127,27 +125,22 @@ type scalibrInstalledPackagesProvider struct {
 	osinfoProvider osinfo.Provider
 }
 
-func combineErrors(errors []error) error {
-	if len(errors) > 0 {
-		return fmt.Errorf("erroneous scan: %v", errors)
-	}
-	return nil
-}
-
 func (p scalibrInstalledPackagesProvider) GetInstalledPackages(ctx context.Context) (Packages, error) {
-	config, errs := gatherConfig(p.extractors)
+	config, err := gatherConfig(p.extractors)
+	if err != nil {
+		return Packages{}, err
+	}
 
 	scan := scalibr.New().Scan(ctx, config)
-
 	if scan.Status.Status != plugin.ScanStatusSucceeded {
-		errs = append(errs, fmt.Errorf("scan.Status is unhealthy: %v", scan.Status))
+		return Packages{}, fmt.Errorf("scalibr scan.Status is unhealthy, status: %v, plugins: %v", scan.Status, scan.PluginStatus)
 	}
 
 	osinfo, err := p.osinfoProvider.GetOSInfo(ctx)
 	if err != nil {
-		errs = append(errs, err)
+		return Packages{}, err
 	}
 
 	pkgs := pkgInfosFromExtractorPackages(ctx, scan, &osinfo)
-	return pkgs, combineErrors(errs)
+	return pkgs, nil
 }
