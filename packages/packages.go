@@ -85,11 +85,6 @@ func (p defaultUpdatesProvider) GetPackageUpdates(ctx context.Context) (Packages
 
 type defaultInstalledPackagesProvider struct{}
 
-// NewInstalledPackagesProvider returns fully initialized provider.
-func NewInstalledPackagesProvider() InstalledPackagesProvider {
-	return defaultInstalledPackagesProvider{}
-}
-
 func (p defaultInstalledPackagesProvider) GetInstalledPackages(ctx context.Context) (Packages, error) {
 	return GetInstalledPackages(ctx)
 }

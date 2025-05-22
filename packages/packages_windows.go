@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
+	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 	ole "github.com/go-ole/go-ole"
 )
@@ -140,4 +141,9 @@ func GetInstalledPackages(ctx context.Context) (Packages, error) {
 		err = errors.New(strings.Join(errs, "\n"))
 	}
 	return pkgs, err
+}
+
+// NewInstalledPackagesProvider returns fully initialized provider.
+func NewInstalledPackagesProvider(_ osinfo.Provider) InstalledPackagesProvider {
+	return defaultInstalledPackagesProvider{}
 }

@@ -131,7 +131,7 @@ type config struct {
 	taskNotificationEnabled bool
 	guestPoliciesEnabled    bool
 	osInventoryEnabled      bool
-	scalibrInventoryEnabled bool
+	scalibrLinuxEnabled     bool
 	guestAttributesEnabled  bool
 	traceGetInventory       bool
 }
@@ -220,9 +220,9 @@ type attributesJSON struct {
 	OSConfigEndpoint      string       `json:"osconfig-endpoint"`
 	OSConfigEnabled       string       `json:"enable-osconfig"`
 	DisabledFeatures      string       `json:"osconfig-disabled-features"`
-	InventoryExtractor    string       `json:"inventory-extractor"`
 	EnableGuestAttributes string       `json:"enable-guest-attributes"`
 	TraceGetInventory     string       `json:"trace-get-inventory"`
+	ScalibrLinuxEnabled   string       `json:"enable-scalibr-linux"`
 }
 
 func createConfigFromMetadata(md metadataJSON) *config {
@@ -353,21 +353,21 @@ func createConfigFromMetadata(md metadataJSON) *config {
 		c.debugEnabled = true
 	}
 
-	setInventoryExtractor(md, c)
+	setScalibrEnablement(md, c)
 	setSVCEndpoint(md, c)
 	setTraceGetInventory(md, c)
 
 	return c
 }
 
-func setInventoryExtractor(md metadataJSON, c *config) {
-	projectSetting := md.Project.Attributes.InventoryExtractor
-	instanceSetting := md.Instance.Attributes.InventoryExtractor
+func setScalibrEnablement(md metadataJSON, c *config) {
+	projectSetting := md.Project.Attributes.ScalibrLinuxEnabled
+	instanceSetting := md.Instance.Attributes.ScalibrLinuxEnabled
 	if projectSetting != "" {
-		c.scalibrInventoryEnabled = projectSetting == "scalibr"
+		c.scalibrLinuxEnabled = parseBool(projectSetting)
 	}
 	if instanceSetting != "" {
-		c.scalibrInventoryEnabled = instanceSetting == "scalibr"
+		c.scalibrLinuxEnabled = parseBool(instanceSetting)
 	}
 }
 
@@ -563,9 +563,9 @@ func DisableLocalLogging() bool {
 	return *disableLocalLogging
 }
 
-// ScalibrInventoryEnabled answers whether scalibr or legacy inventory extractors should be used.
-func ScalibrInventoryEnabled() bool {
-	return getAgentConfig().scalibrInventoryEnabled
+// ScalibrLinuxEnabled answers whether scalibr or legacy inventory extractors should be used.
+func ScalibrLinuxEnabled() bool {
+	return getAgentConfig().scalibrLinuxEnabled
 }
 
 // SvcEndpoint is the OS Config service endpoint.

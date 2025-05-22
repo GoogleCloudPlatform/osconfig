@@ -71,13 +71,7 @@ type defaultInventoryProvider struct {
 
 // NewProvider returns ready to work default provider
 func NewProvider() Provider {
-	var installedPackagesProvider packages.InstalledPackagesProvider
-	if agentconfig.ScalibrInventoryEnabled() {
-		installedPackagesProvider = packages.NewScalibrInstalledPackagesProvider(osinfo.NewProvider())
-	} else {
-		installedPackagesProvider = packages.NewInstalledPackagesProvider()
-	}
-
+	installedPackagesProvider := packages.NewInstalledPackagesProvider(osinfo.NewProvider())
 	if agentconfig.TraceGetInventory() {
 		installedPackagesProvider = packages.TracingInstalledPackagesProvider(
 			installedPackagesProvider,

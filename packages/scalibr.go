@@ -6,9 +6,9 @@ import (
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
-	scalibr "github.com/google/osv-scalibr"
+	"github.com/google/osv-scalibr"
 	"github.com/google/osv-scalibr/binary/platform"
-	extractor "github.com/google/osv-scalibr/extractor"
+	"github.com/google/osv-scalibr/extractor"
 	fslist "github.com/google/osv-scalibr/extractor/filesystem/list"
 	scalibrcos "github.com/google/osv-scalibr/extractor/filesystem/os/cos"
 	scalibrdpkg "github.com/google/osv-scalibr/extractor/filesystem/os/dpkg"
@@ -97,14 +97,8 @@ func gatherScanRoots() ([]*scalibrfs.ScanRoot, error) {
 	return scanRoots, nil
 }
 
-func gatherConfig() (*scalibr.ScanConfig, []error) {
+func gatherConfig(extractors []string) (*scalibr.ScanConfig, []error) {
 	var errs []error
-	extractors := []string{
-		"os/dpkg",
-		"os/rpm",
-		"os/cos",
-		// TODO: implement "os/zypper" for `zypper patches` — excluded from scan till then
-	}
 
 	filesystemExtractors, err := fslist.ExtractorsFromNames(extractors)
 	if err != nil {
@@ -129,12 +123,8 @@ func gatherConfig() (*scalibr.ScanConfig, []error) {
 }
 
 type scalibrInstalledPackagesProvider struct {
+	extractors     []string
 	osinfoProvider osinfo.Provider
-}
-
-// NewScalibrInstalledPackagesProvider makes provider that uses osv-scalibr as its implementation.
-func NewScalibrInstalledPackagesProvider(osinfoProvider osinfo.Provider) InstalledPackagesProvider {
-	return scalibrInstalledPackagesProvider{osinfoProvider: osinfoProvider}
 }
 
 func combineErrors(errors []error) error {
@@ -145,7 +135,7 @@ func combineErrors(errors []error) error {
 }
 
 func (p scalibrInstalledPackagesProvider) GetInstalledPackages(ctx context.Context) (Packages, error) {
-	config, errs := gatherConfig()
+	config, errs := gatherConfig(p.extractors)
 
 	scan := scalibr.New().Scan(ctx, config)
 
