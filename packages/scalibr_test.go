@@ -69,9 +69,15 @@ func TestExtractedPackageMappings(t *testing.T) {
 					Version:  "17412.448.8",
 					Metadata: &scalibrcos.Metadata{Name: "PySocks", Version: "17412.448.8", Category: "dev-python", OSVersion: "105", OSVersionID: "105", EbuildVersion: "1.6.7-r1"},
 				},
+				{
+					Name:     "chromeos-bsp",
+					Version:  "17412.448.8",
+					Metadata: &scalibrcos.Metadata{Name: "chromeos-bsp", Version: "17412.448.8", Category: "virtual", OSVersion: "105", OSVersionID: "105", EbuildVersion: "3-r1"},
+				},
 			},
 			want: Packages{COS: []*PkgInfo{
 				{Name: "dev-python/PySocks", Version: "17412.448.8", Arch: "x86_64"},
+				{Name: "virtual/chromeos-bsp", Version: "17412.448.8", Arch: "x86_64"},
 			}},
 		},
 	}
