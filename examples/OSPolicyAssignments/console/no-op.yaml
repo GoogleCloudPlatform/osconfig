@@ -1,0 +1,12 @@
+id: no-op-policy
+mode: ENFORCEMENT
+resourceGroups:
+  - resources:
+      id: sample
+      exec:
+        validate:
+          interpreter: SHELL
+          script: exit 100
+        enforce:
+          interpreter: SHELL
+          script: exit 100
