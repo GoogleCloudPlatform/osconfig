@@ -49,7 +49,7 @@ func DisableAutoUpdates(ctx context.Context) {
 	if _, err := os.Stat(`C:\Program Files\Google\Compute Engine\tools\auto_updater.ps1`); err == nil {
 		clog.Debugf(ctx, "Removing google-compute-engine-auto-updater package")
 		if err := packages.RemoveGooGetPackages(ctx, []string{"google-compute-engine-auto-updater"}); err != nil {
-			clog.Errorf(ctx, err.Error())
+			clog.Errorf(ctx, "%s", err.Error())
 		}
 	}
 }

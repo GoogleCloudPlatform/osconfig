@@ -20,7 +20,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
+	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 )
 
 // GetPackageUpdates gets all available package updates from any known
@@ -176,4 +178,20 @@ func getInstalledPackages(ctx context.Context) (Packages, []string) {
 	}
 
 	return pkgs, errs
+}
+
+// NewInstalledPackagesProvider makes provider that uses osv-scalibr as its implementation if enabled by config, otherwise falls back to default legacy implementation.
+func NewInstalledPackagesProvider(osinfoProvider osinfo.Provider) InstalledPackagesProvider {
+	if agentconfig.ScalibrLinuxEnabled() {
+		return scalibrInstalledPackagesProvider{
+			extractors: []string{
+				"os/cos",
+				"os/dpkg",
+				"os/rpm",
+			},
+			osinfoProvider: osinfoProvider,
+		}
+	}
+
+	return defaultInstalledPackagesProvider{}
 }

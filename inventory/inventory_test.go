@@ -143,7 +143,6 @@ func TestNewProvider(t *testing.T) {
 
 	if provider == nil {
 		t.Errorf("provider is not valid")
-
 	}
 }
 

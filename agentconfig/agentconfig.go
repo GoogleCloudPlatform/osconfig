@@ -131,6 +131,7 @@ type config struct {
 	taskNotificationEnabled bool
 	guestPoliciesEnabled    bool
 	osInventoryEnabled      bool
+	scalibrLinuxEnabled     bool
 	guestAttributesEnabled  bool
 	traceGetInventory       bool
 }
@@ -221,6 +222,7 @@ type attributesJSON struct {
 	DisabledFeatures      string       `json:"osconfig-disabled-features"`
 	EnableGuestAttributes string       `json:"enable-guest-attributes"`
 	TraceGetInventory     string       `json:"trace-get-inventory"`
+	ScalibrLinuxEnabled   string       `json:"enable-scalibr-linux"`
 }
 
 func createConfigFromMetadata(md metadataJSON) *config {
@@ -351,10 +353,22 @@ func createConfigFromMetadata(md metadataJSON) *config {
 		c.debugEnabled = true
 	}
 
+	setScalibrEnablement(md, c)
 	setSVCEndpoint(md, c)
 	setTraceGetInventory(md, c)
 
 	return c
+}
+
+func setScalibrEnablement(md metadataJSON, c *config) {
+	projectSetting := md.Project.Attributes.ScalibrLinuxEnabled
+	instanceSetting := md.Instance.Attributes.ScalibrLinuxEnabled
+	if projectSetting != "" {
+		c.scalibrLinuxEnabled = parseBool(projectSetting)
+	}
+	if instanceSetting != "" {
+		c.scalibrLinuxEnabled = parseBool(instanceSetting)
+	}
 }
 
 func setSVCEndpoint(md metadataJSON, c *config) {
@@ -547,6 +561,11 @@ func Stdout() bool {
 // DisableLocalLogging flag.
 func DisableLocalLogging() bool {
 	return *disableLocalLogging
+}
+
+// ScalibrLinuxEnabled answers whether scalibr or legacy inventory extractors should be used.
+func ScalibrLinuxEnabled() bool {
+	return getAgentConfig().scalibrLinuxEnabled
 }
 
 // SvcEndpoint is the OS Config service endpoint.
