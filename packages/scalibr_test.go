@@ -120,7 +120,14 @@ func (stubProvider) GetOSInfo(ctx context.Context) (osinfo.OSInfo, error) {
 	return osinfo.OSInfo{}, nil
 }
 
+func withZypperDisabled(t *testing.T) {
+	prev := ZypperExists
+	ZypperExists = false
+	t.Cleanup(func() { ZypperExists = prev })
+}
+
 func TestScalibrIntegration(t *testing.T) {
+	withZypperDisabled(t)
 	tests := []struct {
 		provider InstalledPackagesProvider
 		wantErr  error
