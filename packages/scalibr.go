@@ -145,5 +145,14 @@ func (p scalibrInstalledPackagesProvider) GetInstalledPackages(ctx context.Conte
 	}
 
 	pkgs := pkgInfosFromExtractorPackages(ctx, scan, &osinfo)
-	return pkgs, nil
+
+	// TODO: replace zypper patches legacy extractor with implemented "os/zypper" extractor
+	if ZypperExists {
+		zypperPatches, err := ZypperInstalledPatches(ctx)
+		if err != nil {
+			return pkgs, fmt.Errorf("error getting zypper installed patches: %v", err)
+		}
+		pkgs.ZypperPatches = zypperPatches
+	}
+	return pkgs, err
 }

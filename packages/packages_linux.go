@@ -188,7 +188,6 @@ func NewInstalledPackagesProvider(osinfoProvider osinfo.Provider) InstalledPacka
 				"os/cos",
 				"os/dpkg",
 				"os/rpm",
-				// TODO: implement "os/zypper" for `zypper patches` — excluded from scan till then
 			},
 			osinfoProvider: osinfoProvider,
 		}
