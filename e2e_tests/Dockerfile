@@ -12,11 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# We use this image just for ca-certificates.crt
-FROM golang:alpine
+FROM marketplace.gcr.io/google/debian12:latest
+
+# Set environment variables for the Go version and installation
+ENV GO_VERSION 1.24.3
+ENV PATH /usr/local/go/bin:$PATH
+
+RUN apt-get update && \
+    apt-get install -y wget ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN wget https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz -O go.tar.gz && \
+    tar -C /usr/local -xzf go.tar.gz && \
+    rm go.tar.gz
 
 COPY . /source
 WORKDIR /source
+
 RUN go mod download && CGO_ENABLED=0 go build -o /e2e_tests main.go
 RUN chmod +x /e2e_tests
 
