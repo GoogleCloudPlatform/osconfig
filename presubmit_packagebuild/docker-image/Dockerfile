@@ -13,11 +13,8 @@
 # limitations under the License.
 FROM gcr.io/compute-image-tools/daisy:latest
 
-#FROM alpine
 # Needed for gsutil.
-FROM google/cloud-sdk:alpine
-
-RUN apk add --no-cache bash
+FROM gcr.io/google.com/cloudsdktool/google-cloud-cli:stable
 
 WORKDIR /
 COPY --from=0 /daisy daisy
