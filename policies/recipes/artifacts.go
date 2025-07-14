@@ -24,9 +24,12 @@ import (
 	"path/filepath"
 
 	"cloud.google.com/go/storage"
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/external"
 	"github.com/GoogleCloudPlatform/osconfig/util"
+
+	"google.golang.org/api/option"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
 )
@@ -55,8 +58,7 @@ func fetchArtifact(ctx context.Context, artifact *agentendpointpb.SoftwareRecipe
 	case artifact.GetGcs() != nil:
 		gcs := artifact.GetGcs()
 		extension = path.Ext(gcs.Object)
-
-		cl, err := storage.NewClient(ctx)
+		cl, err := storage.NewClient(ctx, option.WithUniverseDomain(agentconfig.UniverseDomain()))
 		if err != nil {
 			return "", fmt.Errorf("error creating gcs client: %v", err)
 		}
