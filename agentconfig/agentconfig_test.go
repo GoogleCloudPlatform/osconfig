@@ -224,10 +224,17 @@ func TestVersion(t *testing.T) {
 }
 
 func TestSvcEndpoint(t *testing.T) {
+	var request int
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Etag", "sametag")
-		// we always get zone value in instance metadata.
-		fmt.Fprintln(w, `{"instance": {"id": 12345,"name": "name","zone": "fakezone","attributes": {"osconfig-endpoint": "{zone}-dev.osconfig.googleapis.com"}}}`)
+		switch request {
+		case 0:
+			w.Header().Set("Etag", "etag-0")
+			// we always get zone value in instance metadata.
+			fmt.Fprintln(w, `{"instance": {"id": 12345,"name": "name","zone": "fakezone","attributes": {"osconfig-endpoint": "{zone}-dev.osconfig.googleapis.com"}}}`)
+		case 1:
+			w.Header().Set("Etag", "etag-1")
+			fmt.Fprintln(w, `{"universe": {"universe-domain": "domain.com"}, "instance": {"id": 12345,"name": "name","zone": "fakezone","attributes": {"osconfig-endpoint": "{zone}-dev.osconfig.googleapis.com"}}}`)
+		}
 	}))
 	defer ts.Close()
 
@@ -235,13 +242,15 @@ func TestSvcEndpoint(t *testing.T) {
 		t.Fatalf("Error running os.Setenv: %v", err)
 	}
 
-	if err := WatchConfig(context.Background()); err != nil {
-		t.Fatalf("Error running SetConfig: %v", err)
-	}
+	for i, expectedSvcEndpoint := range []string{"fakezone-dev.osconfig.googleapis.com", "fakezone-dev.osconfig.domain.com"} {
+		request = i
+		if err := WatchConfig(context.Background()); err != nil {
+			t.Fatalf("Error running SetConfig: %v", err)
+		}
 
-	expectedSvcEndpoint := "fakezone-dev.osconfig.googleapis.com"
-	if SvcEndpoint() != expectedSvcEndpoint {
-		t.Errorf("Default endpoint: got(%s) != want(%s)", SvcEndpoint(), expectedSvcEndpoint)
+		if SvcEndpoint() != expectedSvcEndpoint {
+			t.Errorf("Default endpoint: got(%s) != want(%s)", SvcEndpoint(), expectedSvcEndpoint)
+		}
 	}
 
 }
@@ -260,4 +269,35 @@ func TestSetConfigError(t *testing.T) {
 	if err := WatchConfig(context.Background()); err == nil || !strings.Contains(err.Error(), "unexpected end of JSON input") {
 		t.Errorf("Unexpected output %+v", err)
 	}
+}
+
+func TestDisableCloudLogging(t *testing.T) {
+	var request int
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch request {
+		case 0:
+			w.Header().Set("Etag", "etag-0")
+			fmt.Fprintln(w, `{"universe":{"universe-domain": "domain.com"}}`)
+		case 1:
+			w.Header().Set("Etag", "etag-1")
+			fmt.Fprintln(w, `{"instance": {"zone": "fake-zone"}}`)
+		}
+	}))
+	defer ts.Close()
+
+	if err := os.Setenv("GCE_METADATA_HOST", strings.Trim(ts.URL, "http://")); err != nil {
+		t.Fatalf("Error running os.Setenv: %v", err)
+	}
+
+	for i, expectedDisableCloudLoggingValue := range []bool{true, false} {
+		request = i
+		if err := WatchConfig(context.Background()); err != nil {
+			t.Fatalf("Error running SetConfig: %v", err)
+		}
+
+		if DisableCloudLogging() != expectedDisableCloudLoggingValue {
+			t.Errorf("DisableCloudLogging: got(%t) != want(%t)", DisableCloudLogging(), expectedDisableCloudLoggingValue)
+		}
+	}
+
 }

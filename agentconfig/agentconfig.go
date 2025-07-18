@@ -82,6 +82,9 @@ const (
 
 	osConfigPollIntervalDefault = 10
 	osConfigMetadataPollTimeout = 60
+
+	// Default Google API domain
+	universeDomainDefault = "googleapis.com"
 )
 
 var (
@@ -125,6 +128,7 @@ type config struct {
 	zypperRepoFilePath      string
 	yumRepoFilePath         string
 	instanceID              string
+	universeDomain          string
 	numericProjectID        int64
 	osConfigPollInterval    int
 	debugEnabled            bool
@@ -192,6 +196,7 @@ func parseBool(s string) bool {
 type metadataJSON struct {
 	Instance instanceJSON
 	Project  projectJSON
+	Universe universeJSON
 }
 
 type instanceJSON struct {
@@ -205,6 +210,10 @@ type projectJSON struct {
 	Attributes       attributesJSON
 	ProjectID        string
 	NumericProjectID int64
+}
+
+type universeJSON struct {
+	UniverseDomain string `json:"universe-domain"`
 }
 
 type attributesJSON struct {
@@ -245,6 +254,8 @@ func createConfigFromMetadata(md metadataJSON) *config {
 		instanceZone:     old.instanceZone,
 		instanceName:     old.instanceName,
 		instanceID:       old.instanceID,
+
+		universeDomain: universeDomainDefault,
 	}
 
 	if md.Project.ProjectID != "" {
@@ -261,6 +272,10 @@ func createConfigFromMetadata(md metadataJSON) *config {
 	}
 	if md.Instance.ID != nil {
 		c.instanceID = md.Instance.ID.String()
+	}
+
+	if md.Universe.UniverseDomain != "" {
+		c.universeDomain = md.Universe.UniverseDomain
 	}
 
 	// Check project first then instance as instance metadata overrides project.
@@ -389,6 +404,11 @@ func setSVCEndpoint(md metadataJSON, c *config) {
 	parts := strings.Split(c.instanceZone, "/")
 	zone := parts[len(parts)-1]
 	c.svcEndpoint = strings.ReplaceAll(c.svcEndpoint, "{zone}", zone)
+
+	// Change hostname according to the universe domain
+	if c.universeDomain != universeDomainDefault {
+		c.svcEndpoint = strings.ReplaceAll(c.svcEndpoint, universeDomainDefault, c.universeDomain)
+	}
 }
 
 func setTraceGetInventory(md metadataJSON, c *config) {
@@ -799,4 +819,14 @@ func DisableInventoryWrite() bool {
 // FreeOSMemory returns true if the FreeOSMemory setting is set.
 func FreeOSMemory() bool {
 	return strings.EqualFold(freeOSMemory, "true") || freeOSMemory == "1"
+}
+
+// DisableCloudLogging returns true if universe domain is not equal to GDU domain.
+func DisableCloudLogging() bool {
+	return !strings.EqualFold(getAgentConfig().universeDomain, universeDomainDefault)
+}
+
+// UniverseDomain is the cloud universe domain
+func UniverseDomain() string {
+	return getAgentConfig().universeDomain
 }

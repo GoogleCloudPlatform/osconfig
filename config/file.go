@@ -24,8 +24,11 @@ import (
 	"os"
 
 	"cloud.google.com/go/storage"
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/external"
 	"github.com/GoogleCloudPlatform/osconfig/util"
+
+	"google.golang.org/api/option"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
 )
@@ -43,7 +46,7 @@ func downloadFile(ctx context.Context, path string, perms os.FileMode, file *age
 
 	switch file.GetType().(type) {
 	case *agentendpointpb.OSPolicy_Resource_File_Gcs_:
-		client, err := storage.NewClient(ctx)
+		client, err := storage.NewClient(ctx, option.WithUniverseDomain(agentconfig.UniverseDomain()))
 		if err != nil {
 			return "", fmt.Errorf("error creating gcs client: %v", err)
 		}

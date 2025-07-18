@@ -26,9 +26,12 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/external"
 	"github.com/GoogleCloudPlatform/osconfig/util"
+
+	"google.golang.org/api/option"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
 )
@@ -61,7 +64,8 @@ var run = func(cmd *exec.Cmd) ([]byte, error) {
 }
 
 func getGCSObject(ctx context.Context, bkt, obj string, gen int64) (string, error) {
-	cl, err := storage.NewClient(ctx)
+	cl, err := storage.NewClient(ctx, option.WithUniverseDomain(agentconfig.UniverseDomain()))
+
 	if err != nil {
 		return "", fmt.Errorf("error creating gcs client: %v", err)
 	}
