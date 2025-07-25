@@ -29,6 +29,8 @@ gsutil cp "${SRC_PATH}/common.sh" ./
 
 # disable the backports repo for debian-10
 sed -i 's/^.*debian buster-backports main.*$//g' /etc/apt/sources.list
+# disable the backports repo for debian-11
+sed -i 's/^.*debian bullseye-backports main.*$//g' /etc/apt/sources.list
 
 try_command apt-get -y update
 try_command apt-get install -y --no-install-{suggests,recommends} git-core
