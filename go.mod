@@ -19,8 +19,8 @@ require (
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
 	github.com/ulikunitz/xz v0.5.12
 	golang.org/x/crypto v0.38.0
-	golang.org/x/oauth2 v0.26.0
-	golang.org/x/sys v0.33.0
+	golang.org/x/oauth2 v0.27.0
+  golang.org/x/sys v0.33.0
 	google.golang.org/api v0.214.0
 	google.golang.org/genproto v0.0.0-20241118233622-e639e219e697
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250218202821-56aae31c358a
@@ -148,7 +148,7 @@ require (
 	golang.org/x/net v0.40.0 // indirect
 	golang.org/x/sync v0.14.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
-	golang.org/x/time v0.9.0 // indirect
+	golang.org/x/time v0.12.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250218202821-56aae31c358a // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
