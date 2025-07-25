@@ -21,8 +21,7 @@ require (
 
 require (
 	cloud.google.com/go v0.110.0 // indirect
-	cloud.google.com/go/compute v1.19.1 // indirect
-	cloud.google.com/go/compute/metadata v0.2.3 // indirect
+	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	cloud.google.com/go/logging v1.7.0 // indirect
 	cos.googlesource.com/cos/tools.git v0.0.0-20210329212435-a349a79f950d // indirect
 	github.com/StackExchange/wmi v1.2.1 // indirect
@@ -39,7 +38,7 @@ require (
 	go.chromium.org/luci v0.0.0-20210524194916-901fa619ed56 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/net v0.38.0 // indirect
-	golang.org/x/oauth2 v0.7.0 // indirect
+	golang.org/x/oauth2 v0.27.0 // indirect
 	golang.org/x/sync v0.12.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
