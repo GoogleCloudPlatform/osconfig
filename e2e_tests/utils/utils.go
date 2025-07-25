@@ -134,6 +134,9 @@ func InstallOSConfigDeb(image string) string {
 sleep 10
 systemctl stop google-osconfig-agent
 
+# disable the backports repo for debian-11
+sed -i 's/^.*debian bullseye-backports main.*$//g' /etc/apt/sources.list
+
 # install gnupg2 if not exist
 apt-get update
 apt-get install -y gnupg2
