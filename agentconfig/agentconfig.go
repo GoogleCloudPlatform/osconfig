@@ -213,7 +213,7 @@ type projectJSON struct {
 }
 
 type universeJSON struct {
-	UniverseDomain string `json:"universe-domain"`
+	UniverseDomain string `json:"universeDomain"`
 }
 
 type attributesJSON struct {
