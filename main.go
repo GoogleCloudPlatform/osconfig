@@ -98,7 +98,7 @@ func registerAgent(ctx context.Context) {
 
 func run(ctx context.Context) {
 	// Setup logging.
-	opts := logger.LogOpts{LoggerName: "OSConfigAgent", UserAgent: agentconfig.UserAgent(), DisableLocalLogging: agentconfig.DisableLocalLogging(), DisableCloudLogging: agentconfig.DisableCloudLogging()}
+	opts := logger.LogOpts{LoggerName: "OSConfigAgent", UserAgent: agentconfig.UserAgent(), DisableLocalLogging: agentconfig.DisableLocalLogging()}
 	if agentconfig.Stdout() {
 		opts.Writers = []io.Writer{os.Stdout}
 	}
@@ -114,6 +114,7 @@ func run(ctx context.Context) {
 	opts.Debug = agentconfig.Debug()
 	clog.DebugEnabled = agentconfig.Debug()
 	opts.ProjectName = agentconfig.ProjectID()
+	opts.DisableCloudLogging = agentconfig.DisableCloudLogging()
 
 	if err := logger.Init(ctx, opts); err != nil {
 		fmt.Printf("Error initializing logger: %v", err)

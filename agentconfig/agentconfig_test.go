@@ -233,7 +233,7 @@ func TestSvcEndpoint(t *testing.T) {
 			fmt.Fprintln(w, `{"instance": {"id": 12345,"name": "name","zone": "fakezone","attributes": {"osconfig-endpoint": "{zone}-dev.osconfig.googleapis.com"}}}`)
 		case 1:
 			w.Header().Set("Etag", "etag-1")
-			fmt.Fprintln(w, `{"universe": {"universe-domain": "domain.com"}, "instance": {"id": 12345,"name": "name","zone": "fakezone","attributes": {"osconfig-endpoint": "{zone}-dev.osconfig.googleapis.com"}}}`)
+			fmt.Fprintln(w, `{"universe": {"universeDomain": "domain.com"}, "instance": {"id": 12345,"name": "name","zone": "fakezone","attributes": {"osconfig-endpoint": "{zone}-dev.osconfig.googleapis.com"}}}`)
 		}
 	}))
 	defer ts.Close()
@@ -277,7 +277,7 @@ func TestDisableCloudLogging(t *testing.T) {
 		switch request {
 		case 0:
 			w.Header().Set("Etag", "etag-0")
-			fmt.Fprintln(w, `{"universe":{"universe-domain": "domain.com"}}`)
+			fmt.Fprintln(w, `{"universe":{"universeDomain": "domain.com"}}`)
 		case 1:
 			w.Header().Set("Etag", "etag-1")
 			fmt.Fprintln(w, `{"instance": {"zone": "fake-zone"}}`)
