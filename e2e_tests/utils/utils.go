@@ -382,9 +382,7 @@ var OldSUSEImages = func() map[string]string {
 
 	// TODO: enable SUSE tests to use testing pkgs after Artifact Registry supports zypper installation from private repos
 	if config.AgentRepo() != "testing" {
-		imgsMap = map[string]string{
-			"old/sles-15-sp4-sap": "projects/suse-sap-cloud/global/images/sles-15-sp4-sap",
-		}
+		imgsMap = map[string]string{}
 	}
 	return imgsMap
 }()
