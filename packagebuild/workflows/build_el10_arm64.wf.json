@@ -28,7 +28,7 @@
         "Path": "./build_package.wf.json",
         "Vars": {
           "type": "rpm",
-          "sourceImage": "projects/rhel-cloud/global/images/family/rhel-10-arm64",
+          "sourceImage": "projects/bct-prod-images/global/images/family/centos-stream-10-arm64",
           "gcs_path": "${gcs_path}",
           "repo_owner": "${repo_owner}",
           "repo_name": "${repo_name}",
