@@ -39,6 +39,8 @@ var debArchiveTypeMap = map[agentendpointpb.AptRepository_ArchiveType]string{
 	agentendpointpb.AptRepository_DEB_SRC: "deb-src",
 }
 
+var osInfoProvider osinfo.Provider = osinfo.NewProvider()
+
 const aptGPGFile = "/etc/apt/trusted.gpg.d/osconfig_agent_managed.gpg"
 
 func isArmoredGPGKey(keyData []byte) bool {
@@ -86,7 +88,7 @@ func containsEntity(es []*openpgp.Entity, e *openpgp.Entity) bool {
 }
 
 func readInstanceOsInfo() (string, float64, error) {
-	oi, err := osinfo.Get()
+	oi, err := osInfoProvider.Get()
 	if err != nil {
 		return "", 0, fmt.Errorf("error getting osinfo: %v", err)
 	}
