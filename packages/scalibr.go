@@ -11,13 +11,13 @@ import (
 	"github.com/google/osv-scalibr/extractor"
 	fslist "github.com/google/osv-scalibr/extractor/filesystem/list"
 	scalibrcos "github.com/google/osv-scalibr/extractor/filesystem/os/cos"
-	scalibrdpkg "github.com/google/osv-scalibr/extractor/filesystem/os/dpkg"
+	dpkgmetadata "github.com/google/osv-scalibr/extractor/filesystem/os/dpkg/metadata"
 	scalibrrpm "github.com/google/osv-scalibr/extractor/filesystem/os/rpm"
 	scalibrfs "github.com/google/osv-scalibr/fs"
 	"github.com/google/osv-scalibr/plugin"
 )
 
-func pkgInfoFromDpkgExtractorPackage(pkg *extractor.Package, metadata *scalibrdpkg.Metadata) *PkgInfo {
+func pkgInfoFromDpkgExtractorPackage(pkg *extractor.Package, metadata *dpkgmetadata.Metadata) *PkgInfo {
 	source := Source{Name: metadata.SourceName, Version: metadata.SourceVersion}
 	if source.Name == "" {
 		source.Name = pkg.Name
@@ -72,7 +72,7 @@ func pkgInfoFromCosExtractorPackage(pkg *extractor.Package, metadata *scalibrcos
 func pkgInfosFromExtractorPackages(ctx context.Context, scan *scalibr.ScanResult, osinfo *osinfo.OSInfo) Packages {
 	var packages Packages
 	for _, pkg := range scan.Inventory.Packages {
-		if metadata, ok := pkg.Metadata.(*scalibrdpkg.Metadata); ok {
+		if metadata, ok := pkg.Metadata.(*dpkgmetadata.Metadata); ok {
 			packages.Deb = append(packages.Deb, pkgInfoFromDpkgExtractorPackage(pkg, metadata))
 		} else if metadata, ok := pkg.Metadata.(*scalibrrpm.Metadata); ok {
 			packages.Rpm = append(packages.Rpm, pkgInfoFromRpmExtractorPackage(pkg, metadata))
