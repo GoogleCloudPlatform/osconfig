@@ -46,6 +46,8 @@ var extensionMap = map[agentendpointpb.SoftwareRecipe_Step_RunScript_Interpreter
 	agentendpointpb.SoftwareRecipe_Step_RunScript_POWERSHELL:              ".ps1",
 }
 
+var chown = chownFunc
+
 func stepCopyFile(step *agentendpointpb.SoftwareRecipe_Step_CopyFile, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	dest, err := util.NormPath(step.Destination)
 	if err != nil {
@@ -127,6 +129,28 @@ func zipIsDir(name string) bool {
 	return strings.HasSuffix(name, "/")
 }
 
+func ensureFilePathBelongsToDir(dirPath string, filePath string) error {
+	dirAbs, err := filepath.Abs(dirPath)
+	if err != nil {
+		return err
+	}
+	fileAbs, err := filepath.Abs(filePath)
+	if err != nil {
+		return err
+	}
+
+	rel, err := filepath.Rel(dirAbs, fileAbs)
+	if err != nil {
+		return err
+	}
+
+	if strings.HasPrefix(rel, "..") {
+		return fmt.Errorf("path %s, does not belongs to dir %s, rel %s", filePath, dirPath, rel)
+	}
+
+	return nil
+}
+
 func extractZip(zipPath string, dst string) error {
 	zr, err := zip.OpenReader(zipPath)
 	if err != nil {
@@ -134,12 +158,17 @@ func extractZip(zipPath string, dst string) error {
 	}
 	defer zr.Close()
 
-	// Check for conflicts
+	// Check that we can extract zip
 	for _, f := range zr.File {
-		filen, err := util.NormPath(util.SanitizePath(filepath.Join(dst, f.Name)))
+		filen, err := util.NormPath(filepath.Join(dst, f.Name))
 		if err != nil {
 			return err
 		}
+
+		if err := ensureFilePathBelongsToDir(dst, filen); err != nil {
+			return fmt.Errorf("unable to extract zip arhive %s: %w", zipPath, err)
+		}
+
 		stat, err := os.Stat(filen)
 		if os.IsNotExist(err) {
 			continue
@@ -151,12 +180,12 @@ func extractZip(zipPath string, dst string) error {
 			// it's ok if directories already exist
 			continue
 		}
-		return fmt.Errorf("file exists: %s", filen)
+		return fmt.Errorf("unable to extract zip archive %s: file %s is already exists", zipPath, filen)
 	}
 
 	// Create files.
 	for _, f := range zr.File {
-		filen, err := util.NormPath(util.SanitizePath(filepath.Join(dst, f.Name)))
+		filen, err := util.NormPath(filepath.Join(dst, f.Name))
 		if err != nil {
 			return err
 		}
@@ -240,6 +269,11 @@ func checkForConflicts(tr *tar.Reader, dst string) error {
 		if err != nil {
 			return err
 		}
+
+		if err := ensureFilePathBelongsToDir(dst, filen); err != nil {
+			return err
+		}
+
 		stat, err := os.Stat(filen)
 		if os.IsNotExist(err) {
 			continue
@@ -270,7 +304,7 @@ func extractTar(ctx context.Context, tarName string, dst string, archiveType age
 	tr := tar.NewReader(decompressed)
 
 	if err := checkForConflicts(tr, dst); err != nil {
-		return err
+		return fmt.Errorf("unable to extract tar arhive %s: %s", tarName, err)
 	}
 
 	file.Seek(0, 0)
@@ -289,10 +323,11 @@ func extractTar(ctx context.Context, tarName string, dst string, archiveType age
 		if err != nil {
 			return err
 		}
-		filen, err := util.NormPath(filepath.Join(dst, util.SanitizePath(header.Name)))
+		filen, err := util.NormPath(filepath.Join(dst, header.Name))
 		if err != nil {
 			return err
 		}
+
 		filedir := filepath.Dir(filen)
 
 		if err := os.MkdirAll(filedir, 0700); err != nil {
@@ -506,7 +541,7 @@ func executeCommand(ctx context.Context, cmd string, args []string, workDir stri
 	return err
 }
 
-func chown(file string, uid, gid int) error {
+func chownFunc(file string, uid, gid int) error {
 	// os.Chown unsupported on windows
 	if runtime.GOOS == "windows" {
 		return nil
