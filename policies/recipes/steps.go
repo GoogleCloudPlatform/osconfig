@@ -129,6 +129,33 @@ func zipIsDir(name string) bool {
 	return strings.HasSuffix(name, "/")
 }
 
+func ensureSymlinkBelongsToDir(dirPath string, symlink string) error {
+	dirAbs, err := filepath.Abs(dirPath)
+	if err != nil {
+		return err
+	}
+	symlinkAbs, err := filepath.Abs(symlink)
+	if err != nil {
+		return err
+	}
+
+	evaluatedSymlinkAbs, err := filepath.EvalSymlinks(symlinkAbs)
+	if err != nil {
+		return err
+	}
+
+	rel, err := filepath.Rel(dirAbs, evaluatedSymlinkAbs)
+	if err != nil {
+		return err
+	}
+
+	if strings.HasPrefix(rel, "..") {
+		return fmt.Errorf("symlink %s, does not belongs to dir %s, rel %s", symlink, dirPath, rel)
+	}
+
+	return nil
+}
+
 func ensureFilePathBelongsToDir(dirPath string, filePath string) error {
 	dirAbs, err := filepath.Abs(dirPath)
 	if err != nil {
@@ -166,7 +193,7 @@ func extractZip(zipPath string, dst string) error {
 		}
 
 		if err := ensureFilePathBelongsToDir(dst, filen); err != nil {
-			return fmt.Errorf("unable to extract zip arhive %s: %w", zipPath, err)
+			return fmt.Errorf("unable to extract zip archive %s: %w", zipPath, err)
 		}
 
 		stat, err := os.Stat(filen)
@@ -304,7 +331,7 @@ func extractTar(ctx context.Context, tarName string, dst string, archiveType age
 	tr := tar.NewReader(decompressed)
 
 	if err := checkForConflicts(tr, dst); err != nil {
-		return fmt.Errorf("unable to extract tar arhive %s: %s", tarName, err)
+		return fmt.Errorf("unable to extract tar archive %s: %s", tarName, err)
 	}
 
 	file.Seek(0, 0)
@@ -363,11 +390,23 @@ func extractTar(ctx context.Context, tarName string, dst string, archiveType age
 				return err
 			}
 		case tar.TypeLink:
+			if err := ensureSymlinkBelongsToDir(dst, header.Linkname); err != nil {
+				clog.Infof(ctx,
+					"link %s resolved outside of destination %s, for the security reason it is not allowed", header.Linkname, dst)
+				continue
+			}
+
 			if err := os.Link(header.Linkname, filen); err != nil {
 				return err
 			}
 			continue
 		case tar.TypeSymlink:
+			if err := ensureSymlinkBelongsToDir(dst, header.Linkname); err != nil {
+				clog.Infof(ctx,
+					"symlink %s resolved outside of destination %s, for the security reason it is not allowed", header.Linkname, dst)
+				continue
+			}
+
 			if err := os.Symlink(header.Linkname, filen); err != nil {
 				return err
 			}

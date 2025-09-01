@@ -54,7 +54,19 @@ func Test_extractTar(t *testing.T) {
 					name: "test2", content: []byte("test2"),
 				},
 			},
-			wantErrRegexp: regexp.MustCompile("^unable to extract tar arhive /tmp/[0-9]+/extractTar.tar: path /tmp/test1, does not belongs to dir /tmp/[0-9]+, rel ../test1$"),
+			wantErrRegexp: regexp.MustCompile("^unable to extract tar archive /tmp/[0-9]+/extractTar.tar: path /tmp/test1, does not belongs to dir /tmp/[0-9]+, rel ../test1$"),
+		},
+		{
+			name: "tar with advance vulnerable path, fail with expected error",
+			entries: []fileEntry{
+				{
+					name: "....//test1", content: []byte("test1"),
+				},
+				{
+					name: "test2", content: []byte("test2"),
+				},
+			},
+			wantErrRegexp: regexp.MustCompile("^unable to extract tar archive /tmp/[0-9]+/extractTar.tar: path /tmp/[0-9]+/..../test1, does not belongs to dir /tmp/[0-9]+, rel ..../test1$"),
 		},
 	}
 
@@ -73,7 +85,6 @@ func Test_extractTar(t *testing.T) {
 			if tt.wantErrRegexp == nil && err == nil {
 				return
 			}
-			fmt.Println(err.Error())
 
 			msg := fmt.Sprintf("%s", err)
 			if !tt.wantErrRegexp.MatchString(msg) {
@@ -111,7 +122,7 @@ func Test_extractZip(t *testing.T) {
 					name: "test2", content: []byte("test2"),
 				},
 			},
-			wantErrRegexp: regexp.MustCompile("^unable to extract zip arhive /tmp/[0-9]+/extractZip.zip: path /tmp/test1, does not belongs to dir /tmp/[0-9]+, rel ../test1$"),
+			wantErrRegexp: regexp.MustCompile("^unable to extract zip archive /tmp/[0-9]+/extractZip.zip: path /tmp/test1, does not belongs to dir /tmp/[0-9]+, rel ../test1$"),
 		},
 	}
 
