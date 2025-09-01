@@ -328,6 +328,10 @@ func extractTar(ctx context.Context, tarName string, dst string, archiveType age
 			return err
 		}
 
+		if err := ensureFilePathBelongsToDir(dst, filen); err != nil {
+			return err
+		}
+
 		filedir := filepath.Dir(filen)
 
 		if err := os.MkdirAll(filedir, 0700); err != nil {
