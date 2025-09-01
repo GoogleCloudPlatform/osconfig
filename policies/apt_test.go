@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
+	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 )
 
 func runAptRepositories(ctx context.Context, repos []*agentendpointpb.AptRepository) (string, error) {
@@ -47,37 +48,75 @@ func runAptRepositories(ctx context.Context, repos []*agentendpointpb.AptReposit
 }
 
 func TestAptRepositories(t *testing.T) {
+	debian10 := func() (string, string, string) {
+		return "debian", "Debian", "10"
+	}
+
+	debian12 := func() (string, string, string) {
+		return "debian", "Debian", "12"
+	}
+
 	tests := []struct {
-		desc  string
-		repos []*agentendpointpb.AptRepository
-		want  string
+		name                   string
+		repos                  []*agentendpointpb.AptRepository
+		nameAndVersionProvider func() (string, string, string)
+		want                   string
 	}{
-		{"no repos", []*agentendpointpb.AptRepository{}, "# Repo file managed by Google OSConfig agent\n"},
 		{
-			"1 repo",
-			[]*agentendpointpb.AptRepository{
+			name:                   "No repositories",
+			nameAndVersionProvider: debian10,
+			repos:                  []*agentendpointpb.AptRepository{},
+			want:                   "# Repo file managed by Google OSConfig agent\n"},
+		{
+			name:                   "1 repositoy, Debian 10",
+			nameAndVersionProvider: debian10,
+			repos: []*agentendpointpb.AptRepository{
 				{Uri: "http://repo1-url/", Distribution: "distribution", Components: []string{"component1"}},
 			},
-			"# Repo file managed by Google OSConfig agent\n\ndeb http://repo1-url/ distribution component1\n",
+			want: "# Repo file managed by Google OSConfig agent\n\ndeb http://repo1-url/ distribution component1\n",
 		},
 		{
-			"2 repos",
-			[]*agentendpointpb.AptRepository{
+			name:                   "1 repositoy, Debian 12",
+			nameAndVersionProvider: debian12,
+			repos: []*agentendpointpb.AptRepository{
+				{Uri: "http://repo1-url/", Distribution: "distribution", Components: []string{"component1"}},
+			},
+			want: "# Repo file managed by Google OSConfig agent\n\ndeb [signed-by=/etc/apt/trusted.gpg.d/osconfig_agent_managed.gpg] http://repo1-url/ distribution component1\n",
+		},
+		{
+			name:                   "2 repos, Debian 10",
+			nameAndVersionProvider: debian10,
+			repos: []*agentendpointpb.AptRepository{
 				{Uri: "http://repo1-url/", Distribution: "distribution", Components: []string{"component1"}, ArchiveType: agentendpointpb.AptRepository_DEB_SRC},
 				{Uri: "http://repo2-url/", Distribution: "distribution", Components: []string{"component1", "component2"}, ArchiveType: agentendpointpb.AptRepository_DEB},
 			},
-			"# Repo file managed by Google OSConfig agent\n\ndeb-src http://repo1-url/ distribution component1\n\ndeb http://repo2-url/ distribution component1 component2\n",
+			want: "# Repo file managed by Google OSConfig agent\n\ndeb-src http://repo1-url/ distribution component1\n\ndeb http://repo2-url/ distribution component1 component2\n",
+		},
+		{
+			name:                   "2 repos, Debian 12",
+			nameAndVersionProvider: debian12,
+			repos: []*agentendpointpb.AptRepository{
+				{Uri: "http://repo1-url/", Distribution: "distribution", Components: []string{"component1"}, ArchiveType: agentendpointpb.AptRepository_DEB_SRC},
+				{Uri: "http://repo2-url/", Distribution: "distribution", Components: []string{"component1", "component2"}, ArchiveType: agentendpointpb.AptRepository_DEB},
+			},
+			want: "# Repo file managed by Google OSConfig agent\n\ndeb-src [signed-by=/etc/apt/trusted.gpg.d/osconfig_agent_managed.gpg] http://repo1-url/ distribution component1\n\ndeb [signed-by=/etc/apt/trusted.gpg.d/osconfig_agent_managed.gpg] http://repo2-url/ distribution component1 component2\n",
 		},
 	}
 
 	for _, tt := range tests {
+		osInfoProviderActual := osInfoProvider
+		defer func() { osInfoProvider = osInfoProviderActual }()
+
+		osInfoStub := stubOsInfoProvider{nameVersionProvider: tt.nameAndVersionProvider}
+		osInfoProvider = osInfoStub
+
 		got, err := runAptRepositories(context.Background(), tt.repos)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		if got != tt.want {
-			t.Errorf("%s: got:\n%q\nwant:\n%q", tt.desc, got, tt.want)
+			t.Errorf("%s: got:\n%q\nwant:\n%q", tt.name, got, tt.want)
 		}
 	}
 }
@@ -107,7 +146,7 @@ func TestGetAptGPGKey(t *testing.T) {
 
 func TestUseSignedBy(t *testing.T) {
 	tests := []struct {
-		desc string
+		name string
 		repo *agentendpointpb.AptRepository
 		want string
 	}{
@@ -128,7 +167,25 @@ func TestUseSignedBy(t *testing.T) {
 		aptRepoLine := getAptRepoLine(tt.repo, useSignedBy)
 
 		if aptRepoLine != tt.want {
-			t.Errorf("%s: got:\n%q\nwant:\n%q", tt.desc, aptRepoLine, tt.want)
+			t.Errorf("%s: got:\n%q\nwant:\n%q", tt.name, aptRepoLine, tt.want)
 		}
 	}
+}
+
+type stubOsInfoProvider struct {
+	nameVersionProvider func() (string, string, string)
+}
+
+func (s stubOsInfoProvider) GetOSInfo(ctx context.Context) (osinfo.OSInfo, error) {
+	short, long, version := s.nameVersionProvider()
+
+	return osinfo.OSInfo{
+		Hostname:      "test",
+		LongName:      long,
+		ShortName:     short,
+		Version:       version,
+		KernelVersion: "test",
+		KernelRelease: "test",
+		Architecture:  "x86_64",
+	}, nil
 }

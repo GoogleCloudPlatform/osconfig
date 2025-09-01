@@ -39,6 +39,8 @@ var debArchiveTypeMap = map[agentendpointpb.AptRepository_ArchiveType]string{
 	agentendpointpb.AptRepository_DEB_SRC: "deb-src",
 }
 
+var osInfoProvider osinfo.Provider = osinfo.NewProvider()
+
 const aptGPGFile = "/etc/apt/trusted.gpg.d/osconfig_agent_managed.gpg"
 
 func isArmoredGPGKey(keyData []byte) bool {
@@ -85,8 +87,8 @@ func containsEntity(es []*openpgp.Entity, e *openpgp.Entity) bool {
 	return false
 }
 
-func readInstanceOsInfo() (string, float64, error) {
-	oi, err := osinfo.Get()
+func readInstanceOsInfo(ctx context.Context) (string, float64, error) {
+	oi, err := osInfoProvider.GetOSInfo(ctx)
 	if err != nil {
 		return "", 0, fmt.Errorf("error getting osinfo: %v", err)
 	}
@@ -99,8 +101,8 @@ func readInstanceOsInfo() (string, float64, error) {
 	return oi.ShortName, osVersion, nil
 }
 
-func shouldUseSignedBy() bool {
-	osShortName, osVersion, err := readInstanceOsInfo()
+func shouldUseSignedBy(ctx context.Context) bool {
+	osShortName, osVersion, err := readInstanceOsInfo(ctx)
 	if err != nil {
 		return false // Default to not using signed-by approach
 	}
@@ -181,7 +183,7 @@ func aptRepositories(ctx context.Context, repos []*agentendpointpb.AptRepository
 	var buf bytes.Buffer
 	buf.WriteString("# Repo file managed by Google OSConfig agent\n")
 
-	shouldUseSignedByBool := shouldUseSignedBy()
+	shouldUseSignedByBool := shouldUseSignedBy(ctx)
 	for _, repo := range repos {
 		line := getAptRepoLine(repo, shouldUseSignedByBool)
 		buf.WriteString(line + "\n")
