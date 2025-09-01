@@ -17,7 +17,7 @@ require (
 	github.com/google/osv-scalibr v0.2.1
 	github.com/kr/pretty v0.3.1
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
-	github.com/ulikunitz/xz v0.5.12
+	github.com/ulikunitz/xz v0.5.15
 	golang.org/x/crypto v0.38.0
 	golang.org/x/oauth2 v0.27.0
 	golang.org/x/sys v0.33.0
