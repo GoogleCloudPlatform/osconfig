@@ -23,7 +23,6 @@ import (
 	"path"
 	"regexp"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -32,6 +31,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/config"
 	gcpclients "github.com/GoogleCloudPlatform/osconfig/e2e_tests/gcp_clients"
 	testconfig "github.com/GoogleCloudPlatform/osconfig/e2e_tests/test_config"
+	testrunner "github.com/GoogleCloudPlatform/osconfig/e2e_tests/test_runner"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests/utils"
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
 	"github.com/golang/protobuf/ptypes/duration"
@@ -54,6 +54,10 @@ var (
 func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junitxml.TestSuite, logger *log.Logger, testSuiteRegex, testCaseRegex *regexp.Regexp) {
 	defer tswg.Done()
 
+	testRunner := &testrunner.TestRunner{
+		TestSuiteName: testSuiteName,
+	}
+
 	if testSuiteRegex != nil && !testSuiteRegex.MatchString(testSuiteName) {
 		return
 	}
@@ -71,7 +75,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		s := setup
 		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[Execute PatchJob] [%s]", s.testName))
 		f := func(tc *junitxml.TestCase) { runExecutePatchJobTest(ctx, tc, s, nil) }
-		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
+		go testRunner.RunTestCase(ctx, tc, f, tests, &wg, logger, testCaseRegex)
 	}
 	// TODO: remove this hack and setup specific test suites for each test type.
 	// We can't test 'old' images with the head image test.
@@ -86,7 +90,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 			f := func(tc *junitxml.TestCase) {
 				runRebootPatchTest(ctx, tc, s, pc, shouldReboot)
 			}
-			go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
+			go testRunner.RunTestCase(ctx, tc, f, tests, &wg, logger, testCaseRegex)
 		}
 
 		// Test that PatchConfig_NEVER prevents reboot.
@@ -97,7 +101,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 			pc := &osconfigpb.PatchConfig{RebootConfig: osconfigpb.PatchConfig_NEVER, Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST}}
 			shouldReboot := false
 			f := func(tc *junitxml.TestCase) { runRebootPatchTest(ctx, tc, s, pc, shouldReboot) }
-			go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
+			go testRunner.RunTestCase(ctx, tc, f, tests, &wg, logger, testCaseRegex)
 		}
 	}
 	// Test that pre- and post-patch steps run as expected.
@@ -107,7 +111,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		tc := junitxml.NewTestCase(testSuiteName, fmt.Sprintf("[PatchJob runs pre-step and post-step] [%s]", s.testName))
 		pc := patchConfigWithPrePostSteps()
 		f := func(tc *junitxml.TestCase) { runExecutePatchJobTest(ctx, tc, s, pc) }
-		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
+		go testRunner.RunTestCase(ctx, tc, f, tests, &wg, logger, testCaseRegex)
 	}
 	// Test APT specific functionality, this just tests that using these settings doesn't break anything.
 	for _, setup := range aptHeadImageTestSetup() {
@@ -117,7 +121,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		f := func(tc *junitxml.TestCase) {
 			runExecutePatchJobTest(ctx, tc, s, &osconfigpb.PatchConfig{Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST, Excludes: []string{"pkg1", "/pkg2/"}}})
 		}
-		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
+		go testRunner.RunTestCase(ctx, tc, f, tests, &wg, logger, testCaseRegex)
 	}
 	// Test APT specific functionality, this just tests that using these settings doesn't break anything.
 	for _, setup := range aptHeadImageTestSetup() {
@@ -127,7 +131,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		f := func(tc *junitxml.TestCase) {
 			runExecutePatchJobTest(ctx, tc, s, &osconfigpb.PatchConfig{Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST, ExclusivePackages: []string{"pkg1"}}})
 		}
-		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
+		go testRunner.RunTestCase(ctx, tc, f, tests, &wg, logger, testCaseRegex)
 	}
 	// Test that apt-get patch works even when a package needs to be downgraded
 	for _, setup := range aptDowngradeImageTestSetup() {
@@ -137,7 +141,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		f := func(tc *junitxml.TestCase) {
 			runExecutePatchJobTest(ctx, tc, s, &osconfigpb.PatchConfig{Apt: &osconfigpb.AptSettings{Type: osconfigpb.AptSettings_DIST}})
 		}
-		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
+		go testRunner.RunTestCase(ctx, tc, f, tests, &wg, logger, testCaseRegex)
 	}
 	// Test YUM specific functionality, this just tests that using these settings doesn't break anything.
 	for _, setup := range yumHeadImageTestSetup() {
@@ -147,7 +151,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		f := func(tc *junitxml.TestCase) {
 			runExecutePatchJobTest(ctx, tc, s, &osconfigpb.PatchConfig{Yum: &osconfigpb.YumSettings{Security: true, Minimal: true, Excludes: []string{"pkg1", "pkg2", "/pkg3/"}}})
 		}
-		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
+		go testRunner.RunTestCase(ctx, tc, f, tests, &wg, logger, testCaseRegex)
 	}
 	// Test YUM exclusive_package updates, this just tests that using these settings doesn't break anything.
 	for _, setup := range yumHeadImageTestSetup() {
@@ -157,7 +161,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 		f := func(tc *junitxml.TestCase) {
 			runExecutePatchJobTest(ctx, tc, s, &osconfigpb.PatchConfig{Yum: &osconfigpb.YumSettings{ExclusivePackages: []string{"pkg1", "pk3"}}})
 		}
-		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
+		go testRunner.RunTestCase(ctx, tc, f, tests, &wg, logger, testCaseRegex)
 	}
 	// Test Zypper specific functionality, this just tests that using these settings doesn't break anything.
 	for _, setup := range suseHeadImageTestSetup() {
@@ -168,7 +172,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 			runExecutePatchJobTest(ctx, tc, s, &osconfigpb.PatchConfig{
 				Zypper: &osconfigpb.ZypperSettings{Excludes: []string{"patch-1", "/patch-2/"}, WithOptional: true, WithUpdate: true, Categories: []string{"security", "recommended", "feature"}, Severities: []string{"critical", "important", "moderate", "low"}}})
 		}
-		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
+		go testRunner.RunTestCase(ctx, tc, f, tests, &wg, logger, testCaseRegex)
 	}
 	// Test Zypper exclusive patches. the test just makes sure that it does not break anything
 	// the actual combination tests is a part of unit test
@@ -181,7 +185,7 @@ func TestSuite(ctx context.Context, tswg *sync.WaitGroup, testSuites chan *junit
 				Zypper: &osconfigpb.ZypperSettings{ExclusivePatches: []string{"patch-1"}}}) // there should be no patch run
 
 		}
-		go runTestCase(tc, f, tests, &wg, logger, testCaseRegex)
+		go testRunner.RunTestCase(ctx, tc, f, tests, &wg, logger, testCaseRegex)
 	}
 
 	go func() {
@@ -420,30 +424,6 @@ func isPatchJobFailureState(state osconfigpb.PatchJob_State) bool {
 	return state == osconfigpb.PatchJob_COMPLETED_WITH_ERRORS ||
 		state == osconfigpb.PatchJob_TIMED_OUT ||
 		state == osconfigpb.PatchJob_CANCELED
-}
-
-func runTestCase(tc *junitxml.TestCase, f func(tc *junitxml.TestCase), tests chan *junitxml.TestCase, wg *sync.WaitGroup, logger *log.Logger, regex *regexp.Regexp) {
-	defer wg.Done()
-
-	if tc.FilterTestCase(regex) {
-		tc.Finish(tests)
-	} else {
-		logger.Printf("Running TestCase %q", tc.Name)
-		f(tc)
-		if tc.Failure != nil {
-			rerunTC := junitxml.NewTestCase(testSuiteName, strings.TrimPrefix(tc.Name, fmt.Sprintf("[%s] ", testSuiteName)))
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				logger.Printf("Rerunning TestCase %q", rerunTC.Name)
-				f(rerunTC)
-				rerunTC.Finish(tests)
-				logger.Printf("TestCase %q finished in %fs", rerunTC.Name, rerunTC.Time)
-			}()
-		}
-		tc.Finish(tests)
-		logger.Printf("TestCase %q finished in %fs", tc.Name, tc.Time)
-	}
 }
 
 func patchConfigWithPrePostSteps() *osconfigpb.PatchConfig {
