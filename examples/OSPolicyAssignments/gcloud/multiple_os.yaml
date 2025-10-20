@@ -1,0 +1,34 @@
+# An OS policy assignment that applies to multiple Linux and Windows operating systems.
+id: multi-os
+mode: VALIDATION
+resourceGroups:
+  - inventoryFilters:
+      - osShortName: debian
+      - osShortName: centos
+      - osShortName: ubuntu
+      - osShortName: rhel
+      - osShortName: rocky
+      - osShortName: cos
+      - osShortName: opensuse-leap
+      - osShortName: ol
+      - osShortName: sles
+    resources:
+      - id: linux
+        exec:
+          validate:
+            interpreter: SHELL
+            # Linux-specific script.
+            # Exit code of 100 = resource is in the desired state
+            script: |
+              exit 100
+  - inventoryFilters:
+      - osShortName: windows
+    resources:
+      - id: windows
+        exec:
+          validate:
+            interpreter: POWERSHELL
+            # Windows-specific script.
+            # Exit code of 100 = resource is in the desired state
+            script: |
+              exit 100
