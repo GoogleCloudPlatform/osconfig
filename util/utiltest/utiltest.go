@@ -2,6 +2,7 @@ package utiltest
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"testing"
 
@@ -79,5 +80,19 @@ func MatchSnapshot(t testReporter, actual any, snapshotFilepath string) {
 		t.Errorf("Snapshot file %q is different from actual data:\n%s", snapshotFilepath, diff)
 	} else {
 		removeSnapshotDraft(snapshotFilepath)
+	}
+}
+
+func EnsureError(t *testing.T, want, got error) {
+	if fmt.Sprintf("%s", want) != fmt.Sprintf("%s", got) {
+		t.Errorf("unwanted error, want: %s, got: %s", want, got)
+
+	}
+}
+
+func EnsureResults(t *testing.T, want, got any, options ...cmp.Option) {
+	diff := cmp.Diff(want, got, options...)
+	if diff != "" {
+		t.Errorf("unwanted diff:\n%s", diff)
 	}
 }

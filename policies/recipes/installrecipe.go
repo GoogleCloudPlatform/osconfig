@@ -31,7 +31,7 @@ import (
 func InstallRecipe(ctx context.Context, recipe *agentendpointpb.SoftwareRecipe) error {
 	ctx = clog.WithLabels(ctx, map[string]string{"recipe_name": recipe.GetName()})
 	steps := recipe.InstallSteps
-	recipeDB, err := newRecipeDB()
+	recipeDB, err := newRecipeDBWithDefaults()
 	if err != nil {
 		return err
 	}
