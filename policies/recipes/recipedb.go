@@ -16,10 +16,12 @@ package recipes
 
 import (
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"time"
 )
 
@@ -29,76 +31,108 @@ var (
 	dbFileName   = "osconfig_recipedb"
 )
 
-// RecipeDB represents local state of installed recipes.
-type RecipeDB map[string]Recipe
+type timeFunc func() time.Time
 
-// newRecipeDB instantiates a recipeDB.
-func newRecipeDB() (RecipeDB, error) {
-	db := make(RecipeDB)
-	f, err := os.Open(filepath.Join(getDbDir(), dbFileName))
+// RecipeDB represents local state of installed recipes.
+type recipeDB struct {
+	file     string
+	timeFunc timeFunc
+
+	recipes map[string]Recipe
+}
+
+func newRecipeDB(path string) (*recipeDB, error) {
+	db := &recipeDB{
+		file:     path,
+		timeFunc: time.Now,
+		recipes:  make(map[string]Recipe, 0),
+	}
+
+	f, err := os.Open(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return db, nil
 		}
+
 		return nil, err
 	}
 	defer f.Close()
-	bytes, err := ioutil.ReadAll(f)
+
+	raw, err := io.ReadAll(f)
 	if err != nil {
 		return nil, err
 	}
-	var recipelist []Recipe
-	if err := json.Unmarshal(bytes, &recipelist); err != nil {
+
+	var recipes []Recipe
+	if err := json.Unmarshal(raw, &recipes); err != nil {
 		return nil, err
 	}
-	for _, recipe := range recipelist {
-		db[recipe.Name] = recipe
+
+	for _, recipe := range recipes {
+		db.recipes[recipe.Name] = recipe
 	}
 	return db, nil
 }
 
+// newRecipeDB instantiates a recipeDB.
+func newRecipeDBWithDefaults() (*recipeDB, error) {
+	dir, fileName := getDbDir(), dbFileName
+	return newRecipeDB(filepath.Join(dir, fileName))
+}
+
 // getRecipe returns the Recipe object for the given recipe name.
-func (db RecipeDB) getRecipe(name string) (Recipe, bool) {
-	r, ok := db[name]
+func (db *recipeDB) getRecipe(name string) (Recipe, bool) {
+	r, ok := db.recipes[name]
 	return r, ok
 }
 
 // addRecipe marks a recipe as installed.
-func (db RecipeDB) addRecipe(name, version string, success bool) error {
+func (db *recipeDB) addRecipe(name, version string, success bool) error {
 	versionNum, err := convertVersion(version)
 	if err != nil {
 		return err
 	}
-	db[name] = Recipe{Name: name, Version: versionNum, InstallTime: time.Now().Unix(), Success: success}
+	db.recipes[name] = Recipe{Name: name, Version: versionNum, InstallTime: db.timeFunc().Unix(), Success: success}
 
-	var recipelist []Recipe
-	for _, recipe := range db {
-		recipelist = append(recipelist, recipe)
+	return db.saveToFS()
+}
+
+func (db *recipeDB) saveToFS() error {
+	var recipes []Recipe
+	for _, recipe := range db.recipes {
+		recipes = append(recipes, recipe)
 	}
-	dbBytes, err := json.Marshal(recipelist)
+
+	sort.Slice(recipes, func(i, j int) bool {
+		return recipes[i].Name < recipes[j].Name
+	})
+
+	raw, err := json.Marshal(recipes)
 	if err != nil {
 		return err
 	}
 
-	dbDir := getDbDir()
-	if err := os.MkdirAll(dbDir, 0755); err != nil {
+	dir := filepath.Dir(db.file)
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
 
-	f, err := ioutil.TempFile(dbDir, dbFileName+"_*")
+	fileName := filepath.Base(db.file)
+	f, err := ioutil.TempFile(dir, fileName+"_*")
 	if err != nil {
 		return err
 	}
 
-	if _, err := f.Write(dbBytes); err != nil {
+	if _, err := f.Write(raw); err != nil {
 		f.Close()
 		return err
 	}
+
 	if err := f.Close(); err != nil {
 		return err
 	}
 
-	return os.Rename(f.Name(), filepath.Join(dbDir, dbFileName))
+	return os.Rename(f.Name(), db.file)
 }
 
 func getDbDir() string {
