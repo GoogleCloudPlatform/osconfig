@@ -65,7 +65,7 @@ var (
 				if item.GetInstalledPackage().GetGoogetPackage().GetPackageName() == "googet" {
 					foundGooget = true
 				}
-				if item.GetAvailablePackage().GetGoogetPackage().GetPackageName() == "google-compute-engine-driver-gvnic" {
+				if item.GetAvailablePackage().GetGoogetPackage().GetPackageName() == "google-compute-engine-windows" {
 					foundGoogleComputeEngineDriverGvnic = true
 				}
 				if item.GetInstalledPackage().GetQfePackage() != nil {
