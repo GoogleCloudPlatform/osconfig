@@ -34,7 +34,7 @@ VERSION=${VERSION:-"dummy"}
 echo "Started build..."
 
 # common.sh contains functions common to all builds.
-gsutil cp "${SRC_PATH}/common.sh" ./
+gcloud storage cp "${SRC_PATH}/common.sh" ./
 . common.sh
 
 # Install git2 as this is not available in centos 6/7
@@ -150,5 +150,5 @@ for rpm in $rpms; do
   rpm -qpilR $rpm
 done
 echo "copying ${rpms} to $GCS_PATH/"
-gsutil cp -n ${rpms} "$GCS_PATH/"
+gcloud storage cp --no-clobber ${rpms} "$GCS_PATH/"
 build_success "Built $(echo ${rpms}|xargs)"
