@@ -24,7 +24,7 @@ VERSION=$(curl -f -H Metadata-Flavor:Google ${URL}/version)
 
 echo "Started build..."
 
-gsutil cp "${SRC_PATH}/common.sh" ./
+gcloud storage cp "${SRC_PATH}/common.sh" ./
 . common.sh
 
 # disable the backports repo for debian-10
@@ -59,5 +59,5 @@ for spec in packaging/googet/*.goospec; do
   pref=${name%.*}
 done
 
-gsutil cp -n *.goo "$GCS_PATH/"
+gcloud storage cp --no-clobber *.goo "$GCS_PATH/"
 build_success "Built `ls *.goo|xargs`"
