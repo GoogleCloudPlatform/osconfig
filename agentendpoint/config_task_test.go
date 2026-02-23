@@ -81,17 +81,10 @@ func (r *testResource) PopulateOutput(rCompliance *agentendpointpb.OSPolicyResou
 }
 
 type agentEndpointServiceConfigTestServer struct {
+	agentendpointpb.UnimplementedAgentEndpointServiceServer
 	lastReportTaskCompleteRequest *agentendpointpb.ReportTaskCompleteRequest
 	progressError                 chan struct{}
 	progressCancel                chan struct{}
-}
-
-func (*agentEndpointServiceConfigTestServer) ReceiveTaskNotification(req *agentendpointpb.ReceiveTaskNotificationRequest, srv agentendpointpb.AgentEndpointService_ReceiveTaskNotificationServer) error {
-	return status.Errorf(codes.Unimplemented, "method ReceiveTaskNotification not implemented")
-}
-
-func (*agentEndpointServiceConfigTestServer) StartNextTask(ctx context.Context, req *agentendpointpb.StartNextTaskRequest) (*agentendpointpb.StartNextTaskResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method StartNextTask not implemented")
 }
 
 func (s *agentEndpointServiceConfigTestServer) ReportTaskProgress(ctx context.Context, req *agentendpointpb.ReportTaskProgressRequest) (*agentendpointpb.ReportTaskProgressResponse, error) {
@@ -113,14 +106,6 @@ func (s *agentEndpointServiceConfigTestServer) ReportTaskProgress(ctx context.Co
 func (s *agentEndpointServiceConfigTestServer) ReportTaskComplete(ctx context.Context, req *agentendpointpb.ReportTaskCompleteRequest) (*agentendpointpb.ReportTaskCompleteResponse, error) {
 	s.lastReportTaskCompleteRequest = req
 	return &agentendpointpb.ReportTaskCompleteResponse{}, nil
-}
-
-func (*agentEndpointServiceConfigTestServer) RegisterAgent(ctx context.Context, req *agentendpointpb.RegisterAgentRequest) (*agentendpointpb.RegisterAgentResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RegisterAgent not implemented")
-}
-
-func (*agentEndpointServiceConfigTestServer) ReportInventory(ctx context.Context, req *agentendpointpb.ReportInventoryRequest) (*agentendpointpb.ReportInventoryResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReportInventory not implemented")
 }
 
 func configOutputGen(msg string, st agentendpointpb.ApplyConfigTaskOutput_State, results []*agentendpointpb.ApplyConfigTaskOutput_OSPolicyResult) *agentendpointpb.ReportTaskCompleteRequest {

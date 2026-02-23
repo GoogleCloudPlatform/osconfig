@@ -122,6 +122,7 @@ func newTestClient(ctx context.Context, srv agentendpointpb.AgentEndpointService
 }
 
 type agentEndpointServiceTestServer struct {
+	agentendpointpb.UnimplementedAgentEndpointServiceServer
 	streamClose             chan struct{}
 	streamSend              chan struct{}
 	permissionError         chan struct{}
@@ -206,14 +207,6 @@ func (s *agentEndpointServiceTestServer) ReportTaskComplete(ctx context.Context,
 		s.streamClose <- struct{}{}
 	}
 	return &agentendpointpb.ReportTaskCompleteResponse{}, nil
-}
-
-func (*agentEndpointServiceTestServer) RegisterAgent(ctx context.Context, req *agentendpointpb.RegisterAgentRequest) (*agentendpointpb.RegisterAgentResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RegisterAgent not implemented")
-}
-
-func (*agentEndpointServiceTestServer) ReportInventory(ctx context.Context, req *agentendpointpb.ReportInventoryRequest) (*agentendpointpb.ReportInventoryResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReportInventory not implemented")
 }
 
 func TestWaitForTask(t *testing.T) {

@@ -32,8 +32,6 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"github.com/google/go-cmp/cmp"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -41,28 +39,9 @@ import (
 )
 
 type agentEndpointServiceInventoryTestServer struct {
+	agentendpointpb.UnimplementedAgentEndpointServiceServer
 	lastReportInventoryRequest *agentendpointpb.ReportInventoryRequest
 	reportFullInventory        bool
-}
-
-func (*agentEndpointServiceInventoryTestServer) ReceiveTaskNotification(req *agentendpointpb.ReceiveTaskNotificationRequest, srv agentendpointpb.AgentEndpointService_ReceiveTaskNotificationServer) error {
-	return status.Errorf(codes.Unimplemented, "method ReceiveTaskNotification not implemented")
-}
-
-func (*agentEndpointServiceInventoryTestServer) StartNextTask(ctx context.Context, req *agentendpointpb.StartNextTaskRequest) (*agentendpointpb.StartNextTaskResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method StartNextTask not implemented")
-}
-
-func (*agentEndpointServiceInventoryTestServer) ReportTaskProgress(ctx context.Context, req *agentendpointpb.ReportTaskProgressRequest) (*agentendpointpb.ReportTaskProgressResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReportTaskProgress not implemented")
-}
-
-func (*agentEndpointServiceInventoryTestServer) ReportTaskComplete(ctx context.Context, req *agentendpointpb.ReportTaskCompleteRequest) (*agentendpointpb.ReportTaskCompleteResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReportTaskComplete not implemented")
-}
-
-func (*agentEndpointServiceInventoryTestServer) RegisterAgent(ctx context.Context, req *agentendpointpb.RegisterAgentRequest) (*agentendpointpb.RegisterAgentResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RegisterAgent not implemented")
 }
 
 func (s *agentEndpointServiceInventoryTestServer) ReportInventory(ctx context.Context, req *agentendpointpb.ReportInventoryRequest) (*agentendpointpb.ReportInventoryResponse, error) {

@@ -20,23 +20,14 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
 )
 
 type agentEndpointServiceExecTestServer struct {
+	agentendpointpb.UnimplementedAgentEndpointServiceServer
 	lastReportTaskCompleteRequest *agentendpointpb.ReportTaskCompleteRequest
-}
-
-func (*agentEndpointServiceExecTestServer) ReceiveTaskNotification(req *agentendpointpb.ReceiveTaskNotificationRequest, srv agentendpointpb.AgentEndpointService_ReceiveTaskNotificationServer) error {
-	return status.Errorf(codes.Unimplemented, "method ReceiveTaskNotification not implemented")
-}
-
-func (*agentEndpointServiceExecTestServer) StartNextTask(ctx context.Context, req *agentendpointpb.StartNextTaskRequest) (*agentendpointpb.StartNextTaskResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method StartNextTask not implemented")
 }
 
 func (*agentEndpointServiceExecTestServer) ReportTaskProgress(ctx context.Context, req *agentendpointpb.ReportTaskProgressRequest) (*agentendpointpb.ReportTaskProgressResponse, error) {
@@ -46,14 +37,6 @@ func (*agentEndpointServiceExecTestServer) ReportTaskProgress(ctx context.Contex
 func (s *agentEndpointServiceExecTestServer) ReportTaskComplete(ctx context.Context, req *agentendpointpb.ReportTaskCompleteRequest) (*agentendpointpb.ReportTaskCompleteResponse, error) {
 	s.lastReportTaskCompleteRequest = req
 	return &agentendpointpb.ReportTaskCompleteResponse{}, nil
-}
-
-func (*agentEndpointServiceExecTestServer) RegisterAgent(ctx context.Context, req *agentendpointpb.RegisterAgentRequest) (*agentendpointpb.RegisterAgentResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RegisterAgent not implemented")
-}
-
-func (*agentEndpointServiceExecTestServer) ReportInventory(ctx context.Context, req *agentendpointpb.ReportInventoryRequest) (*agentendpointpb.ReportInventoryResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReportInventory not implemented")
 }
 
 func outputGen(id string, msg string, st agentendpointpb.ExecStepTaskOutput_State, exitCode int32) *agentendpointpb.ReportTaskCompleteRequest {
