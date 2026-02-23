@@ -32,6 +32,11 @@ func TestProvider(t *testing.T) {
 		GooGet: []*packages.PkgInfo{{Name: "GooGetInstalledPkg", Arch: "Arch", Version: "Version"}},
 	}
 
+	newInstalled := []*packages.InventoryItem{
+		{Name: "YumInstalledPkg", Type: "rpm", Version: "Version", Purl: "Purl", Location: []string{}, Metadata: map[string]any{}},
+		{Name: "GooGetInstalledPkg", Type: "googet", Version: "Version", Purl: "Purl", Location: []string{}, Metadata: map[string]any{}},
+	}
+
 	tests := []struct {
 		name string
 		stub *stubProvider
@@ -47,11 +52,15 @@ func TestProvider(t *testing.T) {
 				installedPackages: func(_ context.Context) (packages.Packages, error) {
 					return packages.Packages{}, fmt.Errorf("unexpected error")
 				},
+				scalibrInstalledPackages: func(_ context.Context) ([]*packages.InventoryItem, error) {
+					return []*packages.InventoryItem{}, fmt.Errorf("unexpected error")
+				},
 			},
 			want: &InstanceInventory{
-				InstalledPackages: &packages.Packages{},
-				PackageUpdates:    &packages.Packages{},
-				LastUpdated:       "1970-01-01T10:00:00Z",
+				InstalledPackages:    &packages.Packages{},
+				PackageUpdates:       &packages.Packages{},
+				NewInstalledPackages: []*packages.InventoryItem{},
+				LastUpdated:          "1970-01-01T10:00:00Z",
 			},
 		},
 		{
@@ -63,6 +72,9 @@ func TestProvider(t *testing.T) {
 				},
 				installedPackages: func(_ context.Context) (packages.Packages, error) {
 					return installed, nil
+				},
+				scalibrInstalledPackages: func(_ context.Context) ([]*packages.InventoryItem, error) {
+					return newInstalled, nil
 				},
 			},
 
@@ -83,6 +95,10 @@ func TestProvider(t *testing.T) {
 					Yum: []*packages.PkgInfo{{Name: "YumPkgUpdate", Arch: "Arch", Version: "Version"}},
 					Apt: []*packages.PkgInfo{{Name: "AptPkgUpdate", Arch: "Arch", Version: "Version"}},
 				},
+				NewInstalledPackages: []*packages.InventoryItem{
+					{Name: "YumInstalledPkg", Type: "rpm", Version: "Version", Purl: "Purl", Location: []string{}, Metadata: map[string]any{}},
+					{Name: "GooGetInstalledPkg", Type: "googet", Version: "Version", Purl: "Purl", Location: []string{}, Metadata: map[string]any{}},
+				},
 				LastUpdated: "1970-01-01T10:00:00Z",
 			},
 		},
@@ -95,6 +111,9 @@ func TestProvider(t *testing.T) {
 				},
 				installedPackages: func(_ context.Context) (packages.Packages, error) {
 					return installed, nil
+				},
+				scalibrInstalledPackages: func(_ context.Context) ([]*packages.InventoryItem, error) {
+					return newInstalled, nil
 				},
 			},
 
@@ -112,6 +131,10 @@ func TestProvider(t *testing.T) {
 					Yum:    []*packages.PkgInfo{{Name: "YumInstalledPkg", Arch: "Arch", Version: "Version"}},
 					GooGet: []*packages.PkgInfo{{Name: "GooGetInstalledPkg", Arch: "Arch", Version: "Version"}},
 				},
+				NewInstalledPackages: []*packages.InventoryItem{
+					{Name: "YumInstalledPkg", Type: "rpm", Version: "Version", Purl: "Purl", Location: []string{}, Metadata: map[string]any{}},
+					{Name: "GooGetInstalledPkg", Type: "googet", Version: "Version", Purl: "Purl", Location: []string{}, Metadata: map[string]any{}},
+				},
 				LastUpdated: "1970-01-01T10:00:00Z",
 			},
 		},
@@ -123,6 +146,7 @@ func TestProvider(t *testing.T) {
 				osInfoProvider:            tt.stub,
 				packageUpdatesProvider:    tt.stub,
 				installedPackagesProvider: tt.stub,
+				scalibrPackagesProvider:   tt.stub,
 				clock:                     stubClock{},
 			}
 
@@ -153,9 +177,10 @@ func (sc stubClock) Now() time.Time {
 }
 
 type stubProvider struct {
-	osinfo            func(context.Context) (osinfo.OSInfo, error)
-	packageUpdates    func(context.Context) (packages.Packages, error)
-	installedPackages func(context.Context) (packages.Packages, error)
+	osinfo                   func(context.Context) (osinfo.OSInfo, error)
+	packageUpdates           func(context.Context) (packages.Packages, error)
+	installedPackages        func(context.Context) (packages.Packages, error)
+	scalibrInstalledPackages func(context.Context) ([]*packages.InventoryItem, error)
 }
 
 func (p stubProvider) GetOSInfo(ctx context.Context) (osinfo.OSInfo, error) {
@@ -168,4 +193,8 @@ func (p stubProvider) GetInstalledPackages(ctx context.Context) (packages.Packag
 
 func (p stubProvider) GetPackageUpdates(ctx context.Context) (packages.Packages, error) {
 	return p.packageUpdates(ctx)
+}
+
+func (p stubProvider) GetScalibrInstalledPackages(ctx context.Context) ([]*packages.InventoryItem, error) {
+	return p.scalibrInstalledPackages(ctx)
 }

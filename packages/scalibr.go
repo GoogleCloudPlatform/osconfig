@@ -2,6 +2,7 @@ package packages
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
@@ -85,6 +86,28 @@ func pkgInfosFromExtractorPackages(ctx context.Context, scan *scalibr.ScanResult
 	return packages
 }
 
+func inventoryItemFromExtractedPackages(scan *scalibr.ScanResult, osinfo *osinfo.OSInfo) []*InventoryItem {
+	var inventoryItems []*InventoryItem
+
+	for _, pkg := range scan.Inventory.Packages {
+		var packageMetadata map[string]any
+
+		metadataJSON, _ := json.Marshal(pkg.Metadata)
+		json.Unmarshal(metadataJSON, &packageMetadata)
+
+		inventoryItems = append(inventoryItems, &InventoryItem{
+			Name:     pkg.Name,
+			Type:     pkg.PURL().Type,
+			Version:  pkg.Version,
+			Purl:     pkg.PURL().String(),
+			Location: pkg.Locations,
+			Metadata: packageMetadata,
+		})
+	}
+
+	return inventoryItems
+}
+
 func (p scalibrInstalledPackagesProvider) getScanConfig() (*scalibr.ScanConfig, error) {
 	var err error
 
@@ -155,4 +178,25 @@ func (p scalibrInstalledPackagesProvider) GetInstalledPackages(ctx context.Conte
 		pkgs.ZypperPatches = zypperPatches
 	}
 	return pkgs, err
+}
+
+func (p scalibrInstalledPackagesProvider) GetScalibrInstalledPackages(ctx context.Context) ([]*InventoryItem, error) {
+	config, err := p.getScanConfig()
+	if err != nil {
+		return []*InventoryItem{}, err
+	}
+
+	scan := scalibr.New().Scan(ctx, config)
+	if scan.Status.Status != plugin.ScanStatusSucceeded {
+		return []*InventoryItem{}, fmt.Errorf("scalibr scan.Status is unhealthy, status: %v, plugins: %v", scan.Status, scan.PluginStatus)
+	}
+
+	osinfo, err := p.osinfoProvider.GetOSInfo(ctx)
+	if err != nil {
+		return []*InventoryItem{}, err
+	}
+
+	inventoryItems := inventoryItemFromExtractedPackages(scan, &osinfo)
+
+	return inventoryItems, err
 }

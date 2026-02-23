@@ -147,3 +147,13 @@ func GetInstalledPackages(ctx context.Context) (Packages, error) {
 func NewInstalledPackagesProvider(_ osinfo.Provider) InstalledPackagesProvider {
 	return defaultInstalledPackagesProvider{}
 }
+
+// ScalibrInstalledPackagesProvider uses osv-scalibr to extract packages.
+func ScalibrInstalledPackagesProvider(osinfoProvider osinfo.Provider) ScalibrPackagesProvider {
+	return scalibrInstalledPackagesProvider{
+		extractors: []string{
+			"windows/ospackages",
+		},
+		osinfoProvider: osinfoProvider,
+	}
+}

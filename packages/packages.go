@@ -72,6 +72,11 @@ type InstalledPackagesProvider interface {
 	GetInstalledPackages(context.Context) (Packages, error)
 }
 
+// ScalibrPackagesProvider defines a contract to extract installed packages via osv-scalibr from the VM.
+type ScalibrPackagesProvider interface {
+	GetScalibrInstalledPackages(context.Context) ([]*InventoryItem, error)
+}
+
 type defaultUpdatesProvider struct{}
 
 // NewPackageUpdatesProvider return fully initialize provider.
@@ -104,6 +109,16 @@ type Packages struct {
 	WUA                []*WUAPackage         `json:"wua,omitempty"`
 	QFE                []*QFEPackage         `json:"qfe,omitempty"`
 	WindowsApplication []*WindowsApplication `json:"-"`
+}
+
+// InventoryItem describes a package.
+type InventoryItem struct {
+	Name     string
+	Type     string
+	Version  string
+	Purl     string
+	Location []string
+	Metadata map[string]any
 }
 
 // PkgInfo describes a package.

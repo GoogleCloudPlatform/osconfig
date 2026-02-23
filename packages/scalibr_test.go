@@ -158,3 +158,56 @@ func TestScalibrIntegration(t *testing.T) {
 		}
 	}
 }
+
+func TestScalibrIntegration_GetScalibrInstalledPackages(t *testing.T) {
+	withZypperDisabled(t)
+	tests := []struct {
+		provider ScalibrPackagesProvider
+		wantErr  error
+		wantPkgs []*InventoryItem
+	}{
+		{
+			provider: scalibrInstalledPackagesProvider{
+				osinfoProvider: stubProvider{},
+				extractors:     []string{"os/dpkg"},
+				scanRootPaths:  []string{arrangeVirtualRoot(t, "./testdata/debian.dpkg-status", "/var/lib/dpkg/status")},
+				dirsToSkip:     []string{},
+			},
+			wantPkgs: []*InventoryItem{
+				{Name: "7zip", Type: "deb", Version: "24.09+dfsg-4", Purl: "pkg:deb/linux/7zip@24.09%2Bdfsg-4?arch=amd64", Location: []string{"var/lib/dpkg/status"}, Metadata: map[string]any{
+					"PackageName":       "7zip",
+					"Status":            "install ok installed",
+					"SourceName":        "",
+					"SourceVersion":     "",
+					"PackageVersion":    "24.09+dfsg-4",
+					"OSID":              "",
+					"OSVersionCodename": "",
+					"OSVersionID":       "",
+					"Maintainer":        "YOKOTA Hiroshi <yokota.hgml@gmail.com>",
+					"Architecture":      "amd64"}},
+				{Name: "llvm-16", Type: "deb", Version: "1:16.0.6-27+build3", Purl: "pkg:deb/linux/llvm-16@1%3A16.0.6-27%2Bbuild3?arch=amd64&source=llvm-toolchain-16", Location: []string{"var/lib/dpkg/status"}, Metadata: map[string]any{
+					"PackageName":       "llvm-16",
+					"Status":            "install ok installed",
+					"SourceName":        "llvm-toolchain-16",
+					"SourceVersion":     "",
+					"PackageVersion":    "1:16.0.6-27+build3",
+					"OSID":              "",
+					"OSVersionCodename": "",
+					"OSVersionID":       "",
+					"Maintainer":        "LLVM Packaging Team <pkg-llvm-team@lists.alioth.debian.org>",
+					"Architecture":      "amd64"}},
+			},
+		},
+	}
+	for _, tt := range tests {
+		pkgs, err := tt.provider.GetScalibrInstalledPackages(context.Background())
+
+		if !reflect.DeepEqual(err, tt.wantErr) {
+			t.Errorf("err: want %v, got %v", tt.wantErr, err)
+		}
+
+		if !reflect.DeepEqual(pkgs, tt.wantPkgs) {
+			t.Errorf("pkgs: want %v, got %v", tt.wantPkgs, pkgs)
+		}
+	}
+}

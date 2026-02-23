@@ -38,6 +38,7 @@ type InstanceInventory struct {
 	OSConfigAgentVersion string
 	InstalledPackages    *packages.Packages
 	PackageUpdates       *packages.Packages
+	NewInstalledPackages []*packages.InventoryItem
 	LastUpdated          string
 }
 
@@ -65,13 +66,14 @@ type defaultInventoryProvider struct {
 
 	packageUpdatesProvider    packages.PackageUpdatesProvider
 	installedPackagesProvider packages.InstalledPackagesProvider
-
-	clock clock
+	scalibrPackagesProvider   packages.ScalibrPackagesProvider
+	clock                     clock
 }
 
 // NewProvider returns ready to work default provider
 func NewProvider() Provider {
 	installedPackagesProvider := packages.NewInstalledPackagesProvider(osinfo.NewProvider())
+	scalibrPackagesProvider := packages.ScalibrInstalledPackagesProvider(osinfo.NewProvider())
 	if agentconfig.TraceGetInventory() {
 		installedPackagesProvider = packages.TracingInstalledPackagesProvider(
 			installedPackagesProvider,
@@ -83,6 +85,7 @@ func NewProvider() Provider {
 		osInfoProvider:            osinfo.NewProvider(),
 		packageUpdatesProvider:    packages.NewPackageUpdatesProvider(),
 		installedPackagesProvider: installedPackagesProvider,
+		scalibrPackagesProvider:   scalibrPackagesProvider,
 		clock:                     newDefaultClock(),
 	}
 }
@@ -101,6 +104,11 @@ func (p *defaultInventoryProvider) Get(ctx context.Context) *InstanceInventory {
 		clog.Errorf(ctx, "packages.GetPackageUpdates() error: %v", err)
 	}
 
+	newInstalledPackages, err := p.scalibrPackagesProvider.GetScalibrInstalledPackages(ctx)
+	if err != nil {
+		clog.Errorf(ctx, "packages.GetScalibrInstalledPackages() error: %v", err)
+	}
+
 	oi, err := p.osInfoProvider.GetOSInfo(ctx)
 	if err != nil {
 		clog.Errorf(ctx, "osinfo.Get() error: %v", err)
@@ -117,6 +125,7 @@ func (p *defaultInventoryProvider) Get(ctx context.Context) *InstanceInventory {
 		OSConfigAgentVersion: agentconfig.Version(),
 		InstalledPackages:    &installedPackages,
 		PackageUpdates:       &packageUpdates,
+		NewInstalledPackages: newInstalledPackages,
 		LastUpdated:          p.clock.Now().UTC().Format(time.RFC3339),
 	}
 }
