@@ -29,13 +29,18 @@ import (
 	"testing"
 	"time"
 
+	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
+	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
+	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
+	"github.com/googleapis/gax-go/v2"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
-
-	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
 )
 
 type agentEndpointServiceInventoryTestServer struct {
@@ -105,6 +110,15 @@ func generateInventoryState() *inventory.InstanceInventory {
 			QFE: []*packages.QFEPackage{{Caption: "QFEInstalled", Description: "Description", HotFixID: "HotFixID", InstalledOn: "9/1/2020"}},
 			COS: []*packages.PkgInfo{{Name: "CosInstalledPkg", Arch: "Arch", Version: "Version"}},
 		},
+		NewInstalledPackages: []*packages.InventoryItem{
+			{Name: "YumInstalledPkg", Type: "rpm", Version: "SourceVersion", Purl: "SourcePurl", Location: []string{}, Metadata: map[string]any{"PackageName": "YumInstalledPackage", "SourceRPM": "SourceRPM"}},
+			{Name: "RpmInstalledPkg", Type: "rpm", Version: "SourceVersion", Purl: "SourcePurl", Location: []string{}, Metadata: map[string]any{"PackageName": "RpmInstalledPackage", "SourceRPM": "SourceRPM"}},
+			{Name: "AptInstalledPkg", Type: "deb", Version: "SourceVersion", Purl: "SourcePurl", Location: []string{}, Metadata: map[string]any{"PackageName": "AptInstalledPackage", "SourceVersion": "SourceVersion"}},
+			{Name: "DebInstalledPkg", Type: "deb", Version: "SourceVersion", Purl: "SourcePurl", Location: []string{}, Metadata: map[string]any{"PackageName": "DebInstalledPackage", "SourceVersion": "SourceVersion"}},
+			{Name: "ZypperInstalledPkg", Type: "rpm", Version: "SourceVersion", Purl: "SourcePurl", Location: []string{}, Metadata: map[string]any{"PackageName": "ZypperInstalledPackage", "SourceRPM": "SourceRPM"}},
+			{Name: "ZypperInstalledPatch", Type: "ZypperPatch", Version: "", Purl: "", Location: []string{}, Metadata: map[string]any{"Category": "Category", "Severity": "Severity", "Summary": "Summary"}},
+			{Name: "CosInstalledPkg", Type: "cos", Version: "SourceVersion", Purl: "SourcePurl", Location: []string{}, Metadata: map[string]any{"Name": "CosInstalledPackage", "Version": "SourceVersion"}},
+		},
 		PackageUpdates: &packages.Packages{
 			Yum:           []*packages.PkgInfo{{Name: "YumPkgUpdate", Arch: "Arch", Version: "Version"}},
 			Apt:           []*packages.PkgInfo{{Name: "AptPkgUpdate", Arch: "Arch", Version: "Version"}},
@@ -126,6 +140,99 @@ func generateInventoryState() *inventory.InstanceInventory {
 				UpdateID:                 "UpdateID",
 				RevisionNumber:           1,
 				LastDeploymentChangeTime: time.Time{}}},
+		},
+	}
+}
+
+func generateVMInventory() *agentendpointpb.VmInventory {
+	return &agentendpointpb.VmInventory{
+		OsInfo: &agentendpointpb.VmInventory_OsInfo{
+			HostName:             "Hostname",
+			LongName:             "LongName",
+			ShortName:            "ShortName",
+			Version:              "Version",
+			Architecture:         "Architecture",
+			KernelVersion:        "KernelVersion",
+			KernelRelease:        "KernelRelease",
+			OsconfigAgentVersion: "OSConfigAgentVersion",
+		},
+		InstalledPackages: []*agentendpointpb.VmInventory_InventoryItem{
+			{Name: "YumInstalledPkg", Type: "rpm", Version: "SourceVersion", Purl: "SourcePurl", Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
+				"PackageName": structpb.NewStringValue("YumInstalledPackage"),
+				"SourceRPM":   structpb.NewStringValue("SourceRPM"),
+			}}},
+			{Name: "RpmInstalledPkg", Type: "rpm", Version: "SourceVersion", Purl: "SourcePurl", Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
+				"PackageName": structpb.NewStringValue("RpmInstalledPackage"),
+				"SourceRPM":   structpb.NewStringValue("SourceRPM"),
+			}}},
+			{Name: "AptInstalledPkg", Type: "deb", Version: "SourceVersion", Purl: "SourcePurl", Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
+				"PackageName":   structpb.NewStringValue("AptInstalledPackage"),
+				"SourceVersion": structpb.NewStringValue("SourceVersion"),
+			}}},
+			{Name: "DebInstalledPkg", Type: "deb", Version: "SourceVersion", Purl: "SourcePurl", Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
+				"PackageName":   structpb.NewStringValue("DebInstalledPackage"),
+				"SourceVersion": structpb.NewStringValue("SourceVersion"),
+			}}},
+			{Name: "ZypperInstalledPkg", Type: "rpm", Version: "SourceVersion", Purl: "SourcePurl", Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
+				"PackageName": structpb.NewStringValue("ZypperInstalledPackage"),
+				"SourceRPM":   structpb.NewStringValue("SourceRPM"),
+			}}},
+			{Name: "ZypperInstalledPatch", Type: "ZypperPatch", Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
+				"Category": structpb.NewStringValue("Category"),
+				"Severity": structpb.NewStringValue("Severity"),
+				"Summary":  structpb.NewStringValue("Summary"),
+			}}},
+			{Name: "CosInstalledPkg", Type: "cos", Version: "SourceVersion", Purl: "SourcePurl", Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
+				"Name":    structpb.NewStringValue("CosInstalledPackage"),
+				"Version": structpb.NewStringValue("SourceVersion"),
+			}}},
+			{Name: "GooGetInstalledPkg", Type: "googet", Version: "Version", Metadata: &structpb.Struct{}},
+			{Name: "WUAInstalled", Type: "WUAPackage", Version: "UpdateID", Purl: "SupportURL", Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
+				"Description": structpb.NewStringValue("Description"),
+				"Categories": structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID1"), "Name": structpb.NewStringValue("Category1")}}),
+					structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID2"), "Name": structpb.NewStringValue("Category2")}}),
+					structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID3"), "Name": structpb.NewStringValue("Category3")}}),
+					structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID4"), "Name": structpb.NewStringValue("Category4")}})}}),
+				"CategoryIds":              structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStringValue("CategoryID1"), structpb.NewStringValue("CategoryID2"), structpb.NewStringValue("CategoryID3"), structpb.NewStringValue("CategoryID4")}}),
+				"KbArticleId":              structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStringValue("KB1"), structpb.NewStringValue("KB2"), structpb.NewStringValue("KB3"), structpb.NewStringValue("KB4")}}),
+				"MoreInfoUrls":             structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStringValue("MoreInfoURL1"), structpb.NewStringValue("MoreInfoURL2"), structpb.NewStringValue("MoreInfoURL3"), structpb.NewStringValue("MoreInfoURL4")}}),
+				"RevisionNumber":           structpb.NewNumberValue(1),
+				"LastDeploymentChangeTime": structpb.NewStringValue(time.Date(2020, time.November, 10, 23, 0, 0, 0, time.UTC).String()),
+			}}},
+			{Name: "QFEInstalled", Type: "QFEPackage", Version: "HotFixID", Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
+				"Description": structpb.NewStringValue("Description"),
+				"InstalledOn": structpb.NewStringValue("9/1/2020"),
+			}}},
+		},
+		AvailablePackages: []*agentendpointpb.VmInventory_InventoryItem{
+			{Name: "AptPkgUpdate", Type: "deb", Version: "Version", Purl: "", Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
+				"SourceName":    structpb.NewStringValue(""),
+				"SourceVersion": structpb.NewStringValue(""),
+			}}},
+			{Name: "YumPkgUpdate", Type: "rpm", Version: "Version", Purl: "", Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
+				"SourceRPM": structpb.NewStringValue(""),
+			}}},
+			{Name: "ZypperPkgUpdate", Type: "rpm", Version: "Version", Purl: "", Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
+				"SourceRPM": structpb.NewStringValue(""),
+			}}},
+			{Name: "ZypperPatchUpdate", Type: "ZypperPatch", Version: "", Purl: "", Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
+				"Category": structpb.NewStringValue("Category"),
+				"Severity": structpb.NewStringValue("Severity"),
+				"Summary":  structpb.NewStringValue("Summary"),
+			}}},
+			{Name: "GooGetPkgUpdate", Type: "googet", Version: "Version", Purl: "", Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{}}},
+			{Name: "WUAUpdate", Type: "WUAPackage", Version: "UpdateID", Purl: "SupportURL", Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
+				"Description": structpb.NewStringValue("Description"),
+				"Categories": structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID1"), "Name": structpb.NewStringValue("Category1")}}),
+					structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID2"), "Name": structpb.NewStringValue("Category2")}}),
+					structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID3"), "Name": structpb.NewStringValue("Category3")}}),
+					structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID4"), "Name": structpb.NewStringValue("Category4")}})}}),
+				"CategoryIds":              structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStringValue("CategoryID1"), structpb.NewStringValue("CategoryID2"), structpb.NewStringValue("CategoryID3"), structpb.NewStringValue("CategoryID4")}}),
+				"KbArticleId":              structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStringValue("KB1"), structpb.NewStringValue("KB2"), structpb.NewStringValue("KB3"), structpb.NewStringValue("KB4")}}),
+				"MoreInfoUrls":             structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStringValue("MoreInfoURL1"), structpb.NewStringValue("MoreInfoURL2"), structpb.NewStringValue("MoreInfoURL3"), structpb.NewStringValue("MoreInfoURL4")}}),
+				"RevisionNumber":           structpb.NewNumberValue(1),
+				"LastDeploymentChangeTime": structpb.NewStringValue("0001-01-01 00:00:00 +0000 UTC"),
+			}}},
 		},
 	}
 }
@@ -423,12 +530,8 @@ func TestWrite(t *testing.T) {
 
 func TestReport(t *testing.T) {
 	ctx := context.Background()
-	srv := &agentEndpointServiceInventoryTestServer{}
-	tc, err := newTestClient(ctx, srv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer tc.close()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
 	tests := []struct {
 		name                string
@@ -452,16 +555,82 @@ func TestReport(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			srv.reportFullInventory = tt.reportFullInventory
+			var actualInventory *agentendpointpb.Inventory
+
+			mockClient := utilmocks.NewMockAgentEndpointClient(ctrl)
+
+			mockClient.EXPECT().ReportInventory(gomock.Any(),
+				gomock.Any()).AnyTimes().Do(func(ctx context.Context,
+				req *agentendpointpb.ReportInventoryRequest,
+				_ ...gax.CallOption) {
+				actualInventory = req.Inventory
+			}).Return(&agentendpointpb.ReportInventoryResponse{ReportFullInventory: tt.reportFullInventory}, nil)
+			mockClient.EXPECT().ReportVmInventory(gomock.Any(), gomock.Any()).AnyTimes().Return(nil, status.Error(codes.FailedPrecondition, ""))
+
+			tc, err := newMockTestClient(ctx, mockClient)
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			tc.client.report(ctx, tt.inventoryState)
 
-			actualInventory := srv.lastReportInventoryRequest.Inventory
 			if diff := cmp.Diff(tt.wantInventory, actualInventory, protocmp.Transform()); diff != "" {
 				t.Fatalf("ReportInventoryRequest.Inventory mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
+}
+
+func TestReportVmInventory(t *testing.T) {
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	tests := []struct {
+		name                string
+		reportFullInventory bool
+		inventoryState      *inventory.InstanceInventory
+		wantInventory       *agentendpointpb.VmInventory
+	}{
+		{
+			name:                "ReportChecksumOnly",
+			reportFullInventory: false,
+			inventoryState:      generateInventoryState(),
+			wantInventory:       nil,
+		},
+		{
+			name:                "ReportFullInventory",
+			reportFullInventory: true,
+			inventoryState:      generateInventoryState(),
+			wantInventory:       generateVMInventory(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var actualInventory *agentendpointpb.VmInventory
+
+			mockClient := utilmocks.NewMockAgentEndpointClient(ctrl)
+			mockClient.EXPECT().ReportVmInventory(gomock.Any(),
+				gomock.Any()).AnyTimes().Do(func(ctx context.Context,
+				req *agentendpointpb.ReportVmInventoryRequest,
+				_ ...gax.CallOption) {
+				actualInventory = req.VmInventory
+			}).Return(&agentendpointpb.ReportVmInventoryResponse{ReportFullInventory: tt.reportFullInventory}, nil)
+
+			tc, err := newMockTestClient(ctx, mockClient)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			tc.client.report(ctx, tt.inventoryState)
+
+			if diff := cmp.Diff(tt.wantInventory, actualInventory, protocmp.Transform()); diff != "" {
+				t.Fatalf("ReportInventoryRequest.Inventory mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+
 }
 
 func Test_computeFingerprint_gotExpectedFingerprintFormat(t *testing.T) {
