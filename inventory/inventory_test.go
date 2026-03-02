@@ -52,7 +52,7 @@ func TestProvider(t *testing.T) {
 				installedPackages: func(_ context.Context) (packages.Packages, error) {
 					return packages.Packages{}, fmt.Errorf("unexpected error")
 				},
-				scalibrInstalledPackages: func(_ context.Context) ([]*packages.InventoryItem, error) {
+				newInstalledPackages: func(_ context.Context) ([]*packages.InventoryItem, error) {
 					return []*packages.InventoryItem{}, fmt.Errorf("unexpected error")
 				},
 			},
@@ -73,7 +73,7 @@ func TestProvider(t *testing.T) {
 				installedPackages: func(_ context.Context) (packages.Packages, error) {
 					return installed, nil
 				},
-				scalibrInstalledPackages: func(_ context.Context) ([]*packages.InventoryItem, error) {
+				newInstalledPackages: func(_ context.Context) ([]*packages.InventoryItem, error) {
 					return newInstalled, nil
 				},
 			},
@@ -112,7 +112,7 @@ func TestProvider(t *testing.T) {
 				installedPackages: func(_ context.Context) (packages.Packages, error) {
 					return installed, nil
 				},
-				scalibrInstalledPackages: func(_ context.Context) ([]*packages.InventoryItem, error) {
+				newInstalledPackages: func(_ context.Context) ([]*packages.InventoryItem, error) {
 					return newInstalled, nil
 				},
 			},
@@ -146,8 +146,8 @@ func TestProvider(t *testing.T) {
 				osInfoProvider:            tt.stub,
 				packageUpdatesProvider:    tt.stub,
 				installedPackagesProvider: tt.stub,
-				scalibrPackagesProvider:   tt.stub,
 				clock:                     stubClock{},
+				isScalibrLinuxEnabled:     func() bool { return true },
 			}
 
 			ctx := context.Background()
@@ -177,10 +177,10 @@ func (sc stubClock) Now() time.Time {
 }
 
 type stubProvider struct {
-	osinfo                   func(context.Context) (osinfo.OSInfo, error)
-	packageUpdates           func(context.Context) (packages.Packages, error)
-	installedPackages        func(context.Context) (packages.Packages, error)
-	scalibrInstalledPackages func(context.Context) ([]*packages.InventoryItem, error)
+	osinfo               func(context.Context) (osinfo.OSInfo, error)
+	packageUpdates       func(context.Context) (packages.Packages, error)
+	installedPackages    func(context.Context) (packages.Packages, error)
+	newInstalledPackages func(context.Context) ([]*packages.InventoryItem, error)
 }
 
 func (p stubProvider) GetOSInfo(ctx context.Context) (osinfo.OSInfo, error) {
@@ -195,6 +195,6 @@ func (p stubProvider) GetPackageUpdates(ctx context.Context) (packages.Packages,
 	return p.packageUpdates(ctx)
 }
 
-func (p stubProvider) GetScalibrInstalledPackages(ctx context.Context) ([]*packages.InventoryItem, error) {
-	return p.scalibrInstalledPackages(ctx)
+func (p stubProvider) GetNewInstalledPackages(ctx context.Context) ([]*packages.InventoryItem, error) {
+	return p.newInstalledPackages(ctx)
 }

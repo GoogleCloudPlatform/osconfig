@@ -180,7 +180,7 @@ func (p scalibrInstalledPackagesProvider) GetInstalledPackages(ctx context.Conte
 	return pkgs, err
 }
 
-func (p scalibrInstalledPackagesProvider) GetScalibrInstalledPackages(ctx context.Context) ([]*InventoryItem, error) {
+func (p scalibrInstalledPackagesProvider) GetNewInstalledPackages(ctx context.Context) ([]*InventoryItem, error) {
 	config, err := p.getScanConfig()
 	if err != nil {
 		return []*InventoryItem{}, err
@@ -198,5 +198,32 @@ func (p scalibrInstalledPackagesProvider) GetScalibrInstalledPackages(ctx contex
 
 	inventoryItems := inventoryItemFromExtractedPackages(scan, &osinfo)
 
+	if ZypperExists {
+		zypperPatches, err := ZypperInstalledPatches(ctx)
+		if err != nil {
+			return inventoryItems, fmt.Errorf("error getting zypper installed patches: %v", err)
+		}
+		inventoryItems = append(inventoryItems, zypperPatchesToInventoryItem(zypperPatches)...)
+	}
+
 	return inventoryItems, err
+}
+
+func zypperPatchesToInventoryItem(zypperPatches []*ZypperPatch) []*InventoryItem {
+	zypperPatchInventoryItems := make([]*InventoryItem, len(zypperPatches))
+	for i, pkg := range zypperPatches {
+		zypperPatchInventoryItems[i] = &InventoryItem{
+			Name:     pkg.Name,
+			Type:     "ZypperPatch",
+			Version:  "",
+			Purl:     "",
+			Location: []string{},
+			Metadata: map[string]any{
+				"Category": pkg.Category,
+				"Severity": pkg.Severity,
+				"Summary":  pkg.Summary,
+			},
+		}
+	}
+	return zypperPatchInventoryItems
 }

@@ -159,10 +159,10 @@ func TestScalibrIntegration(t *testing.T) {
 	}
 }
 
-func TestScalibrIntegration_GetScalibrInstalledPackages(t *testing.T) {
+func TestScalibrGetNewInstalledPackages(t *testing.T) {
 	withZypperDisabled(t)
 	tests := []struct {
-		provider ScalibrPackagesProvider
+		provider InstalledPackagesProvider
 		wantErr  error
 		wantPkgs []*InventoryItem
 	}{
@@ -200,7 +200,7 @@ func TestScalibrIntegration_GetScalibrInstalledPackages(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		pkgs, err := tt.provider.GetScalibrInstalledPackages(context.Background())
+		pkgs, err := tt.provider.GetNewInstalledPackages(context.Background())
 
 		if !reflect.DeepEqual(err, tt.wantErr) {
 			t.Errorf("err: want %v, got %v", tt.wantErr, err)

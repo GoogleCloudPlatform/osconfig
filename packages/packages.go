@@ -70,11 +70,7 @@ type PackageUpdatesProvider interface {
 // InstalledPackagesProvider define contract to extract installed packages from the VM.
 type InstalledPackagesProvider interface {
 	GetInstalledPackages(context.Context) (Packages, error)
-}
-
-// ScalibrPackagesProvider defines a contract to extract installed packages via osv-scalibr from the VM.
-type ScalibrPackagesProvider interface {
-	GetScalibrInstalledPackages(context.Context) ([]*InventoryItem, error)
+	GetNewInstalledPackages(context.Context) ([]*InventoryItem, error)
 }
 
 type defaultUpdatesProvider struct{}
@@ -92,6 +88,10 @@ type defaultInstalledPackagesProvider struct{}
 
 func (p defaultInstalledPackagesProvider) GetInstalledPackages(ctx context.Context) (Packages, error) {
 	return GetInstalledPackages(ctx)
+}
+
+func (p defaultInstalledPackagesProvider) GetNewInstalledPackages(ctx context.Context) ([]*InventoryItem, error) {
+	return GetNewInstalledPackages(ctx)
 }
 
 // Packages is a selection of packages based on their manager.

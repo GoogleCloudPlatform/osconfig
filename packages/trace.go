@@ -40,6 +40,27 @@ func (p tracingInstalledPackagesProvider) GetInstalledPackages(ctx context.Conte
 	return pkgs, err
 }
 
+func (p tracingInstalledPackagesProvider) GetNewInstalledPackages(ctx context.Context) ([]*InventoryItem, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	resultChannel := make(chan utiltrace.TraceMemoryResult)
+	go utiltrace.TraceMemory(ctx, 100*time.Millisecond, resultChannel)
+
+	startTime := time.Now()
+	pkgs, err := p.tracedProvider.GetNewInstalledPackages(ctx)
+	duration := time.Since(startTime)
+
+	cancel()
+	result := <-resultChannel
+
+	osinfo, osinfoErr := p.osInfoProvider.GetOSInfo(ctx)
+	if osinfoErr != nil {
+		clog.Errorf(ctx, "GetOSInfo() error: %v", osinfoErr)
+	}
+	logTraceResult(ctx, result, duration, osinfo)
+
+	return pkgs, err
+}
+
 func logTraceResult(ctx context.Context, result utiltrace.TraceMemoryResult, duration time.Duration, osinfo osinfo.OSInfo) {
 	clog.Debugf(
 		ctx,

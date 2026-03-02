@@ -66,14 +66,13 @@ type defaultInventoryProvider struct {
 
 	packageUpdatesProvider    packages.PackageUpdatesProvider
 	installedPackagesProvider packages.InstalledPackagesProvider
-	scalibrPackagesProvider   packages.ScalibrPackagesProvider
 	clock                     clock
+	isScalibrLinuxEnabled     func() bool
 }
 
 // NewProvider returns ready to work default provider
 func NewProvider() Provider {
 	installedPackagesProvider := packages.NewInstalledPackagesProvider(osinfo.NewProvider())
-	scalibrPackagesProvider := packages.ScalibrInstalledPackagesProvider(osinfo.NewProvider())
 	if agentconfig.TraceGetInventory() {
 		installedPackagesProvider = packages.TracingInstalledPackagesProvider(
 			installedPackagesProvider,
@@ -85,8 +84,8 @@ func NewProvider() Provider {
 		osInfoProvider:            osinfo.NewProvider(),
 		packageUpdatesProvider:    packages.NewPackageUpdatesProvider(),
 		installedPackagesProvider: installedPackagesProvider,
-		scalibrPackagesProvider:   scalibrPackagesProvider,
 		clock:                     newDefaultClock(),
+		isScalibrLinuxEnabled:     agentconfig.ScalibrLinuxEnabled,
 	}
 }
 
@@ -104,9 +103,12 @@ func (p *defaultInventoryProvider) Get(ctx context.Context) *InstanceInventory {
 		clog.Errorf(ctx, "packages.GetPackageUpdates() error: %v", err)
 	}
 
-	newInstalledPackages, err := p.scalibrPackagesProvider.GetScalibrInstalledPackages(ctx)
-	if err != nil {
-		clog.Errorf(ctx, "packages.GetScalibrInstalledPackages() error: %v", err)
+	newInstalledPackages := []*packages.InventoryItem{}
+	if p.isScalibrLinuxEnabled() {
+		newInstalledPackages, err = p.installedPackagesProvider.GetNewInstalledPackages(ctx)
+		if err != nil {
+			clog.Errorf(ctx, "packages.GetNewInstalledPackages() error: %v", err)
+		}
 	}
 
 	oi, err := p.osInfoProvider.GetOSInfo(ctx)

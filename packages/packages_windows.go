@@ -143,17 +143,13 @@ func GetInstalledPackages(ctx context.Context) (Packages, error) {
 	return pkgs, err
 }
 
+// GetNewInstalledPackages uses only osv-scalibr supported plugins to extract installed packages.
+// For Windows, extraction is done via legacy GetInstalledPackages.
+func GetNewInstalledPackages(ctx context.Context) ([]*InventoryItem, error) {
+	return []*InventoryItem{}, nil
+}
+
 // NewInstalledPackagesProvider returns fully initialized provider.
 func NewInstalledPackagesProvider(_ osinfo.Provider) InstalledPackagesProvider {
 	return defaultInstalledPackagesProvider{}
-}
-
-// ScalibrInstalledPackagesProvider uses osv-scalibr to extract packages.
-func ScalibrInstalledPackagesProvider(osinfoProvider osinfo.Provider) ScalibrPackagesProvider {
-	return scalibrInstalledPackagesProvider{
-		extractors: []string{
-			"windows/ospackages",
-		},
-		osinfoProvider: osinfoProvider,
-	}
 }

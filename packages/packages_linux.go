@@ -180,6 +180,11 @@ func getInstalledPackages(ctx context.Context) (Packages, []string) {
 	return pkgs, errs
 }
 
+// GetNewInstalledPackages uses only osv-scalibr supported plugins to extract installed packages.
+func GetNewInstalledPackages(ctx context.Context) ([]*InventoryItem, error) {
+	return []*InventoryItem{}, nil
+}
+
 // NewInstalledPackagesProvider makes provider that uses osv-scalibr as its implementation if enabled by config, otherwise falls back to default legacy implementation.
 func NewInstalledPackagesProvider(osinfoProvider osinfo.Provider) InstalledPackagesProvider {
 	if agentconfig.ScalibrLinuxEnabled() {
@@ -194,16 +199,4 @@ func NewInstalledPackagesProvider(osinfoProvider osinfo.Provider) InstalledPacka
 	}
 
 	return defaultInstalledPackagesProvider{}
-}
-
-// ScalibrInstalledPackagesProvider uses osv-scalibr as its implementation.
-func ScalibrInstalledPackagesProvider(osinfoProvider osinfo.Provider) ScalibrPackagesProvider {
-	return scalibrInstalledPackagesProvider{
-		extractors: []string{
-			"os/cos",
-			"os/dpkg",
-			"os/rpm",
-		},
-		osinfoProvider: osinfoProvider,
-	}
 }
