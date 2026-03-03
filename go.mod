@@ -127,7 +127,7 @@ require (
 	github.com/tidwall/jsonc v0.3.2 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
-	github.com/vbatts/tar-split v0.11.5 // indirect
+	github.com/vbatts/tar-split v0.12.2 // indirect
 	github.com/zeebo/errs v1.4.0 // indirect
 	go.chromium.org/luci v0.0.0-20201204084249-3e81ee3e83fe // indirect
 	go.etcd.io/bbolt v1.3.10 // indirect
