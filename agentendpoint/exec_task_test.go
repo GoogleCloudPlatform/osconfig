@@ -28,6 +28,7 @@ import (
 )
 
 type agentEndpointServiceExecTestServer struct {
+	agentendpointpb.UnimplementedAgentEndpointServiceServer
 	lastReportTaskCompleteRequest *agentendpointpb.ReportTaskCompleteRequest
 }
 

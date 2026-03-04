@@ -41,6 +41,7 @@ import (
 )
 
 type agentEndpointServiceInventoryTestServer struct {
+	agentendpointpb.UnimplementedAgentEndpointServiceServer
 	lastReportInventoryRequest *agentendpointpb.ReportInventoryRequest
 	reportFullInventory        bool
 }
