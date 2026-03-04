@@ -4,6 +4,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.11-17.20190603git.el8",
+        Type:    "rpm",
         Source:  packages.Source{Name:"crontabs-1.11-17.20190603git.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -11,6 +12,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1:1.40.16-4.el8_8",
+        Type:    "rpm",
         Source:  packages.Source{Name:"NetworkManager-1.40.16-4.el8_8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -18,6 +20,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "4.7.0-16.el8_8",
+        Type:    "rpm",
         Source:  packages.Source{Name:"dnf-4.7.0-16.el8_8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -25,6 +28,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.9-24.el8",
+        Type:    "rpm",
         Source:  packages.Source{Name:"policycoreutils-2.9-24.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -32,6 +36,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "10.32-3.el8_6",
+        Type:    "rpm",
         Source:  packages.Source{Name:"pcre2-10.32-3.el8_6.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -39,6 +44,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "4.18.0-477.27.1.el8_8.cloud",
+        Type:    "rpm",
         Source:  packages.Source{Name:"kernel-4.18.0-477.27.1.el8_8.cloud.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -46,6 +52,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1:6.1.2-10.el8",
+        Type:    "rpm",
         Source:  packages.Source{Name:"gmp-6.1.2-10.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -53,6 +60,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1:2.02-148.el8_8.1.rocky.0.3",
+        Type:    "rpm",
         Source:  packages.Source{Name:"grub2-2.02-148.el8_8.1.rocky.0.3.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -60,6 +68,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "4.18.0-477.27.1.el8_8.cloud",
+        Type:    "rpm",
         Source:  packages.Source{Name:"kernel-4.18.0-477.27.1.el8_8.cloud.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -67,6 +76,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "3.6.8-38.module+el8.5.0+671+195e4563",
+        Type:    "rpm",
         Source:  packages.Source{Name:"python36-3.6.8-38.module+el8.5.0+671+195e4563.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -74,6 +84,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "12:4.3.6-49.el8",
+        Type:    "rpm",
         Source:  packages.Source{Name:"dhcp-4.3.6-49.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -81,6 +92,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "4.18.0-477.27.1.el8_8.cloud",
+        Type:    "rpm",
         Source:  packages.Source{Name:"kernel-4.18.0-477.27.1.el8_8.cloud.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -88,6 +100,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "18.168.6.1-117.el8_8.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"linux-firmware-20230404-117.git2e92a49f.el8_8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -95,6 +108,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "3a893e63-627cbc0e",
+        Type:    "rpm",
         Source:  packages.Source{Name:"gpg-pubkey", Version:""},
     },
     &packages.PkgInfo{
@@ -102,6 +116,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "4.18.0-477.27.1.el8_8.cloud",
+        Type:    "rpm",
         Source:  packages.Source{Name:"kernel-4.18.0-477.27.1.el8_8.cloud.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -109,6 +124,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "4.18.0-477.27.1.el8_8.cloud",
+        Type:    "rpm",
         Source:  packages.Source{Name:"kernel-4.18.0-477.27.1.el8_8.cloud.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -116,6 +132,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "B.02.19.2-6.el8",
+        Type:    "rpm",
         Source:  packages.Source{Name:"lshw-B.02.19.2-6.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -123,6 +140,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "4.18.0-477.27.1.el8_8.cloud",
+        Type:    "rpm",
         Source:  packages.Source{Name:"kernel-4.18.0-477.27.1.el8_8.cloud.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -130,6 +148,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "15:6.2.0-33.module+el8.8.0+1454+0b2cbfb8",
+        Type:    "rpm",
         Source:  packages.Source{Name:"qemu-kvm-6.2.0-33.module+el8.8.0+1454+0b2cbfb8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -137,6 +156,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1:25.30.13.0-117.el8_8.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"linux-firmware-20230404-117.git2e92a49f.el8_8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -144,6 +164,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "18.168.6.1-117.el8_8.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"linux-firmware-20230404-117.git2e92a49f.el8_8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -151,6 +172,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "18.168.6.1-117.el8_8.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"linux-firmware-20230404-117.git2e92a49f.el8_8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -158,6 +180,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1:25.30.13.0-117.el8_8.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"linux-firmware-20230404-117.git2e92a49f.el8_8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -165,6 +188,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "18.168.6.1-117.el8_8.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"linux-firmware-20230404-117.git2e92a49f.el8_8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -172,6 +196,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "20230404-117.git2e92a49f.el8_8",
+        Type:    "rpm",
         Source:  packages.Source{Name:"linux-firmware-20230404-117.git2e92a49f.el8_8.src.rpm", Version:""},
     },
 }

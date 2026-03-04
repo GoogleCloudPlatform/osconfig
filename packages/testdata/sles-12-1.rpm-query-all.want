@@ -4,6 +4,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "4.2.8p17-103.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"ntp-4.2.8p17-103.1.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -11,6 +12,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1-3.24.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"lifecycle-data-sle-module-toolchain-1-3.24.1.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -18,6 +20,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "50a3dd1c-50f35137",
+        Type:    "rpm",
         Source:  packages.Source{Name:"gpg-pubkey", Version:""},
     },
     &packages.PkgInfo{
@@ -25,6 +28,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.3.2-4.3.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"libXext-1.3.2-4.3.1.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -32,6 +36,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.08-8.20",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-XML-SAX-Base-1.08-8.20.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -39,6 +44,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.240.0-11.19",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-Sub-Uplevel-0.240.0-11.19.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -46,6 +52,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.9-3.203",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-Digest-MD4-1.9-3.203.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -53,6 +60,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.32-3.14",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-Test-Exception-0.32-3.14.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -60,6 +68,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "0.12-156.12",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-Crypt-SmbHash-0.12-156.12.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -67,6 +76,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "7.3-3.171",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-Bit-Vector-7.3-3.171.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -74,6 +84,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.1.4-6.3.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"libnl-1_1-1.1.4-6.3.1.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -81,6 +92,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.0.3_git201003141408-27.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"lockdev-1.0.3_git201003141408-27.1.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -88,6 +100,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "4.12.14-122.183.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"kernel-default-4.12.14-122.183.1.nosrc.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -95,6 +108,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "12.3.0+git1204-1.13.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"gcc12-12.3.0+git1204-1.13.1.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -102,6 +116,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "12-13.3.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"branding-SLE-12-13.3.1.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -109,6 +124,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1_201403302107-15.6.2",
+        Type:    "rpm",
         Source:  packages.Source{Name:"ca-certificates-1_201403302107-15.6.2.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -116,6 +132,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "0.29.0-23.8.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"python-M2Crypto-0.29.0-23.8.1.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -123,6 +140,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.623-3.19",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-XML-Writer-0.623-3.19.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -130,6 +148,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.41-21.140",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-XML-Parser-2.41-21.140.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -137,6 +156,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.60-7.19",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-URI-1.60-7.19.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -144,6 +164,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.967009-7.19",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-Parse-RecDescent-1.967009-7.19.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -151,6 +172,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.13-17.216",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-Digest-SHA1-2.13-17.216.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -158,6 +180,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.33-8.19",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-Config-Crontab-1.33-8.19.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -165,6 +188,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "0.99-22.8",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-XML-SAX-0.99-22.8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -172,6 +196,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "0.29-106.14",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-X500-DN-0.29-106.14.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -179,6 +204,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.03-18.16",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-Digest-HMAC-1.03-18.16.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -186,6 +212,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.50-3.8",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-XML-SAX-Expat-0.50-3.8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -193,6 +220,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "2.20-4.2",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-XML-Simple-2.20-4.2.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -200,6 +228,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.43+48.63a5696-16.29.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"sg3_utils-1.43+48.63a5696-16.29.1.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -207,6 +236,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.5.1-5.3.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"GeoIP-1.5.1-5.3.1.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -214,6 +244,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "0.944-3.3.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-Bootloader-0.944-3.3.1.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -221,6 +252,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "0.73-4.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-Net-DNS-0.73-4.1.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -228,6 +260,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "17.1.0-4.23.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"python-pyOpenSSL-17.1.0-4.23.1.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -235,6 +268,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "0.3.36-3.18.4",
+        Type:    "rpm",
         Source:  packages.Source{Name:"SUSEConnect-0.3.36-3.18.4.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -242,6 +276,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "3.0.1-5.9.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"regionServiceClientConfigGCE-3.0.1-5.9.1.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -249,6 +284,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "12.5-3.3.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"sles-manuals_en-12.5-3.3.1.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -256,6 +292,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "3.18-1.19",
+        Type:    "rpm",
         Source:  packages.Source{Name:"libHX-3.18-1.19.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -263,6 +300,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "3.6.312.333-3.13.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"SuSEfirewall2-3.6.312.333-3.13.1.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -270,6 +308,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.11-21.13",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-XML-NamespaceSupport-1.11-21.13.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -277,6 +316,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "0.33-7.63",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-List-MoreUtils-0.33-7.63.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -284,6 +324,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "2.82-3.14",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-Config-IniFiles-2.82-3.14.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -291,6 +332,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "6.3-25.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-Date-Calc-6.3-25.1.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -298,6 +340,7 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.0019-6.3.5",
+        Type:    "rpm",
         Source:  packages.Source{Name:"perl-XML-LibXML-2.0019-6.3.5.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -305,6 +348,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.6.2-12.33.1",
+        Type:    "rpm",
         Source:  packages.Source{Name:"libX11-1.6.2-12.33.1.src.rpm", Version:""},
     },
 }

@@ -108,10 +108,17 @@ type Packages struct {
 
 // PkgInfo describes a package.
 type PkgInfo struct {
-	Name, Arch, RawArch, Version string
+	Name, Arch, RawArch, Version, Type string
 
 	Source Source
 }
+
+const (
+	typeRPM    = "rpm"
+	typeDebian = "deb"
+	typeCos    = "cos"
+	typeGooGet = "googet"
+)
 
 // Source represents source package from which binary package was built.
 type Source struct {
@@ -198,7 +205,7 @@ type packageMetadata struct {
 	SourceVersion string `json:"source_version"`
 }
 
-func pkgInfoFromPackageMetadata(pm packageMetadata) *PkgInfo {
+func pkgInfoFromPackageMetadata(pm packageMetadata, packageType string) *PkgInfo {
 	return &PkgInfo{
 		Name:    pm.Package,
 		Arch:    osinfo.NormalizeArchitecture(pm.Architecture),
@@ -207,6 +214,7 @@ func pkgInfoFromPackageMetadata(pm packageMetadata) *PkgInfo {
 			Name:    pm.SourceName,
 			Version: pm.SourceVersion,
 		},
+		Type: packageType,
 	}
 }
 
