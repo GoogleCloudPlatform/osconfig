@@ -4,7 +4,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "25.3.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -12,7 +12,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "24.8.1",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -20,7 +20,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.8.2",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -28,7 +28,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "2025.4.26",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -36,7 +36,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "5.2.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -44,7 +44,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "8.1.8",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -52,7 +52,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.4.6",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -60,7 +60,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "5.0.9",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -68,7 +68,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "23.10.4",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -76,7 +76,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "44.0.3",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -84,7 +84,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.4.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -92,7 +92,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.9.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -100,7 +100,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -108,7 +108,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.4",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -116,7 +116,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.22.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -124,7 +124,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "21.0.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -132,7 +132,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "3.10",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -140,7 +140,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "8.5.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -148,7 +148,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "24.7.2",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -156,7 +156,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "3.1.6",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -164,7 +164,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.33",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -172,7 +172,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "3.0.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -180,7 +180,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "4.23.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -188,7 +188,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "25.5.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -196,7 +196,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "2.1.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -204,7 +204,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.14.6",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -212,7 +212,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.0.7",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -220,7 +220,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "2.1.5",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -228,7 +228,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "10.5.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -236,7 +236,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.11.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -244,7 +244,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "3.2.2",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -252,7 +252,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "4.9.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -260,7 +260,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "25.0.1",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -268,7 +268,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.6.1",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -276,7 +276,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.4.2",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -284,7 +284,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "3.48.2",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -292,7 +292,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "2.1.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -300,7 +300,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "2.9.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -308,7 +308,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.5.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -316,7 +316,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "25.0.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -324,7 +324,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.20.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -332,7 +332,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "3.5",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -340,7 +340,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.0.1",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -348,7 +348,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "6.0.2",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -356,7 +356,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "2.32.3",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -364,7 +364,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.3.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -372,7 +372,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "3.3.3",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -380,7 +380,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "24.2.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -388,7 +388,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "75.3.2",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -396,7 +396,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "3.20.1",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -404,7 +404,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.17.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -412,7 +412,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "5.11",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -420,7 +420,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "235",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -428,7 +428,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "24.11.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -436,7 +436,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "2.2.3",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -444,7 +444,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "2.0.0",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -452,7 +452,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.45.1",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -460,7 +460,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "3.20.2",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -468,7 +468,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "7.2",
-        Type:    "",
+        Type:    "pypi",
         Source:  packages.Source{},
     },
 }
