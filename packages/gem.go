@@ -67,7 +67,7 @@ func GemUpdates(ctx context.Context) ([]*PkgInfo, error) {
 			continue
 		}
 		ver := strings.Trim(pkg[3], ")")
-		pkgs = append(pkgs, &PkgInfo{Name: pkg[0], Arch: noarch, Version: ver})
+		pkgs = append(pkgs, &PkgInfo{Name: pkg[0], Arch: noarch, Version: ver, Type: typeGem})
 	}
 
 	return pkgs, nil
@@ -122,7 +122,7 @@ func parseGemEntry(entry string) []*PkgInfo {
 		ver = strings.TrimSpace(ver)
 		ver = strings.TrimPrefix(ver, "default: ")
 
-		pkgs = append(pkgs, &PkgInfo{Name: name, Arch: noarch, Version: ver})
+		pkgs = append(pkgs, &PkgInfo{Name: name, Arch: noarch, Version: ver, Type: typeGem})
 	}
 
 	return pkgs
