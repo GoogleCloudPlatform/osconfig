@@ -34,6 +34,7 @@ import (
 
 	agentendpoint "cloud.google.com/go/osconfig/agentendpoint/apiv1"
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"golang.org/x/oauth2/jws"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
@@ -121,7 +122,15 @@ func newTestClient(ctx context.Context, srv agentendpointpb.AgentEndpointService
 	}, nil
 }
 
+func newMockTestClient(ctx context.Context, mockAgentEndpointClient *utilmocks.MockAgentEndpointClient) (*testClient, error) {
+	return &testClient{
+		client: &Client{raw: mockAgentEndpointClient, noti: make(chan struct{}, 1)},
+		s:      nil,
+	}, nil
+}
+
 type agentEndpointServiceTestServer struct {
+	agentendpointpb.UnimplementedAgentEndpointServiceServer
 	streamClose             chan struct{}
 	streamSend              chan struct{}
 	permissionError         chan struct{}
