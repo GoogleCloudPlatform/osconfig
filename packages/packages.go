@@ -108,7 +108,7 @@ type Packages struct {
 
 // PkgInfo describes a package.
 type PkgInfo struct {
-	Name, Arch, RawArch, Version, Type string
+	Name, Arch, RawArch, Version, Type, Purl string
 
 	Source Source
 }
