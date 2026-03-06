@@ -5,6 +5,7 @@
         RawArch: "",
         Version: "1.4.0-11ubuntu2.5",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -13,6 +14,7 @@
         RawArch: "",
         Version: "1.4.0-11ubuntu2.5",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -21,6 +23,7 @@
         RawArch: "",
         Version: "249.11-0ubuntu3.15",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -29,6 +32,7 @@
         RawArch: "",
         Version: "249.11-0ubuntu3.15",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -37,6 +41,7 @@
         RawArch: "",
         Version: "249.11-0ubuntu3.15",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -45,6 +50,7 @@
         RawArch: "",
         Version: "249.11-0ubuntu3.15",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -53,6 +59,7 @@
         RawArch: "",
         Version: "1.4.0-11ubuntu2.5",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -61,6 +68,7 @@
         RawArch: "",
         Version: "2:1.02.175-2.1ubuntu5",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -69,6 +77,7 @@
         RawArch: "",
         Version: "2:2.4.3-1ubuntu1.3",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -77,6 +86,7 @@
         RawArch: "",
         Version: "2.5.3-2ubuntu3~22.04.1",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -85,6 +95,7 @@
         RawArch: "",
         Version: "2:1.02.175-2.1ubuntu5",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -93,6 +104,7 @@
         RawArch: "",
         Version: "2:1.02.175-2.1ubuntu5",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -101,6 +113,7 @@
         RawArch: "",
         Version: "2.03.11-2.1ubuntu5",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -109,6 +122,7 @@
         RawArch: "",
         Version: "2:1.02.175-2.1ubuntu5",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -117,6 +131,7 @@
         RawArch: "",
         Version: "2.03.11-2.1ubuntu5",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -125,6 +140,7 @@
         RawArch: "",
         Version: "2.1.5-1ubuntu1.1",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -133,6 +149,7 @@
         RawArch: "",
         Version: "2.1.5-1ubuntu1.1",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -141,6 +158,7 @@
         RawArch: "",
         Version: "0.52ubuntu0.8",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -149,6 +167,7 @@
         RawArch: "",
         Version: "3.3-3ubuntu0.2",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -157,6 +176,7 @@
         RawArch: "",
         Version: "1:20241017.00-g1",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -165,6 +185,7 @@
         RawArch: "",
         Version: "2:2.4.3-1ubuntu1.3",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -173,6 +194,7 @@
         RawArch: "",
         Version: "2:2.4.3-1ubuntu1.3",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -181,6 +203,7 @@
         RawArch: "",
         Version: "2:2.4.3-1ubuntu1.3",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -189,6 +212,7 @@
         RawArch: "",
         Version: "1.2.5-2ubuntu3",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -197,6 +221,7 @@
         RawArch: "",
         Version: "1.2.5-2ubuntu3",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -205,6 +230,7 @@
         RawArch: "",
         Version: "23.02-0ubuntu1~22.04.4",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -213,6 +239,7 @@
         RawArch: "",
         Version: "2.5.18+dfsg-0ubuntu0.22.04.3",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -221,6 +248,7 @@
         RawArch: "",
         Version: "2.5.18+dfsg-0ubuntu0.22.04.3",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -229,6 +257,7 @@
         RawArch: "",
         Version: "1.28.0-1~ubuntu20.04.2",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -237,6 +266,7 @@
         RawArch: "",
         Version: "1.28.0-1~ubuntu20.04.2",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -245,6 +275,7 @@
         RawArch: "",
         Version: "1.2.5-2ubuntu3",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -253,6 +284,7 @@
         RawArch: "",
         Version: "1.2.5-2ubuntu3",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -261,6 +293,7 @@
         RawArch: "",
         Version: "4.33-3ubuntu2.1",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -269,6 +302,7 @@
         RawArch: "",
         Version: "2.67.1+22.04",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -277,6 +311,7 @@
         RawArch: "",
         Version: "4.8.2-0ubuntu0~22.04.1",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -285,6 +320,7 @@
         RawArch: "",
         Version: "5.13.0-1ubuntu2.1",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -293,6 +329,7 @@
         RawArch: "",
         Version: "24.4.1-0ubuntu0~22.04.2",
         Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{},
     },
 }

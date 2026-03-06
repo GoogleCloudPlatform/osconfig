@@ -15,6 +15,7 @@ import (
 	scalibrrpm "github.com/google/osv-scalibr/extractor/filesystem/os/rpm"
 	scalibrfs "github.com/google/osv-scalibr/fs"
 	"github.com/google/osv-scalibr/plugin"
+	"github.com/google/osv-scalibr/purl"
 )
 
 func pkgInfoFromDpkgExtractorPackage(pkg *extractor.Package, metadata *dpkgmetadata.Metadata) *PkgInfo {
@@ -30,6 +31,8 @@ func pkgInfoFromDpkgExtractorPackage(pkg *extractor.Package, metadata *dpkgmetad
 		Version: pkg.Version,
 		Arch:    osinfo.NormalizeArchitecture(metadata.Architecture),
 		Source:  source,
+		Type:    purl.TypeDebian,
+		Purl:    pkg.PURL().String(),
 	}
 }
 
@@ -58,6 +61,8 @@ func pkgInfoFromRpmExtractorPackage(pkg *extractor.Package, metadata *scalibrrpm
 		Version: version,
 		Arch:    osinfo.NormalizeArchitecture(architecture),
 		Source:  source,
+		Type:    purl.TypeRPM,
+		Purl:    pkg.PURL().String(),
 	}
 }
 
@@ -66,6 +71,8 @@ func pkgInfoFromCosExtractorPackage(pkg *extractor.Package, metadata *scalibrcos
 		Name:    fmt.Sprintf("%s/%s", metadata.Category, pkg.Name),
 		Version: pkg.Version,
 		Arch:    osinfo.Architecture,
+		Type:    purl.TypeCOS,
+		Purl:    pkg.PURL().String(),
 	}
 }
 
