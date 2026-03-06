@@ -4,6 +4,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "519.0.0-1",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -11,6 +12,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "3.10.0-1160.119.1.el7",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -18,6 +20,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "32:9.11.4-26.P2.el7_9.16",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -25,6 +28,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "7-9.2009.2.el7.centos",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -32,6 +36,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "7.29.0-59.el7_9.2",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -39,6 +44,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "12:4.2.5-83.el7.centos.2",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -46,6 +52,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "12:4.2.5-83.el7.centos.2",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -53,6 +60,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "12:4.2.5-83.el7.centos.2",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -60,6 +68,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "2.17-326.el7_9.3",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -67,6 +76,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "2.17-326.el7_9.3",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -74,6 +84,7 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "1:20240607.00-g1.el7",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -81,6 +92,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "1:20240415.00-g1.el7",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -88,6 +100,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "1:20240528.00-g1.el7",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -95,6 +108,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "1:20240524.03-g1.el7",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -102,6 +116,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "1:2.02-0.87.0.2.el7.centos.14",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -109,6 +124,7 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "1:2.02-0.87.0.2.el7.centos.14",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -116,6 +132,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "1:2.02-0.87.0.2.el7.centos.14",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -123,6 +140,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "1:2.02-0.87.0.2.el7.centos.14",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -130,6 +148,7 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "1:2.02-0.87.0.2.el7.centos.14",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -137,6 +156,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "1:2.02-0.87.0.2.el7.centos.14",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -144,6 +164,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "1:2.02-0.87.0.2.el7.centos.14",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -151,6 +172,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "1:2.02-0.87.0.2.el7.centos.14",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -158,6 +180,7 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "18.168.6.1-83.el7_9",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -165,6 +188,7 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "18.168.6.1-83.el7_9",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -172,6 +196,7 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "18.168.6.1-83.el7_9",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -179,6 +204,7 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "18.168.6.1-83.el7_9",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -186,6 +212,7 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "25.30.13.0-83.el7_9",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -193,6 +220,7 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "18.168.6.1-83.el7_9",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -200,6 +228,7 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "25.30.13.0-83.el7_9",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -207,6 +236,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "3.10.0-1160.119.1.el7",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -214,6 +244,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "3.10.0-1160.119.1.el7",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -221,6 +252,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "458-10.el7_9",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -228,6 +260,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "7.29.0-59.el7_9.2",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -235,6 +268,7 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "20200421-83.git78c0348.el7_9",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -242,6 +276,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "2.7.5-94.el7_9",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -249,6 +284,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "2.7.5-94.el7_9",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -256,6 +292,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "3.10.0-1160.119.1.el7",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -263,6 +300,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "219-78.el7_9.9",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -270,6 +308,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "219-78.el7_9.9",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -277,6 +316,7 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "219-78.el7_9.9",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -284,6 +324,7 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "2024a-1.el7",
+        Type:    "rpm",
         Source:  packages.Source{},
     },
 }

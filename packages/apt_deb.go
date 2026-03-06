@@ -204,6 +204,7 @@ func parseDpkgDeb(data []byte) (*PkgInfo, error) {
 	if info.Name == "" || info.Version == "" || info.Arch == "" {
 		return nil, fmt.Errorf("could not parse dpkg-deb output: %q", data)
 	}
+	info.Type = typeDebian
 	return info, nil
 }
 
@@ -295,7 +296,7 @@ func parseAptUpdates(ctx context.Context, data []byte, showNew bool) []*PkgInfo 
 		}
 		ver := bytes.Trim(pkg[1], "(")             // (246.0.0-0 => 246.0.0-0
 		arch := bytes.Trim(pkg[len(pkg)-1], "[])") // [all]) => all
-		pkgs = append(pkgs, &PkgInfo{Name: string(pkg[0]), Arch: osinfo.NormalizeArchitecture(string(arch)), Version: string(ver)})
+		pkgs = append(pkgs, &PkgInfo{Name: string(pkg[0]), Arch: osinfo.NormalizeArchitecture(string(arch)), Version: string(ver), Type: typeDebian})
 	}
 	return pkgs
 }
@@ -380,7 +381,7 @@ func parseInstalledDebPackages(ctx context.Context, data []byte) []*PkgInfo {
 			continue
 		}
 
-		pkg := pkgInfoFromPackageMetadata(dpkg)
+		pkg := pkgInfoFromPackageMetadata(dpkg, typeDebian)
 		if dpkg.Status != "installed" {
 			continue
 		}

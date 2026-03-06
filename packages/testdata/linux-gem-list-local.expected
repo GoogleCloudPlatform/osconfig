@@ -4,6 +4,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.1.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -11,6 +12,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "2.0.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -18,6 +20,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "2.1.2",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -25,6 +28,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.1.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -32,6 +36,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "3.1.2",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -39,6 +44,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "3.0.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -46,6 +52,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.1.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -53,6 +60,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.1.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -60,6 +68,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.4.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -67,6 +76,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.1.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -74,6 +84,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.0.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -81,6 +92,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.0.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -88,6 +100,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.4.1",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -95,6 +108,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.3.1",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -102,6 +116,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "2.1.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -109,6 +124,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.1.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -116,6 +132,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.5.3",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -123,6 +140,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.2.2",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -130,6 +148,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.2.1",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -137,6 +156,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "2.3.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -144,6 +164,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.4.2",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -151,6 +172,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.2.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -158,6 +180,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "5.13.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -165,6 +188,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.1.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -172,6 +196,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.1.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -179,6 +204,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.1.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -186,6 +212,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.1.1",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -193,6 +220,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.1.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -200,6 +228,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.1.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -207,6 +236,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "2.1.2",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -214,6 +244,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.2.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -221,6 +252,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.1.7",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -228,6 +260,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.1.1",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -235,6 +268,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.1.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -242,6 +276,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "3.1.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -249,6 +284,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.4.16",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -256,6 +292,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "13.0.1",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -263,6 +300,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "6.2.1",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -270,6 +308,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.0.2",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -277,6 +316,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.1.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -284,6 +324,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.1.2",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -291,6 +332,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "3.2.3",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -298,6 +340,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.2.8",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -305,6 +348,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.0.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -312,6 +356,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.3.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -319,6 +364,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.1.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -326,6 +372,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.1.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -333,6 +380,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.0.3",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -340,6 +388,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "3.3.5",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -347,6 +396,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.1.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -354,6 +404,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.1.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -361,6 +412,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.10.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -368,6 +420,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.6.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -375,6 +428,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.3.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -382,6 +436,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.1.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -389,6 +444,7 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.1.0",
+        Type:    "gem",
         Source:  packages.Source{},
     },
 }

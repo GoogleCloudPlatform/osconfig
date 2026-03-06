@@ -73,7 +73,7 @@ func parseInstalledRPMPackages(ctx context.Context, data []byte) []*PkgInfo {
 
 		normalizeRpmMetadata(&rpm)
 
-		pkg := pkgInfoFromPackageMetadata(rpm)
+		pkg := pkgInfoFromPackageMetadata(rpm, typeRPM)
 		result = append(result, pkg)
 	}
 

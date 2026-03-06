@@ -279,7 +279,10 @@ func TestParseYumUpdates(t *testing.T) {
 		data []byte
 		want []*PkgInfo
 	}{
-		{"NormalCase", data, []*PkgInfo{{Name: "kernel", Arch: "x86_64", RawArch: "x86_64", Version: "2.6.32-754.24.3.el6"}, {Name: "foo", Arch: "all", RawArch: "noarch", Version: "2.0.0-1"}, {Name: "bar", Arch: "x86_64", RawArch: "x86_64", Version: "2.0.0-1"}}},
+		{"NormalCase", data, []*PkgInfo{
+			{Name: "kernel", Arch: "x86_64", RawArch: "x86_64", Version: "2.6.32-754.24.3.el6", Type: "rpm"},
+			{Name: "foo", Arch: "all", RawArch: "noarch", Version: "2.0.0-1", Type: "rpm"},
+			{Name: "bar", Arch: "x86_64", RawArch: "x86_64", Version: "2.0.0-1", Type: "rpm"}}},
 		{"NoPackages", []byte("nothing here"), nil},
 		{"nil", nil, nil},
 	}
@@ -309,7 +312,10 @@ func TestParseYumUpdatesWithInstallingDependenciesKeywords(t *testing.T) {
 		data []byte
 		want []*PkgInfo
 	}{
-		{"NormalCase", data, []*PkgInfo{{Name: "kernel", Arch: "x86_64", RawArch: "x86_64", Version: "2.6.32-754.24.3.el6"}, {Name: "foo", Arch: "all", RawArch: "noarch", Version: "2.0.0-1"}, {Name: "bar", Arch: "x86_64", RawArch: "x86_64", Version: "2.0.0-1"}}},
+		{"NormalCase", data, []*PkgInfo{
+			{Name: "kernel", Arch: "x86_64", RawArch: "x86_64", Version: "2.6.32-754.24.3.el6", Type: "rpm"},
+			{Name: "foo", Arch: "all", RawArch: "noarch", Version: "2.0.0-1", Type: "rpm"},
+			{Name: "bar", Arch: "x86_64", RawArch: "x86_64", Version: "2.0.0-1", Type: "rpm"}}},
 		{"NoPackages", []byte("nothing here"), nil},
 		{"nil", nil, nil},
 	}
