@@ -63,7 +63,7 @@ func TestGetPackageUpdate(t *testing.T) {
 		},
 		{
 			cmd:    exec.Command("/usr/bin/pip", "list", "--format=json", "--outdated"),
-			stdout: []byte(""),
+			stdout: utiltest.BytesFromFile(t, "./testdata/linux-pip-list-outdated-format-json.stdout"),
 			stderr: []byte(""),
 			err:    nil,
 		},
