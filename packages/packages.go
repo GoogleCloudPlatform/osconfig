@@ -118,6 +118,8 @@ const (
 	typeDebian = "deb"
 	typeCos    = "cos"
 	typeGooGet = "googet"
+	typeGem    = "gem"
+	typePypi   = "pypi"
 )
 
 // Source represents source package from which binary package was built.

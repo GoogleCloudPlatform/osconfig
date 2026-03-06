@@ -160,8 +160,8 @@ func TestInstalledGemPackages(t *testing.T) {
 				},
 			},
 			expectedResults: []*PkgInfo{
-				{Name: "webrick", Arch: noarch, Version: "1.6.0"},
-				{Name: "xmlrpc", Arch: noarch, Version: "0.3.0"},
+				{Name: "webrick", Arch: noarch, Version: "1.6.0", Type: "gem"},
+				{Name: "xmlrpc", Arch: noarch, Version: "0.3.0", Type: "gem"},
 			},
 			expectedError: nil,
 		},
