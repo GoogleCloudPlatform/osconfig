@@ -5,6 +5,7 @@
         RawArch: "",
         Version: "1:20250207.00-g1.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"google-compute-engine-20250207.00-g1.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -13,6 +14,7 @@
         RawArch: "",
         Version: "1.6.1-8.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"libipt-1.6.1-8.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -21,6 +23,7 @@
         RawArch: "",
         Version: "2.9.4-5.0.1.el8_10.1",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"sssd-2.9.4-5.0.1.el8_10.1.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -29,6 +32,7 @@
         RawArch: "",
         Version: "39.2.0-8.el8_10",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"python-setuptools-39.2.0-8.el8_10.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -37,6 +41,7 @@
         RawArch: "",
         Version: "999:20250203-999.38.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-firmware-20250203-999.38.git0fd450ee.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -45,6 +50,7 @@
         RawArch: "",
         Version: "17.0.6-3.0.1.module+el8.10.0+90440+aa5a3b2d",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"llvm-compat-17.0.6-3.0.1.module+el8.10.0+90440+aa5a3b2d.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -53,6 +59,7 @@
         RawArch: "",
         Version: "1.6.8-9.el8_10",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"libX11-1.6.8-9.el8_10.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -61,6 +68,7 @@
         RawArch: "",
         Version: "20230731-1.git3177e06.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"crypto-policies-20230731-1.git3177e06.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -69,6 +77,7 @@
         RawArch: "",
         Version: "1.1.12-7.0.1.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"PackageKit-1.1.12-7.0.1.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -77,6 +86,7 @@
         RawArch: "",
         Version: "2:4.6-22.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"shadow-utils-4.6-22.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -85,6 +95,7 @@
         RawArch: "",
         Version: "8:2.03.14-15.0.1.el8_10",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"lvm2-2.03.14-15.0.1.el8_10.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -93,6 +104,7 @@
         RawArch: "",
         Version: "3.12-12.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"PyYAML-3.12-12.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -101,6 +113,7 @@
         RawArch: "",
         Version: "2.8.5-11.0.3.module+el8.3.0+20070+f5719e00",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"dnf-plugin-spacewalk-2.8.5-11.0.3.module+el8.3.0+20070+f5719e00.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -109,6 +122,7 @@
         RawArch: "",
         Version: "2.55-396.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-Digest-MD5-2.55-396.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -117,6 +131,7 @@
         RawArch: "",
         Version: "2.066-4.module+el8.6.0+20623+f0897f98",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-IO-Socket-SSL-2.066-4.module+el8.6.0+20623+f0897f98.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -125,6 +140,7 @@
         RawArch: "",
         Version: "3.28-396.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-Pod-Perldoc-3.28-396.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -133,6 +149,7 @@
         RawArch: "",
         Version: "4:2.97-3.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-Encode-2.97-3.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -141,6 +158,7 @@
         RawArch: "",
         Version: "1.25-396.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-Unicode-Normalize-1.25-396.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -149,6 +167,7 @@
         RawArch: "",
         Version: "999:8.83.5.1_1-999.38.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-firmware-20250203-999.38.git0fd450ee.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -157,6 +176,7 @@
         RawArch: "",
         Version: "1.0.9-3.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"libXau-1.0.9-3.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -165,6 +185,7 @@
         RawArch: "",
         Version: "3e1ba8d5-558ab6a8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"gpg-pubkey", Version:""},
     },
     &packages.PkgInfo{
@@ -173,6 +194,7 @@
         RawArch: "",
         Version: "2:8.0.1763-19.0.1.el8_6.4",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"vim-8.0.1763-19.0.1.el8_6.4.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -181,6 +203,7 @@
         RawArch: "",
         Version: "4.18.0-553.45.1.el8_10",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"kernel-4.18.0-553.45.1.el8_10.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -189,6 +212,7 @@
         RawArch: "",
         Version: "0.3.11-6.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"volume_key-0.3.11-6.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -197,6 +221,7 @@
         RawArch: "",
         Version: "0.39-5.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-IO-Socket-IP-0.39-5.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -205,6 +230,7 @@
         RawArch: "",
         Version: "1:3.35-395.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-Pod-Simple-3.35-395.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -213,6 +239,7 @@
         RawArch: "",
         Version: "1:2.50-4.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-Getopt-Long-2.50-4.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -221,6 +248,7 @@
         RawArch: "",
         Version: "15:6.2.0-53.module+el8.10.0+90428+8e7927cd.2",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"qemu-kvm-6.2.0-53.module+el8.10.0+90428+8e7927cd.2.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -229,6 +257,7 @@
         RawArch: "",
         Version: "999:18.168.6.1-999.38.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-firmware-20250203-999.38.git0fd450ee.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -237,6 +266,7 @@
         RawArch: "",
         Version: "4.18.0-553.45.1.el8_10",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"kernel-4.18.0-553.45.1.el8_10.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -245,6 +275,7 @@
         RawArch: "",
         Version: "5.15.0-306.177.4.el8uek",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"kernel-uek-5.15.0-306.177.4.el8uek.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -253,6 +284,7 @@
         RawArch: "",
         Version: "1:1.40.16-19.0.1.el8_10",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"NetworkManager-1.40.16-19.0.1.el8_10.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -261,6 +293,7 @@
         RawArch: "",
         Version: "5.15.0-306.177.4.el8uek",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"kernel-uek-5.15.0-306.177.4.el8uek.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -269,6 +302,7 @@
         RawArch: "",
         Version: "4.18.0-553.45.1.el8_10",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"kernel-4.18.0-553.45.1.el8_10.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -277,6 +311,7 @@
         RawArch: "",
         Version: "1:1.280-1.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-Time-Local-1.280-1.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -285,6 +320,7 @@
         RawArch: "",
         Version: "4.06-396.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-Term-ANSIColor-4.06-396.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -293,6 +329,7 @@
         RawArch: "",
         Version: "0.074-3.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-HTTP-Tiny-0.074-3.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -301,6 +338,7 @@
         RawArch: "",
         Version: "4:1.69-395.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-Pod-Usage-1.69-395.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -309,6 +347,7 @@
         RawArch: "",
         Version: "5.72-396.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-Exporter-5.72-396.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -317,6 +356,7 @@
         RawArch: "",
         Version: "19.0.0-1.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"pyOpenSSL-19.0.0-1.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -325,6 +365,7 @@
         RawArch: "",
         Version: "999:9.221.4.1-999.38.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-firmware-20250203-999.38.git0fd450ee.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -333,6 +374,7 @@
         RawArch: "",
         Version: "999:18.168.6.1-999.38.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-firmware-20250203-999.38.git0fd450ee.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -341,6 +383,7 @@
         RawArch: "",
         Version: "999:39.31.5.1-999.38.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-firmware-20250203-999.38.git0fd450ee.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -349,6 +392,7 @@
         RawArch: "",
         Version: "4.18.0-553.45.1.el8_10",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"kernel-4.18.0-553.45.1.el8_10.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -357,6 +401,7 @@
         RawArch: "",
         Version: "1.6.8-9.el8_10",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"libX11-1.6.8-9.el8_10.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -365,6 +410,7 @@
         RawArch: "",
         Version: "4.18.0-553.45.1.el8_10",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"kernel-4.18.0-553.45.1.el8_10.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -373,6 +419,7 @@
         RawArch: "",
         Version: "5.15.0-306.177.4.1.el8uek",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"kernel-uek-5.15.0-306.177.4.1.el8uek.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -381,6 +428,7 @@
         RawArch: "",
         Version: "999:20250203-999.38.git0fd450ee.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-firmware-20250203-999.38.git0fd450ee.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -389,6 +437,7 @@
         RawArch: "",
         Version: "999:25.30.13.0-999.38.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-firmware-20250203-999.38.git0fd450ee.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -397,6 +446,7 @@
         RawArch: "",
         Version: "4.18.0-553.45.1.el8_10",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"kernel-4.18.0-553.45.1.el8_10.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -405,6 +455,7 @@
         RawArch: "",
         Version: "4.18.0-553.45.1.el8_10",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"kernel-4.18.0-553.45.1.el8_10.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -413,6 +464,7 @@
         RawArch: "",
         Version: "1.17-395.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-Digest-1.17-395.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -421,6 +473,7 @@
         RawArch: "",
         Version: "1.73-3.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-URI-1.73-3.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -429,6 +482,7 @@
         RawArch: "",
         Version: "20160104-7.0.1.module+el8.3.0+21136+b437fca9",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-Mozilla-CA-20160104-7.0.1.module+el8.3.0+21136+b437fca9.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -437,6 +491,7 @@
         RawArch: "",
         Version: "1.17-395.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-Term-Cap-1.17-395.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -445,6 +500,7 @@
         RawArch: "",
         Version: "3.15-396.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-MIME-Base64-3.15-396.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -453,6 +509,7 @@
         RawArch: "",
         Version: "4:2.027-3.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-Socket-2.027-3.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -461,6 +518,7 @@
         RawArch: "",
         Version: "4.18.0-553.45.1.el8_10",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"kernel-4.18.0-553.45.1.el8_10.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -469,6 +527,7 @@
         RawArch: "",
         Version: "2013.0523-395.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-Text-Tabs+Wrap-2013.0523-395.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -477,6 +536,7 @@
         RawArch: "",
         Version: "3.74-1.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-PathTools-3.74-1.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -485,6 +545,7 @@
         RawArch: "",
         Version: "999:20250203-999.38.git0fd450ee.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-firmware-20250203-999.38.git0fd450ee.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -493,6 +554,7 @@
         RawArch: "",
         Version: "5.15.0-306.177.4.el8uek",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"kernel-uek-5.15.0-306.177.4.el8uek.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -501,6 +563,7 @@
         RawArch: "",
         Version: "B.02.19.2-6.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"lshw-B.02.19.2-6.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -509,6 +572,7 @@
         RawArch: "",
         Version: "999:18.168.6.1-999.38.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-firmware-20250203-999.38.git0fd450ee.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -517,6 +581,7 @@
         RawArch: "",
         Version: "999:25.30.13.0-999.38.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-firmware-20250203-999.38.git0fd450ee.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -525,6 +590,7 @@
         RawArch: "",
         Version: "999:18.168.6.1-999.38.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-firmware-20250203-999.38.git0fd450ee.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -533,6 +599,7 @@
         RawArch: "",
         Version: "5.15.0-306.177.4.el8uek",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"kernel-uek-5.15.0-306.177.4.el8uek.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -541,6 +608,7 @@
         RawArch: "",
         Version: "1:1.07-395.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-Pod-Escapes-1.07-395.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -549,6 +617,7 @@
         RawArch: "",
         Version: "0.230.600-1.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-File-Temp-0.230.600-1.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -557,6 +626,7 @@
         RawArch: "",
         Version: "3:1.49-2.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-Scalar-List-Utils-1.49-2.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -565,6 +635,7 @@
         RawArch: "",
         Version: "999:41.28.5.1-999.38.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-firmware-20250203-999.38.git0fd450ee.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -573,6 +644,7 @@
         RawArch: "",
         Version: "999:18.168.6.1-999.38.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-firmware-20250203-999.38.git0fd450ee.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -581,6 +653,7 @@
         RawArch: "",
         Version: "2.167-399.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-Data-Dumper-2.167-399.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -589,6 +662,7 @@
         RawArch: "",
         Version: "1.88-2.module+el8.6.0+20623+f0897f98",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-Net-SSLeay-1.88-2.module+el8.6.0+20623+f0897f98.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -597,6 +671,7 @@
         RawArch: "",
         Version: "3.30-395.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-Text-ParseWords-3.30-395.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -605,6 +680,7 @@
         RawArch: "",
         Version: "1.42-396.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-Carp-1.42-396.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -613,6 +689,7 @@
         RawArch: "",
         Version: "5.15.0-306.177.4.el8uek",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"kernel-uek-5.15.0-306.177.4.el8uek.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -621,6 +698,7 @@
         RawArch: "",
         Version: "2.15-2.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"perl-File-Path-2.15-2.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -629,6 +707,7 @@
         RawArch: "",
         Version: "999:8.24.2.2-999.38.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-firmware-20250203-999.38.git0fd450ee.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -637,6 +716,7 @@
         RawArch: "",
         Version: "999:39.31.5.1-999.38.el8",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-firmware-20250203-999.38.git0fd450ee.el8.src.rpm", Version:""},
     },
     &packages.PkgInfo{
@@ -645,6 +725,7 @@
         RawArch: "",
         Version: "4.18.0-553.45.1.el8_10",
         Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{Name:"kernel-4.18.0-553.45.1.el8_10.src.rpm", Version:""},
     },
 }
