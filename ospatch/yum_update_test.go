@@ -47,7 +47,7 @@ func TestRunYumUpdateWithSecurity(t *testing.T) {
 	mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"install", "--assumeyes", "foo.noarch"}...))).After(checkUpdateCall).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
 
 	packages.SetPtyCommandRunner(mockCommandRunner)
-	mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"update", "--assumeno", "--cacheonly", "--color=never", "--security"}...))).Return(data, []byte("stderr"), nil).Times(1)
+	mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"update", "--assumeno", "--color=never", "--security"}...))).Return(data, []byte("stderr"), nil).Times(1)
 
 	err := RunYumUpdate(ctx, YumUpdateMinimal(false), YumUpdateSecurity(true))
 	if err != nil {
@@ -84,7 +84,7 @@ func TestRunYumUpdateWithSecurityWithExclusives(t *testing.T) {
 	mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"install", "--assumeyes", "foo.noarch", "bar.x86_64"}...))).After(checkUpdateCall).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
 
 	packages.SetPtyCommandRunner(mockCommandRunner)
-	mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"update", "--assumeno", "--cacheonly", "--color=never", "--security"}...))).Return(data, []byte("stderr"), nil).Times(1)
+	mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"update", "--assumeno", "--color=never", "--security"}...))).Return(data, []byte("stderr"), nil).Times(1)
 
 	err := RunYumUpdate(ctx, YumUpdateMinimal(false), YumUpdateSecurity(true), YumExclusivePackages(exclusivePackages))
 	if err != nil {
