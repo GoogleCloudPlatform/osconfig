@@ -122,6 +122,7 @@ func newTestClient(ctx context.Context, srv agentendpointpb.AgentEndpointService
 }
 
 type agentEndpointServiceTestServer struct {
+	agentendpointpb.UnimplementedAgentEndpointServiceServer
 	streamClose             chan struct{}
 	streamSend              chan struct{}
 	permissionError         chan struct{}
