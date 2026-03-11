@@ -91,19 +91,19 @@ func NewProvider() Provider {
 func (p *defaultInventoryProvider) Get(ctx context.Context) *InstanceInventory {
 	clog.Debugf(ctx, "Gathering instance inventory.")
 
-	installedPackages, err := p.installedPackagesProvider.GetInstalledPackages(ctx)
+	oi, err := p.osInfoProvider.GetOSInfo(ctx)
+	if err != nil {
+		clog.Errorf(ctx, "osinfo.Get() error: %v", err)
+	}
+
+	installedPackages, err := p.installedPackagesProvider.GetInstalledPackages(ctx, oi)
 	if err != nil {
 		clog.Errorf(ctx, "packages.GetInstalledPackages() error: %v", err)
 	}
 
-	packageUpdates, err := p.packageUpdatesProvider.GetPackageUpdates(ctx)
+	packageUpdates, err := p.packageUpdatesProvider.GetPackageUpdates(ctx, oi)
 	if err != nil {
 		clog.Errorf(ctx, "packages.GetPackageUpdates() error: %v", err)
-	}
-
-	oi, err := p.osInfoProvider.GetOSInfo(ctx)
-	if err != nil {
-		clog.Errorf(ctx, "osinfo.Get() error: %v", err)
 	}
 
 	return &InstanceInventory{

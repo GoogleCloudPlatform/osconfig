@@ -23,12 +23,13 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
+	"github.com/package-url/packageurl-go"
 )
 
 // GetPackageUpdates gets all available package updates from any known
 // installed package manager.
-func GetPackageUpdates(ctx context.Context) (Packages, error) {
-	pkgs, errs := getPackageUpdates(ctx)
+func GetPackageUpdates(ctx context.Context, oi osinfo.OSInfo) (Packages, error) {
+	pkgs, errs := getPackageUpdates(ctx, oi)
 
 	var err error
 	if len(errs) != 0 {
@@ -38,8 +39,9 @@ func GetPackageUpdates(ctx context.Context) (Packages, error) {
 	return pkgs, err
 }
 
-func getPackageUpdates(ctx context.Context) (Packages, []string) {
+func getPackageUpdates(ctx context.Context, oi osinfo.OSInfo) (Packages, []string) {
 	pkgs := Packages{}
+	shortname := oi.ShortName
 
 	var errs []string
 	if AptExists {
@@ -49,6 +51,7 @@ func getPackageUpdates(ctx context.Context) (Packages, []string) {
 			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
+			apt = enrichPkgInfoWithPurl(apt, shortname)
 			pkgs.Apt = apt
 		}
 	}
@@ -59,6 +62,7 @@ func getPackageUpdates(ctx context.Context) (Packages, []string) {
 			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
+			yum = enrichPkgInfoWithPurl(yum, shortname)
 			pkgs.Yum = yum
 		}
 	}
@@ -69,6 +73,7 @@ func getPackageUpdates(ctx context.Context) (Packages, []string) {
 			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
+			zypper = enrichPkgInfoWithPurl(zypper, shortname)
 			pkgs.Zypper = zypper
 		}
 		zypperPatches, err := ZypperPatches(ctx)
@@ -77,6 +82,7 @@ func getPackageUpdates(ctx context.Context) (Packages, []string) {
 			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
+			// ZypperPatch PURL is set before API request
 			pkgs.ZypperPatches = zypperPatches
 		}
 	}
@@ -86,6 +92,7 @@ func getPackageUpdates(ctx context.Context) (Packages, []string) {
 			msg := fmt.Sprintf("error getting gem updates: %v", err)
 			clog.Debugf(ctx, "Error: %s", msg)
 		} else {
+			gem = enrichGemPkgInfoWithPurl(gem)
 			pkgs.Gem = gem
 		}
 	}
@@ -95,6 +102,7 @@ func getPackageUpdates(ctx context.Context) (Packages, []string) {
 			msg := fmt.Sprintf("error getting pip updates: %v", err)
 			clog.Debugf(ctx, "Error: %s", msg)
 		} else {
+			pip = enrichPipPkgInfoWithPurl(pip)
 			pkgs.Pip = pip
 		}
 	}
@@ -104,8 +112,8 @@ func getPackageUpdates(ctx context.Context) (Packages, []string) {
 
 // GetInstalledPackages gets all installed packages from any known installed
 // package manager.
-func GetInstalledPackages(ctx context.Context) (Packages, error) {
-	pkgs, errs := getInstalledPackages(ctx)
+func GetInstalledPackages(ctx context.Context, oi osinfo.OSInfo) (Packages, error) {
+	pkgs, errs := getInstalledPackages(ctx, oi)
 	var err error
 	if len(errs) != 0 {
 		err = errors.New(strings.Join(errs, "\n"))
@@ -114,8 +122,9 @@ func GetInstalledPackages(ctx context.Context) (Packages, error) {
 	return pkgs, err
 }
 
-func getInstalledPackages(ctx context.Context) (Packages, []string) {
+func getInstalledPackages(ctx context.Context, oi osinfo.OSInfo) (Packages, []string) {
 	pkgs := Packages{}
+	shortname := oi.ShortName
 
 	var errs []string
 	if RPMQueryExists {
@@ -125,6 +134,7 @@ func getInstalledPackages(ctx context.Context) (Packages, []string) {
 			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
+			rpm = enrichPkgInfoWithPurl(rpm, shortname)
 			pkgs.Rpm = rpm
 		}
 	}
@@ -135,6 +145,7 @@ func getInstalledPackages(ctx context.Context) (Packages, []string) {
 			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
+			// ZypperPatch PURL is set before API request
 			pkgs.ZypperPatches = zypperPatches
 		}
 	}
@@ -145,6 +156,7 @@ func getInstalledPackages(ctx context.Context) (Packages, []string) {
 			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
+			deb = enrichPkgInfoWithPurl(deb, shortname)
 			pkgs.Deb = deb
 		}
 	}
@@ -155,6 +167,7 @@ func getInstalledPackages(ctx context.Context) (Packages, []string) {
 			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
+			cos = enrichPkgInfoWithPurl(cos, shortname)
 			pkgs.COS = cos
 		}
 	}
@@ -164,6 +177,7 @@ func getInstalledPackages(ctx context.Context) (Packages, []string) {
 			msg := fmt.Sprintf("error listing installed gem packages: %v", err)
 			clog.Debugf(ctx, "Error: %s", msg)
 		} else {
+			gem = enrichGemPkgInfoWithPurl(gem)
 			pkgs.Gem = gem
 		}
 	}
@@ -173,11 +187,34 @@ func getInstalledPackages(ctx context.Context) (Packages, []string) {
 			msg := fmt.Sprintf("error listing installed pip packages: %v", err)
 			clog.Debugf(ctx, "Error: %s", msg)
 		} else {
+			pip = enrichPipPkgInfoWithPurl(pip)
 			pkgs.Pip = pip
 		}
 	}
 
 	return pkgs, errs
+}
+
+func enrichPkgInfoWithPurl(pkgs []*PkgInfo, shortname string) []*PkgInfo {
+	for i, pkg := range pkgs {
+		qualifiers := packageurl.Qualifiers{packageurl.Qualifier{Key: "arch", Value: pkg.Arch}}
+		pkgs[i].Purl = packageurl.NewPackageURL(pkg.Type, shortname, pkg.Name, pkg.Version, qualifiers, "").ToString()
+	}
+	return pkgs
+}
+
+func enrichGemPkgInfoWithPurl(pkgs []*PkgInfo) []*PkgInfo {
+	for i, pkg := range pkgs {
+		pkgs[i].Purl = packageurl.NewPackageURL(pkg.Type, "", pkg.Name, pkg.Version, packageurl.Qualifiers{}, "").ToString()
+	}
+	return pkgs
+}
+
+func enrichPipPkgInfoWithPurl(pkgs []*PkgInfo) []*PkgInfo {
+	for i, pkg := range pkgs {
+		pkgs[i].Purl = packageurl.NewPackageURL(pkg.Type, "", pkg.Name, pkg.Version, packageurl.Qualifiers{}, "").ToString()
+	}
+	return pkgs
 }
 
 // NewInstalledPackagesProvider makes provider that uses osv-scalibr as its implementation if enabled by config, otherwise falls back to default legacy implementation.
