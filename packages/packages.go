@@ -64,12 +64,12 @@ var (
 
 // PackageUpdatesProvider define contract to extract available updates from the VM.
 type PackageUpdatesProvider interface {
-	GetPackageUpdates(context.Context) (Packages, error)
+	GetPackageUpdates(context.Context, osinfo.OSInfo) (Packages, error)
 }
 
 // InstalledPackagesProvider define contract to extract installed packages from the VM.
 type InstalledPackagesProvider interface {
-	GetInstalledPackages(context.Context) (Packages, error)
+	GetInstalledPackages(context.Context, osinfo.OSInfo) (Packages, error)
 }
 
 type defaultUpdatesProvider struct{}
@@ -79,14 +79,14 @@ func NewPackageUpdatesProvider() PackageUpdatesProvider {
 	return defaultUpdatesProvider{}
 }
 
-func (p defaultUpdatesProvider) GetPackageUpdates(ctx context.Context) (Packages, error) {
-	return GetPackageUpdates(ctx)
+func (p defaultUpdatesProvider) GetPackageUpdates(ctx context.Context, oi osinfo.OSInfo) (Packages, error) {
+	return GetPackageUpdates(ctx, oi)
 }
 
 type defaultInstalledPackagesProvider struct{}
 
-func (p defaultInstalledPackagesProvider) GetInstalledPackages(ctx context.Context) (Packages, error) {
-	return GetInstalledPackages(ctx)
+func (p defaultInstalledPackagesProvider) GetInstalledPackages(ctx context.Context, oi osinfo.OSInfo) (Packages, error) {
+	return GetInstalledPackages(ctx, oi)
 }
 
 // Packages is a selection of packages based on their manager.

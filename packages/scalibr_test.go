@@ -151,7 +151,7 @@ func TestScalibrIntegration(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		pkgs, err := tt.provider.GetInstalledPackages(context.Background())
+		pkgs, err := tt.provider.GetInstalledPackages(context.Background(), osinfo.OSInfo{})
 
 		if !reflect.DeepEqual(err, tt.wantErr) {
 			t.Errorf("err: want %v, got %v", tt.wantErr, err)

@@ -26,6 +26,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 	ole "github.com/go-ole/go-ole"
+	"github.com/package-url/packageurl-go"
 )
 
 func coInitializeEx() error {
@@ -62,7 +63,7 @@ func wuaUpdates(ctx context.Context, query string) ([]*WUAPackage, error) {
 
 // GetPackageUpdates gets available package updates GooGet as well as any
 // available updates from Windows Update Agent.
-func GetPackageUpdates(ctx context.Context) (Packages, error) {
+func GetPackageUpdates(ctx context.Context, oi osinfo.OSInfo) (Packages, error) {
 	var pkgs Packages
 	var errs []string
 
@@ -72,6 +73,8 @@ func GetPackageUpdates(ctx context.Context) (Packages, error) {
 			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
+			// PURL for other Windows packages is set before API request
+			googet = enrichPkgInfoWithPurl(googet, oi.ShortName)
 			pkgs.GooGet = googet
 		}
 	}
@@ -95,7 +98,7 @@ func GetPackageUpdates(ctx context.Context) (Packages, error) {
 
 // GetInstalledPackages gets all installed GooGet packages and Windows updates.
 // Windows updates are read from Windows Update Agent and Win32_QuickFixEngineering.
-func GetInstalledPackages(ctx context.Context) (Packages, error) {
+func GetInstalledPackages(ctx context.Context, oi osinfo.OSInfo) (Packages, error) {
 	var pkgs Packages
 	var errs []string
 
@@ -105,6 +108,8 @@ func GetInstalledPackages(ctx context.Context) (Packages, error) {
 			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
+			// PURL for other Windows packages is set before API request
+			googet := enrichPkgInfoWithPurl(googet, oi.ShortName)
 			pkgs.GooGet = googet
 		}
 	}
@@ -141,6 +146,13 @@ func GetInstalledPackages(ctx context.Context) (Packages, error) {
 		err = errors.New(strings.Join(errs, "\n"))
 	}
 	return pkgs, err
+}
+
+func enrichPkgInfoWithPurl(pkgs []*PkgInfo, shortname string) []*PkgInfo {
+	for i, pkg := range pkgs {
+		pkgs[i].Purl = packageurl.NewPackageURL(pkg.Type, shortname, pkg.Name, pkg.Version, packageurl.Qualifiers{}, "").ToString()
+	}
+	return pkgs
 }
 
 // NewInstalledPackagesProvider returns fully initialized provider.

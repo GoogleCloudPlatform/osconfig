@@ -131,51 +131,49 @@ func formatPkgsToInventoryItems(ctx context.Context, pkgs *packages.Packages, sh
 	}
 
 	if pkgs.Yum != nil {
-		softwarePackages = append(softwarePackages, yumToInventoryItem(pkgs.Yum, shortname)...)
+		softwarePackages = append(softwarePackages, yumToInventoryItem(pkgs.Yum)...)
 	}
 	if pkgs.Rpm != nil {
-		softwarePackages = append(softwarePackages, rpmToInventoryItem(pkgs.Rpm, shortname)...)
+		softwarePackages = append(softwarePackages, rpmToInventoryItem(pkgs.Rpm)...)
 	}
 	if pkgs.Apt != nil {
-		softwarePackages = append(softwarePackages, aptToInventoryItem(pkgs.Apt, shortname)...)
+		softwarePackages = append(softwarePackages, aptToInventoryItem(pkgs.Apt)...)
 	}
 	if pkgs.Deb != nil {
-		softwarePackages = append(softwarePackages, debToInventoryItem(pkgs.Deb, shortname)...)
+		softwarePackages = append(softwarePackages, debToInventoryItem(pkgs.Deb)...)
 	}
 	if pkgs.Zypper != nil {
-		softwarePackages = append(softwarePackages, zypperToInventoryItem(pkgs.Zypper, shortname)...)
+		softwarePackages = append(softwarePackages, zypperToInventoryItem(pkgs.Zypper)...)
 	}
 	if pkgs.ZypperPatches != nil {
-		softwarePackages = append(softwarePackages, zypperPatchToInventoryItem(pkgs.ZypperPatches)...)
+		softwarePackages = append(softwarePackages, zypperPatchToInventoryItem(pkgs.ZypperPatches, shortname)...)
 	}
 	if pkgs.COS != nil {
-		softwarePackages = append(softwarePackages, cosToInventoryItem(pkgs.COS, shortname)...)
+		softwarePackages = append(softwarePackages, cosToInventoryItem(pkgs.COS)...)
 	}
 	if pkgs.GooGet != nil {
-		softwarePackages = append(softwarePackages, googetToInventoryItem(pkgs.GooGet, shortname)...)
+		softwarePackages = append(softwarePackages, googetToInventoryItem(pkgs.GooGet)...)
 	}
 	if pkgs.WUA != nil {
-		softwarePackages = append(softwarePackages, wuaToInventoryItem(pkgs.WUA)...)
+		softwarePackages = append(softwarePackages, wuaToInventoryItem(pkgs.WUA, shortname)...)
 	}
 	if pkgs.QFE != nil {
-		softwarePackages = append(softwarePackages, qfeToInventoryItem(pkgs.QFE)...)
+		softwarePackages = append(softwarePackages, qfeToInventoryItem(pkgs.QFE, shortname)...)
 	}
 	if pkgs.WindowsApplication != nil {
-		softwarePackages = append(softwarePackages, windowsApplicationToInventoryItem(pkgs.WindowsApplication)...)
+		softwarePackages = append(softwarePackages, windowsApplicationToInventoryItem(pkgs.WindowsApplication, shortname)...)
 	}
 	return softwarePackages
 }
 
-func aptToInventoryItem(packages []*packages.PkgInfo, shortname string) []*agentendpointpb.VmInventory_InventoryItem {
+func aptToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInventory_InventoryItem {
 	formattedApt := make([]*agentendpointpb.VmInventory_InventoryItem, len(packages))
 	for i, pkg := range packages {
-		qualifiers := packageurl.Qualifiers{packageurl.Qualifier{Key: "arch", Value: pkg.Arch}}
-		purl := getPurl(pkg, qualifiers, shortname)
 		formattedApt[i] = &agentendpointpb.VmInventory_InventoryItem{
 			Name:     pkg.Name,
 			Type:     pkg.Type,
 			Version:  pkg.Version,
-			Purl:     purl,
+			Purl:     pkg.Purl,
 			Location: []string{},
 			Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 				"SourceName":    structpb.NewStringValue(pkg.Source.Name),
@@ -186,16 +184,14 @@ func aptToInventoryItem(packages []*packages.PkgInfo, shortname string) []*agent
 	return formattedApt
 }
 
-func debToInventoryItem(packages []*packages.PkgInfo, shortname string) []*agentendpointpb.VmInventory_InventoryItem {
+func debToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInventory_InventoryItem {
 	formattedDeb := make([]*agentendpointpb.VmInventory_InventoryItem, len(packages))
 	for i, pkg := range packages {
-		qualifiers := packageurl.Qualifiers{packageurl.Qualifier{Key: "arch", Value: pkg.Arch}}
-		purl := getPurl(pkg, qualifiers, shortname)
 		formattedDeb[i] = &agentendpointpb.VmInventory_InventoryItem{
 			Name:     pkg.Name,
 			Type:     pkg.Type,
 			Version:  pkg.Version,
-			Purl:     purl,
+			Purl:     pkg.Purl,
 			Location: []string{},
 			Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 				"SourceName":    structpb.NewStringValue(pkg.Source.Name),
@@ -206,16 +202,14 @@ func debToInventoryItem(packages []*packages.PkgInfo, shortname string) []*agent
 	return formattedDeb
 }
 
-func googetToInventoryItem(packages []*packages.PkgInfo, shortname string) []*agentendpointpb.VmInventory_InventoryItem {
+func googetToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInventory_InventoryItem {
 	formattedGooGet := make([]*agentendpointpb.VmInventory_InventoryItem, len(packages))
 	for i, pkg := range packages {
-		qualifiers := packageurl.Qualifiers{}
-		purl := getPurl(pkg, qualifiers, shortname)
 		formattedGooGet[i] = &agentendpointpb.VmInventory_InventoryItem{
 			Name:     pkg.Name,
 			Type:     pkg.Type,
 			Version:  pkg.Version,
-			Purl:     purl,
+			Purl:     pkg.Purl,
 			Location: []string{},
 			Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{}},
 		}
@@ -223,16 +217,14 @@ func googetToInventoryItem(packages []*packages.PkgInfo, shortname string) []*ag
 	return formattedGooGet
 }
 
-func yumToInventoryItem(packages []*packages.PkgInfo, shortname string) []*agentendpointpb.VmInventory_InventoryItem {
+func yumToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInventory_InventoryItem {
 	formattedYum := make([]*agentendpointpb.VmInventory_InventoryItem, len(packages))
 	for i, pkg := range packages {
-		qualifiers := packageurl.Qualifiers{packageurl.Qualifier{Key: "arch", Value: pkg.Arch}}
-		purl := getPurl(pkg, qualifiers, shortname)
 		formattedYum[i] = &agentendpointpb.VmInventory_InventoryItem{
 			Name:     pkg.Name,
 			Type:     pkg.Type,
 			Version:  pkg.Version,
-			Purl:     purl,
+			Purl:     pkg.Purl,
 			Location: []string{},
 			Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 				"SourceRPM": structpb.NewStringValue(pkg.Source.Name),
@@ -242,16 +234,14 @@ func yumToInventoryItem(packages []*packages.PkgInfo, shortname string) []*agent
 	return formattedYum
 }
 
-func zypperToInventoryItem(packages []*packages.PkgInfo, shortname string) []*agentendpointpb.VmInventory_InventoryItem {
+func zypperToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInventory_InventoryItem {
 	formattedZypper := make([]*agentendpointpb.VmInventory_InventoryItem, len(packages))
 	for i, pkg := range packages {
-		qualifiers := packageurl.Qualifiers{packageurl.Qualifier{Key: "arch", Value: pkg.Arch}}
-		purl := getPurl(pkg, qualifiers, shortname)
 		formattedZypper[i] = &agentendpointpb.VmInventory_InventoryItem{
 			Name:     pkg.Name,
 			Type:     pkg.Type,
 			Version:  pkg.Version,
-			Purl:     purl,
+			Purl:     pkg.Purl,
 			Location: []string{},
 			Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 				"SourceRPM": structpb.NewStringValue(pkg.Source.Name),
@@ -261,16 +251,14 @@ func zypperToInventoryItem(packages []*packages.PkgInfo, shortname string) []*ag
 	return formattedZypper
 }
 
-func rpmToInventoryItem(packages []*packages.PkgInfo, shortname string) []*agentendpointpb.VmInventory_InventoryItem {
+func rpmToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInventory_InventoryItem {
 	formattedRpm := make([]*agentendpointpb.VmInventory_InventoryItem, len(packages))
 	for i, pkg := range packages {
-		qualifiers := packageurl.Qualifiers{packageurl.Qualifier{Key: "arch", Value: pkg.Arch}}
-		purl := getPurl(pkg, qualifiers, shortname)
 		formattedRpm[i] = &agentendpointpb.VmInventory_InventoryItem{
 			Name:     pkg.Name,
 			Type:     pkg.Type,
 			Version:  pkg.Version,
-			Purl:     purl,
+			Purl:     pkg.Purl,
 			Location: []string{},
 			Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 				"SourceRPM": structpb.NewStringValue(pkg.Source.Name),
@@ -280,16 +268,14 @@ func rpmToInventoryItem(packages []*packages.PkgInfo, shortname string) []*agent
 	return formattedRpm
 }
 
-func cosToInventoryItem(packages []*packages.PkgInfo, shortname string) []*agentendpointpb.VmInventory_InventoryItem {
+func cosToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInventory_InventoryItem {
 	formattedCos := make([]*agentendpointpb.VmInventory_InventoryItem, len(packages))
 	for i, pkg := range packages {
-		qualifiers := packageurl.Qualifiers{}
-		purl := getPurl(pkg, qualifiers, shortname)
 		formattedCos[i] = &agentendpointpb.VmInventory_InventoryItem{
 			Name:     pkg.Name,
 			Type:     pkg.Type,
 			Version:  pkg.Version,
-			Purl:     purl,
+			Purl:     pkg.Purl,
 			Location: []string{},
 			Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{}},
 		}
@@ -297,14 +283,14 @@ func cosToInventoryItem(packages []*packages.PkgInfo, shortname string) []*agent
 	return formattedCos
 }
 
-func zypperPatchToInventoryItem(packages []*packages.ZypperPatch) []*agentendpointpb.VmInventory_InventoryItem {
+func zypperPatchToInventoryItem(packages []*packages.ZypperPatch, shortname string) []*agentendpointpb.VmInventory_InventoryItem {
 	zypperPatchFormattedPackages := make([]*agentendpointpb.VmInventory_InventoryItem, len(packages))
 	for i, pkg := range packages {
 		zypperPatchFormattedPackages[i] = &agentendpointpb.VmInventory_InventoryItem{
 			Name:     pkg.Name,
 			Type:     "zypperPatch",
 			Version:  "",
-			Purl:     "",
+			Purl:     packageurl.NewPackageURL(packageurl.TypeGeneric, shortname, pkg.Name, "", packageurl.Qualifiers{}, "").ToString(),
 			Location: []string{},
 			Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 				"Category": structpb.NewStringValue(pkg.Category),
@@ -316,7 +302,7 @@ func zypperPatchToInventoryItem(packages []*packages.ZypperPatch) []*agentendpoi
 	return zypperPatchFormattedPackages
 }
 
-func wuaToInventoryItem(packages []*packages.WUAPackage) []*agentendpointpb.VmInventory_InventoryItem {
+func wuaToInventoryItem(packages []*packages.WUAPackage, shortname string) []*agentendpointpb.VmInventory_InventoryItem {
 	wuaFormattedPackages := make([]*agentendpointpb.VmInventory_InventoryItem, len(packages))
 	for i, pkg := range packages {
 		categoriesList := formatToCategoriesList(pkg.CategoryIDs, pkg.Categories)
@@ -327,7 +313,7 @@ func wuaToInventoryItem(packages []*packages.WUAPackage) []*agentendpointpb.VmIn
 			Name:     pkg.Title,
 			Type:     "wuaPackage",
 			Version:  pkg.UpdateID,
-			Purl:     pkg.SupportURL,
+			Purl:     packageurl.NewPackageURL(packageurl.TypeGeneric, shortname, pkg.Title, "", packageurl.Qualifiers{}, "").ToString(),
 			Location: []string{},
 			Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 				"Description":              structpb.NewStringValue(pkg.Description),
@@ -337,20 +323,21 @@ func wuaToInventoryItem(packages []*packages.WUAPackage) []*agentendpointpb.VmIn
 				"MoreInfoUrls":             structpb.NewListValue(moreInfoUrls),
 				"RevisionNumber":           structpb.NewNumberValue(float64(pkg.RevisionNumber)),
 				"LastDeploymentChangeTime": structpb.NewStringValue(pkg.LastDeploymentChangeTime.String()),
+				"SupportUrl":               structpb.NewStringValue(pkg.SupportURL),
 			}},
 		}
 	}
 	return wuaFormattedPackages
 }
 
-func qfeToInventoryItem(packages []*packages.QFEPackage) []*agentendpointpb.VmInventory_InventoryItem {
+func qfeToInventoryItem(packages []*packages.QFEPackage, shortname string) []*agentendpointpb.VmInventory_InventoryItem {
 	qfeFormattedPackages := make([]*agentendpointpb.VmInventory_InventoryItem, len(packages))
 	for i, pkg := range packages {
 		qfeFormattedPackages[i] = &agentendpointpb.VmInventory_InventoryItem{
 			Name:     pkg.Caption,
 			Type:     "qfePackage",
 			Version:  pkg.HotFixID,
-			Purl:     "",
+			Purl:     packageurl.NewPackageURL(packageurl.TypeGeneric, shortname, pkg.Caption, "", packageurl.Qualifiers{}, "").ToString(),
 			Location: []string{},
 			Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 				"Description": structpb.NewStringValue(pkg.Description),
@@ -361,14 +348,14 @@ func qfeToInventoryItem(packages []*packages.QFEPackage) []*agentendpointpb.VmIn
 	return qfeFormattedPackages
 }
 
-func windowsApplicationToInventoryItem(packages []*packages.WindowsApplication) []*agentendpointpb.VmInventory_InventoryItem {
+func windowsApplicationToInventoryItem(packages []*packages.WindowsApplication, shortname string) []*agentendpointpb.VmInventory_InventoryItem {
 	windowsApplicationFormattedPackages := make([]*agentendpointpb.VmInventory_InventoryItem, len(packages))
 	for i, pkg := range packages {
 		windowsApplicationFormattedPackages[i] = &agentendpointpb.VmInventory_InventoryItem{
 			Name:     pkg.DisplayName,
 			Type:     "windowsApplication",
 			Version:  pkg.DisplayVersion,
-			Purl:     "",
+			Purl:     packageurl.NewPackageURL(packageurl.TypeGeneric, shortname, pkg.DisplayName, pkg.DisplayVersion, packageurl.Qualifiers{}, "").ToString(),
 			Location: []string{},
 			Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 				"Publisher":   structpb.NewStringValue(pkg.Publisher),

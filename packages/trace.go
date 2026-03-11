@@ -19,22 +19,23 @@ func TracingInstalledPackagesProvider(tracedProvider InstalledPackagesProvider, 
 	return tracingInstalledPackagesProvider{tracedProvider: tracedProvider, osInfoProvider: osInfoProvider}
 }
 
-func (p tracingInstalledPackagesProvider) GetInstalledPackages(ctx context.Context) (Packages, error) {
+func (p tracingInstalledPackagesProvider) GetInstalledPackages(ctx context.Context, _ osinfo.OSInfo) (Packages, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	resultChannel := make(chan utiltrace.TraceMemoryResult)
 	go utiltrace.TraceMemory(ctx, 100*time.Millisecond, resultChannel)
-
-	startTime := time.Now()
-	pkgs, err := p.tracedProvider.GetInstalledPackages(ctx)
-	duration := time.Since(startTime)
-
-	cancel()
-	result := <-resultChannel
 
 	osinfo, osinfoErr := p.osInfoProvider.GetOSInfo(ctx)
 	if osinfoErr != nil {
 		clog.Errorf(ctx, "GetOSInfo() error: %v", osinfoErr)
 	}
+
+	startTime := time.Now()
+	pkgs, err := p.tracedProvider.GetInstalledPackages(ctx, osinfo)
+	duration := time.Since(startTime)
+
+	cancel()
+	result := <-resultChannel
+
 	logTraceResult(ctx, result, duration, osinfo)
 
 	return pkgs, err

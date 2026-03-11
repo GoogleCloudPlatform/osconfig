@@ -95,6 +95,7 @@ func generateInventoryState() *inventory.InstanceInventory {
 				Arch:    "Arch",
 				Version: "Version",
 				Type:    "rpm",
+				Purl:    "pkg:rpm/ShortName/YumInstalledPkg@Version?arch=Arch",
 				Source:  packages.Source{Name: "SourceName", Version: "SourceVersion"}}},
 
 			Rpm: []*packages.PkgInfo{{
@@ -102,6 +103,7 @@ func generateInventoryState() *inventory.InstanceInventory {
 				Arch:    "Arch",
 				Version: "Version",
 				Type:    "rpm",
+				Purl:    "pkg:rpm/ShortName/RpmInstalledPkg@Version?arch=Arch",
 				Source:  packages.Source{Name: "SourceName", Version: "SourceVersion"}}},
 
 			Apt: []*packages.PkgInfo{{
@@ -109,18 +111,20 @@ func generateInventoryState() *inventory.InstanceInventory {
 				Arch:    "Arch",
 				Version: "Version",
 				Type:    "deb",
+				Purl:    "pkg:deb/ShortName/AptInstalledPkg@Version?arch=Arch",
 				Source:  packages.Source{Name: "SourceName", Version: "SourceVersion"}}},
 			Deb: []*packages.PkgInfo{{
 				Name:    "DebInstalledPkg",
 				Arch:    "Arch",
 				Version: "Version",
 				Type:    "deb",
+				Purl:    "pkg:deb/ShortName/DebInstalledPkg@Version?arch=Arch",
 				Source:  packages.Source{Name: "SourceName", Version: "SourceVersion"}}},
-			Zypper:        []*packages.PkgInfo{{Name: "ZypperInstalledPkg", Arch: "Arch", Version: "Version", Type: "rpm"}},
+			Zypper:        []*packages.PkgInfo{{Name: "ZypperInstalledPkg", Arch: "Arch", Version: "Version", Type: "rpm", Purl: "pkg:rpm/ShortName/ZypperInstalledPkg@Version?arch=Arch"}},
 			ZypperPatches: []*packages.ZypperPatch{{Name: "ZypperInstalledPatch", Category: "Category", Severity: "Severity", Summary: "Summary"}},
-			Gem:           []*packages.PkgInfo{{Name: "GemInstalledPkg", Arch: "Arch", Version: "Version"}},
-			Pip:           []*packages.PkgInfo{{Name: "PipInstalledPkg", Arch: "Arch", Version: "Version"}},
-			GooGet:        []*packages.PkgInfo{{Name: "GooGetInstalledPkg", Arch: "Arch", Version: "Version", Type: "googet"}},
+			Gem:           []*packages.PkgInfo{{Name: "GemInstalledPkg", Arch: "Arch", Version: "Version", Purl: "pkg:gem/GemInstalledPkg@Version"}},
+			Pip:           []*packages.PkgInfo{{Name: "PipInstalledPkg", Arch: "Arch", Version: "Version", Purl: "pkg:pypi/PipInstalledPkg@Version"}},
+			GooGet:        []*packages.PkgInfo{{Name: "GooGetInstalledPkg", Arch: "Arch", Version: "Version", Type: "googet", Purl: "pkg:googet/ShortName/GooGetInstalledPkg@Version"}},
 			WUA: []*packages.WUAPackage{{
 				Title:                    "WUAInstalled",
 				Description:              "Description",
@@ -133,16 +137,16 @@ func generateInventoryState() *inventory.InstanceInventory {
 				RevisionNumber:           1,
 				LastDeploymentChangeTime: time.Date(2020, time.November, 10, 23, 0, 0, 0, time.UTC)}},
 			QFE: []*packages.QFEPackage{{Caption: "QFEInstalled", Description: "Description", HotFixID: "HotFixID", InstalledOn: "9/1/2020"}},
-			COS: []*packages.PkgInfo{{Name: "CosInstalledPkg", Arch: "Arch", Version: "Version", Type: "cos"}},
+			COS: []*packages.PkgInfo{{Name: "CosInstalledPkg", Arch: "Arch", Version: "Version", Type: "cos", Purl: "pkg:cos/ShortName/CosInstalledPkg@Version?arch=Arch"}},
 		},
 		PackageUpdates: &packages.Packages{
-			Yum:           []*packages.PkgInfo{{Name: "YumPkgUpdate", Arch: "Arch", Version: "Version", Type: "rpm"}},
-			Apt:           []*packages.PkgInfo{{Name: "AptPkgUpdate", Arch: "Arch", Version: "Version", Type: "deb"}},
-			Zypper:        []*packages.PkgInfo{{Name: "ZypperPkgUpdate", Arch: "Arch", Version: "Version", Type: "rpm"}},
+			Yum:           []*packages.PkgInfo{{Name: "YumPkgUpdate", Arch: "Arch", Version: "Version", Type: "rpm", Purl: "pkg:rpm/ShortName/YumPkgUpdate@Version?arch=Arch"}},
+			Apt:           []*packages.PkgInfo{{Name: "AptPkgUpdate", Arch: "Arch", Version: "Version", Type: "deb", Purl: "pkg:deb/ShortName/AptPkgUpdate@Version?arch=Arch"}},
+			Zypper:        []*packages.PkgInfo{{Name: "ZypperPkgUpdate", Arch: "Arch", Version: "Version", Type: "rpm", Purl: "pkg:rpm/ShortName/ZypperPkgUpdate@Version?arch=Arch"}},
 			ZypperPatches: []*packages.ZypperPatch{{Name: "ZypperPatchUpdate", Category: "Category", Severity: "Severity", Summary: "Summary"}},
-			Gem:           []*packages.PkgInfo{{Name: "GemPkgUpdate", Arch: "Arch", Version: "Version"}},
-			Pip:           []*packages.PkgInfo{{Name: "PipPkgUpdate", Arch: "Arch", Version: "Version"}},
-			GooGet:        []*packages.PkgInfo{{Name: "GooGetPkgUpdate", Arch: "Arch", Version: "Version", Type: "googet"}},
+			Gem:           []*packages.PkgInfo{{Name: "GemPkgUpdate", Arch: "Arch", Version: "Version", Purl: "pkg:gem/GemPkgUpdate@Version"}},
+			Pip:           []*packages.PkgInfo{{Name: "PipPkgUpdate", Arch: "Arch", Version: "Version", Purl: "pkg:pypi/PipPkgUpdate@Version"}},
+			GooGet:        []*packages.PkgInfo{{Name: "GooGetPkgUpdate", Arch: "Arch", Version: "Version", Type: "googet", Purl: "pkg:googet/ShortName/GooGetPkgUpdate@Version"}},
 			WUA: []*packages.WUAPackage{{
 				Title:       "WUAUpdate",
 				Description: "Description",
@@ -195,15 +199,16 @@ func generateVMInventory() *agentendpointpb.VmInventory {
 				Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 					"SourceRPM": structpb.NewStringValue(""),
 				}}},
-			{Name: "ZypperInstalledPatch", Type: "zypperPatch", Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
-				"Category": structpb.NewStringValue("Category"),
-				"Severity": structpb.NewStringValue("Severity"),
-				"Summary":  structpb.NewStringValue("Summary"),
-			}}},
-			{Name: "CosInstalledPkg", Type: "cos", Version: "Version", Purl: "pkg:cos/ShortName/CosInstalledPkg@Version",
+			{Name: "ZypperInstalledPatch", Type: "zypperPatch", Purl: "pkg:generic/ShortName/ZypperInstalledPatch",
+				Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
+					"Category": structpb.NewStringValue("Category"),
+					"Severity": structpb.NewStringValue("Severity"),
+					"Summary":  structpb.NewStringValue("Summary"),
+				}}},
+			{Name: "CosInstalledPkg", Type: "cos", Version: "Version", Purl: "pkg:cos/ShortName/CosInstalledPkg@Version?arch=Arch",
 				Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{}}},
 			{Name: "GooGetInstalledPkg", Type: "googet", Version: "Version", Purl: "pkg:googet/ShortName/GooGetInstalledPkg@Version", Metadata: &structpb.Struct{}},
-			{Name: "WUAInstalled", Type: "wuaPackage", Version: "UpdateID", Purl: "SupportURL", Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
+			{Name: "WUAInstalled", Type: "wuaPackage", Version: "UpdateID", Purl: "pkg:generic/ShortName/WUAInstalled", Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 				"Description": structpb.NewStringValue("Description"),
 				"Categories": structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID1"), "Name": structpb.NewStringValue("Category1")}}),
 					structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID2"), "Name": structpb.NewStringValue("Category2")}}),
@@ -214,11 +219,13 @@ func generateVMInventory() *agentendpointpb.VmInventory {
 				"MoreInfoUrls":             structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStringValue("MoreInfoURL1"), structpb.NewStringValue("MoreInfoURL2"), structpb.NewStringValue("MoreInfoURL3"), structpb.NewStringValue("MoreInfoURL4")}}),
 				"RevisionNumber":           structpb.NewNumberValue(1),
 				"LastDeploymentChangeTime": structpb.NewStringValue(time.Date(2020, time.November, 10, 23, 0, 0, 0, time.UTC).String()),
+				"SupportUrl":               structpb.NewStringValue("SupportURL"),
 			}}},
-			{Name: "QFEInstalled", Type: "qfePackage", Version: "HotFixID", Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
-				"Description": structpb.NewStringValue("Description"),
-				"InstalledOn": structpb.NewStringValue("9/1/2020"),
-			}}},
+			{Name: "QFEInstalled", Type: "qfePackage", Version: "HotFixID", Purl: "pkg:generic/ShortName/QFEInstalled",
+				Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
+					"Description": structpb.NewStringValue("Description"),
+					"InstalledOn": structpb.NewStringValue("9/1/2020"),
+				}}},
 		},
 		AvailablePackages: []*agentendpointpb.VmInventory_InventoryItem{
 			{Name: "YumPkgUpdate", Type: "rpm", Version: "Version", Purl: "pkg:rpm/ShortName/YumPkgUpdate@Version?arch=Arch",
@@ -234,25 +241,28 @@ func generateVMInventory() *agentendpointpb.VmInventory {
 				Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 					"SourceRPM": structpb.NewStringValue(""),
 				}}},
-			{Name: "ZypperPatchUpdate", Type: "zypperPatch", Version: "", Purl: "", Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
-				"Category": structpb.NewStringValue("Category"),
-				"Severity": structpb.NewStringValue("Severity"),
-				"Summary":  structpb.NewStringValue("Summary"),
-			}}},
+			{Name: "ZypperPatchUpdate", Type: "zypperPatch", Version: "", Purl: "pkg:generic/ShortName/ZypperPatchUpdate",
+				Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
+					"Category": structpb.NewStringValue("Category"),
+					"Severity": structpb.NewStringValue("Severity"),
+					"Summary":  structpb.NewStringValue("Summary"),
+				}}},
 			{Name: "GooGetPkgUpdate", Type: "googet", Version: "Version", Purl: "pkg:googet/ShortName/GooGetPkgUpdate@Version",
 				Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{}}},
-			{Name: "WUAUpdate", Type: "wuaPackage", Version: "UpdateID", Purl: "SupportURL", Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
-				"Description": structpb.NewStringValue("Description"),
-				"Categories": structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID1"), "Name": structpb.NewStringValue("Category1")}}),
-					structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID2"), "Name": structpb.NewStringValue("Category2")}}),
-					structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID3"), "Name": structpb.NewStringValue("Category3")}}),
-					structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID4"), "Name": structpb.NewStringValue("Category4")}})}}),
-				"CategoryIds":              structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStringValue("CategoryID1"), structpb.NewStringValue("CategoryID2"), structpb.NewStringValue("CategoryID3"), structpb.NewStringValue("CategoryID4")}}),
-				"KbArticleId":              structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStringValue("KB1"), structpb.NewStringValue("KB2"), structpb.NewStringValue("KB3"), structpb.NewStringValue("KB4")}}),
-				"MoreInfoUrls":             structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStringValue("MoreInfoURL1"), structpb.NewStringValue("MoreInfoURL2"), structpb.NewStringValue("MoreInfoURL3"), structpb.NewStringValue("MoreInfoURL4")}}),
-				"RevisionNumber":           structpb.NewNumberValue(1),
-				"LastDeploymentChangeTime": structpb.NewStringValue("0001-01-01 00:00:00 +0000 UTC"),
-			}}},
+			{Name: "WUAUpdate", Type: "wuaPackage", Version: "UpdateID", Purl: "pkg:generic/ShortName/WUAUpdate",
+				Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
+					"Description": structpb.NewStringValue("Description"),
+					"Categories": structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID1"), "Name": structpb.NewStringValue("Category1")}}),
+						structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID2"), "Name": structpb.NewStringValue("Category2")}}),
+						structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID3"), "Name": structpb.NewStringValue("Category3")}}),
+						structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID4"), "Name": structpb.NewStringValue("Category4")}})}}),
+					"CategoryIds":              structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStringValue("CategoryID1"), structpb.NewStringValue("CategoryID2"), structpb.NewStringValue("CategoryID3"), structpb.NewStringValue("CategoryID4")}}),
+					"KbArticleId":              structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStringValue("KB1"), structpb.NewStringValue("KB2"), structpb.NewStringValue("KB3"), structpb.NewStringValue("KB4")}}),
+					"MoreInfoUrls":             structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStringValue("MoreInfoURL1"), structpb.NewStringValue("MoreInfoURL2"), structpb.NewStringValue("MoreInfoURL3"), structpb.NewStringValue("MoreInfoURL4")}}),
+					"RevisionNumber":           structpb.NewNumberValue(1),
+					"LastDeploymentChangeTime": structpb.NewStringValue("0001-01-01 00:00:00 +0000 UTC"),
+					"SupportUrl":               structpb.NewStringValue("SupportURL"),
+				}}},
 		},
 	}
 }
