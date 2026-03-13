@@ -33,7 +33,10 @@ VERSION=${VERSION:-"dummy"}
 
 echo "Started build..."
 
-export CLOUDSDK_PYTHON="/usr/bin/python3.12"
+if [[ -f /usr/bin/python3.12 ]]; then
+  export CLOUDSDK_PYTHON="/usr/bin/python3.12"
+fi
+
 # common.sh contains functions common to all builds.
 gcloud storage cp "${SRC_PATH}/common.sh" ./
 . common.sh
