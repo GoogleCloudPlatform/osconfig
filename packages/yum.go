@@ -35,8 +35,8 @@ var (
 	yumInstallArgs           = []string{"install", "--assumeyes"}
 	yumRemoveArgs            = []string{"remove", "--assumeyes"}
 	yumCheckUpdateArgs       = []string{"check-update", "--assumeyes"}
-	yumListUpdatesArgs       = []string{"update", "--assumeno", "--cacheonly", "--color=never"}
-	yumListUpdateMinimalArgs = []string{"update-minimal", "--assumeno", "--cacheonly", "--color=never"}
+	yumListUpdatesArgs       = []string{"update", "--assumeno", "--color=never"}
+	yumListUpdateMinimalArgs = []string{"update-minimal", "--assumeno", "--color=never"}
 )
 
 func init() {

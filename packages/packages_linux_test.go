@@ -143,7 +143,7 @@ func Test_getPackageUpdateErrorPropagation(t *testing.T) {
 
 	wantErrors := []string{
 		"error getting apt updates: apt-get update fail",
-		`error getting yum updates: error running /usr/bin/yum with args ["update" "--assumeno" "--cacheonly" "--color=never"]: yum list updates fail, stdout: "", stderr: ""`,
+		`error getting yum updates: error running /usr/bin/yum with args ["update" "--assumeno" "--color=never"]: yum list updates fail, stdout: "", stderr: ""`,
 		`error getting zypper updates: error running /usr/bin/zypper with args ["--gpg-auto-import-keys" "-q" "list-updates"]: zypper list updates fail, stdout: "", stderr: ""`,
 		`error getting zypper available patches: error running /usr/bin/zypper with args ["--gpg-auto-import-keys" "-q" "list-patches" "--all"]: zypper list patches fail, stdout: "", stderr: ""`,
 	}
