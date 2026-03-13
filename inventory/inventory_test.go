@@ -23,13 +23,13 @@ func TestProvider(t *testing.T) {
 	}
 
 	updates := packages.Packages{
-		Yum: []*packages.PkgInfo{{Name: "YumPkgUpdate", Arch: "Arch", Version: "Version"}},
-		Apt: []*packages.PkgInfo{{Name: "AptPkgUpdate", Arch: "Arch", Version: "Version"}},
+		Yum: []*packages.PkgInfo{{Name: "YumPkgUpdate", Arch: "Arch", Version: "Version", Type: "rpm", Purl: "pkg:rpm/Namespace/YumPkgUpdate@Version?arch=Arch"}},
+		Apt: []*packages.PkgInfo{{Name: "AptPkgUpdate", Arch: "Arch", Version: "Version", Type: "deb", Purl: "pkg:deb/Namespace/AptPkgUpdate@Version?arch=Arch"}},
 	}
 
 	installed := packages.Packages{
-		Yum:    []*packages.PkgInfo{{Name: "YumInstalledPkg", Arch: "Arch", Version: "Version"}},
-		GooGet: []*packages.PkgInfo{{Name: "GooGetInstalledPkg", Arch: "Arch", Version: "Version"}},
+		Yum:    []*packages.PkgInfo{{Name: "YumInstalledPkg", Arch: "Arch", Version: "Version", Type: "rpm", Purl: "pkg:rpm/Namespace/YumInstalledPkg@Version?arch=Arch"}},
+		GooGet: []*packages.PkgInfo{{Name: "GooGetInstalledPkg", Arch: "Arch", Version: "Version", Type: "googet", Purl: "pkg:googet/Namespace/GooGetInstalledPkg@Version?arch=Arch"}},
 	}
 
 	tests := []struct {
@@ -76,12 +76,12 @@ func TestProvider(t *testing.T) {
 				KernelRelease:        "6.1.0-29-cloud-amd64",
 				OSConfigAgentVersion: "",
 				InstalledPackages: &packages.Packages{
-					Yum:    []*packages.PkgInfo{{Name: "YumInstalledPkg", Arch: "Arch", Version: "Version"}},
-					GooGet: []*packages.PkgInfo{{Name: "GooGetInstalledPkg", Arch: "Arch", Version: "Version"}},
+					Yum:    []*packages.PkgInfo{{Name: "YumInstalledPkg", Arch: "Arch", Version: "Version", Type: "rpm", Purl: "pkg:rpm/Namespace/YumInstalledPkg@Version?arch=Arch"}},
+					GooGet: []*packages.PkgInfo{{Name: "GooGetInstalledPkg", Arch: "Arch", Version: "Version", Type: "googet", Purl: "pkg:googet/Namespace/GooGetInstalledPkg@Version?arch=Arch"}},
 				},
 				PackageUpdates: &packages.Packages{
-					Yum: []*packages.PkgInfo{{Name: "YumPkgUpdate", Arch: "Arch", Version: "Version"}},
-					Apt: []*packages.PkgInfo{{Name: "AptPkgUpdate", Arch: "Arch", Version: "Version"}},
+					Yum: []*packages.PkgInfo{{Name: "YumPkgUpdate", Arch: "Arch", Version: "Version", Type: "rpm", Purl: "pkg:rpm/Namespace/YumPkgUpdate@Version?arch=Arch"}},
+					Apt: []*packages.PkgInfo{{Name: "AptPkgUpdate", Arch: "Arch", Version: "Version", Type: "deb", Purl: "pkg:deb/Namespace/AptPkgUpdate@Version?arch=Arch"}},
 				},
 				LastUpdated: "1970-01-01T10:00:00Z",
 			},
@@ -109,8 +109,8 @@ func TestProvider(t *testing.T) {
 				OSConfigAgentVersion: "",
 				PackageUpdates:       &packages.Packages{},
 				InstalledPackages: &packages.Packages{
-					Yum:    []*packages.PkgInfo{{Name: "YumInstalledPkg", Arch: "Arch", Version: "Version"}},
-					GooGet: []*packages.PkgInfo{{Name: "GooGetInstalledPkg", Arch: "Arch", Version: "Version"}},
+					Yum:    []*packages.PkgInfo{{Name: "YumInstalledPkg", Arch: "Arch", Version: "Version", Type: "rpm", Purl: "pkg:rpm/Namespace/YumInstalledPkg@Version?arch=Arch"}},
+					GooGet: []*packages.PkgInfo{{Name: "GooGetInstalledPkg", Arch: "Arch", Version: "Version", Type: "googet", Purl: "pkg:googet/Namespace/GooGetInstalledPkg@Version?arch=Arch"}},
 				},
 				LastUpdated: "1970-01-01T10:00:00Z",
 			},
@@ -162,10 +162,10 @@ func (p stubProvider) GetOSInfo(ctx context.Context) (osinfo.OSInfo, error) {
 	return p.osinfo(ctx)
 }
 
-func (p stubProvider) GetInstalledPackages(ctx context.Context) (packages.Packages, error) {
+func (p stubProvider) GetInstalledPackages(ctx context.Context, oi osinfo.OSInfo) (packages.Packages, error) {
 	return p.installedPackages(ctx)
 }
 
-func (p stubProvider) GetPackageUpdates(ctx context.Context) (packages.Packages, error) {
+func (p stubProvider) GetPackageUpdates(ctx context.Context, oi osinfo.OSInfo) (packages.Packages, error) {
 	return p.packageUpdates(ctx)
 }
