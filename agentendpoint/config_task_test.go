@@ -81,6 +81,7 @@ func (r *testResource) PopulateOutput(rCompliance *agentendpointpb.OSPolicyResou
 }
 
 type agentEndpointServiceConfigTestServer struct {
+	agentendpointpb.UnimplementedAgentEndpointServiceServer
 	lastReportTaskCompleteRequest *agentendpointpb.ReportTaskCompleteRequest
 	progressError                 chan struct{}
 	progressCancel                chan struct{}
