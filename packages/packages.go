@@ -64,29 +64,35 @@ var (
 
 // PackageUpdatesProvider define contract to extract available updates from the VM.
 type PackageUpdatesProvider interface {
-	GetPackageUpdates(context.Context, osinfo.OSInfo) (Packages, error)
+	GetPackageUpdates(context.Context) (Packages, error)
 }
 
 // InstalledPackagesProvider define contract to extract installed packages from the VM.
 type InstalledPackagesProvider interface {
-	GetInstalledPackages(context.Context, osinfo.OSInfo) (Packages, error)
+	GetInstalledPackages(context.Context) (Packages, error)
 }
 
-type defaultUpdatesProvider struct{}
+type defaultUpdatesProvider struct {
+	osinfoProvider osinfo.Provider
+}
 
 // NewPackageUpdatesProvider return fully initialize provider.
-func NewPackageUpdatesProvider() PackageUpdatesProvider {
-	return defaultUpdatesProvider{}
+func NewPackageUpdatesProvider(osinfoProvider osinfo.Provider) PackageUpdatesProvider {
+	return defaultUpdatesProvider{
+		osinfoProvider: osinfoProvider,
+	}
 }
 
-func (p defaultUpdatesProvider) GetPackageUpdates(ctx context.Context, oi osinfo.OSInfo) (Packages, error) {
-	return GetPackageUpdates(ctx, oi)
+func (p defaultUpdatesProvider) GetPackageUpdates(ctx context.Context) (Packages, error) {
+	return p.getPackageUpdates(ctx)
 }
 
-type defaultInstalledPackagesProvider struct{}
+type defaultInstalledPackagesProvider struct {
+	osinfoProvider osinfo.Provider
+}
 
-func (p defaultInstalledPackagesProvider) GetInstalledPackages(ctx context.Context, oi osinfo.OSInfo) (Packages, error) {
-	return GetInstalledPackages(ctx, oi)
+func (p defaultInstalledPackagesProvider) GetInstalledPackages(ctx context.Context) (Packages, error) {
+	return p.getInstalledPackages(ctx)
 }
 
 // Packages is a selection of packages based on their manager.
@@ -133,7 +139,7 @@ func (i *PkgInfo) String() string {
 
 // ZypperPatch describes a Zypper patch.
 type ZypperPatch struct {
-	Name, Category, Severity, Summary string
+	Name, Category, Severity, Summary, Purl string
 }
 
 // WUAPackage describes a Windows Update Agent package.
@@ -148,11 +154,12 @@ type WUAPackage struct {
 	MoreInfoURLs             []string
 	CategoryIDs              []string
 	RevisionNumber           int32
+	Purl                     string
 }
 
 // QFEPackage describes a Windows Quick Fix Engineering package.
 type QFEPackage struct {
-	Caption, Description, HotFixID, InstalledOn string
+	Caption, Description, HotFixID, InstalledOn, Purl string
 }
 
 // WindowsApplication describes a Windows Application.
@@ -162,6 +169,7 @@ type WindowsApplication struct {
 	InstallDate    time.Time
 	Publisher      string
 	HelpLink       string
+	Purl           string
 }
 
 func run(ctx context.Context, cmd string, args []string) ([]byte, error) {

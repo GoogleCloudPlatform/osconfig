@@ -121,7 +121,7 @@ func generateInventoryState() *inventory.InstanceInventory {
 				Purl:    "pkg:deb/ShortName/DebInstalledPkg@Version?arch=Arch",
 				Source:  packages.Source{Name: "SourceName", Version: "SourceVersion"}}},
 			Zypper:        []*packages.PkgInfo{{Name: "ZypperInstalledPkg", Arch: "Arch", Version: "Version", Type: "rpm", Purl: "pkg:rpm/ShortName/ZypperInstalledPkg@Version?arch=Arch"}},
-			ZypperPatches: []*packages.ZypperPatch{{Name: "ZypperInstalledPatch", Category: "Category", Severity: "Severity", Summary: "Summary"}},
+			ZypperPatches: []*packages.ZypperPatch{{Name: "ZypperInstalledPatch", Category: "Category", Severity: "Severity", Summary: "Summary", Purl: "pkg:generic/ShortName/ZypperInstalledPatch"}},
 			Gem:           []*packages.PkgInfo{{Name: "GemInstalledPkg", Arch: "Arch", Version: "Version", Purl: "pkg:gem/GemInstalledPkg@Version"}},
 			Pip:           []*packages.PkgInfo{{Name: "PipInstalledPkg", Arch: "Arch", Version: "Version", Purl: "pkg:pypi/PipInstalledPkg@Version"}},
 			GooGet:        []*packages.PkgInfo{{Name: "GooGetInstalledPkg", Arch: "Arch", Version: "Version", Type: "googet", Purl: "pkg:googet/ShortName/GooGetInstalledPkg@Version"}},
@@ -135,15 +135,16 @@ func generateInventoryState() *inventory.InstanceInventory {
 				SupportURL:               "SupportURL",
 				UpdateID:                 "UpdateID",
 				RevisionNumber:           1,
-				LastDeploymentChangeTime: time.Date(2020, time.November, 10, 23, 0, 0, 0, time.UTC)}},
-			QFE: []*packages.QFEPackage{{Caption: "QFEInstalled", Description: "Description", HotFixID: "HotFixID", InstalledOn: "9/1/2020"}},
+				LastDeploymentChangeTime: time.Date(2020, time.November, 10, 23, 0, 0, 0, time.UTC),
+				Purl:                     "pkg:generic/ShortName/WUAInstalled@UpdateID"}},
+			QFE: []*packages.QFEPackage{{Caption: "QFEInstalled", Description: "Description", HotFixID: "HotFixID", InstalledOn: "9/1/2020", Purl: "pkg:generic/ShortName/QFEInstalled@HotFixID"}},
 			COS: []*packages.PkgInfo{{Name: "CosInstalledPkg", Arch: "Arch", Version: "Version", Type: "cos", Purl: "pkg:cos/ShortName/CosInstalledPkg@Version?arch=Arch"}},
 		},
 		PackageUpdates: &packages.Packages{
 			Yum:           []*packages.PkgInfo{{Name: "YumPkgUpdate", Arch: "Arch", Version: "Version", Type: "rpm", Purl: "pkg:rpm/ShortName/YumPkgUpdate@Version?arch=Arch"}},
 			Apt:           []*packages.PkgInfo{{Name: "AptPkgUpdate", Arch: "Arch", Version: "Version", Type: "deb", Purl: "pkg:deb/ShortName/AptPkgUpdate@Version?arch=Arch"}},
 			Zypper:        []*packages.PkgInfo{{Name: "ZypperPkgUpdate", Arch: "Arch", Version: "Version", Type: "rpm", Purl: "pkg:rpm/ShortName/ZypperPkgUpdate@Version?arch=Arch"}},
-			ZypperPatches: []*packages.ZypperPatch{{Name: "ZypperPatchUpdate", Category: "Category", Severity: "Severity", Summary: "Summary"}},
+			ZypperPatches: []*packages.ZypperPatch{{Name: "ZypperPatchUpdate", Category: "Category", Severity: "Severity", Summary: "Summary", Purl: "pkg:generic/ShortName/ZypperPatchUpdate"}},
 			Gem:           []*packages.PkgInfo{{Name: "GemPkgUpdate", Arch: "Arch", Version: "Version", Purl: "pkg:gem/GemPkgUpdate@Version"}},
 			Pip:           []*packages.PkgInfo{{Name: "PipPkgUpdate", Arch: "Arch", Version: "Version", Purl: "pkg:pypi/PipPkgUpdate@Version"}},
 			GooGet:        []*packages.PkgInfo{{Name: "GooGetPkgUpdate", Arch: "Arch", Version: "Version", Type: "googet", Purl: "pkg:googet/ShortName/GooGetPkgUpdate@Version"}},
@@ -159,7 +160,8 @@ func generateInventoryState() *inventory.InstanceInventory {
 				SupportURL:               "SupportURL",
 				UpdateID:                 "UpdateID",
 				RevisionNumber:           1,
-				LastDeploymentChangeTime: time.Time{}}},
+				LastDeploymentChangeTime: time.Time{},
+				Purl:                     "pkg:generic/ShortName/WUAUpdate@UpdateID"}},
 		},
 	}
 }
@@ -208,7 +210,7 @@ func generateVMInventory() *agentendpointpb.VmInventory {
 			{Name: "CosInstalledPkg", Type: "cos", Version: "Version", Purl: "pkg:cos/ShortName/CosInstalledPkg@Version?arch=Arch",
 				Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{}}},
 			{Name: "GooGetInstalledPkg", Type: "googet", Version: "Version", Purl: "pkg:googet/ShortName/GooGetInstalledPkg@Version", Metadata: &structpb.Struct{}},
-			{Name: "WUAInstalled", Type: "wuaPackage", Version: "UpdateID", Purl: "pkg:generic/ShortName/WUAInstalled", Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
+			{Name: "WUAInstalled", Type: "wuaPackage", Version: "UpdateID", Purl: "pkg:generic/ShortName/WUAInstalled@UpdateID", Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 				"Description": structpb.NewStringValue("Description"),
 				"Categories": structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID1"), "Name": structpb.NewStringValue("Category1")}}),
 					structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID2"), "Name": structpb.NewStringValue("Category2")}}),
@@ -221,7 +223,7 @@ func generateVMInventory() *agentendpointpb.VmInventory {
 				"LastDeploymentChangeTime": structpb.NewStringValue(time.Date(2020, time.November, 10, 23, 0, 0, 0, time.UTC).String()),
 				"SupportUrl":               structpb.NewStringValue("SupportURL"),
 			}}},
-			{Name: "QFEInstalled", Type: "qfePackage", Version: "HotFixID", Purl: "pkg:generic/ShortName/QFEInstalled",
+			{Name: "QFEInstalled", Type: "qfePackage", Version: "HotFixID", Purl: "pkg:generic/ShortName/QFEInstalled@HotFixID",
 				Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 					"Description": structpb.NewStringValue("Description"),
 					"InstalledOn": structpb.NewStringValue("9/1/2020"),
@@ -249,7 +251,7 @@ func generateVMInventory() *agentendpointpb.VmInventory {
 				}}},
 			{Name: "GooGetPkgUpdate", Type: "googet", Version: "Version", Purl: "pkg:googet/ShortName/GooGetPkgUpdate@Version",
 				Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{}}},
-			{Name: "WUAUpdate", Type: "wuaPackage", Version: "UpdateID", Purl: "pkg:generic/ShortName/WUAUpdate",
+			{Name: "WUAUpdate", Type: "wuaPackage", Version: "UpdateID", Purl: "pkg:generic/ShortName/WUAUpdate@UpdateID",
 				Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 					"Description": structpb.NewStringValue("Description"),
 					"Categories": structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID1"), "Name": structpb.NewStringValue("Category1")}}),

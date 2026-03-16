@@ -162,10 +162,10 @@ func (p stubProvider) GetOSInfo(ctx context.Context) (osinfo.OSInfo, error) {
 	return p.osinfo(ctx)
 }
 
-func (p stubProvider) GetInstalledPackages(ctx context.Context, oi osinfo.OSInfo) (packages.Packages, error) {
+func (p stubProvider) GetInstalledPackages(ctx context.Context) (packages.Packages, error) {
 	return p.installedPackages(ctx)
 }
 
-func (p stubProvider) GetPackageUpdates(ctx context.Context, oi osinfo.OSInfo) (packages.Packages, error) {
+func (p stubProvider) GetPackageUpdates(ctx context.Context) (packages.Packages, error) {
 	return p.packageUpdates(ctx)
 }

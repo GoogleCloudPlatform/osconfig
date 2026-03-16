@@ -135,7 +135,7 @@ type scalibrInstalledPackagesProvider struct {
 	dirsToSkip     []string
 }
 
-func (p scalibrInstalledPackagesProvider) GetInstalledPackages(ctx context.Context, _ osinfo.OSInfo) (Packages, error) {
+func (p scalibrInstalledPackagesProvider) GetInstalledPackages(ctx context.Context) (Packages, error) {
 	config, err := p.getScanConfig()
 	if err != nil {
 		return Packages{}, err

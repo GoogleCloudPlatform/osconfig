@@ -71,17 +71,18 @@ type defaultInventoryProvider struct {
 
 // NewProvider returns ready to work default provider
 func NewProvider() Provider {
-	installedPackagesProvider := packages.NewInstalledPackagesProvider(osinfo.NewProvider())
+	osInfoProvider := osinfo.NewProvider()
+	installedPackagesProvider := packages.NewInstalledPackagesProvider(osInfoProvider)
 	if agentconfig.TraceGetInventory() {
 		installedPackagesProvider = packages.TracingInstalledPackagesProvider(
 			installedPackagesProvider,
-			osinfo.NewProvider(),
+			osInfoProvider,
 		)
 	}
 
 	return &defaultInventoryProvider{
-		osInfoProvider:            osinfo.NewProvider(),
-		packageUpdatesProvider:    packages.NewPackageUpdatesProvider(),
+		osInfoProvider:            osInfoProvider,
+		packageUpdatesProvider:    packages.NewPackageUpdatesProvider(osInfoProvider),
 		installedPackagesProvider: installedPackagesProvider,
 		clock:                     newDefaultClock(),
 	}
@@ -91,19 +92,19 @@ func NewProvider() Provider {
 func (p *defaultInventoryProvider) Get(ctx context.Context) *InstanceInventory {
 	clog.Debugf(ctx, "Gathering instance inventory.")
 
-	oi, err := p.osInfoProvider.GetOSInfo(ctx)
-	if err != nil {
-		clog.Errorf(ctx, "osinfo.Get() error: %v", err)
-	}
-
-	installedPackages, err := p.installedPackagesProvider.GetInstalledPackages(ctx, oi)
+	installedPackages, err := p.installedPackagesProvider.GetInstalledPackages(ctx)
 	if err != nil {
 		clog.Errorf(ctx, "packages.GetInstalledPackages() error: %v", err)
 	}
 
-	packageUpdates, err := p.packageUpdatesProvider.GetPackageUpdates(ctx, oi)
+	packageUpdates, err := p.packageUpdatesProvider.GetPackageUpdates(ctx)
 	if err != nil {
 		clog.Errorf(ctx, "packages.GetPackageUpdates() error: %v", err)
+	}
+
+	oi, err := p.osInfoProvider.GetOSInfo(ctx)
+	if err != nil {
+		clog.Errorf(ctx, "osinfo.Get() error: %v", err)
 	}
 
 	return &InstanceInventory{
