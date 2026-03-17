@@ -4,6 +4,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "84.87+git20180409.04c9dae-150300.10.6.2",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -11,6 +13,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "84.87+git20180409.04c9dae-150300.10.6.2",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -18,6 +22,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "3.0.4-150500.11.9.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -25,6 +31,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "9.16.44-150500.8.12.2",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -32,6 +40,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.41-150100.7.46.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -39,6 +49,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "10.1.3-150000.6.99.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -46,6 +58,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.0.0-150000.6.99.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -53,6 +67,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "20210917.c9d86d1-150400.3.6.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -60,6 +76,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "8.0.1-150400.5.36.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -67,6 +85,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.03.22_1.02.196-150500.7.9.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -74,6 +94,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "055+suse.375.g1167ed75-150500.3.15.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -81,6 +103,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.31-150300.63.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -88,6 +112,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "2.31-150300.63.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -95,6 +121,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.31-150300.63.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -102,6 +130,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.31-150300.63.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -109,6 +139,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "20230808.00-150400.13.6.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -116,6 +148,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.2.27-150300.3.8.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -123,6 +157,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.22.4-150400.5.2.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -130,6 +166,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.06-150500.29.11.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -137,6 +175,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "2.06-150500.29.11.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -144,6 +184,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "2.06-150500.29.11.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -151,6 +193,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "5.14.21-150500.55.36.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -158,6 +202,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "3.0.4-150500.11.9.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -165,6 +211,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "0.8-150400.7.10.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -172,6 +220,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "0.8-150400.7.10.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -179,6 +229,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.41-150100.7.46.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -186,6 +238,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.41-150100.7.46.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -193,6 +247,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "8.0.1-150400.5.36.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -200,6 +256,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.03.22_1.02.196-150500.7.9.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -207,6 +265,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.03.22_1.02.196-150500.7.9.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -214,6 +274,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "0.5.2-150400.3.6.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -221,6 +283,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "13.2.1+git7813-150000.1.6.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -228,6 +292,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "0.10.1-150300.3.2.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -235,6 +301,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.20-150000.3.8.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -242,6 +310,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "65.1-150200.4.10.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -249,6 +319,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "65.1-150200.4.10.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -256,6 +328,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.03.22-150500.7.9.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -263,6 +337,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.40.0-150200.12.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -270,6 +346,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.4+29.ga3cf0a-150500.4.9.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -277,6 +355,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.4+29.ga3cf0a-150500.4.9.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -284,6 +364,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.1.1l-150500.17.22.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -291,6 +373,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "0.23.22-150500.8.3.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -298,6 +382,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "3.5.6-150300.13.6.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -305,6 +391,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.4.1-150000.3.2.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -312,6 +400,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "3.6.15-150300.10.51.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -319,6 +409,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.5.9-150000.4.29.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -326,6 +418,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "3.44.0-150000.3.23.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -333,6 +427,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "13.2.1+git7813-150000.1.6.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -340,6 +436,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "4.5.101-150500.3.3.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -347,6 +445,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "4.5.101-150500.3.3.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -354,6 +454,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.4.0~git0.b0f7c25bfdfa-150500.3.6.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -361,6 +463,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "249.16-150400.8.35.5",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -368,6 +472,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.3.4-150300.3.20.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -375,6 +481,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.3.4-150300.3.20.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -382,6 +490,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "249.16-150400.8.35.5",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -389,6 +499,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.6.5-150000.3.33.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -396,6 +508,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.6.5-150000.3.33.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -403,6 +517,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.10.3-150500.5.11.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -410,6 +526,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.2.13-150500.4.3.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -417,6 +535,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.1.16-150400.3.7.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -424,6 +544,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "17.31.22-150400.3.43.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -431,6 +553,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "4.8.1-150400.10.12.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -438,6 +562,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.03.22-150500.7.9.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -445,6 +571,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.7.6-150100.8.5.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -452,6 +580,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "4.16-150300.13.5.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -459,6 +589,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.1.1-150500.22.3.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -466,6 +598,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.1.1-150500.22.3.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -473,6 +607,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.31-150300.63.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -480,6 +616,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.4+31.gf7ec09-150500.4.12.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -487,6 +625,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.1.1l-150500.17.22.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -494,6 +634,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "0.23.22-150500.8.3.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -501,6 +643,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "0.23.22-150500.8.3.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -508,6 +652,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "3.5.6-150300.13.6.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -515,6 +661,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "23.0-150000.6.25.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -522,6 +670,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "3.6.15-150300.10.51.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -529,6 +679,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "3.6.15-150300.10.51.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -536,6 +688,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "9.16.44-150500.8.12.2",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -543,6 +697,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "3.3.2-150400.20.3",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -550,6 +706,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "3.6.15-150300.10.51.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -557,6 +715,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "3.10-150000.3.5.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -564,6 +724,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "2.25.1-150300.3.6.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -571,6 +733,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "4.14.3-150400.59.3.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -578,6 +742,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "44.1.1-150400.9.6.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -585,6 +751,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.25.10-150300.4.9.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -592,6 +760,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "4.0.1-150000.4.12.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -599,6 +769,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "15.5.20231106-150500.3.9.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -606,6 +778,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "4.14.3-150400.59.3.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -613,6 +787,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "8.2306.0-150400.5.21.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -620,6 +796,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.5.9-150000.4.29.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -627,6 +805,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.5.9-150000.4.29.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -634,6 +814,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "4.17.12+git.427.2619dc0bed-150500.3.14.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -641,6 +823,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "4.6.2-150000.5.5.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -648,6 +832,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "4.8.1-150400.10.12.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -655,6 +841,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "3.44.0-150000.3.23.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -662,6 +850,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "3.1.26-150300.7.35.21.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -669,6 +859,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "12.0-150000.8.37.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -676,6 +868,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "15.5.3-150500.3.6.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -683,6 +877,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.4.0~git0.b0f7c25bfdfa-150500.3.6.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -690,6 +886,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.4.0~git0.b0f7c25bfdfa-150500.3.6.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -697,6 +895,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "20170617-150400.24.2.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -704,6 +904,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "20170617-150400.24.2.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -711,6 +913,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "20170617-150400.24.2.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -718,6 +922,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "20170617-150400.24.2.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -725,6 +931,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "20170617-150400.24.2.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -732,6 +940,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "20170617-150400.24.2.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -739,6 +949,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "249.16-150400.8.35.5",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -746,6 +958,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "14-150000.7.36.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -753,6 +967,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "249.16-150400.8.35.5",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -760,6 +976,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "249.16-150400.8.35.5",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -767,6 +985,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "9.0.2103-150500.20.6.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -774,6 +994,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "9.0.2103-150500.20.6.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -781,6 +1003,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "4.17.2_08-150500.3.15.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -788,6 +1012,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "4.5.18-150500.3.6.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -795,6 +1021,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "4.5.8-150500.3.3.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -802,6 +1030,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "4.5.25-150500.3.8.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -809,6 +1039,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "4.5.4-150500.3.3.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -816,6 +1048,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.14.66-150400.3.35.1",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
 }

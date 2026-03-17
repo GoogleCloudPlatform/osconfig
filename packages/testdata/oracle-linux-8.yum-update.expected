@@ -4,6 +4,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "4.18.0-553.50.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -11,6 +13,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "4.18.0-553.50.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -18,6 +22,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "4.18.0-553.50.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -25,6 +31,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "4.18.0-553.50.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -32,6 +40,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "5.15.0-307.178.5.el8uek",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -39,6 +49,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "5.15.0-307.178.5.el8uek",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -46,6 +58,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "5.15.0-307.178.5.el8uek",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -53,6 +67,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "5.15.0-307.178.5.el8uek",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -60,6 +76,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "5.15.0-307.178.5.el8uek",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -67,6 +85,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "5.15.0-307.178.5.el8uek",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -74,6 +94,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "8.5.0-26.0.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -81,6 +103,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "0.8.4-42.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -88,6 +112,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "0.8.4-42.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -95,6 +121,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "2.2.5-17.0.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -102,6 +130,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "2.9.1-10.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -109,6 +139,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "8.5.0-26.0.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -116,6 +148,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "2.28-251.0.3.el8_10.16",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -123,6 +157,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "2.28-251.0.3.el8_10.16",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -130,6 +166,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "2.28-251.0.3.el8_10.16",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -137,6 +175,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "2.28-251.0.3.el8_10.16",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -144,6 +184,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "2.28-251.0.3.el8_10.16",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -151,6 +193,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "2.28-251.0.3.el8_10.16",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -158,6 +202,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "3.6.16-8.el8_10.3",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -165,6 +211,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "1:20250327.01-g1.el8",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -172,6 +220,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "1:20250320.00-g1.el8",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -179,6 +229,8 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "1:2.02-164.0.2.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -186,6 +238,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "1:2.02-164.0.2.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -193,6 +247,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "1:2.02-164.0.2.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -200,6 +256,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "1:2.02-164.0.2.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -207,6 +265,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "1:2.02-164.0.2.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -214,6 +274,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "1:2.02-164.0.2.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -221,6 +283,8 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "999:39.31.5.1-999.39.el8",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -228,6 +292,8 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "999:39.31.5.1-999.39.el8",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -235,6 +301,8 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "999:18.168.6.1-999.39.el8",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -242,6 +310,8 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "999:18.168.6.1-999.39.el8",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -249,6 +319,8 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "999:18.168.6.1-999.39.el8",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -256,6 +328,8 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "999:18.168.6.1-999.39.el8",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -263,6 +337,8 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "999:25.30.13.0-999.39.el8",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -270,6 +346,8 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "999:8.83.5.1_1-999.39.el8",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -277,6 +355,8 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "999:8.24.2.2-999.39.el8",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -284,6 +364,8 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "999:9.221.4.1-999.39.el8",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -291,6 +373,8 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "999:18.168.6.1-999.39.el8",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -298,6 +382,8 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "999:41.28.5.1-999.39.el8",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -305,6 +391,8 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "999:25.30.13.0-999.39.el8",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -312,6 +400,8 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "999:20250319-999.39.el8",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -319,6 +409,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "4.18.0-553.50.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -326,6 +418,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "4.18.0-553.50.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -333,6 +427,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "4.18.0-553.50.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -340,6 +436,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "2.0.28-1.0.9.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -347,6 +445,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "0.8.4-42.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -354,6 +454,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "8.5.0-26.0.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -361,6 +463,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "8.5.0-26.0.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -368,6 +472,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "8.5.0-26.0.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -375,6 +481,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "8.5.0-26.0.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -382,6 +490,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "4.19.4-7.0.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -389,6 +499,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "8.5.0-26.0.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -396,6 +508,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "4.13-5.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -403,6 +517,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "4.19.4-7.0.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -410,6 +526,8 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "999:20250319-999.39.git430633ec.el8",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -417,6 +535,8 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "999:20250319-999.39.git430633ec.el8",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -424,6 +544,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "4:20250211-1.0.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -431,6 +553,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "4.18.0-553.50.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -438,6 +562,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "4.18.0-553.50.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -445,6 +571,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "4.19.4-7.0.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -452,6 +580,8 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "4.19.4-7.0.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -459,6 +589,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "4.19.4-7.0.1.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -466,6 +598,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "15.8-4.0.2.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -473,6 +607,8 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "4.8.2-1.0.2.el8_10",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -480,6 +616,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "239-82.0.3.el8_10.5",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -487,6 +625,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "239-82.0.3.el8_10.5",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -494,6 +634,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "239-82.0.3.el8_10.5",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -501,6 +643,8 @@
         Arch:    "x86_64",
         RawArch: "x86_64",
         Version: "239-82.0.3.el8_10.5",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
     &packages.PkgInfo{
@@ -508,6 +652,8 @@
         Arch:    "all",
         RawArch: "noarch",
         Version: "2025b-1.0.1.el8",
+        Type:    "rpm",
+        Purl:    "",
         Source:  packages.Source{},
     },
 }

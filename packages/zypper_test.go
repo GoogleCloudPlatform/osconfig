@@ -77,7 +77,9 @@ this is junk data`
 		data []byte
 		want []*PkgInfo
 	}{
-		{"NormalCase", []byte(normalCase), []*PkgInfo{{Name: "at", Arch: "x86_64", Version: "3.1.14-8.3.1"}, {Name: "autoyast2-installation", Arch: "all", Version: "3.2.22-2.9.2"}}},
+		{"NormalCase", []byte(normalCase), []*PkgInfo{
+			{Name: "at", Arch: "x86_64", Version: "3.1.14-8.3.1", Type: "rpm"},
+			{Name: "autoyast2-installation", Arch: "all", Version: "3.2.22-2.9.2", Type: "rpm"}}},
 		{"NoPackages", []byte("nothing here"), nil},
 		{"nil", nil, nil},
 	}
@@ -132,7 +134,7 @@ func TestZypperUpdates(t *testing.T) {
 					stderr: []byte("stderr"),
 				},
 			},
-			expectedResults: []*PkgInfo{{Name: "at", Arch: "x86_64", Version: "3.1.14-8.3.1"}},
+			expectedResults: []*PkgInfo{{Name: "at", Arch: "x86_64", Version: "3.1.14-8.3.1", Type: "rpm"}},
 		},
 		{
 			name: "sles-12-1 mapped list-updates stdout matches snapshot",

@@ -4,6 +4,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "3.137ubuntu2",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"adduser", Version:"3.137ubuntu2"},
     },
     &packages.PkgInfo{
@@ -11,6 +13,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "3.20240116.2+nmu1ubuntu1.1",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"amd64-microcode", Version:"3.20240116.2+nmu1ubuntu1.1"},
     },
     &packages.PkgInfo{
@@ -18,6 +22,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "4.1.0~beta1-0ubuntu3",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"apparmor", Version:"4.1.0~beta1-0ubuntu3"},
     },
     &packages.PkgInfo{
@@ -25,6 +31,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "2.30.0-0ubuntu4.2",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"apport", Version:"2.30.0-0ubuntu4.2"},
     },
     &packages.PkgInfo{
@@ -32,6 +40,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "2.30.0-0ubuntu4.2",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"apport", Version:"2.30.0-0ubuntu4.2"},
     },
     &packages.PkgInfo{
@@ -39,6 +49,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.9.8ubuntu0.1",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"apt", Version:"2.9.8ubuntu0.1"},
     },
     &packages.PkgInfo{
@@ -46,6 +58,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "5.2.32-1ubuntu1.1",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"bash", Version:"5.2.32-1ubuntu1.1"},
     },
     &packages.PkgInfo{
@@ -53,6 +67,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "0.30.0+ds-1ubuntu4",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"bpfcc", Version:"0.30.0+ds-1ubuntu4"},
     },
     &packages.PkgInfo{
@@ -60,6 +76,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1:2.40.2-1ubuntu1.1",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"util-linux", Version:"2.40.2-1ubuntu1.1"},
     },
     &packages.PkgInfo{
@@ -67,6 +85,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "20240203",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"ca-certificates", Version:"20240203"},
     },
     &packages.PkgInfo{
@@ -74,6 +94,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "24.4.1-0ubuntu0~24.10.3",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"cloud-init", Version:"24.4.1-0ubuntu0~24.10.3"},
     },
     &packages.PkgInfo{
@@ -81,6 +103,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "1.226ubuntu2",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"console-setup", Version:"1.226ubuntu2"},
     },
     &packages.PkgInfo{
@@ -88,6 +112,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.15+dfsg-2",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"cpio", Version:"2.15+dfsg-2"},
     },
     &packages.PkgInfo{
@@ -95,6 +121,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.14.10-4ubuntu5",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"dbus", Version:"1.14.10-4ubuntu5"},
     },
     &packages.PkgInfo{
@@ -102,6 +130,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1:10.0.8-3",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"dhcpcd", Version:"1:10.0.8-3"},
     },
     &packages.PkgInfo{
@@ -109,6 +139,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1:3.10-1build1",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"diffutils", Version:"1:3.10-1build1"},
     },
     &packages.PkgInfo{
@@ -116,6 +148,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.56.0~ubuntu24.10",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"google-cloud-ops-agent", Version:"2.56.0~ubuntu24.10"},
     },
     &packages.PkgInfo{
@@ -123,6 +157,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "20241010.00-0ubuntu1~24.10.0",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"gce-compute-image-packages", Version:"20241010.00-0ubuntu1~24.10.0"},
     },
     &packages.PkgInfo{
@@ -130,6 +166,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.209.4+2.12-5ubuntu5.3",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"grub2-signed", Version:"1.209.4"},
     },
     &packages.PkgInfo{
@@ -137,6 +175,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "31+20240202-2ubuntu8",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"kmod", Version:"31+20240202-2ubuntu8"},
     },
     &packages.PkgInfo{
@@ -144,6 +184,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "4.1.0~beta1-0ubuntu3",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"apparmor", Version:"4.1.0~beta1-0ubuntu3"},
     },
     &packages.PkgInfo{
@@ -151,6 +193,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.9.8ubuntu0.1",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"apt", Version:"2.9.8ubuntu0.1"},
     },
     &packages.PkgInfo{
@@ -158,6 +202,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "1:4.0.1-1ubuntu2",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"audit", Version:"1:4.0.1-1ubuntu2"},
     },
     &packages.PkgInfo{
@@ -165,6 +211,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "0.30.0+ds-1ubuntu4",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"bpfcc", Version:"0.30.0+ds-1ubuntu4"},
     },
     &packages.PkgInfo{
@@ -172,6 +220,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2:6.3.0+dfsg-2ubuntu7",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"gmp", Version:"2:6.3.0+dfsg-2ubuntu7"},
     },
     &packages.PkgInfo{
@@ -179,6 +229,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "31+20240202-2ubuntu8",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"kmod", Version:"31+20240202-2ubuntu8"},
     },
     &packages.PkgInfo{
@@ -186,6 +238,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "2.6.8+dfsg-1~exp4ubuntu1.1",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"openldap", Version:"2.6.8+dfsg-1~exp4ubuntu1.1"},
     },
     &packages.PkgInfo{
@@ -193,6 +247,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "2.6.8+dfsg-1~exp4ubuntu1.1",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"openldap", Version:"2.6.8+dfsg-1~exp4ubuntu1.1"},
     },
     &packages.PkgInfo{
@@ -200,6 +256,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "4.5ubuntu9.1",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-base", Version:"4.5ubuntu9.1"},
     },
     &packages.PkgInfo{
@@ -207,6 +265,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "6.11.0-1013.13",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-meta-gcp", Version:"6.11.0-1013.13"},
     },
     &packages.PkgInfo{
@@ -214,6 +274,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "6.11.0-1013.13",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-gcp", Version:"6.11.0-1013.13"},
     },
     &packages.PkgInfo{
@@ -221,6 +283,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "6.11.0-1013.13",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-gcp", Version:"6.11.0-1013.13"},
     },
     &packages.PkgInfo{
@@ -228,6 +292,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "6.11.0-1013.13",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-gcp", Version:"6.11.0-1013.13"},
     },
     &packages.PkgInfo{
@@ -235,6 +301,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "6.11.0-1013.13",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-meta-gcp", Version:"6.11.0-1013.13"},
     },
     &packages.PkgInfo{
@@ -242,6 +310,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "6.11.0-1013.13",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-signed-gcp", Version:"6.11.0-1013.13"},
     },
     &packages.PkgInfo{
@@ -249,6 +319,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "6.11.0-1013.13",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-meta-gcp", Version:"6.11.0-1013.13"},
     },
     &packages.PkgInfo{
@@ -256,6 +328,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "6.11.0-24.24",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"linux", Version:"6.11.0-24.24"},
     },
     &packages.PkgInfo{
@@ -263,6 +337,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "6.11.0-1013.13",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-gcp", Version:"6.11.0-1013.13"},
     },
     &packages.PkgInfo{
@@ -270,6 +346,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "6.11.0-1013.13",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"linux-gcp", Version:"6.11.0-1013.13"},
     },
     &packages.PkgInfo{
@@ -277,6 +355,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "6.11.0-24.24",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"linux", Version:"6.11.0-24.24"},
     },
     &packages.PkgInfo{
@@ -284,6 +364,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "3build1",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"microcode-initrd", Version:"3build1"},
     },
     &packages.PkgInfo{
@@ -291,6 +373,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "1:24.10.14",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"ubuntu-release-upgrader", Version:"1:24.10.14"},
     },
     &packages.PkgInfo{
@@ -298,6 +382,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1.59+15.8-0ubuntu2",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"shim-signed", Version:"1.59"},
     },
     &packages.PkgInfo{
@@ -305,6 +391,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1:0.9.7.11",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"ubuntu-drivers-common", Version:"1:0.9.7.11"},
     },
     &packages.PkgInfo{
@@ -312,6 +400,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "35.1ubuntu0~24.10",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"ubuntu-advantage-tools", Version:"35.1ubuntu0~24.10"},
     },
     &packages.PkgInfo{
@@ -319,6 +409,8 @@
         Arch:    "all",
         RawArch: "",
         Version: "3.0043+nmu1",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"ucf", Version:"3.0043+nmu1"},
     },
     &packages.PkgInfo{
@@ -326,6 +418,8 @@
         Arch:    "x86_64",
         RawArch: "",
         Version: "1:017-3build1",
+        Type:    "deb",
+        Purl:    "",
         Source:  packages.Source{Name:"usbutils", Version:"1:017-3build1"},
     },
 }

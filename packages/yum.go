@@ -35,8 +35,8 @@ var (
 	yumInstallArgs           = []string{"install", "--assumeyes"}
 	yumRemoveArgs            = []string{"remove", "--assumeyes"}
 	yumCheckUpdateArgs       = []string{"check-update", "--assumeyes"}
-	yumListUpdatesArgs       = []string{"update", "--assumeno", "--cacheonly", "--color=never"}
-	yumListUpdateMinimalArgs = []string{"update-minimal", "--assumeno", "--cacheonly", "--color=never"}
+	yumListUpdatesArgs       = []string{"update", "--assumeno", "--color=never"}
+	yumListUpdateMinimalArgs = []string{"update-minimal", "--assumeno", "--color=never"}
 )
 
 func init() {
@@ -131,7 +131,8 @@ func parseYumUpdates(data []byte) []*PkgInfo {
 			}
 			break
 		}
-		pkgs = append(pkgs, &PkgInfo{Name: string(pkg[0]), Arch: osinfo.NormalizeArchitecture(string(pkg[1])), RawArch: string(pkg[1]), Version: string(pkg[2])})
+
+		pkgs = append(pkgs, &PkgInfo{Name: string(pkg[0]), Arch: osinfo.NormalizeArchitecture(string(pkg[1])), RawArch: string(pkg[1]), Version: string(pkg[2]), Type: typeRPM})
 	}
 	return pkgs
 }

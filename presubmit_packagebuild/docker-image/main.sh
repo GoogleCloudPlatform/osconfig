@@ -127,5 +127,5 @@ DAISY_BUCKET="gs://$(sed -En "s|(^.*)$pattern||p" out)"
 # $ARTIFACTS is set by prow
 if [[ -n $ARTIFACTS ]]; then
   echo "copying daisy outputs from ${DAISY_BUCKET}/packages to prow artifacts dir"
-  gsutil cp "${DAISY_BUCKET}/packages/*" ${ARTIFACTS}/
+  gcloud storage cp "${DAISY_BUCKET}/packages/*" ${ARTIFACTS}/
 fi

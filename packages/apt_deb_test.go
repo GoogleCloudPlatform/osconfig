@@ -239,7 +239,7 @@ func TestAptUpdates(t *testing.T) {
 					err:    nil,
 				},
 			},
-			expectedResults: []*PkgInfo{{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"}},
+			expectedResults: []*PkgInfo{{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0", Type: "deb"}},
 			expectedError:   nil,
 		},
 		{
@@ -261,7 +261,7 @@ func TestAptUpdates(t *testing.T) {
 					err:    nil,
 				},
 			},
-			expectedResults: []*PkgInfo{{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"}},
+			expectedResults: []*PkgInfo{{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0", Type: "deb"}},
 			expectedError:   nil,
 		},
 		{
@@ -283,7 +283,7 @@ func TestAptUpdates(t *testing.T) {
 					err:    nil,
 				},
 			},
-			expectedResults: []*PkgInfo{{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"}},
+			expectedResults: []*PkgInfo{{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0", Type: "deb"}},
 			expectedError:   nil,
 		},
 		{
@@ -440,8 +440,8 @@ func TestAptUpdates(t *testing.T) {
 				},
 			},
 			expectedResults: []*PkgInfo{
-				{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"},
-				{Name: "firmware-linux-free", Arch: "all", Version: "3.4"},
+				{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0", Type: "deb"},
+				{Name: "firmware-linux-free", Arch: "all", Version: "3.4", Type: "deb"},
 			},
 			expectedError: nil,
 		},
@@ -467,7 +467,7 @@ func TestAptUpdates(t *testing.T) {
 				},
 			},
 			expectedResults: []*PkgInfo{
-				{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"},
+				{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0", Type: typeDebian},
 			},
 			expectedError: nil,
 		},
@@ -498,7 +498,7 @@ func TestAptUpdates(t *testing.T) {
 				},
 			},
 			expectedResults: []*PkgInfo{
-				{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"},
+				{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0", Type: "deb"},
 			},
 			expectedError: nil,
 		},
@@ -662,7 +662,7 @@ func TestInstalledDebPackages(t *testing.T) {
 					stderr: []byte(""),
 				},
 			},
-			wantPkgs: []*PkgInfo{{Name: "git", Arch: "x86_64", Version: "1:2.25.1-1ubuntu3.12", Source: Source{Name: "git", Version: "1:2.25.1-1ubuntu3.12"}}},
+			wantPkgs: []*PkgInfo{{Name: "git", Arch: "x86_64", Version: "1:2.25.1-1ubuntu3.12", Source: Source{Name: "git", Version: "1:2.25.1-1ubuntu3.12"}, Type: "deb"}},
 		},
 		{
 			name: "empty package list maps to nil",
@@ -792,8 +792,8 @@ func TestParseInstalledDebpackages(t *testing.T) {
 				"\n" +
 				`{"package":"man-db","architecture":"amd64","version":"2.9.1-1","status":"installed","source_name":"man-db","source_version":"2.9.1-1"}`),
 			want: []*PkgInfo{
-				{Name: "python3-gi", Arch: "x86_64", Version: "3.36.0-1", Source: Source{Name: "pygobject", Version: "3.36.0-1"}},
-				{Name: "man-db", Arch: "x86_64", Version: "2.9.1-1", Source: Source{Name: "man-db", Version: "2.9.1-1"}}},
+				{Name: "python3-gi", Arch: "x86_64", Version: "3.36.0-1", Source: Source{Name: "pygobject", Version: "3.36.0-1"}, Type: "deb"},
+				{Name: "man-db", Arch: "x86_64", Version: "2.9.1-1", Source: Source{Name: "man-db", Version: "2.9.1-1"}, Type: "deb"}},
 		},
 		{
 			name:  "No lines formatted as a package info",
@@ -809,14 +809,14 @@ func TestParseInstalledDebpackages(t *testing.T) {
 			name: "Skip wrongly formatted lines",
 			input: []byte("something we dont understand\n" +
 				`{"package":"python3-gi","architecture":"amd64","version":"3.36.0-1","status":"installed","source_name":"pygobject","source_version":"3.36.0-1"}`),
-			want: []*PkgInfo{{Name: "python3-gi", Arch: "x86_64", Version: "3.36.0-1", Source: Source{Name: "pygobject", Version: "3.36.0-1"}}},
+			want: []*PkgInfo{{Name: "python3-gi", Arch: "x86_64", Version: "3.36.0-1", Source: Source{Name: "pygobject", Version: "3.36.0-1"}, Type: "deb"}},
 		},
 		{
 			name: "Skip entries that have status other than 'installed'",
 			input: []byte("" +
 				`{"package":"python3-gi","architecture":"amd64","version":"3.36.0-1","status":"installed","source_name":"pygobject","source_version":"3.36.0-1"}` + "\n" +
 				`{"package":"man-db","architecture":"amd64","version":"2.9.1-1","status":"config-files","source_name":"man-db","source_version":"2.9.1-1"}`),
-			want: []*PkgInfo{{Name: "python3-gi", Arch: "x86_64", Version: "3.36.0-1", Source: Source{Name: "pygobject", Version: "3.36.0-1"}}},
+			want: []*PkgInfo{{Name: "python3-gi", Arch: "x86_64", Version: "3.36.0-1", Source: Source{Name: "pygobject", Version: "3.36.0-1"}, Type: "deb"}},
 		},
 	}
 
@@ -848,8 +848,8 @@ Conf firmware-linux-free (3.4 Debian:9.9/stable [all])
 			input:   []byte(normalCase),
 			showNew: false,
 			want: []*PkgInfo{
-				{Name: "libldap-common", Arch: "all", Version: "2.4.45+dfsg-1ubuntu1.3"},
-				{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"},
+				{Name: "libldap-common", Arch: "all", Version: "2.4.45+dfsg-1ubuntu1.3", Type: "deb"},
+				{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0", Type: "deb"},
 			},
 		},
 		{
@@ -857,9 +857,9 @@ Conf firmware-linux-free (3.4 Debian:9.9/stable [all])
 			input:   []byte(normalCase),
 			showNew: true,
 			want: []*PkgInfo{
-				{Name: "libldap-common", Arch: "all", Version: "2.4.45+dfsg-1ubuntu1.3"},
-				{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"},
-				{Name: "firmware-linux-free", Arch: "all", Version: "3.4"},
+				{Name: "libldap-common", Arch: "all", Version: "2.4.45+dfsg-1ubuntu1.3", Type: "deb"},
+				{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0", Type: "deb"},
+				{Name: "firmware-linux-free", Arch: "all", Version: "3.4", Type: "deb"},
 			},
 		},
 		{
@@ -879,7 +879,7 @@ Conf firmware-linux-free (3.4 Debian:9.9/stable [all])
 			input:   []byte("Inst something [we dont understand\n Inst google-cloud-sdk [245.0.0-0] (246.0.0-0 cloud-sdk-stretch:cloud-sdk-stretch [amd64])"),
 			showNew: false,
 			want: []*PkgInfo{
-				{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0"},
+				{Name: "google-cloud-sdk", Arch: "x86_64", Version: "246.0.0-0", Type: "deb"},
 			},
 		},
 	}
@@ -926,7 +926,7 @@ func TestDebPkgInfo(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	want := &PkgInfo{Name: "google-guest-agent", Arch: "x86_64", Version: "1:1dummy-g1"}
+	want := &PkgInfo{Name: "google-guest-agent", Arch: "x86_64", Version: "1:1dummy-g1", Type: "deb"}
 	if !reflect.DeepEqual(ret, want) {
 		t.Errorf("DebPkgInfo() = %+v, want %+v", ret, want)
 	}

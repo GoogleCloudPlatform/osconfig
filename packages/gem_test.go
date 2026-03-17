@@ -69,8 +69,8 @@ func TestGemUpdates(t *testing.T) {
 				},
 			},
 			expectedResults: []*PkgInfo{
-				{Name: "rexml", Arch: noarch, Version: "3.4.1"},
-				{Name: "singleton", Arch: noarch, Version: "0.3.0"},
+				{Name: "rexml", Arch: noarch, Version: "3.4.1", Type: "gem"},
+				{Name: "singleton", Arch: noarch, Version: "0.3.0", Type: "gem"},
 			},
 			expectedError: nil,
 		},
@@ -160,8 +160,8 @@ func TestInstalledGemPackages(t *testing.T) {
 				},
 			},
 			expectedResults: []*PkgInfo{
-				{Name: "webrick", Arch: noarch, Version: "1.6.0"},
-				{Name: "xmlrpc", Arch: noarch, Version: "0.3.0"},
+				{Name: "webrick", Arch: noarch, Version: "1.6.0", Type: "gem"},
+				{Name: "xmlrpc", Arch: noarch, Version: "0.3.0", Type: "gem"},
 			},
 			expectedError: nil,
 		},
