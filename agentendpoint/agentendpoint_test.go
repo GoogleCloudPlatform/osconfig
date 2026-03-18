@@ -365,12 +365,12 @@ func TestClose(t *testing.T) {
 	ctx := context.Background()
 	tc, err := newTestClient(ctx, newAgentEndpointServiceTestServer())
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("newTestClient error: %v", err)
 	}
 	defer tc.s.Stop()
 
 	if tc.client.Closed() {
-		t.Fatal("Expected Closed() to be false initially")
+		t.Errorf("Closed() = true, want false")
 	}
 	tc.client.Close()
 }
@@ -441,7 +441,7 @@ func TestWaitForTaskNotification(t *testing.T) {
 			srv := newAgentEndpointServiceTestServer()
 			tc, err := newTestClient(tCtx, srv)
 			if err != nil {
-				t.Fatal(err)
+				t.Fatalf("%s: newTestClient error: %v", tt.name, err)
 			}
 			defer tc.s.Stop()
 
@@ -454,13 +454,11 @@ func TestWaitForTaskNotification(t *testing.T) {
 		})
 	}
 }
-
 func TestRegisterAgent(t *testing.T) {
 	ctx := context.Background()
-	srv := newAgentEndpointServiceTestServer()
-	tc, err := newTestClient(ctx, srv)
+	tc, err := newTestClient(ctx, newAgentEndpointServiceTestServer())
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("newTestClient error: %v", err)
 	}
 	defer tc.s.Stop()
 
