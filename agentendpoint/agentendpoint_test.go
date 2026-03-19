@@ -134,6 +134,7 @@ type agentEndpointServiceTestServer struct {
 	streamClose             chan struct{}
 	streamSend              chan struct{}
 	permissionError         chan struct{}
+	resourceExhaustedError  chan struct{}
 	taskStart               bool
 	execTaskProgress        bool
 	patchTaskProgress       bool
@@ -146,10 +147,20 @@ type agentEndpointServiceTestServer struct {
 
 func newAgentEndpointServiceTestServer() *agentEndpointServiceTestServer {
 	return &agentEndpointServiceTestServer{
-		streamClose:     make(chan struct{}, 1),
-		streamSend:      make(chan struct{}, 1),
-		permissionError: make(chan struct{}, 1),
+		streamClose:            make(chan struct{}, 1),
+		streamSend:             make(chan struct{}, 1),
+		permissionError:        make(chan struct{}, 1),
+		resourceExhaustedError: make(chan struct{}, 1),
 	}
+}
+func (s *agentEndpointServiceTestServer) causePermissionError() {
+	s.permissionError <- struct{}{}
+}
+
+func (s *agentEndpointServiceTestServer) causeResourceExhaustedError() {
+	// ResourceExhausted is handled in waitForTask which calls receiveTaskNotification.
+	// We'll need a way to trigger this. For now let's add a channel.
+	s.resourceExhaustedError <- struct{}{}
 }
 
 func (s *agentEndpointServiceTestServer) ReceiveTaskNotification(req *agentendpointpb.ReceiveTaskNotificationRequest, srv agentendpointpb.AgentEndpointService_ReceiveTaskNotificationServer) error {
@@ -157,10 +168,14 @@ func (s *agentEndpointServiceTestServer) ReceiveTaskNotification(req *agentendpo
 		select {
 		case <-s.streamClose:
 			return nil
+		case <-srv.Context().Done():
+			return srv.Context().Err()
 		case <-s.streamSend:
 			srv.Send(&agentendpointpb.ReceiveTaskNotificationResponse{})
 		case <-s.permissionError:
 			return status.Errorf(codes.PermissionDenied, "")
+		case <-s.resourceExhaustedError:
+			return status.Errorf(codes.ResourceExhausted, "")
 		}
 	}
 }
@@ -217,8 +232,8 @@ func (s *agentEndpointServiceTestServer) ReportTaskComplete(ctx context.Context,
 	return &agentendpointpb.ReportTaskCompleteResponse{}, nil
 }
 
-func (*agentEndpointServiceTestServer) RegisterAgent(ctx context.Context, req *agentendpointpb.RegisterAgentRequest) (*agentendpointpb.RegisterAgentResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RegisterAgent not implemented")
+func (s *agentEndpointServiceTestServer) RegisterAgent(ctx context.Context, req *agentendpointpb.RegisterAgentRequest) (*agentendpointpb.RegisterAgentResponse, error) {
+	return &agentendpointpb.RegisterAgentResponse{}, nil
 }
 
 func (*agentEndpointServiceTestServer) ReportInventory(ctx context.Context, req *agentendpointpb.ReportInventoryRequest) (*agentendpointpb.ReportInventoryResponse, error) {
@@ -351,5 +366,111 @@ func TestLoadPatchTaskFromState(t *testing.T) {
 	}
 	if srv.runTaskIDs[0] != taskID {
 		t.Errorf("first entry in runTaskIDs does not match taskID, %q, %q", srv.runTaskIDs, taskID)
+	}
+}
+
+func TestClose(t *testing.T) {
+	ctx := context.Background()
+	tc, err := newTestClient(ctx, newAgentEndpointServiceTestServer())
+	if err != nil {
+		t.Fatalf("newTestClient error: %v", err)
+	}
+	defer tc.s.Stop()
+
+	if tc.client.Closed() {
+		t.Errorf("Closed() = true, want false")
+	}
+	tc.client.Close()
+}
+
+func TestWaitForTaskNotification(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name  string
+		setup func(srv *agentEndpointServiceTestServer, cancel context.CancelFunc)
+		check func(t *testing.T, tc *testClient)
+	}{
+		{
+			name: "Success",
+			setup: func(srv *agentEndpointServiceTestServer, cancel context.CancelFunc) {
+			},
+			check: func(t *testing.T, tc *testClient) {
+				time.Sleep(50 * time.Millisecond)
+			},
+		},
+		{
+			name: "ServiceDisabled",
+			setup: func(srv *agentEndpointServiceTestServer, cancel context.CancelFunc) {
+				srv.causePermissionError()
+			},
+			check: func(t *testing.T, tc *testClient) {
+				for i := 0; i < 20; i++ {
+					if tc.client.closed {
+						return
+					}
+					time.Sleep(20 * time.Millisecond)
+				}
+				t.Error("Expected client to be closed after service disabled error")
+			},
+		},
+		{
+			name: "MultipleCalls",
+			setup: func(srv *agentEndpointServiceTestServer, cancel context.CancelFunc) {
+			},
+			check: func(t *testing.T, tc *testClient) {
+				tc.client.WaitForTaskNotification(context.Background())
+			},
+		},
+		{
+			name: "ContextCancel",
+			setup: func(srv *agentEndpointServiceTestServer, cancel context.CancelFunc) {
+				cancel()
+			},
+			check: func(t *testing.T, tc *testClient) {
+				time.Sleep(50 * time.Millisecond)
+			},
+		},
+		{
+			name: "ResourceExhausted",
+			setup: func(srv *agentEndpointServiceTestServer, cancel context.CancelFunc) {
+				srv.causeResourceExhaustedError()
+			},
+			check: func(t *testing.T, tc *testClient) {
+				time.Sleep(100 * time.Millisecond)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tCtx, tCancel := context.WithCancel(ctx)
+			defer tCancel()
+			srv := newAgentEndpointServiceTestServer()
+			tc, err := newTestClient(tCtx, srv)
+			if err != nil {
+				t.Fatalf("%s: newTestClient error: %v", tt.name, err)
+			}
+			defer tc.s.Stop()
+
+			tt.setup(srv, tCancel)
+			tc.client.WaitForTaskNotification(tCtx)
+
+			if tt.check != nil {
+				tt.check(t, tc)
+			}
+		})
+	}
+}
+func TestRegisterAgent(t *testing.T) {
+	ctx := context.Background()
+	tc, err := newTestClient(ctx, newAgentEndpointServiceTestServer())
+	if err != nil {
+		t.Fatalf("newTestClient error: %v", err)
+	}
+	defer tc.s.Stop()
+
+	if err := tc.client.RegisterAgent(ctx); err != nil {
+		t.Errorf("RegisterAgent() error: %v", err)
 	}
 }
