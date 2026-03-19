@@ -16,7 +16,12 @@ package agentendpoint
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -134,3 +139,120 @@ func TestRunExecStep(t *testing.T) {
 		})
 	}
 }
+
+func TestGetGCSObject(t *testing.T) {
+	ctx := context.Background()
+	testContent := "test script content"
+	bucket := "test-bucket"
+	object := "scripts/test.sh"
+
+	tests := []struct {
+		name    string
+		bucket  string
+		object  string
+		handler http.HandlerFunc
+		wantErr bool
+	}{
+		{
+			name:   "Success",
+			bucket: bucket,
+			object: object,
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(testContent))
+			},
+			wantErr: false,
+		},
+		{
+			name:   "NotFound",
+			bucket: bucket,
+			object: object,
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+			},
+			wantErr: true,
+		},
+		{
+			name:   "InvalidLocalPath",
+			bucket: bucket,
+			object: "///",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(testContent))
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ts := httptest.NewServer(tt.handler)
+			defer ts.Close()
+
+			os.Setenv("STORAGE_EMULATOR_HOST", ts.URL)
+			defer os.Unsetenv("STORAGE_EMULATOR_HOST")
+
+			localPath, err := getGCSObject(ctx, tt.bucket, tt.object, 0)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("getGCSObject() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if err == nil {
+				defer os.Remove(localPath)
+				content, err := os.ReadFile(localPath)
+				if err != nil {
+					t.Fatalf("Failed to read downloaded file: %v", err)
+				}
+				if string(content) != testContent {
+					t.Errorf("Content mismatch: got %q, want %q", string(content), testContent)
+				}
+				if filepath.Base(localPath) != "test.sh" {
+					t.Errorf("Expected filename test.sh, got %s", filepath.Base(localPath))
+				}
+			}
+		})
+	}
+}
+
+func TestExecuteCommand(t *testing.T) {
+	ctx := context.Background()
+	oldRun := run
+	defer func() { run = oldRun }()
+
+	tests := []struct {
+		name     string
+		mockRun  func(*exec.Cmd) ([]byte, error)
+		wantCode int32
+		wantErr  bool
+	}{
+		{
+			name: "SystemError",
+			mockRun: func(cmd *exec.Cmd) ([]byte, error) {
+				return nil, fmt.Errorf("system error")
+			},
+			wantCode: -1,
+			wantErr:  true,
+		},
+		{
+			name: "CommandExitError",
+			mockRun: func(cmd *exec.Cmd) ([]byte, error) {
+				return []byte("error output"), &exec.ExitError{}
+			},
+			wantCode: 0,
+			wantErr:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			run = tt.mockRun
+			gotCode, err := executeCommand(ctx, "test-path", nil)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("%s: executeCommand() error = %v, wantErr %v", tt.name, err, tt.wantErr)
+			}
+			if gotCode != tt.wantCode {
+				t.Errorf("%s: executeCommand() exitCode = %d, want %d", tt.name, gotCode, tt.wantCode)
+			}
+		})
+	}
+}
+
