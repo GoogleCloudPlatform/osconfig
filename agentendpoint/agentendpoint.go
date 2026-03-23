@@ -54,7 +54,7 @@ var (
 
 // Client is a an agentendpoint client.
 type Client struct {
-	raw    *agentendpoint.Client
+	raw    AgentEndpointClient
 	cancel context.CancelFunc
 	noti   chan struct{}
 	closed bool
@@ -169,6 +169,30 @@ func (c *Client) reportInventory(ctx context.Context, inventory *agentendpointpb
 
 	resp, err := c.raw.ReportInventory(ctx, req)
 	clog.DebugRPC(ctx, "ReportInventory", nil, resp)
+	return resp, err
+}
+
+func (c *Client) reportVMInventory(ctx context.Context, inventory *agentendpointpb.VmInventory, reportFull bool) (*agentendpointpb.ReportVmInventoryResponse, error) {
+	token, err := agentconfig.IDToken()
+	if err != nil {
+		return nil, err
+	}
+
+	checksum, err := computeStableFingerprintVMInventory(ctx, inventory)
+	if err != nil {
+		return nil, fmt.Errorf("unable to compute hash, err: %w", err)
+	}
+
+	req := &agentendpointpb.ReportVmInventoryRequest{InventoryChecksum: checksum}
+	if reportFull {
+		req = &agentendpointpb.ReportVmInventoryRequest{InventoryChecksum: checksum, VmInventory: inventory}
+	}
+	req.InstanceIdToken = "<redacted>"
+	clog.DebugRPC(ctx, "ReportVmInventory", req, nil)
+	req.InstanceIdToken = token
+
+	resp, err := c.raw.ReportVmInventory(ctx, req)
+	clog.DebugRPC(ctx, "ReportVmInventory", nil, resp)
 	return resp, err
 }
 
