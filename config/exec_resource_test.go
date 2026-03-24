@@ -26,7 +26,7 @@ import (
 	"testing"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
-	"github.com/GoogleCloudPlatform/osconfig/testutil"
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"github.com/golang/mock/gomock"
@@ -228,15 +228,15 @@ func TestExecResourceDownload(t *testing.T) {
 			defer pr.Cleanup(ctx)
 
 			err := pr.Validate(ctx)
-			testutil.AssertErrorMatch(t, err, tt.wantErr)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 
 			resource := pr.resource.(*execResource)
 
-			testutil.AssertFilePath(t, "validate", resource.validatePath, tt.wantValidatePath)
-			testutil.AssertFileContents(t, resource.validatePath, tt.wantValidateContents)
+			utiltest.AssertFilePath(t, resource.validatePath, tt.wantValidatePath)
+			utiltest.AssertFileContents(t, resource.validatePath, tt.wantValidateContents)
 
-			testutil.AssertFilePath(t, "enforce", resource.enforcePath, tt.wantEnforcePath)
-			testutil.AssertFileContents(t, resource.enforcePath, tt.wantEnforceContents)
+			utiltest.AssertFilePath(t, resource.enforcePath, tt.wantEnforcePath)
+			utiltest.AssertFileContents(t, resource.enforcePath, tt.wantEnforceContents)
 		})
 	}
 }
@@ -321,7 +321,7 @@ func TestExecResourceRun(t *testing.T) {
 			}
 
 			_, _, _, err := execRes.run(ctx, "test_script", tt.execR)
-			testutil.AssertErrorMatch(t, err, tt.wantErr)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 		})
 	}
 }
@@ -357,7 +357,7 @@ func TestExecResourceCheckState(t *testing.T) {
 			mockRunnerExpectation(ctx, mockCommandRunner, tt.exitCode)
 
 			inDesiredState, err := execRes.checkState(ctx)
-			testutil.AssertErrorMatch(t, err, tt.wantErr)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 			if inDesiredState != tt.wantInDesiredState {
 				t.Errorf("checkState() inDesiredState = %v, want %v", inDesiredState, tt.wantInDesiredState)
 			}
@@ -407,11 +407,11 @@ func TestExecResourceEnforceState(t *testing.T) {
 			}
 
 			inDesiredState, err := execRes.enforceState(ctx)
-			testutil.AssertErrorMatch(t, err, tt.wantErr)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 			if inDesiredState != tt.wantInDesiredState {
 				t.Errorf("enforceState() inDesiredState = %v, want %v", inDesiredState, tt.wantInDesiredState)
 			}
-			if tt.wantOutput != "" && string(execRes.enforceOutput) != tt.wantOutput {
+			if string(execRes.enforceOutput) != tt.wantOutput {
 				t.Errorf("enforceState() output = %q, want %q", string(execRes.enforceOutput), tt.wantOutput)
 			}
 		})
@@ -475,8 +475,8 @@ func TestExecOutput(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := execOutput(ctx, tt.filePath)
-			testutil.AssertErrorMatch(t, err, tt.wantErr)
-			testutil.EnsureEquals(t, got, tt.want)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			utiltest.EnsureEquals(t, got, tt.want)
 		})
 	}
 }
@@ -512,10 +512,7 @@ func TestExecResourcePopulateOutput(t *testing.T) {
 			if rCompliance.GetExecResourceOutput() != nil {
 				got = string(rCompliance.GetExecResourceOutput().GetEnforcementOutput())
 			}
-
-			if got != tt.wantOutput {
-				t.Errorf("populateOutput() output = %q, want %q", got, tt.wantOutput)
-			}
+			utiltest.EnsureEquals(t, got, tt.wantOutput)
 		})
 	}
 }
@@ -549,7 +546,7 @@ func TestExecResourceCleanup(t *testing.T) {
 			execRes := &execResource{tempDir: tmpDir}
 
 			err := execRes.cleanup(ctx)
-			testutil.AssertErrorMatch(t, err, tt.wantErr)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 			if tmpDir != "" {
 				if _, err := os.Stat(tmpDir); !os.IsNotExist(err) {
 					t.Errorf("cleanup() failed to remove temp directory %q", tmpDir)
