@@ -22,11 +22,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"reflect"
 	"runtime"
 	"testing"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
+	"github.com/GoogleCloudPlatform/osconfig/testutil"
 
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"github.com/golang/mock/gomock"
@@ -51,7 +51,7 @@ func TestExecResourceDownload(t *testing.T) {
 		wantEnforcePath      string
 		wantEnforceContents  string
 		goos                 string
-		wantErr              string
+		wantErr              error
 	}{
 		{
 			name: "Script NONE Linux",
@@ -70,7 +70,7 @@ func TestExecResourceDownload(t *testing.T) {
 			wantEnforcePath:      "script",
 			wantEnforceContents:  "enforce",
 			goos:                 "linux",
-			wantErr:              "",
+			wantErr:              nil,
 		},
 		{
 			name: "Script NONE Windows",
@@ -89,7 +89,7 @@ func TestExecResourceDownload(t *testing.T) {
 			wantEnforcePath:      "script.cmd",
 			wantEnforceContents:  "enforce",
 			goos:                 "windows",
-			wantErr:              "",
+			wantErr:              nil,
 		},
 		{
 			name: "Script SHELL Linux",
@@ -108,7 +108,7 @@ func TestExecResourceDownload(t *testing.T) {
 			wantEnforcePath:      "script.sh",
 			wantEnforceContents:  "enforce",
 			goos:                 "linux",
-			wantErr:              "",
+			wantErr:              nil,
 		},
 		{
 			name: "Script SHELL Windows",
@@ -127,7 +127,7 @@ func TestExecResourceDownload(t *testing.T) {
 			wantEnforcePath:      "script.cmd",
 			wantEnforceContents:  "enforce",
 			goos:                 "windows",
-			wantErr:              "",
+			wantErr:              nil,
 		},
 		{
 			name: "Script POWERSHELL Windows",
@@ -146,7 +146,7 @@ func TestExecResourceDownload(t *testing.T) {
 			wantEnforcePath:      "script.ps1",
 			wantEnforceContents:  "enforce",
 			goos:                 "windows",
-			wantErr:              "",
+			wantErr:              nil,
 		},
 		{
 			name: "Unsupported Interpreter",
@@ -161,7 +161,7 @@ func TestExecResourceDownload(t *testing.T) {
 			wantEnforcePath:      "",
 			wantEnforceContents:  "",
 			goos:                 "linux",
-			wantErr:              `unsupported interpreter "99"`,
+			wantErr:              errors.New(`unsupported interpreter "99"`),
 		},
 		{
 			name: "Unrecognized Source Type",
@@ -175,7 +175,7 @@ func TestExecResourceDownload(t *testing.T) {
 			wantEnforcePath:      "",
 			wantEnforceContents:  "",
 			goos:                 "linux",
-			wantErr:              `unrecognized Source type for ExecResource: %!q(<nil>)`,
+			wantErr:              errors.New(`unrecognized Source type for ExecResource: %!q(<nil>)`),
 		},
 		{
 			name: "Unsupported File",
@@ -192,7 +192,7 @@ func TestExecResourceDownload(t *testing.T) {
 			wantEnforcePath:      "",
 			wantEnforceContents:  "",
 			goos:                 "linux",
-			wantErr:              `unsupported File `,
+			wantErr:              errors.New(`unsupported File `),
 		},
 		{
 			name: "LocalPath File",
@@ -211,7 +211,7 @@ func TestExecResourceDownload(t *testing.T) {
 			wantEnforcePath:      "",
 			wantEnforceContents:  "",
 			goos:                 "linux",
-			wantErr:              "",
+			wantErr:              nil,
 		},
 	}
 
@@ -228,25 +228,15 @@ func TestExecResourceDownload(t *testing.T) {
 			defer pr.Cleanup(ctx)
 
 			err := pr.Validate(ctx)
-			if !matchError(t, err, tt.wantErr) || tt.wantErr != "" {
-				return
-			}
+			testutil.AssertErrorMatch(t, err, tt.wantErr)
 
 			resource := pr.resource.(*execResource)
 
-			if tt.wantValidatePath != "" {
-				if tt.wantValidatePath != filepath.Base(resource.validatePath) {
-					t.Errorf("unexpected validate path: got %q, want %q", filepath.Base(resource.validatePath), tt.wantValidatePath)
-				}
-				assertFileContents(t, resource.validatePath, tt.wantValidateContents)
-			}
+			testutil.AssertFilePath(t, "validate", resource.validatePath, tt.wantValidatePath)
+			testutil.AssertFileContents(t, resource.validatePath, tt.wantValidateContents)
 
-			if tt.wantEnforcePath != "" {
-				if tt.wantEnforcePath != filepath.Base(resource.enforcePath) {
-					t.Errorf("unexpected enforce path: got %q, want %q", filepath.Base(resource.enforcePath), tt.wantEnforcePath)
-				}
-				assertFileContents(t, resource.enforcePath, tt.wantEnforceContents)
-			}
+			testutil.AssertFilePath(t, "enforce", resource.enforcePath, tt.wantEnforcePath)
+			testutil.AssertFileContents(t, resource.enforcePath, tt.wantEnforceContents)
 		})
 	}
 }
@@ -261,77 +251,77 @@ func TestExecResourceRun(t *testing.T) {
 		goos        string
 		execR       *agentendpointpb.OSPolicy_Resource_ExecResource_Exec
 		expectedCmd *exec.Cmd
-		wantErr     string
+		wantErr     error
 	}{
 		{
 			name:        "NONE interpreter",
 			goos:        "linux",
 			execR:       &agentendpointpb.OSPolicy_Resource_ExecResource_Exec{Interpreter: agentendpointpb.OSPolicy_Resource_ExecResource_Exec_NONE},
 			expectedCmd: exec.Command("test_script"),
-			wantErr:     "",
+			wantErr:     nil,
 		},
 		{
 			name:        "SHELL Linux",
 			goos:        "linux",
 			execR:       &agentendpointpb.OSPolicy_Resource_ExecResource_Exec{Interpreter: agentendpointpb.OSPolicy_Resource_ExecResource_Exec_SHELL},
 			expectedCmd: exec.Command("/bin/sh", "test_script"),
-			wantErr:     "",
+			wantErr:     nil,
 		},
 		{
 			name:        "SHELL with args",
 			goos:        "linux",
 			execR:       &agentendpointpb.OSPolicy_Resource_ExecResource_Exec{Interpreter: agentendpointpb.OSPolicy_Resource_ExecResource_Exec_SHELL, Args: []string{"arg1", "arg2"}},
 			expectedCmd: exec.Command("/bin/sh", "test_script", "arg1", "arg2"),
-			wantErr:     "",
+			wantErr:     nil,
 		},
 		{
 			name:        "SHELL Windows",
 			goos:        "windows",
 			execR:       &agentendpointpb.OSPolicy_Resource_ExecResource_Exec{Interpreter: agentendpointpb.OSPolicy_Resource_ExecResource_Exec_SHELL},
 			expectedCmd: exec.Command("test_script"),
-			wantErr:     "",
+			wantErr:     nil,
 		},
 		{
 			name:        "POWERSHELL Windows",
 			goos:        "windows",
 			execR:       &agentendpointpb.OSPolicy_Resource_ExecResource_Exec{Interpreter: agentendpointpb.OSPolicy_Resource_ExecResource_Exec_POWERSHELL},
 			expectedCmd: exec.Command("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\PowerShell.exe", "-File", "test_script"),
-			wantErr:     "",
+			wantErr:     nil,
 		},
 		{
 			name:        "POWERSHELL Linux error",
 			goos:        "linux",
 			execR:       &agentendpointpb.OSPolicy_Resource_ExecResource_Exec{Interpreter: agentendpointpb.OSPolicy_Resource_ExecResource_Exec_POWERSHELL},
 			expectedCmd: nil,
-			wantErr:     `interpreter "POWERSHELL" can only be used on Windows systems`,
+			wantErr:     errors.New(`interpreter "POWERSHELL" can only be used on Windows systems`),
 		},
 		{
 			name:        "Unsupported interpreter",
 			goos:        "linux",
 			execR:       &agentendpointpb.OSPolicy_Resource_ExecResource_Exec{Interpreter: agentendpointpb.OSPolicy_Resource_ExecResource_Exec_Interpreter(99)},
 			expectedCmd: nil,
-			wantErr:     `unsupported interpreter "99"`,
+			wantErr:     errors.New(`unsupported interpreter "99"`),
 		},
 		{
 			name:        "Nil Exec",
 			goos:        "linux",
 			execR:       nil,
 			expectedCmd: nil,
-			wantErr:     `ExecResource Exec cannot be nil`,
+			wantErr:     errors.New(`ExecResource Exec cannot be nil`),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			goos = tt.goos
-			e := &execResource{}
+			execRes := &execResource{}
 			mockCommandRunner := setupMockRunner(t)
 			if tt.expectedCmd != nil {
 				mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(tt.expectedCmd)).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
 			}
 
-			_, _, _, err := e.run(ctx, "test_script", tt.execR)
-			matchError(t, err, tt.wantErr)
+			_, _, _, err := execRes.run(ctx, "test_script", tt.execR)
+			testutil.AssertErrorMatch(t, err, tt.wantErr)
 		})
 	}
 }
@@ -340,37 +330,36 @@ func TestExecResourceRun(t *testing.T) {
 func TestExecResourceCheckState(t *testing.T) {
 	ctx := context.Background()
 	preserveGlobalState(t)
+	execRes := &execResource{
+		validatePath: "test_script",
+		OSPolicy_Resource_ExecResource: &agentendpointpb.OSPolicy_Resource_ExecResource{
+			Validate: &agentendpointpb.OSPolicy_Resource_ExecResource_Exec{
+				Interpreter: agentendpointpb.OSPolicy_Resource_ExecResource_Exec_NONE,
+			},
+		},
+	}
 
 	var tests = []struct {
 		name               string
 		exitCode           int
 		wantInDesiredState bool
-		wantErr            string
+		wantErr            error
 	}{
-		{name: "Code 100", exitCode: 100, wantInDesiredState: true, wantErr: ""},
-		{name: "Code 101", exitCode: 101, wantInDesiredState: false, wantErr: ""},
-		{name: "Code 0", exitCode: 0, wantInDesiredState: false, wantErr: "unexpected return code from validate: 0, stdout: stdout, stderr: stderr"},
-		{name: "Code -1", exitCode: -1, wantInDesiredState: false, wantErr: "some error"},
+		{name: "Code 100", exitCode: 100, wantInDesiredState: true, wantErr: nil},
+		{name: "Code 101", exitCode: 101, wantInDesiredState: false, wantErr: nil},
+		{name: "Code 0", exitCode: 0, wantInDesiredState: false, wantErr: errors.New("unexpected return code from validate: 0, stdout: stdout, stderr: stderr")},
+		{name: "Code -1", exitCode: -1, wantInDesiredState: false, wantErr: errors.New("some error")},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCommandRunner := setupMockRunner(t)
 			mockRunnerExpectation(ctx, mockCommandRunner, tt.exitCode)
-			e := &execResource{
-				validatePath: "test_script",
-				OSPolicy_Resource_ExecResource: &agentendpointpb.OSPolicy_Resource_ExecResource{
-					Validate: &agentendpointpb.OSPolicy_Resource_ExecResource_Exec{
-						Interpreter: agentendpointpb.OSPolicy_Resource_ExecResource_Exec_NONE,
-					},
-				},
-			}
 
-			inDesiredState, retErr := e.checkState(ctx)
-			if matchError(t, retErr, tt.wantErr) {
-				if inDesiredState != tt.wantInDesiredState {
-					t.Errorf("checkState() inDesiredState = %v, want %v", inDesiredState, tt.wantInDesiredState)
-				}
+			inDesiredState, err := execRes.checkState(ctx)
+			testutil.AssertErrorMatch(t, err, tt.wantErr)
+			if inDesiredState != tt.wantInDesiredState {
+				t.Errorf("checkState() inDesiredState = %v, want %v", inDesiredState, tt.wantInDesiredState)
 			}
 		})
 	}
@@ -389,13 +378,13 @@ func TestExecResourceEnforceState(t *testing.T) {
 		exitCode           int
 		outputFilePath     string
 		wantInDesiredState bool
-		wantErr            string
+		wantErr            error
 		wantOutput         string
 	}{
-		{name: "Code 100 without output", exitCode: 100, outputFilePath: "", wantInDesiredState: true, wantErr: "", wantOutput: ""},
-		{name: "Code 100 with output", exitCode: 100, outputFilePath: outputFile, wantInDesiredState: true, wantErr: "", wantOutput: "my enforce output"},
-		{name: "Code 0", exitCode: 0, outputFilePath: "", wantInDesiredState: false, wantErr: "unexpected return code from enforce: 0, stdout: stdout, stderr: stderr", wantOutput: ""},
-		{name: "Code -1", exitCode: -1, outputFilePath: "", wantInDesiredState: false, wantErr: "some error", wantOutput: ""},
+		{name: "Code 100 without output", exitCode: 100, outputFilePath: "", wantInDesiredState: true, wantErr: nil, wantOutput: ""},
+		{name: "Code 100 with output", exitCode: 100, outputFilePath: outputFile, wantInDesiredState: true, wantErr: nil, wantOutput: "my enforce output"},
+		{name: "Code 0", exitCode: 0, outputFilePath: "", wantInDesiredState: false, wantErr: errors.New("unexpected return code from enforce: 0, stdout: stdout, stderr: stderr"), wantOutput: ""},
+		{name: "Code -1", exitCode: -1, outputFilePath: "", wantInDesiredState: false, wantErr: errors.New("some error"), wantOutput: ""},
 	}
 
 	for _, tt := range tests {
@@ -407,7 +396,7 @@ func TestExecResourceEnforceState(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			e := &execResource{
+			execRes := &execResource{
 				enforcePath: "test_script",
 				OSPolicy_Resource_ExecResource: &agentendpointpb.OSPolicy_Resource_ExecResource{
 					Enforce: &agentendpointpb.OSPolicy_Resource_ExecResource_Exec{
@@ -417,14 +406,13 @@ func TestExecResourceEnforceState(t *testing.T) {
 				},
 			}
 
-			inDesiredState, retErr := e.enforceState(ctx)
-			if matchError(t, retErr, tt.wantErr) {
-				if inDesiredState != tt.wantInDesiredState {
-					t.Errorf("enforceState() inDesiredState = %v, want %v", inDesiredState, tt.wantInDesiredState)
-				}
-				if tt.wantOutput != "" && string(e.enforceOutput) != tt.wantOutput {
-					t.Errorf("enforceState() output = %q, want %q", string(e.enforceOutput), tt.wantOutput)
-				}
+			inDesiredState, err := execRes.enforceState(ctx)
+			testutil.AssertErrorMatch(t, err, tt.wantErr)
+			if inDesiredState != tt.wantInDesiredState {
+				t.Errorf("enforceState() inDesiredState = %v, want %v", inDesiredState, tt.wantInDesiredState)
+			}
+			if tt.wantOutput != "" && string(execRes.enforceOutput) != tt.wantOutput {
+				t.Errorf("enforceState() output = %q, want %q", string(execRes.enforceOutput), tt.wantOutput)
 			}
 		})
 	}
@@ -450,48 +438,45 @@ func TestExecOutput(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, errDNE := os.Open("DNE")
-	expectedDNEErr := fmt.Sprintf("error opening OutputFilePath: %v", errDNE)
+	_, err := os.Open("DNE")
+	wantedDoNotExistErrorMessage := fmt.Sprintf("error opening OutputFilePath: %v", err)
 
 	var tests = []struct {
 		name     string
 		filePath string
 		want     []byte
-		wantErr  string
+		wantErr  error
 	}{
 		{
 			name:     "empty path",
 			filePath: "",
 			want:     nil,
-			wantErr:  "",
+			wantErr:  nil,
 		},
 		{
 			name:     "path DNE",
 			filePath: "DNE",
 			want:     nil,
-			wantErr:  expectedDNEErr,
+			wantErr:  errors.New(wantedDoNotExistErrorMessage),
 		},
 		{
 			name:     "normal case",
 			filePath: fileA,
 			want:     contentsA,
-			wantErr:  "",
+			wantErr:  nil,
 		},
 		{
 			name:     "file to large case",
 			filePath: fileB,
 			want:     contentsB[:maxExecOutputSize],
-			wantErr:  fmt.Sprintf("contents of OutputFilePath greater than %dK", maxExecOutputSize/1024),
+			wantErr:  fmt.Errorf("contents of OutputFilePath greater than %dK", maxExecOutputSize/1024),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := execOutput(ctx, tt.filePath)
-			if matchError(t, err, tt.wantErr) {
-				if !reflect.DeepEqual(got, tt.want) {
-					t.Errorf("got != want, string(got) = %q string(want) = %q", got, tt.want)
-				}
-			}
+			testutil.AssertErrorMatch(t, err, tt.wantErr)
+			testutil.EnsureEquals(t, got, tt.want)
 		})
 	}
 }
@@ -517,11 +502,11 @@ func TestExecResourcePopulateOutput(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			e := &execResource{
+			execRes := &execResource{
 				enforceOutput: tt.outputData,
 			}
 			rCompliance := &agentendpointpb.OSPolicyResourceCompliance{}
-			e.populateOutput(rCompliance)
+			execRes.populateOutput(rCompliance)
 
 			var got string
 			if rCompliance.GetExecResourceOutput() != nil {
@@ -542,30 +527,29 @@ func TestExecResourceCleanup(t *testing.T) {
 	tests := []struct {
 		name         string
 		setupTempDir func() string
-		wantErr      string
+		wantErr      error
 	}{
 		{
 			name:         "Empty temp directory",
 			setupTempDir: func() string { return "" },
-			wantErr:      "",
+			wantErr:      nil,
 		},
 		{
 			name: "Valid temp directory",
 			setupTempDir: func() string {
 				return t.TempDir()
 			},
-			wantErr: "",
+			wantErr: nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tmpDir := tt.setupTempDir()
-			e := &execResource{tempDir: tmpDir}
+			execRes := &execResource{tempDir: tmpDir}
 
-			err := e.cleanup(ctx)
-			matchError(t, err, tt.wantErr)
-
+			err := execRes.cleanup(ctx)
+			testutil.AssertErrorMatch(t, err, tt.wantErr)
 			if tmpDir != "" {
 				if _, err := os.Stat(tmpDir); !os.IsNotExist(err) {
 					t.Errorf("cleanup() failed to remove temp directory %q", tmpDir)
@@ -617,35 +601,4 @@ func preserveGlobalState(t *testing.T) {
 		goos = origGoos
 		runner = origRunner
 	})
-}
-
-// matchError asserts if the error matches the expected error message.
-// It returns true if we should continue testing (i.e. no error occurred and none was expected).
-func matchError(t *testing.T, err error, wantErr string) bool {
-	t.Helper()
-	if err != nil {
-		if wantErr == "" {
-			t.Errorf("Unexpected error: %v", err)
-		} else if err.Error() != wantErr {
-			t.Errorf("error = %q, wantErr %q", err.Error(), wantErr)
-		}
-		return false
-	}
-	if wantErr != "" {
-		t.Errorf("Expected error %q but got nil", wantErr)
-		return false
-	}
-	return true
-}
-
-// assertFileContents verifies that the file at filePath matches the expected contents.
-func assertFileContents(t *testing.T, filePath string, wantContents string) {
-	t.Helper()
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		t.Fatalf("Failed to read file %q: %v", filePath, err)
-	}
-	if string(data) != wantContents {
-		t.Errorf("File contents = %q, want %q", string(data), wantContents)
-	}
 }
