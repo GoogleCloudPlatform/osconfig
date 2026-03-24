@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+  "strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -140,6 +141,7 @@ func TestRunExecStep(t *testing.T) {
 	}
 }
 
+// TestGetGCSObject verifies the process of downloading objects from Google Cloud Storage. It uses a local HTTP server to emulate the GCS API
 func TestGetGCSObject(t *testing.T) {
 	ctx := context.Background()
 	testContent := "test script content"
@@ -189,8 +191,8 @@ func TestGetGCSObject(t *testing.T) {
 			ts := httptest.NewServer(tt.handler)
 			defer ts.Close()
 
-			os.Setenv("STORAGE_EMULATOR_HOST", ts.URL)
-			defer os.Unsetenv("STORAGE_EMULATOR_HOST")
+      rollback := OverrideEnv(t, "STORAGE_EMULATOR_HOST", ts.URL)
+			defer t.Cleanup(rollback)
 
 			localPath, err := getGCSObject(ctx, tt.bucket, tt.object, 0)
 			if (err != nil) != tt.wantErr {
@@ -213,24 +215,38 @@ func TestGetGCSObject(t *testing.T) {
 	}
 }
 
+// TestExecuteCommand verifies the handling of process execution results by mocking the run function
 func TestExecuteCommand(t *testing.T) {
 	ctx := context.Background()
 	oldRun := run
 	defer func() { run = oldRun }()
 
 	tests := []struct {
-		name     string
-		mockRun  func(*exec.Cmd) ([]byte, error)
-		wantCode int32
-		wantErr  bool
+		name       string
+		mockRun    func(*exec.Cmd) ([]byte, error)
+		wantCode   int32
+		wantErr    bool
+		wantErrMsg string
 	}{
+		{
+			name: "Success",
+			mockRun: func(cmd *exec.Cmd) ([]byte, error) {
+				testCmd := exec.Command("true")
+				testCmd.Run()
+				cmd.ProcessState = testCmd.ProcessState
+				return []byte("output"), nil
+			},
+			wantCode: 0,
+			wantErr:  false,
+		},
 		{
 			name: "SystemError",
 			mockRun: func(cmd *exec.Cmd) ([]byte, error) {
 				return nil, fmt.Errorf("system error")
 			},
-			wantCode: -1,
-			wantErr:  true,
+			wantCode:   -1,
+			wantErr:    true,
+			wantErrMsg: "system error",
 		},
 		{
 			name: "CommandExitError",
@@ -249,6 +265,9 @@ func TestExecuteCommand(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("%s: executeCommand() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 			}
+			if err != nil && tt.wantErrMsg != "" && !strings.Contains(err.Error(), tt.wantErrMsg) {
+				t.Errorf("%s: executeCommand() error = %v, want error to contain %q", tt.name, err, tt.wantErrMsg)
+			}
 			if gotCode != tt.wantCode {
 				t.Errorf("%s: executeCommand() exitCode = %d, want %d", tt.name, gotCode, tt.wantCode)
 			}
@@ -256,3 +275,23 @@ func TestExecuteCommand(t *testing.T) {
 	}
 }
 
+func OverrideEnv(t *testing.T, env, value string) (rollback func()) {
+	orig, ok := os.LookupEnv(env)
+	rollback = func() {
+		if ok {
+			if err := os.Setenv(env, orig); err != nil {
+				t.Fatalf("Failed to restore environment variable %s: %v", env, err)
+			}
+		} else {
+			if err := os.Unsetenv(env); err != nil {
+				t.Fatalf("Failed to unset environment variable %s: %v", env, err)
+			}
+		}
+	}
+
+	if err := os.Setenv(env, value); err != nil {
+		t.Fatalf("Failed to set environment variable %s: %v", env, err)
+	}
+
+	return rollback
+}
