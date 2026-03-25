@@ -28,11 +28,13 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
+var rebootRequiredFile = "/var/run/reboot-required"
+
 // SystemRebootRequired checks whether a system reboot is required.
 func SystemRebootRequired(ctx context.Context) (bool, error) {
 	if packages.AptExists {
-		clog.Debugf(ctx, "Checking if reboot required by looking at /var/run/reboot-required.")
-		data, err := ioutil.ReadFile("/var/run/reboot-required")
+		clog.Debugf(ctx, "Checking if reboot required by looking at %s.", rebootRequiredFile)
+		data, err := ioutil.ReadFile(rebootRequiredFile)
 		if os.IsNotExist(err) {
 			clog.Debugf(ctx, "/var/run/reboot-required does not exist, indicating no reboot is required.")
 			return false, nil
@@ -45,7 +47,7 @@ func SystemRebootRequired(ctx context.Context) (bool, error) {
 	}
 	if ok := util.Exists(rpmquery); ok {
 		clog.Debugf(ctx, "Checking if reboot required by querying rpm database.")
-		return rpmReboot()
+		return rpmReboot(ctx)
 	}
 
 	return false, errors.New("no recognized package manager installed, can't determine if reboot is required")
