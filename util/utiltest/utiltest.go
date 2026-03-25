@@ -84,8 +84,8 @@ func MatchSnapshot(t testReporter, actual any, snapshotFilepath string) {
 	}
 }
 
-// EnsureEquals checks if got and want are deeply equal. If not, it fails the test.
-func EnsureEquals(t *testing.T, got interface{}, want interface{}) {
+// AssertEquals checks if got and want are deeply equal. If not, it fails the test.
+func AssertEquals(t *testing.T, got interface{}, want interface{}) {
 	t.Helper()
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("got != want (-want +got):\n%s", diff)

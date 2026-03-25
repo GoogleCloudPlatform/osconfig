@@ -476,7 +476,7 @@ func TestExecOutput(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := execOutput(ctx, tt.filePath)
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
-			utiltest.EnsureEquals(t, got, tt.want)
+			utiltest.AssertEquals(t, got, tt.want)
 		})
 	}
 }
@@ -512,7 +512,7 @@ func TestExecResourcePopulateOutput(t *testing.T) {
 			if rCompliance.GetExecResourceOutput() != nil {
 				got = string(rCompliance.GetExecResourceOutput().GetEnforcementOutput())
 			}
-			utiltest.EnsureEquals(t, got, tt.wantOutput)
+			utiltest.AssertEquals(t, got, tt.wantOutput)
 		})
 	}
 }
