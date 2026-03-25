@@ -26,9 +26,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 )
 
-const (
-	rpmquery = "/usr/bin/rpmquery"
-)
+var rpmquery = "/usr/bin/rpmquery"
 
 func getBtime(stat string) (int64, error) {
 	f, err := os.Open(stat)
@@ -85,7 +83,7 @@ func rpmRebootRequired(pkgs []byte, btime int64) bool {
 // To get this signal we look at a set of well known packages and whether
 // install time > system boot time. This list is not meant to be exhastive,
 // just to provide a signal when core system packages are updated.
-func rpmReboot() (bool, error) {
+var rpmReboot = func() (bool, error) {
 	provides := []string{
 		// Common packages.
 		"kernel", "glibc", "gnutls",
