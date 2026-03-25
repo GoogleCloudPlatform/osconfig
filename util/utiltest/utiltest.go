@@ -98,12 +98,12 @@ func AssertErrorMatch(t *testing.T, gotErr, wantErr error) {
 	if gotErr == nil && wantErr == nil {
 		return
 	}
-	if gotErr == nil || wantErr == nil {
+	if gotErr == nil || wantErr == nil || reflect.TypeOf(gotErr) != reflect.TypeOf(wantErr) {
 		t.Errorf("Errors mismatch, want %v, got %v", wantErr, gotErr)
 		return
 	}
-	if reflect.TypeOf(gotErr) != reflect.TypeOf(wantErr) || gotErr.Error() != wantErr.Error() {
-		t.Errorf("Unexpected error, want %v, got %v", wantErr, gotErr)
+	if diff := cmp.Diff(wantErr.Error(), gotErr.Error()); diff != "" {
+		t.Errorf("Unexpected error, got != want (-want +got):\n%s", diff)
 	}
 }
 
@@ -133,5 +133,47 @@ func AssertFileContents(t *testing.T, filePath string, wantContents string) {
 	}
 	if diff := cmp.Diff(wantContents, string(data)); diff != "" {
 		t.Errorf("File contents mismatch (-want +got):\n%s", diff)
+	}
+}
+
+// OverrideEnv sets an environment variable for the duration of a test and restores its original state on cleanup.
+func OverrideEnv(t *testing.T, env, value string) {
+	t.Helper()
+	orig, ok := os.LookupEnv(env)
+	t.Cleanup(func() {
+		if ok {
+			if err := os.Setenv(env, orig); err != nil {
+				t.Fatalf("Failed to restore environment variable %s: %v", env, err)
+			}
+		} else {
+			if err := os.Unsetenv(env); err != nil {
+				t.Fatalf("Failed to unset environment variable %s: %v", env, err)
+			}
+		}
+	})
+
+	if err := os.Setenv(env, value); err != nil {
+		t.Fatalf("Failed to set environment variable %s: %v", env, err)
+	}
+}
+
+// UnsetEnv unsets an environment variable for the duration of a test and restores its original state on cleanup.
+func UnsetEnv(t *testing.T, env string) {
+	t.Helper()
+	orig, ok := os.LookupEnv(env)
+	t.Cleanup(func() {
+		if ok {
+			if err := os.Setenv(env, orig); err != nil {
+				t.Fatalf("Failed to restore environment variable %s: %v", env, err)
+			}
+		} else {
+			if err := os.Unsetenv(env); err != nil {
+				t.Fatalf("Failed to unset environment variable %s: %v", env, err)
+			}
+		}
+	})
+
+	if err := os.Unsetenv(env); err != nil {
+		t.Fatalf("Failed to unset environment variable %s: %v", env, err)
 	}
 }

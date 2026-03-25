@@ -33,6 +33,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 )
 
 // setupMockMetadataServer starts an httptest.Server with the provided handler and overrides the GCE_METADATA_HOST environment variable.
@@ -42,8 +44,7 @@ func setupMockMetadataServer(t *testing.T, handler http.HandlerFunc) *httptest.S
 	ts := httptest.NewServer(handler)
 	t.Cleanup(ts.Close)
 
-	rollback := OverrideEnv(t, "GCE_METADATA_HOST", strings.TrimPrefix(ts.URL, "http://"))
-	t.Cleanup(rollback)
+	utiltest.OverrideEnv(t, "GCE_METADATA_HOST", strings.TrimPrefix(ts.URL, "http://"))
 
 	return ts
 }
@@ -238,7 +239,7 @@ func TestSetConfigDefaultValues(t *testing.T) {
 // keep polling for real changes. This test verifies that the agent correctly
 // continues to wait until its internal timeout runs out, and then exits normally.
 func TestWatchConfigUnchangedConfigTimeout(t *testing.T) {
-	defer OverrideWatchConfigTimeouts(1*time.Millisecond, 10*time.Millisecond)()
+	OverrideWatchConfigTimeouts(t, 1*time.Millisecond, 10*time.Millisecond)
 
 	var count int
 	setupMockMetadataServer(t, func(w http.ResponseWriter, r *http.Request) {
@@ -267,17 +268,17 @@ func TestWatchConfigUnchangedConfigTimeout(t *testing.T) {
 // up to a limit of 12 times before giving up and reporting an error.
 func TestWatchConfigWebErrorLimit(t *testing.T) {
 	lEtag.set("0")
-	defer OverrideWatchConfigTimeouts(1*time.Millisecond, 1*time.Second)()
-	defer OverrideEnv(t, "GCE_METADATA_HOST", "mock-host")()
+	OverrideWatchConfigTimeouts(t, 1*time.Millisecond, 1*time.Second)
+	utiltest.OverrideEnv(t, "GCE_METADATA_HOST", "mock-host")
 
 	mockNetErr := &net.OpError{
 		Op:  "dial",
 		Net: "tcp",
 		Err: errors.New("connection refused"),
 	}
-	defer MockDefaultClientTransport(t, func(req *http.Request) (*http.Response, error) {
+	MockDefaultClientTransport(t, func(req *http.Request) (*http.Response, error) {
 		return nil, mockNetErr
-	})()
+	})
 
 	err := WatchConfig(context.Background())
 	if err == nil {
@@ -290,9 +291,7 @@ func TestWatchConfigWebErrorLimit(t *testing.T) {
 		Err: mockNetErr,
 	}
 	expectedErr := fmt.Errorf("network error when requesting metadata, make sure your instance has an active network and can reach the metadata server: %w", expectedBaseErr)
-	if err.Error() != expectedErr.Error() {
-		t.Errorf("Expected exact error:\n%q\nGot:\n%q", expectedErr.Error(), err.Error())
-	}
+	utiltest.AssertErrorMatch(t, err, expectedErr)
 }
 
 // TestWatchConfigUnmarshalErrorLimit tests how WatchConfig handles bad or incomplete
@@ -300,7 +299,7 @@ func TestWatchConfigWebErrorLimit(t *testing.T) {
 // response and verifies that the agent tries to read it again up to a limit of 3
 // times before it stops and reports an error.
 func TestWatchConfigUnmarshalErrorLimit(t *testing.T) {
-	defer OverrideWatchConfigTimeouts(1*time.Millisecond, 1*time.Second)()
+	OverrideWatchConfigTimeouts(t, 1*time.Millisecond, 1*time.Second)
 
 	badJSON := []byte(`{"bad json"`)
 	setupMockMetadataServer(t, func(w http.ResponseWriter, r *http.Request) {
@@ -316,9 +315,7 @@ func TestWatchConfigUnmarshalErrorLimit(t *testing.T) {
 
 	var dummy metadataJSON
 	expectedErr := json.Unmarshal(badJSON, &dummy)
-	if err.Error() != expectedErr.Error() {
-		t.Errorf("Expected exact error:\n%q\nGot:\n%q", expectedErr.Error(), err.Error())
-	}
+	utiltest.AssertErrorMatch(t, err, expectedErr)
 }
 
 // TestWatchConfigContextCancel tests that the WatchConfig function can be stopped
@@ -326,7 +323,7 @@ func TestWatchConfigUnmarshalErrorLimit(t *testing.T) {
 // cancel, it stops immediately without waiting for a timeout or retrying failed
 // requests.
 func TestWatchConfigContextCancel(t *testing.T) {
-	defer OverrideWatchConfigTimeouts(1*time.Minute, 1*time.Minute)()
+	OverrideWatchConfigTimeouts(t, 1*time.Minute, 1*time.Minute)
 
 	setupMockMetadataServer(t, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Etag", fmt.Sprintf("cancel-etag-%d", time.Now().UnixNano()))
@@ -418,7 +415,7 @@ func TestIDToken(t *testing.T) {
 		handler      http.HandlerFunc
 		numCalls     int
 		wantToken    string
-		wantErr      bool
+		wantErr      error
 		wantRequests int
 	}{
 		{
@@ -433,7 +430,7 @@ func TestIDToken(t *testing.T) {
 			},
 			numCalls:     2,
 			wantToken:    validToken,
-			wantErr:      false,
+			wantErr:      nil,
 			wantRequests: 1, // Only 1 request should be made due to caching
 		},
 		{
@@ -448,7 +445,7 @@ func TestIDToken(t *testing.T) {
 			},
 			numCalls:     2,
 			wantToken:    expiringToken,
-			wantErr:      false,
+			wantErr:      nil,
 			wantRequests: 2, // Token is within 10m of expiry, should trigger a fetch on every call
 		},
 		{
@@ -457,7 +454,7 @@ func TestIDToken(t *testing.T) {
 				http.Error(w, "internal error", http.StatusInternalServerError)
 			},
 			numCalls: 1,
-			wantErr:  true,
+			wantErr:  fmt.Errorf("error getting token from metadata: %w", errors.New("compute: Received 500 `internal error\n`")),
 			// The compute/metadata client library automatically retries on 500 errors (1 initial + 5 retries).
 			wantRequests: 6,
 		},
@@ -468,7 +465,7 @@ func TestIDToken(t *testing.T) {
 				fmt.Fprint(w, "not.a.valid.token")
 			},
 			numCalls:     1,
-			wantErr:      true,
+			wantErr:      errors.New("jws: invalid token received"),
 			wantRequests: 1,
 		},
 	}
@@ -488,11 +485,8 @@ func TestIDToken(t *testing.T) {
 			for i := 0; i < tt.numCalls; i++ {
 				token, err = IDToken()
 			}
-
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("IDToken() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if err == nil && token != tt.wantToken {
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			if token != tt.wantToken {
 				t.Errorf("IDToken() = %q, want %q", token, tt.wantToken)
 			}
 			if requests != tt.wantRequests {
@@ -504,42 +498,36 @@ func TestIDToken(t *testing.T) {
 
 // TestFormatMetadataError verifies that network and DNS errors are wrapped with helpful context.
 func TestFormatMetadataError(t *testing.T) {
-	errStandard := fmt.Errorf("standard error")
-	errDNS := &url.Error{Err: &net.DNSError{Err: "no such host"}}
-	errNet := &url.Error{Err: &net.OpError{Op: "dial", Net: "tcp"}}
+	dnsErr := &url.Error{Err: &net.DNSError{Err: "no such host"}}
+	netErr := &url.Error{Err: &net.OpError{Op: "dial", Net: "tcp", Err: errors.New("connection refused")}}
 
 	tests := []struct {
-		name        string
-		inputErr    error
-		wantExact   error
-		wantContain string
+		name     string
+		inputErr error
+		wantErr  error
 	}{
 		{
-			name:      "standard error",
-			inputErr:  errStandard,
-			wantExact: errStandard,
+			name:     "standard error",
+			inputErr: fmt.Errorf("standard error"),
+			wantErr:  fmt.Errorf("standard error"),
 		},
 		{
-			name:        "DNS error",
-			inputErr:    errDNS,
-			wantContain: "DNS error when requesting metadata",
+			name:     "DNS error",
+			inputErr: dnsErr,
+			wantErr:  fmt.Errorf("DNS error when requesting metadata, check DNS settings and ensure metadata.google.internal is setup in your hosts file: %w", dnsErr),
 		},
 		{
-			name:        "network error",
-			inputErr:    errNet,
-			wantContain: "network error when requesting metadata",
+			name:     "network error",
+			inputErr: netErr,
+			wantErr:  fmt.Errorf("network error when requesting metadata, make sure your instance has an active network and can reach the metadata server: %w", netErr),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := formatMetadataError(tt.inputErr)
-			if tt.wantExact != nil && got != tt.wantExact {
-				t.Errorf("formatMetadataError() = %v, want exact %v", got, tt.wantExact)
-			}
-			if tt.wantContain != "" && !strings.Contains(got.Error(), tt.wantContain) {
-				t.Errorf("formatMetadataError() = %v, want to contain %q", got, tt.wantContain)
-			}
+
+			utiltest.AssertErrorMatch(t, got, tt.wantErr)
 		})
 	}
 }
@@ -608,13 +596,13 @@ func TestGetMetadata(t *testing.T) {
 
 // TestGetMetadataFallback verifies fallback to the default metadata IP address.
 func TestGetMetadataFallback(t *testing.T) {
-	defer UnsetEnv(t, metadataHostEnv)()
+	utiltest.UnsetEnv(t, metadataHostEnv)
 
 	var requestedURL string
-	defer MockDefaultClientTransport(t, func(req *http.Request) (*http.Response, error) {
+	MockDefaultClientTransport(t, func(req *http.Request) (*http.Response, error) {
 		requestedURL = req.URL.String()
 		return &http.Response{StatusCode: 200, Body: ioutil.NopCloser(strings.NewReader("mock response"))}, nil
-	})()
+	})
 
 	_, _, err := getMetadata("test-suffix")
 	if err != nil {
@@ -632,7 +620,7 @@ func TestGetMetadataErrors(t *testing.T) {
 	tests := []struct {
 		name           string
 		suffix         string
-		mockTransport  func(t *testing.T) (rollback func())
+		mockTransport  func(t *testing.T)
 		wantErrContain string
 	}{
 		{
@@ -643,8 +631,8 @@ func TestGetMetadataErrors(t *testing.T) {
 		{
 			name:   "client.Do error",
 			suffix: "test-suffix",
-			mockTransport: func(t *testing.T) func() {
-				return MockDefaultClientTransport(t, func(req *http.Request) (*http.Response, error) {
+			mockTransport: func(t *testing.T) {
+				MockDefaultClientTransport(t, func(req *http.Request) (*http.Response, error) {
 					return nil, fmt.Errorf("mock dial error")
 				})
 			},
@@ -655,7 +643,7 @@ func TestGetMetadataErrors(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.mockTransport != nil {
-				t.Cleanup(tt.mockTransport(t))
+				tt.mockTransport(t)
 			}
 			_, _, err := getMetadata(tt.suffix)
 			if err == nil || !strings.Contains(err.Error(), tt.wantErrContain) {
@@ -1184,7 +1172,7 @@ func TestGetCacheDirWindows(t *testing.T) {
 				// that os.UserCacheDir relies on to generate paths.
 				envs := []string{"HOME", "LocalAppData", "XDG_CACHE_HOME"}
 				for _, env := range envs {
-					t.Cleanup(UnsetEnv(t, env))
+					utiltest.UnsetEnv(t, env)
 				}
 			},
 			want:        filepath.Join(os.TempDir(), windowsCacheDir),
@@ -1318,70 +1306,27 @@ func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f(req)
 }
 
-// OverrideEnv sets an environment variable for the duration of a test and returns a rollback function to restore its original state.
-func OverrideEnv(t *testing.T, env, value string) (rollback func()) {
-	orig, ok := os.LookupEnv(env)
-	rollback = func() {
-		if ok {
-			if err := os.Setenv(env, orig); err != nil {
-				t.Fatalf("Failed to restore environment variable %s: %v", env, err)
-			}
-		} else {
-			if err := os.Unsetenv(env); err != nil {
-				t.Fatalf("Failed to unset environment variable %s: %v", env, err)
-			}
-		}
-	}
-
-	if err := os.Setenv(env, value); err != nil {
-		t.Fatalf("Failed to set environment variable %s: %v", env, err)
-	}
-
-	return rollback
-}
-
-// UnsetEnv unsets an environment variable for the duration of a test and returns a rollback function to restore its original state.
-func UnsetEnv(t *testing.T, env string) (rollback func()) {
-	orig, ok := os.LookupEnv(env)
-	rollback = func() {
-		if ok {
-			if err := os.Setenv(env, orig); err != nil {
-				t.Fatalf("Failed to restore environment variable %s: %v", env, err)
-			}
-		} else {
-			if err := os.Unsetenv(env); err != nil {
-				t.Fatalf("Failed to unset environment variable %s: %v", env, err)
-			}
-		}
-	}
-
-	if err := os.Unsetenv(env); err != nil {
-		t.Fatalf("Failed to unset environment variable %s: %v", env, err)
-	}
-
-	return rollback
-}
-
 // OverrideWatchConfigTimeouts temporarily overwrites the timeout and retry intervals for WatchConfig.
-func OverrideWatchConfigTimeouts(interval, timeout time.Duration) (rollback func()) {
+func OverrideWatchConfigTimeouts(t *testing.T, interval, timeout time.Duration) {
+	t.Helper()
 	origInterval := watchConfigRetryInterval
 	origTimeout := osConfigWatchConfigTimeout
 
 	watchConfigRetryInterval = interval
 	osConfigWatchConfigTimeout = timeout
-	return func() {
+	t.Cleanup(func() {
 		watchConfigRetryInterval = origInterval
 		osConfigWatchConfigTimeout = origTimeout
-	}
+	})
 }
 
 // MockDefaultClientTransport temporarily replaces the defaultClient's transport with a custom round tripper.
-func MockDefaultClientTransport(t *testing.T, roundTrip func(*http.Request) (*http.Response, error)) (rollback func()) {
+func MockDefaultClientTransport(t *testing.T, roundTrip func(*http.Request) (*http.Response, error)) {
 	origClient := defaultClient
 	defaultClient = &http.Client{
 		Transport: roundTripperFunc(roundTrip),
 	}
-	return func() {
+	t.Cleanup(func() {
 		defaultClient = origClient
-	}
+	})
 }
