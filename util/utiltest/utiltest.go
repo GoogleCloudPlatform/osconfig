@@ -3,6 +3,8 @@ package utiltest
 import (
 	"errors"
 	"os"
+	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -79,5 +81,99 @@ func MatchSnapshot(t testReporter, actual any, snapshotFilepath string) {
 		t.Errorf("Snapshot file %q is different from actual data:\n%s", snapshotFilepath, diff)
 	} else {
 		removeSnapshotDraft(snapshotFilepath)
+	}
+}
+
+// EnsureEquals checks if got and want are deeply equal. If not, it fails the test.
+func EnsureEquals(t *testing.T, got interface{}, want interface{}) {
+	t.Helper()
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("got != want (-want +got):\n%s", diff)
+	}
+}
+
+// AssertErrorMatch verifies that the gotErr matches the wantErr type and message.
+func AssertErrorMatch(t *testing.T, gotErr, wantErr error) {
+	t.Helper()
+	if gotErr == nil && wantErr == nil {
+		return
+	}
+	if gotErr == nil || wantErr == nil || reflect.TypeOf(gotErr) != reflect.TypeOf(wantErr) {
+		t.Errorf("Errors mismatch, want %v, got %v", wantErr, gotErr)
+		return
+	}
+	if diff := cmp.Diff(wantErr.Error(), gotErr.Error()); diff != "" {
+		t.Errorf("Unexpected error, got != want (-want +got):\n%s", diff)
+	}
+}
+
+// AssertFilePath verifies that the file path base matches the expected path base.
+func AssertFilePath(t *testing.T, gotPath string, wantPath string) {
+	t.Helper()
+	if wantPath == "" {
+		if gotPath != "" {
+			t.Errorf("unexpected path: got %q, want empty", gotPath)
+		}
+		return
+	}
+	if diff := cmp.Diff(wantPath, filepath.Base(gotPath)); diff != "" {
+		t.Errorf("unexpected path (-want +got):\n%s", diff)
+	}
+}
+
+// AssertFileContents verifies that the file at filePath matches the expected contents.
+func AssertFileContents(t *testing.T, filePath string, wantContents string) {
+	t.Helper()
+	if filePath == "" {
+		return
+	}
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		t.Fatalf("Failed to read file %q: %v", filePath, err)
+	}
+	if diff := cmp.Diff(wantContents, string(data)); diff != "" {
+		t.Errorf("File contents mismatch (-want +got):\n%s", diff)
+	}
+}
+
+// OverrideEnv sets an environment variable for the duration of a test and restores its original state on cleanup.
+func OverrideEnv(t *testing.T, env, value string) {
+	t.Helper()
+	orig, ok := os.LookupEnv(env)
+	t.Cleanup(func() {
+		if ok {
+			if err := os.Setenv(env, orig); err != nil {
+				t.Fatalf("Failed to restore environment variable %s: %v", env, err)
+			}
+		} else {
+			if err := os.Unsetenv(env); err != nil {
+				t.Fatalf("Failed to unset environment variable %s: %v", env, err)
+			}
+		}
+	})
+
+	if err := os.Setenv(env, value); err != nil {
+		t.Fatalf("Failed to set environment variable %s: %v", env, err)
+	}
+}
+
+// UnsetEnv unsets an environment variable for the duration of a test and restores its original state on cleanup.
+func UnsetEnv(t *testing.T, env string) {
+	t.Helper()
+	orig, ok := os.LookupEnv(env)
+	t.Cleanup(func() {
+		if ok {
+			if err := os.Setenv(env, orig); err != nil {
+				t.Fatalf("Failed to restore environment variable %s: %v", env, err)
+			}
+		} else {
+			if err := os.Unsetenv(env); err != nil {
+				t.Fatalf("Failed to unset environment variable %s: %v", env, err)
+			}
+		}
+	})
+
+	if err := os.Unsetenv(env); err != nil {
+		t.Fatalf("Failed to unset environment variable %s: %v", env, err)
 	}
 }
