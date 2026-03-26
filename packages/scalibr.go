@@ -8,13 +8,14 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	scalibr "github.com/google/osv-scalibr"
 	"github.com/google/osv-scalibr/binary/platform"
+	"github.com/google/osv-scalibr/binary/proto/config_go_proto"
 	"github.com/google/osv-scalibr/extractor"
-	fslist "github.com/google/osv-scalibr/extractor/filesystem/list"
-	scalibrcos "github.com/google/osv-scalibr/extractor/filesystem/os/cos"
+	scalibrcos "github.com/google/osv-scalibr/extractor/filesystem/os/cos/metadata"
 	dpkgmetadata "github.com/google/osv-scalibr/extractor/filesystem/os/dpkg/metadata"
-	scalibrrpm "github.com/google/osv-scalibr/extractor/filesystem/os/rpm"
+	scalibrrpm "github.com/google/osv-scalibr/extractor/filesystem/os/rpm/metadata"
 	scalibrfs "github.com/google/osv-scalibr/fs"
 	"github.com/google/osv-scalibr/plugin"
+	pl "github.com/google/osv-scalibr/plugin/list"
 	"github.com/google/osv-scalibr/purl"
 )
 
@@ -108,7 +109,7 @@ func (p scalibrInstalledPackagesProvider) getScanConfig() (*scalibr.ScanConfig, 
 		scanRoots = append(scanRoots, scalibrfs.RealFSScanRoot(path))
 	}
 
-	filesystemExtractors, err := fslist.ExtractorsFromNames(p.extractors)
+	plugins, err := pl.FromNames(p.extractors, &config_go_proto.PluginConfig{})
 	if err != nil {
 		return nil, err
 	}
@@ -122,9 +123,9 @@ func (p scalibrInstalledPackagesProvider) getScanConfig() (*scalibr.ScanConfig, 
 	}
 
 	return &scalibr.ScanConfig{
-		FilesystemExtractors: filesystemExtractors,
-		ScanRoots:            scanRoots,
-		DirsToSkip:           dirsToSkip,
+		Plugins:    plugins,
+		ScanRoots:  scanRoots,
+		DirsToSkip: dirsToSkip,
 	}, nil
 }
 
