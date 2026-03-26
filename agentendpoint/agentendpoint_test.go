@@ -1,4 +1,4 @@
-//  Copyright 2019 Google Inc. All Rights Reserved.
+//  Copyright 2026 Google Inc. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -153,16 +153,18 @@ func newAgentEndpointServiceTestServer() *agentEndpointServiceTestServer {
 		resourceExhaustedError: make(chan struct{}, 1),
 	}
 }
+
+// causePermissionError triggers a PermissionDenied error in ReceiveTaskNotification.
 func (s *agentEndpointServiceTestServer) causePermissionError() {
 	s.permissionError <- struct{}{}
 }
 
+// causeResourceExhaustedError triggers a ResourceExhausted error in ReceiveTaskNotification.
 func (s *agentEndpointServiceTestServer) causeResourceExhaustedError() {
-	// ResourceExhausted is handled in waitForTask which calls receiveTaskNotification.
-	// We'll need a way to trigger this. For now let's add a channel.
 	s.resourceExhaustedError <- struct{}{}
 }
 
+// ReceiveTaskNotification sends task notifications or errors based on the state of the test server's channels.
 func (s *agentEndpointServiceTestServer) ReceiveTaskNotification(req *agentendpointpb.ReceiveTaskNotificationRequest, srv agentendpointpb.AgentEndpointService_ReceiveTaskNotificationServer) error {
 	for {
 		select {
@@ -232,7 +234,9 @@ func (s *agentEndpointServiceTestServer) ReportTaskComplete(ctx context.Context,
 	return &agentendpointpb.ReportTaskCompleteResponse{}, nil
 }
 
+// RegisterAgent is a mock implementation of the RegisterAgent RPC.
 func (s *agentEndpointServiceTestServer) RegisterAgent(ctx context.Context, req *agentendpointpb.RegisterAgentRequest) (*agentendpointpb.RegisterAgentResponse, error) {
+	s.registerAgentReq = req
 	return &agentendpointpb.RegisterAgentResponse{}, nil
 }
 
@@ -369,6 +373,7 @@ func TestLoadPatchTaskFromState(t *testing.T) {
 	}
 }
 
+// TestClose verifies that the Client can be closed multiple times without panicking.
 func TestClose(t *testing.T) {
 	ctx := context.Background()
 	tc, err := newTestClient(ctx, newAgentEndpointServiceTestServer())
@@ -383,6 +388,8 @@ func TestClose(t *testing.T) {
 	tc.client.Close()
 }
 
+// TestWaitForTaskNotification verifies that WaitForTaskNotification correctly handles various scenarios.
+// It tests successful notification, service disablement, multiple calls, and context cancellation.
 func TestWaitForTaskNotification(t *testing.T) {
 	ctx := context.Background()
 
@@ -462,6 +469,8 @@ func TestWaitForTaskNotification(t *testing.T) {
 		})
 	}
 }
+
+// TestRegisterAgent verifies that RegisterAgent correctly sends a registration request to the server.
 func TestRegisterAgent(t *testing.T) {
 	ctx := context.Background()
 	tc, err := newTestClient(ctx, newAgentEndpointServiceTestServer())
