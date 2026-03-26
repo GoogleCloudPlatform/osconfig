@@ -16,15 +16,14 @@ package agentendpoint
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"os/exec"
-	"path/filepath"
-  "strings"
 	"testing"
+	"errors"
 
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -149,11 +148,13 @@ func TestGetGCSObject(t *testing.T) {
 	object := "scripts/test.sh"
 
 	tests := []struct {
-		name    string
-		bucket  string
-		object  string
-		handler http.HandlerFunc
-		wantErr bool
+		name        string
+		bucket      string
+		object      string
+		handler     http.HandlerFunc
+		wantErr     error
+		wantPath    string
+		wantContent string
 	}{
 		{
 			name:   "Success",
@@ -163,7 +164,9 @@ func TestGetGCSObject(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 				w.Write([]byte(testContent))
 			},
-			wantErr: false,
+			wantErr:     nil,
+			wantPath:    "test.sh",
+			wantContent: testContent,
 		},
 		{
 			name:   "NotFound",
@@ -172,7 +175,7 @@ func TestGetGCSObject(t *testing.T) {
 			handler: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusNotFound)
 			},
-			wantErr: true,
+			wantErr: errors.New("error fetching GCS object: storage: object doesn't exist"),
 		},
 		{
 			name:   "InvalidLocalPath",
@@ -182,7 +185,7 @@ func TestGetGCSObject(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 				w.Write([]byte(testContent))
 			},
-			wantErr: true,
+			wantErr: errors.New("error downloading GCS object"),
 		},
 	}
 
@@ -191,25 +194,20 @@ func TestGetGCSObject(t *testing.T) {
 			ts := httptest.NewServer(tt.handler)
 			defer ts.Close()
 
-      rollback := OverrideEnv(t, "STORAGE_EMULATOR_HOST", ts.URL)
+			rollback := OverrideEnv(t, "STORAGE_EMULATOR_HOST", ts.URL)
 			defer t.Cleanup(rollback)
 
 			localPath, err := getGCSObject(ctx, tt.bucket, tt.object, 0)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("getGCSObject() error = %v, wantErr %v", err, tt.wantErr)
+			if tt.name == "InvalidLocalPath" {
+				utiltest.AssertErrorContains(t, err, tt.wantErr)
+			} else {
+				utiltest.AssertErrorMatch(t, err, tt.wantErr)
 			}
+
 			if err == nil {
 				defer os.Remove(localPath)
-				content, err := os.ReadFile(localPath)
-				if err != nil {
-					t.Fatalf("Failed to read downloaded file: %v", err)
-				}
-				if string(content) != testContent {
-					t.Errorf("Content mismatch: got %q, want %q", string(content), testContent)
-				}
-				if filepath.Base(localPath) != "test.sh" {
-					t.Errorf("Expected filename test.sh, got %s", filepath.Base(localPath))
-				}
+				utiltest.AssertFilePath(t, localPath, tt.wantPath)
+				utiltest.AssertFileContents(t, localPath, tt.wantContent)
 			}
 		})
 	}
@@ -222,11 +220,10 @@ func TestExecuteCommand(t *testing.T) {
 	defer func() { run = oldRun }()
 
 	tests := []struct {
-		name       string
-		mockRun    func(*exec.Cmd) ([]byte, error)
-		wantCode   int32
-		wantErr    bool
-		wantErrMsg string
+		name     string
+		mockRun  func(*exec.Cmd) ([]byte, error)
+		wantCode int32
+		wantErr  error
 	}{
 		{
 			name: "Success",
@@ -237,16 +234,15 @@ func TestExecuteCommand(t *testing.T) {
 				return []byte("output"), nil
 			},
 			wantCode: 0,
-			wantErr:  false,
+			wantErr:  nil,
 		},
 		{
 			name: "SystemError",
 			mockRun: func(cmd *exec.Cmd) ([]byte, error) {
-				return nil, fmt.Errorf("system error")
+				return nil, errors.New("system error")
 			},
-			wantCode:   -1,
-			wantErr:    true,
-			wantErrMsg: "system error",
+			wantCode: -1,
+			wantErr:  errors.New("system error"),
 		},
 		{
 			name: "CommandExitError",
@@ -254,7 +250,7 @@ func TestExecuteCommand(t *testing.T) {
 				return []byte("error output"), &exec.ExitError{}
 			},
 			wantCode: 0,
-			wantErr:  false,
+			wantErr:  nil,
 		},
 	}
 
@@ -262,12 +258,7 @@ func TestExecuteCommand(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			run = tt.mockRun
 			gotCode, err := executeCommand(ctx, "test-path", nil)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("%s: executeCommand() error = %v, wantErr %v", tt.name, err, tt.wantErr)
-			}
-			if err != nil && tt.wantErrMsg != "" && !strings.Contains(err.Error(), tt.wantErrMsg) {
-				t.Errorf("%s: executeCommand() error = %v, want error to contain %q", tt.name, err, tt.wantErrMsg)
-			}
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 			if gotCode != tt.wantCode {
 				t.Errorf("%s: executeCommand() exitCode = %d, want %d", tt.name, gotCode, tt.wantCode)
 			}
