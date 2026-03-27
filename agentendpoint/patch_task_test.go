@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -114,21 +113,21 @@ func TestHandleErrorState(t *testing.T) {
 
 // TestSetStep verifies that setStep correctly updates the task step and saves the state file with the correct information.
 func TestSetStep(t *testing.T) {
-	td, err := ioutil.TempDir(os.TempDir(), "")
+	td, err := os.MkdirTemp(os.TempDir(), "")
 	if err != nil {
 		t.Fatalf("error creating temp dir: %v", err)
 	}
 	defer os.RemoveAll(td)
-	oldStateFile := taskStateFile
-	taskStateFile = filepath.Join(td, "testState")
-	defer func() { taskStateFile = oldStateFile }()
 
 	pt := &patchTask{
 		TaskID: "test-task",
 		state:  &taskState{},
 	}
 
-	if err := pt.setStep(patching); err != nil {
+	stateFile := filepath.Join(td, "testState")
+	if err := withStateFile(stateFile, func() error {
+		return pt.setStep(patching)
+	}); err != nil {
 		t.Fatalf("setStep error: %v", err)
 	}
 
@@ -136,7 +135,7 @@ func TestSetStep(t *testing.T) {
 		t.Errorf("PatchStep = %q, want %q", pt.PatchStep, patching)
 	}
 
-	if _, err := os.Stat(taskStateFile); os.IsNotExist(err) {
+	if _, err := os.Stat(stateFile); os.IsNotExist(err) {
 		t.Error("State file was not created")
 	}
 }
@@ -151,14 +150,11 @@ func TestReportContinuingState(t *testing.T) {
 	}
 	defer tc.s.Stop()
 
-	td, err := ioutil.TempDir(os.TempDir(), "")
+	td, err := os.MkdirTemp(os.TempDir(), "")
 	if err != nil {
 		t.Fatalf("error creating temp dir: %v", err)
 	}
 	defer os.RemoveAll(td)
-	oldStateFile := taskStateFile
-	taskStateFile = filepath.Join(td, "testState")
-	defer func() { taskStateFile = oldStateFile }()
 
 	pt := &patchTask{
 		client: tc.client,
@@ -167,12 +163,17 @@ func TestReportContinuingState(t *testing.T) {
 	}
 
 	patchState := agentendpointpb.ApplyPatchesTaskProgress_STARTED
-	if err := pt.reportContinuingState(ctx, patchState); err != nil {
+	stateFile := filepath.Join(td, "testState")
+	if err := withStateFile(stateFile, func() error {
+		return pt.reportContinuingState(ctx, patchState)
+	}); err != nil {
 		t.Fatalf("reportContinuingState error: %v", err)
 	}
 
 	// Test deduplication - calling again immediately should not trigger a second report (returns nil early)
-	if err := pt.reportContinuingState(ctx, patchState); err != nil {
+	if err := withStateFile(stateFile, func() error {
+		return pt.reportContinuingState(ctx, patchState)
+	}); err != nil {
 		t.Fatalf("reportContinuingState deduplication error: %v", err)
 	}
 }
@@ -340,9 +341,13 @@ func TestReportContinuingStateStop(t *testing.T) {
 	defer tc.s.Stop()
 }
 
-func withInvalidStateFile(f func() error) error {
+func withStateFile(path string, f func() error) error {
 	oldStateFile := taskStateFile
-	taskStateFile = "/proc/invalid/path/state"
+	taskStateFile = path
 	defer func() { taskStateFile = oldStateFile }()
 	return f()
+}
+
+func withInvalidStateFile(f func() error) error {
+	return withStateFile("/proc/invalid/path/state", f)
 }
