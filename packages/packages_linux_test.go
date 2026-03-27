@@ -7,6 +7,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/golang/mock/gomock"
@@ -68,6 +69,19 @@ func TestGetPackageUpdate(t *testing.T) {
 			err:    nil,
 		},
 	}
+
+	oi := osinfo.OSInfo{Hostname: "Hostname",
+		LongName:      "Longname",
+		ShortName:     "Shortname",
+		Version:       "Version",
+		KernelVersion: "KernelVersion",
+		KernelRelease: "KernelRelease",
+		Architecture:  "Architecture"}
+
+	oiProvider := &stubOsInfoProvider{
+		osinfo: func(_ context.Context) (osinfo.OSInfo, error) { return oi, nil },
+	}
+
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -77,7 +91,8 @@ func TestGetPackageUpdate(t *testing.T) {
 
 	setExpectations(mockCommandRunner, wantCommandChain)
 
-	_, err := GetPackageUpdates(context.Background())
+	packageUpdatesProvider := NewPackageUpdatesProvider(oiProvider)
+	_, err := packageUpdatesProvider.GetPackageUpdates(context.Background())
 	if err != nil {
 		t.Errorf("unexpected error, got: %v, want: <nil>", err)
 	}
@@ -132,6 +147,14 @@ func Test_getPackageUpdateErrorPropagation(t *testing.T) {
 		},
 	}
 
+	oi := osinfo.OSInfo{Hostname: "Hostname",
+		LongName:      "Longname",
+		ShortName:     "Shortname",
+		Version:       "Version",
+		KernelVersion: "KernelVersion",
+		KernelRelease: "KernelRelease",
+		Architecture:  "Architecture"}
+
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -148,7 +171,7 @@ func Test_getPackageUpdateErrorPropagation(t *testing.T) {
 		`error getting zypper available patches: error running /usr/bin/zypper with args ["--gpg-auto-import-keys" "-q" "list-patches" "--all"]: zypper list patches fail, stdout: "", stderr: ""`,
 	}
 
-	_, errs := getPackageUpdates(context.Background())
+	_, errs := getPackageUpdates(context.Background(), oi)
 	if diff := cmp.Diff(wantErrors, errs); diff != "" {
 		t.Errorf("expected set of errors, Diff:\n%s", diff)
 	}
@@ -192,6 +215,18 @@ func TestGetInstalledPackages(t *testing.T) {
 		},
 	}
 
+	oi := osinfo.OSInfo{Hostname: "Hostname",
+		LongName:      "Longname",
+		ShortName:     "Shortname",
+		Version:       "Version",
+		KernelVersion: "KernelVersion",
+		KernelRelease: "KernelRelease",
+		Architecture:  "Architecture"}
+
+	oiProvider := &stubOsInfoProvider{
+		osinfo: func(_ context.Context) (osinfo.OSInfo, error) { return oi, nil },
+	}
+
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -200,7 +235,8 @@ func TestGetInstalledPackages(t *testing.T) {
 	ptyrunner = mockCommandRunner
 	setExpectations(mockCommandRunner, wantCommandChain)
 
-	if _, err := GetInstalledPackages(context.Background()); err != nil {
+	installedPackagesProvider := NewInstalledPackagesProvider(oiProvider)
+	if _, err := installedPackagesProvider.GetInstalledPackages(context.Background()); err != nil {
 		t.Errorf("unexpected error, got: %v, want: <nil>", err)
 	}
 }
@@ -241,6 +277,14 @@ func Test_getInstalledPackages(t *testing.T) {
 		},
 	}
 
+	oi := osinfo.OSInfo{Hostname: "Hostname",
+		LongName:      "Longname",
+		ShortName:     "Shortname",
+		Version:       "Version",
+		KernelVersion: "KernelVersion",
+		KernelRelease: "KernelRelease",
+		Architecture:  "Architecture"}
+
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -256,9 +300,181 @@ func Test_getInstalledPackages(t *testing.T) {
 		`error listing installed deb packages: error running /usr/bin/dpkg-query with args ["-W" "-f" "\\{\"architecture\":\"${Architecture}\",\"package\":\"${Package}\",\"source_name\":\"${source:Package}\",\"source_version\":\"${source:Version}\",\"status\":\"${db:Status-Status}\",\"version\":\"${Version}\"\\}\n"]: dpkg query failed, stdout: "", stderr: ""`,
 	}
 
-	_, errs := getInstalledPackages(context.Background())
+	_, errs := getInstalledPackages(context.Background(), oi)
 	if diff := cmp.Diff(wantErrors, errs); diff != "" {
 		t.Errorf("expected set of errors, Diff:\n%s", diff)
+	}
+}
+
+func Test_enrichPkgInfoWithPurl(t *testing.T) {
+	tests := []struct {
+		name                  string
+		pkgInfo               []*PkgInfo
+		shortname             string
+		version               string
+		enrichPkgInfoFunction func([]*PkgInfo, string, string) []*PkgInfo
+		wantEnrichedPkgInfo   []*PkgInfo
+	}{
+		{
+			name: "Correctly create PURL for RPM packages",
+			pkgInfo: []*PkgInfo{
+				{
+					Name:    "RpmPkg",
+					Arch:    "x86_64",
+					RawArch: "noarch",
+					Version: "Version",
+					Type:    "rpm",
+				},
+			},
+			shortname:             "Namespace",
+			version:               "Version",
+			enrichPkgInfoFunction: enrichRpmPkgInfoWithPurl,
+			wantEnrichedPkgInfo: []*PkgInfo{
+				{
+					Name:    "RpmPkg",
+					Arch:    "x86_64",
+					RawArch: "noarch",
+					Version: "Version",
+					Type:    "rpm",
+					Purl:    "pkg:rpm/Namespace/RpmPkg@Version?arch=x86_64&distro=Version",
+				},
+			},
+		},
+		{
+			name: "Correctly create PURL for Deb packages",
+			pkgInfo: []*PkgInfo{
+				{
+					Name:    "DebPkg",
+					Arch:    "x86_64",
+					RawArch: "",
+					Version: "Version",
+					Type:    "deb",
+					Source:  Source{Name: "SourceName", Version: "SourceVersion"},
+				},
+			},
+			shortname:             "Namespace",
+			version:               "Version",
+			enrichPkgInfoFunction: enrichDebPkgInfoWithPurl,
+			wantEnrichedPkgInfo: []*PkgInfo{
+				{
+					Name:    "DebPkg",
+					Arch:    "x86_64",
+					RawArch: "",
+					Version: "Version",
+					Type:    "deb",
+					Source:  Source{Name: "SourceName", Version: "SourceVersion"},
+					Purl:    "pkg:deb/Namespace/DebPkg@Version?arch=x86_64&distro=Version&source=SourceName",
+				},
+			},
+		},
+		{
+			name: "Correctly create PURL for Cos packages",
+			pkgInfo: []*PkgInfo{
+				{
+					Name:    "CosPkg",
+					Arch:    "x86_64",
+					RawArch: "noarch",
+					Version: "Version",
+					Type:    "cos",
+				},
+			},
+			shortname:             "Namespace",
+			version:               "Version",
+			enrichPkgInfoFunction: enrichCosPkgInfoWithPurl,
+			wantEnrichedPkgInfo: []*PkgInfo{
+				{
+					Name:    "CosPkg",
+					Arch:    "x86_64",
+					RawArch: "noarch",
+					Version: "Version",
+					Type:    "cos",
+					Purl:    "pkg:cos/Namespace/CosPkg@Version?arch=x86_64&distro=Namespace-Version",
+				},
+			},
+		}}
+
+	for _, tt := range tests {
+		got := tt.enrichPkgInfoFunction(tt.pkgInfo, tt.shortname, tt.version)
+
+		if diff := cmp.Diff(tt.wantEnrichedPkgInfo, got); diff != "" {
+			t.Errorf("unexpected diff, diff:\n%s", diff)
+		}
+	}
+}
+
+func Test_enrichGemPkgInfoWithPurl(t *testing.T) {
+	tests := []struct {
+		name                string
+		pkgInfo             []*PkgInfo
+		wantEnrichedPkgInfo []*PkgInfo
+	}{
+		{
+			name: "Correctly create PURL for GEM packages",
+			pkgInfo: []*PkgInfo{
+				{
+					Name:    "GemPkg",
+					Arch:    "x86_64",
+					RawArch: "noarch",
+					Version: "Version",
+					Type:    "gem",
+				},
+			},
+			wantEnrichedPkgInfo: []*PkgInfo{
+				{
+					Name:    "GemPkg",
+					Arch:    "x86_64",
+					RawArch: "noarch",
+					Version: "Version",
+					Type:    "gem",
+					Purl:    "pkg:gem/GemPkg@Version",
+				},
+			},
+		}}
+
+	for _, tt := range tests {
+		got := enrichGemPkgInfoWithPurl(tt.pkgInfo)
+
+		if diff := cmp.Diff(tt.wantEnrichedPkgInfo, got); diff != "" {
+			t.Errorf("unexpected diff, diff:\n%s", diff)
+		}
+	}
+}
+
+func Test_enrichPipPkgInfoWithPurl(t *testing.T) {
+	tests := []struct {
+		name                string
+		pkgInfo             []*PkgInfo
+		wantEnrichedPkgInfo []*PkgInfo
+	}{
+		{
+			name: "Correctly create PURL for PyPI packages",
+			pkgInfo: []*PkgInfo{
+				{
+					Name:    "PipPkg",
+					Arch:    "x86_64",
+					RawArch: "noarch",
+					Version: "Version",
+					Type:    "pypi",
+				},
+			},
+			wantEnrichedPkgInfo: []*PkgInfo{
+				{
+					Name:    "PipPkg",
+					Arch:    "x86_64",
+					RawArch: "noarch",
+					Version: "Version",
+					Type:    "pypi",
+					Purl:    "pkg:pypi/PipPkg@Version",
+				},
+			},
+		}}
+
+	for _, tt := range tests {
+		got := enrichPipPkgInfoWithPurl(tt.pkgInfo)
+
+		if diff := cmp.Diff(tt.wantEnrichedPkgInfo, got); diff != "" {
+			t.Errorf("unexpected diff, diff:\n%s", diff)
+		}
 	}
 }
 
@@ -277,4 +493,12 @@ func enableAllInstalledPackages() {
 	COSPkgInfoExists = true
 	GemExists = true
 	PipExists = true
+}
+
+type stubOsInfoProvider struct {
+	osinfo func(context.Context) (osinfo.OSInfo, error)
+}
+
+func (p stubOsInfoProvider) GetOSInfo(ctx context.Context) (osinfo.OSInfo, error) {
+	return p.osinfo(ctx)
 }

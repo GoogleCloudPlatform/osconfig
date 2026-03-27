@@ -26,7 +26,10 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/util"
 	ole "github.com/go-ole/go-ole"
+	"github.com/package-url/packageurl-go"
 )
+
+var purlNamespace = "microsoft"
 
 func coInitializeEx() error {
 	if err := ole.CoInitializeEx(0, ole.COINIT_MULTITHREADED); err != nil {
@@ -62,9 +65,10 @@ func wuaUpdates(ctx context.Context, query string) ([]*WUAPackage, error) {
 
 // GetPackageUpdates gets available package updates GooGet as well as any
 // available updates from Windows Update Agent.
-func GetPackageUpdates(ctx context.Context) (Packages, error) {
+func (p defaultUpdatesProvider) getPackageUpdates(ctx context.Context) (Packages, error) {
 	var pkgs Packages
 	var errs []string
+	var err error
 
 	if GooGetExists {
 		if googet, err := GooGetUpdates(ctx); err != nil {
@@ -72,6 +76,7 @@ func GetPackageUpdates(ctx context.Context) (Packages, error) {
 			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
+			googet = enrichGoogetPkgInfoWithPurl(googet)
 			pkgs.GooGet = googet
 		}
 	}
@@ -83,10 +88,10 @@ func GetPackageUpdates(ctx context.Context) (Packages, error) {
 		clog.Debugf(ctx, "Error: %s", msg)
 		errs = append(errs, msg)
 	} else {
+		wua = enrichWuaWithPurl(wua)
 		pkgs.WUA = wua
 	}
 
-	var err error
 	if len(errs) != 0 {
 		err = errors.New(strings.Join(errs, "\n"))
 	}
@@ -95,9 +100,10 @@ func GetPackageUpdates(ctx context.Context) (Packages, error) {
 
 // GetInstalledPackages gets all installed GooGet packages and Windows updates.
 // Windows updates are read from Windows Update Agent and Win32_QuickFixEngineering.
-func GetInstalledPackages(ctx context.Context) (Packages, error) {
+func (p defaultInstalledPackagesProvider) getInstalledPackages(ctx context.Context) (Packages, error) {
 	var pkgs Packages
 	var errs []string
+	var err error
 
 	if util.Exists(googet) {
 		if googet, err := InstalledGooGetPackages(ctx); err != nil {
@@ -105,6 +111,8 @@ func GetInstalledPackages(ctx context.Context) (Packages, error) {
 			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
+			// PURL for other Windows packages is set before API request
+			googet := enrichGoogetPkgInfoWithPurl(googet)
 			pkgs.GooGet = googet
 		}
 	}
@@ -116,6 +124,7 @@ func GetInstalledPackages(ctx context.Context) (Packages, error) {
 		clog.Debugf(ctx, "Error: %s", msg)
 		errs = append(errs, msg)
 	} else {
+		wua = enrichWuaWithPurl(wua)
 		pkgs.WUA = wua
 	}
 
@@ -124,6 +133,7 @@ func GetInstalledPackages(ctx context.Context) (Packages, error) {
 		clog.Debugf(ctx, "Error: %s", msg)
 		errs = append(errs, msg)
 	} else {
+		qfe = enrichQfeWithPurl(qfe)
 		pkgs.QFE = qfe
 	}
 
@@ -133,14 +143,43 @@ func GetInstalledPackages(ctx context.Context) (Packages, error) {
 		clog.Debugf(ctx, "Error: %s", msg)
 		errs = append(errs, msg)
 	} else {
+		windowsApplications = enrichWindowsApplicationWithPurl(windowsApplications)
 		pkgs.WindowsApplication = windowsApplications
 	}
 
-	var err error
 	if len(errs) != 0 {
 		err = errors.New(strings.Join(errs, "\n"))
 	}
 	return pkgs, err
+}
+
+func enrichGoogetPkgInfoWithPurl(pkgs []*PkgInfo) []*PkgInfo {
+	for i, pkg := range pkgs {
+		pkgs[i].Purl = packageurl.NewPackageURL(pkg.Type, purlNamespace, pkg.Name, pkg.Version, packageurl.Qualifiers{}, "").ToString()
+	}
+	return pkgs
+}
+
+func enrichWuaWithPurl(pkgs []*WUAPackage) []*WUAPackage {
+	for i, pkg := range pkgs {
+		pkgs[i].Purl = packageurl.NewPackageURL(packageurl.TypeGeneric, purlNamespace, pkg.Title, pkg.UpdateID, packageurl.Qualifiers{}, "").ToString()
+	}
+	return pkgs
+}
+
+func enrichQfeWithPurl(pkgs []*QFEPackage) []*QFEPackage {
+	for i, pkg := range pkgs {
+		pkgs[i].Purl = packageurl.NewPackageURL(packageurl.TypeGeneric, purlNamespace, pkg.Caption, pkg.HotFixID, packageurl.Qualifiers{}, "").ToString()
+	}
+	return pkgs
+}
+
+func enrichWindowsApplicationWithPurl(pkgs []*WindowsApplication) []*WindowsApplication {
+	for i, pkg := range pkgs {
+		qualifiers := packageurl.Qualifiers{packageurl.Qualifier{Key: "publisher", Value: pkg.Publisher}}
+		pkgs[i].Purl = packageurl.NewPackageURL(packageurl.TypeGeneric, purlNamespace, pkg.DisplayName, pkg.DisplayVersion, qualifiers, "").ToString()
+	}
+	return pkgs
 }
 
 // NewInstalledPackagesProvider returns fully initialized provider.

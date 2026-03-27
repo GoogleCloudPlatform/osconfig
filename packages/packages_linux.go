@@ -23,14 +23,21 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
+	"github.com/package-url/packageurl-go"
 )
 
 // GetPackageUpdates gets all available package updates from any known
 // installed package manager.
-func GetPackageUpdates(ctx context.Context) (Packages, error) {
-	pkgs, errs := getPackageUpdates(ctx)
-
+func (p defaultUpdatesProvider) getPackageUpdates(ctx context.Context) (Packages, error) {
 	var err error
+
+	oi, err := p.osinfoProvider.GetOSInfo(ctx)
+	if err != nil {
+		clog.Errorf(ctx, "osinfo.Get() error: %v", err)
+	}
+
+	pkgs, errs := getPackageUpdates(ctx, oi)
+
 	if len(errs) != 0 {
 		err = errors.New(strings.Join(errs, "\n"))
 	}
@@ -38,8 +45,9 @@ func GetPackageUpdates(ctx context.Context) (Packages, error) {
 	return pkgs, err
 }
 
-func getPackageUpdates(ctx context.Context) (Packages, []string) {
+func getPackageUpdates(ctx context.Context, oi osinfo.OSInfo) (Packages, []string) {
 	pkgs := Packages{}
+	shortname := oi.ShortName
 
 	var errs []string
 	if AptExists {
@@ -49,6 +57,7 @@ func getPackageUpdates(ctx context.Context) (Packages, []string) {
 			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
+			apt = enrichDebPkgInfoWithPurl(apt, shortname, oi.Version)
 			pkgs.Apt = apt
 		}
 	}
@@ -59,6 +68,7 @@ func getPackageUpdates(ctx context.Context) (Packages, []string) {
 			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
+			yum = enrichRpmPkgInfoWithPurl(yum, shortname, oi.Version)
 			pkgs.Yum = yum
 		}
 	}
@@ -69,6 +79,7 @@ func getPackageUpdates(ctx context.Context) (Packages, []string) {
 			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
+			zypper = enrichRpmPkgInfoWithPurl(zypper, shortname, oi.Version)
 			pkgs.Zypper = zypper
 		}
 		zypperPatches, err := ZypperPatches(ctx)
@@ -77,6 +88,7 @@ func getPackageUpdates(ctx context.Context) (Packages, []string) {
 			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
+			zypperPatches = enrichZypperPatchWithPurl(zypperPatches, shortname)
 			pkgs.ZypperPatches = zypperPatches
 		}
 	}
@@ -86,6 +98,7 @@ func getPackageUpdates(ctx context.Context) (Packages, []string) {
 			msg := fmt.Sprintf("error getting gem updates: %v", err)
 			clog.Debugf(ctx, "Error: %s", msg)
 		} else {
+			gem = enrichGemPkgInfoWithPurl(gem)
 			pkgs.Gem = gem
 		}
 	}
@@ -95,6 +108,7 @@ func getPackageUpdates(ctx context.Context) (Packages, []string) {
 			msg := fmt.Sprintf("error getting pip updates: %v", err)
 			clog.Debugf(ctx, "Error: %s", msg)
 		} else {
+			pip = enrichPipPkgInfoWithPurl(pip)
 			pkgs.Pip = pip
 		}
 	}
@@ -104,9 +118,15 @@ func getPackageUpdates(ctx context.Context) (Packages, []string) {
 
 // GetInstalledPackages gets all installed packages from any known installed
 // package manager.
-func GetInstalledPackages(ctx context.Context) (Packages, error) {
-	pkgs, errs := getInstalledPackages(ctx)
+func (p defaultInstalledPackagesProvider) getInstalledPackages(ctx context.Context) (Packages, error) {
 	var err error
+
+	oi, err := p.osinfoProvider.GetOSInfo(ctx)
+	if err != nil {
+		clog.Errorf(ctx, "osinfo.Get() error: %v", err)
+	}
+
+	pkgs, errs := getInstalledPackages(ctx, oi)
 	if len(errs) != 0 {
 		err = errors.New(strings.Join(errs, "\n"))
 	}
@@ -114,8 +134,9 @@ func GetInstalledPackages(ctx context.Context) (Packages, error) {
 	return pkgs, err
 }
 
-func getInstalledPackages(ctx context.Context) (Packages, []string) {
+func getInstalledPackages(ctx context.Context, oi osinfo.OSInfo) (Packages, []string) {
 	pkgs := Packages{}
+	shortname := oi.ShortName
 
 	var errs []string
 	if RPMQueryExists {
@@ -125,6 +146,7 @@ func getInstalledPackages(ctx context.Context) (Packages, []string) {
 			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
+			rpm = enrichRpmPkgInfoWithPurl(rpm, shortname, oi.Version)
 			pkgs.Rpm = rpm
 		}
 	}
@@ -135,6 +157,7 @@ func getInstalledPackages(ctx context.Context) (Packages, []string) {
 			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
+			zypperPatches = enrichZypperPatchWithPurl(zypperPatches, shortname)
 			pkgs.ZypperPatches = zypperPatches
 		}
 	}
@@ -145,6 +168,7 @@ func getInstalledPackages(ctx context.Context) (Packages, []string) {
 			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
+			deb = enrichDebPkgInfoWithPurl(deb, shortname, oi.Version)
 			pkgs.Deb = deb
 		}
 	}
@@ -155,6 +179,7 @@ func getInstalledPackages(ctx context.Context) (Packages, []string) {
 			clog.Debugf(ctx, "Error: %s", msg)
 			errs = append(errs, msg)
 		} else {
+			cos = enrichCosPkgInfoWithPurl(cos, shortname, oi.Version)
 			pkgs.COS = cos
 		}
 	}
@@ -164,6 +189,7 @@ func getInstalledPackages(ctx context.Context) (Packages, []string) {
 			msg := fmt.Sprintf("error listing installed gem packages: %v", err)
 			clog.Debugf(ctx, "Error: %s", msg)
 		} else {
+			gem = enrichGemPkgInfoWithPurl(gem)
 			pkgs.Gem = gem
 		}
 	}
@@ -173,11 +199,68 @@ func getInstalledPackages(ctx context.Context) (Packages, []string) {
 			msg := fmt.Sprintf("error listing installed pip packages: %v", err)
 			clog.Debugf(ctx, "Error: %s", msg)
 		} else {
+			pip = enrichPipPkgInfoWithPurl(pip)
 			pkgs.Pip = pip
 		}
 	}
 
 	return pkgs, errs
+}
+
+func enrichDebPkgInfoWithPurl(pkgs []*PkgInfo, shortname string, version string) []*PkgInfo {
+	for i, pkg := range pkgs {
+		qualifiersMap := map[string]string{
+			"source": pkg.Source.Name,
+			"arch":   pkg.Arch,
+			"distro": version, // For Deb, accepted distro format is version (eg. distro=9.1)
+		}
+		pkgs[i].Purl = packageurl.NewPackageURL(pkg.Type, shortname, pkg.Name, pkg.Version, packageurl.QualifiersFromMap(qualifiersMap), "").ToString()
+	}
+	return pkgs
+}
+
+func enrichRpmPkgInfoWithPurl(pkgs []*PkgInfo, shortname string, version string) []*PkgInfo {
+	for i, pkg := range pkgs {
+		qualifiersMap := map[string]string{
+			"arch":   pkg.Arch,
+			"distro": version, // For RPM, accepted distro format is version (eg. distro=9.1)
+		}
+		pkgs[i].Purl = packageurl.NewPackageURL(pkg.Type, shortname, pkg.Name, pkg.Version, packageurl.QualifiersFromMap(qualifiersMap), "").ToString()
+	}
+	return pkgs
+}
+
+func enrichCosPkgInfoWithPurl(pkgs []*PkgInfo, shortname string, version string) []*PkgInfo {
+	for i, pkg := range pkgs {
+		qualifiersMap := map[string]string{
+			"arch":   pkg.Arch,
+			"distro": fmt.Sprintf("%s-%s", shortname, version), // For COS, required distro format is OS and version (eg. distro=cos-101)
+		}
+		pkgs[i].Purl = packageurl.NewPackageURL(pkg.Type, shortname, pkg.Name, pkg.Version, packageurl.QualifiersFromMap(qualifiersMap), "").ToString()
+	}
+	return pkgs
+}
+
+func enrichGemPkgInfoWithPurl(pkgs []*PkgInfo) []*PkgInfo {
+	for i, pkg := range pkgs {
+		pkgs[i].Purl = packageurl.NewPackageURL(pkg.Type, "", pkg.Name, pkg.Version, packageurl.Qualifiers{}, "").ToString()
+	}
+	return pkgs
+}
+
+func enrichPipPkgInfoWithPurl(pkgs []*PkgInfo) []*PkgInfo {
+	for i, pkg := range pkgs {
+		pkgs[i].Purl = packageurl.NewPackageURL(pkg.Type, "", pkg.Name, pkg.Version, packageurl.Qualifiers{}, "").ToString()
+	}
+	return pkgs
+}
+
+func enrichZypperPatchWithPurl(pkgs []*ZypperPatch, shortname string) []*ZypperPatch {
+	for i, pkg := range pkgs {
+		qualifiers := packageurl.Qualifiers{packageurl.Qualifier{Key: "severity", Value: pkg.Severity}}
+		pkgs[i].Purl = packageurl.NewPackageURL(packageurl.TypeGeneric, shortname, pkg.Name, "", qualifiers, "").ToString()
+	}
+	return pkgs
 }
 
 // NewInstalledPackagesProvider makes provider that uses osv-scalibr as its implementation if enabled by config, otherwise falls back to default legacy implementation.
@@ -193,5 +276,7 @@ func NewInstalledPackagesProvider(osinfoProvider osinfo.Provider) InstalledPacka
 		}
 	}
 
-	return defaultInstalledPackagesProvider{}
+	return defaultInstalledPackagesProvider{
+		osinfoProvider: osinfoProvider,
+	}
 }
