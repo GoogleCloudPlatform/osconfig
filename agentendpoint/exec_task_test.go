@@ -16,12 +16,12 @@ package agentendpoint
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"os/exec"
 	"testing"
-	"errors"
 
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/google/go-cmp/cmp"
@@ -199,7 +199,7 @@ func TestGetGCSObject(t *testing.T) {
 
 			localPath, err := getGCSObject(ctx, tt.bucket, tt.object, 0)
 			if tt.name == "InvalidLocalPath" {
-        // impossible to predict exact error message for downloading error because of random /tmp files
+				// impossible to predict exact error message for downloading error because of random /tmp files
 				utiltest.AssertErrorContains(t, err, tt.wantErr)
 			} else {
 				utiltest.AssertErrorMatch(t, err, tt.wantErr)
