@@ -199,6 +199,7 @@ func TestGetGCSObject(t *testing.T) {
 
 			localPath, err := getGCSObject(ctx, tt.bucket, tt.object, 0)
 			if tt.name == "InvalidLocalPath" {
+        // impossible to predict exact error message for downloading error because of random /tmp files
 				utiltest.AssertErrorContains(t, err, tt.wantErr)
 			} else {
 				utiltest.AssertErrorMatch(t, err, tt.wantErr)
