@@ -22,28 +22,73 @@ import (
 
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
+	"github.com/golang/mock/gomock"
 )
 
-// mockInstalledPackagesProvider is a mock implementation of InstalledPackagesProvider.
+// mockInstalledPackagesProvider is a gomock implementation of InstalledPackagesProvider.
 type mockInstalledPackagesProvider struct {
-	pkgs Packages
-	err  error
+	ctrl     *gomock.Controller
+	recorder *mockInstalledPackagesProviderMockRecorder
 }
 
-// GetInstalledPackages returns the predefined packages and error.
-func (m mockInstalledPackagesProvider) GetInstalledPackages(ctx context.Context) (Packages, error) {
-	return m.pkgs, m.err
+type mockInstalledPackagesProviderMockRecorder struct {
+	mock *mockInstalledPackagesProvider
 }
 
-// mockOSInfoProvider is a mock implementation of osinfo.Provider.
+func newMockInstalledPackagesProvider(ctrl *gomock.Controller) *mockInstalledPackagesProvider {
+	mock := &mockInstalledPackagesProvider{ctrl: ctrl}
+	mock.recorder = &mockInstalledPackagesProviderMockRecorder{mock}
+	return mock
+}
+
+func (m *mockInstalledPackagesProvider) EXPECT() *mockInstalledPackagesProviderMockRecorder {
+	return m.recorder
+}
+
+func (m *mockInstalledPackagesProvider) GetInstalledPackages(ctx context.Context) (Packages, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetInstalledPackages", ctx)
+	ret0, _ := ret[0].(Packages)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+func (mr *mockInstalledPackagesProviderMockRecorder) GetInstalledPackages(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInstalledPackages", reflect.TypeOf((*mockInstalledPackagesProvider)(nil).GetInstalledPackages), ctx)
+}
+
+// mockOSInfoProvider is a gomock implementation of osinfo.Provider.
 type mockOSInfoProvider struct {
-	info osinfo.OSInfo
-	err  error
+	ctrl     *gomock.Controller
+	recorder *mockOSInfoProviderMockRecorder
 }
 
-// GetOSInfo returns the predefined OSInfo and error.
-func (m mockOSInfoProvider) GetOSInfo(ctx context.Context) (osinfo.OSInfo, error) {
-	return m.info, m.err
+type mockOSInfoProviderMockRecorder struct {
+	mock *mockOSInfoProvider
+}
+
+func newMockOSInfoProvider(ctrl *gomock.Controller) *mockOSInfoProvider {
+	mock := &mockOSInfoProvider{ctrl: ctrl}
+	mock.recorder = &mockOSInfoProviderMockRecorder{mock}
+	return mock
+}
+
+func (m *mockOSInfoProvider) EXPECT() *mockOSInfoProviderMockRecorder {
+	return m.recorder
+}
+
+func (m *mockOSInfoProvider) GetOSInfo(ctx context.Context) (osinfo.OSInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOSInfo", ctx)
+	ret0, _ := ret[0].(osinfo.OSInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+func (mr *mockOSInfoProviderMockRecorder) GetOSInfo(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOSInfo", reflect.TypeOf((*mockOSInfoProvider)(nil).GetOSInfo), ctx)
 }
 
 // TestTracingInstalledPackagesProvider verifies that the tracing decorator
@@ -61,21 +106,21 @@ func TestTracingInstalledPackagesProvider(t *testing.T) {
 		wantErr   error
 	}{
 		{
-			name:      "Success",
+			name:      "success case",
 			tracedErr: nil,
 			osInfoErr: nil,
 			wantPkgs:  testPkgs,
 			wantErr:   nil,
 		},
 		{
-			name:      "TracedProviderError",
+			name:      "traced provider returns error",
 			tracedErr: errors.New("traced error"),
 			osInfoErr: nil,
 			wantPkgs:  Packages{},
 			wantErr:   errors.New("traced error"),
 		},
 		{
-			name:      "OSInfoError",
+			name:      "osinfo provider returns error",
 			tracedErr: nil,
 			osInfoErr: errors.New("osinfo error"),
 			wantPkgs:  testPkgs,
@@ -85,8 +130,15 @@ func TestTracingInstalledPackagesProvider(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tp := mockInstalledPackagesProvider{pkgs: tt.wantPkgs, err: tt.tracedErr}
-			op := mockOSInfoProvider{info: testInfo, err: tt.osInfoErr}
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			tp := newMockInstalledPackagesProvider(mockCtrl)
+			op := newMockOSInfoProvider(mockCtrl)
+
+			tp.EXPECT().GetInstalledPackages(gomock.Any()).Return(tt.wantPkgs, tt.tracedErr)
+			op.EXPECT().GetOSInfo(gomock.Any()).Return(testInfo, tt.osInfoErr)
+
 			provider := TracingInstalledPackagesProvider(tp, op)
 
 			gotPkgs, err := provider.GetInstalledPackages(ctx)
