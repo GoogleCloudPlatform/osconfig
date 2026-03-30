@@ -94,7 +94,6 @@ func (mr *mockOSInfoProviderMockRecorder) GetOSInfo(ctx interface{}) *gomock.Cal
 // TestTracingInstalledPackagesProvider verifies that the tracing decorator
 // correctly handles results and errors from the underlying providers.
 func TestTracingInstalledPackagesProvider(t *testing.T) {
-	ctx := context.Background()
 	testPkgs := Packages{Yum: []*PkgInfo{{Name: "pkg1"}}}
 	testInfo := osinfo.OSInfo{Hostname: "test-host"}
 
@@ -106,7 +105,7 @@ func TestTracingInstalledPackagesProvider(t *testing.T) {
 		wantErr   error
 	}{
 		{
-			name:      "success case",
+			name:      "get packages without errors",
 			tracedErr: nil,
 			osInfoErr: nil,
 			wantPkgs:  testPkgs,
@@ -141,7 +140,7 @@ func TestTracingInstalledPackagesProvider(t *testing.T) {
 
 			provider := TracingInstalledPackagesProvider(tp, op)
 
-			gotPkgs, err := provider.GetInstalledPackages(ctx)
+			gotPkgs, err := provider.GetInstalledPackages(context.Background())
 
 			if !reflect.DeepEqual(gotPkgs, tt.wantPkgs) {
 				t.Errorf("GetInstalledPackages() gotPkgs = %v, want %v", gotPkgs, tt.wantPkgs)
