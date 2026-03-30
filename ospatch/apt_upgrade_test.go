@@ -27,7 +27,8 @@ import (
 	"github.com/golang/mock/gomock"
 )
 
-// TestRunAptGetUpgrade verifies the functionality of Apt upgrade process
+// TestRunAptGetUpgrade verifies the functionality and error handling of RunAptGetUpgrade function
+// apt behavior is mocked with gomock
 func TestRunAptGetUpgrade(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -61,7 +62,7 @@ func TestRunAptGetUpgrade(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name: "Success",
+			name: "successful apt install with default options",
 			opts: nil,
 			mock: func() {
 				gomock.InOrder(
@@ -73,10 +74,10 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "DryRun",
+			name: "dry run mode, only check for updates",
 			opts: []AptGetUpgradeOption{AptGetDryRun(true)},
 			mock: func() {
-				gomock.InOrder(
+        gomock.InOrder(
 					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(updateCmd)).Return(stdout, empty, nil),
 					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(upgradeCmd)).Return(pkg1out, empty, nil),
 				)
@@ -84,7 +85,7 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "WithExcludes",
+			name: "apt upgrade with package excludes should skip excluded packages",
 			opts: []AptGetUpgradeOption{
 				AptGetExcludes([]*Exclude{CreateStringExclude(&pkg1)}),
 			},
@@ -98,7 +99,7 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "WithExclusivePackages",
+			name: "apt upgrade with exclusive packages should only install specified packages",
 			opts: []AptGetUpgradeOption{
 				AptGetExclusivePackages([]string{pkg2}),
 			},
@@ -112,7 +113,7 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "AptGetDistUpgrade",
+			name: "dist-upgrade should be used when specified",
 			opts: []AptGetUpgradeOption{
 				AptGetUpgradeType(packages.AptGetDistUpgrade),
 			},
@@ -126,7 +127,7 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "AptGetFullUpgrade",
+			name: "full-upgrade should be used when specified",
 			opts: []AptGetUpgradeOption{
 				AptGetUpgradeType(packages.AptGetFullUpgrade),
 			},
@@ -140,7 +141,7 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "NoPackagesToUpdate",
+			name: "no packages to update should result in no install command",
 			opts: nil,
 			mock: func() {
 				gomock.InOrder(
@@ -151,7 +152,7 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "AptUpdateError",
+			name: "notify about update error",
 			opts: nil,
 			mock: func() {
 				mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(updateCmd)).Return(empty, []byte("error"), errors.New("update fail"))
@@ -159,7 +160,7 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			wantErr: errors.New("update fail"),
 		},
 		{
-			name: "AptInstallError",
+			name: "notify about install error with detailed output",
 			opts: nil,
 			mock: func() {
 				gomock.InOrder(
@@ -171,7 +172,7 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			wantErr: errors.New("error running /usr/bin/apt-get with args [\"install\" \"-y\" \"pkg1\"]: install fail, stdout: \"\", stderr: \"install error\""),
 		},
 		{
-			name: "FilterPackagesError",
+			name: "providing both exclusive packages and excludes should return an error",
 			opts: []AptGetUpgradeOption{
 				AptGetExclusivePackages([]string{pkg1}),
 				AptGetExcludes([]*Exclude{CreateStringExclude(&pkg1)}),
