@@ -5,11 +5,27 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/kr/pretty"
 )
+
+// ... (existing code)
+
+// AssertFormatMatch verifies that the gotString matches the wantFormat regular expression.
+func AssertFormatMatch(t *testing.T, gotString string, wantFormat string) {
+	t.Helper()
+	matched, err := regexp.MatchString(wantFormat, gotString)
+	if err != nil {
+		t.Fatalf("regexp.MatchString(%q, %q) err: %v", wantFormat, gotString, err)
+	}
+	if !matched {
+		t.Errorf("string %q does not match format %q", gotString, wantFormat)
+	}
+}
+
 
 // BytesFromFile returns file as bytes; propagates err (e.g. file does not exist) as test failure reason
 func BytesFromFile(t *testing.T, filepath string) []byte {

@@ -15,11 +15,15 @@
 package packages
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"io"
 	"reflect"
 	"testing"
+	"time"
 
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/golang/mock/gomock"
@@ -96,6 +100,9 @@ func (mr *mockOSInfoProviderMockRecorder) GetOSInfo(ctx interface{}) *gomock.Cal
 func TestTracingInstalledPackagesProvider(t *testing.T) {
 	testPkgs := Packages{Yum: []*PkgInfo{{Name: "pkg1"}}}
 	testInfo := osinfo.OSInfo{Hostname: "test-host"}
+	// logPattern matches the trace log output format, for example:
+	// GetInstalledPackages: 0.111s, memory +0.00 MB (=10.26-10.26), peak 10.26 MB, mean 10.26 MB (2 samples), OS: @, hostname: test-host
+	logPattern := `GetInstalledPackages: \d+\.\d+s, memory [+-]?\d+\.\d+ MB \(=\d+\.\d+-\d+\.\d+\), peak \d+\.\d+ MB, mean \d+\.\d+ MB \(\d+ samples\), OS: .*@.*, hostname: test-host`
 
 	tests := []struct {
 		name      string
@@ -129,23 +136,33 @@ func TestTracingInstalledPackagesProvider(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			_ = logger.Init(context.Background(), logger.LogOpts{LoggerName: "trace_test", Debug: true, Writers: []io.Writer{&buf}})
+
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 
 			tp := newMockInstalledPackagesProvider(mockCtrl)
 			op := newMockOSInfoProvider(mockCtrl)
 
-			tp.EXPECT().GetInstalledPackages(gomock.Any()).Return(tt.wantPkgs, tt.tracedErr)
-			op.EXPECT().GetOSInfo(gomock.Any()).Return(testInfo, tt.osInfoErr)
+			// Verify sequence and allow time for TraceMemory to sample.
+			call1 := tp.EXPECT().GetInstalledPackages(gomock.Any()).DoAndReturn(func(ctx context.Context) (Packages, error) {
+				// Wait at least 110ms to ensure TraceMemory (100ms interval) samples at least once.
+				time.Sleep(110 * time.Millisecond)
+				return tt.wantPkgs, tt.tracedErr
+			}).Times(1)
+
+			op.EXPECT().GetOSInfo(gomock.Any()).After(call1).Return(testInfo, tt.osInfoErr).Times(1)
 
 			provider := TracingInstalledPackagesProvider(tp, op)
-
 			gotPkgs, err := provider.GetInstalledPackages(context.Background())
 
 			if !reflect.DeepEqual(gotPkgs, tt.wantPkgs) {
 				t.Errorf("GetInstalledPackages() gotPkgs = %v, want %v", gotPkgs, tt.wantPkgs)
 			}
+
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			utiltest.AssertFormatMatch(t, buf.String(), logPattern)
 		})
 	}
 }
