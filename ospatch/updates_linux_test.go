@@ -60,7 +60,7 @@ func mockAPT(t *testing.T, exists, fileExists, fileReadErr bool) {
 	rebootRequiredFile = tmpFile.Name()
 }
 
-func mockRPM(t *testing.T, ctx context.Context, exists bool) {
+func mockRPM(ctx context.Context, t *testing.T, exists bool) {
 	t.Helper()
 
 	originalRpmQuery := rpmquery
@@ -122,7 +122,7 @@ func TestSystemRebootRequiredApt(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			mockAPT(t, true, tt.aptFileExists, tt.aptFileReadErr)
-			mockRPM(t, ctx, false)
+			mockRPM(ctx, t, false)
 
 			gotReboot, gotErr := SystemRebootRequired(ctx)
 
@@ -155,7 +155,7 @@ func TestSystemRebootRequiredRpm(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			mockAPT(t, false, false, false)
-			mockRPM(t, ctx, tt.rpmExists)
+			mockRPM(ctx, t, tt.rpmExists)
 
 			gotReboot, gotErr := SystemRebootRequired(ctx)
 
