@@ -12,8 +12,6 @@ import (
 	"github.com/kr/pretty"
 )
 
-// ... (existing code)
-
 // AssertFormatMatch verifies that the gotString matches the wantFormat regular expression.
 func AssertFormatMatch(t *testing.T, gotString string, wantFormat string) {
 	t.Helper()
