@@ -24,7 +24,6 @@ func AssertFormatMatch(t *testing.T, gotString string, wantFormat string) {
 	}
 }
 
-
 // BytesFromFile returns file as bytes; propagates err (e.g. file does not exist) as test failure reason
 func BytesFromFile(t *testing.T, filepath string) []byte {
 	bytes, err := os.ReadFile(filepath)
