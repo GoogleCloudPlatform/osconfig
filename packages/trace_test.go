@@ -119,11 +119,11 @@ func TestTracingInstalledPackagesProvider(t *testing.T) {
 			wantErr:   nil,
 		},
 		{
-			name:      "traced provider returns error",
-			tracedErr: errors.New("traced error"),
+			name:      "get packages with errors",
+			tracedErr: errors.New("traced provider error"),
 			osInfoErr: nil,
 			wantPkgs:  Packages{},
-			wantErr:   errors.New("traced error"),
+			wantErr:   errors.New("traced provider error"),
 		},
 		{
 			name:      "osinfo provider returns error",
