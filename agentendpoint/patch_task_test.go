@@ -84,12 +84,12 @@ func TestHandleErrorState(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name:    "server cancel",
+			name:    "handle server cancel error",
 			err:     errServerCancel,
 			wantErr: errServerCancel,
 		},
 		{
-			name:    "generic error",
+			name:    "handle generic error",
 			err:     fmt.Errorf("generic error"),
 			wantErr: errors.New("generic error"),
 		},
@@ -196,7 +196,7 @@ func TestRebootIfNeededSafe(t *testing.T) {
 		wantErr      error
 	}{
 		{
-			name:         "config never",
+			name:         "skip reboot when config is never",
 			rebootConfig: agentendpointpb.PatchConfig_NEVER,
 			wantErr:      nil,
 		},
@@ -288,7 +288,7 @@ func TestPatchTaskErrorPaths(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name: "complete error",
+			name: "state file error",
 			op: func() error {
 				return withInvalidStateFile(func() error {
 					pt.complete(ctx)
@@ -298,7 +298,7 @@ func TestPatchTaskErrorPaths(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "set step error",
+			name: "set step error on invalid state file",
 			op: func() error {
 				return withInvalidStateFile(func() error {
 					return pt.setStep(patching)
