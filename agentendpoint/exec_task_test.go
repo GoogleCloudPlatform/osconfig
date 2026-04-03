@@ -157,7 +157,7 @@ func TestGetGCSObject(t *testing.T) {
 		wantContent string
 	}{
 		{
-			name:   "Success",
+			name:   "successful object download",
 			bucket: bucket,
 			object: object,
 			handler: func(w http.ResponseWriter, r *http.Request) {
@@ -169,7 +169,7 @@ func TestGetGCSObject(t *testing.T) {
 			wantContent: testContent,
 		},
 		{
-			name:   "NotFound",
+			name:   "gcs object not found",
 			bucket: bucket,
 			object: object,
 			handler: func(w http.ResponseWriter, r *http.Request) {
@@ -178,7 +178,7 @@ func TestGetGCSObject(t *testing.T) {
 			wantErr: errors.New("error fetching GCS object: storage: object doesn't exist"),
 		},
 		{
-			name:   "InvalidLocalPath",
+			name:   "invalid download path error",
 			bucket: bucket,
 			object: "///",
 			handler: func(w http.ResponseWriter, r *http.Request) {
@@ -227,7 +227,7 @@ func TestExecuteCommand(t *testing.T) {
 		wantErr  error
 	}{
 		{
-			name: "Success",
+			name: "successful command execution",
 			mockRun: func(cmd *exec.Cmd) ([]byte, error) {
 				testCmd := exec.Command("true")
 				testCmd.Run()
@@ -238,7 +238,7 @@ func TestExecuteCommand(t *testing.T) {
 			wantErr:  nil,
 		},
 		{
-			name: "SystemError",
+			name: "system error during run",
 			mockRun: func(cmd *exec.Cmd) ([]byte, error) {
 				return nil, errors.New("system error")
 			},
@@ -246,7 +246,7 @@ func TestExecuteCommand(t *testing.T) {
 			wantErr:  errors.New("system error"),
 		},
 		{
-			name: "CommandExitError",
+			name: "command exit error",
 			mockRun: func(cmd *exec.Cmd) ([]byte, error) {
 				return []byte("error output"), &exec.ExitError{}
 			},
