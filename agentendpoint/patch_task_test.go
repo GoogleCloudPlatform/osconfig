@@ -84,12 +84,12 @@ func TestHandleErrorState(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name:    "ServerCancel",
+			name:    "server cancel",
 			err:     errServerCancel,
 			wantErr: errServerCancel,
 		},
 		{
-			name:    "GenericError",
+			name:    "generic error",
 			err:     fmt.Errorf("generic error"),
 			wantErr: errors.New("generic error"),
 		},
@@ -196,12 +196,12 @@ func TestRebootIfNeededSafe(t *testing.T) {
 		wantErr      error
 	}{
 		{
-			name:         "ConfigNever",
+			name:         "config never",
 			rebootConfig: agentendpointpb.PatchConfig_NEVER,
 			wantErr:      nil,
 		},
 		{
-			name:         "AlwaysWithDryRun",
+			name:         "always with dry run",
 			rebootConfig: agentendpointpb.PatchConfig_ALWAYS,
 			dryRun:       true,
 			prePatch:     false,
@@ -288,7 +288,7 @@ func TestPatchTaskErrorPaths(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name: "completeError",
+			name: "complete error",
 			op: func() error {
 				return withInvalidStateFile(func() error {
 					pt.complete(ctx)
@@ -298,7 +298,7 @@ func TestPatchTaskErrorPaths(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "setStepError",
+			name: "set step error",
 			op: func() error {
 				return withInvalidStateFile(func() error {
 					return pt.setStep(patching)
@@ -307,14 +307,14 @@ func TestPatchTaskErrorPaths(t *testing.T) {
 			wantErr: errors.New("error saving state: mkdir /proc/invalid: no such file or directory"),
 		},
 		{
-			name: "reportContinuingStateError",
+			name: "report continuing state error",
 			op: func() error {
 				return pt.reportContinuingState(ctx, agentendpointpb.ApplyPatchesTaskProgress_STARTED)
 			},
 			wantErr: errors.New("error reporting state STARTED: error calling ReportTaskProgress: code: \"Canceled\", message: \"grpc: the client connection is closing\", details: []"),
 		},
 		{
-			name: "reportCompletedStateError",
+			name: "report completed state error",
 			op: func() error {
 				return pt.reportCompletedState(ctx, "error", &agentendpointpb.ReportTaskCompleteRequest_ApplyPatchesTaskOutput{})
 			},
