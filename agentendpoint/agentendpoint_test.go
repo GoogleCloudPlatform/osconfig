@@ -399,7 +399,7 @@ func TestWaitForTaskNotification(t *testing.T) {
 		check func(t *testing.T, tc *testClient)
 	}{
 		{
-			name: "Success",
+			name: "successful notification",
 			setup: func(srv *agentEndpointServiceTestServer, cancel context.CancelFunc) {
 			},
 			check: func(t *testing.T, tc *testClient) {
@@ -407,7 +407,7 @@ func TestWaitForTaskNotification(t *testing.T) {
 			},
 		},
 		{
-			name: "ServiceDisabled",
+			name: "service disabled error handling",
 			setup: func(srv *agentEndpointServiceTestServer, cancel context.CancelFunc) {
 				srv.causePermissionError()
 			},
@@ -422,7 +422,7 @@ func TestWaitForTaskNotification(t *testing.T) {
 			},
 		},
 		{
-			name: "MultipleCalls",
+			name: "multiple notification calls",
 			setup: func(srv *agentEndpointServiceTestServer, cancel context.CancelFunc) {
 			},
 			check: func(t *testing.T, tc *testClient) {
@@ -430,7 +430,7 @@ func TestWaitForTaskNotification(t *testing.T) {
 			},
 		},
 		{
-			name: "ContextCancel",
+			name: "context cancellation handling",
 			setup: func(srv *agentEndpointServiceTestServer, cancel context.CancelFunc) {
 				cancel()
 			},
@@ -439,7 +439,7 @@ func TestWaitForTaskNotification(t *testing.T) {
 			},
 		},
 		{
-			name: "ResourceExhausted",
+			name: "resource exhausted error handling",
 			setup: func(srv *agentEndpointServiceTestServer, cancel context.CancelFunc) {
 				srv.causeResourceExhaustedError()
 			},
