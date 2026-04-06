@@ -78,6 +78,8 @@ var (
 	yumChangesFunc         = yumChanges
 	zypperRepositoriesFunc = zypperRepositories
 	zypperChangesFunc      = zypperChanges
+
+	retryRPC = retryutil.RetryFunc
 )
 
 func installRecipes(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) error {
@@ -183,7 +185,7 @@ func setConfig(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) {
 		if err := googetRepositoriesFunc(ctx, gooRepos, agentconfig.GooGetRepoFilePath()); err != nil {
 			clog.Errorf(ctx, "Error writing googet repo file: %v", err)
 		}
-		if err := retryutil.RetryFunc(ctx, 1*time.Minute, "Applying googet changes", func() error {
+		if err := retryRPC(ctx, 1*time.Minute, "Applying googet changes", func() error {
 			return googetChangesFunc(ctx, gooInstallPkgs, gooRemovePkgs, gooUpdatePkgs)
 		}); err != nil {
 			clog.Errorf(ctx, "Error performing googet changes: %v", err)
@@ -194,7 +196,7 @@ func setConfig(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) {
 		if err := aptRepositoriesFunc(ctx, aptRepos, agentconfig.AptRepoFilePath()); err != nil {
 			clog.Errorf(ctx, "Error writing apt repo file: %v", err)
 		}
-		if err := retryutil.RetryFunc(ctx, 1*time.Minute, "Applying apt changes", func() error {
+		if err := retryRPC(ctx, 1*time.Minute, "Applying apt changes", func() error {
 			return aptChangesFunc(ctx, aptInstallPkgs, aptRemovePkgs, aptUpdatePkgs)
 		}); err != nil {
 			clog.Errorf(ctx, "Error performing apt changes: %v", err)
@@ -205,7 +207,7 @@ func setConfig(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) {
 		if err := yumRepositoriesFunc(ctx, yumRepos, agentconfig.YumRepoFilePath()); err != nil {
 			clog.Errorf(ctx, "Error writing yum repo file: %v", err)
 		}
-		if err := retryutil.RetryFunc(ctx, 1*time.Minute, "Applying yum changes", func() error {
+		if err := retryRPC(ctx, 1*time.Minute, "Applying yum changes", func() error {
 			return yumChangesFunc(ctx, yumInstallPkgs, yumRemovePkgs, yumUpdatePkgs)
 		}); err != nil {
 			clog.Errorf(ctx, "Error performing yum changes: %v", err)
@@ -216,7 +218,7 @@ func setConfig(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) {
 		if err := zypperRepositoriesFunc(ctx, zypperRepos, agentconfig.ZypperRepoFilePath()); err != nil {
 			clog.Errorf(ctx, "Error writing zypper repo file: %v", err)
 		}
-		if err := retryutil.RetryFunc(ctx, 1*time.Minute, "Applying zypper changes.", func() error {
+		if err := retryRPC(ctx, 1*time.Minute, "Applying zypper changes.", func() error {
 			return zypperChangesFunc(ctx, zypperInstallPkgs, zypperRemovePkgs, zypperUpdatePkgs)
 		}); err != nil {
 			clog.Errorf(ctx, "Error performing zypper changes: %v", err)
