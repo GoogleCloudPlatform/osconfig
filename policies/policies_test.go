@@ -38,7 +38,7 @@ type managerCalls struct {
 }
 
 func setupMocks(googetExists, aptExists, yumExists, zypperExists bool, gotCalls map[string]*managerCalls) func() {
-	// Сохраняем оригиналы
+	// preserve original functions
 	oldGooE, oldAptE, oldYumE, oldZypE := packages.GooGetExists, packages.AptExists, packages.YumExists, packages.ZypperExists
 	oldGooR, oldGooC := googetRepositoriesFunc, googetChangesFunc
 	oldAptR, oldAptC := aptRepositoriesFunc, aptChangesFunc
@@ -46,11 +46,11 @@ func setupMocks(googetExists, aptExists, yumExists, zypperExists bool, gotCalls 
 	oldZypR, oldZypC := zypperRepositoriesFunc, zypperChangesFunc
 	oldRetry := retryRPC
 
-	// Настраиваем существование
+	// mock Exists functions
 	packages.GooGetExists, packages.AptExists = googetExists, aptExists
 	packages.YumExists, packages.ZypperExists = yumExists, zypperExists
 
-	// Настраиваем Retry
+	// replace retryRPC function to avoid long awaits
 	retryRPC = func(ctx context.Context, timeout time.Duration, desc string, f func() error) error { return f() }
 
 	getCalls := func(m string) *managerCalls {
@@ -128,7 +128,9 @@ func TestChecksum(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			r := bytes.NewReader(tt.data)
 			h := checksum(r)
 
@@ -172,7 +174,9 @@ func TestWriteIfChanged(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			td := t.TempDir()
 			path := filepath.Join(td, "test_file")
 
@@ -203,17 +207,34 @@ func TestInstallRecipes(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name     string
-		recipes  []*agentendpointpb.SoftwareRecipe
-		wantInst []string
+		name       string
+		recipes    []*agentendpointpb.EffectiveGuestPolicy_SourcedSoftwareRecipe
+		installErr error
+		wantInst   []string
 	}{
 		{
 			name: "multiple recipes",
-			recipes: []*agentendpointpb.SoftwareRecipe{
-				{Name: "recipe1"},
-				{Name: "recipe2"},
+			recipes: []*agentendpointpb.EffectiveGuestPolicy_SourcedSoftwareRecipe{
+				{SoftwareRecipe: &agentendpointpb.SoftwareRecipe{Name: "recipe1"}},
+				{SoftwareRecipe: &agentendpointpb.SoftwareRecipe{Name: "recipe2"}},
 			},
 			wantInst: []string{"recipe1", "recipe2"},
+		},
+		{
+			name: "nil SoftwareRecipe",
+			recipes: []*agentendpointpb.EffectiveGuestPolicy_SourcedSoftwareRecipe{
+				{SoftwareRecipe: &agentendpointpb.SoftwareRecipe{Name: "recipe1"}},
+				{SoftwareRecipe: nil},
+			},
+			wantInst: []string{"recipe1"},
+		},
+		{
+			name: "installation error",
+			recipes: []*agentendpointpb.EffectiveGuestPolicy_SourcedSoftwareRecipe{
+				{SoftwareRecipe: &agentendpointpb.SoftwareRecipe{Name: "recipe1"}},
+			},
+			installErr: errors.New("install error"),
+			wantInst:   []string{"recipe1"},
 		},
 		{
 			name:     "no recipes",
@@ -223,24 +244,19 @@ func TestInstallRecipes(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			var installed []string
 			oldInstallRecipe := installRecipe
 			installRecipe = func(ctx context.Context, recipe *agentendpointpb.SoftwareRecipe) error {
 				installed = append(installed, recipe.Name)
-				return nil
+				return tt.installErr
 			}
 			defer func() { installRecipe = oldInstallRecipe }()
 
-			var sourcedRecipes []*agentendpointpb.EffectiveGuestPolicy_SourcedSoftwareRecipe
-			for _, r := range tt.recipes {
-				sourcedRecipes = append(sourcedRecipes, &agentendpointpb.EffectiveGuestPolicy_SourcedSoftwareRecipe{
-					SoftwareRecipe: r,
-				})
-			}
-
 			egp := &agentendpointpb.EffectiveGuestPolicy{
-				SoftwareRecipes: sourcedRecipes,
+				SoftwareRecipes: tt.recipes,
 			}
 
 			if err := installRecipes(ctx, egp); err != nil {
@@ -292,7 +308,7 @@ func TestSetConfig(t *testing.T) {
 			},
 		},
 		{
-			name:      "manager not existing",
+			name:      "manager doesnt exist",
 			aptExists: true,
 			packages: []*agentendpointpb.Package{
 				{Name: "apt-pkg", Manager: agentendpointpb.Package_APT, DesiredState: agentendpointpb.DesiredState_INSTALLED},
@@ -326,7 +342,9 @@ func TestSetConfig(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			gotCalls := make(map[string]*managerCalls)
 			defer setupMocks(tt.googetExists, tt.aptExists, tt.yumExists, tt.zypperExists, gotCalls)()
 
