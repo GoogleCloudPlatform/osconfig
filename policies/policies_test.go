@@ -128,7 +128,6 @@ func TestChecksum(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			r := bytes.NewReader(tt.data)
@@ -174,7 +173,6 @@ func TestWriteIfChanged(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			td := t.TempDir()
@@ -244,7 +242,6 @@ func TestInstallRecipes(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			var installed []string
@@ -342,7 +339,6 @@ func TestSetConfig(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			gotCalls := make(map[string]*managerCalls)
