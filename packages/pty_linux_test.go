@@ -87,12 +87,7 @@ func TestRunWithPty(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			stdout, stderr, err := runWithPty(tt.cmd)
-
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
-			if tt.wantErr != nil {
-				return
-			}
-
 			utiltest.AssertEquals(t, string(stdout), tt.wantOut)
 			utiltest.AssertEquals(t, string(stderr), tt.wantStderr)
 		})
