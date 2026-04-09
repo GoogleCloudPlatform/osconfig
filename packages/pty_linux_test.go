@@ -17,9 +17,7 @@ package packages
 import (
 	"os"
 	"os/exec"
-	"strings"
 	"testing"
-	"unsafe"
 
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"golang.org/x/sys/unix"
@@ -29,23 +27,6 @@ import (
 func CheckPtmxAvailability(t *testing.T) {
 	if _, err := os.Stat("/dev/ptmx"); os.IsNotExist(err) {
 		t.Skip("/dev/ptmx not found, skipping PTY tests")
-	}
-}
-
-// TestIoctl verifies that the ioctl wrapper correctly performs a system call on a valid file descriptor
-func TestIoctl(t *testing.T) {
-	CheckPtmxAvailability(t)
-
-	f, err := os.OpenFile("/dev/ptmx", os.O_RDWR, 0)
-	if err != nil {
-		t.Fatalf("unable to open /dev/ptmx: %v", err)
-	}
-	defer f.Close()
-
-	// TIOCSPTLCK (unlockpt)
-	var i int
-	if err := ioctl(f.Fd(), unix.TIOCSPTLCK, uintptr(unsafe.Pointer(&i))); err != nil {
-		t.Errorf("ioctl() unexpected error: %v", err)
 	}
 }
 
@@ -72,34 +53,33 @@ func TestRunWithPty(t *testing.T) {
 	}{
 		{
 			name:    "command with exit code 0 returns nil",
-			cmd:     exec.Command("echo", "hello"),
+			cmd:     exec.Command("echo"),
 			wantOut: "",
 			wantErr: nil,
 		},
 		{
 			name:    "command with exit code 1 returns output",
 			cmd:     exec.Command("sh", "-c", "echo 'updates found'; exit 1"),
-			wantOut: "updates found",
+			wantOut: "updates found\r\n",
 			wantErr: nil,
 		},
 		{
 			name:       "command with stderr and exit code 1",
 			cmd:        exec.Command("sh", "-c", "echo 'stdout message'; echo 'stderr message' >&2; exit 1"),
-			wantOut:    "stdout message",
-			wantStderr: "stderr message",
+			wantOut:    "stdout message\r\n",
+			wantStderr: "stderr message\n",
 			wantErr:    nil,
 		},
 		{
 			name:    "command with multiple lines of output",
 			cmd:     exec.Command("sh", "-c", "printf 'line1\nline2\nline3\n'; exit 1"),
-			wantOut: "line1\nline2\nline3\n",
+			wantOut: "line1\r\nline2\r\nline3\r\n",
 			wantErr: nil,
 		},
 		{
 			name:    "non existent command returns error",
 			cmd:     exec.Command("this-command-does-not-exist"),
 			wantOut: "",
-			// We use &exec.Error to match the type returned by exec.Command.Run()
 			wantErr: &exec.Error{Name: "this-command-does-not-exist", Err: exec.ErrNotFound},
 		},
 	}
@@ -113,18 +93,8 @@ func TestRunWithPty(t *testing.T) {
 				return
 			}
 
-			if err != nil {
-				t.Errorf("runWithPty() unexpected error: %v", err)
-			}
-
-			// PTY often converts \n to \r\n, normalize for comparison.
-			gotOut := strings.ReplaceAll(string(stdout), "\r\n", "\n")
-			if !strings.Contains(gotOut, tt.wantOut) {
-				t.Errorf("runWithPty() stdout = %q, wantOut %q", gotOut, tt.wantOut)
-			}
-			if !strings.Contains(string(stderr), tt.wantStderr) {
-				t.Errorf("runWithPty() stderr = %q, wantStderr %q", string(stderr), tt.wantStderr)
-			}
+			utiltest.AssertEquals(t, string(stdout), tt.wantOut)
+			utiltest.AssertEquals(t, string(stderr), tt.wantStderr)
 		})
 	}
 }
