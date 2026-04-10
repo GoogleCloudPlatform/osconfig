@@ -39,6 +39,11 @@
     "zone": {
       "Value": "us-central1-a",
       "Description": "zone"
+    },
+    "disk_type": {
+       "Value": "pd-ssd",
+       "Description": "Type of the disk used in the workflow."
+
     }
   },
   "Steps": {
@@ -48,7 +53,7 @@
           "disks": [
             {
               "initializeParams": {
-                "diskType": "pd-ssd",
+                "diskType": "${disk_type}",
                 "sourceImage": "${sourceImage}"
               }
             }
