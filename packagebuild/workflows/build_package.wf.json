@@ -37,7 +37,7 @@
       "Description": "machine type"
     },
     "zone": {
-      "Value": "us-central1-a",
+      "Value": "us-central1-b",
       "Description": "zone"
     }
   },
