@@ -211,14 +211,14 @@ some junk data`
 		{
 			"NormalCase",
 			[]byte(normalCase),
-			[]*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1206", "security", "low", "Security update for bzip2"}},
-			[]*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1221", "security", "moderate", "Security update for libxslt"}, {"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix"}},
+			[]*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1206", "security", "low", "Security update for bzip2" /*PURL: */, ""}},
+			[]*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1221", "security", "moderate", "Security update for libxslt" /*PURL: */, ""}, {"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix" /*PURL: */, ""}},
 		},
 		{
 			"WithSinceField",
 			[]byte(withSinceField),
-			[]*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1206", "security", "low", "Security update for bzip2"}},
-			[]*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1221", "security", "moderate", "Security update for libxslt"}, {"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix"}},
+			[]*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1206", "security", "low", "Security update for bzip2" /*PURL: */, ""}},
+			[]*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1221", "security", "moderate", "Security update for libxslt" /*PURL: */, ""}, {"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix", ""}},
 		},
 		{"NoPackages", []byte("nothing here"), nil, nil},
 		{"nil", nil, nil, nil},
@@ -279,7 +279,7 @@ func TestZypperPatches(t *testing.T) {
 					stderr: []byte("stderr"),
 				},
 			},
-			expectedResults: []*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix"}},
+			expectedResults: []*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix", ""}},
 		},
 		{
 			name: "sles-12-1 mapped list-patches stdout matches snapshot",
@@ -344,7 +344,7 @@ func TestZypperInstalledPatches(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	want := []*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix"}}
+	want := []*ZypperPatch{{"SUSE-SLE-Module-Basesystem-15-SP1-2019-1258", "recommended", "moderate", "Recommended update for postfix", ""}}
 	if !reflect.DeepEqual(ret, want) {
 		t.Errorf("ZypperInstalledPatches() = %v, want %v", ret, want)
 	}
