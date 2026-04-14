@@ -32,7 +32,6 @@ import (
 func TestRunAptGetUpgrade(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-
 	oldRunner := packages.GetCommandRunner()
 	defer packages.SetCommandRunner(oldRunner)
 
@@ -44,16 +43,9 @@ func TestRunAptGetUpgrade(t *testing.T) {
 	env := append(os.Environ(), "DEBIAN_FRONTEND=noninteractive")
 
 	pkg1, pkg2 := "pkg1", "pkg2"
-	stdout, empty := []byte("stdout"), []byte("")
+	fakeOutput, empty := []byte("stdout"), []byte("")
 	pkg1out := []byte("Inst pkg1 [1.0] (1.1 stable [amd64])")
 	pkg12out := []byte("Inst pkg1 [1.0] (1.1 stable [amd64])\nInst pkg2 [1.0] (1.1 stable [amd64])")
-
-	updateCmd := buildCmd(aptGet, env, "update")
-	upgradeCmd := buildCmd(aptGet, env, "--just-print", "-qq", "upgrade")
-	distUpgradeCmd := buildCmd(aptGet, env, "--just-print", "-qq", "dist-upgrade")
-	fullUpgradeCmd := buildCmd(aptGet, env, "--just-print", "-qq", "full-upgrade")
-	installPkg1Cmd := buildCmd(aptGet, env, "install", "-y", "pkg1")
-	installPkg2Cmd := buildCmd(aptGet, env, "install", "-y", "pkg2")
 
 	tests := []struct {
 		name    string
@@ -66,9 +58,9 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			opts: nil,
 			mock: func() {
 				gomock.InOrder(
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(updateCmd)).Return(stdout, empty, nil),
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(upgradeCmd)).Return(pkg1out, empty, nil),
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(installPkg1Cmd)).Return(stdout, empty, nil),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "update"))).Return(fakeOutput, empty, nil),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "--just-print", "-qq", "upgrade"))).Return(pkg1out, empty, nil),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "install", "-y", "pkg1"))).Return(fakeOutput, empty, nil),
 				)
 			},
 			wantErr: nil,
@@ -77,9 +69,9 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			name: "dry run mode, only check for updates",
 			opts: []AptGetUpgradeOption{AptGetDryRun(true)},
 			mock: func() {
-        gomock.InOrder(
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(updateCmd)).Return(stdout, empty, nil),
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(upgradeCmd)).Return(pkg1out, empty, nil),
+				gomock.InOrder(
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "update"))).Return(fakeOutput, empty, nil),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "--just-print", "-qq", "upgrade"))).Return(pkg1out, empty, nil),
 				)
 			},
 			wantErr: nil,
@@ -91,9 +83,9 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			},
 			mock: func() {
 				gomock.InOrder(
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(updateCmd)).Return(stdout, empty, nil),
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(upgradeCmd)).Return(pkg12out, empty, nil),
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(installPkg2Cmd)).Return(stdout, empty, nil),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "update"))).Return(fakeOutput, empty, nil),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "--just-print", "-qq", "upgrade"))).Return(pkg12out, empty, nil),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "install", "-y", "pkg2"))).Return(fakeOutput, empty, nil),
 				)
 			},
 			wantErr: nil,
@@ -105,9 +97,9 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			},
 			mock: func() {
 				gomock.InOrder(
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(updateCmd)).Return(stdout, empty, nil),
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(upgradeCmd)).Return(pkg12out, empty, nil),
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(installPkg2Cmd)).Return(stdout, empty, nil),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "update"))).Return(fakeOutput, empty, nil),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "--just-print", "-qq", "upgrade"))).Return(pkg12out, empty, nil),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "install", "-y", "pkg2"))).Return(fakeOutput, empty, nil),
 				)
 			},
 			wantErr: nil,
@@ -119,9 +111,9 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			},
 			mock: func() {
 				gomock.InOrder(
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(updateCmd)).Return(stdout, empty, nil),
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(distUpgradeCmd)).Return(pkg1out, empty, nil),
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(installPkg1Cmd)).Return(stdout, empty, nil),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "update"))).Return(fakeOutput, empty, nil),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "--just-print", "-qq", "dist-upgrade"))).Return(pkg1out, empty, nil),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "install", "-y", "pkg1"))).Return(fakeOutput, empty, nil),
 				)
 			},
 			wantErr: nil,
@@ -133,9 +125,9 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			},
 			mock: func() {
 				gomock.InOrder(
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(updateCmd)).Return(stdout, empty, nil),
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(fullUpgradeCmd)).Return(pkg1out, empty, nil),
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(installPkg1Cmd)).Return(stdout, empty, nil),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "update"))).Return(fakeOutput, empty, nil),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "--just-print", "-qq", "full-upgrade"))).Return(pkg1out, empty, nil),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "install", "-y", "pkg1"))).Return(fakeOutput, empty, nil),
 				)
 			},
 			wantErr: nil,
@@ -145,8 +137,8 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			opts: nil,
 			mock: func() {
 				gomock.InOrder(
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(updateCmd)).Return(stdout, empty, nil),
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(upgradeCmd)).Return(empty, empty, nil),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "update"))).Return(fakeOutput, empty, nil),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "--just-print", "-qq", "upgrade"))).Return(empty, empty, nil),
 				)
 			},
 			wantErr: nil,
@@ -155,7 +147,7 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			name: "notify about update error",
 			opts: nil,
 			mock: func() {
-				mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(updateCmd)).Return(empty, []byte("error"), errors.New("update fail"))
+				mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "update"))).Return(empty, []byte("error"), errors.New("update fail"))
 			},
 			wantErr: errors.New("update fail"),
 		},
@@ -164,9 +156,9 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			opts: nil,
 			mock: func() {
 				gomock.InOrder(
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(updateCmd)).Return(stdout, empty, nil),
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(upgradeCmd)).Return(pkg1out, empty, nil),
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(installPkg1Cmd)).Return(empty, []byte("install error"), errors.New("install fail")),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "update"))).Return(fakeOutput, empty, nil),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "--just-print", "-qq", "upgrade"))).Return(pkg1out, empty, nil),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "install", "-y", "pkg1"))).Return(empty, []byte("install error"), errors.New("install fail")),
 				)
 			},
 			wantErr: errors.New("error running /usr/bin/apt-get with args [\"install\" \"-y\" \"pkg1\"]: install fail, stdout: \"\", stderr: \"install error\""),
@@ -179,8 +171,8 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			},
 			mock: func() {
 				gomock.InOrder(
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(updateCmd)).Return(stdout, empty, nil),
-					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(upgradeCmd)).Return(pkg1out, empty, nil),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "update"))).Return(fakeOutput, empty, nil),
+					mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "--just-print", "-qq", "upgrade"))).Return(pkg1out, empty, nil),
 				)
 			},
 			wantErr: errors.New("exclusivePackages and excludes can not both be non 0"),
