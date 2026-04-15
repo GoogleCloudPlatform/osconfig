@@ -292,10 +292,8 @@ func TestReadInstanceOsInfo(t *testing.T) {
 
 			gotName, gotVersion, gotErr := readInstanceOsInfo(ctx)
 			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
-			if gotErr == nil {
-				utiltest.AssertEquals(t, gotName, tt.wantName)
-				utiltest.AssertEquals(t, gotVersion, tt.wantVersion)
-			}
+			utiltest.AssertEquals(t, gotName, tt.wantName)
+			utiltest.AssertEquals(t, gotVersion, tt.wantVersion)
 		})
 	}
 }
