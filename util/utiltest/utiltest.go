@@ -3,6 +3,7 @@ package utiltest
 import (
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -82,6 +83,14 @@ func MatchSnapshot(t testReporter, actual any, snapshotFilepath string) {
 	} else {
 		removeSnapshotDraft(snapshotFilepath)
 	}
+}
+
+// ExpectedCommand defines a reusable expected command call
+type ExpectedCommand struct {
+	Cmd    *exec.Cmd
+	Stdout []byte
+	Stderr []byte
+	Err    error
 }
 
 // AssertEquals checks if got and want are deeply equal. If not, it fails the test.

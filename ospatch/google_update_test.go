@@ -18,9 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"testing"
 
 	"github.com/GoogleCloudPlatform/osconfig/packages"
@@ -31,100 +29,146 @@ import (
 
 func TestRunGooGetUpdate(t *testing.T) {
 	ctx := context.Background()
-	googet := filepath.Join(os.Getenv("GooGetRoot"), "googet.exe")
+	googet := "googet.exe"
 
 	updatesData := []byte("foo.noarch, 1.0.0@1 --> 2.0.0@1 from repo\nbar.x86_64, 1.0.0@1 --> 2.0.0@1 from repo")
 	updatesErr := errors.New("updates error")
 	installErr := errors.New("install error")
 
 	excludeName := "bar"
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	packages.SetCommandRunner(mockCommandRunner)
 
 	tests := []struct {
-		desc            string
-		opts            []GooGetUpdateOption
-		updatesOut      []byte
-		updatesErr      error
-		installOut      []byte
-		installErr      error
-		expectInstall   bool
-		installPkgNames []string
-		wantErr         error
+		desc     string
+		opts     []GooGetUpdateOption
+		commands []utiltest.ExpectedCommand
+		wantErr  error
 	}{
 		{
-			desc:            "success",
-			updatesOut:      updatesData,
-			expectInstall:   true,
-			installPkgNames: []string{"foo", "bar"},
+			desc: "googet update lists foo and bar then install succeeds",
+			commands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command(googet, "update"),
+					Stdout: updatesData,
+					Stderr: []byte("stderr"),
+				},
+				{
+					Cmd:    exec.Command(googet, "-noconfirm", "install", "foo", "bar"),
+					Stderr: []byte("stderr"),
+				},
+			},
 		},
 		{
-			desc:       "updates error",
-			updatesErr: updatesErr,
+			desc: "googet update error is propagated",
+			commands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command(googet, "update"),
+					Stderr: []byte("stderr"),
+					Err:    updatesErr,
+				},
+			},
 			wantErr: fmt.Errorf("error running %s with args %q: %v, stdout: %q, stderr: %q",
 				googet, []string{"update"}, updatesErr, "", "stderr"),
 		},
 		{
-			desc:       "no packages to update",
-			updatesOut: []byte("nothing here"),
+			desc: "no packages to update results in no install",
+			commands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command(googet, "update"),
+					Stdout: []byte("nothing here"),
+					Stderr: []byte("stderr"),
+				},
+			},
 		},
 		{
-			desc:          "dryrun skips install",
-			opts:          []GooGetUpdateOption{GooGetDryRun(true)},
-			updatesOut:    updatesData,
-			expectInstall: false,
+			desc: "dryrun skips install command",
+			opts: []GooGetUpdateOption{GooGetDryRun(true)},
+			commands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command(googet, "update"),
+					Stdout: updatesData,
+					Stderr: []byte("stderr"),
+				},
+			},
 		},
 		{
-			desc:            "exclusive packages",
-			opts:            []GooGetUpdateOption{GooGetExclusivePackages([]string{"foo"})},
-			updatesOut:      updatesData,
-			expectInstall:   true,
-			installPkgNames: []string{"foo"},
+			desc: "exclusive packages filters install to only foo",
+			opts: []GooGetUpdateOption{GooGetExclusivePackages([]string{"foo"})},
+			commands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command(googet, "update"),
+					Stdout: updatesData,
+					Stderr: []byte("stderr"),
+				},
+				{
+					Cmd:    exec.Command(googet, "-noconfirm", "install", "foo"),
+					Stderr: []byte("stderr"),
+				},
+			},
 		},
 		{
-			desc:            "excludes",
-			opts:            []GooGetUpdateOption{GooGetExcludes([]*Exclude{CreateStringExclude(&excludeName)})},
-			updatesOut:      updatesData,
-			expectInstall:   true,
-			installPkgNames: []string{"foo"},
+			desc: "excludes filters out bar from install",
+			opts: []GooGetUpdateOption{GooGetExcludes([]*Exclude{CreateStringExclude(&excludeName)})},
+			commands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command(googet, "update"),
+					Stdout: updatesData,
+					Stderr: []byte("stderr"),
+				},
+				{
+					Cmd:    exec.Command(googet, "-noconfirm", "install", "foo"),
+					Stderr: []byte("stderr"),
+				},
+			},
 		},
 		{
-			desc:            "install error",
-			updatesOut:      updatesData,
-			expectInstall:   true,
-			installPkgNames: []string{"foo", "bar"},
-			installErr:      installErr,
+			desc: "install error is propagated",
+			commands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command(googet, "update"),
+					Stdout: updatesData,
+					Stderr: []byte("stderr"),
+				},
+				{
+					Cmd:    exec.Command(googet, "-noconfirm", "install", "foo", "bar"),
+					Stderr: []byte("stderr"),
+					Err:    installErr,
+				},
+			},
 			wantErr: fmt.Errorf("error running %s with args %q: %v, stdout: %q, stderr: %q",
 				googet, []string{"-noconfirm", "install", "foo", "bar"}, installErr, "", "stderr"),
 		},
 		{
-			desc:       "exclusive and excludes error",
-			opts:       []GooGetUpdateOption{GooGetExclusivePackages([]string{"foo"}), GooGetExcludes([]*Exclude{CreateStringExclude(&excludeName)})},
-			updatesOut: updatesData,
-			wantErr:    errors.New("exclusivePackages and excludes can not both be non 0"),
+			desc: "exclusive and excludes both set returns error without running commands",
+			opts: []GooGetUpdateOption{GooGetExclusivePackages([]string{"foo"}), GooGetExcludes([]*Exclude{CreateStringExclude(&excludeName)})},
+			commands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command(googet, "update"),
+					Stdout: updatesData,
+					Stderr: []byte("stderr"),
+				},
+			},
+			wantErr: errors.New("exclusivePackages and excludes can not both be non 0"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			mockCtrl := gomock.NewController(t)
-			defer mockCtrl.Finish()
-
-			mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
-			packages.SetCommandRunner(mockCommandRunner)
-
-			updatesCmd := utilmocks.EqCmd(exec.Command(googet, "update"))
-			updatesCall := mockCommandRunner.EXPECT().
-				Run(ctx, updatesCmd).
-				Return(tt.updatesOut, []byte("stderr"), tt.updatesErr).
-				Times(1)
-
-			if tt.expectInstall {
-				installArgs := append([]string{"-noconfirm", "install"}, tt.installPkgNames...)
-				installCmd := utilmocks.EqCmd(exec.Command(googet, installArgs...))
-				mockCommandRunner.EXPECT().
-					Run(ctx, installCmd).
-					After(updatesCall).
-					Return(tt.installOut, []byte("stderr"), tt.installErr).
+			var prev *gomock.Call
+			for _, ec := range tt.commands {
+				cmd := utilmocks.EqCmd(ec.Cmd)
+				call := mockCommandRunner.EXPECT().
+					Run(ctx, cmd).
+					Return(ec.Stdout, ec.Stderr, ec.Err).
 					Times(1)
+				if prev != nil {
+					call.After(prev)
+				}
+				prev = call
 			}
 
 			err := RunGooGetUpdate(ctx, tt.opts...)
