@@ -27,102 +27,77 @@ import (
 	"github.com/golang/mock/gomock"
 )
 
-func mockAPT(t *testing.T, exists, fileExists, fileReadErr bool) {
+func createTempFile(t *testing.T) string {
 	t.Helper()
-
-	originalAptExists := packages.AptExists
-	originalRebootFile := rebootRequiredFile
-	t.Cleanup(func() {
-		packages.AptExists = originalAptExists
-		rebootRequiredFile = originalRebootFile
-	})
-
-	packages.AptExists = exists
-	if !exists {
-		return
-	}
-	if !fileExists {
-		rebootRequiredFile = "/non_existing_reboot_file"
-		return
-	}
-	if fileReadErr {
-		rebootRequiredFile = "/dev/null/invalid"
-		return
-	}
-
 	tmpFile, err := os.CreateTemp("", "reboot-required")
 	if err != nil {
-		t.Fatalf("Failed to create temp file for reboot-required mock: %v", err)
+		t.Fatalf("Failed to create temp file: %v", err)
 	}
 	tmpFile.Close()
 	t.Cleanup(func() { os.Remove(tmpFile.Name()) })
-
-	rebootRequiredFile = tmpFile.Name()
+	return tmpFile.Name()
 }
 
-func mockRPM(ctx context.Context, t *testing.T, exists bool) {
+func setAptExists(t *testing.T, exists bool) {
 	t.Helper()
+	original := packages.AptExists
+	packages.AptExists = exists
+	t.Cleanup(func() { packages.AptExists = original })
+}
 
-	originalRpmQuery := rpmquery
-	originalProcStatPath := procStatPath
-	originalRunner := runner
-	t.Cleanup(func() {
-		rpmquery = originalRpmQuery
-		procStatPath = originalProcStatPath
-		runner = originalRunner
-	})
+func setRebootRequiredFile(t *testing.T, path string) {
+	t.Helper()
+	original := rebootRequiredFile
+	rebootRequiredFile = path
+	t.Cleanup(func() { rebootRequiredFile = original })
+}
 
-	if !exists {
-		rpmquery = "/non_existing_file"
-		return
-	}
-
-	tmpFile, err := os.CreateTemp("", "rpmquery")
-	if err != nil {
-		t.Fatalf("Failed to create temp file for rpmquery mock: %v", err)
-	}
-	t.Cleanup(func() { os.Remove(tmpFile.Name()) })
-	rpmquery = tmpFile.Name()
-
-	mockCtrl := gomock.NewController(t)
-	t.Cleanup(func() { mockCtrl.Finish() })
-	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
-	runner = mockCommandRunner
-	mockCommandRunner.EXPECT().Run(ctx, gomock.Any()).Return([]byte("1000\n"), nil, nil).Times(1)
+func setRpmquery(t *testing.T, path string) {
+	t.Helper()
+	original := rpmquery
+	rpmquery = path
+	t.Cleanup(func() { rpmquery = original })
 }
 
 func TestSystemRebootRequiredApt(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		desc           string
-		aptFileExists  bool
-		aptFileReadErr bool
-		wantReboot     bool
-		wantErr        error
+		desc       string
+		setup      func(t *testing.T)
+		wantReboot bool
+		wantErr    error
 	}{
 		{
-			desc:       "no reboot required",
+			desc: "no reboot required when reboot file does not exist",
+			setup: func(t *testing.T) {
+				setAptExists(t, true)
+				setRebootRequiredFile(t, "/non_existing_reboot_file")
+			},
 			wantReboot: false,
 		},
 		{
-			desc:          "reboot required",
-			aptFileExists: true,
-			wantReboot:    true,
+			desc: "reboot required when reboot file exists",
+			setup: func(t *testing.T) {
+				setAptExists(t, true)
+				setRebootRequiredFile(t, createTempFile(t))
+			},
+			wantReboot: true,
 		},
 		{
-			desc:           "file read error",
-			aptFileExists:  true,
-			aptFileReadErr: true,
-			wantReboot:     false,
-			wantErr:        &os.PathError{Op: "open", Path: "/dev/null/invalid", Err: syscall.ENOTDIR},
+			desc: "file read error is propagated",
+			setup: func(t *testing.T) {
+				setAptExists(t, true)
+				setRebootRequiredFile(t, "/dev/null/invalid")
+			},
+			wantReboot: false,
+			wantErr:    &os.PathError{Op: "open", Path: "/dev/null/invalid", Err: syscall.ENOTDIR},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			mockAPT(t, true, tt.aptFileExists, tt.aptFileReadErr)
-			mockRPM(ctx, t, false)
+			tt.setup(t)
 
 			gotReboot, gotErr := SystemRebootRequired(ctx)
 
@@ -134,28 +109,44 @@ func TestSystemRebootRequiredApt(t *testing.T) {
 
 func TestSystemRebootRequiredRpm(t *testing.T) {
 	ctx := context.Background()
+	originalRunner := runner
+	mockCtrl := gomock.NewController(t)
+	t.Cleanup(func() { 
+		runner = originalRunner
+		mockCtrl.Finish()
+	})
 
 	tests := []struct {
 		desc       string
-		rpmExists  bool
+		setup      func(t *testing.T)
 		wantReboot bool
 		wantErr    error
 	}{
 		{
-			desc:       "reboot check",
-			rpmExists:  true,
+			desc: "rpm reboot check succeeds",
+			setup: func(t *testing.T) {
+				setAptExists(t, false)
+				setRpmquery(t, createTempFile(t))
+
+				mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+				runner = mockCommandRunner
+				mockCommandRunner.EXPECT().Run(ctx, gomock.Any()).Return([]byte("1000\n"), nil, nil).Times(1)
+			},
 			wantReboot: false,
 		},
 		{
-			desc:    "unsupported package manager",
+			desc: "unsupported package manager returns error",
+			setup: func(t *testing.T) {
+				setAptExists(t, false)
+				setRpmquery(t, "/non_existing_file")
+			},
 			wantErr: errors.New("no recognized package manager installed, can't determine if reboot is required"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			mockAPT(t, false, false, false)
-			mockRPM(ctx, t, tt.rpmExists)
+			tt.setup(t)
 
 			gotReboot, gotErr := SystemRebootRequired(ctx)
 
