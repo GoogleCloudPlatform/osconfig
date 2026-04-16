@@ -1,4 +1,4 @@
-//  Copyright 2019 Google Inc. All Rights Reserved.
+//  Copyright 2026 Google Inc. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -21,13 +21,15 @@ import (
 	"fmt"
 	"os"
 
+	"os/exec"
 	"path/filepath"
 	"testing"
 	"time"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
-
+	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
+	"github.com/golang/mock/gomock"
 )
 
 // TestChecksum verifies that checksum correctly calculates the SHA256 hash of the input reader.
@@ -48,16 +50,13 @@ func TestChecksum(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
 			r := bytes.NewReader(tt.data)
 			h := checksum(r)
 
 			expected := sha256.Sum256(tt.data)
 			got := h.Sum(nil)
 
-			if !bytes.Equal(got, expected[:]) {
-				t.Errorf("checksum() = %x, want %x", got, expected)
-			}
+			utiltest.AssertEquals(t, got, expected[:])
 		})
 	}
 }
@@ -93,7 +92,6 @@ func TestWriteIfChanged(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
 			td := t.TempDir()
 			path := filepath.Join(td, "test_file")
 
@@ -105,10 +103,7 @@ func TestWriteIfChanged(t *testing.T) {
 
 			err := writeIfChanged(ctx, tt.newContent, path)
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
-
-			if err == nil {
-				utiltest.AssertFileContents(t, path, string(tt.newContent))
-			}
+			utiltest.AssertFileContents(t, path, string(tt.newContent))
 		})
 	}
 }
@@ -169,7 +164,6 @@ func TestInstallRecipes(t *testing.T) {
 	}
 }
 
-
 // TestRun covers the Run function.
 func TestRun(t *testing.T) {
 	Run(context.Background())
@@ -182,3 +176,35 @@ func Test_run(t *testing.T) {
 	run(ctx)
 }
 
+type expectedCommand struct {
+	cmd    *exec.Cmd
+	envs   []string
+	stdout []byte
+	stderr []byte
+	err    error
+}
+
+func setExpectations(mockCommandRunner *utilmocks.MockCommandRunner, expectedCommandsChain []expectedCommand) {
+	if len(expectedCommandsChain) == 0 {
+		return
+	}
+
+	var prev *gomock.Call
+	for _, expectedCmd := range expectedCommandsChain {
+		cmd := expectedCmd.cmd
+		if len(expectedCmd.envs) > 0 {
+			cmd.Env = append(os.Environ(), expectedCmd.envs...)
+		}
+
+		if prev == nil {
+			prev = mockCommandRunner.EXPECT().
+				Run(gomock.Any(), utilmocks.EqCmd(cmd)).
+				Return(expectedCmd.stdout, expectedCmd.stderr, expectedCmd.err).Times(1)
+		} else {
+			prev = mockCommandRunner.EXPECT().
+				Run(gomock.Any(), utilmocks.EqCmd(cmd)).
+				After(prev).
+				Return(expectedCmd.stdout, expectedCmd.stderr, expectedCmd.err).Times(1)
+		}
+	}
+}
