@@ -111,7 +111,7 @@ func TestSystemRebootRequiredRpm(t *testing.T) {
 	ctx := context.Background()
 	originalRunner := runner
 	mockCtrl := gomock.NewController(t)
-	t.Cleanup(func() { 
+	t.Cleanup(func() {
 		runner = originalRunner
 		mockCtrl.Finish()
 	})
