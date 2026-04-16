@@ -178,122 +178,73 @@ func TestUseSignedBy(t *testing.T) {
 
 func TestIsArmoredGPGKey(t *testing.T) {
 	tests := []struct {
-		name     string
-		keyData  []byte
-		expected bool
+		name    string
+		keyData []byte
+		want    bool
 	}{
 		{
-			name:     "valid armored key",
-			keyData:  []byte("-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQENBF2..."),
-			expected: true,
+			name:    "valid armored PGP public key block, expect true",
+			keyData: []byte("-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQENBF2..."),
+			want:    true,
 		},
 		{
-			name:     "invalid armored key (not a key)",
-			keyData:  []byte("-----BEGIN PGP MESSAGE-----\n\n..."),
-			expected: true, // armor.Decode returns true for any valid armored block
+			name:    "valid armored PGP message block, expect true",
+			keyData: []byte("-----BEGIN PGP MESSAGE-----\n\n..."),
+			want:    true, // armor.Decode returns true for any valid armored block
 		},
 		{
-			name:     "binary data",
-			keyData:  []byte{0x99, 0x01, 0x02, 0x03},
-			expected: false,
+			name:    "non-armored binary data, expect false",
+			keyData: []byte{0x99, 0x01, 0x02, 0x03},
+			want:    false,
 		},
 		{
-			name:     "empty data",
-			keyData:  []byte{},
-			expected: false,
+			name:    "empty input, expect false",
+			keyData: []byte{},
+			want:    false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			utiltest.AssertEquals(t, isArmoredGPGKey(tt.keyData), tt.expected)
+			utiltest.AssertEquals(t, isArmoredGPGKey(tt.keyData), tt.want)
 		})
 	}
 }
 
 func TestContainsEntity(t *testing.T) {
-	e1 := &openpgp.Entity{PrimaryKey: &packet.PublicKey{Fingerprint: [20]byte{1}}}
-	e2 := &openpgp.Entity{PrimaryKey: &packet.PublicKey{Fingerprint: [20]byte{2}}}
-	e3 := &openpgp.Entity{PrimaryKey: &packet.PublicKey{Fingerprint: [20]byte{3}}}
+	entity1 := &openpgp.Entity{PrimaryKey: &packet.PublicKey{Fingerprint: [20]byte{1}}}
+	entity2 := &openpgp.Entity{PrimaryKey: &packet.PublicKey{Fingerprint: [20]byte{2}}}
+	entity3 := &openpgp.Entity{PrimaryKey: &packet.PublicKey{Fingerprint: [20]byte{3}}}
 
 	tests := []struct {
-		name     string
-		es       []*openpgp.Entity
-		e        *openpgp.Entity
-		expected bool
+		name       string
+		entityList []*openpgp.Entity
+		target     *openpgp.Entity
+		want       bool
 	}{
 		{
-			name:     "entity is present",
-			es:       []*openpgp.Entity{e1, e2},
-			e:        e1,
-			expected: true,
+			name:       "entity is present, expect true",
+			entityList: []*openpgp.Entity{entity1, entity2},
+			target:     entity1,
+			want:       true,
 		},
 		{
-			name:     "entity is not present",
-			es:       []*openpgp.Entity{e1, e2},
-			e:        e3,
-			expected: false,
+			name:       "entity is not present, expect false",
+			entityList: []*openpgp.Entity{entity1, entity2},
+			target:     entity3,
+			want:       false,
 		},
 		{
-			name:     "empty entity list",
-			es:       []*openpgp.Entity{},
-			e:        e1,
-			expected: false,
+			name:       "empty entity list, expect false",
+			entityList: []*openpgp.Entity{},
+			target:     entity1,
+			want:       false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			utiltest.AssertEquals(t, containsEntity(tt.es, tt.e), tt.expected)
-		})
-	}
-}
-
-func TestReadInstanceOsInfo(t *testing.T) {
-	ctx := context.Background()
-
-	tests := []struct {
-		name        string
-		provider    osinfo.Provider
-		wantName    string
-		wantVersion float64
-		wantErr     error
-	}{
-		{
-			name: "successful read debian 11",
-			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
-				return "debian", "Debian", "11"
-			}},
-			wantName:    "debian",
-			wantVersion: 11,
-			wantErr:     nil,
-		},
-		{
-			name:     "provider error",
-			provider: errorOsInfoProvider{},
-			wantErr:  errors.New("error getting osinfo: osinfo error"),
-		},
-		{
-			name: "invalid version string",
-			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
-				return "debian", "Debian", "not-a-number"
-			}},
-			wantName:    "debian",
-			wantVersion: 0,
-			wantErr:     nil,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			osInfoProviderActual := osInfoProvider
-			defer func() { osInfoProvider = osInfoProviderActual }()
-			osInfoProvider = tt.provider
-
-			gotName, gotVersion, gotErr := readInstanceOsInfo(ctx)
-			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
-			utiltest.AssertEquals(t, gotName, tt.wantName)
-			utiltest.AssertEquals(t, gotVersion, tt.wantVersion)
+			utiltest.AssertEquals(t, containsEntity(tt.entityList, tt.target), tt.want)
 		})
 	}
 }
@@ -304,65 +255,67 @@ func TestShouldUseSignedBy(t *testing.T) {
 	tests := []struct {
 		name     string
 		provider osinfo.Provider
-		expected bool
+		want     bool
 	}{
 		{
-			name: "debian 12",
+			name: "debian 12, expect true",
 			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
 				return "debian", "Debian", "12"
 			}},
-			expected: true,
+			want: true,
 		},
 		{
-			name: "debian 11",
+			name: "debian 11, expect false",
 			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
 				return "debian", "Debian", "11"
 			}},
-			expected: false,
+			want: false,
 		},
 		{
-			name: "ubuntu 24",
+			name: "ubuntu 24, expect true",
 			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
 				return "ubuntu", "Ubuntu", "24"
 			}},
-			expected: true,
+			want: true,
 		},
 		{
-			name: "ubuntu 22",
+			name: "ubuntu 22, expect false",
 			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
 				return "ubuntu", "Ubuntu", "22"
 			}},
-			expected: false,
+			want: false,
 		},
 		{
-			name:     "error reading os info",
-			provider: errorOsInfoProvider{},
-			expected: false,
+			name: "invalid version string on Debian, expect false",
+			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
+				return "debian", "Debian", "not-a-number"
+			}},
+			want: false,
+		},
+		{
+			name:     "error reading os info, expect false",
+			provider: stubOsInfoProvider{err: errors.New("osinfo error")},
+			want:     false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			osInfoProviderActual := osInfoProvider
-			defer func() { osInfoProvider = osInfoProviderActual }()
-			osInfoProvider = tt.provider
-
-			utiltest.AssertEquals(t, shouldUseSignedBy(ctx), tt.expected)
+			defer utiltest.OverrideVariable(&osInfoProvider, tt.provider)()
+			utiltest.AssertEquals(t, shouldUseSignedBy(ctx), tt.want)
 		})
 	}
 }
 
-type errorOsInfoProvider struct{}
-
-func (e errorOsInfoProvider) GetOSInfo(ctx context.Context) (osinfo.OSInfo, error) {
-	return osinfo.OSInfo{}, errors.New("osinfo error")
-}
-
 type stubOsInfoProvider struct {
 	nameVersionProvider func() (string, string, string)
+	err                 error
 }
 
 func (s stubOsInfoProvider) GetOSInfo(ctx context.Context) (osinfo.OSInfo, error) {
+	if s.err != nil {
+		return osinfo.OSInfo{}, s.err
+	}
 	short, long, version := s.nameVersionProvider()
 
 	return osinfo.OSInfo{
