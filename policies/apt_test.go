@@ -196,6 +196,7 @@ func (s stubOsInfoProvider) GetOSInfo(ctx context.Context) (osinfo.OSInfo, error
 	}, nil
 }
 
+// TestAptChanges tests the aptChanges function, ensuring it correctly handles package installations, removals, and updates.
 func TestAptChanges(t *testing.T) {
 	dpkgQueryArgs := []string{"-W", "-f", `\{"architecture":"${Architecture}","package":"${Package}","source_name":"${source:Package}","source_version":"${source:Version}","status":"${db:Status-Status}","version":"${Version}"\}` + "\n"}
 	aptUpgradableArgs := []string{"--just-print", "-qq", "dist-upgrade"}
