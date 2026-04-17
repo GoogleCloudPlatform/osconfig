@@ -38,8 +38,6 @@ var (
 	unattendedUpgPath  = "/usr/bin/unattended-upgrades"
 )
 
-var runner util.CommandRunner = &util.DefaultRunner{}
-
 // run executes a command and returns stdout.
 var run = func(ctx context.Context, cmd string, args []string) ([]byte, error) {
 	stdout, stderr, err := runner.Run(ctx, exec.CommandContext(ctx, cmd, args...))
