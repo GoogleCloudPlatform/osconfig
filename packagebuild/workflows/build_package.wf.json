@@ -57,7 +57,8 @@
           "name": "inst-build-pkg-disk",
           "sizeGb": "${disk_size_gb}",
           "sourceImage": "${sourceImage}",
-          "type": "${disk_type}"
+          "type": "${disk_type}",
+          "zone": "${zone}"
         }
       ]
     },
