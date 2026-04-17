@@ -1,4 +1,4 @@
-//  Copyright 2019 Google Inc. All Rights Reserved.
+//  Copyright 2026 Google Inc. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -16,9 +16,14 @@ package agentendpoint
 
 import (
 	"context"
+	"errors"
+	"net/http"
+	"net/http/httptest"
+	"os"
 	"os/exec"
 	"testing"
 
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -133,4 +138,152 @@ func TestRunExecStep(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestGetGCSObject verifies the process of downloading objects from Google Cloud Storage. It uses a local HTTP server to emulate the GCS API
+func TestGetGCSObject(t *testing.T) {
+	ctx := context.Background()
+	testContent := "test script content"
+	bucket := "test-bucket"
+	object := "scripts/test.sh"
+
+	tests := []struct {
+		name        string
+		bucket      string
+		object      string
+		handler     http.HandlerFunc
+		wantErr     error
+		wantPath    string
+		wantContent string
+	}{
+		{
+			name:   "successful object download",
+			bucket: bucket,
+			object: object,
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(testContent))
+			},
+			wantErr:     nil,
+			wantPath:    "test.sh",
+			wantContent: testContent,
+		},
+		{
+			name:   "gcs object not found",
+			bucket: bucket,
+			object: object,
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+			},
+			wantErr: errors.New("error fetching GCS object: storage: object doesn't exist"),
+		},
+		{
+			name:   "invalid download path error",
+			bucket: bucket,
+			object: "///",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(testContent))
+			},
+			wantErr: errors.New("error downloading GCS object"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ts := httptest.NewServer(tt.handler)
+			defer ts.Close()
+
+			rollback := OverrideEnv(t, "STORAGE_EMULATOR_HOST", ts.URL)
+			defer t.Cleanup(rollback)
+
+			localPath, err := getGCSObject(ctx, tt.bucket, tt.object, 0)
+			if tt.name == "InvalidLocalPath" {
+				// impossible to predict exact error message for downloading error because of random /tmp files
+				utiltest.AssertErrorContains(t, err, tt.wantErr)
+			} else {
+				utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			}
+
+			if err == nil {
+				defer os.Remove(localPath)
+				utiltest.AssertFilePath(t, localPath, tt.wantPath)
+				utiltest.AssertFileContents(t, localPath, tt.wantContent)
+			}
+		})
+	}
+}
+
+// TestExecuteCommand verifies the handling of process execution results by mocking the run function
+func TestExecuteCommand(t *testing.T) {
+	ctx := context.Background()
+	oldRun := run
+	defer func() { run = oldRun }()
+
+	tests := []struct {
+		name     string
+		mockRun  func(*exec.Cmd) ([]byte, error)
+		wantCode int32
+		wantErr  error
+	}{
+		{
+			name: "successful command execution",
+			mockRun: func(cmd *exec.Cmd) ([]byte, error) {
+				testCmd := exec.Command("true")
+				testCmd.Run()
+				cmd.ProcessState = testCmd.ProcessState
+				return []byte("output"), nil
+			},
+			wantCode: 0,
+			wantErr:  nil,
+		},
+		{
+			name: "system error during run",
+			mockRun: func(cmd *exec.Cmd) ([]byte, error) {
+				return nil, errors.New("system error")
+			},
+			wantCode: -1,
+			wantErr:  errors.New("system error"),
+		},
+		{
+			name: "command exit error",
+			mockRun: func(cmd *exec.Cmd) ([]byte, error) {
+				return []byte("error output"), &exec.ExitError{}
+			},
+			wantCode: 0,
+			wantErr:  nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			run = tt.mockRun
+			gotCode, err := executeCommand(ctx, "test-path", nil)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			if gotCode != tt.wantCode {
+				t.Errorf("%s: executeCommand() exitCode = %d, want %d", tt.name, gotCode, tt.wantCode)
+			}
+		})
+	}
+}
+
+func OverrideEnv(t *testing.T, env, value string) (rollback func()) {
+	orig, ok := os.LookupEnv(env)
+	rollback = func() {
+		if ok {
+			if err := os.Setenv(env, orig); err != nil {
+				t.Fatalf("Failed to restore environment variable %s: %v", env, err)
+			}
+		} else {
+			if err := os.Unsetenv(env); err != nil {
+				t.Fatalf("Failed to unset environment variable %s: %v", env, err)
+			}
+		}
+	}
+
+	if err := os.Setenv(env, value); err != nil {
+		t.Fatalf("Failed to set environment variable %s: %v", env, err)
+	}
+
+	return rollback
 }
