@@ -15,6 +15,7 @@
 package policies
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"net/http"
@@ -29,11 +30,30 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 )
 
+func createTestGPGKey(t *testing.T) []byte {
+	t.Helper()
+	entity, err := openpgp.NewEntity("test", "test", "test@test.com", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var buf bytes.Buffer
+	if err := entity.Serialize(&buf); err != nil {
+		t.Fatal(err)
+	}
+	return buf.Bytes()
+}
+
 // TestAptRepositories tests the adding of apt repository files.
 func TestAptRepositories(t *testing.T) {
 	ctx := context.Background()
+	validKey := createTestGPGKey(t)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("fake-gpg-key"))
+		switch r.URL.Path {
+		case "/valid-key":
+			w.Write(validKey)
+		default:
+			w.Write([]byte("fake-gpg-key"))
+		}
 	}))
 	defer srv.Close()
 
@@ -93,12 +113,12 @@ func TestAptRepositories(t *testing.T) {
 			want: "# Repo file managed by Google OSConfig agent\n\ndeb-src http://repo1 dist1 comp1\n\ndeb http://repo2 dist2 comp1 comp2\n",
 		},
 		{
-			name: "repo with gpg key, want repo line",
+			name: "repo with valid gpg key, want repo line and gpg block coverage",
 			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
 				return "debian", "Debian", "10"
 			}},
 			repos: []*agentendpointpb.AptRepository{
-				{Uri: "http://repo", Distribution: "dist", GpgKey: srv.URL},
+				{Uri: "http://repo", Distribution: "dist", GpgKey: srv.URL + "/valid-key"},
 			},
 			want: "# Repo file managed by Google OSConfig agent\n\ndeb http://repo dist\n",
 		},
