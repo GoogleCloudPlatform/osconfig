@@ -24,7 +24,7 @@
 
 DEFAULT_TYPE='deb11'
 DEFAULT_PROJECT='gcp-guest'
-DEFAULT_ZONE='us-west1-a'
+DEFAULT_ZONE='us-central1-a'
 DEFAULT_OWNER='GoogleCloudPlatform'
 DEFAULT_GIT_REF='master'
 DEFAULT_GCS_PATH='${SCRATCHPATH}/packages'
