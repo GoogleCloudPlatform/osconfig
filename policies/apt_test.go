@@ -17,10 +17,8 @@ package policies
 import (
 	"context"
 	"errors"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -40,18 +38,18 @@ func TestAptRepositories(t *testing.T) {
 	defer srv.Close()
 
 	tests := []struct {
-		name       string
-		repos      []*agentendpointpb.AptRepository
+		name     string
+		repos    []*agentendpointpb.AptRepository
 		provider osinfo.Provider
-		want       string
+		want     string
 	}{
 		{
 			name: "no repositories, want header only",
 			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
 				return "debian", "Debian", "10"
 			}},
-			repos:   []*agentendpointpb.AptRepository{},
-			want:    "# Repo file managed by Google OSConfig agent\n",
+			repos: []*agentendpointpb.AptRepository{},
+			want:  "# Repo file managed by Google OSConfig agent\n",
 		},
 		{
 			name: "single deb repo on debian 10, want repo line without signed-by",
@@ -61,7 +59,7 @@ func TestAptRepositories(t *testing.T) {
 			repos: []*agentendpointpb.AptRepository{
 				{Uri: "http://repo1-url/", Distribution: "distribution", Components: []string{"component1"}},
 			},
-			want:    "# Repo file managed by Google OSConfig agent\n\ndeb http://repo1-url/ distribution component1\n",
+			want: "# Repo file managed by Google OSConfig agent\n\ndeb http://repo1-url/ distribution component1\n",
 		},
 		{
 			name: "single deb repo on debian 12, want repo line with signed-by",
@@ -71,17 +69,17 @@ func TestAptRepositories(t *testing.T) {
 			repos: []*agentendpointpb.AptRepository{
 				{Uri: "http://repo1-url/", Distribution: "distribution", Components: []string{"component1"}},
 			},
-			want:    "# Repo file managed by Google OSConfig agent\n\ndeb [signed-by=/etc/apt/trusted.gpg.d/osconfig_agent_managed.gpg] http://repo1-url/ distribution component1\n",
+			want: "# Repo file managed by Google OSConfig agent\n\ndeb [signed-by=/etc/apt/trusted.gpg.d/osconfig_agent_managed.gpg] http://repo1-url/ distribution component1\n",
 		},
 		{
-			name: "unknown archive type, want common deb line",
+			name: "unknown archive type, want default to deb",
 			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
 				return "debian", "Debian", "10"
 			}},
 			repos: []*agentendpointpb.AptRepository{
 				{Uri: "http://repo", Distribution: "dist", ArchiveType: agentendpointpb.AptRepository_ArchiveType(99)},
 			},
-			want:    "# Repo file managed by Google OSConfig agent\n\ndeb http://repo dist\n",
+			want: "# Repo file managed by Google OSConfig agent\n\ndeb http://repo dist\n",
 		},
 		{
 			name: "multiple repos and components, want multiple repo lines",
@@ -92,7 +90,7 @@ func TestAptRepositories(t *testing.T) {
 				{Uri: "http://repo1", Distribution: "dist1", Components: []string{"comp1"}, ArchiveType: agentendpointpb.AptRepository_DEB_SRC},
 				{Uri: "http://repo2", Distribution: "dist2", Components: []string{"comp1", "comp2"}},
 			},
-			want:    "# Repo file managed by Google OSConfig agent\n\ndeb-src http://repo1 dist1 comp1\n\ndeb http://repo2 dist2 comp1 comp2\n",
+			want: "# Repo file managed by Google OSConfig agent\n\ndeb-src http://repo1 dist1 comp1\n\ndeb http://repo2 dist2 comp1 comp2\n",
 		},
 		{
 			name: "repo with gpg key, want repo line",
@@ -102,22 +100,19 @@ func TestAptRepositories(t *testing.T) {
 			repos: []*agentendpointpb.AptRepository{
 				{Uri: "http://repo", Distribution: "dist", GpgKey: srv.URL},
 			},
-			want:    "# Repo file managed by Google OSConfig agent\n\ndeb http://repo dist\n",
+			want: "# Repo file managed by Google OSConfig agent\n\ndeb http://repo dist\n",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-      defer utiltest.OverrideVariable(&osInfoProvider, tt.provider)()
+			defer utiltest.OverrideVariable(&osInfoProvider, tt.provider)()
 
-			td, err := ioutil.TempDir(os.TempDir(), "")
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer os.RemoveAll(td)
+			td, cleanup := utiltest.TempDir(t)
+			defer cleanup()
 			testRepo := filepath.Join(td, "testRepo")
 
-			err = aptRepositories(ctx, tt.repos, testRepo)
+			err := aptRepositories(ctx, tt.repos, testRepo)
 			utiltest.AssertErrorMatch(t, err, nil)
 			utiltest.AssertFileContents(t, testRepo, tt.want)
 		})
