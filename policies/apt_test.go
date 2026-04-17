@@ -16,6 +16,7 @@ package policies
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -25,6 +26,9 @@ import (
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
+	"golang.org/x/crypto/openpgp"
+	"golang.org/x/crypto/openpgp/packet"
 )
 
 func runAptRepositories(ctx context.Context, repos []*agentendpointpb.AptRepository) (string, error) {
@@ -172,11 +176,146 @@ func TestUseSignedBy(t *testing.T) {
 	}
 }
 
+func TestIsArmoredGPGKey(t *testing.T) {
+	tests := []struct {
+		name    string
+		keyData []byte
+		want    bool
+	}{
+		{
+			name:    "valid armored PGP public key block, expect true",
+			keyData: []byte("-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQENBF2..."),
+			want:    true,
+		},
+		{
+			name:    "valid armored PGP message block, expect true",
+			keyData: []byte("-----BEGIN PGP MESSAGE-----\n\n..."),
+			want:    true, // armor.Decode returns true for any valid armored block
+		},
+		{
+			name:    "non-armored binary data, expect false",
+			keyData: []byte{0x99, 0x01, 0x02, 0x03},
+			want:    false,
+		},
+		{
+			name:    "empty input, expect false",
+			keyData: []byte{},
+			want:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			utiltest.AssertEquals(t, isArmoredGPGKey(tt.keyData), tt.want)
+		})
+	}
+}
+
+func TestContainsEntity(t *testing.T) {
+	entity1 := &openpgp.Entity{PrimaryKey: &packet.PublicKey{Fingerprint: [20]byte{1}}}
+	entity2 := &openpgp.Entity{PrimaryKey: &packet.PublicKey{Fingerprint: [20]byte{2}}}
+	entity3 := &openpgp.Entity{PrimaryKey: &packet.PublicKey{Fingerprint: [20]byte{3}}}
+
+	tests := []struct {
+		name       string
+		entityList []*openpgp.Entity
+		target     *openpgp.Entity
+		want       bool
+	}{
+		{
+			name:       "entity is present, expect true",
+			entityList: []*openpgp.Entity{entity1, entity2},
+			target:     entity1,
+			want:       true,
+		},
+		{
+			name:       "entity is not present, expect false",
+			entityList: []*openpgp.Entity{entity1, entity2},
+			target:     entity3,
+			want:       false,
+		},
+		{
+			name:       "empty entity list, expect false",
+			entityList: []*openpgp.Entity{},
+			target:     entity1,
+			want:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			utiltest.AssertEquals(t, containsEntity(tt.entityList, tt.target), tt.want)
+		})
+	}
+}
+
+func TestShouldUseSignedBy(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name     string
+		provider osinfo.Provider
+		want     bool
+	}{
+		{
+			name: "debian 12, expect true",
+			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
+				return "debian", "Debian", "12"
+			}},
+			want: true,
+		},
+		{
+			name: "debian 11, expect false",
+			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
+				return "debian", "Debian", "11"
+			}},
+			want: false,
+		},
+		{
+			name: "ubuntu 24, expect true",
+			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
+				return "ubuntu", "Ubuntu", "24"
+			}},
+			want: true,
+		},
+		{
+			name: "ubuntu 22, expect false",
+			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
+				return "ubuntu", "Ubuntu", "22"
+			}},
+			want: false,
+		},
+		{
+			name: "invalid version string on Debian, expect false",
+			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
+				return "debian", "Debian", "not-a-number"
+			}},
+			want: false,
+		},
+		{
+			name:     "error reading os info, expect false",
+			provider: stubOsInfoProvider{err: errors.New("osinfo error")},
+			want:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer utiltest.OverrideVariable(&osInfoProvider, tt.provider)()
+			utiltest.AssertEquals(t, shouldUseSignedBy(ctx), tt.want)
+		})
+	}
+}
+
 type stubOsInfoProvider struct {
 	nameVersionProvider func() (string, string, string)
+	err                 error
 }
 
 func (s stubOsInfoProvider) GetOSInfo(ctx context.Context) (osinfo.OSInfo, error) {
+	if s.err != nil {
+		return osinfo.OSInfo{}, s.err
+	}
 	short, long, version := s.nameVersionProvider()
 
 	return osinfo.OSInfo{
