@@ -17,6 +17,7 @@ package ospatch
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -24,10 +25,13 @@ import (
 	"strconv"
 
 	"github.com/GoogleCloudPlatform/osconfig/packages"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 )
 
-const (
-	rpmquery = "/usr/bin/rpmquery"
+var (
+	rpmquery     = "/usr/bin/rpmquery"
+	procStatPath = "/proc/stat"
+	runner       = util.CommandRunner(&util.DefaultRunner{})
 )
 
 func getBtime(stat string) (int64, error) {
@@ -85,7 +89,7 @@ func rpmRebootRequired(pkgs []byte, btime int64) bool {
 // To get this signal we look at a set of well known packages and whether
 // install time > system boot time. This list is not meant to be exhastive,
 // just to provide a signal when core system packages are updated.
-func rpmReboot() (bool, error) {
+func rpmReboot(ctx context.Context) (bool, error) {
 	provides := []string{
 		// Common packages.
 		"kernel", "glibc", "gnutls",
@@ -95,7 +99,7 @@ func rpmReboot() (bool, error) {
 		"kernel-firmware", "libopenssl1_1", "libopenssl1_0_0", "dbus-1",
 	}
 	args := append([]string{"--queryformat", "%{INSTALLTIME}\n", "--whatprovides"}, provides...)
-	out, err := exec.Command(rpmquery, args...).Output()
+	out, _, err := runner.Run(ctx, exec.Command(rpmquery, args...))
 	if err != nil {
 		// We don't care about return codes as we know some of these packages won't be installed.
 		if _, ok := err.(*exec.ExitError); !ok {
@@ -103,7 +107,7 @@ func rpmReboot() (bool, error) {
 		}
 	}
 
-	btime, err := getBtime("/proc/stat")
+	btime, err := getBtime(procStatPath)
 	if err != nil {
 		return false, err
 	}
