@@ -17,11 +17,11 @@ package policies
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
@@ -31,120 +31,158 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 )
 
-func runAptRepositories(ctx context.Context, repos []*agentendpointpb.AptRepository) (string, error) {
-	td, err := ioutil.TempDir(os.TempDir(), "")
-	if err != nil {
-		return "", fmt.Errorf("error creating temp dir: %v", err)
-	}
-	defer os.RemoveAll(td)
-	testRepo := filepath.Join(td, "testRepo")
-
-	if err := aptRepositories(ctx, repos, testRepo); err != nil {
-		return "", fmt.Errorf("error running aptRepositories: %v", err)
-	}
-
-	data, err := ioutil.ReadFile(testRepo)
-	if err != nil {
-		return "", fmt.Errorf("error reading testRepo: %v", err)
-	}
-
-	return string(data), nil
-}
-
+// TestAptRepositories tests the adding of apt repository files.
 func TestAptRepositories(t *testing.T) {
-	debian10 := func() (string, string, string) {
-		return "debian", "Debian", "10"
-	}
-
-	debian12 := func() (string, string, string) {
-		return "debian", "Debian", "12"
-	}
+	ctx := context.Background()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("fake-gpg-key"))
+	}))
+	defer srv.Close()
 
 	tests := []struct {
-		name                   string
-		repos                  []*agentendpointpb.AptRepository
-		nameAndVersionProvider func() (string, string, string)
-		want                   string
+		name       string
+		repos      []*agentendpointpb.AptRepository
+		provider osinfo.Provider
+		want       string
 	}{
 		{
-			name:                   "No repositories",
-			nameAndVersionProvider: debian10,
-			repos:                  []*agentendpointpb.AptRepository{},
-			want:                   "# Repo file managed by Google OSConfig agent\n"},
+			name: "no repositories, want header only",
+			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
+				return "debian", "Debian", "10"
+			}},
+			repos:   []*agentendpointpb.AptRepository{},
+			want:    "# Repo file managed by Google OSConfig agent\n",
+		},
 		{
-			name:                   "1 repositoy, Debian 10",
-			nameAndVersionProvider: debian10,
+			name: "single deb repo on debian 10, want repo line without signed-by",
+			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
+				return "debian", "Debian", "10"
+			}},
 			repos: []*agentendpointpb.AptRepository{
 				{Uri: "http://repo1-url/", Distribution: "distribution", Components: []string{"component1"}},
 			},
-			want: "# Repo file managed by Google OSConfig agent\n\ndeb http://repo1-url/ distribution component1\n",
+			want:    "# Repo file managed by Google OSConfig agent\n\ndeb http://repo1-url/ distribution component1\n",
 		},
 		{
-			name:                   "1 repositoy, Debian 12",
-			nameAndVersionProvider: debian12,
+			name: "single deb repo on debian 12, want repo line with signed-by",
+			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
+				return "debian", "Debian", "12"
+			}},
 			repos: []*agentendpointpb.AptRepository{
 				{Uri: "http://repo1-url/", Distribution: "distribution", Components: []string{"component1"}},
 			},
-			want: "# Repo file managed by Google OSConfig agent\n\ndeb [signed-by=/etc/apt/trusted.gpg.d/osconfig_agent_managed.gpg] http://repo1-url/ distribution component1\n",
+			want:    "# Repo file managed by Google OSConfig agent\n\ndeb [signed-by=/etc/apt/trusted.gpg.d/osconfig_agent_managed.gpg] http://repo1-url/ distribution component1\n",
 		},
 		{
-			name:                   "2 repos, Debian 10",
-			nameAndVersionProvider: debian10,
+			name: "unknown archive type, want common deb line",
+			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
+				return "debian", "Debian", "10"
+			}},
 			repos: []*agentendpointpb.AptRepository{
-				{Uri: "http://repo1-url/", Distribution: "distribution", Components: []string{"component1"}, ArchiveType: agentendpointpb.AptRepository_DEB_SRC},
-				{Uri: "http://repo2-url/", Distribution: "distribution", Components: []string{"component1", "component2"}, ArchiveType: agentendpointpb.AptRepository_DEB},
+				{Uri: "http://repo", Distribution: "dist", ArchiveType: agentendpointpb.AptRepository_ArchiveType(99)},
 			},
-			want: "# Repo file managed by Google OSConfig agent\n\ndeb-src http://repo1-url/ distribution component1\n\ndeb http://repo2-url/ distribution component1 component2\n",
+			want:    "# Repo file managed by Google OSConfig agent\n\ndeb http://repo dist\n",
 		},
 		{
-			name:                   "2 repos, Debian 12",
-			nameAndVersionProvider: debian12,
+			name: "multiple repos and components, want multiple repo lines",
+			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
+				return "debian", "Debian", "10"
+			}},
 			repos: []*agentendpointpb.AptRepository{
-				{Uri: "http://repo1-url/", Distribution: "distribution", Components: []string{"component1"}, ArchiveType: agentendpointpb.AptRepository_DEB_SRC},
-				{Uri: "http://repo2-url/", Distribution: "distribution", Components: []string{"component1", "component2"}, ArchiveType: agentendpointpb.AptRepository_DEB},
+				{Uri: "http://repo1", Distribution: "dist1", Components: []string{"comp1"}, ArchiveType: agentendpointpb.AptRepository_DEB_SRC},
+				{Uri: "http://repo2", Distribution: "dist2", Components: []string{"comp1", "comp2"}},
 			},
-			want: "# Repo file managed by Google OSConfig agent\n\ndeb-src [signed-by=/etc/apt/trusted.gpg.d/osconfig_agent_managed.gpg] http://repo1-url/ distribution component1\n\ndeb [signed-by=/etc/apt/trusted.gpg.d/osconfig_agent_managed.gpg] http://repo2-url/ distribution component1 component2\n",
+			want:    "# Repo file managed by Google OSConfig agent\n\ndeb-src http://repo1 dist1 comp1\n\ndeb http://repo2 dist2 comp1 comp2\n",
+		},
+		{
+			name: "repo with gpg key, want repo line",
+			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
+				return "debian", "Debian", "10"
+			}},
+			repos: []*agentendpointpb.AptRepository{
+				{Uri: "http://repo", Distribution: "dist", GpgKey: srv.URL},
+			},
+			want:    "# Repo file managed by Google OSConfig agent\n\ndeb http://repo dist\n",
 		},
 	}
 
 	for _, tt := range tests {
-		osInfoProviderActual := osInfoProvider
-		defer func() { osInfoProvider = osInfoProviderActual }()
+		t.Run(tt.name, func(t *testing.T) {
+      defer utiltest.OverrideVariable(&osInfoProvider, tt.provider)()
 
-		osInfoStub := stubOsInfoProvider{nameVersionProvider: tt.nameAndVersionProvider}
-		osInfoProvider = osInfoStub
+			td, err := ioutil.TempDir(os.TempDir(), "")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer os.RemoveAll(td)
+			testRepo := filepath.Join(td, "testRepo")
 
-		got, err := runAptRepositories(context.Background(), tt.repos)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if got != tt.want {
-			t.Errorf("%s: got:\n%q\nwant:\n%q", tt.name, got, tt.want)
-		}
+			err = aptRepositories(ctx, tt.repos, testRepo)
+			utiltest.AssertErrorMatch(t, err, nil)
+			utiltest.AssertFileContents(t, testRepo, tt.want)
+		})
 	}
 }
 
+// TestGetAptGPGKey tests the retrieval and validation of apt GPG keys.
 func TestGetAptGPGKey(t *testing.T) {
-	key := "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
-
-	entityList, err := getAptGPGKey(key)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// check if Artifact Regitry key exist or not
-	artifactRegistryKeyFound := false
-	for _, e := range entityList {
-		for key := range e.Identities {
-			if strings.Contains(key, "Artifact Registry") {
-				artifactRegistryKeyFound = true
-			}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/large":
+			w.Header().Set("Content-Length", "2000000")
+			w.Write(make([]byte, 100))
+		case "/binary":
+			w.Write([]byte{0x99, 0x01, 0x02})
+		case "/empty_armored":
+			w.Write([]byte("-----BEGIN PGP PUBLIC KEY BLOCK-----\n\n-----END PGP PUBLIC KEY BLOCK-----"))
+		default:
+			w.Write([]byte("invalid data"))
 		}
+	}))
+	defer srv.Close()
+
+	tests := []struct {
+		name    string
+		url     string
+		wantErr error
+	}{
+		{
+			name:    "empty armored key, want nil error",
+			url:     srv.URL + "/empty_armored",
+			wantErr: nil,
+		},
+		{
+			name:    "invalid data, want invalid data error",
+			url:     srv.URL + "/invalid",
+			wantErr: errors.New("openpgp: invalid data: tag byte does not have MSB set"),
+		},
+		{
+			name:    "binary key, want unexpected EOF error",
+			url:     srv.URL + "/binary",
+			wantErr: errors.New("unexpected EOF"),
+		},
+		{
+			name:    "large key, want too large error",
+			url:     srv.URL + "/large",
+			wantErr: errors.New("key size of 2000000 too large"),
+		},
+		{
+			name:    "invalid url, want parse error",
+			url:     "http://invalid:url",
+			wantErr: errors.New(`parse "http://invalid:url": invalid port ":url" after host`),
+		},
 	}
 
-	if !artifactRegistryKeyFound {
-		t.Errorf("Expected to find Artifact Registry key in Google Cloud Public GPG key, but its missed.")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := getAptGPGKey(tt.url)
+			if err != nil {
+				// openpgp returns custom error types
+				// convert to standard error type for AssertErrorMatch
+				err = errors.New(err.Error())
+			}
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+		})
 	}
 }
 
