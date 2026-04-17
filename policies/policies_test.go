@@ -39,11 +39,11 @@ func TestChecksum(t *testing.T) {
 		data []byte
 	}{
 		{
-			name: "basic string",
+			name: "basic string data, want correct sha256 hash",
 			data: []byte("test data"),
 		},
 		{
-			name: "empty string",
+			name: "empty data, want hash of empty data",
 			data: []byte(""),
 		},
 	}
@@ -72,18 +72,18 @@ func TestWriteIfChanged(t *testing.T) {
 		wantErr        error
 	}{
 		{
-			name:       "new file creation",
+			name:       "new content for non-existent file, want nil error",
 			newContent: []byte("content 1"),
 			wantErr:    nil,
 		},
 		{
-			name:           "no change",
+			name:           "same content as existing file, want nil error",
 			initialContent: []byte("content 1"),
 			newContent:     []byte("content 1"),
 			wantErr:        nil,
 		},
 		{
-			name:           "content update",
+			name:           "different content for existing file, want nil error",
 			initialContent: []byte("content 1"),
 			newContent:     []byte("content 2"),
 			wantErr:        nil,
@@ -118,11 +118,11 @@ func TestInstallRecipes(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name: "no recipes",
+			name: "policy without recipes",
 			egp:  &agentendpointpb.EffectiveGuestPolicy{},
 		},
 		{
-			name: "nil software recipe",
+			name: "policy with nil software recipe",
 			egp: &agentendpointpb.EffectiveGuestPolicy{
 				SoftwareRecipes: []*agentendpointpb.EffectiveGuestPolicy_SourcedSoftwareRecipe{
 					{
@@ -132,7 +132,7 @@ func TestInstallRecipes(t *testing.T) {
 			},
 		},
 		{
-			name: "recipe installation error",
+			name: "policy with invalid recipe",
 			egp: &agentendpointpb.EffectiveGuestPolicy{
 				SoftwareRecipes: []*agentendpointpb.EffectiveGuestPolicy_SourcedSoftwareRecipe{
 					{
