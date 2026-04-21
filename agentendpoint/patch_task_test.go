@@ -84,12 +84,12 @@ func TestHandleErrorState(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name:    "handle server cancel error",
+			name:    "server cancel error, want it",
 			err:     errServerCancel,
 			wantErr: errServerCancel,
 		},
 		{
-			name:    "handle generic error",
+			name:    "generic error, want it",
 			err:     fmt.Errorf("generic error"),
 			wantErr: errors.New("generic error"),
 		},
@@ -196,12 +196,12 @@ func TestRebootIfNeededSafe(t *testing.T) {
 		wantErr      error
 	}{
 		{
-			name:         "skip reboot when config is never",
+			name:         "reboot config NEVER, want nil",
 			rebootConfig: agentendpointpb.PatchConfig_NEVER,
 			wantErr:      nil,
 		},
 		{
-			name:         "always with dry run",
+			name:         "reboot config ALWAYS with dry run, want nil",
 			rebootConfig: agentendpointpb.PatchConfig_ALWAYS,
 			dryRun:       true,
 			prePatch:     false,
@@ -288,7 +288,7 @@ func TestPatchTaskErrorPaths(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name: "state file error",
+			name: "invalid state file during complete, want success (nil error)",
 			op: func() error {
 				return withInvalidStateFile(func() error {
 					pt.complete(ctx)
@@ -298,7 +298,7 @@ func TestPatchTaskErrorPaths(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "set step error on invalid state file",
+			name: "invalid state file during setStep, want error saving step",
 			op: func() error {
 				return withInvalidStateFile(func() error {
 					return pt.setStep(patching)
@@ -307,14 +307,14 @@ func TestPatchTaskErrorPaths(t *testing.T) {
 			wantErr: errors.New("error saving state: mkdir /proc/invalid: no such file or directory"),
 		},
 		{
-			name: "report continuing state error",
+			name: "continuing state report on closed client, want connection error",
 			op: func() error {
 				return pt.reportContinuingState(ctx, agentendpointpb.ApplyPatchesTaskProgress_STARTED)
 			},
 			wantErr: errors.New("error reporting state STARTED: error calling ReportTaskProgress: code: \"Canceled\", message: \"grpc: the client connection is closing\", details: []"),
 		},
 		{
-			name: "report completed state error",
+			name: "completed state report on closed client, want connection error",
 			op: func() error {
 				return pt.reportCompletedState(ctx, "error", &agentendpointpb.ReportTaskCompleteRequest_ApplyPatchesTaskOutput{})
 			},
