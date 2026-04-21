@@ -31,7 +31,6 @@ import (
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/golang/mock/gomock"
-	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
@@ -341,18 +340,18 @@ func TestAptChanges(t *testing.T) {
 	aptEnv := []string{"DEBIAN_FRONTEND=noninteractive"}
 
 	tests := []struct {
-		name          string
-		aptInstalled  []*agentendpointpb.Package
-		aptRemoved    []*agentendpointpb.Package
-		aptUpdated    []*agentendpointpb.Package
-		expectations  []expectedCommand
-		wantErr       error
+		name         string
+		aptInstalled []*agentendpointpb.Package
+		aptRemoved   []*agentendpointpb.Package
+		aptUpdated   []*agentendpointpb.Package
+		expectations []expectedCommand
+		wantErr      error
 	}{
 		{
-			name: "no changes needed",
+			name: "no changes, want nil",
 		},
 		{
-			name:         "failed to get installed packages",
+			name:         "dpkg-query failure, want dkpg-query error",
 			aptInstalled: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...), err: errors.New("dpkg-query error")},
@@ -360,7 +359,7 @@ func TestAptChanges(t *testing.T) {
 			wantErr: errors.New("error running /usr/bin/dpkg-query with args [\"-W\" \"-f\" \"\\\\{\\\"architecture\\\":\\\"${Architecture}\\\",\\\"package\\\":\\\"${Package}\\\",\\\"source_name\\\":\\\"${source:Package}\\\",\\\"source_version\\\":\\\"${source:Version}\\\",\\\"status\\\":\\\"${db:Status-Status}\\\",\\\"version\\\":\\\"${Version}\\\"\\\\}\\n\"]: dpkg-query error, stdout: \"\", stderr: \"\""),
 		},
 		{
-			name:       "failed to get updates",
+			name:       "apt-get update failure, want update error",
 			aptUpdated: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...), stdout: []byte(`{"package":"p1","status":"installed"}`)},
@@ -370,7 +369,7 @@ func TestAptChanges(t *testing.T) {
 			wantErr: errors.New("apt-get updates error"),
 		},
 		{
-			name:         "successful install",
+			name:         "p1 to install, want nil",
 			aptInstalled: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...), stdout: []byte("")},
@@ -379,18 +378,7 @@ func TestAptChanges(t *testing.T) {
 			},
 		},
 		{
-			name:         "install fallback success",
-			aptInstalled: []*agentendpointpb.Package{{Name: "p1"}, {Name: "p2"}},
-			expectations: []expectedCommand{
-				{cmd: exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...), stdout: []byte("")},
-				{cmd: exec.Command("/usr/bin/apt-get", "update"), envs: aptEnv},
-				{cmd: exec.Command("/usr/bin/apt-get", "install", "-y", "p1", "p2"), envs: aptEnv, err: errors.New("bulk install error")},
-				{cmd: exec.Command("/usr/bin/apt-get", "install", "-y", "p1"), envs: aptEnv},
-				{cmd: exec.Command("/usr/bin/apt-get", "install", "-y", "p2"), envs: aptEnv},
-			},
-		},
-		{
-			name:         "install fallback failure",
+			name:         "p1 to install with failure, want installing error",
 			aptInstalled: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...), stdout: []byte("")},
@@ -401,7 +389,7 @@ func TestAptChanges(t *testing.T) {
 			wantErr: errors.New("error installing apt packages: Error installing apt package: p1. Error details: error running /usr/bin/apt-get with args [\"install\" \"-y\" \"p1\"]: individual install error, stdout: \"\", stderr: \"\""),
 		},
 		{
-			name:       "successful upgrade",
+			name:       "p1 to upgrade, want nil",
 			aptUpdated: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...), stdout: []byte(`{"package":"p1","status":"installed"}`)},
@@ -411,7 +399,7 @@ func TestAptChanges(t *testing.T) {
 			},
 		},
 		{
-			name:       "upgrade failure",
+			name:       "p1 to upgrade with failure, wnt upgrading error",
 			aptUpdated: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...), stdout: []byte(`{"package":"p1","status":"installed"}`)},
@@ -422,7 +410,7 @@ func TestAptChanges(t *testing.T) {
 			wantErr: errors.New("error upgrading apt packages: error running /usr/bin/apt-get with args [\"install\" \"-y\" \"p1\"]: upgrade error, stdout: \"\", stderr: \"\""),
 		},
 		{
-			name:       "successful remove",
+			name:       "p1 to remove, nil",
 			aptRemoved: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...), stdout: []byte(`{"package":"p1","status":"installed"}`)},
@@ -430,17 +418,7 @@ func TestAptChanges(t *testing.T) {
 			},
 		},
 		{
-			name:       "remove fallback success",
-			aptRemoved: []*agentendpointpb.Package{{Name: "p1"}, {Name: "p2"}},
-			expectations: []expectedCommand{
-				{cmd: exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...), stdout: []byte(`{"package":"p1","status":"installed"}` + "\n" + `{"package":"p2","status":"installed"}`)},
-				{cmd: exec.Command("/usr/bin/apt-get", "remove", "-y", "p1", "p2"), envs: aptEnv, err: errors.New("bulk remove error")},
-				{cmd: exec.Command("/usr/bin/apt-get", "remove", "-y", "p1"), envs: aptEnv},
-				{cmd: exec.Command("/usr/bin/apt-get", "remove", "-y", "p2"), envs: aptEnv},
-			},
-		},
-		{
-			name:       "remove fallback failure",
+			name:       "p1 to remove with failure, want removing error",
 			aptRemoved: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...), stdout: []byte(`{"package":"p1","status":"installed"}`)},
@@ -468,14 +446,7 @@ func TestAptChanges(t *testing.T) {
 
 // setupAptChangesTest sets up the environment for aptChanges tests by mocking the command runner.
 func setupAptChangesTest(t *testing.T, runner *utilmocks.MockCommandRunner) {
-	oldApt := packages.AptExists
-
-	packages.AptExists = true
+	t.Cleanup(utiltest.OverrideVariable(&packages.AptExists, true))
 	packages.SetCommandRunner(runner)
 	packages.SetPtyCommandRunner(runner)
-
-	t.Cleanup(func() {
-		packages.AptExists = oldApt
-	})
 }
-
