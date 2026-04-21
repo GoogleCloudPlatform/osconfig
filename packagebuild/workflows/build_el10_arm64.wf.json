@@ -1,6 +1,6 @@
 {
   "Name": "el10",
-  "Timeout": "20m",
+  "Timeout": "30m",
   "Vars": {
     "gcs_path": {
       "Required": true
@@ -23,7 +23,7 @@
   },
   "Steps": {
     "build-package": {
-      "Timeout": "20m",
+      "Timeout": "30m",
       "SubWorkflow": {
         "Path": "./build_package.wf.json",
         "Vars": {
@@ -34,7 +34,8 @@
           "repo_name": "${repo_name}",
           "git_ref": "${git_ref}",
           "build_dir": "${build_dir}",
-          "machine_type": "t2a-standard-2",
+          "machine_type": "c4a-standard-2",
+          "disk_type": "hyperdisk-balanced",
           "zone": "us-central1-a",
           "version": "${version}"
         }
