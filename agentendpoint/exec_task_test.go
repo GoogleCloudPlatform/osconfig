@@ -157,7 +157,7 @@ func TestGetGCSObject(t *testing.T) {
 		wantContent string
 	}{
 		{
-			name:   "successful object download",
+			name:   "valid bucket and object, want successful download",
 			bucket: bucket,
 			object: object,
 			handler: func(w http.ResponseWriter, r *http.Request) {
@@ -169,7 +169,7 @@ func TestGetGCSObject(t *testing.T) {
 			wantContent: testContent,
 		},
 		{
-			name:   "gcs object not found",
+			name:   "non-existent object, want not found error",
 			bucket: bucket,
 			object: object,
 			handler: func(w http.ResponseWriter, r *http.Request) {
@@ -178,7 +178,7 @@ func TestGetGCSObject(t *testing.T) {
 			wantErr: errors.New("error fetching GCS object: storage: object doesn't exist"),
 		},
 		{
-			name:   "invalid download path error",
+			name:   "invalid object path, want download error",
 			bucket: bucket,
 			object: "///",
 			handler: func(w http.ResponseWriter, r *http.Request) {
@@ -193,12 +193,10 @@ func TestGetGCSObject(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ts := httptest.NewServer(tt.handler)
 			defer ts.Close()
-
-			rollback := OverrideEnv(t, "STORAGE_EMULATOR_HOST", ts.URL)
-			defer t.Cleanup(rollback)
+			t.Cleanup(utiltest.OverrideEnv(t, "STORAGE_EMULATOR_HOST", ts.URL))
 
 			localPath, err := getGCSObject(ctx, tt.bucket, tt.object, 0)
-			if tt.name == "InvalidLocalPath" {
+			if tt.name == "invalid object path, want download error" {
 				// impossible to predict exact error message for downloading error because of random /tmp files
 				utiltest.AssertErrorContains(t, err, tt.wantErr)
 			} else {
@@ -227,7 +225,7 @@ func TestExecuteCommand(t *testing.T) {
 		wantErr  error
 	}{
 		{
-			name: "successful command execution",
+			name: "successful command execution, want code 0",
 			mockRun: func(cmd *exec.Cmd) ([]byte, error) {
 				testCmd := exec.Command("true")
 				testCmd.Run()
@@ -238,7 +236,7 @@ func TestExecuteCommand(t *testing.T) {
 			wantErr:  nil,
 		},
 		{
-			name: "system error during run",
+			name: "system error during run, want error and code -1",
 			mockRun: func(cmd *exec.Cmd) ([]byte, error) {
 				return nil, errors.New("system error")
 			},
@@ -246,7 +244,7 @@ func TestExecuteCommand(t *testing.T) {
 			wantErr:  errors.New("system error"),
 		},
 		{
-			name: "command exit error",
+			name: "command exit error, want code 0",
 			mockRun: func(cmd *exec.Cmd) ([]byte, error) {
 				return []byte("error output"), &exec.ExitError{}
 			},
@@ -260,30 +258,7 @@ func TestExecuteCommand(t *testing.T) {
 			run = tt.mockRun
 			gotCode, err := executeCommand(ctx, "test-path", nil)
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
-			if gotCode != tt.wantCode {
-				t.Errorf("%s: executeCommand() exitCode = %d, want %d", tt.name, gotCode, tt.wantCode)
-			}
+      utiltest.AssertEquals(t, gotCode, tt.wantCode)
 		})
 	}
-}
-
-func OverrideEnv(t *testing.T, env, value string) (rollback func()) {
-	orig, ok := os.LookupEnv(env)
-	rollback = func() {
-		if ok {
-			if err := os.Setenv(env, orig); err != nil {
-				t.Fatalf("Failed to restore environment variable %s: %v", env, err)
-			}
-		} else {
-			if err := os.Unsetenv(env); err != nil {
-				t.Fatalf("Failed to unset environment variable %s: %v", env, err)
-			}
-		}
-	}
-
-	if err := os.Setenv(env, value); err != nil {
-		t.Fatalf("Failed to set environment variable %s: %v", env, err)
-	}
-
-	return rollback
 }

@@ -160,3 +160,23 @@ func OverrideVariable[T any](ptr *T, val T) func() {
 		*ptr = original
 	}
 }
+
+// OverrideEnv sets an environment variable to a new value and returns a function to restore its original state.
+func OverrideEnv(t *testing.T, key, value string) func() {
+	t.Helper()
+	original, exists := os.LookupEnv(key)
+	if err := os.Setenv(key, value); err != nil {
+		t.Fatalf("Failed to set environment variable %s: %v", key, err)
+	}
+	return func() {
+		var err error
+		if exists {
+			err = os.Setenv(key, original)
+		} else {
+			err = os.Unsetenv(key)
+		}
+		if err != nil {
+			t.Fatalf("Failed to restore environment variable %s: %v", key, err)
+		}
+	}
+}
