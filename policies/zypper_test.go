@@ -101,10 +101,10 @@ func TestZypperChanges(t *testing.T) {
 		wantErr         error
 	}{
 		{
-			name: "no changes needed",
+			name: "no changes, want nil",
 		},
 		{
-			name:            "failed to get installed packages",
+			name:            "rpmquery failure, want rpmquery error",
 			zypperInstalled: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), err: errors.New("rpmquery error")},
@@ -112,7 +112,7 @@ func TestZypperChanges(t *testing.T) {
 			wantErr: errors.New("error running /usr/bin/rpmquery with args [\"--queryformat\" \"\\\\{\\\"architecture\\\":\\\"%{ARCH}\\\",\\\"package\\\":\\\"%{NAME}\\\",\\\"source_name\\\":\\\"%{SOURCERPM}\\\",\\\"version\\\":\\\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\\\"\\\\}\\n\" \"-a\"]: rpmquery error, stdout: \"\", stderr: \"\""),
 		},
 		{
-			name:          "failed to get updates",
+			name:          "zypper list-updates failure, want list-updates error",
 			zypperUpdated: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), stdout: []byte(`{"package":"p1","status":"installed"}`)},
@@ -121,7 +121,7 @@ func TestZypperChanges(t *testing.T) {
 			wantErr: errors.New("error running /usr/bin/zypper with args [\"--gpg-auto-import-keys\" \"-q\" \"list-updates\"]: zypper list-updates error, stdout: \"\", stderr: \"\""),
 		},
 		{
-			name:            "successful install",
+			name:            "p1 to install, want nil",
 			zypperInstalled: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), stdout: []byte("")},
@@ -129,7 +129,7 @@ func TestZypperChanges(t *testing.T) {
 			},
 		},
 		{
-			name:            "install failure",
+			name:            "p1 to install with failure, want installing error",
 			zypperInstalled: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), stdout: []byte("")},
@@ -138,7 +138,7 @@ func TestZypperChanges(t *testing.T) {
 			wantErr: errors.New("error installing zypper packages: error running /usr/bin/zypper with args [\"--gpg-auto-import-keys\" \"--non-interactive\" \"install\" \"--auto-agree-with-licenses\" \"p1\"]: install error, stdout: \"\", stderr: \"\""),
 		},
 		{
-			name:          "successful upgrade",
+			name:          "p1 to upgrade, want nil",
 			zypperUpdated: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), stdout: []byte(`{"package":"p1","status":"installed"}`)},
@@ -147,7 +147,7 @@ func TestZypperChanges(t *testing.T) {
 			},
 		},
 		{
-			name:          "upgrade failure",
+			name:          "p1 to upgrade with failure, want upgrading error",
 			zypperUpdated: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), stdout: []byte(`{"package":"p1","status":"installed"}`)},
@@ -157,7 +157,7 @@ func TestZypperChanges(t *testing.T) {
 			wantErr: errors.New("error upgrading zypper packages: error running /usr/bin/zypper with args [\"--gpg-auto-import-keys\" \"--non-interactive\" \"install\" \"--auto-agree-with-licenses\" \"p1\"]: upgrade error, stdout: \"\", stderr: \"\""),
 		},
 		{
-			name:          "successful remove",
+			name:          "p1 to remove, want nil",
 			zypperRemoved: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), stdout: []byte(`{"package":"p1","status":"installed"}`)},
@@ -165,7 +165,7 @@ func TestZypperChanges(t *testing.T) {
 			},
 		},
 		{
-			name:          "remove failure",
+			name:          "p1 to remove with failure, want removing error",
 			zypperRemoved: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), stdout: []byte(`{"package":"p1","status":"installed"}`)},
@@ -192,13 +192,7 @@ func TestZypperChanges(t *testing.T) {
 
 // setupZypperChangesTest sets up the environment for zypperChanges tests by mocking the command runner.
 func setupZypperChangesTest(t *testing.T, runner *utilmocks.MockCommandRunner) {
-	oldZypper := packages.ZypperExists
-
-	packages.ZypperExists = true
+	t.Cleanup(utiltest.OverrideVariable(&packages.ZypperExists, true))
 	packages.SetCommandRunner(runner)
 	packages.SetPtyCommandRunner(runner)
-
-	t.Cleanup(func() {
-		packages.ZypperExists = oldZypper
-	})
 }
