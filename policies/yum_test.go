@@ -104,10 +104,10 @@ func TestYumChanges(t *testing.T) {
 		wantErr      error
 	}{
 		{
-			name: "no changes needed",
+			name: "no changes, want nil",
 		},
 		{
-			name:         "failed to get installed packages",
+			name:         "rpmquery failure, want error",
 			yumInstalled: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), err: errors.New("rpmquery error")},
@@ -115,7 +115,7 @@ func TestYumChanges(t *testing.T) {
 			wantErr: errors.New("error running /usr/bin/rpmquery with args [\"--queryformat\" \"\\\\{\\\"architecture\\\":\\\"%{ARCH}\\\",\\\"package\\\":\\\"%{NAME}\\\",\\\"source_name\\\":\\\"%{SOURCERPM}\\\",\\\"version\\\":\\\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\\\"\\\\}\\n\" \"-a\"]: rpmquery error, stdout: \"\", stderr: \"\""),
 		},
 		{
-			name:       "failed to get updates",
+			name:       "yum check-update failure, want check-update error",
 			yumUpdated: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), stdout: []byte(`{"package":"p1","status":"installed"}`)},
@@ -124,7 +124,7 @@ func TestYumChanges(t *testing.T) {
 			wantErr: errors.New("error running /usr/bin/yum with args [\"check-update\" \"--assumeyes\"]: yum check-update error, stdout: \"\", stderr: \"\""),
 		},
 		{
-			name:         "successful install",
+			name:         "p1 to install, want nil",
 			yumInstalled: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), stdout: []byte("")},
@@ -132,7 +132,7 @@ func TestYumChanges(t *testing.T) {
 			},
 		},
 		{
-			name:         "install failure",
+			name:         "p1 to install with failure, want installing error",
 			yumInstalled: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), stdout: []byte("")},
@@ -141,7 +141,7 @@ func TestYumChanges(t *testing.T) {
 			wantErr: errors.New("error installing yum packages: error running /usr/bin/yum with args [\"install\" \"--assumeyes\" \"p1\"]: install error, stdout: \"\", stderr: \"\""),
 		},
 		{
-			name:       "successful upgrade",
+			name:       "p1 to upgrade, want nil",
 			yumUpdated: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), stdout: []byte(`{"package":"p1","status":"installed"}`)},
@@ -151,7 +151,7 @@ func TestYumChanges(t *testing.T) {
 			},
 		},
 		{
-			name:       "upgrade failure",
+			name:       "p1 to upgrade with failure, want upgrading error",
 			yumUpdated: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), stdout: []byte(`{"package":"p1","status":"installed"}`)},
@@ -162,7 +162,7 @@ func TestYumChanges(t *testing.T) {
 			wantErr: errors.New("error upgrading yum packages: error running /usr/bin/yum with args [\"install\" \"--assumeyes\" \"p1\"]: upgrade error, stdout: \"\", stderr: \"\""),
 		},
 		{
-			name:       "successful remove",
+			name:       "p1 to remove, want nil",
 			yumRemoved: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), stdout: []byte(`{"package":"p1","status":"installed"}`)},
@@ -170,7 +170,7 @@ func TestYumChanges(t *testing.T) {
 			},
 		},
 		{
-			name:       "remove failure",
+			name:       "p1 to remove with failure, want removing error",
 			yumRemoved: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), stdout: []byte(`{"package":"p1","status":"installed"}`)},
@@ -197,13 +197,7 @@ func TestYumChanges(t *testing.T) {
 
 // setupYumChangesTest sets up the environment for yumChanges tests by mocking the command runner.
 func setupYumChangesTest(t *testing.T, runner *utilmocks.MockCommandRunner) {
-	oldYum := packages.YumExists
-
-	packages.YumExists = true
+	t.Cleanup(utiltest.OverrideVariable(&packages.YumExists, true))
 	packages.SetCommandRunner(runner)
 	packages.SetPtyCommandRunner(runner)
-
-	t.Cleanup(func() {
-		packages.YumExists = oldYum
-	})
 }
