@@ -44,18 +44,30 @@
        "Value": "pd-ssd",
        "Description": "Type of the disk used in the workflow."
 
+    },
+    "disk_size_gb": {
+      "Value": "20",
+      "Description": "Size of the disk in GB."
     }
   },
   "Steps": {
+    "create-disks": {
+      "CreateDisks": [
+        {
+          "name": "inst-build-pkg-disk",
+          "sizeGb": "${disk_size_gb}",
+          "sourceImage": "${sourceImage}",
+          "type": "${disk_type}",
+          "zone": "${zone}"
+        }
+      ]
+    },
     "build-packages": {
       "CreateInstances": [
         {
           "disks": [
             {
-              "initializeParams": {
-                "diskType": "${disk_type}",
-                "sourceImage": "${sourceImage}"
-              }
+              "source": "inst-build-pkg-disk"
             }
           ],
           "Metadata": {
@@ -96,6 +108,7 @@
     }
   },
   "Dependencies": {
+    "build-packages": ["create-disks"],
     "wait-for-build": [
       "build-packages"
     ],
