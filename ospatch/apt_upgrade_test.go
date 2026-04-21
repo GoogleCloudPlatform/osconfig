@@ -54,7 +54,7 @@ func TestRunAptGetUpgrade(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name: "default options, want nil error",
+			name: "default apt options, want nil",
 			opts: nil,
 			mock: func() {
 				gomock.InOrder(
@@ -66,7 +66,7 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "dry run option, want nil error",
+			name: "dry run option, want nil",
 			opts: []AptGetUpgradeOption{AptGetDryRun(true)},
 			mock: func() {
 				gomock.InOrder(
@@ -77,7 +77,7 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "package excludes, want nil error",
+			name: "package excludes, want nil",
 			opts: []AptGetUpgradeOption{
 				AptGetExcludes([]*Exclude{CreateStringExclude(&pkg1)}),
 			},
@@ -91,7 +91,7 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "exclusive packages, want nil error",
+			name: "exclusive packages, want nil",
 			opts: []AptGetUpgradeOption{
 				AptGetExclusivePackages([]string{pkg2}),
 			},
@@ -105,7 +105,7 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "dist-upgrade type, want nil error",
+			name: "dist-upgrade type, want nil",
 			opts: []AptGetUpgradeOption{
 				AptGetUpgradeType(packages.AptGetDistUpgrade),
 			},
@@ -119,7 +119,7 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "full-upgrade type, want nil error",
+			name: "full-upgrade type, want nil",
 			opts: []AptGetUpgradeOption{
 				AptGetUpgradeType(packages.AptGetFullUpgrade),
 			},
@@ -133,7 +133,7 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "no packages to update, want nil error",
+			name: "no packages to update, want nil",
 			opts: nil,
 			mock: func() {
 				gomock.InOrder(
@@ -144,7 +144,7 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "update error, want 'update fail' error",
+			name: "update with failure, want update fail error",
 			opts: nil,
 			mock: func() {
 				mockCommandRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(buildCmd(aptGet, env, "update"))).Return(empty, []byte("error"), errors.New("update fail"))
@@ -152,7 +152,7 @@ func TestRunAptGetUpgrade(t *testing.T) {
 			wantErr: errors.New("update fail"),
 		},
 		{
-			name: "install error, want 'install fail' error",
+			name: "install with failure, want install fail",
 			opts: nil,
 			mock: func() {
 				gomock.InOrder(
@@ -176,7 +176,7 @@ func TestRunAptGetUpgrade(t *testing.T) {
 				)
 			},
 			wantErr: errors.New("exclusivePackages and excludes can not both be non 0"),
-		},
+    },:G
 	}
 
 	for _, tt := range tests {
