@@ -16,52 +16,36 @@ package config
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"os"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 )
 
-// setupTempDir creates a temporary directory for file downloads and returns its path.
-func setupTempDir(t *testing.T) string {
-	t.Helper()
-	tmpDir, err := os.MkdirTemp("", "osconfig_file_test_")
-	if err != nil {
-		t.Fatalf("failed to create temp dir: %v", err)
-	}
-	t.Cleanup(func() { os.RemoveAll(tmpDir) })
-	return tmpDir
-}
-
-// setEnv temporarily sets an environment variable, restoring its previous value
-// (or unsetting it) when the test finishes.
-func setEnv(t *testing.T, key, val string) {
-	t.Helper()
-	oldVal, exists := os.LookupEnv(key)
-	os.Setenv(key, val)
-	t.Cleanup(func() {
-		if exists {
-			os.Setenv(key, oldVal)
-		} else {
-			os.Unsetenv(key)
-		}
-	})
-}
-
-// setupMockServer creates a mock HTTP server to simulate remote file downloads.
+// setupMockServer creates a mock HTTP server that serves:
+//   - "/success" for plain HTTP fetches
+//   - GCS-style object path "/storage/v1/b/<bucket>/o/<object>" for GCS fetches
+//     when STORAGE_EMULATOR_HOST is pointed at this server.
+//
+// Anything else returns 404.
 func setupMockServer(t *testing.T) *httptest.Server {
 	t.Helper()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/success" {
+		switch {
+		case r.URL.Path == "/success",
+			strings.HasPrefix(r.URL.Path, "/storage/v1/b/test-bucket/o/test-object"),
+			strings.HasPrefix(r.URL.Path, "/test-bucket/test-object"):
 			w.Write([]byte("test content"))
-			return
+		default:
+			http.NotFound(w, r)
 		}
-		http.NotFound(w, r)
 	}))
 	t.Cleanup(ts.Close)
 	return ts
@@ -75,12 +59,12 @@ func TestChecksum(t *testing.T) {
 		want  string
 	}{
 		{
-			name:  "empty string",
+			name:  `empty string, valid checksum`,
 			input: "",
 			want:  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
 		},
 		{
-			name:  "simple string",
+			name:  `"test content", valid checksum`,
 			input: "test content",
 			want:  "6ae8a75555209fd6c44157c0aed8016e763ff435a19cf186f76863140143ff72",
 		},
@@ -88,10 +72,9 @@ func TestChecksum(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := strings.NewReader(tt.input)
-			if got := checksum(r); got != tt.want {
-				t.Errorf("checksum() = %v, want %v", got, tt.want)
-			}
+			got := checksum(strings.NewReader(tt.input))
+
+			utiltest.AssertEquals(t, got, tt.want)
 		})
 	}
 }
@@ -99,20 +82,19 @@ func TestChecksum(t *testing.T) {
 // TestDownloadFile tests remote file downloading and error handling.
 func TestDownloadFile(t *testing.T) {
 	mockServer := setupMockServer(t)
-	tmpDir := setupTempDir(t)
+	tmpDir := t.TempDir()
 
-	// Set STORAGE_EMULATOR_HOST to the mock server to test GCS path without credentials.
-	// The mock server will return 404 for GCS requests, producing a predictable error.
-	host := strings.TrimPrefix(mockServer.URL, "http://")
+	// Mock host used for STORAGE_EMULATOR_HOST to exercise the GCS path without real creds.
+	gcsHost := strings.TrimPrefix(mockServer.URL, "http://")
 
 	tests := []struct {
 		name    string
 		file    *agentendpointpb.OSPolicy_Resource_File
-		wantErr string
-		env     map[string]string
+		wantErr error
+		setup   func(t *testing.T, i int) string
 	}{
 		{
-			name: "HTTP remote file success without checksum",
+			name: "Remote file success without checksum, successsful download",
 			file: &agentendpointpb.OSPolicy_Resource_File{
 				Type: &agentendpointpb.OSPolicy_Resource_File_Remote_{
 					Remote: &agentendpointpb.OSPolicy_Resource_File_Remote{
@@ -122,7 +104,7 @@ func TestDownloadFile(t *testing.T) {
 			},
 		},
 		{
-			name: "HTTP remote file success with correct checksum",
+			name: "Remote file success with correct checksum, successsful download",
 			file: &agentendpointpb.OSPolicy_Resource_File{
 				Type: &agentendpointpb.OSPolicy_Resource_File_Remote_{
 					Remote: &agentendpointpb.OSPolicy_Resource_File_Remote{
@@ -133,7 +115,7 @@ func TestDownloadFile(t *testing.T) {
 			},
 		},
 		{
-			name: "HTTP remote file failure with incorrect checksum",
+			name: "Remote file with incorrect checksum, failed download",
 			file: &agentendpointpb.OSPolicy_Resource_File{
 				Type: &agentendpointpb.OSPolicy_Resource_File_Remote_{
 					Remote: &agentendpointpb.OSPolicy_Resource_File_Remote{
@@ -142,32 +124,10 @@ func TestDownloadFile(t *testing.T) {
 					},
 				},
 			},
-			wantErr: `got "6ae8a75555209fd6c44157c0aed8016e763ff435a19cf186f76863140143ff72" for checksum, expected "badchecksum"`,
+			wantErr: errors.New(`got "6ae8a75555209fd6c44157c0aed8016e763ff435a19cf186f76863140143ff72" for checksum, expected "badchecksum"`),
 		},
 		{
-			name: "Unknown file type",
-			file: &agentendpointpb.OSPolicy_Resource_File{
-				Type: nil,
-			},
-			wantErr: "unknown remote File type: <nil>",
-		},
-		{
-			name: "GCS remote file fetch error",
-			file: &agentendpointpb.OSPolicy_Resource_File{
-				Type: &agentendpointpb.OSPolicy_Resource_File_Gcs_{
-					Gcs: &agentendpointpb.OSPolicy_Resource_File_Gcs{
-						Bucket: "test-bucket",
-						Object: "test-object",
-					},
-				},
-			},
-			wantErr: "storage: object doesn't exist",
-			env: map[string]string{
-				"STORAGE_EMULATOR_HOST": host,
-			},
-		},
-		{
-			name: "HTTP remote file fetch error",
+			name: "Remote file with unsupported protocol, failed download",
 			file: &agentendpointpb.OSPolicy_Resource_File{
 				Type: &agentendpointpb.OSPolicy_Resource_File_Remote_{
 					Remote: &agentendpointpb.OSPolicy_Resource_File_Remote{
@@ -175,10 +135,10 @@ func TestDownloadFile(t *testing.T) {
 					},
 				},
 			},
-			wantErr: `Get "httpx://foo/bar": unsupported protocol scheme "httpx"`,
+			wantErr: &url.Error{Op: "Get", URL: "httpx://foo/bar", Err: errors.New(`unsupported protocol scheme "httpx"`)},
 		},
 		{
-			name: "HTTP remote file 404 Not Found",
+			name: "Remote file not found, failed download",
 			file: &agentendpointpb.OSPolicy_Resource_File{
 				Type: &agentendpointpb.OSPolicy_Resource_File_Remote_{
 					Remote: &agentendpointpb.OSPolicy_Resource_File_Remote{
@@ -186,10 +146,17 @@ func TestDownloadFile(t *testing.T) {
 					},
 				},
 			},
-			wantErr: "got http status 404 when attempting to download artifact",
+			wantErr: errors.New("got http status 404 when attempting to download artifact"),
 		},
 		{
-			name: "GCS client creation error",
+			name: "Unknown file type, failed download",
+			file: &agentendpointpb.OSPolicy_Resource_File{
+				Type: nil,
+			},
+			wantErr: errors.New("unknown remote File type: <nil>"),
+		},
+		{
+			name: "GCS existing remote file, fetch success",
 			file: &agentendpointpb.OSPolicy_Resource_File{
 				Type: &agentendpointpb.OSPolicy_Resource_File_Gcs_{
 					Gcs: &agentendpointpb.OSPolicy_Resource_File_Gcs{
@@ -198,32 +165,58 @@ func TestDownloadFile(t *testing.T) {
 					},
 				},
 			},
-			wantErr: "error creating gcs client: dialing: open /non/existent/path/to/creds.json: no such file or directory",
-			env: map[string]string{
-				"STORAGE_EMULATOR_HOST":          "",
-				"GOOGLE_APPLICATION_CREDENTIALS": "/non/existent/path/to/creds.json",
+			setup: func(t *testing.T, i int) string {
+				t.Setenv("STORAGE_EMULATOR_HOST", gcsHost)
+				return filepath.Join(tmpDir, fmt.Sprintf("test_file_%d", i))
 			},
+		},
+		{
+			name: "GCS missing remote file, not found error",
+			file: &agentendpointpb.OSPolicy_Resource_File{
+				Type: &agentendpointpb.OSPolicy_Resource_File_Gcs_{
+					Gcs: &agentendpointpb.OSPolicy_Resource_File_Gcs{
+						Bucket: "missing-bucket",
+						Object: "missing-object",
+					},
+				},
+			},
+			setup: func(t *testing.T, i int) string {
+				t.Setenv("STORAGE_EMULATOR_HOST", gcsHost)
+				return filepath.Join(tmpDir, fmt.Sprintf("test_file_%d", i))
+			},
+			wantErr: errors.New("storage: object doesn't exist"),
+		},
+		{
+			name: "GCS client creation error, failed download",
+			file: &agentendpointpb.OSPolicy_Resource_File{
+				Type: &agentendpointpb.OSPolicy_Resource_File_Gcs_{
+					Gcs: &agentendpointpb.OSPolicy_Resource_File_Gcs{
+						Bucket: "test-bucket",
+						Object: "test-object",
+					},
+				},
+			},
+			setup: func(t *testing.T, i int) string {
+				t.Setenv("STORAGE_EMULATOR_HOST", "")
+				t.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "/non/existent/path/to/creds.json")
+				return filepath.Join(tmpDir, fmt.Sprintf("test_file_%d", i))
+			},
+			wantErr: errors.New("error creating gcs client: dialing: open /non/existent/path/to/creds.json: no such file or directory"),
 		},
 	}
 
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			for k, v := range tt.env {
-				setEnv(t, k, v)
+			var destPath string
+			if tt.setup != nil {
+				destPath = tt.setup(t, i)
+			} else {
+				destPath = filepath.Join(tmpDir, fmt.Sprintf("test_file_%d", i))
 			}
 
-			ctx := context.Background()
-			destPath := filepath.Join(tmpDir, fmt.Sprintf("test_file_%d", i))
+			_, err := downloadFile(context.Background(), destPath, 0644, tt.file)
 
-			_, err := downloadFile(ctx, destPath, 0644, tt.file)
-
-			if err == nil {
-				if tt.wantErr != "" {
-					t.Errorf("downloadFile() expected error %q, got nil", tt.wantErr)
-				}
-			} else if err.Error() != tt.wantErr {
-				t.Errorf("downloadFile() error = %q, wantErr %q", err.Error(), tt.wantErr)
-			}
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 		})
 	}
 }
