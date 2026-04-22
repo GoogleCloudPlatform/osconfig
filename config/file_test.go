@@ -102,6 +102,9 @@ func TestDownloadFile(t *testing.T) {
 					},
 				},
 			},
+			setup: func(t *testing.T, i int) string {
+				return filepath.Join(tmpDir, fmt.Sprintf("test_file_%d", i))
+			},
 		},
 		{
 			name: "Remote file success with correct checksum, successsful download",
@@ -112,6 +115,9 @@ func TestDownloadFile(t *testing.T) {
 						Sha256Checksum: "6ae8a75555209fd6c44157c0aed8016e763ff435a19cf186f76863140143ff72",
 					},
 				},
+			},
+			setup: func(t *testing.T, i int) string {
+				return filepath.Join(tmpDir, fmt.Sprintf("test_file_%d", i))
 			},
 		},
 		{
@@ -125,6 +131,9 @@ func TestDownloadFile(t *testing.T) {
 				},
 			},
 			wantErr: errors.New(`got "6ae8a75555209fd6c44157c0aed8016e763ff435a19cf186f76863140143ff72" for checksum, expected "badchecksum"`),
+			setup: func(t *testing.T, i int) string {
+				return filepath.Join(tmpDir, fmt.Sprintf("test_file_%d", i))
+			},
 		},
 		{
 			name: "Remote file with unsupported protocol, failed download",
@@ -136,6 +145,9 @@ func TestDownloadFile(t *testing.T) {
 				},
 			},
 			wantErr: &url.Error{Op: "Get", URL: "httpx://foo/bar", Err: errors.New(`unsupported protocol scheme "httpx"`)},
+			setup: func(t *testing.T, i int) string {
+				return filepath.Join(tmpDir, fmt.Sprintf("test_file_%d", i))
+			},
 		},
 		{
 			name: "Remote file not found, failed download",
@@ -147,11 +159,17 @@ func TestDownloadFile(t *testing.T) {
 				},
 			},
 			wantErr: errors.New("got http status 404 when attempting to download artifact"),
+			setup: func(t *testing.T, i int) string {
+				return filepath.Join(tmpDir, fmt.Sprintf("test_file_%d", i))
+			},
 		},
 		{
 			name: "Unknown file type, failed download",
 			file: &agentendpointpb.OSPolicy_Resource_File{
 				Type: nil,
+			},
+			setup: func(t *testing.T, i int) string {
+				return filepath.Join(tmpDir, fmt.Sprintf("test_file_%d", i))
 			},
 			wantErr: errors.New("unknown remote File type: <nil>"),
 		},
@@ -207,12 +225,7 @@ func TestDownloadFile(t *testing.T) {
 
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var destPath string
-			if tt.setup != nil {
-				destPath = tt.setup(t, i)
-			} else {
-				destPath = filepath.Join(tmpDir, fmt.Sprintf("test_file_%d", i))
-			}
+			destPath := tt.setup(t, i)
 
 			_, err := downloadFile(context.Background(), destPath, 0644, tt.file)
 
