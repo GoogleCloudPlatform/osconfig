@@ -354,7 +354,7 @@ func TestShouldUseSignedBy(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			defer utiltest.OverrideVariable(&osInfoProvider, tt.provider)()
+			utiltest.OverrideVariable(t, &osInfoProvider, tt.provider)
 			utiltest.AssertEquals(t, shouldUseSignedBy(ctx), tt.want)
 		})
 	}
