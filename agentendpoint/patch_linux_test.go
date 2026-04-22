@@ -32,7 +32,7 @@ import (
 func TestExcludeConversion(t *testing.T) {
 	regex, _ := regexp.Compile("PackageName")
 	emptyRegex, _ := regexp.Compile("")
-	regexpErr := func() error { _, err := regexp.Compile("[a-z"); return err }()
+	_, regexpErr := regexp.Compile("[a-z")
 
 	tests := []struct {
 		name    string
@@ -40,20 +40,20 @@ func TestExcludeConversion(t *testing.T) {
 		want    []*ospatch.Exclude
 		wantErr error
 	}{
-		{name: "StrictStringConversion", input: []string{"PackageName"}, want: CreateStringExcludes("PackageName")},
-		{name: "MultipleStringConversion", input: []string{"PackageName1", "PackageName2"}, want: CreateStringExcludes("PackageName1", "PackageName2")},
-		{name: "RegexConversion", input: []string{"/PackageName/"}, want: []*ospatch.Exclude{ospatch.CreateRegexExclude(regex)}},
-		{name: "CornerCaseRegex", input: []string{"//"}, want: []*ospatch.Exclude{ospatch.CreateRegexExclude(emptyRegex)}},
-		{name: "CornerCaseStrictString", input: []string{"/"}, want: CreateStringExcludes("/")},
-		{name: "CornerCaseEmptyString", input: []string{""}, want: CreateStringExcludes("")},
-		{name: "ErrorInvalidRegex", input: []string{"/[a-z/"}, wantErr: regexpErr},
+		{name: "Single package name, want one string exclude", input: []string{"PackageName"}, want: createStringExcludes("PackageName")},
+		{name: "Multiple package names, want multiple string excludes", input: []string{"PackageName1", "PackageName2"}, want: createStringExcludes("PackageName1", "PackageName2")},
+		{name: "Slash-wrapped value, want regex exclude", input: []string{"/PackageName/"}, want: []*ospatch.Exclude{ospatch.CreateRegexExclude(regex)}},
+		{name: "Empty regex //, want empty regex exclude", input: []string{"//"}, want: []*ospatch.Exclude{ospatch.CreateRegexExclude(emptyRegex)}},
+		{name: "Single slash, want string exclude", input: []string{"/"}, want: createStringExcludes("/")},
+		{name: "Empty string, want string exclude", input: []string{""}, want: createStringExcludes("")},
+		{name: "Invalid regex, want regex compile error", input: []string{"/[a-z/"}, wantErr: regexpErr},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			excludes, err := convertInputToExcludes(tt.input)
 
-			if tt.wantErr == nil && !reflect.DeepEqual(excludes, tt.want) {
+			if !reflect.DeepEqual(excludes, tt.want) {
 				t.Errorf("convertInputToExcludes() = %s, want = %s", toString(excludes), toString(tt.want))
 			}
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
@@ -62,8 +62,7 @@ func TestExcludeConversion(t *testing.T) {
 }
 
 func TestRunUpdates(t *testing.T) {
-	stubGlobalState(t)
-	retryPeriod = 1 * time.Millisecond
+	utiltest.OverrideVariable(t, &retryPeriod, 1*time.Millisecond)
 
 	mockAptSuccess := func(ctx context.Context, opts ...ospatch.AptGetUpgradeOption) error { return nil }
 	mockYumSuccess := func(ctx context.Context, opts ...ospatch.YumUpdateOption) error { return nil }
@@ -71,32 +70,27 @@ func TestRunUpdates(t *testing.T) {
 	mockAptErr := func(ctx context.Context, opts ...ospatch.AptGetUpgradeOption) error { return errors.New("apt err") }
 	mockYumErr := func(ctx context.Context, opts ...ospatch.YumUpdateOption) error { return errors.New("yum err") }
 	mockZypperErr := func(ctx context.Context, opts ...ospatch.ZypperPatchOption) error { return errors.New("zypper err") }
-	regexpErr := func() error { _, err := regexp.Compile("[a-z"); return err }()
+	_, regexpErr := regexp.Compile("[a-z")
 
 	tests := []struct {
 		name       string
-		setupMocks func()
+		setup      func(t *testing.T)
 		taskConfig *agentendpointpb.PatchConfig
 		wantErr    error
 	}{
 		{
-			name: "No package managers found",
-			setupMocks: func() {
-				packages.AptExists = false
-				packages.YumExists = false
-				packages.ZypperExists = false
+			name: "No package managers detected, want no patch operations attempted and no error",
+			setup: func(t *testing.T) {
+				disableAllPackageManagers(t)
 			},
 			taskConfig: &agentendpointpb.PatchConfig{},
 			wantErr:    nil,
 		},
 		{
-			name: "Apt upgrade success with DIST type",
-			setupMocks: func() {
-				packages.AptExists = true
-				packages.DpkgQueryExists = true
-				packages.YumExists = false
-				packages.ZypperExists = false
-				runAptGetUpgrade = mockAptSuccess
+			name: "Apt available, want apt-get dist-upgrade attempted and no error",
+			setup: func(t *testing.T) {
+				disableAllPackageManagers(t)
+				enableApt(t, mockAptSuccess)
 			},
 			taskConfig: &agentendpointpb.PatchConfig{
 				Apt: &agentendpointpb.AptSettings{Type: agentendpointpb.AptSettings_DIST},
@@ -104,24 +98,21 @@ func TestRunUpdates(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "Apt conversion error bubbles up",
-			setupMocks: func() {
-				packages.AptExists = true
-				packages.DpkgQueryExists = true
+			name: "Apt available with invalid regex in excludes, want regex compile error and no upgrade attempted",
+			setup: func(t *testing.T) {
+				disableAllPackageManagers(t)
+				enableApt(t, nil)
 			},
 			taskConfig: &agentendpointpb.PatchConfig{
-				Apt: &agentendpointpb.AptSettings{Excludes: []string{"/[a-z/"}}, // Invalid regex
+				Apt: &agentendpointpb.AptSettings{Excludes: []string{"/[a-z/"}},
 			},
-			wantErr: func() error { _, err := regexp.Compile("[a-z"); return err }(),
+			wantErr: regexpErr,
 		},
 		{
-			name: "Yum update success",
-			setupMocks: func() {
-				packages.AptExists = false
-				packages.YumExists = true
-				packages.RPMQueryExists = true
-				packages.ZypperExists = false
-				runYumUpdate = mockYumSuccess
+			name: "Yum available, want yum update attempted and no error",
+			setup: func(t *testing.T) {
+				disableAllPackageManagers(t)
+				enableYum(t, mockYumSuccess)
 			},
 			taskConfig: &agentendpointpb.PatchConfig{
 				Yum: &agentendpointpb.YumSettings{
@@ -132,13 +123,10 @@ func TestRunUpdates(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "Zypper patch success",
-			setupMocks: func() {
-				packages.AptExists = false
-				packages.YumExists = false
-				packages.ZypperExists = true
-				packages.RPMQueryExists = true
-				runZypperPatch = mockZypperSuccess
+			name: "Zypper available, want zypper patch attempted and no error",
+			setup: func(t *testing.T) {
+				disableAllPackageManagers(t)
+				enableZypper(t, mockZypperSuccess)
 			},
 			taskConfig: &agentendpointpb.PatchConfig{
 				Zypper: &agentendpointpb.ZypperSettings{
@@ -149,39 +137,32 @@ func TestRunUpdates(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "Yum conversion error bubbles up",
-			setupMocks: func() {
-				packages.AptExists = false
-				packages.YumExists = true
-				packages.RPMQueryExists = true
-				packages.ZypperExists = false
+			name: "Yum available with invalid regex in excludes, want regex compile error and no update attempted",
+			setup: func(t *testing.T) {
+				disableAllPackageManagers(t)
+				enableYum(t, nil)
 			},
 			taskConfig: &agentendpointpb.PatchConfig{
-				Yum: &agentendpointpb.YumSettings{Excludes: []string{"/[a-z/"}}, // Invalid regex
+				Yum: &agentendpointpb.YumSettings{Excludes: []string{"/[a-z/"}},
 			},
 			wantErr: regexpErr,
 		},
 		{
-			name: "Zypper conversion error bubbles up",
-			setupMocks: func() {
-				packages.AptExists = false
-				packages.YumExists = false
-				packages.ZypperExists = true
-				packages.RPMQueryExists = true
+			name: "Zypper available with invalid regex in excludes, want regex compile error and no patch attempted",
+			setup: func(t *testing.T) {
+				disableAllPackageManagers(t)
+				enableZypper(t, nil)
 			},
 			taskConfig: &agentendpointpb.PatchConfig{
-				Zypper: &agentendpointpb.ZypperSettings{Excludes: []string{"/[a-z/"}}, // Invalid regex
+				Zypper: &agentendpointpb.ZypperSettings{Excludes: []string{"/[a-z/"}},
 			},
 			wantErr: regexpErr,
 		},
 		{
-			name: "Yum update fails",
-			setupMocks: func() {
-				packages.AptExists = false
-				packages.YumExists = true
-				packages.RPMQueryExists = true
-				packages.ZypperExists = false
-				runYumUpdate = mockYumErr
+			name: "Yum available and yum update returns error, want that error returned",
+			setup: func(t *testing.T) {
+				disableAllPackageManagers(t)
+				enableYum(t, mockYumErr)
 			},
 			taskConfig: &agentendpointpb.PatchConfig{
 				Yum: &agentendpointpb.YumSettings{},
@@ -189,17 +170,12 @@ func TestRunUpdates(t *testing.T) {
 			wantErr: errors.New("yum err"),
 		},
 		{
-			name: "Multiple package manager error aggregation",
-			setupMocks: func() {
-				packages.AptExists = true
-				packages.DpkgQueryExists = true
-				packages.YumExists = true
-				packages.RPMQueryExists = true
-				packages.ZypperExists = true // RPMQuery is already true
-
-				runAptGetUpgrade = mockAptErr
-				runYumUpdate = mockYumErr
-				runZypperPatch = mockZypperErr
+			name: "All package managers available and each fails, want all three errors aggregated",
+			setup: func(t *testing.T) {
+				disableAllPackageManagers(t)
+				enableApt(t, mockAptErr)
+				enableYum(t, mockYumErr)
+				enableZypper(t, mockZypperErr)
 			},
 			taskConfig: &agentendpointpb.PatchConfig{
 				Apt:    &agentendpointpb.AptSettings{},
@@ -212,15 +188,8 @@ func TestRunUpdates(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.setupMocks()
-
-			task := &patchTask{
-				Task: &applyPatchesTask{
-					ApplyPatchesTask: &agentendpointpb.ApplyPatchesTask{
-						PatchConfig: tt.taskConfig,
-					},
-				},
-			}
+			tt.setup(t)
+			task := initializePatchTask(tt.taskConfig)
 
 			err := task.runUpdates(context.Background())
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
@@ -228,31 +197,49 @@ func TestRunUpdates(t *testing.T) {
 	}
 }
 
-func stubGlobalState(t *testing.T) {
+func initializePatchTask(config *agentendpointpb.PatchConfig) *patchTask {
+	return &patchTask{
+		Task: &applyPatchesTask{
+			ApplyPatchesTask: &agentendpointpb.ApplyPatchesTask{
+				PatchConfig: config,
+			},
+		},
+	}
+}
+
+func disableAllPackageManagers(t *testing.T) {
 	t.Helper()
-	origAptExists := packages.AptExists
-	origDpkgExists := packages.DpkgQueryExists
-	origYumExists := packages.YumExists
-	origRPMExists := packages.RPMQueryExists
-	origZypperExists := packages.ZypperExists
+	utiltest.OverrideVariable(t, &packages.DpkgQueryExists, false)
+	utiltest.OverrideVariable(t, &packages.YumExists, false)
+	utiltest.OverrideVariable(t, &packages.RPMQueryExists, false)
+	utiltest.OverrideVariable(t, &packages.ZypperExists, false)
+}
 
-	origRunApt := runAptGetUpgrade
-	origRunYum := runYumUpdate
-	origRunZypper := runZypperPatch
-	origRetryPeriod := retryPeriod
+func enableApt(t *testing.T, run func(ctx context.Context, opts ...ospatch.AptGetUpgradeOption) error) {
+	t.Helper()
+	utiltest.OverrideVariable(t, &packages.AptExists, true)
+	utiltest.OverrideVariable(t, &packages.DpkgQueryExists, true)
+	if run != nil {
+		utiltest.OverrideVariable(t, &runAptGetUpgrade, run)
+	}
+}
 
-	t.Cleanup(func() {
-		packages.AptExists = origAptExists
-		packages.DpkgQueryExists = origDpkgExists
-		packages.YumExists = origYumExists
-		packages.RPMQueryExists = origRPMExists
-		packages.ZypperExists = origZypperExists
+func enableYum(t *testing.T, run func(ctx context.Context, opts ...ospatch.YumUpdateOption) error) {
+	t.Helper()
+	utiltest.OverrideVariable(t, &packages.YumExists, true)
+	utiltest.OverrideVariable(t, &packages.RPMQueryExists, true)
+	if run != nil {
+		utiltest.OverrideVariable(t, &runYumUpdate, run)
+	}
+}
 
-		runAptGetUpgrade = origRunApt
-		runYumUpdate = origRunYum
-		runZypperPatch = origRunZypper
-		retryPeriod = origRetryPeriod
-	})
+func enableZypper(t *testing.T, run func(ctx context.Context, opts ...ospatch.ZypperPatchOption) error) {
+	t.Helper()
+	utiltest.OverrideVariable(t, &packages.ZypperExists, true)
+	utiltest.OverrideVariable(t, &packages.RPMQueryExists, true)
+	if run != nil {
+		utiltest.OverrideVariable(t, &runZypperPatch, run)
+	}
 }
 
 func toString(excludes []*ospatch.Exclude) string {
@@ -264,7 +251,7 @@ func toString(excludes []*ospatch.Exclude) string {
 	return strings.Join(results, ",")
 }
 
-func CreateStringExcludes(pkgs ...string) []*ospatch.Exclude {
+func createStringExcludes(pkgs ...string) []*ospatch.Exclude {
 	excludes := make([]*ospatch.Exclude, len(pkgs))
 	for i := 0; i < len(pkgs); i++ {
 		pkg := pkgs[i]
