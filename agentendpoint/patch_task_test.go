@@ -84,12 +84,12 @@ func TestHandleErrorState(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name:    "server cancel error, want it",
+			name:    "handleErrorState should report errServerCancel",
 			err:     errServerCancel,
 			wantErr: errServerCancel,
 		},
 		{
-			name:    "generic error, want it",
+			name:    "handleErrorState should report generic error",
 			err:     fmt.Errorf("generic error"),
 			wantErr: errors.New("generic error"),
 		},
@@ -101,12 +101,9 @@ func TestHandleErrorState(t *testing.T) {
 				client: tc.client,
 				TaskID: "test-task",
 			}
-			err := pt.handleErrorState(ctx, tt.wantErr.Error(), tt.err)
+			err := pt.handleErrorState(ctx, tt.err.Error(), tt.err)
 			utiltest.AssertErrorMatch(t, err, nil)
-
-			if srv.lastReportTaskCompleteRequest.ErrorMessage != tt.wantErr.Error() {
-				t.Errorf("ErrorMessage = %q, want %q", srv.lastReportTaskCompleteRequest.ErrorMessage, tt.wantErr.Error())
-			}
+      utiltest.AssertEquals(t, srv.lastReportTaskCompleteRequest.ErrorMessage, tt.wantErr.Error()) 
 		})
 	}
 }
@@ -283,13 +280,13 @@ func TestPatchTaskErrorPaths(t *testing.T) {
 	}
 
 	tests := []struct {
-		name    string
-		op      func() error
-		wantErr error
+		name      string
+		operation func() error
+		wantErr   error
 	}{
 		{
 			name: "invalid state file during complete, want success (nil error)",
-			op: func() error {
+			operation: func() error {
 				return withInvalidStateFile(func() error {
 					pt.complete(ctx)
 					return nil
@@ -299,7 +296,7 @@ func TestPatchTaskErrorPaths(t *testing.T) {
 		},
 		{
 			name: "invalid state file during setStep, want error saving step",
-			op: func() error {
+			operation: func() error {
 				return withInvalidStateFile(func() error {
 					return pt.setStep(patching)
 				})
@@ -308,14 +305,14 @@ func TestPatchTaskErrorPaths(t *testing.T) {
 		},
 		{
 			name: "continuing state report on closed client, want connection error",
-			op: func() error {
+			operation: func() error {
 				return pt.reportContinuingState(ctx, agentendpointpb.ApplyPatchesTaskProgress_STARTED)
 			},
 			wantErr: errors.New("error reporting state STARTED: error calling ReportTaskProgress: code: \"Canceled\", message: \"grpc: the client connection is closing\", details: []"),
 		},
 		{
 			name: "completed state report on closed client, want connection error",
-			op: func() error {
+			operation: func() error {
 				return pt.reportCompletedState(ctx, "error", &agentendpointpb.ReportTaskCompleteRequest_ApplyPatchesTaskOutput{})
 			},
 			wantErr: errors.New("error reporting completed state: error calling ReportTaskComplete: code: \"Canceled\", message: \"grpc: the client connection is closing\", details: []"),
@@ -324,7 +321,7 @@ func TestPatchTaskErrorPaths(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.op()
+			err := tt.operation()
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 		})
 	}
