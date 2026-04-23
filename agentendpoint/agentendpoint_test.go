@@ -143,6 +143,7 @@ type agentEndpointServiceTestServer struct {
 	patchTaskComplete       bool
 	applyConfigTaskComplete bool
 	runTaskIDs              []string
+	registerAgentReq        *agentendpointpb.RegisterAgentRequest
 }
 
 func newAgentEndpointServiceTestServer() *agentEndpointServiceTestServer {
@@ -304,6 +305,13 @@ func TestWaitForTaskErrors(t *testing.T) {
 	if err := tc.client.waitForTask(ctx); err != nil {
 		t.Errorf("did not expect error from a closed stream: %v", err)
 	}
+
+	// Error from receiveTaskNotification
+	cCtx, cCancel := context.WithCancel(ctx)
+	cCancel()
+	if err := tc.client.waitForTask(cCtx); !errors.Is(err, context.Canceled) {
+		t.Errorf("did not get expected context.Canceled, got: %v", err)
+	}
 }
 
 func TestLoadPatchTaskFromState(t *testing.T) {
@@ -393,32 +401,36 @@ func TestClose(t *testing.T) {
 func TestWaitForTaskNotification(t *testing.T) {
 	ctx := context.Background()
 
+	waitUntil := func(t *testing.T, condition func() bool, timeout time.Duration) bool {
+		t.Helper()
+		wCtx, wCancel := context.WithTimeout(context.Background(), timeout)
+		defer wCancel()
+		for {
+			if condition() {
+				return true
+			}
+			select {
+			case <-wCtx.Done():
+				return false
+			case <-time.After(10 * time.Millisecond):
+			}
+		}
+	}
+
 	tests := []struct {
 		name  string
 		setup func(srv *agentEndpointServiceTestServer, cancel context.CancelFunc)
 		check func(t *testing.T, tc *testClient)
 	}{
 		{
-			name: "successful notification",
-			setup: func(srv *agentEndpointServiceTestServer, cancel context.CancelFunc) {
-			},
-			check: func(t *testing.T, tc *testClient) {
-				time.Sleep(50 * time.Millisecond)
-			},
-		},
-		{
 			name: "service disabled error handling",
 			setup: func(srv *agentEndpointServiceTestServer, cancel context.CancelFunc) {
 				srv.causePermissionError()
 			},
 			check: func(t *testing.T, tc *testClient) {
-				for i := 0; i < 20; i++ {
-					if tc.client.closed {
-						return
-					}
-					time.Sleep(20 * time.Millisecond)
+				if !waitUntil(t, tc.client.Closed, 400*time.Millisecond) {
+					t.Error("Expected client to be closed after service disabled error")
 				}
-				t.Error("Expected client to be closed after service disabled error")
 			},
 		},
 		{
@@ -427,6 +439,9 @@ func TestWaitForTaskNotification(t *testing.T) {
 			},
 			check: func(t *testing.T, tc *testClient) {
 				tc.client.WaitForTaskNotification(context.Background())
+				if waitUntil(t, tc.client.Closed, 50*time.Millisecond) {
+					t.Error("Expected client to remain open")
+				}
 			},
 		},
 		{
@@ -435,7 +450,9 @@ func TestWaitForTaskNotification(t *testing.T) {
 				cancel()
 			},
 			check: func(t *testing.T, tc *testClient) {
-				time.Sleep(50 * time.Millisecond)
+				if waitUntil(t, tc.client.Closed, 50*time.Millisecond) {
+					t.Error("Expected client to remain open after context cancellation")
+				}
 			},
 		},
 		{
@@ -444,7 +461,9 @@ func TestWaitForTaskNotification(t *testing.T) {
 				srv.causeResourceExhaustedError()
 			},
 			check: func(t *testing.T, tc *testClient) {
-				time.Sleep(100 * time.Millisecond)
+				if waitUntil(t, tc.client.Closed, 100*time.Millisecond) {
+					t.Error("Expected client to remain open after resource exhausted error")
+				}
 			},
 		},
 	}
