@@ -29,9 +29,15 @@ import (
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
 )
 
+var (
+	runAptGetUpgrade = ospatch.RunAptGetUpgrade
+	runYumUpdate     = ospatch.RunYumUpdate
+	runZypperPatch   = ospatch.RunZypperPatch
+	retryPeriod      = 3 * time.Minute
+)
+
 func (r *patchTask) runUpdates(ctx context.Context) error {
 	var errs []string
-	const retryPeriod = 3 * time.Minute
 	// Check for both apt-get and dpkg-query to give us a clean signal.
 	if packages.AptExists && packages.DpkgQueryExists {
 		excludes, err := convertInputToExcludes(r.Task.GetPatchConfig().GetApt().GetExcludes())
@@ -48,7 +54,7 @@ func (r *patchTask) runUpdates(ctx context.Context) error {
 			opts = append(opts, ospatch.AptGetUpgradeType(packages.AptGetDistUpgrade))
 		}
 		clog.Debugf(ctx, "Installing APT package updates.")
-		if err := retryutil.RetryFunc(ctx, retryPeriod, "installing APT package updates", func() error { return ospatch.RunAptGetUpgrade(ctx, opts...) }); err != nil {
+		if err := retryutil.RetryFunc(ctx, retryPeriod, "installing APT package updates", func() error { return runAptGetUpgrade(ctx, opts...) }); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}
@@ -65,7 +71,7 @@ func (r *patchTask) runUpdates(ctx context.Context) error {
 			ospatch.YumDryRun(r.Task.GetDryRun()),
 		}
 		clog.Debugf(ctx, "Installing YUM package updates.")
-		if err := retryutil.RetryFunc(ctx, retryPeriod, "installing YUM package updates", func() error { return ospatch.RunYumUpdate(ctx, opts...) }); err != nil {
+		if err := retryutil.RetryFunc(ctx, retryPeriod, "installing YUM package updates", func() error { return runYumUpdate(ctx, opts...) }); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}
@@ -84,7 +90,7 @@ func (r *patchTask) runUpdates(ctx context.Context) error {
 			ospatch.ZypperUpdateDryrun(r.Task.GetDryRun()),
 		}
 		clog.Debugf(ctx, "Installing Zypper updates.")
-		if err := retryutil.RetryFunc(ctx, retryPeriod, "installing Zypper updates", func() error { return ospatch.RunZypperPatch(ctx, opts...) }); err != nil {
+		if err := retryutil.RetryFunc(ctx, retryPeriod, "installing Zypper updates", func() error { return runZypperPatch(ctx, opts...) }); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}
