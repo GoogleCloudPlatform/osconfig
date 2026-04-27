@@ -50,11 +50,11 @@ func TestChecksum(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := bytes.NewReader(tt.data)
-			h := checksum(r)
+			reader := bytes.NewReader(tt.data)
+			hasher := checksum(reader)
 
 			expected := sha256.Sum256(tt.data)
-			got := h.Sum(nil)
+			got := hasher.Sum(nil)
 
 			utiltest.AssertEquals(t, got, expected[:])
 		})
@@ -108,8 +108,8 @@ func TestWriteIfChanged(t *testing.T) {
 	}
 }
 
-// TestInstallRecipes verifies that installRecipes correctly iterates over and installs recipes.
-func TestInstallRecipes(t *testing.T) {
+// TestInstallRecipesHandlesInputs verifies that installRecipes correctly handles different EffectiveGuestPolicy inputs.
+func TestInstallRecipesHandlesInputs(t *testing.T) {
 	uniqueSuffix := fmt.Sprintf("-%d", time.Now().UnixNano())
 
 	tests := []struct {
