@@ -18,12 +18,14 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"testing"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"golang.org/x/crypto/openpgp"
@@ -61,7 +63,9 @@ func TestAptRepositories(t *testing.T) {
 		name     string
 		repos    []*agentendpointpb.AptRepository
 		provider osinfo.Provider
+		repoFile string
 		want     string
+		wantLog  string
 	}{
 		{
 			name: "no repositories, want header only",
@@ -122,18 +126,61 @@ func TestAptRepositories(t *testing.T) {
 			},
 			want: "# Repo file managed by Google OSConfig agent\n\ndeb http://repo dist\n",
 		},
+		{
+			name: "osinfo error, want repo line without signed-by",
+			provider: stubOsInfoProvider{err: errors.New("osinfo error")},
+			repos: []*agentendpointpb.AptRepository{
+				{Uri: "http://repo1-url/", Distribution: "distribution", Components: []string{"component1"}},
+			},
+			want: "# Repo file managed by Google OSConfig agent\n\ndeb http://repo1-url/ distribution component1\n",
+		},
+		{
+			name: "invalid os version, want repo line without signed-by",
+			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
+				return "debian", "Debian", "invalid"
+			}},
+			repos: []*agentendpointpb.AptRepository{
+				{Uri: "http://repo1-url/", Distribution: "distribution", Components: []string{"component1"}},
+			},
+			want: "# Repo file managed by Google OSConfig agent\n\ndeb http://repo1-url/ distribution component1\n",
+		},
+		{
+			name: "gpg key fetch error, want error fetching gpg key",
+			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
+				return "debian", "Debian", "10"
+			}},
+			repos: []*agentendpointpb.AptRepository{
+				{Uri: "http://repo", Distribution: "dist", GpgKey: "http://invalid-url"},
+			},
+			want:    "# Repo file managed by Google OSConfig agent\n\ndeb http://repo dist\n",
+			wantLog: `.*Error fetching gpg key "http://invalid-url": Get "http://invalid-url": dial tcp: lookup invalid-url.*`,
+		},
+		{
+			name: "invalid gpg key data, want error fetching gpg key",
+			provider: stubOsInfoProvider{nameVersionProvider: func() (string, string, string) {
+				return "debian", "Debian", "10"
+			}},
+			repos: []*agentendpointpb.AptRepository{
+				{Uri: "http://repo", Distribution: "dist", GpgKey: srv.URL + "/invalid-key"},
+			},
+			want:    "# Repo file managed by Google OSConfig agent\n\ndeb http://repo dist\n",
+			wantLog: `.*Error fetching gpg key "http://127.0.0.1:.*/invalid-key": openpgp: invalid data: tag byte does not have MSB set.*`,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			_ = logger.Init(ctx, logger.LogOpts{LoggerName: "trace_test", Debug: true, Writers: []io.Writer{&buf}})
 			utiltest.OverrideVariable(t, &osInfoProvider, tt.provider)
+
 
 			td := t.TempDir()
 			testRepo := filepath.Join(td, "testRepo")
 
-			err := aptRepositories(ctx, tt.repos, testRepo)
-			utiltest.AssertErrorMatch(t, err, nil)
+			aptRepositories(ctx, tt.repos, testRepo)
 			utiltest.AssertFileContents(t, testRepo, tt.want)
+			utiltest.AssertFormatMatch(t, buf.String(), tt.wantLog)
 		})
 	}
 }
