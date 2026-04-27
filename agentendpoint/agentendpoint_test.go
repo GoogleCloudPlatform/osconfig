@@ -144,6 +144,7 @@ type agentEndpointServiceTestServer struct {
 	runTaskIDs                    []string
 	registerAgentReq              *agentendpointpb.RegisterAgentRequest
 	lastReportTaskCompleteRequest *agentendpointpb.ReportTaskCompleteRequest
+	taskDirective                 agentendpointpb.TaskDirective
 }
 
 func newAgentEndpointServiceTestServer() *agentEndpointServiceTestServer {
@@ -152,6 +153,7 @@ func newAgentEndpointServiceTestServer() *agentEndpointServiceTestServer {
 		streamSend:       make(chan struct{}, 1),
 		permissionError:  make(chan struct{}, 1),
 		registerAgentReq: &agentendpointpb.RegisterAgentRequest{},
+		taskDirective:    agentendpointpb.TaskDirective_CONTINUE,
 	}
 }
 
@@ -198,7 +200,7 @@ func (s *agentEndpointServiceTestServer) ReportTaskProgress(ctx context.Context,
 	default:
 		return &agentendpointpb.ReportTaskProgressResponse{}, status.Errorf(codes.Unimplemented, "task type %q not implemented", req.GetTaskType())
 	}
-	return &agentendpointpb.ReportTaskProgressResponse{TaskDirective: agentendpointpb.TaskDirective_CONTINUE}, nil
+	return &agentendpointpb.ReportTaskProgressResponse{TaskDirective: s.taskDirective}, nil
 }
 
 func (s *agentEndpointServiceTestServer) ReportTaskComplete(ctx context.Context, req *agentendpointpb.ReportTaskCompleteRequest) (*agentendpointpb.ReportTaskCompleteResponse, error) {

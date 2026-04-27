@@ -110,11 +110,7 @@ func TestHandleErrorState(t *testing.T) {
 
 // TestSetStep verifies that setStep correctly updates the task step and saves the state file with the correct information.
 func TestSetStep(t *testing.T) {
-	td, err := os.MkdirTemp(os.TempDir(), "")
-	if err != nil {
-		t.Fatalf("error creating temp dir: %v", err)
-	}
-	defer os.RemoveAll(td)
+	td := t.TempDir()
 
 	pt := &patchTask{
 		TaskID: "test-task",
@@ -147,11 +143,7 @@ func TestReportContinuingState(t *testing.T) {
 	}
 	defer tc.s.Stop()
 
-	td, err := os.MkdirTemp(os.TempDir(), "")
-	if err != nil {
-		t.Fatalf("error creating temp dir: %v", err)
-	}
-	defer os.RemoveAll(td)
+	td := t.TempDir()
 
 	pt := &patchTask{
 		client: tc.client,
@@ -336,6 +328,17 @@ func TestReportContinuingStateStop(t *testing.T) {
 		t.Fatalf("newTestClient error: %v", err)
 	}
 	defer tc.s.Stop()
+
+	pt := &patchTask{
+		client: tc.client,
+		TaskID: "test-task",
+	}
+
+	// Set the directive to STOP.
+	srv.taskDirective = agentendpointpb.TaskDirective_STOP
+
+	err = pt.reportContinuingState(ctx, agentendpointpb.ApplyPatchesTaskProgress_STARTED)
+	utiltest.AssertErrorMatch(t, err, errServerCancel)
 }
 
 func withStateFile(path string, f func() error) error {
