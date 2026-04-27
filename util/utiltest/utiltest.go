@@ -148,3 +148,10 @@ func AssertFileContents(t *testing.T, filePath string, wantContents string) {
 		t.Errorf("File contents mismatch (-want +got):\n%s", diff)
 	}
 }
+
+// OverrideVariable overrides the value of a variable and returns a function to restore it.
+func OverrideVariable[T any](t *testing.T, ptr *T, val T) {
+	original := *ptr
+	*ptr = val
+	t.Cleanup(func() { *ptr = original })
+}
