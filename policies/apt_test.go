@@ -399,7 +399,7 @@ func TestAptChanges(t *testing.T) {
 			},
 		},
 		{
-			name:       "p1 to upgrade with failure, wnt upgrading error",
+			name:       "p1 to upgrade with failure, want upgrading error",
 			aptUpdated: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...), stdout: []byte(`{"package":"p1","status":"installed"}`)},
@@ -410,7 +410,7 @@ func TestAptChanges(t *testing.T) {
 			wantErr: errors.New("error upgrading apt packages: error running /usr/bin/apt-get with args [\"install\" \"-y\" \"p1\"]: upgrade error, stdout: \"\", stderr: \"\""),
 		},
 		{
-			name:       "p1 to remove, nil",
+			name:       "p1 to remove, want nil",
 			aptRemoved: []*agentendpointpb.Package{{Name: "p1"}},
 			expectations: []expectedCommand{
 				{cmd: exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...), stdout: []byte(`{"package":"p1","status":"installed"}`)},
