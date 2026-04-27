@@ -52,12 +52,8 @@ func TestReportFailed(t *testing.T) {
 	}
 
 	got := srv.lastReportTaskCompleteRequest
-	if got.TaskId != taskID {
-		t.Errorf("TaskId = %q, want %q", got.TaskId, taskID)
-	}
-	if got.ErrorMessage != errMsg {
-		t.Errorf("ErrorMessage = %q, want %q", got.ErrorMessage, errMsg)
-	}
+	utiltest.AssertEquals(t, got.TaskId, taskID)
+	utiltest.AssertEquals(t, got.ErrorMessage, errMsg)
 
 	output, ok := got.Output.(*agentendpointpb.ReportTaskCompleteRequest_ApplyPatchesTaskOutput)
 	if !ok {
@@ -124,9 +120,7 @@ func TestSetStep(t *testing.T) {
 		t.Fatalf("setStep error: %v", err)
 	}
 
-	if pt.PatchStep != patching {
-		t.Errorf("PatchStep = %q, want %q", pt.PatchStep, patching)
-	}
+	utiltest.AssertEquals(t, string(pt.PatchStep), patching)
 
 	if _, err := os.Stat(stateFile); os.IsNotExist(err) {
 		t.Error("State file was not created")
@@ -249,9 +243,7 @@ func TestRunPanicRecovery(t *testing.T) {
 	if !ok {
 		t.Fatal("Output is not ApplyPatchesTaskOutput")
 	}
-	if output.ApplyPatchesTaskOutput.State != agentendpointpb.ApplyPatchesTaskOutput_FAILED {
-		t.Errorf("State = %v, want %v", output.ApplyPatchesTaskOutput.State, agentendpointpb.ApplyPatchesTaskOutput_FAILED)
-	}
+	utiltest.AssertEquals(t, output.ApplyPatchesTaskOutput.State, agentendpointpb.ApplyPatchesTaskOutput_FAILED)
 }
 
 // TestPatchTaskErrorPaths verifies the error handling logic in various patchTask methods using a table-driven approach.
