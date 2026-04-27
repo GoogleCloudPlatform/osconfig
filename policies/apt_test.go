@@ -126,10 +126,9 @@ func TestAptRepositories(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			defer utiltest.OverrideVariable(&osInfoProvider, tt.provider)()
+			utiltest.OverrideVariable(t, &osInfoProvider, tt.provider)
 
-			td, cleanup := utiltest.TempDir(t)
-			defer cleanup()
+			td := t.TempDir()
 			testRepo := filepath.Join(td, "testRepo")
 
 			err := aptRepositories(ctx, tt.repos, testRepo)

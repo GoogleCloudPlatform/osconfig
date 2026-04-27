@@ -142,13 +142,3 @@ func OverrideVariable[T any](t *testing.T, ptr *T, val T) {
 	*ptr = val
 	t.Cleanup(func() { *ptr = original })
 }
-
-// TempDir creates a temporary directory and returns its path and a cleanup function.
-func TempDir(t *testing.T) (string, func()) {
-	t.Helper()
-	name, err := os.MkdirTemp("", "")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	return name, func() { os.RemoveAll(name) }
-}
