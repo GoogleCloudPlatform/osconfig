@@ -19,6 +19,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"io"
 	"os"
 
 	"os/exec"
@@ -27,6 +28,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
+	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/golang/mock/gomock"
@@ -113,16 +115,17 @@ func TestInstallRecipesHandlesInputs(t *testing.T) {
 	uniqueSuffix := fmt.Sprintf("-%d", time.Now().UnixNano())
 
 	tests := []struct {
-		name    string
-		egp     *agentendpointpb.EffectiveGuestPolicy
-		wantErr error
+		name       string
+		egp        *agentendpointpb.EffectiveGuestPolicy
+		wantErrFormat string
 	}{
 		{
-			name: "policy without recipes",
+			name: "policy without recipes, want nil error",
 			egp:  &agentendpointpb.EffectiveGuestPolicy{},
+
 		},
 		{
-			name: "policy with nil software recipe",
+			name: "policy with nil software recipe, want nil error",
 			egp: &agentendpointpb.EffectiveGuestPolicy{
 				SoftwareRecipes: []*agentendpointpb.EffectiveGuestPolicy_SourcedSoftwareRecipe{
 					{
@@ -132,7 +135,7 @@ func TestInstallRecipesHandlesInputs(t *testing.T) {
 			},
 		},
 		{
-			name: "policy with invalid recipe",
+			name: "policy with invalid recipe, want installing error",
 			egp: &agentendpointpb.EffectiveGuestPolicy{
 				SoftwareRecipes: []*agentendpointpb.EffectiveGuestPolicy_SourcedSoftwareRecipe{
 					{
@@ -152,25 +155,30 @@ func TestInstallRecipesHandlesInputs(t *testing.T) {
 					},
 				},
 			},
+			wantErrFormat: `(?s).*Error installing recipe: error running step 0 \(CopyFile\): could not find location for artifact "non-existent".*`,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			_ = logger.Init(context.Background(), logger.LogOpts{LoggerName: "test", Debug: true, Writers: []io.Writer{&buf}})
+
 			ctx := context.Background()
-			err := installRecipes(ctx, tt.egp)
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			installRecipes(ctx, tt.egp)
+
+			utiltest.AssertFormatMatch(t, buf.String(), tt.wantErrFormat)
 		})
 	}
 }
 
-// TestRun covers the Run function.
-func TestRun(t *testing.T) {
+// TestRunSmoke is a smoke test for the Run function.
+func TestRunSmoke(t *testing.T) {
 	Run(context.Background())
 }
 
-// Test_run covers the internal run function.
-func Test_run(t *testing.T) {
+// TestRunCancelledContext verifies that run returns immediately when context is cancelled.
+func TestRunCancelledContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	run(ctx)
