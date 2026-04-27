@@ -1,12 +1,16 @@
 package utiltest
 
 import (
+	"context"
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"testing"
 
+	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
+	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/kr/pretty"
 )
@@ -84,6 +88,14 @@ func MatchSnapshot(t testReporter, actual any, snapshotFilepath string) {
 	}
 }
 
+// ExpectedCommand defines a reusable expected command call
+type ExpectedCommand struct {
+	Cmd    *exec.Cmd
+	Stdout []byte
+	Stderr []byte
+	Err    error
+}
+
 // AssertEquals checks if got and want are deeply equal. If not, it fails the test.
 func AssertEquals(t *testing.T, got interface{}, want interface{}) {
 	t.Helper()
@@ -141,4 +153,23 @@ func OverrideVariable[T any](t *testing.T, ptr *T, val T) {
 	original := *ptr
 	*ptr = val
 	t.Cleanup(func() { *ptr = original })
+}
+
+// SetExpectedCommands sets expected result for provided mock commands
+func SetExpectedCommands(ctx context.Context, mockCommandRunner *utilmocks.MockCommandRunner, expectedCommands []ExpectedCommand) {
+	if len(expectedCommands) == 0 {
+		return
+	}
+
+	var prev *gomock.Call
+	for _, expectedCommand := range expectedCommands {
+		call := mockCommandRunner.EXPECT().
+			Run(ctx, utilmocks.EqCmd(expectedCommand.Cmd)).
+			Return(expectedCommand.Stdout, expectedCommand.Stderr, expectedCommand.Err).
+			Times(1)
+		if prev != nil {
+			call.After(prev)
+		}
+		prev = call
+	}
 }
