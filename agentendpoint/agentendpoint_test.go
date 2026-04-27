@@ -142,7 +142,6 @@ type agentEndpointServiceTestServer struct {
 	patchTaskComplete       bool
 	applyConfigTaskComplete       bool
 	runTaskIDs                    []string
-	registerAgentReq              *agentendpointpb.RegisterAgentRequest
 	lastReportTaskCompleteRequest *agentendpointpb.ReportTaskCompleteRequest
 	taskDirective                 agentendpointpb.TaskDirective
 }
@@ -152,7 +151,6 @@ func newAgentEndpointServiceTestServer() *agentEndpointServiceTestServer {
 		streamClose:      make(chan struct{}, 1),
 		streamSend:       make(chan struct{}, 1),
 		permissionError:  make(chan struct{}, 1),
-		registerAgentReq: &agentendpointpb.RegisterAgentRequest{},
 		taskDirective:    agentendpointpb.TaskDirective_CONTINUE,
 	}
 }
