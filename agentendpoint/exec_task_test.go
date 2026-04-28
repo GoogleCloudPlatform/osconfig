@@ -1,4 +1,4 @@
-//  Copyright 2026 Google Inc. All Rights Reserved.
+//  Copyright 2019 Google Inc. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -193,7 +193,7 @@ func TestGetGCSObject(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ts := httptest.NewServer(tt.handler)
 			defer ts.Close()
-			t.Cleanup(utiltest.OverrideEnv(t, "STORAGE_EMULATOR_HOST", ts.URL))
+			t.Setenv("STORAGE_EMULATOR_HOST", ts.URL)
 
 			localPath, err := getGCSObject(ctx, tt.bucket, tt.object, 0)
 			if tt.name == "invalid object path, want download error" {
