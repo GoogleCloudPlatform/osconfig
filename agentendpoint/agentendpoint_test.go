@@ -307,9 +307,9 @@ func TestWaitForTaskErrors(t *testing.T) {
 	}
 
 	// Error from receiveTaskNotification
-	cCtx, cCancel := context.WithCancel(ctx)
-	cCancel()
-	if err := tc.client.waitForTask(cCtx); !errors.Is(err, context.Canceled) {
+	ctx, cancel := context.WithCancel(ctx)
+	cancel()
+	if err := tc.client.waitForTask(ctx); !errors.Is(err, context.Canceled) {
 		t.Errorf("did not get expected context.Canceled, got: %v", err)
 	}
 }
@@ -403,14 +403,14 @@ func TestWaitForTaskNotification(t *testing.T) {
 
 	waitUntil := func(t *testing.T, condition func() bool, timeout time.Duration) bool {
 		t.Helper()
-		wCtx, wCancel := context.WithTimeout(context.Background(), timeout)
-		defer wCancel()
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
 		for {
 			if condition() {
 				return true
 			}
 			select {
-			case <-wCtx.Done():
+			case <-ctx.Done():
 				return false
 			case <-time.After(10 * time.Millisecond):
 			}
