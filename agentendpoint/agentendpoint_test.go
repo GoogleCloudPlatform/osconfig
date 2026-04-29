@@ -131,29 +131,29 @@ func newMockTestClient(ctx context.Context, mockAgentEndpointClient *utilmocks.M
 
 type agentEndpointServiceTestServer struct {
 	agentendpointpb.UnimplementedAgentEndpointServiceServer
-	streamClose             chan struct{}
-	streamSend              chan struct{}
-	permissionError         chan struct{}
-	resourceExhaustedError  chan struct{}
-	taskStart               bool
-	execTaskProgress        bool
-	patchTaskProgress       bool
-	applyConfigTaskProgress bool
-	execTaskComplete        bool
-	patchTaskComplete       bool
+	streamClose                   chan struct{}
+	streamSend                    chan struct{}
+	permissionError               chan struct{}
+	resourceExhaustedError        chan struct{}
+	taskStart                     bool
+	execTaskProgress              bool
+	patchTaskProgress             bool
+	applyConfigTaskProgress       bool
+	execTaskComplete              bool
+	patchTaskComplete             bool
 	applyConfigTaskComplete       bool
 	runTaskIDs                    []string
 	lastReportTaskCompleteRequest *agentendpointpb.ReportTaskCompleteRequest
 	taskDirective                 agentendpointpb.TaskDirective
-	registerAgentReq        *agentendpointpb.RegisterAgentRequest
+	registerAgentReq              *agentendpointpb.RegisterAgentRequest
 }
 
 func newAgentEndpointServiceTestServer() *agentEndpointServiceTestServer {
 	return &agentEndpointServiceTestServer{
-		streamClose:      make(chan struct{}, 1),
-		streamSend:       make(chan struct{}, 1),
-		permissionError:  make(chan struct{}, 1),
-		taskDirective:    agentendpointpb.TaskDirective_CONTINUE,
+		streamClose:            make(chan struct{}, 1),
+		streamSend:             make(chan struct{}, 1),
+		permissionError:        make(chan struct{}, 1),
+		taskDirective:          agentendpointpb.TaskDirective_CONTINUE,
 		resourceExhaustedError: make(chan struct{}, 1),
 	}
 }

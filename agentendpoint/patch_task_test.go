@@ -99,7 +99,7 @@ func TestHandleErrorState(t *testing.T) {
 			}
 			err := pt.handleErrorState(ctx, tt.err.Error(), tt.err)
 			utiltest.AssertErrorMatch(t, err, nil)
-      utiltest.AssertEquals(t, srv.lastReportTaskCompleteRequest.ErrorMessage, tt.wantErr.Error()) 
+			utiltest.AssertEquals(t, srv.lastReportTaskCompleteRequest.ErrorMessage, tt.wantErr.Error())
 		})
 	}
 }
