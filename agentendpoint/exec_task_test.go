@@ -258,7 +258,7 @@ func TestExecuteCommand(t *testing.T) {
 			run = tt.mockRun
 			gotCode, err := executeCommand(ctx, "test-path", nil)
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
-      utiltest.AssertEquals(t, gotCode, tt.wantCode)
+			utiltest.AssertEquals(t, gotCode, tt.wantCode)
 		})
 	}
 }
