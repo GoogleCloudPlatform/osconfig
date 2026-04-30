@@ -155,5 +155,3 @@ func OverrideVariable[T any](t *testing.T, ptr *T, val T) {
 	*ptr = val
 	t.Cleanup(func() { *ptr = original })
 }
-
-
