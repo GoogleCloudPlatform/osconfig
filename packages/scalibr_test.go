@@ -11,9 +11,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 	scalibr "github.com/google/osv-scalibr"
 	"github.com/google/osv-scalibr/extractor"
-	scalibrcos "github.com/google/osv-scalibr/extractor/filesystem/os/cos"
+	scalibrcos "github.com/google/osv-scalibr/extractor/filesystem/os/cos/metadata"
 	dpkgmetadata "github.com/google/osv-scalibr/extractor/filesystem/os/dpkg/metadata"
-	scalibrrpm "github.com/google/osv-scalibr/extractor/filesystem/os/rpm"
+	scalibrrpm "github.com/google/osv-scalibr/extractor/filesystem/os/rpm/metadata"
 	"github.com/google/osv-scalibr/inventory"
 )
 
@@ -48,18 +48,18 @@ func TestExtractedPackageMappings(t *testing.T) {
 					Name:     "acl",
 					Version:  "2.2.51-15.el7",
 					PURLType: "rpm",
-					Metadata: &scalibrrpm.Metadata{PackageName: "acl", SourceRPM: "acl-2.2.51-15.el7.src.rpm", Epoch: 0, OSName: "CentOS Linux", OSID: "centos", OSVersionID: "7", OSBuildID: "", Vendor: "CentOS", Architecture: "x86_64", License: "GPLv2+"},
+					Metadata: &scalibrrpm.Metadata{PackageName: "acl", SourceRPM: "acl-2.2.51-15.el7.src.rpm", Epoch: 0, OSName: "CentOS Linux", OSID: "centos", OSVersionID: "7", OSBuildID: "", Vendor: "CentOS", Architecture: "x86_64", OSCPEName: ""},
 				},
 				{
 					Name:     "gpg-pubkey",
 					Version:  "352c64e5-52ae6884",
 					PURLType: "rpm",
-					Metadata: &scalibrrpm.Metadata{PackageName: "gpg-pubkey", SourceRPM: "", Epoch: 0, OSName: "CentOS Linux", OSID: "centos", OSVersionID: "7", OSBuildID: "", Vendor: "", Architecture: "", License: "pubkey"},
+					Metadata: &scalibrrpm.Metadata{PackageName: "gpg-pubkey", SourceRPM: "", Epoch: 0, OSName: "CentOS Linux", OSID: "centos", OSVersionID: "7", OSBuildID: "", Vendor: "", Architecture: "", OSCPEName: ""},
 				},
 			},
 			want: Packages{Rpm: []*PkgInfo{
-				{Name: "acl", Version: "2.2.51-15.el7", Arch: "x86_64", Source: Source{Name: "acl-2.2.51-15.el7.src.rpm", Version: ""}, Type: "rpm", Purl: "pkg:rpm/acl@2.2.51-15.el7"},
-				{Name: "gpg-pubkey", Version: "352c64e5-52ae6884", Arch: "all", Source: Source{Name: "gpg-pubkey", Version: ""}, Type: "rpm", Purl: "pkg:rpm/gpg-pubkey@352c64e5-52ae6884"},
+				{Name: "acl", Version: "2.2.51-15.el7", Arch: "x86_64", Source: Source{Name: "acl-2.2.51-15.el7.src.rpm", Version: ""}, Type: "rpm", Purl: "pkg:rpm/centos/acl@2.2.51-15.el7?arch=x86_64&distro=centos-7&sourcerpm=acl-2.2.51-15.el7.src.rpm"},
+				{Name: "gpg-pubkey", Version: "352c64e5-52ae6884", Arch: "all", Source: Source{Name: "gpg-pubkey", Version: ""}, Type: "rpm", Purl: "pkg:rpm/centos/gpg-pubkey@352c64e5-52ae6884?distro=centos-7"},
 			}},
 		},
 		{
@@ -80,8 +80,8 @@ func TestExtractedPackageMappings(t *testing.T) {
 				},
 			},
 			want: Packages{COS: []*PkgInfo{
-				{Name: "dev-python/PySocks", Version: "17412.448.8", Arch: "x86_64", Type: "cos", Purl: "pkg:cos/PySocks@17412.448.8"},
-				{Name: "virtual/chromeos-bsp", Version: "17412.448.8", Arch: "x86_64", Type: "cos", Purl: "pkg:cos/chromeos-bsp@17412.448.8"},
+				{Name: "dev-python/PySocks", Version: "17412.448.8", Arch: "x86_64", Type: "cos", Purl: "pkg:cos/PySocks@17412.448.8?distro=cos-105"},
+				{Name: "virtual/chromeos-bsp", Version: "17412.448.8", Arch: "x86_64", Type: "cos", Purl: "pkg:cos/chromeos-bsp@17412.448.8?distro=cos-105"},
 			}},
 		},
 	}
