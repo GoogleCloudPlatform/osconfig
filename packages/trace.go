@@ -31,9 +31,9 @@ func (p tracingInstalledPackagesProvider) GetInstalledPackages(ctx context.Conte
 	cancel()
 	result := <-resultChannel
 
-	osinfo, err := p.osInfoProvider.GetOSInfo(ctx)
-	if err != nil {
-		clog.Errorf(ctx, "GetOSInfo() error: %v", err)
+	osinfo, oserr := p.osInfoProvider.GetOSInfo(ctx)
+	if oserr != nil {
+		clog.Errorf(ctx, "GetOSInfo() error: %v", oserr)
 	}
 	logTraceResult(ctx, result, duration, osinfo)
 
