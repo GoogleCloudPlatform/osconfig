@@ -16,13 +16,19 @@ package policies
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
+	"github.com/GoogleCloudPlatform/osconfig/packages"
+	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
+	"github.com/golang/mock/gomock"
 )
 
 func runGooGetRepositories(ctx context.Context, repos []*agentendpointpb.GooRepository) (string, error) {
@@ -79,4 +85,85 @@ func TestGooGetRepositories(t *testing.T) {
 			t.Errorf("%s: got:\n%q\nwant:\n%q", tt.desc, got, tt.want)
 		}
 	}
+}
+
+// TestGooGetChanges tests the googetChanges function.
+func TestGooGetChanges(t *testing.T) {
+	googet := filepath.Join(os.Getenv("GooGetRoot"), "googet.exe")
+
+	tests := []struct {
+		name         string
+		gooInstalled []*agentendpointpb.Package
+		gooRemoved   []*agentendpointpb.Package
+		gooUpdated   []*agentendpointpb.Package
+		expectations []utiltest.ExpectedCommand
+		wantErr      error
+	}{
+		{
+			name: "no changes, want nil",
+		},
+		{
+			name:         "installation failure, want installed error",
+			gooInstalled: []*agentendpointpb.Package{{Name: "p1"}},
+			expectations: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command(googet, "installed"), Err: errors.New("installed error")},
+			},
+			wantErr: errors.New("error running googet.exe with args [\"installed\"]: installed error, stdout: \"\", stderr: \"\""),
+		},
+		{
+			name:       "updates failure, want update error",
+			gooUpdated: []*agentendpointpb.Package{{Name: "p1"}},
+			expectations: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command(googet, "installed"), Stdout: []byte("p1.x86_64 1.0.0@1")},
+				{Cmd: exec.Command(googet, "update"), Err: errors.New("update error")},
+			},
+			wantErr: errors.New("error running googet.exe with args [\"update\"]: update error, stdout: \"\", stderr: \"\""),
+		},
+		{
+			name:         "all operations success, want nil",
+			gooInstalled: []*agentendpointpb.Package{{Name: "p1"}},
+			gooUpdated:   []*agentendpointpb.Package{{Name: "p2"}},
+			gooRemoved:   []*agentendpointpb.Package{{Name: "p3"}},
+			expectations: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command(googet, "installed"), Stdout: []byte("p2.x86_64 1.0.0@1\np3.x86_64 1.0.0@1")},
+				{Cmd: exec.Command(googet, "update"), Stdout: []byte("p2.x86_64, 1.0.0@1 --> 2.0.0@1 from repo")},
+				{Cmd: exec.Command(googet, "-noconfirm", "install", "p1")},
+				{Cmd: exec.Command(googet, "-noconfirm", "install", "p2")},
+				{Cmd: exec.Command(googet, "-noconfirm", "remove", "p3")},
+			},
+		},
+		{
+			name:         "all operations failure, want combined error",
+			gooInstalled: []*agentendpointpb.Package{{Name: "p1"}},
+			gooUpdated:   []*agentendpointpb.Package{{Name: "p2"}},
+			gooRemoved:   []*agentendpointpb.Package{{Name: "p3"}},
+			expectations: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command(googet, "installed"), Stdout: []byte("p2.x86_64 1.0.0@1\np3.x86_64 1.0.0@1")},
+				{Cmd: exec.Command(googet, "update"), Stdout: []byte("p2.x86_64, 1.0.0@1 --> 2.0.0@1 from repo")},
+				{Cmd: exec.Command(googet, "-noconfirm", "install", "p1"), Err: errors.New("install error")},
+				{Cmd: exec.Command(googet, "-noconfirm", "install", "p2"), Err: errors.New("upgrade error")},
+				{Cmd: exec.Command(googet, "-noconfirm", "remove", "p3"), Err: errors.New("remove error")},
+			},
+			wantErr: errors.New("error installing googet packages: error running googet.exe with args [\"-noconfirm\" \"install\" \"p1\"]: install error, stdout: \"\", stderr: \"\",\nerror upgrading googet packages: error running googet.exe with args [\"-noconfirm\" \"install\" \"p2\"]: upgrade error, stdout: \"\", stderr: \"\",\nerror removing googet packages: error running googet.exe with args [\"-noconfirm\" \"remove\" \"p3\"]: remove error, stdout: \"\", stderr: \"\""),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+			setupGooGetChangesTest(t, mockCommandRunner)
+			utiltest.SetExpectations(mockCommandRunner, tt.expectations)
+
+			err := googetChanges(context.Background(), tt.gooInstalled, tt.gooRemoved, tt.gooUpdated)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+		})
+	}
+}
+
+func setupGooGetChangesTest(t *testing.T, runner *utilmocks.MockCommandRunner) {
+	utiltest.OverrideVariable(t, &packages.GooGetExists, true)
+	packages.SetCommandRunner(runner)
 }
