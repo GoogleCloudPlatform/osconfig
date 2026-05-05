@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -104,6 +105,21 @@ func AssertErrorMatch(t *testing.T, gotErr, wantErr error) {
 	}
 	if reflect.TypeOf(gotErr) != reflect.TypeOf(wantErr) || gotErr.Error() != wantErr.Error() {
 		t.Errorf("Unexpected error, want %v, got %v", wantErr, gotErr)
+	}
+}
+
+// AssertErrorContains verifies that the gotErr contains the wantErr message.
+func AssertErrorContains(t *testing.T, gotErr, wantErr error) {
+	t.Helper()
+	if gotErr == nil && wantErr == nil {
+		return
+	}
+	if gotErr == nil || wantErr == nil {
+		t.Errorf("Errors mismatch, want %v, got %v", wantErr, gotErr)
+		return
+	}
+	if !strings.Contains(gotErr.Error(), wantErr.Error()) {
+		t.Errorf("Unexpected error, want error containing %q, got %q", wantErr.Error(), gotErr.Error())
 	}
 }
 

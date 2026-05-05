@@ -16,9 +16,14 @@ package agentendpoint
 
 import (
 	"context"
+	"errors"
+	"net/http"
+	"net/http/httptest"
+	"os"
 	"os/exec"
 	"testing"
 
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -131,6 +136,129 @@ func TestRunExecStep(t *testing.T) {
 			if diff := cmp.Diff(tt.wantArgs, gotArgs); diff != "" {
 				t.Fatalf("did not get expected args (-want +got):\n%s", diff)
 			}
+		})
+	}
+}
+
+// TestGetGCSObject verifies the process of downloading objects from Google Cloud Storage. It uses a local HTTP server to emulate the GCS API
+func TestGetGCSObject(t *testing.T) {
+	ctx := context.Background()
+	testContent := "test script content"
+	bucket := "test-bucket"
+	object := "scripts/test.sh"
+
+	tests := []struct {
+		name        string
+		bucket      string
+		object      string
+		handler     http.HandlerFunc
+		wantErr     error
+		wantPath    string
+		wantContent string
+	}{
+		{
+			name:   "valid bucket and object, want successful download",
+			bucket: bucket,
+			object: object,
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(testContent))
+			},
+			wantErr:     nil,
+			wantPath:    "test.sh",
+			wantContent: testContent,
+		},
+		{
+			name:   "non-existent object, want not found error",
+			bucket: bucket,
+			object: object,
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+			},
+			wantErr: errors.New("error fetching GCS object: storage: object doesn't exist"),
+		},
+		{
+			name:   "invalid object path, want download error",
+			bucket: bucket,
+			object: "///",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(testContent))
+			},
+			wantErr: errors.New("error downloading GCS object"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ts := httptest.NewServer(tt.handler)
+			defer ts.Close()
+			t.Setenv("STORAGE_EMULATOR_HOST", ts.URL)
+
+			localPath, err := getGCSObject(ctx, tt.bucket, tt.object, 0)
+			if tt.name == "invalid object path, want download error" {
+				// impossible to predict exact error message for downloading error because of random /tmp files
+				utiltest.AssertErrorContains(t, err, tt.wantErr)
+			} else {
+				utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			}
+
+			if err == nil {
+				defer os.Remove(localPath)
+				utiltest.AssertFilePath(t, localPath, tt.wantPath)
+				utiltest.AssertFileContents(t, localPath, tt.wantContent)
+			}
+		})
+	}
+}
+
+// TestExecuteCommand verifies the handling of process execution results by mocking the run function
+func TestExecuteCommand(t *testing.T) {
+	ctx := context.Background()
+	oldRun := run
+	defer func() { run = oldRun }()
+
+	tests := []struct {
+		name     string
+		mockRun  func(*exec.Cmd) ([]byte, error)
+		wantCode int32
+		wantErr  error
+	}{
+		{
+			name: "successful command execution, want code 0",
+			mockRun: func(cmd *exec.Cmd) ([]byte, error) {
+				testCmd := exec.Command("true")
+				testCmd.Run()
+				cmd.ProcessState = testCmd.ProcessState
+				return []byte("output"), nil
+			},
+			wantCode: 0,
+			wantErr:  nil,
+		},
+		{
+			name: "system error during run, want error and code -1",
+			mockRun: func(cmd *exec.Cmd) ([]byte, error) {
+				return nil, errors.New("system error")
+			},
+			wantCode: -1,
+			wantErr:  errors.New("system error"),
+		},
+		{
+			name: "command exit error, want code 0",
+			mockRun: func(cmd *exec.Cmd) ([]byte, error) {
+				return []byte("error output"), &exec.ExitError{}
+			},
+			wantCode: 0,
+			wantErr:  nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			run = tt.mockRun
+			gotCode, err := executeCommand(ctx, "test-path", nil)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			utiltest.AssertEquals(t, gotCode, tt.wantCode)
 		})
 	}
 }
