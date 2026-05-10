@@ -49,6 +49,8 @@ var (
 
 	errLinuxPowerShell = errors.New("interpreter POWERSHELL cannot be used on non-Windows system")
 	errWinNoInt        = fmt.Errorf("an interpreter value of `SHELL` or `POWERSHELL` must be set for files ran on Windows systems")
+
+	atomicWriteFileStream = util.AtomicWriteFileStream
 )
 
 func init() {
@@ -78,8 +80,8 @@ func getGCSObject(ctx context.Context, bkt, obj string, gen int64) (string, erro
 	clog.Debugf(ctx, "Fetched GCS object bucket %s object %s generation number %d", bkt, obj, gen)
 
 	localPath := filepath.Join(os.TempDir(), path.Base(obj))
-	if _, err := util.AtomicWriteFileStream(reader, "", localPath, 0755); err != nil {
-		return "", fmt.Errorf("error downloading GCS object: %s", err)
+	if _, err := atomicWriteFileStream(reader, "", localPath, 0755); err != nil {
+		return "", fmt.Errorf("error downloading GCS object: %v", err)
 	}
 
 	clog.Debugf(ctx, "Downloaded to local path %s", localPath)

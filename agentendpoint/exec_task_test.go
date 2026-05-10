@@ -17,12 +17,14 @@ package agentendpoint
 import (
 	"context"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"os/exec"
 	"testing"
 
+	"github.com/GoogleCloudPlatform/osconfig/util"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
@@ -152,6 +154,7 @@ func TestGetGCSObject(t *testing.T) {
 		bucket      string
 		object      string
 		handler     http.HandlerFunc
+		writeErr    error
 		wantErr     error
 		wantPath    string
 		wantContent string
@@ -164,7 +167,6 @@ func TestGetGCSObject(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 				w.Write([]byte(testContent))
 			},
-			wantErr:     nil,
 			wantPath:    "test.sh",
 			wantContent: testContent,
 		},
@@ -180,34 +182,39 @@ func TestGetGCSObject(t *testing.T) {
 		{
 			name:   "invalid object path, want download error",
 			bucket: bucket,
-			object: "///",
+			object: object,
 			handler: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				w.Write([]byte(testContent))
 			},
-			wantErr: errors.New("error downloading GCS object"),
+			writeErr: errors.New("mocked error"),
+			wantErr:  errors.New("error downloading GCS object: mocked error"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			utiltest.OverrideVariable(t, &atomicWriteFileStream, func(r io.Reader, checksum, path string, mode os.FileMode) (string, error) {
+				if tt.writeErr != nil {
+					return "", tt.writeErr
+				}
+				return util.AtomicWriteFileStream(r, checksum, path, mode)
+			})
+
 			ts := httptest.NewServer(tt.handler)
 			defer ts.Close()
 			t.Setenv("STORAGE_EMULATOR_HOST", ts.URL)
 
 			localPath, err := getGCSObject(ctx, tt.bucket, tt.object, 0)
-			if tt.name == "invalid object path, want download error" {
-				// impossible to predict exact error message for downloading error because of random /tmp files
-				utiltest.AssertErrorContains(t, err, tt.wantErr)
-			} else {
-				utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			utiltest.AssertErrorMatchAndFail(t, err, tt.wantErr)
+
+			if tt.wantErr != nil {
+				return
 			}
 
-			if err == nil {
-				defer os.Remove(localPath)
-				utiltest.AssertFilePath(t, localPath, tt.wantPath)
-				utiltest.AssertFileContents(t, localPath, tt.wantContent)
-			}
+			defer os.Remove(localPath)
+			utiltest.AssertFilePath(t, localPath, tt.wantPath)
+			utiltest.AssertFileContents(t, localPath, tt.wantContent)
 		})
 	}
 }
