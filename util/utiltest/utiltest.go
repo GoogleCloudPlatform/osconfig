@@ -142,16 +142,3 @@ func OverrideVariable[T any](t *testing.T, ptr *T, val T) {
 	*ptr = val
 	t.Cleanup(func() { *ptr = original })
 }
-
-// AssertFormatMatch verifies that the gotString matches the wantFormat regular expression.
-// REMOVE THIS when any PR that contains it is merged
-func AssertFormatMatch(t *testing.T, gotString string, wantFormat string) {
-	t.Helper()
-	matched, err := regexp.MatchString(wantFormat, gotString)
-	if err != nil {
-		t.Fatalf("regexp.MatchString(%q, %q) err: %v", wantFormat, gotString, err)
-	}
-	if !matched {
-		t.Errorf("string %q does not match format %q", gotString, wantFormat)
-	}
-}

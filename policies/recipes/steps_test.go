@@ -3,7 +3,6 @@ package recipes
 import (
 	"archive/tar"
 	"archive/zip"
-	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -220,8 +219,8 @@ func ensureTar(t *testing.T, dst string, entries []fileEntry) {
 	}
 }
 
-// TestParsePermissions tests the parsePermissions function
-func TestParsePermissions(t *testing.T) {
+// Test_parsePermissions verifies that octal permission strings are correctly parsed into os.FileMode.
+func Test_parsePermissions(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   string
@@ -258,64 +257,67 @@ func TestParsePermissions(t *testing.T) {
 	}
 }
 
-// TestEnsureSymlinkBelongsToDir tests the ensureSymlinkBelongsToDir function
-func TestEnsureSymlinkBelongsToDir(t *testing.T) {
+func setupSymlinkTest(t *testing.T) (dir, linkInside, linkOutside string) {
 	tmpDir := t.TempDir()
-	dir := filepath.Join(tmpDir, "dir")
+	dir = filepath.Join(tmpDir, "dir")
 	otherDir := filepath.Join(tmpDir, "other")
-	os.Mkdir(dir, 0755)
-	os.Mkdir(otherDir, 0755)
+	if err := os.Mkdir(dir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(otherDir, 0755); err != nil {
+		t.Fatal(err)
+	}
 
 	file := filepath.Join(dir, "file")
-	os.WriteFile(file, []byte("test"), 0644)
-
+	if err := os.WriteFile(file, []byte("test"), 0644); err != nil {
+		t.Fatal(err)
+	}
 	otherFile := filepath.Join(otherDir, "other_file")
-	os.WriteFile(otherFile, []byte("test"), 0644)
+	if err := os.WriteFile(otherFile, []byte("test"), 0644); err != nil {
+		t.Fatal(err)
+	}
 
-	linkInside := filepath.Join(dir, "link_inside")
-	os.Symlink(file, linkInside)
+	linkInside = filepath.Join(dir, "link_inside")
+	if err := os.Symlink(file, linkInside); err != nil {
+		t.Fatal(err)
+	}
+	linkOutside = filepath.Join(dir, "link_outside")
+	if err := os.Symlink(otherFile, linkOutside); err != nil {
+		t.Fatal(err)
+	}
 
-	linkOutside := filepath.Join(dir, "link_outside")
-	os.Symlink(otherFile, linkOutside)
+	return dir, linkInside, linkOutside
+}
+
+// Test_ensureSymlinkBelongsToDir ensures that symlinks do not point to locations outside the designated directory.
+func Test_ensureSymlinkBelongsToDir(t *testing.T) {
+	dir, linkInside, linkOutside := setupSymlinkTest(t)
 
 	tests := []struct {
 		name    string
-		dir     string
 		link    string
 		wantErr error
 	}{
 		{
 			name: "link target inside dir, want nil",
-			dir:  dir,
 			link: linkInside,
 		},
 		{
 			name:    "link target outside dir, want error",
-			dir:     dir,
 			link:    linkOutside,
 			wantErr: fmt.Errorf("symlink %s, does not belongs to dir %s, rel ../other/other_file", linkOutside, dir),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ensureSymlinkBelongsToDir(tt.dir, tt.link)
-			if tt.wantErr == nil {
-				utiltest.AssertErrorMatch(t, err, nil)
-				return
-			}
-
-			if err == nil {
-				t.Errorf("got error nil, want %v", tt.wantErr)
-				return
-			}
-
-			utiltest.AssertFormatMatch(t, err.Error(), regexp.QuoteMeta(tt.wantErr.Error()))
+			err := ensureSymlinkBelongsToDir(dir, tt.link)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 		})
 	}
 }
 
-// TestStepCopyFile tests the stepCopyFile function
-func TestStepCopyFile(t *testing.T) {
+// Test_stepCopyFile verifies the file copying logic, including artifact resolution, overwrite behavior, and permission setting.
+func Test_stepCopyFile(t *testing.T) {
 	tmpDir := t.TempDir()
 	artifactPath := filepath.Join(tmpDir, "artifact")
 	content := "artifact content"
