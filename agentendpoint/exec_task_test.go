@@ -187,8 +187,8 @@ func TestGetGCSObject(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 				w.Write([]byte(testContent))
 			},
-			writeErr: errors.New("mocked error"),
-			wantErr:  errors.New("error downloading GCS object: mocked error"),
+			writeErr: errors.New("download error"),
+			wantErr:  errors.New("error downloading GCS object: download error"),
 		},
 	}
 
