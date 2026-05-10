@@ -299,11 +299,11 @@ func Test_ensureSymlinkBelongsToDir(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name: "link target inside dir, want nil",
+			name: "link target inside dir, want nil error",
 			link: linkInside,
 		},
 		{
-			name:    "link target outside dir, want error",
+			name:    "link target outside dir, want outside link error",
 			link:    linkOutside,
 			wantErr: fmt.Errorf("symlink %s, does not belongs to dir %s, rel ../other/other_file", linkOutside, dir),
 		},
@@ -336,7 +336,7 @@ func Test_stepCopyFile(t *testing.T) {
 		expectedPerm os.FileMode
 	}{
 		{
-			name: "successful copy, want 0644",
+			name: "successful copy, want nil error and 0644",
 			step: &agentendpointpb.SoftwareRecipe_Step_CopyFile{
 				ArtifactId:  "art1",
 				Destination: destPath,
@@ -346,7 +346,7 @@ func Test_stepCopyFile(t *testing.T) {
 			expectedPerm: 0644,
 		},
 		{
-			name: "file already exists, overwrite false, want error",
+			name: "file already exists and overwrite false, want file exists error",
 			step: &agentendpointpb.SoftwareRecipe_Step_CopyFile{
 				ArtifactId:  "art1",
 				Destination: destPath,
@@ -357,7 +357,7 @@ func Test_stepCopyFile(t *testing.T) {
 			wantErr:   fmt.Errorf("file already exists at path %q and Overwrite = false", destPath),
 		},
 		{
-			name: "file already exists, overwrite true, want success",
+			name: "file already exists and overwrite true, want nil error and 0644",
 			step: &agentendpointpb.SoftwareRecipe_Step_CopyFile{
 				ArtifactId:  "art1",
 				Destination: destPath,
@@ -369,7 +369,7 @@ func Test_stepCopyFile(t *testing.T) {
 			expectedPerm: 0755,
 		},
 		{
-			name: "invalid permissions, want error",
+			name: "invalid permissions, want parse error",
 			step: &agentendpointpb.SoftwareRecipe_Step_CopyFile{
 				ArtifactId:  "art1",
 				Destination: destPath,
@@ -379,7 +379,7 @@ func Test_stepCopyFile(t *testing.T) {
 			wantErr:   &strconv.NumError{Func: "ParseUint", Num: "888", Err: strconv.ErrSyntax},
 		},
 		{
-			name: "artifact not found, want error",
+			name: "artifact not found, want find error",
 			step: &agentendpointpb.SoftwareRecipe_Step_CopyFile{
 				ArtifactId:  "unknown",
 				Destination: destPath,
@@ -388,7 +388,7 @@ func Test_stepCopyFile(t *testing.T) {
 			wantErr:   fmt.Errorf("could not find location for artifact \"unknown\""),
 		},
 		{
-			name: "artifact file missing, want error",
+			name: "artifact file missing, want no file error",
 			step: &agentendpointpb.SoftwareRecipe_Step_CopyFile{
 				ArtifactId:  "art2",
 				Destination: destPath,
@@ -400,7 +400,7 @@ func Test_stepCopyFile(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			os.Remove(destPath) // Ensure clean state
+			os.Remove(destPath)
 			if tt.setupFunc != nil {
 				tt.setupFunc()
 			}
@@ -408,14 +408,16 @@ func Test_stepCopyFile(t *testing.T) {
 			err := stepCopyFile(tt.step, tt.artifacts, nil, "")
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 
-			if tt.wantErr == nil {
-				utiltest.AssertFileContents(t, destPath, content)
-				info, err := os.Stat(destPath)
-				if err != nil {
-					t.Fatal(err)
-				}
-				utiltest.AssertEquals(t, info.Mode().Perm(), tt.expectedPerm)
+			if tt.wantErr != nil {
+				return
 			}
+
+			utiltest.AssertFileContents(t, destPath, content)
+			info, err := os.Stat(destPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			utiltest.AssertEquals(t, info.Mode().Perm(), tt.expectedPerm)
 		})
 	}
 }
