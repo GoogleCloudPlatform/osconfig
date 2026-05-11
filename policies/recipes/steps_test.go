@@ -6,12 +6,17 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"testing"
 	"time"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
+	"github.com/GoogleCloudPlatform/osconfig/packages"
+	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
+	"github.com/golang/mock/gomock"
 )
 
 type fileEntry struct {
@@ -214,5 +219,208 @@ func ensureTar(t *testing.T, dst string, entries []fileEntry) {
 
 	if err := w.Close(); err != err {
 		t.Errorf("unable to close file: %s", err)
+	}
+}
+
+// Test_stepInstallDpkg verifies that stepInstallDpkg correctly handles system state and artifact mapping.
+func Test_stepInstallDpkg(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	packages.SetCommandRunner(mockCommandRunner)
+
+	ctx := context.Background()
+	artifactID := "test-artifact"
+	artifactPath := "/path/to/artifact.deb"
+	step := &agentendpointpb.SoftwareRecipe_Step_InstallDpkg{ArtifactId: artifactID}
+
+	tests := []struct {
+		name         string
+		dpkgExists   bool
+		artifacts    map[string]string
+		expectations []utiltest.ExpectedCommand
+		wantErr      error
+	}{
+		{
+			name:       "dpkg missing, want dpkg error",
+			dpkgExists: false,
+			wantErr:    fmt.Errorf("dpkg does not exist on system"),
+		},
+		{
+			name:       "artifact missing, want not found error",
+			dpkgExists: true,
+			artifacts:  map[string]string{"other": "path"},
+			wantErr:    fmt.Errorf("%q not found in artifact map", artifactID),
+		},
+		{
+			name:       "successful install, want nil",
+			dpkgExists: true,
+			artifacts:  map[string]string{artifactID: artifactPath},
+			expectations: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/dpkg", "--install", artifactPath)},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			utiltest.OverrideVariable(t, &packages.DpkgExists, tt.dpkgExists)
+			utiltest.SetExpectations(mockCommandRunner, tt.expectations)
+
+			err := stepInstallDpkg(ctx, step, tt.artifacts)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+		})
+	}
+}
+
+// Test_stepInstallRpm verifies that stepInstallRpm correctly handles system state and artifact mapping.
+func Test_stepInstallRpm(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	packages.SetCommandRunner(mockCommandRunner)
+
+	ctx := context.Background()
+	artifactID := "test-artifact"
+	artifactPath := "/path/to/artifact.rpm"
+	step := &agentendpointpb.SoftwareRecipe_Step_InstallRpm{ArtifactId: artifactID}
+
+	tests := []struct {
+		name         string
+		rpmExists    bool
+		artifacts    map[string]string
+		expectations []utiltest.ExpectedCommand
+		wantErr      error
+	}{
+		{
+			name:      "rpm missing, want rpm error",
+			rpmExists: false,
+			wantErr:   fmt.Errorf("rpm does not exist on system"),
+		},
+		{
+			name:      "artifact missing, want not found error",
+			rpmExists: true,
+			artifacts: map[string]string{"other": "path"},
+			wantErr:   fmt.Errorf("%q not found in artifact map", artifactID),
+		},
+		{
+			name:      "successful install, want nil",
+			rpmExists: true,
+			artifacts: map[string]string{artifactID: artifactPath},
+			expectations: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/bin/rpm", "--upgrade", "--replacepkgs", "-v", artifactPath)},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			utiltest.OverrideVariable(t, &packages.RPMExists, tt.rpmExists)
+			utiltest.SetExpectations(mockCommandRunner, tt.expectations)
+
+			err := stepInstallRpm(ctx, step, tt.artifacts)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+		})
+	}
+}
+
+// Test_stepExecFile verifies that stepExecFile correctly resolves locations and sets permissions.
+func Test_stepExecFile(t *testing.T) {
+	utiltest.OverrideVariable(t, &executeCommand, func(ctx context.Context, cmd string, args []string, workDir string, runEnvs []string, allowedExitCodes []int32) error {
+		return nil
+	})
+
+	tmpDir := t.TempDir()
+	artifactPath := filepath.Join(tmpDir, "test_artifact")
+	os.WriteFile(artifactPath, []byte("echo 1"), 0644)
+
+	ctx := context.Background()
+	tests := []struct {
+		name      string
+		step      *agentendpointpb.SoftwareRecipe_Step_ExecFile
+		artifacts map[string]string
+		wantErr   error
+	}{
+		{
+			name: "execute artifact, want nil",
+			step: &agentendpointpb.SoftwareRecipe_Step_ExecFile{
+				LocationType: &agentendpointpb.SoftwareRecipe_Step_ExecFile_ArtifactId{ArtifactId: "art1"},
+			},
+			artifacts: map[string]string{"art1": artifactPath},
+		},
+		{
+			name: "execute local path, want nil",
+			step: &agentendpointpb.SoftwareRecipe_Step_ExecFile{
+				LocationType: &agentendpointpb.SoftwareRecipe_Step_ExecFile_LocalPath{LocalPath: "/bin/ls"},
+			},
+		},
+		{
+			name: "artifact not found, want not found error",
+			step: &agentendpointpb.SoftwareRecipe_Step_ExecFile{
+				LocationType: &agentendpointpb.SoftwareRecipe_Step_ExecFile_ArtifactId{ArtifactId: "unknown"},
+			},
+			wantErr: fmt.Errorf("\"unknown\" not found in artifact map"),
+		},
+		{
+			name:    "no location defined, want location error",
+			step:    &agentendpointpb.SoftwareRecipe_Step_ExecFile{},
+			wantErr: fmt.Errorf("can't determine location type"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := stepExecFile(ctx, tt.step, tt.artifacts, nil, "")
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+		})
+	}
+}
+
+// Test_executeCommandFunc verifies the command execution logic, including allowed exit codes.
+func Test_executeCommandFunc(t *testing.T) {
+	ctx := context.Background()
+
+	// Pre-generate expected errors to match types and messages exactly.
+	exit1Err := exec.Command("sh", "-c", "exit 1").Run()
+	noSuchCmdErr := exec.Command("non-existent-command").Run()
+
+	tests := []struct {
+		name             string
+		cmd              string
+		args             []string
+		allowedExitCodes []int32
+		wantErr          error
+	}{
+		{
+			name: "exit 0, want nil",
+			cmd:  "sh",
+			args: []string{"-c", "exit 0"},
+		},
+		{
+			name:             "allowed exit code 1, want nil error",
+			cmd:              "sh",
+			args:             []string{"-c", "exit 1"},
+			allowedExitCodes: []int32{1},
+		},
+		{
+			name:    "unallowed exit code 1, want exit 1 error",
+			cmd:     "sh",
+			args:    []string{"-c", "exit 1"},
+			wantErr: exit1Err,
+		},
+		{
+			name:    "command not found, want no command error",
+			cmd:     "non-existent-command",
+			wantErr: noSuchCmdErr,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := executeCommandFunc(ctx, tt.cmd, tt.args, "", nil, tt.allowedExitCodes)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+		})
 	}
 }
