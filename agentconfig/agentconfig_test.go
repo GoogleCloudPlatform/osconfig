@@ -30,7 +30,6 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -55,35 +54,90 @@ func TestWatchConfig(t *testing.T) {
 		t.Fatalf("Error running WatchConfig: %v", err)
 	}
 
-	testsBool := []struct {
+	tests := []struct {
 		name string
-		op   any
+		op   func() any
 		want any
 	}{
-		{name: "metadata endpoint is SvcEndpoint, returns configured service endpoint", op: SvcEndpoint, want: "SvcEndpoint"},
-		{name: "metadata zone and name are populated, returns instance resource path", op: Instance, want: "zone/instances/name"},
-		{name: "metadata instance id is 12345, returns instance id string", op: ID, want: "12345"},
-		{name: "metadata project id is projectId, returns project id", op: ProjectID, want: "projectId"},
-		{name: "metadata zone is zone, returns zone", op: Zone, want: "zone"},
-		{name: "metadata instance name is name, returns instance name", op: Name, want: "name"},
-		{name: "project disables inventory and instance enables it, returns inventory enabled", op: OSInventoryEnabled, want: true},
-		{name: "instance enables prerelease tasks, returns task notifications enabled", op: TaskNotificationEnabled, want: true},
-		{name: "instance enables prerelease ospatch, returns guest policies enabled", op: GuestPoliciesEnabled, want: true},
-		{name: "project disables debug and instance enables it, returns debug enabled", op: Debug, want: true},
-		{name: "instance enables scalibr linux, returns scalibr linux enabled", op: ScalibrLinuxEnabled, want: true},
-		{name: "instance enables trace get inventory, returns inventory tracing enabled", op: TraceGetInventory, want: true},
-		{name: "instance enables guest attributes, returns guest attributes enabled", op: GuestAttributesEnabled, want: true},
-		{name: "svc poll interval is 3 minutes, returns proper time", op: SvcPollInterval, want: 3 * time.Minute},
-		{name: "numeric project id is 12345, successfuly returned", op: NumericProjectID, want: int64(12345)},
+		{
+			name: "metadata endpoint is SvcEndpoint, returns configured service endpoint",
+			op:   asAny(SvcEndpoint),
+			want: "SvcEndpoint",
+		},
+		{
+			name: "metadata zone and name are populated, returns instance resource path",
+			op:   asAny(Instance),
+			want: "zone/instances/name",
+		},
+		{
+			name: "metadata instance id is 12345, returns instance id string",
+			op:   asAny(ID),
+			want: "12345",
+		},
+		{
+			name: "metadata project id is projectId, returns project id",
+			op:   asAny(ProjectID),
+			want: "projectId",
+		},
+		{
+			name: "metadata zone is zone, returns zone",
+			op:   asAny(Zone),
+			want: "zone",
+		},
+		{
+			name: "metadata instance name is name, returns instance name",
+			op:   asAny(Name),
+			want: "name",
+		},
+		{
+			name: "project disables inventory and instance enables it, returns inventory enabled",
+			op:   asAny(OSInventoryEnabled),
+			want: true,
+		},
+		{
+			name: "instance enables prerelease tasks, returns task notifications enabled",
+			op:   asAny(TaskNotificationEnabled),
+			want: true,
+		},
+		{
+			name: "instance enables prerelease ospatch, returns guest policies enabled",
+			op:   asAny(GuestPoliciesEnabled),
+			want: true,
+		},
+		{
+			name: "project disables debug and instance enables it, returns debug enabled",
+			op:   asAny(Debug),
+			want: true,
+		},
+		{
+			name: "instance enables scalibr linux, returns scalibr linux enabled",
+			op:   asAny(ScalibrLinuxEnabled),
+			want: true,
+		},
+		{
+			name: "instance enables trace get inventory, returns inventory tracing enabled",
+			op:   asAny(TraceGetInventory),
+			want: true,
+		},
+		{
+			name: "instance enables guest attributes, returns guest attributes enabled",
+			op:   asAny(GuestAttributesEnabled),
+			want: true,
+		},
+		{
+			name: "svc poll interval is 3 minutes, returns proper time",
+			op:   asAny(SvcPollInterval),
+			want: 3 * time.Minute,
+		},
+		{
+			name: "numeric project id is 12345, successfuly returned",
+			op:   asAny(NumericProjectID),
+			want: int64(12345),
+		},
 	}
-	for _, tt := range testsBool {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results := reflect.ValueOf(tt.op).Call(nil)
-			if len(results) == 0 {
-				t.Fatalf("Function %v did not return any value", tt.op)
-			}
-			got := results[0].Interface()
-			utiltest.AssertEquals(t, got, tt.want)
+			utiltest.AssertEquals(t, tt.op(), tt.want)
 		})
 	}
 }
@@ -107,44 +161,65 @@ func TestSetConfigEnabled(t *testing.T) {
 		}
 	})
 
-	for i, want := range []bool{false, true, false} {
-		request = i
-		if err := WatchConfig(context.Background()); err != nil {
-			t.Fatalf("Error running SetConfig: %v", err)
-		}
-
-		testsBool := []struct {
-			name string
-			op   func() bool
-		}{
-			{name: "enable-osconfig metadata is applied to inventory state, returns expected inventory flag", op: OSInventoryEnabled},
-			{name: "enable-osconfig metadata is applied to task state, returns expected task notification flag", op: TaskNotificationEnabled},
-			{name: "enable-osconfig metadata is applied to guest policy state, returns expected guest policy flag", op: GuestPoliciesEnabled},
-		}
-		for _, tt := range testsBool {
-			t.Run(fmt.Sprintf("request %d: %s", request, tt.name), func(t *testing.T) {
-				utiltest.AssertEquals(t, tt.op(), want)
-			})
-		}
-	}
-
-	request = 3
-	if err := WatchConfig(context.Background()); err != nil {
-		t.Fatalf("Error running SetConfig: %v", err)
-	}
-
-	testsBool := []struct {
+	type assertion struct {
 		name string
 		op   func() bool
 		want bool
-	}{
-		{name: "disabled features contains osinventory, returns inventory disabled", op: OSInventoryEnabled, want: false},
-		{name: "osconfig remains enabled for tasks, returns task notifications enabled", op: TaskNotificationEnabled, want: true},
-		{name: "osconfig remains enabled for guest policies, returns guest policies enabled", op: GuestPoliciesEnabled, want: true},
 	}
-	for _, tt := range testsBool {
-		t.Run(tt.name, func(t *testing.T) {
-			utiltest.AssertEquals(t, tt.op(), tt.want)
+	tests := []struct {
+		name       string
+		request    int
+		assertions []assertion
+	}{
+		{
+			name:    "project and instance disable osconfig, returns features disabled",
+			request: 0,
+			assertions: []assertion{
+				{name: "inventory is requested, returns disabled", op: OSInventoryEnabled, want: false},
+				{name: "task notifications are requested, returns disabled", op: TaskNotificationEnabled, want: false},
+				{name: "guest policies are requested, returns disabled", op: GuestPoliciesEnabled, want: false},
+			},
+		},
+		{
+			name:    "project disables osconfig and instance enables osconfig, returns features enabled",
+			request: 1,
+			assertions: []assertion{
+				{name: "inventory is requested, returns enabled", op: OSInventoryEnabled, want: true},
+				{name: "task notifications are requested, returns enabled", op: TaskNotificationEnabled, want: true},
+				{name: "guest policies are requested, returns enabled", op: GuestPoliciesEnabled, want: true},
+			},
+		},
+		{
+			name:    "project and instance disable osconfig again, returns features disabled",
+			request: 2,
+			assertions: []assertion{
+				{name: "inventory is requested, returns disabled", op: OSInventoryEnabled, want: false},
+				{name: "task notifications are requested, returns disabled", op: TaskNotificationEnabled, want: false},
+				{name: "guest policies are requested, returns disabled", op: GuestPoliciesEnabled, want: false},
+			},
+		},
+		{
+			name:    "osconfig enabled and disabled features contains osinventory, returns inventory disabled only",
+			request: 3,
+			assertions: []assertion{
+				{name: "inventory is requested, returns disabled", op: OSInventoryEnabled, want: false},
+				{name: "task notifications are requested, returns enabled", op: TaskNotificationEnabled, want: true},
+				{name: "guest policies are requested, returns enabled", op: GuestPoliciesEnabled, want: true},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("request %d: %s", tt.request, tt.name), func(t *testing.T) {
+			request = tt.request
+			if err := WatchConfig(context.Background()); err != nil {
+				t.Fatalf("Error running SetConfig: %v", err)
+			}
+
+			for _, assertion := range tt.assertions {
+				t.Run(assertion.name, func(t *testing.T) {
+					utiltest.AssertEquals(t, assertion.op(), assertion.want)
+				})
+			}
 		})
 	}
 }
@@ -160,58 +235,121 @@ func TestSetConfigDefaultValues(t *testing.T) {
 		t.Fatalf("Error running SetConfig: %v", err)
 	}
 
-	testsString := []struct {
+	tests := []struct {
 		name string
-		op   func() string
-		want string
+		op   func() any
+		want any
 	}{
-		{name: "apt repo file path is requested, returns default apt repo file path", op: AptRepoFilePath, want: aptRepoFilePath},
-		{name: "yum repo file path is requested, returns default yum repo file path", op: YumRepoFilePath, want: yumRepoFilePath},
-		{name: "zypper repo file path is requested, returns default zypper repo file path", op: ZypperRepoFilePath, want: zypperRepoFilePath},
-		{name: "googet repo file path is requested, returns default googet repo file path", op: GooGetRepoFilePath, want: googetRepoFilePath},
-		{name: "zypper repo dir is requested, returns default zypper repo dir", op: ZypperRepoDir, want: zypperRepoDir},
-		{name: "zypper repo format is requested, returns default zypper repo format", op: ZypperRepoFormat, want: filepath.Join(zypperRepoDir, "osconfig_managed_%s.repo")},
-		{name: "yum repo dir is requested, returns default yum repo dir", op: YumRepoDir, want: yumRepoDir},
-		{name: "yum repo format is requested, returns default yum repo format", op: YumRepoFormat, want: filepath.Join(yumRepoDir, "osconfig_managed_%s.repo")},
-		{name: "apt repo dir is requested, returns default apt repo dir", op: AptRepoDir, want: aptRepoDir},
-		{name: "apt repo format is requested, returns default apt repo format", op: AptRepoFormat, want: filepath.Join(aptRepoDir, "osconfig_managed_%s.list")},
-		{name: "googet repo dir is requested, returns default googet repo dir", op: GooGetRepoDir, want: googetRepoDir},
-		{name: "googet repo format is requested, returns default googet repo format", op: GooGetRepoFormat, want: filepath.Join(googetRepoDir, "osconfig_managed_%s.repo")},
-		{name: "universe domain is requested, returns default universe domain", op: UniverseDomain, want: universeDomainDefault},
+		{
+			name: "apt repo file path is requested, returns default apt repo file path",
+			op:   asAny(AptRepoFilePath),
+			want: aptRepoFilePath,
+		},
+		{
+			name: "yum repo file path is requested, returns default yum repo file path",
+			op:   asAny(YumRepoFilePath),
+			want: yumRepoFilePath,
+		},
+		{
+			name: "zypper repo file path is requested, returns default zypper repo file path",
+			op:   asAny(ZypperRepoFilePath),
+			want: zypperRepoFilePath,
+		},
+		{
+			name: "googet repo file path is requested, returns default googet repo file path",
+			op:   asAny(GooGetRepoFilePath),
+			want: googetRepoFilePath,
+		},
+		{
+			name: "zypper repo dir is requested, returns default zypper repo dir",
+			op:   asAny(ZypperRepoDir),
+			want: zypperRepoDir,
+		},
+		{
+			name: "zypper repo format is requested, returns default zypper repo format",
+			op:   asAny(ZypperRepoFormat),
+			want: filepath.Join(zypperRepoDir, "osconfig_managed_%s.repo"),
+		},
+		{
+			name: "yum repo dir is requested, returns default yum repo dir",
+			op:   asAny(YumRepoDir),
+			want: yumRepoDir,
+		},
+		{
+			name: "yum repo format is requested, returns default yum repo format",
+			op:   asAny(YumRepoFormat),
+			want: filepath.Join(yumRepoDir, "osconfig_managed_%s.repo"),
+		},
+		{
+			name: "apt repo dir is requested, returns default apt repo dir",
+			op:   asAny(AptRepoDir),
+			want: aptRepoDir,
+		},
+		{
+			name: "apt repo format is requested, returns default apt repo format",
+			op:   asAny(AptRepoFormat),
+			want: filepath.Join(aptRepoDir, "osconfig_managed_%s.list"),
+		},
+		{
+			name: "googet repo dir is requested, returns default googet repo dir",
+			op:   asAny(GooGetRepoDir),
+			want: googetRepoDir,
+		},
+		{
+			name: "googet repo format is requested, returns default googet repo format",
+			op:   asAny(GooGetRepoFormat),
+			want: filepath.Join(googetRepoDir, "osconfig_managed_%s.repo"),
+		},
+		{
+			name: "universe domain is requested, returns default universe domain",
+			op:   asAny(UniverseDomain),
+			want: universeDomainDefault,
+		},
+		{
+			name: "inventory enabled is requested, returns default boolean",
+			op:   asAny(OSInventoryEnabled),
+			want: osInventoryEnabledDefault,
+		},
+		{
+			name: "task notification enabled is requested, returns default boolean",
+			op:   asAny(TaskNotificationEnabled),
+			want: taskNotificationEnabledDefault,
+		},
+		{
+			name: "guest policies enabled is requested, returns default boolean",
+			op:   asAny(GuestPoliciesEnabled),
+			want: guestPoliciesEnabledDefault,
+		},
+		{
+			name: "debug enabled is requested, returns default boolean",
+			op:   asAny(Debug),
+			want: debugEnabledDefault,
+		},
+		{
+			name: "svc poll interval is requested, returns default duration",
+			op:   asAny(SvcPollInterval),
+			want: time.Duration(osConfigPollIntervalDefault) * time.Minute,
+		},
+		{
+			name: "svc endpoint is requested, returns default zonal endpoint",
+			op:   asAny(SvcEndpoint),
+			want: "fake-zone-osconfig.googleapis.com.:443",
+		},
 	}
-	for _, tt := range testsString {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			utiltest.AssertEquals(t, tt.op(), tt.want)
 		})
 	}
-
-	testsBool := []struct {
-		op   func() bool
-		want bool
-	}{
-		{op: OSInventoryEnabled, want: osInventoryEnabledDefault},
-		{op: TaskNotificationEnabled, want: taskNotificationEnabledDefault},
-		{op: GuestPoliciesEnabled, want: guestPoliciesEnabledDefault},
-		{op: Debug, want: debugEnabledDefault},
-	}
-	for _, tt := range testsBool {
-		f := filepath.Base(runtime.FuncForPC(reflect.ValueOf(tt.op).Pointer()).Name())
-		t.Run(fmt.Sprintf("%s is requested, returns default boolean", f), func(t *testing.T) {
-			utiltest.AssertEquals(t, tt.op(), tt.want)
-		})
-	}
-
-	utiltest.AssertEquals(t, SvcPollInterval().Minutes(), float64(osConfigPollIntervalDefault))
-
-	expectedEndpoint := "fake-zone-osconfig.googleapis.com.:443"
-	utiltest.AssertEquals(t, SvcEndpoint(), expectedEndpoint)
 }
 
 // TestWatchConfigUnchangedConfigTimeout ignores unchanged metadata until timeout.
 func TestWatchConfigUnchangedConfigTimeout(t *testing.T) {
 	utiltest.OverrideVariable(t, &watchConfigRetryInterval, 1*time.Millisecond)
 	utiltest.OverrideVariable(t, &osConfigWatchConfigTimeout, 10*time.Millisecond)
+	utiltest.OverrideVariable(t, &agentConfig, createConfigFromMetadata(metadataJSON{}))
 
+	before := getAgentConfig()
 	var count int
 	setupMockMetadataServer(t, func(w http.ResponseWriter, r *http.Request) {
 		count++
@@ -227,6 +365,12 @@ func TestWatchConfigUnchangedConfigTimeout(t *testing.T) {
 	err := WatchConfig(ctx)
 	utiltest.AssertErrorMatch(t, err, nil)
 	utiltest.AssertErrorMatch(t, ctx.Err(), nil)
+	if got := getAgentConfig(); got != before {
+		t.Errorf("Agent config changed after unchanged metadata: got %+v, want %+v", got, before)
+	}
+	if count <= 1 {
+		t.Errorf("WatchConfig made %d metadata requests, want more than 1", count)
+	}
 }
 
 // TestWatchConfigWebErrorLimit returns a wrapped network error after retry exhaustion.
@@ -247,13 +391,13 @@ func TestWatchConfigWebErrorLimit(t *testing.T) {
 
 	err := WatchConfig(context.Background())
 
-	expectedBaseErr := &url.Error{
+	wantBaseErr := &url.Error{
 		Op:  "Get",
 		URL: "http://mock-host/computeMetadata/v1/?recursive=true&alt=json&wait_for_change=true&last_etag=0&timeout_sec=60",
 		Err: mockNetErr,
 	}
-	expectedErr := fmt.Errorf("network error when requesting metadata, make sure your instance has an active network and can reach the metadata server: %w", expectedBaseErr)
-	utiltest.AssertErrorMatch(t, err, expectedErr)
+	wantErr := fmt.Errorf("network error when requesting metadata, make sure your instance has an active network and can reach the metadata server: %w", wantBaseErr)
+	utiltest.AssertErrorMatch(t, err, wantErr)
 }
 
 // TestWatchConfigUnmarshalErrorLimit returns the unmarshal error after retry exhaustion.
@@ -270,9 +414,7 @@ func TestWatchConfigUnmarshalErrorLimit(t *testing.T) {
 
 	err := WatchConfig(context.Background())
 
-	var dummy metadataJSON
-	expectedErr := json.Unmarshal(badJSON, &dummy)
-	utiltest.AssertErrorMatch(t, err, expectedErr)
+	utiltest.AssertErrorMatch(t, err, metadataUnmarshalErr(badJSON))
 }
 
 // TestWatchConfigContextCancel returns nil when the context is canceled.
@@ -292,14 +434,13 @@ func TestWatchConfigContextCancel(t *testing.T) {
 	utiltest.AssertErrorMatch(t, WatchConfig(ctx), nil)
 }
 
+// TestSetConfigError returns an unmarshal error when metadata is empty.
 func TestSetConfigError(t *testing.T) {
 	setupMockMetadataServer(t, func(w http.ResponseWriter, r *http.Request) {})
 	utiltest.OverrideVariable(t, &osConfigWatchConfigTimeout, 1*time.Millisecond)
 
 	err := WatchConfig(context.Background())
-	var dummy metadataJSON
-	expectedErr := json.Unmarshal([]byte{}, &dummy)
-	utiltest.AssertErrorMatch(t, err, expectedErr)
+	utiltest.AssertErrorMatch(t, err, metadataUnmarshalErr([]byte{}))
 }
 
 func TestVersion(t *testing.T) {
@@ -323,65 +464,41 @@ func TestLoggingFlags(t *testing.T) {
 	utiltest.AssertEquals(t, DisableLocalLogging(), false)
 }
 
-// TestLogFeatures logs feature status without panicking.
-func TestLogFeatures(t *testing.T) {
-	LogFeatures(context.Background())
-}
-
 // TestIDToken validates token caching and token parsing errors.
 func TestIDToken(t *testing.T) {
-	// Create a valid dummy JWS token
-	// Header: {"alg":"RS256","typ":"JWT"} -> eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9
-	// Payload: {"exp": 4102444800} (January 1, 2100 00:00:00 UTC) -> eyJleHAiOiA0MTAyNDQ0ODAwfQ
-	// Signature: dummy -> ZHVtbXk
-	validToken := "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOiA0MTAyNDQ0ODAwfQ.ZHVtbXk"
-
-	// Create a token that expires in 5 minutes to test caching fallback.
-	// The agent re-requests the token if the expiry is within 10 minutes.
-	expTime := time.Now().Add(5 * time.Minute).Unix()
-	payload := fmt.Sprintf(`{"exp": %d}`, expTime)
-	payloadB64 := base64.RawURLEncoding.EncodeToString([]byte(payload))
-	expiringToken := "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9." + payloadB64 + ".ZHVtbXk"
+	validToken := tokenWithExp(time.Date(2100, 1, 1, 0, 0, 0, 0, time.UTC))
+	expiringToken := tokenWithExp(time.Now().Add(5 * time.Minute))
 	malformedToken := "not.a.valid.token"
 	malformedTokenErr := errors.New("jws: invalid token received")
 
 	tests := []struct {
 		name         string
 		handler      http.HandlerFunc
+		setup        func()
 		numCalls     int
 		wantToken    string
 		wantErr      error
 		wantRequests int
 	}{
 		{
-			name: "token stays valid across two calls, reuses cached token",
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				if strings.HasPrefix(r.URL.Path, "/computeMetadata/v1/instance/service-accounts/default/identity") {
-					w.Header().Set("Metadata-Flavor", "Google")
-					fmt.Fprint(w, validToken)
-					return
-				}
-				http.NotFound(w, r)
-			},
+			name:         "token stays valid across two calls, reuses cached token",
+			handler:      metadataIdentityHandler(validToken),
 			numCalls:     2,
 			wantToken:    validToken,
 			wantErr:      nil,
-			wantRequests: 1, // Only 1 request should be made due to caching
+			wantRequests: 1,
 		},
 		{
-			name: "token expires within ten minutes, fetches a fresh token on each call",
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				if strings.HasPrefix(r.URL.Path, "/computeMetadata/v1/instance/service-accounts/default/identity") {
-					w.Header().Set("Metadata-Flavor", "Google")
-					fmt.Fprint(w, expiringToken)
-					return
-				}
-				http.NotFound(w, r)
+			name:    "cached token expires within ten minutes, fetches a fresh valid token",
+			handler: metadataIdentityHandler(validToken),
+			setup: func() {
+				exp := time.Now().Add(5 * time.Minute)
+				identity = idToken{raw: expiringToken, exp: &exp}
 			},
-			numCalls:     2,
-			wantToken:    expiringToken,
+			numCalls:     1,
+			wantToken:    validToken,
 			wantErr:      nil,
-			wantRequests: 2, // Token is within 10m of expiry, should trigger a fetch on every call
+			wantRequests: 1,
 		},
 		{
 			name: "metadata server returns http 500, returns an error after retries",
@@ -394,11 +511,8 @@ func TestIDToken(t *testing.T) {
 			wantRequests: 6,
 		},
 		{
-			name: "metadata server returns malformed token, returns an error",
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Set("Metadata-Flavor", "Google")
-				fmt.Fprint(w, malformedToken)
-			},
+			name:         "metadata server returns malformed token, returns an error",
+			handler:      metadataIdentityHandler(malformedToken),
 			numCalls:     1,
 			wantErr:      malformedTokenErr,
 			wantRequests: 1,
@@ -414,6 +528,9 @@ func TestIDToken(t *testing.T) {
 			})
 
 			identity = idToken{}
+			if tt.setup != nil {
+				tt.setup()
+			}
 
 			var token string
 			var err error
@@ -483,7 +600,6 @@ func TestGetMetadata(t *testing.T) {
 		suffix   string
 		wantBody string
 		wantEtag string
-		wantNil  bool
 	}{
 		{
 			name:     "metadata suffix maps to a 200 response, returns body and etag",
@@ -492,14 +608,12 @@ func TestGetMetadata(t *testing.T) {
 			wantEtag: "test-etag",
 		},
 		{
-			name:    "metadata suffix maps to a 404 response, returns nil body and empty etag",
-			suffix:  "test-404",
-			wantNil: true,
+			name:   "metadata suffix maps to a 404 response, returns empty body and etag",
+			suffix: "test-404",
 		},
 		{
-			name:    "metadata suffix maps to a 500 response, returns nil body and empty etag",
-			suffix:  "test-500",
-			wantNil: true,
+			name:   "metadata suffix maps to a 500 response, returns empty body and etag",
+			suffix: "test-500",
 		},
 	}
 
@@ -507,13 +621,8 @@ func TestGetMetadata(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			body, etag, err := getMetadata(tt.suffix)
 			utiltest.AssertErrorMatch(t, err, nil)
-			if tt.wantNil {
-				utiltest.AssertEquals(t, body, []byte(nil))
-				utiltest.AssertEquals(t, etag, "")
-			} else {
-				utiltest.AssertEquals(t, string(body), tt.wantBody)
-				utiltest.AssertEquals(t, etag, tt.wantEtag)
-			}
+			utiltest.AssertEquals(t, string(body), tt.wantBody)
+			utiltest.AssertEquals(t, etag, tt.wantEtag)
 		})
 	}
 }
@@ -531,8 +640,8 @@ func TestGetMetadataFallback(t *testing.T) {
 	_, _, err := getMetadata("test-suffix")
 	utiltest.AssertErrorMatch(t, err, nil)
 
-	expected := "http://" + metadataIP + "/computeMetadata/v1/test-suffix"
-	utiltest.AssertEquals(t, requestedURL, expected)
+	want := "http://" + metadataIP + "/computeMetadata/v1/test-suffix"
+	utiltest.AssertEquals(t, requestedURL, want)
 }
 
 // TestGetMetadataErrors returns request construction and transport errors.
@@ -588,31 +697,9 @@ func TestConfigSha256(t *testing.T) {
 	}
 }
 
-// TestLastEtag supports concurrent reads and writes.
-func TestLastEtag(t *testing.T) {
-	le := &lastEtag{Etag: "initial"}
-	var wg sync.WaitGroup
-
-	// Run concurrent gets and sets to ensure no race conditions
-	for i := 0; i < 100; i++ {
-		wg.Add(1)
-		go func(val int) {
-			defer wg.Done()
-			le.set(fmt.Sprintf("etag-%d", val))
-			_ = le.get()
-		}(i)
-	}
-	wg.Wait()
-
-	if le.get() == "" {
-		t.Errorf("Expected non-empty etag")
-	}
-}
-
 // TestSystemPaths returns OS-specific system paths.
 func TestSystemPaths(t *testing.T) {
 	utiltest.OverrideVariable(t, &goos, runtime.GOOS)
-	t.Setenv("XDG_CACHE_HOME", filepath.Join(t.TempDir(), "system-cache"))
 
 	tests := []struct {
 		name string
@@ -667,11 +754,19 @@ func TestMiscGetters(t *testing.T) {
 
 	tests := []struct {
 		name string
-		got  interface{}
-		want interface{}
+		got  any
+		want any
 	}{
-		{name: "agent capabilities are requested, returns supported capability list", got: Capabilities(), want: []string{"PATCH_GA", "GUEST_POLICY_BETA", "CONFIG_V1"}},
-		{name: "user agent is requested after version is set, returns versioned user agent", got: UserAgent(), want: "google-osconfig-agent/1.2.3"},
+		{
+			name: "agent capabilities are requested, returns supported capability list",
+			got:  Capabilities(),
+			want: []string{"PATCH_GA", "GUEST_POLICY_BETA", "CONFIG_V1"},
+		},
+		{
+			name: "user agent is requested after version is set, returns versioned user agent",
+			got:  UserAgent(),
+			want: "google-osconfig-agent/1.2.3",
+		},
 	}
 
 	for _, tt := range tests {
@@ -903,12 +998,42 @@ func TestSetScalibrEnablement(t *testing.T) {
 		instVal string
 		want    bool
 	}{
-		{name: "project and instance values are empty, returns scalibr disabled", projVal: "", instVal: "", want: false},
-		{name: "project enables scalibr and instance is empty, returns scalibr enabled", projVal: "true", instVal: "", want: true},
-		{name: "project disables scalibr and instance is empty, returns scalibr disabled", projVal: "false", instVal: "", want: false},
-		{name: "instance enables scalibr and project is empty, returns scalibr enabled", projVal: "", instVal: "true", want: true},
-		{name: "instance enables scalibr and project disables it, returns instance override", projVal: "false", instVal: "true", want: true},
-		{name: "instance disables scalibr and project enables it, returns instance override", projVal: "true", instVal: "false", want: false},
+		{
+			name:    "project and instance values are empty, returns scalibr disabled",
+			projVal: "",
+			instVal: "",
+			want:    false,
+		},
+		{
+			name:    "project enables scalibr and instance is empty, returns scalibr enabled",
+			projVal: "true",
+			instVal: "",
+			want:    true,
+		},
+		{
+			name:    "project disables scalibr and instance is empty, returns scalibr disabled",
+			projVal: "false",
+			instVal: "",
+			want:    false,
+		},
+		{
+			name:    "instance enables scalibr and project is empty, returns scalibr enabled",
+			projVal: "",
+			instVal: "true",
+			want:    true,
+		},
+		{
+			name:    "instance enables scalibr and project disables it, returns instance override",
+			projVal: "false",
+			instVal: "true",
+			want:    true,
+		},
+		{
+			name:    "instance disables scalibr and project enables it, returns instance override",
+			projVal: "true",
+			instVal: "false",
+			want:    false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -933,12 +1058,42 @@ func TestSetTraceGetInventory(t *testing.T) {
 		instVal string
 		want    bool
 	}{
-		{name: "project and instance values are empty, returns trace get inventory disabled", projVal: "", instVal: "", want: false},
-		{name: "project enables trace get inventory and instance is empty, returns tracing enabled", projVal: "true", instVal: "", want: true},
-		{name: "project disables trace get inventory and instance is empty, returns tracing disabled", projVal: "false", instVal: "", want: false},
-		{name: "instance enables trace get inventory and project is empty, returns tracing enabled", projVal: "", instVal: "true", want: true},
-		{name: "instance enables trace get inventory and project disables it, returns instance override", projVal: "false", instVal: "true", want: true},
-		{name: "instance disables trace get inventory and project enables it, returns instance override", projVal: "true", instVal: "false", want: false},
+		{
+			name:    "project and instance values are empty, returns trace get inventory disabled",
+			projVal: "",
+			instVal: "",
+			want:    false,
+		},
+		{
+			name:    "project enables trace get inventory and instance is empty, returns tracing enabled",
+			projVal: "true",
+			instVal: "",
+			want:    true,
+		},
+		{
+			name:    "project disables trace get inventory and instance is empty, returns tracing disabled",
+			projVal: "false",
+			instVal: "",
+			want:    false,
+		},
+		{
+			name:    "instance enables trace get inventory and project is empty, returns tracing enabled",
+			projVal: "",
+			instVal: "true",
+			want:    true,
+		},
+		{
+			name:    "instance enables trace get inventory and project disables it, returns instance override",
+			projVal: "false",
+			instVal: "true",
+			want:    true,
+		},
+		{
+			name:    "instance disables trace get inventory and project enables it, returns instance override",
+			projVal: "true",
+			instVal: "false",
+			want:    false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -1064,12 +1219,16 @@ func TestGetCacheDirWindows(t *testing.T) {
 		want  func(t *testing.T) string
 	}{
 		{
-			name: "xdg cache home is set, returns cache path under xdg cache home",
+			name: "user cache directory is available, returns cache path under user cache directory",
 			setup: func(t *testing.T) {
-				t.Setenv("XDG_CACHE_HOME", filepath.Join(t.TempDir(), "xdg-cache"))
+				t.Setenv("HOME", t.TempDir())
+				t.Setenv("LocalAppData", "")
+				t.Setenv("XDG_CACHE_HOME", "")
 			},
 			want: func(t *testing.T) string {
-				return filepath.Join(os.Getenv("XDG_CACHE_HOME"), windowsCacheDir)
+				cacheDir, err := os.UserCacheDir()
+				utiltest.AssertErrorMatch(t, err, nil)
+				return filepath.Join(cacheDir, windowsCacheDir)
 			},
 		},
 		{
@@ -1081,7 +1240,7 @@ func TestGetCacheDirWindows(t *testing.T) {
 				}
 			},
 			want: func(t *testing.T) string {
-				return filepath.Join(os.TempDir(), windowsCacheDir)
+				return filepath.Join("/tmp", windowsCacheDir)
 			},
 		},
 	}
@@ -1089,6 +1248,7 @@ func TestGetCacheDirWindows(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup(t)
+			t.Setenv("TMPDIR", "/tmp")
 
 			utiltest.AssertEquals(t, GetCacheDirWindows(), tt.want(t))
 		})
@@ -1104,9 +1264,27 @@ func TestFlagsAndEnvVars(t *testing.T) {
 		wantFreeOS            bool
 		wantDisableInv        bool
 	}{
-		{name: "environment enables both flags, returns both flags enabled", freeOSMemoryVal: "true", disableInventoryWrite: "1", wantFreeOS: true, wantDisableInv: true},
-		{name: "environment disables both flags, returns both flags disabled", freeOSMemoryVal: "false", disableInventoryWrite: "0", wantFreeOS: false, wantDisableInv: false},
-		{name: "environment leaves both flags empty, returns both flags disabled", freeOSMemoryVal: "", disableInventoryWrite: "", wantFreeOS: false, wantDisableInv: false},
+		{
+			name:                  "environment enables both flags, returns both flags enabled",
+			freeOSMemoryVal:       "true",
+			disableInventoryWrite: "1",
+			wantFreeOS:            true,
+			wantDisableInv:        true,
+		},
+		{
+			name:                  "environment disables both flags, returns both flags disabled",
+			freeOSMemoryVal:       "false",
+			disableInventoryWrite: "0",
+			wantFreeOS:            false,
+			wantDisableInv:        false,
+		},
+		{
+			name:                  "environment leaves both flags empty, returns both flags disabled",
+			freeOSMemoryVal:       "",
+			disableInventoryWrite: "",
+			wantFreeOS:            false,
+			wantDisableInv:        false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -1134,9 +1312,7 @@ func TestParseBool(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		if got := parseBool(tt.input); got != tt.want {
-			t.Errorf("parseBool(%q) = %v, want %v", tt.input, got, tt.want)
-		}
+		utiltest.AssertEquals(t, parseBool(tt.input), tt.want)
 	}
 }
 
@@ -1193,4 +1369,32 @@ type roundTripperFunc func(*http.Request) (*http.Response, error)
 
 func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f(req)
+}
+
+func metadataUnmarshalErr(data []byte) error {
+	var dummy metadataJSON
+	return json.Unmarshal(data, &dummy)
+}
+
+func tokenWithExp(exp time.Time) string {
+	payload := fmt.Sprintf(`{"exp": %d}`, exp.Unix())
+	payloadB64 := base64.RawURLEncoding.EncodeToString([]byte(payload))
+	return "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9." + payloadB64 + ".ZHVtbXk"
+}
+
+func metadataIdentityHandler(token string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/computeMetadata/v1/instance/service-accounts/default/identity") {
+			w.Header().Set("Metadata-Flavor", "Google")
+			fmt.Fprint(w, token)
+			return
+		}
+		http.NotFound(w, r)
+	}
+}
+
+func asAny[T any](f func() T) func() any {
+	return func() any {
+		return f()
+	}
 }
