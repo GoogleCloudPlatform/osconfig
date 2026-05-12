@@ -142,22 +142,22 @@ func TestRunExecStep(t *testing.T) {
 	}
 }
 
-// TestGetGCSObject verifies the process of downloading objects from Google Cloud Storage. It uses a local HTTP server to emulate the GCS API
-func TestGetGCSObject(t *testing.T) {
+// Test_getGCSObject verifies the process of downloading objects from Google Cloud Storage. It uses a local HTTP server to emulate the GCS API
+func Test_getGCSObject(t *testing.T) {
 	ctx := context.Background()
 	testContent := "test script content"
 	bucket := "test-bucket"
 	object := "scripts/test.sh"
 
 	tests := []struct {
-		name        string
-		bucket      string
-		object      string
-		handler     http.HandlerFunc
-		writeErr    error
-		wantErr     error
-		wantPath    string
-		wantContent string
+		name           string
+		bucket         string
+		object         string
+		handler        http.HandlerFunc
+		setupWriteFunc func(io.Reader, string, string, os.FileMode) (string, error)
+		wantErr        error
+		wantPath       string
+		wantContent    string
 	}{
 		{
 			name:   "valid bucket and object, want successful download",
@@ -167,8 +167,9 @@ func TestGetGCSObject(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 				w.Write([]byte(testContent))
 			},
-			wantPath:    "test.sh",
-			wantContent: testContent,
+			setupWriteFunc: util.AtomicWriteFileStream,
+			wantPath:       "test.sh",
+			wantContent:    testContent,
 		},
 		{
 			name:   "non-existent object, want not found error",
@@ -177,7 +178,8 @@ func TestGetGCSObject(t *testing.T) {
 			handler: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusNotFound)
 			},
-			wantErr: errors.New("error fetching GCS object: storage: object doesn't exist"),
+			setupWriteFunc: util.AtomicWriteFileStream,
+			wantErr:        errors.New("error fetching GCS object: storage: object doesn't exist"),
 		},
 		{
 			name:   "invalid object path, want download error",
@@ -187,30 +189,21 @@ func TestGetGCSObject(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 				w.Write([]byte(testContent))
 			},
-			writeErr: errors.New("download error"),
-			wantErr:  errors.New("error downloading GCS object: download error"),
+			setupWriteFunc: func(io.Reader, string, string, os.FileMode) (string, error) {
+				return "", errors.New("download error")
+			},
+			wantErr: errors.New("error downloading GCS object: download error"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			utiltest.OverrideVariable(t, &atomicWriteFileStream, func(r io.Reader, checksum, path string, mode os.FileMode) (string, error) {
-				if tt.writeErr != nil {
-					return "", tt.writeErr
-				}
-				return util.AtomicWriteFileStream(r, checksum, path, mode)
-			})
-
 			ts := httptest.NewServer(tt.handler)
 			defer ts.Close()
 			t.Setenv("STORAGE_EMULATOR_HOST", ts.URL)
 
-			localPath, err := getGCSObject(ctx, tt.bucket, tt.object, 0)
-			utiltest.AssertErrorMatchAndFail(t, err, tt.wantErr)
-
-			if tt.wantErr != nil {
-				return
-			}
+			localPath, gotErr := getGCSObjectWithAtomicWriter(ctx, tt.bucket, tt.object, 0, tt.setupWriteFunc)
+			utiltest.AssertErrorMatchAndFail(t, gotErr, tt.wantErr)
 
 			defer os.Remove(localPath)
 			utiltest.AssertFilePath(t, localPath, tt.wantPath)
@@ -219,11 +212,9 @@ func TestGetGCSObject(t *testing.T) {
 	}
 }
 
-// TestExecuteCommand verifies the handling of process execution results by mocking the run function
-func TestExecuteCommand(t *testing.T) {
+// Test_executeCommand verifies the handling of process execution results by mocking the run function
+func Test_executeCommand(t *testing.T) {
 	ctx := context.Background()
-	oldRun := run
-	defer func() { run = oldRun }()
 
 	tests := []struct {
 		name     string
@@ -262,9 +253,9 @@ func TestExecuteCommand(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			run = tt.mockRun
-			gotCode, err := executeCommand(ctx, "test-path", nil)
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			utiltest.OverrideVariable(t, &run, tt.mockRun)
+			gotCode, gotErr := executeCommand(ctx, "test-path", nil)
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
 			utiltest.AssertEquals(t, gotCode, tt.wantCode)
 		})
 	}
