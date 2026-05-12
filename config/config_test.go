@@ -15,7 +15,14 @@
 package config
 
 import (
+	"context"
+	"errors"
+	"fmt"
+	"testing"
+
+	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 )
 
 func init() {
@@ -26,4 +33,51 @@ func init() {
 	packages.RPMExists = true
 	packages.ZypperExists = true
 	packages.MSIExists = true
+}
+
+func TestErrorBeforeValidate(t *testing.T) {
+	pr := &OSPolicyResource{
+		OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
+			ResourceType: nil,
+		},
+	}
+	ctx := context.Background()
+
+	tests := []struct {
+		funcName string
+		fn       func() error
+	}{
+		{
+			funcName: "CheckState",
+			fn:       func() error { return pr.CheckState(ctx) },
+		},
+		{
+			funcName: "EnforceState",
+			fn:       func() error { return pr.EnforceState(ctx) },
+		},
+		{
+			funcName: "Cleanup",
+			fn:       func() error { return pr.Cleanup(ctx) },
+		},
+		{
+			funcName: "PopulateOutput",
+			fn:       func() error { return pr.PopulateOutput(nil) },
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.funcName, func(t *testing.T) {
+			err := tt.fn()
+			utiltest.AssertErrorMatch(t, err, fmt.Errorf("%v run before Validate", tt.funcName))
+		})
+	}
+}
+
+func TestValidateNilResourceType(t *testing.T) {
+	pr := &OSPolicyResource{
+		OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
+			ResourceType: nil,
+		},
+	}
+	err := pr.Validate(context.Background())
+	utiltest.AssertErrorMatch(t, err, errors.New("ResourceType field not set"))
 }
