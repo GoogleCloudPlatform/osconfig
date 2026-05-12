@@ -107,15 +107,26 @@ func AssertEquals(t *testing.T, got interface{}, want interface{}) {
 // AssertErrorMatch verifies that the gotErr matches the wantErr type and message.
 func AssertErrorMatch(t *testing.T, gotErr, wantErr error) {
 	t.Helper()
+	assertErrorMatch(t, gotErr, wantErr, false)
+}
+
+// AssertErrorMatchAndFail verifies that the gotErr matches the wantErr type and message,
+// and fails the test immediately if they don't match.
+func AssertErrorMatchAndFail(t *testing.T, gotErr, wantErr error) {
+	t.Helper()
+	assertErrorMatch(t, gotErr, wantErr, true)
+}
+
+func assertErrorMatch(t *testing.T, gotErr, wantErr error, failNow bool) {
+	t.Helper()
 	if gotErr == nil && wantErr == nil {
 		return
 	}
-	if gotErr == nil || wantErr == nil {
+	if gotErr == nil || wantErr == nil || reflect.TypeOf(gotErr) != reflect.TypeOf(wantErr) || gotErr.Error() != wantErr.Error() {
 		t.Errorf("Errors mismatch, want %v, got %v", wantErr, gotErr)
-		return
-	}
-	if reflect.TypeOf(gotErr) != reflect.TypeOf(wantErr) || gotErr.Error() != wantErr.Error() {
-		t.Errorf("Unexpected error, want %v, got %v", wantErr, gotErr)
+		if failNow {
+			t.FailNow()
+		}
 	}
 }
 
