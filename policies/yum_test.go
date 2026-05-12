@@ -89,19 +89,26 @@ func TestYumRepositories(t *testing.T) {
 
 // TestYumChanges tests the yumChanges function, ensuring it correctly handles package installations, removals, and updates.
 func TestYumChanges(t *testing.T) {
+	ctx := context.Background()
+
 	rpmQueryArgs := []string{"--queryformat", `\{"architecture":"%{ARCH}","package":"%{NAME}","source_name":"%{SOURCERPM}","version":"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}"\}` + "\n", "-a"}
 	yumCheckUpdateArgs := []string{"check-update", "--assumeyes"}
 	yumListUpdatesArgs := []string{"update", "--assumeno", "--color=never"}
-
 	yumCheckUpdateErr := exec.Command("/bin/bash", "-c", "exit 100").Run()
 
+	mockCtrl := gomock.NewController(t)
+	t.Cleanup(func() { mockCtrl.Finish() })
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	setupYumChangesTest(t, mockCommandRunner)
+
 	tests := []struct {
-		name         string
-		yumInstalled []*agentendpointpb.Package
-		yumRemoved   []*agentendpointpb.Package
-		yumUpdated   []*agentendpointpb.Package
-		expectations []utiltest.ExpectedCommand
-		wantErr      error
+		name             string
+		yumInstalled     []*agentendpointpb.Package
+		yumRemoved       []*agentendpointpb.Package
+		yumUpdated       []*agentendpointpb.Package
+		expectedCommands []utiltest.ExpectedCommand
+		wantErr          error
 	}{
 		{
 			name: "no changes, want nil",
@@ -109,7 +116,7 @@ func TestYumChanges(t *testing.T) {
 		{
 			name:         "rpmquery failure, want error",
 			yumInstalled: []*agentendpointpb.Package{{Name: "p1"}},
-			expectations: []utiltest.ExpectedCommand{
+			expectedCommands: []utiltest.ExpectedCommand{
 				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Err: errors.New("rpmquery error")},
 			},
 			wantErr: errors.New("error running /usr/bin/rpmquery with args [\"--queryformat\" \"\\\\{\\\"architecture\\\":\\\"%{ARCH}\\\",\\\"package\\\":\\\"%{NAME}\\\",\\\"source_name\\\":\\\"%{SOURCERPM}\\\",\\\"version\\\":\\\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\\\"\\\\}\\n\" \"-a\"]: rpmquery error, stdout: \"\", stderr: \"\""),
@@ -117,7 +124,7 @@ func TestYumChanges(t *testing.T) {
 		{
 			name:       "yum check-update failure, want check-update error",
 			yumUpdated: []*agentendpointpb.Package{{Name: "p1"}},
-			expectations: []utiltest.ExpectedCommand{
+			expectedCommands: []utiltest.ExpectedCommand{
 				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Stdout: []byte(`{"package":"p1","status":"installed"}`)},
 				{Cmd: exec.Command("/usr/bin/yum", yumCheckUpdateArgs...), Err: errors.New("yum check-update error")},
 			},
@@ -126,7 +133,7 @@ func TestYumChanges(t *testing.T) {
 		{
 			name:         "p1 to install, want nil",
 			yumInstalled: []*agentendpointpb.Package{{Name: "p1"}},
-			expectations: []utiltest.ExpectedCommand{
+			expectedCommands: []utiltest.ExpectedCommand{
 				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Stdout: []byte("")},
 				{Cmd: exec.Command("/usr/bin/yum", "install", "--assumeyes", "p1")},
 			},
@@ -134,7 +141,7 @@ func TestYumChanges(t *testing.T) {
 		{
 			name:         "p1 to install with failure, want installing error",
 			yumInstalled: []*agentendpointpb.Package{{Name: "p1"}},
-			expectations: []utiltest.ExpectedCommand{
+			expectedCommands: []utiltest.ExpectedCommand{
 				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Stdout: []byte("")},
 				{Cmd: exec.Command("/usr/bin/yum", "install", "--assumeyes", "p1"), Err: errors.New("install error")},
 			},
@@ -143,7 +150,7 @@ func TestYumChanges(t *testing.T) {
 		{
 			name:       "p1 to upgrade, want nil",
 			yumUpdated: []*agentendpointpb.Package{{Name: "p1"}},
-			expectations: []utiltest.ExpectedCommand{
+			expectedCommands: []utiltest.ExpectedCommand{
 				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Stdout: []byte(`{"package":"p1","status":"installed"}`)},
 				{Cmd: exec.Command("/usr/bin/yum", yumCheckUpdateArgs...), Err: yumCheckUpdateErr},
 				{Cmd: exec.Command("/usr/bin/yum", yumListUpdatesArgs...), Stdout: []byte("Updating:\n p1 x86_64 2.0 updates 100 k\n")},
@@ -153,7 +160,7 @@ func TestYumChanges(t *testing.T) {
 		{
 			name:       "p1 to upgrade with failure, want upgrading error",
 			yumUpdated: []*agentendpointpb.Package{{Name: "p1"}},
-			expectations: []utiltest.ExpectedCommand{
+			expectedCommands: []utiltest.ExpectedCommand{
 				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Stdout: []byte(`{"package":"p1","status":"installed"}`)},
 				{Cmd: exec.Command("/usr/bin/yum", yumCheckUpdateArgs...), Err: yumCheckUpdateErr},
 				{Cmd: exec.Command("/usr/bin/yum", yumListUpdatesArgs...), Stdout: []byte("Updating:\n p1 x86_64 2.0 updates 100 k\n")},
@@ -164,7 +171,7 @@ func TestYumChanges(t *testing.T) {
 		{
 			name:       "p1 to remove, want nil",
 			yumRemoved: []*agentendpointpb.Package{{Name: "p1"}},
-			expectations: []utiltest.ExpectedCommand{
+			expectedCommands: []utiltest.ExpectedCommand{
 				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Stdout: []byte(`{"package":"p1","status":"installed"}`)},
 				{Cmd: exec.Command("/usr/bin/yum", "remove", "--assumeyes", "p1")},
 			},
@@ -172,7 +179,7 @@ func TestYumChanges(t *testing.T) {
 		{
 			name:       "p1 to remove with failure, want removing error",
 			yumRemoved: []*agentendpointpb.Package{{Name: "p1"}},
-			expectations: []utiltest.ExpectedCommand{
+			expectedCommands: []utiltest.ExpectedCommand{
 				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Stdout: []byte(`{"package":"p1","status":"installed"}`)},
 				{Cmd: exec.Command("/usr/bin/yum", "remove", "--assumeyes", "p1"), Err: errors.New("remove error")},
 			},
@@ -182,15 +189,9 @@ func TestYumChanges(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockCtrl := gomock.NewController(t)
-			defer mockCtrl.Finish()
-
-			mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
-			setupYumChangesTest(t, mockCommandRunner)
-			utiltest.SetExpectations(mockCommandRunner, tt.expectations)
-
-			err := yumChanges(context.Background(), tt.yumInstalled, tt.yumRemoved, tt.yumUpdated)
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
+			gotErr := yumChanges(context.Background(), tt.yumInstalled, tt.yumRemoved, tt.yumUpdated)
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
 		})
 	}
 }
