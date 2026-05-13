@@ -1,12 +1,16 @@
 package utiltest
 
 import (
+	"context"
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"testing"
 
+	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
+	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/kr/pretty"
 )
@@ -84,6 +88,14 @@ func MatchSnapshot(t testReporter, actual any, snapshotFilepath string) {
 	}
 }
 
+// ExpectedCommand defines a reusable expected command call
+type ExpectedCommand struct {
+	Cmd    *exec.Cmd
+	Stdout []byte
+	Stderr []byte
+	Err    error
+}
+
 // AssertEquals checks if got and want are deeply equal. If not, it fails the test.
 func AssertEquals(t *testing.T, got interface{}, want interface{}) {
 	t.Helper()
@@ -95,15 +107,26 @@ func AssertEquals(t *testing.T, got interface{}, want interface{}) {
 // AssertErrorMatch verifies that the gotErr matches the wantErr type and message.
 func AssertErrorMatch(t *testing.T, gotErr, wantErr error) {
 	t.Helper()
+	assertErrorMatch(t, gotErr, wantErr, false)
+}
+
+// AssertErrorMatchAndFail verifies that the gotErr matches the wantErr type and message,
+// and fails the test immediately if they don't match.
+func AssertErrorMatchAndFail(t *testing.T, gotErr, wantErr error) {
+	t.Helper()
+	assertErrorMatch(t, gotErr, wantErr, true)
+}
+
+func assertErrorMatch(t *testing.T, gotErr, wantErr error, failNow bool) {
+	t.Helper()
 	if gotErr == nil && wantErr == nil {
 		return
 	}
-	if gotErr == nil || wantErr == nil {
+	if gotErr == nil || wantErr == nil || reflect.TypeOf(gotErr) != reflect.TypeOf(wantErr) || gotErr.Error() != wantErr.Error() {
 		t.Errorf("Errors mismatch, want %v, got %v", wantErr, gotErr)
-		return
-	}
-	if reflect.TypeOf(gotErr) != reflect.TypeOf(wantErr) || gotErr.Error() != wantErr.Error() {
-		t.Errorf("Unexpected error, want %v, got %v", wantErr, gotErr)
+		if failNow {
+			t.FailNow()
+		}
 	}
 }
 
@@ -141,4 +164,23 @@ func OverrideVariable[T any](t *testing.T, ptr *T, val T) {
 	original := *ptr
 	*ptr = val
 	t.Cleanup(func() { *ptr = original })
+}
+
+// SetExpectedCommands sets expected result for provided mock commands
+func SetExpectedCommands(ctx context.Context, mockCommandRunner *utilmocks.MockCommandRunner, expectedCommands []ExpectedCommand) {
+	if len(expectedCommands) == 0 {
+		return
+	}
+
+	var prev *gomock.Call
+	for _, expectedCommand := range expectedCommands {
+		call := mockCommandRunner.EXPECT().
+			Run(ctx, utilmocks.EqCmd(expectedCommand.Cmd)).
+			Return(expectedCommand.Stdout, expectedCommand.Stderr, expectedCommand.Err).
+			Times(1)
+		if prev != nil {
+			call.After(prev)
+		}
+		prev = call
+	}
 }
