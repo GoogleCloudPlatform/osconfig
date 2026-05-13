@@ -16,9 +16,16 @@ package agentendpoint
 
 import (
 	"context"
+	"errors"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"os"
 	"os/exec"
 	"testing"
 
+	"github.com/GoogleCloudPlatform/osconfig/util"
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -131,6 +138,125 @@ func TestRunExecStep(t *testing.T) {
 			if diff := cmp.Diff(tt.wantArgs, gotArgs); diff != "" {
 				t.Fatalf("did not get expected args (-want +got):\n%s", diff)
 			}
+		})
+	}
+}
+
+// Test_getGCSObject verifies the process of downloading objects from Google Cloud Storage. It uses a local HTTP server to emulate the GCS API
+func Test_getGCSObject(t *testing.T) {
+	ctx := context.Background()
+	testContent := "test script content"
+	bucket := "test-bucket"
+	object := "scripts/test.sh"
+
+	tests := []struct {
+		name           string
+		bucket         string
+		object         string
+		handler        http.HandlerFunc
+		setupWriteFunc func(io.Reader, string, string, os.FileMode) (string, error)
+		wantErr        error
+		wantPath       string
+		wantContent    string
+	}{
+		{
+			name:   "valid bucket and object, want successful download",
+			bucket: bucket,
+			object: object,
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(testContent))
+			},
+			setupWriteFunc: util.AtomicWriteFileStream,
+			wantPath:       "test.sh",
+			wantContent:    testContent,
+		},
+		{
+			name:   "non-existent object, want not found error",
+			bucket: bucket,
+			object: object,
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+			},
+			setupWriteFunc: util.AtomicWriteFileStream,
+			wantErr:        errors.New("error fetching GCS object: storage: object doesn't exist"),
+		},
+		{
+			name:   "invalid object path, want download error",
+			bucket: bucket,
+			object: object,
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(testContent))
+			},
+			setupWriteFunc: func(io.Reader, string, string, os.FileMode) (string, error) {
+				return "", errors.New("download error")
+			},
+			wantErr: errors.New("error downloading GCS object: download error"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ts := httptest.NewServer(tt.handler)
+			defer ts.Close()
+			t.Setenv("STORAGE_EMULATOR_HOST", ts.URL)
+
+			localPath, gotErr := getGCSObjectWithAtomicWriter(ctx, tt.bucket, tt.object, 0, tt.setupWriteFunc)
+			utiltest.AssertErrorMatchAndFail(t, gotErr, tt.wantErr)
+
+			defer os.Remove(localPath)
+			utiltest.AssertFilePath(t, localPath, tt.wantPath)
+			utiltest.AssertFileContents(t, localPath, tt.wantContent)
+		})
+	}
+}
+
+// Test_executeCommand verifies the handling of process execution results by mocking the run function
+func Test_executeCommand(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name     string
+		mockRun  func(*exec.Cmd) ([]byte, error)
+		wantCode int32
+		wantErr  error
+	}{
+		{
+			name: "successful command execution, want code 0",
+			mockRun: func(cmd *exec.Cmd) ([]byte, error) {
+				testCmd := exec.Command("true")
+				testCmd.Run()
+				cmd.ProcessState = testCmd.ProcessState
+				return []byte("output"), nil
+			},
+			wantCode: 0,
+			wantErr:  nil,
+		},
+		{
+			name: "system error during run, want error and code -1",
+			mockRun: func(cmd *exec.Cmd) ([]byte, error) {
+				return nil, errors.New("system error")
+			},
+			wantCode: -1,
+			wantErr:  errors.New("system error"),
+		},
+		{
+			name: "command exit error, want code 0",
+			mockRun: func(cmd *exec.Cmd) ([]byte, error) {
+				return []byte("error output"), &exec.ExitError{}
+			},
+			wantCode: 0,
+			wantErr:  nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			utiltest.OverrideVariable(t, &run, tt.mockRun)
+			gotCode, gotErr := executeCommand(ctx, "test-path", nil)
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
+			utiltest.AssertEquals(t, gotCode, tt.wantCode)
 		})
 	}
 }
