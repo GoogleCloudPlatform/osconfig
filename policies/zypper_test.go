@@ -89,16 +89,24 @@ func TestZypperRepositories(t *testing.T) {
 
 // TestZypperChanges tests the zypperChanges function, ensuring it correctly handles package installations, removals, and updates.
 func TestZypperChanges(t *testing.T) {
+	ctx := context.Background()
+
 	rpmQueryArgs := []string{"--queryformat", `\{"architecture":"%{ARCH}","package":"%{NAME}","source_name":"%{SOURCERPM}","version":"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}"\}` + "\n", "-a"}
 	zypperListUpdatesArgs := []string{"--gpg-auto-import-keys", "-q", "list-updates"}
 
+	mockCtrl := gomock.NewController(t)
+	t.Cleanup(func() { mockCtrl.Finish() })
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	setupZypperChangesTest(t, mockCommandRunner)
+
 	tests := []struct {
-		name            string
-		zypperInstalled []*agentendpointpb.Package
-		zypperRemoved   []*agentendpointpb.Package
-		zypperUpdated   []*agentendpointpb.Package
-		expectations    []utiltest.ExpectedCommand
-		wantErr         error
+		name             string
+		zypperInstalled  []*agentendpointpb.Package
+		zypperRemoved    []*agentendpointpb.Package
+		zypperUpdated    []*agentendpointpb.Package
+		expectedCommands []utiltest.ExpectedCommand
+		wantErr          error
 	}{
 		{
 			name: "no changes, want nil",
@@ -106,7 +114,7 @@ func TestZypperChanges(t *testing.T) {
 		{
 			name:            "rpmquery failure, want rpmquery error",
 			zypperInstalled: []*agentendpointpb.Package{{Name: "p1"}},
-			expectations: []utiltest.ExpectedCommand{
+			expectedCommands: []utiltest.ExpectedCommand{
 				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Err: errors.New("rpmquery error")},
 			},
 			wantErr: errors.New("error running /usr/bin/rpmquery with args [\"--queryformat\" \"\\\\{\\\"architecture\\\":\\\"%{ARCH}\\\",\\\"package\\\":\\\"%{NAME}\\\",\\\"source_name\\\":\\\"%{SOURCERPM}\\\",\\\"version\\\":\\\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\\\"\\\\}\\n\" \"-a\"]: rpmquery error, stdout: \"\", stderr: \"\""),
@@ -114,7 +122,7 @@ func TestZypperChanges(t *testing.T) {
 		{
 			name:          "zypper list-updates failure, want list-updates error",
 			zypperUpdated: []*agentendpointpb.Package{{Name: "p1"}},
-			expectations: []utiltest.ExpectedCommand{
+			expectedCommands: []utiltest.ExpectedCommand{
 				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Stdout: []byte(`{"package":"p1","status":"installed"}`)},
 				{Cmd: exec.Command("/usr/bin/zypper", zypperListUpdatesArgs...), Err: errors.New("zypper list-updates error")},
 			},
@@ -123,7 +131,7 @@ func TestZypperChanges(t *testing.T) {
 		{
 			name:            "p1 to install, want nil",
 			zypperInstalled: []*agentendpointpb.Package{{Name: "p1"}},
-			expectations: []utiltest.ExpectedCommand{
+			expectedCommands: []utiltest.ExpectedCommand{
 				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Stdout: []byte("")},
 				{Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "p1")},
 			},
@@ -131,7 +139,7 @@ func TestZypperChanges(t *testing.T) {
 		{
 			name:            "p1 to install with failure, want installing error",
 			zypperInstalled: []*agentendpointpb.Package{{Name: "p1"}},
-			expectations: []utiltest.ExpectedCommand{
+			expectedCommands: []utiltest.ExpectedCommand{
 				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Stdout: []byte("")},
 				{Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "p1"), Err: errors.New("install error")},
 			},
@@ -140,7 +148,7 @@ func TestZypperChanges(t *testing.T) {
 		{
 			name:          "p1 to upgrade, want nil",
 			zypperUpdated: []*agentendpointpb.Package{{Name: "p1"}},
-			expectations: []utiltest.ExpectedCommand{
+			expectedCommands: []utiltest.ExpectedCommand{
 				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Stdout: []byte(`{"package":"p1","status":"installed"}`)},
 				{Cmd: exec.Command("/usr/bin/zypper", zypperListUpdatesArgs...), Stdout: []byte("v | Repo | p1 | 1.0 | 2.0 | x86_64\n")},
 				{Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "p1")},
@@ -149,7 +157,7 @@ func TestZypperChanges(t *testing.T) {
 		{
 			name:          "p1 to upgrade with failure, want upgrading error",
 			zypperUpdated: []*agentendpointpb.Package{{Name: "p1"}},
-			expectations: []utiltest.ExpectedCommand{
+			expectedCommands: []utiltest.ExpectedCommand{
 				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Stdout: []byte(`{"package":"p1","status":"installed"}`)},
 				{Cmd: exec.Command("/usr/bin/zypper", zypperListUpdatesArgs...), Stdout: []byte("v | Repo | p1 | 1.0 | 2.0 | x86_64\n")},
 				{Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "p1"), Err: errors.New("upgrade error")},
@@ -159,7 +167,7 @@ func TestZypperChanges(t *testing.T) {
 		{
 			name:          "p1 to remove, want nil",
 			zypperRemoved: []*agentendpointpb.Package{{Name: "p1"}},
-			expectations: []utiltest.ExpectedCommand{
+			expectedCommands: []utiltest.ExpectedCommand{
 				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Stdout: []byte(`{"package":"p1","status":"installed"}`)},
 				{Cmd: exec.Command("/usr/bin/zypper", "--non-interactive", "remove", "p1")},
 			},
@@ -167,7 +175,7 @@ func TestZypperChanges(t *testing.T) {
 		{
 			name:          "p1 to remove with failure, want removing error",
 			zypperRemoved: []*agentendpointpb.Package{{Name: "p1"}},
-			expectations: []utiltest.ExpectedCommand{
+			expectedCommands: []utiltest.ExpectedCommand{
 				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Stdout: []byte(`{"package":"p1","status":"installed"}`)},
 				{Cmd: exec.Command("/usr/bin/zypper", "--non-interactive", "remove", "p1"), Err: errors.New("remove error")},
 			},
@@ -177,15 +185,9 @@ func TestZypperChanges(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockCtrl := gomock.NewController(t)
-			defer mockCtrl.Finish()
-
-			mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
-			setupZypperChangesTest(t, mockCommandRunner)
-			utiltest.SetExpectations(mockCommandRunner, tt.expectations)
-
-			err := zypperChanges(context.Background(), tt.zypperInstalled, tt.zypperRemoved, tt.zypperUpdated)
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
+			gotErr := zypperChanges(context.Background(), tt.zypperInstalled, tt.zypperRemoved, tt.zypperUpdated)
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
 		})
 	}
 }
