@@ -19,6 +19,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -54,6 +55,11 @@ func TestLoadState(t *testing.T) {
 	}
 	defer os.RemoveAll(td)
 	testState := filepath.Join(td, "testState")
+
+	// test read error by attempting to read a directory
+	if _, err := loadState(td); err == nil {
+		t.Error("expected error loading state from a directory, got nil")
+	}
 
 	// test no state file
 	if _, err := loadState(testState); err != nil {
@@ -151,41 +157,91 @@ func TestStateSave(t *testing.T) {
 	}
 	defer os.RemoveAll(td)
 	testState := filepath.Join(td, "testState")
+	invalidDir := filepath.Join(td, "invalidDir")
+	if err := os.WriteFile(invalidDir, []byte(""), 0755); err != nil {
+		t.Fatalf("error creating file: %v", err)
+	}
+	invalidPath := filepath.Join(invalidDir, "testState")
+
+	roDir := filepath.Join(td, "roDir")
+	if err := os.MkdirAll(roDir, 0444); err != nil {
+		t.Fatalf("error creating read-only dir: %v", err)
+	}
+	defer os.Chmod(roDir, 0755)
+	roPath := filepath.Join(roDir, "state.json")
 
 	var tests = []struct {
-		desc  string
-		state *taskState
-		want  string
+		desc    string
+		state   *taskState
+		path    string
+		want    string
+		wantErr bool
 	}{
 		{
 			"NilState",
 			nil,
+			testState,
 			"{}",
+			false,
 		},
 		{
 			"BlankState",
 			&taskState{},
+			testState,
 			"{}",
+			false,
 		},
 		{
 			"PatchTask",
 			testPatchTaskState,
+			testState,
 			testPatchTaskStateString,
+			false,
 		},
 		{
 			"ExecTask",
 			&taskState{ExecTask: &execTask{TaskID: "foo"}},
+			testState,
 			"{\"ExecTask\":{\"StartedAt\":\"0001-01-01T00:00:00Z\",\"Task\":null,\"TaskID\":\"foo\"}}",
+			false,
+		},
+		{
+			"InvalidDirectoryError",
+			&taskState{},
+			invalidPath,
+			"",
+			true,
+		},
+		{
+			// time.Time.MarshalJSON only supports years between 0 and 9999.
+			"MarshalError",
+			&taskState{
+				ExecTask: &execTask{StartedAt: time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC)},
+			},
+			testState,
+			"",
+			true,
+		},
+		{
+			// TempFile inside writeFile will fail because the parent directory is read-only.
+			"WriteFileTempFileError",
+			&taskState{},
+			roPath,
+			"",
+			true,
 		},
 	}
 	for _, tt := range tests {
-		err := tt.state.save(testState)
+		err := tt.state.save(tt.path)
+		if (err != nil) != tt.wantErr {
+			t.Errorf("%s: unexpected save error state: %v, wantErr: %v", tt.desc, err, tt.wantErr)
+			continue
+		}
 		if err != nil {
-			t.Errorf("%s: unexpected save error: %v", tt.desc, err)
 			continue
 		}
 
-		got, err := ioutil.ReadFile(testState)
+		got, err := ioutil.ReadFile(tt.path)
 		if err != nil {
 			t.Errorf("%s: error reading state: %v", tt.desc, err)
 			continue
