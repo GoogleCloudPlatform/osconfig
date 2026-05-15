@@ -211,7 +211,7 @@ func TestInstallRecipesHandlesInputs(t *testing.T) {
 	}
 }
 
-// TestRunMetadataFailure verifies that run logs an error when metadata server is unreachable.
+// TestRunMetadataFailure verifies that run logs an error obtaining metadatae.
 func TestRunMetadataFailure(t *testing.T) {
 	var buf bytes.Buffer
 	_ = logger.Init(context.Background(), logger.LogOpts{LoggerName: "test", Debug: true, Writers: []io.Writer{&buf}})
@@ -225,5 +225,5 @@ func TestRunMetadataFailure(t *testing.T) {
 	<-done
 
 	utiltest.AssertFormatMatch(t, buf.String(), `(?s).*Creating new agentendpoint beta client.*`)
-	utiltest.AssertFormatMatch(t, buf.String(), `(?s).*Error running LookupEffectiveGuestPolicies: error getting token from metadata.*`)
+	utiltest.AssertFormatMatch(t, buf.String(), `(?s).*Error running LookupEffectiveGuestPolicies:.*Request is missing required authentication credential.*`)
 }
