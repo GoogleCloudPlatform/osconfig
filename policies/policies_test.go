@@ -72,13 +72,13 @@ func TestWriteIfChanged(t *testing.T) {
 		wantErr        error
 	}{
 		{
-      name:       "new content for non-existent file, want nil error",
-      newContent: []byte("content 1"),
+			name:       "new content for non-existent file, want nil error",
+			newContent: []byte("content 1"),
 			pathFunc: func(t *testing.T, initialContent []byte) string {
 				return utiltest.WriteToTempFileMust(t, "test_file", initialContent)
 			},
-      wantErr:    nil,
-    },
+			wantErr: nil,
+		},
 		{
 			name:           "same content as existing file, want nil error",
 			initialContent: []byte("content 1"),

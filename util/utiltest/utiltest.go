@@ -137,7 +137,6 @@ func AssertErrorMatchAndSkip(t *testing.T, gotErr, wantErr error) {
 	assertErrorMatch(t, gotErr, wantErr, false, true)
 }
 
-
 func assertErrorMatch(t *testing.T, gotErr, wantErr error, failNow bool, skipNow bool) {
 	t.Helper()
 	if gotErr == nil && wantErr == nil {
