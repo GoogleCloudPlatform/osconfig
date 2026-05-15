@@ -120,17 +120,25 @@ func AssertEquals(t *testing.T, got interface{}, want interface{}) {
 // AssertErrorMatch verifies that the gotErr matches the wantErr type and message.
 func AssertErrorMatch(t *testing.T, gotErr, wantErr error) {
 	t.Helper()
-	assertErrorMatch(t, gotErr, wantErr, false)
+	assertErrorMatch(t, gotErr, wantErr, false, false)
 }
 
 // AssertErrorMatchAndFail verifies that the gotErr matches the wantErr type and message,
 // and fails the test immediately if they don't match.
 func AssertErrorMatchAndFail(t *testing.T, gotErr, wantErr error) {
 	t.Helper()
-	assertErrorMatch(t, gotErr, wantErr, true)
+	assertErrorMatch(t, gotErr, wantErr, true, false)
 }
 
-func assertErrorMatch(t *testing.T, gotErr, wantErr error, failNow bool) {
+// AssertErrorMatchAndSkip verifies that the gotErr matches the wantErr type and message,
+// and skips the further test step immediately if they match.
+func AssertErrorMatchAndSkip(t *testing.T, gotErr, wantErr error) {
+	t.Helper()
+	assertErrorMatch(t, gotErr, wantErr, false, true)
+}
+
+
+func assertErrorMatch(t *testing.T, gotErr, wantErr error, failNow bool, skipNow bool) {
 	t.Helper()
 	if gotErr == nil && wantErr == nil {
 		return
@@ -140,6 +148,9 @@ func assertErrorMatch(t *testing.T, gotErr, wantErr error, failNow bool) {
 		if failNow {
 			t.FailNow()
 		}
+	}
+	if skipNow {
+		t.SkipNow()
 	}
 }
 
@@ -198,17 +209,15 @@ func SetExpectedCommands(ctx context.Context, mockCommandRunner *utilmocks.MockC
 	}
 }
 
-// WriteToTempFile writes content to a temporary file. If content is nil, it only returns the path where the file would be located.
-func WriteToTempFile(t *testing.T, filename string, content []byte) (string, error) {
+// WriteToTempFileMust writes content to a temporary file. If content is nil, it only returns the path where the file would be located.
+// It fails the test if any error occurs.
+func WriteToTempFileMust(t *testing.T, filename string, content []byte) string {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), filename)
 	if content != nil {
 		if err := os.WriteFile(path, content, 0644); err != nil {
-			return path, err
+			t.Fatalf("Failed to write to temp file %q: %v", path, err)
 		}
-		t.Cleanup(func() {
-			os.Remove(path)
-		})
 	}
-	return path, nil
+	return path
 }

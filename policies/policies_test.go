@@ -52,10 +52,10 @@ func TestChecksum(t *testing.T) {
 			reader := bytes.NewReader(tt.data)
 			hasher := checksum(reader)
 
-			expected := sha256.Sum256(tt.data)
+			want := sha256.Sum256(tt.data)
 			got := hasher.Sum(nil)
 
-			utiltest.AssertEquals(t, got, expected[:])
+			utiltest.AssertEquals(t, got, want[:])
 		})
 	}
 }
@@ -98,19 +98,14 @@ func TestWriteIfChanged(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			path, err := utiltest.WriteToTempFile(t, "test_file", tt.initialContent)
-			utiltest.AssertErrorMatchAndFail(t, err, nil)
-
-			if tt.pathPredefined != "" {
-				path = tt.pathPredefined
+			path := tt.pathPredefined
+			if path == "" {
+				path = utiltest.WriteToTempFileMust(t, "test_file", tt.initialContent)
 			}
 
-			err = writeIfChanged(ctx, tt.newContent, path)
-			utiltest.AssertErrorMatchAndFail(t, err, tt.wantErr)
-
-			if tt.wantErr == nil {
-				utiltest.AssertFileContents(t, path, string(tt.newContent))
-			}
+			err := writeIfChanged(ctx, tt.newContent, path)
+			utiltest.AssertErrorMatchAndSkip(t, err, tt.wantErr)
+			utiltest.AssertFileContents(t, path, string(tt.newContent))
 		})
 	}
 }
