@@ -68,40 +68,48 @@ func TestWriteIfChanged(t *testing.T) {
 		name           string
 		initialContent []byte
 		newContent     []byte
-		pathPredefined string
+		pathFunc       func(t *testing.T, initialContent []byte) string
 		wantErr        error
 	}{
 		{
-			name:       "new content for non-existent file, want nil error",
-			newContent: []byte("content 1"),
-			wantErr:    nil,
-		},
+      name:       "new content for non-existent file, want nil error",
+      newContent: []byte("content 1"),
+			pathFunc: func(t *testing.T, initialContent []byte) string {
+				return utiltest.WriteToTempFileMust(t, "test_file", initialContent)
+			},
+      wantErr:    nil,
+    },
 		{
 			name:           "same content as existing file, want nil error",
 			initialContent: []byte("content 1"),
 			newContent:     []byte("content 1"),
-			wantErr:        nil,
+			pathFunc: func(t *testing.T, initialContent []byte) string {
+				return utiltest.WriteToTempFileMust(t, "test_file", initialContent)
+			},
+			wantErr: nil,
 		},
 		{
 			name:           "different content for existing file, want nil error",
 			initialContent: []byte("content 1"),
 			newContent:     []byte("content 2"),
-			wantErr:        nil,
+			pathFunc: func(t *testing.T, initialContent []byte) string {
+				return utiltest.WriteToTempFileMust(t, "test_file", initialContent)
+			},
+			wantErr: nil,
 		},
 		{
-			name:           "path is a directory, want error",
-			newContent:     []byte("content 1"),
-			pathPredefined: "/tmp",
-			wantErr:        &os.PathError{Op: "open", Path: "/tmp", Err: syscall.EISDIR},
+			name:       "path is a directory, want error",
+			newContent: []byte("content 1"),
+			pathFunc: func(t *testing.T, initialContent []byte) string {
+				return "/tmp"
+			},
+			wantErr: &os.PathError{Op: "open", Path: "/tmp", Err: syscall.EISDIR},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			path := tt.pathPredefined
-			if path == "" {
-				path = utiltest.WriteToTempFileMust(t, "test_file", tt.initialContent)
-			}
+			path := tt.pathFunc(t, tt.initialContent)
 
 			err := writeIfChanged(ctx, tt.newContent, path)
 			utiltest.AssertErrorMatchAndSkip(t, err, tt.wantErr)
