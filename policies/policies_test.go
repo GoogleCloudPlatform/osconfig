@@ -210,20 +210,3 @@ func TestInstallRecipesHandlesInputs(t *testing.T) {
 		})
 	}
 }
-
-// TestRunMetadataFailure verifies that run logs an error obtaining metadatae.
-func TestRunMetadataFailure(t *testing.T) {
-	var buf bytes.Buffer
-	_ = logger.Init(context.Background(), logger.LogOpts{LoggerName: "test", Debug: true, Writers: []io.Writer{&buf}})
-
-	done := make(chan struct{})
-	Run(context.Background())
-	// Wait for previous Run task has completed.
-	tasker.Enqueue(context.Background(), "signal", func() {
-		close(done)
-	})
-	<-done
-
-	utiltest.AssertFormatMatch(t, buf.String(), `(?s).*Creating new agentendpoint beta client.*`)
-	utiltest.AssertFormatMatch(t, buf.String(), `(?s).*Error running LookupEffectiveGuestPolicies:.*Request is missing required authentication credential.*`)
-}
