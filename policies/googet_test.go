@@ -108,49 +108,87 @@ func TestGooGetChanges(t *testing.T) {
 		wantErr          error
 	}{
 		{
-			name: "no changes, want nil",
+			name:         "no changes, want nil error",
+			gooInstalled: []*agentendpointpb.Package{},
+			wantErr:      nil,
 		},
 		{
-			name:         "installation failure, want installed error",
+			name:         "package p1 to install with failure, want installed error",
 			gooInstalled: []*agentendpointpb.Package{{Name: "p1"}},
 			expectedCommands: []utiltest.ExpectedCommand{
-				{Cmd: exec.Command(googet, "installed"), Err: errors.New("installed error")},
+				{
+					Cmd: exec.Command(googet, "installed"),
+					Err: errors.New("installed error"),
+				},
 			},
 			wantErr: errors.New("error running googet.exe with args [\"installed\"]: installed error, stdout: \"\", stderr: \"\""),
 		},
 		{
-			name:       "updates failure, want update error",
+			name:       "package p1 to update with failure, want update error",
 			gooUpdated: []*agentendpointpb.Package{{Name: "p1"}},
 			expectedCommands: []utiltest.ExpectedCommand{
-				{Cmd: exec.Command(googet, "installed"), Stdout: []byte("p1.x86_64 1.0.0@1")},
-				{Cmd: exec.Command(googet, "update"), Err: errors.New("update error")},
+				{
+					Cmd:    exec.Command(googet, "installed"),
+					Stdout: []byte("p1.x86_64 1.0.0@1"),
+				},
+				{
+					Cmd: exec.Command(googet, "update"),
+					Err: errors.New("update error"),
+				},
 			},
 			wantErr: errors.New("error running googet.exe with args [\"update\"]: update error, stdout: \"\", stderr: \"\""),
 		},
 		{
-			name:         "all operations success, want nil",
+			name:         "all packages operations success, want nil error",
 			gooInstalled: []*agentendpointpb.Package{{Name: "p1"}},
 			gooUpdated:   []*agentendpointpb.Package{{Name: "p2"}},
 			gooRemoved:   []*agentendpointpb.Package{{Name: "p3"}},
 			expectedCommands: []utiltest.ExpectedCommand{
-				{Cmd: exec.Command(googet, "installed"), Stdout: []byte("p2.x86_64 1.0.0@1\np3.x86_64 1.0.0@1")},
-				{Cmd: exec.Command(googet, "update"), Stdout: []byte("p2.x86_64, 1.0.0@1 --> 2.0.0@1 from repo")},
-				{Cmd: exec.Command(googet, "-noconfirm", "install", "p1")},
-				{Cmd: exec.Command(googet, "-noconfirm", "install", "p2")},
-				{Cmd: exec.Command(googet, "-noconfirm", "remove", "p3")},
+				{
+					Cmd:    exec.Command(googet, "installed"),
+					Stdout: []byte("p2.x86_64 1.0.0@1\np3.x86_64 1.0.0@1"),
+				},
+				{
+					Cmd:    exec.Command(googet, "update"),
+					Stdout: []byte("p2.x86_64, 1.0.0@1 --> 2.0.0@1 from repo"),
+				},
+				{
+					Cmd: exec.Command(googet, "-noconfirm", "install", "p1"),
+				},
+				{
+					Cmd: exec.Command(googet, "-noconfirm", "install", "p2"),
+				},
+				{
+					Cmd: exec.Command(googet, "-noconfirm", "remove", "p3"),
+				},
 			},
 		},
 		{
-			name:         "all operations failure, want combined error",
+			name:         "all packages operations failure, want combined error",
 			gooInstalled: []*agentendpointpb.Package{{Name: "p1"}},
 			gooUpdated:   []*agentendpointpb.Package{{Name: "p2"}},
 			gooRemoved:   []*agentendpointpb.Package{{Name: "p3"}},
 			expectedCommands: []utiltest.ExpectedCommand{
-				{Cmd: exec.Command(googet, "installed"), Stdout: []byte("p2.x86_64 1.0.0@1\np3.x86_64 1.0.0@1")},
-				{Cmd: exec.Command(googet, "update"), Stdout: []byte("p2.x86_64, 1.0.0@1 --> 2.0.0@1 from repo")},
-				{Cmd: exec.Command(googet, "-noconfirm", "install", "p1"), Err: errors.New("install error")},
-				{Cmd: exec.Command(googet, "-noconfirm", "install", "p2"), Err: errors.New("upgrade error")},
-				{Cmd: exec.Command(googet, "-noconfirm", "remove", "p3"), Err: errors.New("remove error")},
+				{
+					Cmd:    exec.Command(googet, "installed"),
+					Stdout: []byte("p2.x86_64 1.0.0@1\np3.x86_64 1.0.0@1"),
+				},
+				{
+					Cmd:    exec.Command(googet, "update"),
+					Stdout: []byte("p2.x86_64, 1.0.0@1 --> 2.0.0@1 from repo"),
+				},
+				{
+					Cmd: exec.Command(googet, "-noconfirm", "install", "p1"),
+					Err: errors.New("install error"),
+				},
+				{
+					Cmd: exec.Command(googet, "-noconfirm", "install", "p2"),
+					Err: errors.New("upgrade error"),
+				},
+				{
+					Cmd: exec.Command(googet, "-noconfirm", "remove", "p3"),
+					Err: errors.New("remove error"),
+				},
 			},
 			wantErr: errors.New("error installing googet packages: error running googet.exe with args [\"-noconfirm\" \"install\" \"p1\"]: install error, stdout: \"\", stderr: \"\",\nerror upgrading googet packages: error running googet.exe with args [\"-noconfirm\" \"install\" \"p2\"]: upgrade error, stdout: \"\", stderr: \"\",\nerror removing googet packages: error running googet.exe with args [\"-noconfirm\" \"remove\" \"p3\"]: remove error, stdout: \"\", stderr: \"\""),
 		},
@@ -159,6 +197,7 @@ func TestGooGetChanges(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
+
 			gotErr := googetChanges(context.Background(), tt.gooInstalled, tt.gooRemoved, tt.gooUpdated)
 			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
 		})
