@@ -109,13 +109,18 @@ func TestZypperChanges(t *testing.T) {
 		wantErr          error
 	}{
 		{
-			name: "no changes, want nil",
+			name:            "no changes, want nil error",
+			zypperInstalled: []*agentendpointpb.Package{},
+			wantErr:         nil,
 		},
 		{
 			name:            "rpmquery failure, want rpmquery error",
 			zypperInstalled: []*agentendpointpb.Package{{Name: "p1"}},
 			expectedCommands: []utiltest.ExpectedCommand{
-				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Err: errors.New("rpmquery error")},
+				{
+					Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...),
+					Err: errors.New("rpmquery error"),
+				},
 			},
 			wantErr: errors.New("error running /usr/bin/rpmquery with args [\"--queryformat\" \"\\\\{\\\"architecture\\\":\\\"%{ARCH}\\\",\\\"package\\\":\\\"%{NAME}\\\",\\\"source_name\\\":\\\"%{SOURCERPM}\\\",\\\"version\\\":\\\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\\\"\\\\}\\n\" \"-a\"]: rpmquery error, stdout: \"\", stderr: \"\""),
 		},
@@ -123,61 +128,106 @@ func TestZypperChanges(t *testing.T) {
 			name:          "zypper list-updates failure, want list-updates error",
 			zypperUpdated: []*agentendpointpb.Package{{Name: "p1"}},
 			expectedCommands: []utiltest.ExpectedCommand{
-				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Stdout: []byte(`{"package":"p1","status":"installed"}`)},
-				{Cmd: exec.Command("/usr/bin/zypper", zypperListUpdatesArgs...), Err: errors.New("zypper list-updates error")},
+				{
+					Cmd:    exec.Command("/usr/bin/rpmquery", rpmQueryArgs...),
+					Stdout: []byte(`{"package":"p1","status":"installed"}`),
+				},
+				{
+					Cmd: exec.Command("/usr/bin/zypper", zypperListUpdatesArgs...),
+					Err: errors.New("zypper list-updates error"),
+				},
 			},
 			wantErr: errors.New("error running /usr/bin/zypper with args [\"--gpg-auto-import-keys\" \"-q\" \"list-updates\"]: zypper list-updates error, stdout: \"\", stderr: \"\""),
 		},
 		{
-			name:            "p1 to install, want nil",
+			name:            "package p1 to install, want nil error",
 			zypperInstalled: []*agentendpointpb.Package{{Name: "p1"}},
 			expectedCommands: []utiltest.ExpectedCommand{
-				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Stdout: []byte("")},
-				{Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "p1")},
+				{
+					Cmd:    exec.Command("/usr/bin/rpmquery", rpmQueryArgs...),
+					Stdout: []byte(""),
+				},
+				{
+					Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "p1"),
+				},
 			},
 		},
 		{
-			name:            "p1 to install with failure, want installing error",
+			name:            "package p1 to install with failure, want installing error",
 			zypperInstalled: []*agentendpointpb.Package{{Name: "p1"}},
 			expectedCommands: []utiltest.ExpectedCommand{
-				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Stdout: []byte("")},
-				{Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "p1"), Err: errors.New("install error")},
+				{
+					Cmd:    exec.Command("/usr/bin/rpmquery", rpmQueryArgs...),
+					Stdout: []byte(""),
+				},
+				{
+					Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "p1"),
+					Err: errors.New("install error"),
+				},
 			},
 			wantErr: errors.New("error installing zypper packages: error running /usr/bin/zypper with args [\"--gpg-auto-import-keys\" \"--non-interactive\" \"install\" \"--auto-agree-with-licenses\" \"p1\"]: install error, stdout: \"\", stderr: \"\""),
 		},
 		{
-			name:          "p1 to upgrade, want nil",
+			name:          "package p1 to upgrade, want nil error",
 			zypperUpdated: []*agentendpointpb.Package{{Name: "p1"}},
 			expectedCommands: []utiltest.ExpectedCommand{
-				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Stdout: []byte(`{"package":"p1","status":"installed"}`)},
-				{Cmd: exec.Command("/usr/bin/zypper", zypperListUpdatesArgs...), Stdout: []byte("v | Repo | p1 | 1.0 | 2.0 | x86_64\n")},
-				{Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "p1")},
+				{
+					Cmd:    exec.Command("/usr/bin/rpmquery", rpmQueryArgs...),
+					Stdout: []byte(`{"package":"p1","status":"installed"}`),
+				},
+				{
+					Cmd:    exec.Command("/usr/bin/zypper", zypperListUpdatesArgs...),
+					Stdout: []byte("v | Repo | p1 | 1.0 | 2.0 | x86_64\n"),
+				},
+				{
+					Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "p1"),
+				},
 			},
 		},
 		{
-			name:          "p1 to upgrade with failure, want upgrading error",
+			name:          "package p1 to upgrade with failure, want upgrading error",
 			zypperUpdated: []*agentendpointpb.Package{{Name: "p1"}},
 			expectedCommands: []utiltest.ExpectedCommand{
-				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Stdout: []byte(`{"package":"p1","status":"installed"}`)},
-				{Cmd: exec.Command("/usr/bin/zypper", zypperListUpdatesArgs...), Stdout: []byte("v | Repo | p1 | 1.0 | 2.0 | x86_64\n")},
-				{Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "p1"), Err: errors.New("upgrade error")},
+				{
+					Cmd:    exec.Command("/usr/bin/rpmquery", rpmQueryArgs...),
+					Stdout: []byte(`{"package":"p1","status":"installed"}`),
+				},
+				{
+					Cmd:    exec.Command("/usr/bin/zypper", zypperListUpdatesArgs...),
+					Stdout: []byte("v | Repo | p1 | 1.0 | 2.0 | x86_64\n"),
+				},
+				{
+					Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "p1"),
+					Err: errors.New("upgrade error"),
+				},
 			},
 			wantErr: errors.New("error upgrading zypper packages: error running /usr/bin/zypper with args [\"--gpg-auto-import-keys\" \"--non-interactive\" \"install\" \"--auto-agree-with-licenses\" \"p1\"]: upgrade error, stdout: \"\", stderr: \"\""),
 		},
 		{
-			name:          "p1 to remove, want nil",
+			name:          "package p1 to remove, want nil error",
 			zypperRemoved: []*agentendpointpb.Package{{Name: "p1"}},
 			expectedCommands: []utiltest.ExpectedCommand{
-				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Stdout: []byte(`{"package":"p1","status":"installed"}`)},
-				{Cmd: exec.Command("/usr/bin/zypper", "--non-interactive", "remove", "p1")},
+				{
+					Cmd:    exec.Command("/usr/bin/rpmquery", rpmQueryArgs...),
+					Stdout: []byte(`{"package":"p1","status":"installed"}`),
+				},
+				{
+					Cmd: exec.Command("/usr/bin/zypper", "--non-interactive", "remove", "p1"),
+				},
 			},
 		},
 		{
-			name:          "p1 to remove with failure, want removing error",
+			name:          "package p1 to remove with failure, want removing error",
 			zypperRemoved: []*agentendpointpb.Package{{Name: "p1"}},
 			expectedCommands: []utiltest.ExpectedCommand{
-				{Cmd: exec.Command("/usr/bin/rpmquery", rpmQueryArgs...), Stdout: []byte(`{"package":"p1","status":"installed"}`)},
-				{Cmd: exec.Command("/usr/bin/zypper", "--non-interactive", "remove", "p1"), Err: errors.New("remove error")},
+				{
+					Cmd:    exec.Command("/usr/bin/rpmquery", rpmQueryArgs...),
+					Stdout: []byte(`{"package":"p1","status":"installed"}`),
+				},
+				{
+					Cmd: exec.Command("/usr/bin/zypper", "--non-interactive", "remove", "p1"),
+					Err: errors.New("remove error"),
+				},
 			},
 			wantErr: errors.New("error removing zypper packages: error running /usr/bin/zypper with args [\"--non-interactive\" \"remove\" \"p1\"]: remove error, stdout: \"\", stderr: \"\""),
 		},
@@ -186,6 +236,7 @@ func TestZypperChanges(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
+
 			gotErr := zypperChanges(context.Background(), tt.zypperInstalled, tt.zypperRemoved, tt.zypperUpdated)
 			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
 		})
