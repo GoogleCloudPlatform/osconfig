@@ -153,6 +153,7 @@ func TestYumChanges(t *testing.T) {
 					Cmd: exec.Command("/usr/bin/yum", "install", "--assumeyes", "p1"),
 				},
 			},
+			wantErr: nil,
 		},
 		{
 			name:         "package p1 to install with failure, want installing error",
@@ -189,6 +190,7 @@ func TestYumChanges(t *testing.T) {
 					Cmd: exec.Command("/usr/bin/yum", "install", "--assumeyes", "p1"),
 				},
 			},
+			wantErr: nil,
 		},
 		{
 			name:       "package p1 to upgrade with failure, want upgrading error",
@@ -225,6 +227,7 @@ func TestYumChanges(t *testing.T) {
 					Cmd: exec.Command("/usr/bin/yum", "remove", "--assumeyes", "p1"),
 				},
 			},
+			wantErr: nil,
 		},
 		{
 			name:       "package p1 to remove with failure, want removing error",
