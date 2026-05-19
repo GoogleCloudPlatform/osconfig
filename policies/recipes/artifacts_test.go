@@ -16,17 +16,159 @@ package recipes
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
+
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
+
+	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
 )
 
-func TestFetchArtifacts_http_InvalidURL(t *testing.T) {
-	uri := "ftp://google.com/agent.deb"
-	u, err := url.Parse(uri)
-	_, err = getHTTPArtifact(context.Background(), nil, *u)
-	if err == nil || !strings.Contains(err.Error(), "unsupported protocol scheme") {
-		t.Errorf("expected error (unsupported protocol); got(%v)", err)
+// TestGetHTTPArtifact verifies downloading artifacts via HTTP/HTTPS and handles various error scenarios.
+func TestGetHTTPArtifact(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "test data")
+	}))
+	defer ts.Close()
+
+	ts404 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer ts404.Close()
+
+	tests := []struct {
+		name    string
+		uri     string
+		client  *http.Client
+		want    string
+		wantErr error
+	}{
+		{
+			name:    "valid URL, want test data and nil error",
+			uri:     ts.URL,
+			client:  ts.Client(),
+			want:    "test data",
+			wantErr: nil,
+		},
+		{
+			name:    "unsupported protocol ftp, want unsupported protocol scheme error",
+			uri:     "ftp://google.com/agent.deb",
+			client:  http.DefaultClient,
+			want:    "",
+			wantErr: errors.New("error, unsupported protocol scheme ftp"),
+		},
+		{
+			name:    "http status 404, want got http status 404 error",
+			uri:     ts404.URL,
+			client:  ts404.Client(),
+			want:    "",
+			wantErr: errors.New("got http status 404 when attempting to download artifact"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			u, _ := url.Parse(tt.uri)
+			reader, err := getHTTPArtifact(context.Background(), tt.client, *u)
+
+			utiltest.AssertErrorMatchAndSkip(t, err, tt.wantErr)
+
+			defer reader.Close()
+			data, _ := io.ReadAll(reader)
+			utiltest.AssertEquals(t, string(data), tt.want)
+		})
+	}
+}
+
+// TestFetchArtifact_Remote ensures remote artifacts are correctly downloaded and saved to a local directory.
+func TestFetchArtifact_Remote(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "remote data")
+	}))
+	defer ts.Close()
+
+	tdir := t.TempDir()
+	artifact := &agentendpointpb.SoftwareRecipe_Artifact{
+		Id: "test-artifact",
+		Artifact: &agentendpointpb.SoftwareRecipe_Artifact_Remote_{
+			Remote: &agentendpointpb.SoftwareRecipe_Artifact_Remote{
+				Uri: ts.URL,
+			},
+		},
+	}
+
+	path, err := fetchArtifact(context.Background(), artifact, tdir)
+	utiltest.AssertErrorMatch(t, err, nil)
+	utiltest.AssertFileContents(t, path, "remote data")
+}
+
+// TestFetchArtifact_GCS ensures artifacts can be downloaded from GCS using a storage emulator.
+func TestFetchArtifact_GCS(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "GET" && strings.Contains(r.URL.Path, "test-bucket/test-object") {
+			fmt.Fprint(w, "gcs data")
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer ts.Close()
+
+	t.Setenv("STORAGE_EMULATOR_HOST", ts.URL)
+
+	tdir := t.TempDir()
+	artifact := &agentendpointpb.SoftwareRecipe_Artifact{
+		Id: "gcs-artifact",
+		Artifact: &agentendpointpb.SoftwareRecipe_Artifact_Gcs_{
+			Gcs: &agentendpointpb.SoftwareRecipe_Artifact_Gcs{
+				Bucket: "test-bucket",
+				Object: "test-object",
+			},
+		},
+	}
+
+	path, err := fetchArtifact(context.Background(), artifact, tdir)
+	utiltest.AssertErrorMatch(t, err, nil)
+	utiltest.AssertFileContents(t, path, "gcs data")
+}
+
+// TestFetchArtifacts verifies that multiple artifacts can be downloaded and mapped to their local paths.
+func TestFetchArtifacts(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "data")
+	}))
+	defer ts.Close()
+
+	tdir := t.TempDir()
+	artifacts := []*agentendpointpb.SoftwareRecipe_Artifact{
+		{
+			Id: "art1",
+			Artifact: &agentendpointpb.SoftwareRecipe_Artifact_Remote_{
+				Remote: &agentendpointpb.SoftwareRecipe_Artifact_Remote{
+					Uri: ts.URL,
+				},
+			},
+		},
+		{
+			Id: "art2",
+			Artifact: &agentendpointpb.SoftwareRecipe_Artifact_Remote_{
+				Remote: &agentendpointpb.SoftwareRecipe_Artifact_Remote{
+					Uri: ts.URL,
+				},
+			},
+		},
+	}
+
+	res, err := fetchArtifacts(context.Background(), artifacts, tdir)
+	utiltest.AssertErrorMatch(t, err, nil)
+	utiltest.AssertEquals(t, len(res), 2)
+	for _, path := range res {
+		utiltest.AssertFileContents(t, path, "data")
 	}
 }
 
