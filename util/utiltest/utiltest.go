@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"testing"
 
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
@@ -14,6 +15,18 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/kr/pretty"
 )
+
+// AssertFormatMatch verifies that the got matches the wantFormat regular expression.
+func AssertFormatMatch(t *testing.T, got string, wantFormat string) {
+	t.Helper()
+	matched, err := regexp.MatchString(wantFormat, got)
+	if err != nil {
+		t.Fatalf("regexp.MatchString(%q, %q) err: %v", wantFormat, got, err)
+	}
+	if !matched {
+		t.Errorf("Format mismatch, want %q, got %q", wantFormat, got)
+	}
+}
 
 // BytesFromFile returns file as bytes; propagates err (e.g. file does not exist) as test failure reason
 func BytesFromFile(t *testing.T, filepath string) []byte {
@@ -108,17 +121,24 @@ func AssertEquals(t *testing.T, got interface{}, want interface{}) {
 // AssertErrorMatch verifies that the gotErr matches the wantErr type and message.
 func AssertErrorMatch(t *testing.T, gotErr, wantErr error) {
 	t.Helper()
-	assertErrorMatch(t, gotErr, wantErr, false)
+	assertErrorMatch(t, gotErr, wantErr, false, false)
 }
 
 // AssertErrorMatchAndFail verifies that the gotErr matches the wantErr type and message,
 // and fails the test immediately if they don't match.
 func AssertErrorMatchAndFail(t *testing.T, gotErr, wantErr error) {
 	t.Helper()
-	assertErrorMatch(t, gotErr, wantErr, true)
+	assertErrorMatch(t, gotErr, wantErr, true, false)
 }
 
-func assertErrorMatch(t *testing.T, gotErr, wantErr error, failNow bool) {
+// AssertErrorMatchAndSkip verifies that the gotErr matches the wantErr type and message,
+// and skips the further test step immediately if they match.
+func AssertErrorMatchAndSkip(t *testing.T, gotErr, wantErr error) {
+	t.Helper()
+	assertErrorMatch(t, gotErr, wantErr, false, true)
+}
+
+func assertErrorMatch(t *testing.T, gotErr, wantErr error, failNow bool, skipNow bool) {
 	t.Helper()
 	if gotErr == nil && wantErr == nil {
 		return
@@ -128,6 +148,9 @@ func assertErrorMatch(t *testing.T, gotErr, wantErr error, failNow bool) {
 		if failNow {
 			t.FailNow()
 		}
+	}
+	if skipNow {
+		t.SkipNow()
 	}
 }
 
@@ -187,4 +210,17 @@ func SetExpectedCommands(ctx context.Context, mockCommandRunner *utilmocks.MockC
 		}
 		prev = call
 	}
+}
+
+// WriteToTempFileMust writes content to a temporary file. If content is nil, it only returns the path where the file would be located.
+// It fails the test if any error occurs.
+func WriteToTempFileMust(t *testing.T, filename string, content []byte) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), filename)
+	if content != nil {
+		if err := os.WriteFile(path, content, 0644); err != nil {
+			t.Fatalf("Failed to write to temp file %q: %v", path, err)
+		}
+	}
+	return path
 }
