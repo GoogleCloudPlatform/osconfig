@@ -113,6 +113,20 @@ func TestGooGetChanges(t *testing.T) {
 			wantErr:      nil,
 		},
 		{
+			name:         "package p1 to install, want nil error",
+			gooInstalled: []*agentendpointpb.Package{{Name: "p1"}},
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command(googet, "installed"),
+					Stdout: []byte(""),
+				},
+				{
+					Cmd: exec.Command(googet, "-noconfirm", "install", "p1"),
+				},
+			},
+			wantErr: nil,
+		},
+		{
 			name:         "package p1 to install with failure, want installed error",
 			gooInstalled: []*agentendpointpb.Package{{Name: "p1"}},
 			expectedCommands: []utiltest.ExpectedCommand{
@@ -122,6 +136,24 @@ func TestGooGetChanges(t *testing.T) {
 				},
 			},
 			wantErr: errors.New("error running googet.exe with args [\"installed\"]: installed error, stdout: \"\", stderr: \"\""),
+		},
+		{
+			name:       "package p1 to update, want nil error",
+			gooUpdated: []*agentendpointpb.Package{{Name: "p1"}},
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command(googet, "installed"),
+					Stdout: []byte("p1.x86_64 1.0.0@1"),
+				},
+				{
+					Cmd:    exec.Command(googet, "update"),
+					Stdout: []byte("p1.x86_64, 1.0.0@1 --> 2.0.0@1 from repo"),
+				},
+				{
+					Cmd: exec.Command(googet, "-noconfirm", "install", "p1"),
+				},
+			},
+			wantErr: nil,
 		},
 		{
 			name:       "package p1 to update with failure, want update error",
@@ -137,31 +169,6 @@ func TestGooGetChanges(t *testing.T) {
 				},
 			},
 			wantErr: errors.New("error running googet.exe with args [\"update\"]: update error, stdout: \"\", stderr: \"\""),
-		},
-		{
-			name:         "all packages operations success, want nil error",
-			gooInstalled: []*agentendpointpb.Package{{Name: "p1"}},
-			gooUpdated:   []*agentendpointpb.Package{{Name: "p2"}},
-			gooRemoved:   []*agentendpointpb.Package{{Name: "p3"}},
-			expectedCommands: []utiltest.ExpectedCommand{
-				{
-					Cmd:    exec.Command(googet, "installed"),
-					Stdout: []byte("p2.x86_64 1.0.0@1\np3.x86_64 1.0.0@1"),
-				},
-				{
-					Cmd:    exec.Command(googet, "update"),
-					Stdout: []byte("p2.x86_64, 1.0.0@1 --> 2.0.0@1 from repo"),
-				},
-				{
-					Cmd: exec.Command(googet, "-noconfirm", "install", "p1"),
-				},
-				{
-					Cmd: exec.Command(googet, "-noconfirm", "install", "p2"),
-				},
-				{
-					Cmd: exec.Command(googet, "-noconfirm", "remove", "p3"),
-				},
-			},
 		},
 		{
 			name:         "all packages operations failure, want combined error",
