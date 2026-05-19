@@ -51,7 +51,6 @@ func TestWithLabels(t *testing.T) {
 	}
 }
 
-
 type testWriter struct {
 	logs []string
 }
