@@ -19,9 +19,11 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"fmt"
 	"hash"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
@@ -57,9 +59,11 @@ func run(ctx context.Context) {
 
 	effective := mergeConfigs(local, resp)
 
-	// We don't check the error from setConfig or installRecipes as all errors are already logged.
+	// We don't check the error from setConfig as all errors are already logged.
 	setConfig(ctx, effective)
-	installRecipes(ctx, effective)
+	if err := installRecipes(ctx, effective); err != nil {
+		clog.Errorf(ctx, "%v", err)
+	}
 }
 
 // Run looks up osconfigs and applies them using tasker.Enqueue.
@@ -67,13 +71,30 @@ func Run(ctx context.Context) {
 	tasker.Enqueue(ctx, "Run GuestPolicies", func() { run(ctx) })
 }
 
+type installRecipesError struct {
+	errors []error
+}
+
+func (e installRecipesError) Error() string {
+	results := make([]string, len(e.errors))
+	for i, err := range e.errors {
+		results[i] = err.Error()
+	}
+
+	return fmt.Sprintf("unable to install recipes:\n%s", strings.Join(results, ",\n"))
+}
+
 func installRecipes(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) error {
+	var errors []error
 	for _, recipe := range egp.GetSoftwareRecipes() {
 		if r := recipe.GetSoftwareRecipe(); r != nil {
 			if err := recipes.InstallRecipe(ctx, r); err != nil {
-				clog.Errorf(ctx, "Error installing recipe: %v", err)
+				errors = append(errors, fmt.Errorf("Error installing recipe: %v", err))
 			}
 		}
+	}
+	if len(errors) > 0 {
+		return installRecipesError{errors: errors}
 	}
 	return nil
 }
@@ -218,7 +239,7 @@ func checksum(r io.Reader) hash.Hash {
 }
 
 func writeIfChanged(ctx context.Context, content []byte, path string) error {
-	file, err := os.Open(path)
+	file, err := os.OpenFile(path, os.O_RDWR, 0)
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
