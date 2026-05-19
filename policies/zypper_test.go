@@ -151,6 +151,7 @@ func TestZypperChanges(t *testing.T) {
 					Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "p1"),
 				},
 			},
+			wantErr: nil,
 		},
 		{
 			name:            "package p1 to install with failure, want installing error",
@@ -183,6 +184,7 @@ func TestZypperChanges(t *testing.T) {
 					Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "p1"),
 				},
 			},
+			wantErr: nil,
 		},
 		{
 			name:          "package p1 to upgrade with failure, want upgrading error",
@@ -215,6 +217,7 @@ func TestZypperChanges(t *testing.T) {
 					Cmd: exec.Command("/usr/bin/zypper", "--non-interactive", "remove", "p1"),
 				},
 			},
+			wantErr: nil,
 		},
 		{
 			name:          "package p1 to remove with failure, want removing error",
