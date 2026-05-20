@@ -171,6 +171,35 @@ func TestGooGetChanges(t *testing.T) {
 			wantErr: errors.New("error running googet.exe with args [\"update\"]: update error, stdout: \"\", stderr: \"\""),
 		},
 		{
+			name:       "package p1 to remove, want nil error",
+			gooRemoved: []*agentendpointpb.Package{{Name: "p1"}},
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command(googet, "installed"),
+					Stdout: []byte("p1.x86_64 1.0.0@1"),
+				},
+				{
+					Cmd: exec.Command(googet, "-noconfirm", "remove", "p1"),
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name:       "package p1 to remove with failure, want remove error",
+			gooRemoved: []*agentendpointpb.Package{{Name: "p1"}},
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command(googet, "installed"),
+					Stdout: []byte("p1.x86_64 1.0.0@1"),
+				},
+				{
+					Cmd: exec.Command(googet, "-noconfirm", "remove", "p1"),
+					Err: errors.New("remove error"),
+				},
+			},
+			wantErr: errors.New("error removing googet packages: error running googet.exe with args [\"-noconfirm\" \"remove\" \"p1\"]: remove error, stdout: \"\", stderr: \"\""),
+		},
+		{
 			name:         "all packages operations failure, want combined error",
 			gooInstalled: []*agentendpointpb.Package{{Name: "p1"}},
 			gooUpdated:   []*agentendpointpb.Package{{Name: "p2"}},
