@@ -15,9 +15,13 @@
 package agentendpoint
 
 import (
+	"encoding/json"
+	"errors"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 	"time"
 
@@ -26,6 +30,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 )
 
 var (
@@ -175,81 +180,86 @@ func TestStateSave(t *testing.T) {
 		state   *taskState
 		path    string
 		want    string
-		wantErr bool
+		wantErr error
 	}{
 		{
-			"NilState",
-			nil,
-			testState,
-			"{}",
-			false,
+			desc:    "NilState",
+			state:   nil,
+			path:    testState,
+			want:    "{}",
+			wantErr: nil,
 		},
 		{
-			"BlankState",
-			&taskState{},
-			testState,
-			"{}",
-			false,
+			desc:    "BlankState",
+			state:   &taskState{},
+			path:    testState,
+			want:    "{}",
+			wantErr: nil,
 		},
 		{
-			"PatchTask",
-			testPatchTaskState,
-			testState,
-			testPatchTaskStateString,
-			false,
+			desc:    "PatchTask",
+			state:   testPatchTaskState,
+			path:    testState,
+			want:    testPatchTaskStateString,
+			wantErr: nil,
 		},
 		{
-			"ExecTask",
-			&taskState{ExecTask: &execTask{TaskID: "foo"}},
-			testState,
-			"{\"ExecTask\":{\"StartedAt\":\"0001-01-01T00:00:00Z\",\"Task\":null,\"TaskID\":\"foo\"}}",
-			false,
+			desc:    "ExecTask",
+			state:   &taskState{ExecTask: &execTask{TaskID: "foo"}},
+			path:    testState,
+			want:    "{\"ExecTask\":{\"StartedAt\":\"0001-01-01T00:00:00Z\",\"Task\":null,\"TaskID\":\"foo\"}}",
+			wantErr: nil,
 		},
 		{
-			"InvalidDirectoryError",
-			&taskState{},
-			invalidPath,
-			"",
-			true,
+			desc:    "InvalidDirectoryError",
+			state:   &taskState{},
+			path:    invalidPath,
+			want:    "",
+			wantErr: &fs.PathError{Op: "mkdir", Path: invalidDir, Err: errors.New("not a directory")},
 		},
 		{
 			// time.Time.MarshalJSON only supports years between 0 and 9999.
-			"MarshalError",
-			&taskState{
+			desc: "MarshalError",
+			state: &taskState{
 				ExecTask: &execTask{StartedAt: time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC)},
 			},
-			testState,
-			"",
-			true,
+			path:    testState,
+			want:    "",
+			wantErr: &json.MarshalerError{Type: reflect.TypeOf(time.Time{}), Err: errors.New("Time.MarshalJSON: year outside of range [0,9999]")},
 		},
 		{
 			// TempFile inside writeFile will fail because the parent directory is read-only.
-			"WriteFileTempFileError",
-			&taskState{},
-			roPath,
-			"",
-			true,
+			desc:    "WriteFileTempFileError",
+			state:   &taskState{},
+			path:    roPath,
+			want:    "",
+			wantErr: &fs.PathError{Op: "open", Path: roPath, Err: errors.New("permission denied")},
 		},
 	}
 	for _, tt := range tests {
-		err := tt.state.save(tt.path)
-		if (err != nil) != tt.wantErr {
-			t.Errorf("%s: unexpected save error state: %v, wantErr: %v", tt.desc, err, tt.wantErr)
-			continue
-		}
-		if err != nil {
-			continue
-		}
+		t.Run(tt.desc, func(t *testing.T) {
+			err := tt.state.save(tt.path)
+			// Update the expected PathError's path since it cannot be predicted ahead of time.
+			if pe, ok := err.(*fs.PathError); ok && tt.desc == "WriteFileTempFileError" {
+				if wantPe, ok := tt.wantErr.(*fs.PathError); ok {
+					wantPe.Path = pe.Path
+				}
+			}
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			if err != nil {
+				return
+			}
 
-		got, err := ioutil.ReadFile(tt.path)
-		if err != nil {
-			t.Errorf("%s: error reading state: %v", tt.desc, err)
-			continue
-		}
+			got, err := ioutil.ReadFile(tt.path)
+			if err != nil {
+				t.Errorf("error reading state: %v", err)
+				return
+			}
 
-		if string(got) != tt.want {
-			t.Errorf("%s:\ngot:\n%q\nwant:\n%q", tt.desc, got, tt.want)
-		}
+			if string(got) != tt.want {
+				t.Errorf("got:\n%q\nwant:\n%q", string(got), tt.want)
+			}
+		})
 	}
 }
 
