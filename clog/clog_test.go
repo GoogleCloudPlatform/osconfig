@@ -18,10 +18,11 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"strings"
+	"regexp"
 	"testing"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -52,18 +53,39 @@ func TestWithLabels(t *testing.T) {
 }
 
 type testWriter struct {
-	logs []string
+	logs string
 }
 
 func (w *testWriter) Write(p []byte) (n int, err error) {
-	w.logs = append(w.logs, string(p))
+	w.logs = string(p)
 	return len(p), nil
+}
+
+// Initializes logger and returns testWriter
+func initTestLogger(t *testing.T, ctx context.Context) *testWriter {
+	t.Helper()
+	tw := &testWriter{}
+	err := logger.Init(ctx, logger.LogOpts{
+		LoggerName:          "test-logger",
+		Writers:             []io.Writer{tw},
+		DisableCloudLogging: true,
+		DisableLocalLogging: true,
+		Debug:               true,
+		FormatFunction: func(e logger.LogEntry) string {
+			return fmt.Sprintf("[%s] %s", e.Severity, e.Message)
+		},
+	})
+	if err != nil {
+		t.Fatalf("logger.Init error: %v", err)
+	}
+	return tw
 }
 
 func TestDebugRPC(t *testing.T) {
 	DebugEnabled = true
 	defer func() { DebugEnabled = false }()
-
+	ctx := context.Background()
+	tw := initTestLogger(t, ctx)
 	req := wrapperspb.String("request")
 	resp := wrapperspb.String("response")
 
@@ -101,45 +123,21 @@ func TestDebugRPC(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tw := &testWriter{}
-			ctx := context.Background()
-			err := logger.Init(ctx, logger.LogOpts{
-				LoggerName:          "test-logger",
-				Writers:             []io.Writer{tw},
-				DisableCloudLogging: true,
-				DisableLocalLogging: true,
-				Debug:               true,
-				FormatFunction: func(e logger.LogEntry) string {
-					return fmt.Sprintf("[%s] %s", e.Severity, e.Message)
-				},
-			})
-			if err != nil {
-				t.Fatalf("logger.Init error: %v", err)
-			}
-
+			tw.logs = ""
 			DebugRPC(ctx, tt.name, tt.req, tt.resp)
 
 			if tt.expected != "" {
-				found := false
-				for _, logLine := range tw.logs {
-					if strings.Contains(logLine, tt.expected) {
-						found = true
-						break
-					}
-				}
-				if !found {
-					t.Errorf("expected to find %q in logs, but did not. Logs: %v", tt.expected, tw.logs)
-				}
+				utiltest.AssertFormatMatch(t, tw.logs, regexp.QuoteMeta(tt.expected))
 			} else {
-				if len(tw.logs) > 0 {
-					t.Errorf("expected no logs, but got: %v", tw.logs)
-				}
+				utiltest.AssertEquals(t, len(tw.logs), 0)
 			}
 		})
 	}
 }
 
 func TestLoggingFunctions(t *testing.T) {
+	ctx := context.Background()
+	tw := initTestLogger(t, ctx)
 	tests := []struct {
 		name     string
 		logFunc  func(ctx context.Context)
@@ -148,61 +146,37 @@ func TestLoggingFunctions(t *testing.T) {
 		{
 			name:     "Debugf",
 			logFunc:  func(ctx context.Context) { Debugf(ctx, "test debug %s", "msg") },
-			expected: "[Debug] test debug msg",
+			expected: "[Debug] test debug msg\n",
 		},
 		{
 			name:     "Infof",
 			logFunc:  func(ctx context.Context) { Infof(ctx, "test info %s", "msg") },
-			expected: "[Info] test info msg",
+			expected: "[Info] test info msg\n",
 		},
 		{
 			name:     "Warningf",
 			logFunc:  func(ctx context.Context) { Warningf(ctx, "test warn %s", "msg") },
-			expected: "[Warning] test warn msg",
+			expected: "[Warning] test warn msg\n",
 		},
 		{
 			name:     "Errorf",
 			logFunc:  func(ctx context.Context) { Errorf(ctx, "test error %s", "msg") },
-			expected: "[Error] test error msg",
+			expected: "[Error] test error msg\n",
 		},
 		{
 			name: "DebugStructured",
 			logFunc: func(ctx context.Context) {
 				DebugStructured(ctx, map[string]string{"key": "value"}, "test structured %s", "msg")
 			},
-			expected: "[Debug] test structured msg",
+			expected: "[Debug] test structured msg\n",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tw := &testWriter{}
-			ctx := context.Background()
-			err := logger.Init(ctx, logger.LogOpts{
-				LoggerName:          "test-logger",
-				Writers:             []io.Writer{tw},
-				DisableCloudLogging: true,
-				DisableLocalLogging: true,
-				Debug:               true,
-				FormatFunction: func(e logger.LogEntry) string {
-					return fmt.Sprintf("[%s] %s", e.Severity, e.Message)
-				},
-			})
-			if err != nil {
-				t.Fatalf("logger.Init error: %v", err)
-			}
+			tw.logs = ""
 			tt.logFunc(ctx)
-
-			found := false
-			for _, logLine := range tw.logs {
-				if strings.Contains(logLine, tt.expected) {
-					found = true
-					break
-				}
-			}
-			if !found {
-				t.Errorf("expected to find %q in logs, but did not. Logs: %v", tt.expected, tw.logs)
-			}
+			utiltest.AssertEquals(t, tw.logs, tt.expected)
 		})
 	}
 }
