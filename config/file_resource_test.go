@@ -16,12 +16,14 @@ package config
 
 import (
 	"context"
+	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/GoogleCloudPlatform/osconfig/util"
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/google/go-cmp/cmp"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
@@ -375,5 +377,198 @@ func TestFileResourceEnforceStatePresent(t *testing.T) {
 	}
 	if !match {
 		t.Fatal("Repo file contents do not match after enforcement")
+	}
+}
+
+func TestFileResourceValidateErrors(t *testing.T) {
+	ctx := context.Background()
+	tests := []struct {
+		name string
+		fr   *fileResource
+	}{
+		{
+			name: "InvalidState",
+			fr: &fileResource{
+				OSPolicy_Resource_FileResource: &agentendpointpb.OSPolicy_Resource_FileResource{
+					State: agentendpointpb.OSPolicy_Resource_FileResource_DESIRED_STATE_UNSPECIFIED,
+				},
+			},
+		},
+		{
+			name: "InvalidPermissions",
+			fr: &fileResource{
+				OSPolicy_Resource_FileResource: &agentendpointpb.OSPolicy_Resource_FileResource{
+					State:       agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
+					Permissions: "invalid",
+				},
+			},
+		},
+		{
+			name: "LocalPathDoesNotExist",
+			fr: &fileResource{
+				OSPolicy_Resource_FileResource: &agentendpointpb.OSPolicy_Resource_FileResource{
+					Path:  "some/path",
+					State: agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
+					Source: &agentendpointpb.OSPolicy_Resource_FileResource_File{
+						File: &agentendpointpb.OSPolicy_Resource_File{
+							Type: &agentendpointpb.OSPolicy_Resource_File_LocalPath{
+								LocalPath: "does_not_exist",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "UnrecognizedSource",
+			fr: &fileResource{
+				OSPolicy_Resource_FileResource: &agentendpointpb.OSPolicy_Resource_FileResource{
+					Path:   "some/path",
+					State:  agentendpointpb.OSPolicy_Resource_FileResource_CONTENTS_MATCH,
+					Source: nil,
+				},
+			},
+		},
+		{
+			name: "ContentDownloadError",
+			fr: &fileResource{
+				OSPolicy_Resource_FileResource: &agentendpointpb.OSPolicy_Resource_FileResource{
+					Path:  "", // Empty path causes write error to temp directory
+					State: agentendpointpb.OSPolicy_Resource_FileResource_CONTENTS_MATCH,
+					Source: &agentendpointpb.OSPolicy_Resource_FileResource_Content{
+						Content: "test content",
+					},
+				},
+			},
+		},
+		{
+			name: "RemoteDownloadError",
+			fr: &fileResource{
+				OSPolicy_Resource_FileResource: &agentendpointpb.OSPolicy_Resource_FileResource{
+					Path:  "some/path",
+					State: agentendpointpb.OSPolicy_Resource_FileResource_CONTENTS_MATCH,
+					Source: &agentendpointpb.OSPolicy_Resource_FileResource_File{
+						File: &agentendpointpb.OSPolicy_Resource_File{
+							Type: &agentendpointpb.OSPolicy_Resource_File_Remote_{
+								Remote: &agentendpointpb.OSPolicy_Resource_File_Remote{
+									Uri: "doesnot/exist",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if _, err := tt.fr.validate(ctx); err == nil {
+				t.Fatal("expected error, got nil")
+			}
+		})
+	}
+}
+
+func TestFileResourceEnforceStateErrors(t *testing.T) {
+	ctx := context.Background()
+	tests := []struct {
+		name string
+		fr   *fileResource
+	}{
+		{
+			name: "InvalidState",
+			fr: &fileResource{
+				managedFile: ManagedFile{
+					State: agentendpointpb.OSPolicy_Resource_FileResource_DESIRED_STATE_UNSPECIFIED,
+				},
+			},
+		},
+		{
+			name: "InvalidPathRemove",
+			fr: &fileResource{
+				managedFile: ManagedFile{
+					Path:  "/path/does/not/exist",
+					State: agentendpointpb.OSPolicy_Resource_FileResource_ABSENT,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if _, err := tt.fr.enforceState(ctx); err == nil {
+				t.Fatal("expected error, got nil")
+			}
+		})
+	}
+}
+
+func TestFileResourceEnforceStateDownload(t *testing.T) {
+	ctx := context.Background()
+	tmpDir, err := ioutil.TempDir("", "test_enforce_download")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	dst := filepath.Join(tmpDir, "dst")
+
+	tests := []struct {
+		name        string
+		fr          *fileResource
+		wantErr     error
+		wantContent string
+	}{
+		{
+			name: "EnforceStateDownloadError",
+			fr: &fileResource{
+				OSPolicy_Resource_FileResource: &agentendpointpb.OSPolicy_Resource_FileResource{
+					Path:   "some/path",
+					State:  agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
+					Source: nil,
+				},
+				managedFile: ManagedFile{
+					State: agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
+				},
+			},
+			wantErr: errors.New("unrecognized Source type for FileResource: %!q(<nil>)"),
+		},
+		{
+			name: "EnforceStateDownloadSuccess",
+			fr: &fileResource{
+				OSPolicy_Resource_FileResource: &agentendpointpb.OSPolicy_Resource_FileResource{
+					Path:  dst,
+					State: agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
+					Source: &agentendpointpb.OSPolicy_Resource_FileResource_Content{
+						Content: "test content",
+					},
+				},
+				managedFile: ManagedFile{
+					State:      agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
+					Path:       dst,
+					Permisions: 0644,
+				},
+			},
+			wantErr:     nil,
+			wantContent: "test content",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			inDesiredState, err := tt.fr.enforceState(ctx)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			if tt.wantErr != nil {
+				return
+			}
+
+			utiltest.AssertEquals(t, inDesiredState, true)
+
+			b, err := ioutil.ReadFile(tt.fr.managedFile.Path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			utiltest.AssertEquals(t, string(b), tt.wantContent)
+		})
 	}
 }
