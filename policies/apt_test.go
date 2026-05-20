@@ -356,9 +356,9 @@ func TestAptChanges(t *testing.T) {
 		wantErr          error
 	}{
 		{
-			name:             "no changes, want nil error",
-			aptInstalled:     []*agentendpointpb.Package{},
-			wantErr:          nil,
+			name:         "no changes, want nil error",
+			aptInstalled: []*agentendpointpb.Package{},
+			wantErr:      nil,
 		},
 		{
 			name:         "dpkg-query failure, want dkpg-query error",
@@ -408,7 +408,7 @@ func TestAptChanges(t *testing.T) {
 					Envs: aptEnv,
 				},
 			},
-			wantErr:          nil,
+			wantErr: nil,
 		},
 		{
 			name:         "package p1 to install with failure, want installing error",
@@ -457,7 +457,7 @@ func TestAptChanges(t *testing.T) {
 					Envs: aptEnv,
 				},
 			},
-			wantErr:          nil,
+			wantErr: nil,
 		},
 		{
 			name:       "package p1 to upgrade with failure, want upgrading error",
@@ -497,7 +497,7 @@ func TestAptChanges(t *testing.T) {
 					Envs: aptEnv,
 				},
 			},
-			wantErr:          nil,
+			wantErr: nil,
 		},
 		{
 			name:       "package p1 to remove with failure, want removing error",
