@@ -104,6 +104,7 @@ func MatchSnapshot(t testReporter, actual any, snapshotFilepath string) {
 // ExpectedCommand defines a reusable expected command call
 type ExpectedCommand struct {
 	Cmd    *exec.Cmd
+	Envs   []string
 	Stdout []byte
 	Stderr []byte
 	Err    error
@@ -197,6 +198,9 @@ func SetExpectedCommands(ctx context.Context, mockCommandRunner *utilmocks.MockC
 
 	var prev *gomock.Call
 	for _, expectedCommand := range expectedCommands {
+		if expectedCommand.Envs != nil {
+			expectedCommand.Cmd.Env = append(os.Environ(), expectedCommand.Envs...)
+		}
 		call := mockCommandRunner.EXPECT().
 			Run(ctx, utilmocks.EqCmd(expectedCommand.Cmd)).
 			Return(expectedCommand.Stdout, expectedCommand.Stderr, expectedCommand.Err).
