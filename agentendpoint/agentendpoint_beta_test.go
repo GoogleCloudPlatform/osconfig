@@ -17,6 +17,7 @@ package agentendpoint
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"testing"
@@ -24,6 +25,7 @@ import (
 
 	agentendpoint "cloud.google.com/go/osconfig/agentendpoint/apiv1beta"
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
@@ -47,22 +49,22 @@ func (s *agentEndpointServiceBetaTestServer) LookupEffectiveGuestPolicy(ctx cont
 
 type testBetaClient struct {
 	client *BetaClient
-	s      *grpc.Server
+	server *grpc.Server
 }
 
 func newBetaTestClient(ctx context.Context, srv agentendpointpb.AgentEndpointServiceServer) (*testBetaClient, error) {
-	lis := bufconn.Listen(bufSize)
-	s := grpc.NewServer()
-	agentendpointpb.RegisterAgentEndpointServiceServer(s, srv)
+	listener := bufconn.Listen(bufSize)
+	server := grpc.NewServer()
+	agentendpointpb.RegisterAgentEndpointServiceServer(server, srv)
 
 	go func() {
-		if err := s.Serve(lis); err != nil {
+		if err := server.Serve(listener); err != nil {
 			log.Fatalf("Server exited with error: %v", err)
 		}
 	}()
 
 	var bufDialer = func(string, time.Duration) (net.Conn, error) {
-		return lis.Dial()
+		return listener.Dial()
 	}
 
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
@@ -78,7 +80,7 @@ func newBetaTestClient(ctx context.Context, srv agentendpointpb.AgentEndpointSer
 
 	return &testBetaClient{
 		client: &BetaClient{raw: client, noti: make(chan struct{}, 1)},
-		s:      s,
+		server: server,
 	}, nil
 }
 
@@ -89,7 +91,7 @@ func TestBetaClientClose(t *testing.T) {
 	if err != nil {
 		t.Fatalf("newBetaTestClient() error: %v", err)
 	}
-	defer tc.s.Stop()
+	defer tc.server.Stop()
 
 	if tc.client.Closed() {
 		t.Errorf("Closed() = true, want false")
@@ -108,37 +110,37 @@ func TestLookupEffectiveGuestPolicies(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name    string
-		wantErr error
+		name       string
+		mockErr    error
+		wantErr    error
 	}{
 		{
-			name:    "successful server response, want non-nil policy",
-			wantErr: nil,
+			name:       "successful server response, want non-nil policy",
+			mockErr:    nil,
+			wantErr:    nil,
 		},
 		{
-			name:    "server returns error, want error",
-			wantErr: errors.New("mock error"),
+			name:       "server returns error, want error",
+			mockErr:    errors.New("mock error"),
+			wantErr:    fmt.Errorf("error calling LookupEffectiveGuestPolicies: %w", errors.New(`code: "Unknown", message: "mock error", details: []`)),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			srv := newAgentEndpointServiceBetaTestServer()
-			srv.mockError = tt.wantErr
+			srv.mockError = tt.mockErr
 
 			tc, err := newBetaTestClient(ctx, srv)
 			if err != nil {
 				t.Fatal(err)
 			}
 			defer tc.client.Close()
-			defer tc.s.Stop()
+			defer tc.server.Stop()
 
-			policy, err := tc.client.LookupEffectiveGuestPolicies(ctx)
-			if (err != nil) != (tt.wantErr != nil) {
-				t.Fatalf("LookupEffectiveGuestPolicies() unexpected error state: got err = %v, wantErr = %v", err, tt.wantErr)
-			}
-
-			if tt.wantErr == nil && policy == nil {
+			gotPolicy, gotErr := tc.client.LookupEffectiveGuestPolicies(ctx)
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
+			if tt.wantErr == nil && gotPolicy == nil {
 				t.Fatal("LookupEffectiveGuestPolicies() returned nil policy, want non-nil")
 			}
 		})
