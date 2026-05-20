@@ -466,7 +466,8 @@ func TestLoggingFlags(t *testing.T) {
 
 // TestIDToken validates token caching and token parsing errors.
 func TestIDToken(t *testing.T) {
-	validToken := tokenWithExp(time.Date(2100, 1, 1, 0, 0, 0, 0, time.UTC))
+	validTokenExp := time.Date(2100, 1, 1, 0, 0, 0, 0, time.UTC)
+	validToken := tokenWithExp(validTokenExp)
 	expiringToken := tokenWithExp(time.Now().Add(5 * time.Minute))
 	malformedToken := "not.a.valid.token"
 	malformedTokenErr := errors.New("jws: invalid token received")
@@ -475,18 +476,19 @@ func TestIDToken(t *testing.T) {
 		name         string
 		handler      http.HandlerFunc
 		setup        func()
-		numCalls     int
 		wantToken    string
 		wantErr      error
 		wantRequests int
 	}{
 		{
-			name:         "token stays valid across two calls, reuses cached token",
-			handler:      metadataIdentityHandler(validToken),
-			numCalls:     2,
+			name:    "cached token is valid, returns cached token without metadata request",
+			handler: metadataIdentityHandler(validToken),
+			setup: func() {
+				identity = idToken{raw: validToken, exp: &validTokenExp}
+			},
 			wantToken:    validToken,
 			wantErr:      nil,
-			wantRequests: 1,
+			wantRequests: 0,
 		},
 		{
 			name:    "cached token expires within ten minutes, fetches a fresh valid token",
@@ -495,7 +497,6 @@ func TestIDToken(t *testing.T) {
 				exp := time.Now().Add(5 * time.Minute)
 				identity = idToken{raw: expiringToken, exp: &exp}
 			},
-			numCalls:     1,
 			wantToken:    validToken,
 			wantErr:      nil,
 			wantRequests: 1,
@@ -505,15 +506,13 @@ func TestIDToken(t *testing.T) {
 			handler: func(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "internal error", http.StatusInternalServerError)
 			},
-			numCalls: 1,
-			wantErr:  fmt.Errorf("error getting token from metadata: %w", errors.New("compute: Received 500 `internal error\n`")),
+			wantErr: fmt.Errorf("error getting token from metadata: %w", errors.New("compute: Received 500 `internal error\n`")),
 			// The compute/metadata client library automatically retries on 500 errors (1 initial + 5 retries).
 			wantRequests: 6,
 		},
 		{
 			name:         "metadata server returns malformed token, returns an error",
 			handler:      metadataIdentityHandler(malformedToken),
-			numCalls:     1,
 			wantErr:      malformedTokenErr,
 			wantRequests: 1,
 		},
@@ -532,11 +531,7 @@ func TestIDToken(t *testing.T) {
 				tt.setup()
 			}
 
-			var token string
-			var err error
-			for i := 0; i < tt.numCalls; i++ {
-				token, err = IDToken()
-			}
+			token, err := IDToken()
 
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 			utiltest.AssertEquals(t, token, tt.wantToken)
@@ -993,57 +988,57 @@ func TestDisableCloudLogging(t *testing.T) {
 // TestSetScalibrEnablement applies metadata precedence for scalibr enablement.
 func TestSetScalibrEnablement(t *testing.T) {
 	tests := []struct {
-		name    string
-		projVal string
-		instVal string
-		want    bool
+		name string
+		md   metadataJSON
+		want bool
 	}{
 		{
-			name:    "project and instance values are empty, returns scalibr disabled",
-			projVal: "",
-			instVal: "",
-			want:    false,
+			name: "project and instance values are empty, returns scalibr disabled",
+			want: false,
 		},
 		{
-			name:    "project enables scalibr and instance is empty, returns scalibr enabled",
-			projVal: "true",
-			instVal: "",
-			want:    true,
+			name: "project enables scalibr and instance is empty, returns scalibr enabled",
+			md: metadataJSON{
+				Project: projectJSON{Attributes: attributesJSON{ScalibrLinuxEnabled: "true"}},
+			},
+			want: true,
 		},
 		{
-			name:    "project disables scalibr and instance is empty, returns scalibr disabled",
-			projVal: "false",
-			instVal: "",
-			want:    false,
+			name: "project disables scalibr and instance is empty, returns scalibr disabled",
+			md: metadataJSON{
+				Project: projectJSON{Attributes: attributesJSON{ScalibrLinuxEnabled: "false"}},
+			},
+			want: false,
 		},
 		{
-			name:    "instance enables scalibr and project is empty, returns scalibr enabled",
-			projVal: "",
-			instVal: "true",
-			want:    true,
+			name: "instance enables scalibr and project is empty, returns scalibr enabled",
+			md: metadataJSON{
+				Instance: instanceJSON{Attributes: attributesJSON{ScalibrLinuxEnabled: "true"}},
+			},
+			want: true,
 		},
 		{
-			name:    "instance enables scalibr and project disables it, returns instance override",
-			projVal: "false",
-			instVal: "true",
-			want:    true,
+			name: "instance enables scalibr and project disables it, returns instance override",
+			md: metadataJSON{
+				Project:  projectJSON{Attributes: attributesJSON{ScalibrLinuxEnabled: "false"}},
+				Instance: instanceJSON{Attributes: attributesJSON{ScalibrLinuxEnabled: "true"}},
+			},
+			want: true,
 		},
 		{
-			name:    "instance disables scalibr and project enables it, returns instance override",
-			projVal: "true",
-			instVal: "false",
-			want:    false,
+			name: "instance disables scalibr and project enables it, returns instance override",
+			md: metadataJSON{
+				Project:  projectJSON{Attributes: attributesJSON{ScalibrLinuxEnabled: "true"}},
+				Instance: instanceJSON{Attributes: attributesJSON{ScalibrLinuxEnabled: "false"}},
+			},
+			want: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &config{}
-			md := metadataJSON{
-				Project:  projectJSON{Attributes: attributesJSON{ScalibrLinuxEnabled: tt.projVal}},
-				Instance: instanceJSON{Attributes: attributesJSON{ScalibrLinuxEnabled: tt.instVal}},
-			}
-			setScalibrEnablement(md, c)
+			setScalibrEnablement(tt.md, c)
 
 			utiltest.AssertEquals(t, c.scalibrLinuxEnabled, tt.want)
 		})
@@ -1053,57 +1048,57 @@ func TestSetScalibrEnablement(t *testing.T) {
 // TestSetTraceGetInventory applies metadata precedence for inventory tracing.
 func TestSetTraceGetInventory(t *testing.T) {
 	tests := []struct {
-		name    string
-		projVal string
-		instVal string
-		want    bool
+		name string
+		md   metadataJSON
+		want bool
 	}{
 		{
-			name:    "project and instance values are empty, returns trace get inventory disabled",
-			projVal: "",
-			instVal: "",
-			want:    false,
+			name: "project and instance values are empty, returns trace get inventory disabled",
+			want: false,
 		},
 		{
-			name:    "project enables trace get inventory and instance is empty, returns tracing enabled",
-			projVal: "true",
-			instVal: "",
-			want:    true,
+			name: "project enables trace get inventory and instance is empty, returns tracing enabled",
+			md: metadataJSON{
+				Project: projectJSON{Attributes: attributesJSON{TraceGetInventory: "true"}},
+			},
+			want: true,
 		},
 		{
-			name:    "project disables trace get inventory and instance is empty, returns tracing disabled",
-			projVal: "false",
-			instVal: "",
-			want:    false,
+			name: "project disables trace get inventory and instance is empty, returns tracing disabled",
+			md: metadataJSON{
+				Project: projectJSON{Attributes: attributesJSON{TraceGetInventory: "false"}},
+			},
+			want: false,
 		},
 		{
-			name:    "instance enables trace get inventory and project is empty, returns tracing enabled",
-			projVal: "",
-			instVal: "true",
-			want:    true,
+			name: "instance enables trace get inventory and project is empty, returns tracing enabled",
+			md: metadataJSON{
+				Instance: instanceJSON{Attributes: attributesJSON{TraceGetInventory: "true"}},
+			},
+			want: true,
 		},
 		{
-			name:    "instance enables trace get inventory and project disables it, returns instance override",
-			projVal: "false",
-			instVal: "true",
-			want:    true,
+			name: "instance enables trace get inventory and project disables it, returns instance override",
+			md: metadataJSON{
+				Project:  projectJSON{Attributes: attributesJSON{TraceGetInventory: "false"}},
+				Instance: instanceJSON{Attributes: attributesJSON{TraceGetInventory: "true"}},
+			},
+			want: true,
 		},
 		{
-			name:    "instance disables trace get inventory and project enables it, returns instance override",
-			projVal: "true",
-			instVal: "false",
-			want:    false,
+			name: "instance disables trace get inventory and project enables it, returns instance override",
+			md: metadataJSON{
+				Project:  projectJSON{Attributes: attributesJSON{TraceGetInventory: "true"}},
+				Instance: instanceJSON{Attributes: attributesJSON{TraceGetInventory: "false"}},
+			},
+			want: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &config{}
-			md := metadataJSON{
-				Project:  projectJSON{Attributes: attributesJSON{TraceGetInventory: tt.projVal}},
-				Instance: instanceJSON{Attributes: attributesJSON{TraceGetInventory: tt.instVal}},
-			}
-			setTraceGetInventory(md, c)
+			setTraceGetInventory(tt.md, c)
 
 			utiltest.AssertEquals(t, c.traceGetInventory, tt.want)
 		})
@@ -1115,96 +1110,106 @@ func TestSetSVCEndpoint(t *testing.T) {
 	utiltest.OverrideVariable(t, endpoint, *endpoint)
 
 	tests := []struct {
-		name         string
-		flag         string
-		instNew      string
-		instOld      string
-		projNew      string
-		projOld      string
-		universe     string
-		instanceZone string
-		want         string
+		name string
+		flag string
+		md   metadataJSON
+		cfg  config
+		want string
 	}{
 		{
-			name:         "flag and metadata endpoints are empty, returns default zonal endpoint",
-			flag:         prodEndpoint,
-			instanceZone: "projects/123/zones/us-west1-a",
-			universe:     "googleapis.com",
-			want:         "us-west1-a-osconfig.googleapis.com.:443",
+			name: "flag and metadata endpoints are empty, returns default zonal endpoint",
+			flag: prodEndpoint,
+			cfg: config{
+				instanceZone:   "projects/123/zones/us-west1-a",
+				svcEndpoint:    prodEndpoint,
+				universeDomain: "googleapis.com",
+			},
+			want: "us-west1-a-osconfig.googleapis.com.:443",
 		},
 		{
-			name:     "endpoint flag is set, returns flag endpoint",
-			flag:     "custom-endpoint",
-			instNew:  "inst-new",
-			universe: "googleapis.com",
-			want:     "custom-endpoint",
+			name: "endpoint flag is set, returns flag endpoint",
+			flag: "custom-endpoint",
+			md: metadataJSON{
+				Instance: instanceJSON{Attributes: attributesJSON{OSConfigEndpoint: "inst-new"}},
+			},
+			cfg: config{
+				svcEndpoint:    prodEndpoint,
+				universeDomain: "googleapis.com",
+			},
+			want: "custom-endpoint",
 		},
 		{
-			name:         "instance new endpoint is set, returns zonal instance endpoint",
-			flag:         prodEndpoint,
-			instNew:      "inst-new-{zone}",
-			instanceZone: "projects/123/zones/us-west1-a",
-			universe:     "googleapis.com",
-			want:         "inst-new-us-west1-a",
+			name: "instance new endpoint is set, returns zonal instance endpoint",
+			flag: prodEndpoint,
+			md: metadataJSON{
+				Instance: instanceJSON{Attributes: attributesJSON{OSConfigEndpoint: "inst-new-{zone}"}},
+			},
+			cfg: config{
+				instanceZone:   "projects/123/zones/us-west1-a",
+				svcEndpoint:    prodEndpoint,
+				universeDomain: "googleapis.com",
+			},
+			want: "inst-new-us-west1-a",
 		},
 		{
-			name:         "instance legacy endpoint is set, returns zonal legacy instance endpoint",
-			flag:         prodEndpoint,
-			instOld:      "inst-old-{zone}",
-			instanceZone: "projects/123/zones/us-west1-a",
-			universe:     "googleapis.com",
-			want:         "inst-old-us-west1-a",
+			name: "instance legacy endpoint is set, returns zonal legacy instance endpoint",
+			flag: prodEndpoint,
+			md: metadataJSON{
+				Instance: instanceJSON{Attributes: attributesJSON{OSConfigEndpointOld: "inst-old-{zone}"}},
+			},
+			cfg: config{
+				instanceZone:   "projects/123/zones/us-west1-a",
+				svcEndpoint:    prodEndpoint,
+				universeDomain: "googleapis.com",
+			},
+			want: "inst-old-us-west1-a",
 		},
 		{
-			name:         "project new endpoint is set, returns zonal project endpoint",
-			flag:         prodEndpoint,
-			projNew:      "proj-new-{zone}",
-			instanceZone: "projects/123/zones/us-west1-a",
-			universe:     "googleapis.com",
-			want:         "proj-new-us-west1-a",
+			name: "project new endpoint is set, returns zonal project endpoint",
+			flag: prodEndpoint,
+			md: metadataJSON{
+				Project: projectJSON{Attributes: attributesJSON{OSConfigEndpoint: "proj-new-{zone}"}},
+			},
+			cfg: config{
+				instanceZone:   "projects/123/zones/us-west1-a",
+				svcEndpoint:    prodEndpoint,
+				universeDomain: "googleapis.com",
+			},
+			want: "proj-new-us-west1-a",
 		},
 		{
-			name:         "project legacy endpoint is set, returns zonal legacy project endpoint",
-			flag:         prodEndpoint,
-			projOld:      "proj-old-{zone}",
-			instanceZone: "projects/123/zones/us-west1-a",
-			universe:     "googleapis.com",
-			want:         "proj-old-us-west1-a",
+			name: "project legacy endpoint is set, returns zonal legacy project endpoint",
+			flag: prodEndpoint,
+			md: metadataJSON{
+				Project: projectJSON{Attributes: attributesJSON{OSConfigEndpointOld: "proj-old-{zone}"}},
+			},
+			cfg: config{
+				instanceZone:   "projects/123/zones/us-west1-a",
+				svcEndpoint:    prodEndpoint,
+				universeDomain: "googleapis.com",
+			},
+			want: "proj-old-us-west1-a",
 		},
 		{
-			name:     "endpoint uses default domain and universe domain is custom, returns rewritten universe endpoint",
-			flag:     prodEndpoint,
-			instNew:  "test-osconfig.googleapis.com",
-			universe: "my-universe.com",
-			want:     "test-osconfig.my-universe.com",
+			name: "endpoint uses default domain and universe domain is custom, returns rewritten universe endpoint",
+			flag: prodEndpoint,
+			md: metadataJSON{
+				Instance: instanceJSON{Attributes: attributesJSON{OSConfigEndpoint: "test-osconfig.googleapis.com"}},
+			},
+			cfg: config{
+				svcEndpoint:    prodEndpoint,
+				universeDomain: "my-universe.com",
+			},
+			want: "test-osconfig.my-universe.com",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			utiltest.OverrideVariable(t, endpoint, tt.flag)
-			c := &config{
-				instanceZone:   tt.instanceZone,
-				svcEndpoint:    prodEndpoint,
-				universeDomain: tt.universe,
-			}
+			c := tt.cfg
 
-			md := metadataJSON{
-				Project: projectJSON{
-					Attributes: attributesJSON{
-						OSConfigEndpoint:    tt.projNew,
-						OSConfigEndpointOld: tt.projOld,
-					},
-				},
-				Instance: instanceJSON{
-					Attributes: attributesJSON{
-						OSConfigEndpoint:    tt.instNew,
-						OSConfigEndpointOld: tt.instOld,
-					},
-				},
-			}
-
-			setSVCEndpoint(md, c)
+			setSVCEndpoint(tt.md, &c)
 
 			utiltest.AssertEquals(t, c.svcEndpoint, tt.want)
 		})
