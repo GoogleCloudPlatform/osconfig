@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"syscall"
 	"testing"
 	"time"
@@ -217,19 +218,20 @@ func TestInstallRecipesHandlesInputs(t *testing.T) {
 func TestSetConfig(t *testing.T) {
 	ctx := context.Background()
 
+	mockCtrl := gomock.NewController(t)
+	t.Cleanup(func() { mockCtrl.Finish() })
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+
 	dpkgQueryArgs := []string{"-W", "-f", "\\{\"architecture\":\"${Architecture}\",\"package\":\"${Package}\",\"source_name\":\"${source:Package}\",\"source_version\":\"${source:Version}\",\"status\":\"${db:Status-Status}\",\"version\":\"${Version}\"\\}\n"}
 	rpmQueryArgs := []string{"--queryformat", "\\{\"architecture\":\"%{ARCH}\",\"package\":\"%{NAME}\",\"source_name\":\"%{SOURCERPM}\",\"version\":\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\"\\}\n", "-a"}
 	aptUpgradableArgs := []string{"--just-print", "-qq", "dist-upgrade"}
 	yumCheckUpdateArgs := []string{"check-update", "--assumeyes"}
 	yumListUpdatesArgs := []string{"update", "--assumeno", "--color=never"}
 	zypperListUpdatesArgs := []string{"--gpg-auto-import-keys", "-q", "list-updates"}
+	aptEnv := []string{"DEBIAN_FRONTEND=noninteractive"}
 
 	yumCheckUpdateErr := exec.Command("/bin/bash", "-c", "exit 100").Run()
-
-	mockCtrl := gomock.NewController(t)
-	t.Cleanup(func() { mockCtrl.Finish() })
-
-	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 
 	tests := []struct {
 		name             string
@@ -239,13 +241,15 @@ func TestSetConfig(t *testing.T) {
 		zypperExists     bool
 		googetExists     bool
 		expectedCommands []utiltest.ExpectedCommand
+		wantErr          error
 	}{
 		{
-			name: "empty policy",
-			egp:  &agentendpointpb.EffectiveGuestPolicy{},
+			name:    "empty policy, want nil error",
+			egp:     &agentendpointpb.EffectiveGuestPolicy{},
+			wantErr: nil,
 		},
 		{
-			name: "apt install",
+			name: "apt install package p1, want nil error",
 			egp: &agentendpointpb.EffectiveGuestPolicy{
 				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
 					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_INSTALLED, Manager: agentendpointpb.Package_APT}},
@@ -257,21 +261,29 @@ func TestSetConfig(t *testing.T) {
 					Cmd:    exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...),
 					Stdout: []byte(""),
 				},
-				{Cmd: exec.Command("/usr/bin/apt-get", "update")},
-				{Cmd: exec.Command("/usr/bin/apt-get", "install", "-y", "p1")},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "update"),
+					Envs: aptEnv,
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "install", "-y", "p1"),
+					Envs: aptEnv,
+				},
 			},
+			wantErr: nil,
 		},
 		{
-			name: "apt install manager not found",
+			name: "apt install manager not found, want nil error",
 			egp: &agentendpointpb.EffectiveGuestPolicy{
 				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
 					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_INSTALLED, Manager: agentendpointpb.Package_APT}},
 				},
 			},
 			aptExists: false,
+			wantErr:   nil,
 		},
 		{
-			name: "apt update",
+			name: "apt update package p1, want nil error",
 			egp: &agentendpointpb.EffectiveGuestPolicy{
 				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
 					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_UPDATED, Manager: agentendpointpb.Package_APT}},
@@ -283,16 +295,24 @@ func TestSetConfig(t *testing.T) {
 					Cmd:    exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...),
 					Stdout: []byte(`{"package":"p1","status":"installed"}`),
 				},
-				{Cmd: exec.Command("/usr/bin/apt-get", "update")},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "update"),
+					Envs: aptEnv,
+				},
 				{
 					Cmd:    exec.Command("/usr/bin/apt-get", aptUpgradableArgs...),
 					Stdout: []byte("Inst p1 [1.0] (2.0 repo [amd64])\n"),
+					Envs:   aptEnv,
 				},
-				{Cmd: exec.Command("/usr/bin/apt-get", "install", "-y", "p1")},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "install", "-y", "p1"),
+					Envs: aptEnv,
+				},
 			},
+			wantErr: nil,
 		},
 		{
-			name: "apt remove",
+			name: "apt remove package p1, want nil error",
 			egp: &agentendpointpb.EffectiveGuestPolicy{
 				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
 					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_REMOVED, Manager: agentendpointpb.Package_APT}},
@@ -304,11 +324,15 @@ func TestSetConfig(t *testing.T) {
 					Cmd:    exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...),
 					Stdout: []byte(`{"package":"p1","status":"installed"}`),
 				},
-				{Cmd: exec.Command("/usr/bin/apt-get", "remove", "-y", "p1")},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "remove", "-y", "p1"),
+					Envs: aptEnv,
+				},
 			},
+			wantErr: nil,
 		},
 		{
-			name: "yum install",
+			name: "yum install package p1, want nil error",
 			egp: &agentendpointpb.EffectiveGuestPolicy{
 				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
 					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_INSTALLED, Manager: agentendpointpb.Package_YUM}},
@@ -320,11 +344,14 @@ func TestSetConfig(t *testing.T) {
 					Cmd:    exec.Command("/usr/bin/rpmquery", rpmQueryArgs...),
 					Stdout: []byte(""),
 				},
-				{Cmd: exec.Command("/usr/bin/yum", "install", "--assumeyes", "p1")},
+				{
+					Cmd: exec.Command("/usr/bin/yum", "install", "--assumeyes", "p1"),
+				},
 			},
+			wantErr: nil,
 		},
 		{
-			name: "yum update",
+			name: "yum update package p1, want nil error",
 			egp: &agentendpointpb.EffectiveGuestPolicy{
 				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
 					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_UPDATED, Manager: agentendpointpb.Package_YUM}},
@@ -344,11 +371,14 @@ func TestSetConfig(t *testing.T) {
 					Cmd:    exec.Command("/usr/bin/yum", yumListUpdatesArgs...),
 					Stdout: []byte("Updating:\n p1 x86_64 2.0 updates 100 k\n"),
 				},
-				{Cmd: exec.Command("/usr/bin/yum", "install", "--assumeyes", "p1")},
+				{
+					Cmd: exec.Command("/usr/bin/yum", "install", "--assumeyes", "p1"),
+				},
 			},
+			wantErr: nil,
 		},
 		{
-			name: "yum remove",
+			name: "yum remove package p1, want nil error",
 			egp: &agentendpointpb.EffectiveGuestPolicy{
 				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
 					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_REMOVED, Manager: agentendpointpb.Package_YUM}},
@@ -360,11 +390,14 @@ func TestSetConfig(t *testing.T) {
 					Cmd:    exec.Command("/usr/bin/rpmquery", rpmQueryArgs...),
 					Stdout: []byte(`{"package":"p1","status":"installed"}`),
 				},
-				{Cmd: exec.Command("/usr/bin/yum", "remove", "--assumeyes", "p1")},
+				{
+					Cmd: exec.Command("/usr/bin/yum", "remove", "--assumeyes", "p1"),
+				},
 			},
+			wantErr: nil,
 		},
 		{
-			name: "zypper install",
+			name: "zypper install package p1, want nil error",
 			egp: &agentendpointpb.EffectiveGuestPolicy{
 				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
 					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_INSTALLED, Manager: agentendpointpb.Package_ZYPPER}},
@@ -376,11 +409,14 @@ func TestSetConfig(t *testing.T) {
 					Cmd:    exec.Command("/usr/bin/rpmquery", rpmQueryArgs...),
 					Stdout: []byte(""),
 				},
-				{Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "p1")},
+				{
+					Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "p1"),
+				},
 			},
+			wantErr: nil,
 		},
 		{
-			name: "zypper update",
+			name: "zypper update package p1, want nil error",
 			egp: &agentendpointpb.EffectiveGuestPolicy{
 				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
 					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_UPDATED, Manager: agentendpointpb.Package_ZYPPER}},
@@ -396,11 +432,14 @@ func TestSetConfig(t *testing.T) {
 					Cmd:    exec.Command("/usr/bin/zypper", zypperListUpdatesArgs...),
 					Stdout: []byte("v | Repo | p1 | 1.0 | 2.0 | x86_64\n"),
 				},
-				{Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "p1")},
+				{
+					Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "p1"),
+				},
 			},
+			wantErr: nil,
 		},
 		{
-			name: "zypper remove",
+			name: "zypper remove package p1, want nil error",
 			egp: &agentendpointpb.EffectiveGuestPolicy{
 				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
 					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_REMOVED, Manager: agentendpointpb.Package_ZYPPER}},
@@ -412,11 +451,14 @@ func TestSetConfig(t *testing.T) {
 					Cmd:    exec.Command("/usr/bin/rpmquery", rpmQueryArgs...),
 					Stdout: []byte(`{"package":"p1","status":"installed"}`),
 				},
-				{Cmd: exec.Command("/usr/bin/zypper", "--non-interactive", "remove", "p1")},
+				{
+					Cmd: exec.Command("/usr/bin/zypper", "--non-interactive", "remove", "p1"),
+				},
 			},
+			wantErr: nil,
 		},
 		{
-			name: "googet install",
+			name: "googet install package p1, want nil error",
 			egp: &agentendpointpb.EffectiveGuestPolicy{
 				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
 					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_INSTALLED, Manager: agentendpointpb.Package_GOO}},
@@ -428,11 +470,14 @@ func TestSetConfig(t *testing.T) {
 					Cmd:    exec.Command("googet.exe", "installed"),
 					Stdout: []byte(""),
 				},
-				{Cmd: exec.Command("googet.exe", "-noconfirm", "install", "p1")},
+				{
+					Cmd: exec.Command("googet.exe", "-noconfirm", "install", "p1"),
+				},
 			},
+			wantErr: nil,
 		},
 		{
-			name: "googet update",
+			name: "googet update package p1, want nil error",
 			egp: &agentendpointpb.EffectiveGuestPolicy{
 				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
 					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_UPDATED, Manager: agentendpointpb.Package_GOO}},
@@ -448,11 +493,14 @@ func TestSetConfig(t *testing.T) {
 					Cmd:    exec.Command("googet.exe", "update"),
 					Stdout: []byte("p1.noarch, 1.0 --> 2.0 from repo\n"),
 				},
-				{Cmd: exec.Command("googet.exe", "-noconfirm", "install", "p1")},
+				{
+					Cmd: exec.Command("googet.exe", "-noconfirm", "install", "p1"),
+				},
 			},
+			wantErr: nil,
 		},
 		{
-			name: "googet remove",
+			name: "googet remove package p1, want nil error",
 			egp: &agentendpointpb.EffectiveGuestPolicy{
 				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
 					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_REMOVED, Manager: agentendpointpb.Package_GOO}},
@@ -464,11 +512,14 @@ func TestSetConfig(t *testing.T) {
 					Cmd:    exec.Command("googet.exe", "installed"),
 					Stdout: []byte("p1.x86_64 1.0\n"),
 				},
-				{Cmd: exec.Command("googet.exe", "-noconfirm", "remove", "p1")},
+				{
+					Cmd: exec.Command("googet.exe", "-noconfirm", "remove", "p1"),
+				},
 			},
+			wantErr: nil,
 		},
 		{
-			name: "package ANY install",
+			name: "package ANY install p1, want nil error",
 			egp: &agentendpointpb.EffectiveGuestPolicy{
 				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
 					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_INSTALLED, Manager: agentendpointpb.Package_ANY}},
@@ -480,17 +531,26 @@ func TestSetConfig(t *testing.T) {
 					Cmd:    exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...),
 					Stdout: []byte(""),
 				},
-				{Cmd: exec.Command("/usr/bin/apt-get", "update")},
-				{Cmd: exec.Command("/usr/bin/apt-get", "install", "-y", "p1")},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "update"),
+					Envs: aptEnv,
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "install", "-y", "p1"),
+					Envs: aptEnv,
+				},
 				{
 					Cmd:    exec.Command("/usr/bin/rpmquery", rpmQueryArgs...),
 					Stdout: []byte(""),
 				},
-				{Cmd: exec.Command("/usr/bin/yum", "install", "--assumeyes", "p1")},
+				{
+					Cmd: exec.Command("/usr/bin/yum", "install", "--assumeyes", "p1"),
+				},
 			},
+			wantErr: nil,
 		},
 		{
-			name: "all repositories",
+			name: "all repositories configured, want nil error",
 			egp: &agentendpointpb.EffectiveGuestPolicy{
 				PackageRepositories: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackageRepository{
 					{PackageRepository: &agentendpointpb.PackageRepository{Repository: &agentendpointpb.PackageRepository_Apt{Apt: &agentendpointpb.AptRepository{Uri: "http://repo"}}}},
@@ -500,6 +560,195 @@ func TestSetConfig(t *testing.T) {
 				},
 			},
 			aptExists: true, yumExists: true, zypperExists: true, googetExists: true,
+			wantErr: nil,
+		},
+		{
+			name: "apt install p1 with failure, want installing error",
+			egp: &agentendpointpb.EffectiveGuestPolicy{
+				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
+					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_INSTALLED, Manager: agentendpointpb.Package_APT}},
+				},
+			},
+			aptExists: true,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...),
+					Stdout: []byte(""),
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "update"),
+					Envs: aptEnv,
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "install", "-y", "p1"),
+					Envs: aptEnv,
+					Err:  fmt.Errorf("individual install error"),
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "install", "-y", "p1"),
+					Envs: aptEnv,
+					Err:  fmt.Errorf("individual install error"),
+				},
+			},
+			wantErr: setConfigError{
+				errors: []error{
+					fmt.Errorf("Error performing apt changes: error installing apt packages: Error installing apt package: p1. Error details: error running /usr/bin/apt-get with args [\"install\" \"-y\" \"p1\"]: individual install error, stdout: \"\", stderr: \"\""),
+				},
+			},
+		},
+		{
+			name: "yum install p1 with failure, want installing error",
+			egp: &agentendpointpb.EffectiveGuestPolicy{
+				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
+					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_INSTALLED, Manager: agentendpointpb.Package_YUM}},
+				},
+			},
+			yumExists: true,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/usr/bin/rpmquery", rpmQueryArgs...),
+					Stdout: []byte(""),
+				},
+				{
+					Cmd: exec.Command("/usr/bin/yum", "install", "--assumeyes", "p1"),
+					Err: fmt.Errorf("yum error"),
+				},
+			},
+			wantErr: setConfigError{
+				errors: []error{
+					fmt.Errorf("Error performing yum changes: error installing yum packages: error running /usr/bin/yum with args [\"install\" \"--assumeyes\" \"p1\"]: yum error, stdout: \"\", stderr: \"\""),
+				},
+			},
+		},
+		{
+			name: "zypper install p1 with failure, want installing error",
+			egp: &agentendpointpb.EffectiveGuestPolicy{
+				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
+					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_INSTALLED, Manager: agentendpointpb.Package_ZYPPER}},
+				},
+			},
+			zypperExists: true,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/usr/bin/rpmquery", rpmQueryArgs...),
+					Stdout: []byte(""),
+				},
+				{
+					Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "p1"),
+					Err: fmt.Errorf("zypper error"),
+				},
+			},
+			wantErr: setConfigError{
+				errors: []error{
+					fmt.Errorf("Error performing zypper changes: error installing zypper packages: error running /usr/bin/zypper with args [\"--gpg-auto-import-keys\" \"--non-interactive\" \"install\" \"--auto-agree-with-licenses\" \"p1\"]: zypper error, stdout: \"\", stderr: \"\""),
+				},
+			},
+		},
+		{
+			name: "googet install p1 with failure, want installing  error",
+			egp: &agentendpointpb.EffectiveGuestPolicy{
+				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
+					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_INSTALLED, Manager: agentendpointpb.Package_GOO}},
+				},
+			},
+			googetExists: true,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("googet.exe", "installed"),
+					Stdout: []byte(""),
+				},
+				{
+					Cmd: exec.Command("googet.exe", "-noconfirm", "install", "p1"),
+					Err: fmt.Errorf("googet error"),
+				},
+			},
+			wantErr: setConfigError{
+				errors: []error{
+					fmt.Errorf("Error performing googet changes: error installing googet packages: error running googet.exe with args [\"-noconfirm\" \"install\" \"p1\"]: googet error, stdout: \"\", stderr: \"\""),
+				},
+			},
+		},
+		{
+			name: "package ANY removed and unspecified manager/state, want nil error",
+			egp: &agentendpointpb.EffectiveGuestPolicy{
+				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
+					{
+						Package: &agentendpointpb.Package{
+							Name:         "p1",
+							DesiredState: agentendpointpb.DesiredState_REMOVED,
+							Manager:      agentendpointpb.Package_ANY,
+						},
+					},
+					{
+						Package: &agentendpointpb.Package{
+							Name:         "p2",
+							DesiredState: agentendpointpb.DesiredState_DESIRED_STATE_UNSPECIFIED,
+							Manager:      agentendpointpb.Package_MANAGER_UNSPECIFIED,
+						},
+					},
+					{
+						Package: &agentendpointpb.Package{
+							Name:         "p3",
+							DesiredState: agentendpointpb.DesiredState_UPDATED,
+							Manager:      agentendpointpb.Package_ANY,
+						},
+					},
+				},
+			},
+			aptExists: true, yumExists: true,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...),
+					Stdout: []byte(`{"package":"p1","status":"installed"}`),
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "update"),
+					Envs: aptEnv,
+				},
+				{
+					Cmd:    exec.Command("/usr/bin/apt-get", aptUpgradableArgs...),
+					Stdout: []byte("Inst p3 [1.0] (2.0 repo [amd64])\n"),
+					Envs:   aptEnv,
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "update"),
+					Envs: aptEnv,
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "install", "-y", "p2"),
+					Envs: aptEnv,
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "install", "-y", "p3"),
+					Envs: aptEnv,
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "remove", "-y", "p1"),
+					Envs: aptEnv,
+				},
+				{
+					Cmd:    exec.Command("/usr/bin/rpmquery", rpmQueryArgs...),
+					Stdout: []byte(`{"package":"p1","status":"installed"}`),
+				},
+				{
+					Cmd: exec.Command("/usr/bin/yum", yumCheckUpdateArgs...),
+					Err: yumCheckUpdateErr,
+				},
+				{
+					Cmd:    exec.Command("/usr/bin/yum", yumListUpdatesArgs...),
+					Stdout: []byte("Updating:\n p3 x86_64 2.0 updates 100 k\n"),
+				},
+				{
+					Cmd: exec.Command("/usr/bin/yum", "install", "--assumeyes", "p2"),
+				},
+				{
+					Cmd: exec.Command("/usr/bin/yum", "install", "--assumeyes", "p3"),
+				},
+				{
+					Cmd: exec.Command("/usr/bin/yum", "remove", "--assumeyes", "p1"),
+				},
+			},
+			wantErr: nil,
 		},
 	}
 
@@ -508,7 +757,8 @@ func TestSetConfig(t *testing.T) {
 			setupSetConfigTest(t, tt.aptExists, tt.yumExists, tt.zypperExists, tt.googetExists, mockCommandRunner)
 
 			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
-			setConfig(context.Background(), tt.egp)
+			err := setConfig(context.Background(), tt.egp)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 		})
 	}
 }
@@ -530,6 +780,16 @@ func setupSetConfigTest(t *testing.T, apt, yum, zypper, googet bool, runner *uti
 	utiltest.OverrideVariable(t, &osInfoProvider, (osinfo.Provider)(policiesStubOsInfoProvider{
 		osinfo: osinfo.OSInfo{ShortName: "debian", Version: "11"},
 	}))
+
+	tmpDir := t.TempDir()
+	utiltest.OverrideVariable(t, &googetRepoFilePath, func() string { return filepath.Join(tmpDir, "googet.repo") })
+	utiltest.OverrideVariable(t, &aptRepoFilePath, func() string { return filepath.Join(tmpDir, "apt.list") })
+	utiltest.OverrideVariable(t, &yumRepoFilePath, func() string { return filepath.Join(tmpDir, "yum.repo") })
+	utiltest.OverrideVariable(t, &zypperRepoFilePath, func() string { return filepath.Join(tmpDir, "zypper.repo") })
+
+	utiltest.OverrideVariable(t, &retry, func(ctx context.Context, timeout time.Duration, desc string, f func() error) error {
+		return f()
+	})
 
 	packages.SetCommandRunner(runner)
 	packages.SetPtyCommandRunner(runner)
