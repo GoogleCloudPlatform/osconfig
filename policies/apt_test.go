@@ -20,13 +20,17 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
+	"github.com/GoogleCloudPlatform/osconfig/packages"
+	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
+	"github.com/golang/mock/gomock"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
@@ -327,4 +331,210 @@ func (s stubOsInfoProvider) GetOSInfo(ctx context.Context) (osinfo.OSInfo, error
 		KernelRelease: "test",
 		Architecture:  "x86_64",
 	}, nil
+}
+
+// TestAptChanges tests the aptChanges function, ensuring it correctly handles package installations, removals, and updates.
+func TestAptChanges(t *testing.T) {
+	ctx := context.Background()
+
+	dpkgQueryArgs := []string{"-W", "-f", `\{"architecture":"${Architecture}","package":"${Package}","source_name":"${source:Package}","source_version":"${source:Version}","status":"${db:Status-Status}","version":"${Version}"\}` + "\n"}
+	aptUpgradableArgs := []string{"--just-print", "-qq", "dist-upgrade"}
+	aptEnv := []string{"DEBIAN_FRONTEND=noninteractive"}
+
+	mockCtrl := gomock.NewController(t)
+	t.Cleanup(func() { mockCtrl.Finish() })
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	setupAptChangesTest(t, mockCommandRunner)
+
+	tests := []struct {
+		name             string
+		aptInstalled     []*agentendpointpb.Package
+		aptRemoved       []*agentendpointpb.Package
+		aptUpdated       []*agentendpointpb.Package
+		expectedCommands []utiltest.ExpectedCommand
+		wantErr          error
+	}{
+		{
+			name:         "no changes, want nil error",
+			aptInstalled: []*agentendpointpb.Package{},
+			wantErr:      nil,
+		},
+		{
+			name:         "dpkg-query failure, want dkpg-query error",
+			aptInstalled: []*agentendpointpb.Package{{Name: "p1"}},
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd: exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...),
+					Err: errors.New("dpkg-query error"),
+				},
+			},
+			wantErr: errors.New("error running /usr/bin/dpkg-query with args [\"-W\" \"-f\" \"\\\\{\\\"architecture\\\":\\\"${Architecture}\\\",\\\"package\\\":\\\"${Package}\\\",\\\"source_name\\\":\\\"${source:Package}\\\",\\\"source_version\\\":\\\"${source:Version}\\\",\\\"status\\\":\\\"${db:Status-Status}\\\",\\\"version\\\":\\\"${Version}\\\"\\\\}\\n\"]: dpkg-query error, stdout: \"\", stderr: \"\""),
+		},
+		{
+			name:       "apt-get update failure, want update error",
+			aptUpdated: []*agentendpointpb.Package{{Name: "p1"}},
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...),
+					Stdout: []byte(`{"package":"p1","status":"installed"}`),
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "update"),
+					Envs: aptEnv,
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", aptUpgradableArgs...),
+					Envs: aptEnv,
+					Err:  errors.New("apt-get updates error"),
+				},
+			},
+			wantErr: errors.New("apt-get updates error"),
+		},
+		{
+			name:         "package p1 to install, want nil error",
+			aptInstalled: []*agentendpointpb.Package{{Name: "p1"}},
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...),
+					Stdout: []byte(""),
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "update"),
+					Envs: aptEnv,
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "install", "-y", "p1"),
+					Envs: aptEnv,
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name:         "package p1 to install with failure, want installing error",
+			aptInstalled: []*agentendpointpb.Package{{Name: "p1"}},
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...),
+					Stdout: []byte(""),
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "update"),
+					Envs: aptEnv,
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "install", "-y", "p1"),
+					Envs: aptEnv,
+					Err:  errors.New("bulk install error"),
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "install", "-y", "p1"),
+					Envs: aptEnv,
+					Err:  errors.New("individual install error"),
+				},
+			},
+			wantErr: errors.New("error installing apt packages: Error installing apt package: p1. Error details: error running /usr/bin/apt-get with args [\"install\" \"-y\" \"p1\"]: individual install error, stdout: \"\", stderr: \"\""),
+		},
+		{
+			name:       "package p1 to upgrade, want nil error",
+			aptUpdated: []*agentendpointpb.Package{{Name: "p1"}},
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...),
+					Stdout: []byte(`{"package":"p1","status":"installed"}`),
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "update"),
+					Envs: aptEnv,
+				},
+				{
+					Cmd:    exec.Command("/usr/bin/apt-get", aptUpgradableArgs...),
+					Envs:   aptEnv,
+					Stdout: []byte("Inst p1 [1.0] (2.0 repo [amd64])\n"),
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "install", "-y", "p1"),
+					Envs: aptEnv,
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name:       "package p1 to upgrade with failure, want upgrading error",
+			aptUpdated: []*agentendpointpb.Package{{Name: "p1"}},
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...),
+					Stdout: []byte(`{"package":"p1","status":"installed"}`),
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "update"),
+					Envs: aptEnv,
+				},
+				{
+					Cmd:    exec.Command("/usr/bin/apt-get", aptUpgradableArgs...),
+					Envs:   aptEnv,
+					Stdout: []byte("Inst p1 [1.0] (2.0 repo [amd64])\n"),
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "install", "-y", "p1"),
+					Envs: aptEnv,
+					Err:  errors.New("upgrade error"),
+				},
+			},
+			wantErr: errors.New("error upgrading apt packages: error running /usr/bin/apt-get with args [\"install\" \"-y\" \"p1\"]: upgrade error, stdout: \"\", stderr: \"\""),
+		},
+		{
+			name:       "package p1 to remove, want nil error",
+			aptRemoved: []*agentendpointpb.Package{{Name: "p1"}},
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...),
+					Stdout: []byte(`{"package":"p1","status":"installed"}`),
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "remove", "-y", "p1"),
+					Envs: aptEnv,
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name:       "package p1 to remove with failure, want removing error",
+			aptRemoved: []*agentendpointpb.Package{{Name: "p1"}},
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...),
+					Stdout: []byte(`{"package":"p1","status":"installed"}`),
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "remove", "-y", "p1"),
+					Envs: aptEnv,
+					Err:  errors.New("bulk remove error"),
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "remove", "-y", "p1"),
+					Envs: aptEnv,
+					Err:  errors.New("individual remove error"),
+				},
+			},
+			wantErr: errors.New("error removing apt packages: Error removing apt package: p1. Error details: error running /usr/bin/apt-get with args [\"remove\" \"-y\" \"p1\"]: individual remove error, stdout: \"\", stderr: \"\""),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
+
+			err := aptChanges(context.Background(), tt.aptInstalled, tt.aptRemoved, tt.aptUpdated)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+		})
+	}
+}
+
+// setupAptChangesTest sets up the environment for aptChanges tests by mocking the command runner.
+func setupAptChangesTest(t *testing.T, runner *utilmocks.MockCommandRunner) {
+	utiltest.OverrideVariable(t, &packages.AptExists, true)
+	packages.SetCommandRunner(runner)
+	packages.SetPtyCommandRunner(runner)
 }
