@@ -34,16 +34,16 @@ func init() {
 	packages.MSIExists = true
 }
 
-func TestOsPolicyResourceCallOrder(t *testing.T) {
+func TestOSPolicyResourceMethods(t *testing.T) {
 	ctx := context.Background()
 
 	// Helper to create a fresh valid OSPolicyResource
-	newPR := func() *OSPolicyResource {
+	newPR := func(path string) *OSPolicyResource {
 		return &OSPolicyResource{
 			OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
 				ResourceType: &agentendpointpb.OSPolicy_Resource_File_{
 					File: &agentendpointpb.OSPolicy_Resource_FileResource{
-						Path:  "/path/does/not/exist",
+						Path:  path,
 						State: agentendpointpb.OSPolicy_Resource_FileResource_ABSENT,
 					},
 				},
@@ -53,45 +53,45 @@ func TestOsPolicyResourceCallOrder(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		setupFunc func() error
+		setupFunc func(t *testing.T) error
 		wantErr   error
 	}{
 		{
-			name: "CheckState call before Validate, want run before Validate error",
-			setupFunc: func() error {
-				pr := newPR()
+			name: "CheckState call before Validate, expect run before Validate error",
+			setupFunc: func(t *testing.T) error {
+				pr := newPR("/path/does/not/exist")
 				return pr.CheckState(ctx)
 			},
 			wantErr: errors.New("CheckState run before Validate"),
 		},
 		{
-			name: "EnforceState call before Validate, want run before Validate error",
-			setupFunc: func() error {
-				pr := newPR()
+			name: "EnforceState call before Validate, expect run before Validate error",
+			setupFunc: func(t *testing.T) error {
+				pr := newPR("/path/does/not/exist")
 				return pr.EnforceState(ctx)
 			},
 			wantErr: errors.New("EnforceState run before Validate"),
 		},
 		{
-			name: "Cleanup call before Validate, want run before Validate error",
-			setupFunc: func() error {
-				pr := newPR()
+			name: "Cleanup call before Validate, expect run before Validate error",
+			setupFunc: func(t *testing.T) error {
+				pr := newPR("/path/does/not/exist")
 				return pr.Cleanup(ctx)
 			},
 			wantErr: errors.New("Cleanup run before Validate"),
 		},
 		{
-			name: "PopulateOutput call before Validate, want run before Validate error",
-			setupFunc: func() error {
-				pr := newPR()
+			name: "PopulateOutput call before Validate, expect run before Validate error",
+			setupFunc: func(t *testing.T) error {
+				pr := newPR("/path/does/not/exist")
 				return pr.PopulateOutput(nil)
 			},
 			wantErr: errors.New("PopulateOutput run before Validate"),
 		},
 		{
-			name: "CheckState call after Validate, want success",
-			setupFunc: func() error {
-				pr := newPR()
+			name: "CheckState call after Validate, expect success",
+			setupFunc: func(t *testing.T) error {
+				pr := newPR("/path/does/not/exist")
 				if err := pr.Validate(ctx); err != nil {
 					return err
 				}
@@ -100,21 +100,21 @@ func TestOsPolicyResourceCallOrder(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "EnforceState call after Validate, want no such file error",
-			setupFunc: func() error {
-				pr := newPR()
+			name: "EnforceState call after Validate, expect success",
+			setupFunc: func(t *testing.T) error {
+				tmpPath := utiltest.WriteToTempFileMust(t, "enforce-state-test", []byte("test"))
+				pr := newPR(tmpPath)
 				if err := pr.Validate(ctx); err != nil {
 					return err
 				}
 				return pr.EnforceState(ctx)
 			},
-			// successfully bypassed the "run before Validate" wrapper error.
-			wantErr: errors.New("error removing \"/path/does/not/exist\": remove /path/does/not/exist: no such file or directory"),
+			wantErr: nil,
 		},
 		{
-			name: "Cleanup call after Validate, want success",
-			setupFunc: func() error {
-				pr := newPR()
+			name: "Cleanup call after Validate, expect success",
+			setupFunc: func(t *testing.T) error {
+				pr := newPR("/path/does/not/exist")
 				if err := pr.Validate(ctx); err != nil {
 					return err
 				}
@@ -123,9 +123,9 @@ func TestOsPolicyResourceCallOrder(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "PopulateOutput call after Validate, want success",
-			setupFunc: func() error {
-				pr := newPR()
+			name: "PopulateOutput call after Validate, expect success",
+			setupFunc: func(t *testing.T) error {
+				pr := newPR("/path/does/not/exist")
 				if err := pr.Validate(ctx); err != nil {
 					return err
 				}
@@ -133,21 +133,23 @@ func TestOsPolicyResourceCallOrder(t *testing.T) {
 			},
 			wantErr: nil,
 		},
+		{
+			name: "Validate call with nil ResourceType, expect error",
+			setupFunc: func(t *testing.T) error {
+				pr := &OSPolicyResource{
+					OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
+						ResourceType: nil,
+					},
+				}
+				return pr.Validate(ctx)
+			},
+			wantErr: errors.New("ResourceType field not set"),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.setupFunc()
+			err := tt.setupFunc(t)
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 		})
 	}
-}
-
-func TestOSPolicyResourceValidateNilResourceType(t *testing.T) {
-	pr := &OSPolicyResource{
-		OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
-			ResourceType: nil,
-		},
-	}
-	err := pr.Validate(context.Background())
-	utiltest.AssertErrorMatch(t, err, errors.New("ResourceType field not set"))
 }
