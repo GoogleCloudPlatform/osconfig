@@ -156,11 +156,7 @@ func TestLoadOldState(t *testing.T) {
 }
 
 func TestStateSave(t *testing.T) {
-	td, err := ioutil.TempDir(os.TempDir(), "")
-	if err != nil {
-		t.Fatalf("error creating temp dir: %v", err)
-	}
-	defer os.RemoveAll(td)
+	td := t.TempDir()
 	testState := filepath.Join(td, "testState")
 	invalidDir := filepath.Join(td, "invalidDir")
 	if err := os.WriteFile(invalidDir, []byte(""), 0755); err != nil {
@@ -250,15 +246,7 @@ func TestStateSave(t *testing.T) {
 				return
 			}
 
-			got, err := ioutil.ReadFile(tt.path)
-			if err != nil {
-				t.Errorf("error reading state: %v", err)
-				return
-			}
-
-			if string(got) != tt.want {
-				t.Errorf("got:\n%q\nwant:\n%q", string(got), tt.want)
-			}
+			utiltest.AssertFileContents(t, tt.path, tt.want)
 		})
 	}
 }
