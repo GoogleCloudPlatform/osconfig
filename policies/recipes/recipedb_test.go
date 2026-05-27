@@ -17,7 +17,6 @@ package recipes
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -26,30 +25,17 @@ import (
 )
 
 // setupTestDB creates a temporary directory for the test database.
-func setupTestDB(t *testing.T) (string, func()) {
+func setupTestDB(t *testing.T) string {
 	t.Helper()
-	tmpDir, err := ioutil.TempDir("", "recipedb_test")
-	if err != nil {
-		t.Fatalf("failed to create temp dir: %v", err)
-	}
+	tmpDir := t.TempDir()
 
-	origWindows := dbDirWindows
-	origUnix := dbDirUnix
-	dbDirWindows = tmpDir
-	dbDirUnix = tmpDir
+	utiltest.OverrideVariable(t, &dbDirWindows, tmpDir)
+	utiltest.OverrideVariable(t, &dbDirUnix, tmpDir)
 
-	cleanup := func() {
-		os.RemoveAll(tmpDir)
-		dbDirWindows = origWindows
-		dbDirUnix = origUnix
-	}
-	return tmpDir, cleanup
+	return tmpDir
 }
 
 func TestNewRecipeDB(t *testing.T) {
-	tmpDir, cleanup := setupTestDB(t)
-	defer cleanup()
-
 	tests := []struct {
 		name        string
 		fileContent string
@@ -78,11 +64,11 @@ func TestNewRecipeDB(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := setupTestDB(t)
 			dbFilePath := filepath.Join(tmpDir, dbFileName)
-			os.Remove(dbFilePath)
 
 			if tt.fileContent != "" {
-				if err := ioutil.WriteFile(dbFilePath, []byte(tt.fileContent), 0644); err != nil {
+				if err := os.WriteFile(dbFilePath, []byte(tt.fileContent), 0644); err != nil {
 					t.Fatalf("failed to write test file: %v", err)
 				}
 			}
@@ -95,9 +81,6 @@ func TestNewRecipeDB(t *testing.T) {
 }
 
 func TestAddRecipe(t *testing.T) {
-	_, cleanup := setupTestDB(t)
-	defer cleanup()
-
 	tests := []struct {
 		name       string
 		recipeName string
@@ -123,6 +106,7 @@ func TestAddRecipe(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			setupTestDB(t)
 			db := make(RecipeDB)
 			err := db.addRecipe(tt.recipeName, tt.version, tt.success)
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
