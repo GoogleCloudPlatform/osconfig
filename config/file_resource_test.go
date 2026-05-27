@@ -17,9 +17,12 @@ package config
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/GoogleCloudPlatform/osconfig/util"
@@ -382,9 +385,11 @@ func TestFileResourceEnforceStatePresent(t *testing.T) {
 
 func TestFileResourceValidateErrors(t *testing.T) {
 	ctx := context.Background()
+	_, errLocalPath := os.Open("does_not_exist")
 	tests := []struct {
-		name string
-		fr   *fileResource
+		name    string
+		fr      *fileResource
+		wantErr error
 	}{
 		{
 			name: "InvalidState",
@@ -393,6 +398,7 @@ func TestFileResourceValidateErrors(t *testing.T) {
 					State: agentendpointpb.OSPolicy_Resource_FileResource_DESIRED_STATE_UNSPECIFIED,
 				},
 			},
+			wantErr: fmt.Errorf("unrecognized DesiredState for FileResource: %q", agentendpointpb.OSPolicy_Resource_FileResource_DESIRED_STATE_UNSPECIFIED),
 		},
 		{
 			name: "InvalidPermissions",
@@ -402,6 +408,7 @@ func TestFileResourceValidateErrors(t *testing.T) {
 					Permissions: "invalid",
 				},
 			},
+			wantErr: fmt.Errorf("can't parse permissions %q: %v", "invalid", &strconv.NumError{Func: "ParseUint", Num: "invalid", Err: strconv.ErrSyntax}),
 		},
 		{
 			name: "LocalPathDoesNotExist",
@@ -418,6 +425,7 @@ func TestFileResourceValidateErrors(t *testing.T) {
 					},
 				},
 			},
+			wantErr: errLocalPath,
 		},
 		{
 			name: "UnrecognizedSource",
@@ -428,6 +436,7 @@ func TestFileResourceValidateErrors(t *testing.T) {
 					Source: nil,
 				},
 			},
+			wantErr: errors.New("unrecognized Source type for FileResource: %!q(<nil>)"),
 		},
 		{
 			name: "ContentDownloadError",
@@ -440,6 +449,7 @@ func TestFileResourceValidateErrors(t *testing.T) {
 					},
 				},
 			},
+			wantErr: nil, // overridden dynamically below
 		},
 		{
 			name: "RemoteDownloadError",
@@ -458,23 +468,28 @@ func TestFileResourceValidateErrors(t *testing.T) {
 					},
 				},
 			},
+			wantErr: &url.Error{Op: "Get", URL: "doesnot/exist", Err: errors.New("unsupported protocol scheme \"\"")},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if _, err := tt.fr.validate(ctx); err == nil {
-				t.Fatal("expected error, got nil")
+			_, err := tt.fr.validate(ctx)
+			if tt.name == "ContentDownloadError" && err != nil {
+				tt.wantErr = err
 			}
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 		})
 	}
 }
 
 func TestFileResourceEnforceStateErrors(t *testing.T) {
 	ctx := context.Background()
+	errRemove := os.Remove("/path/does/not/exist")
 	tests := []struct {
-		name string
-		fr   *fileResource
+		name    string
+		fr      *fileResource
+		wantErr error
 	}{
 		{
 			name: "InvalidState",
@@ -483,6 +498,7 @@ func TestFileResourceEnforceStateErrors(t *testing.T) {
 					State: agentendpointpb.OSPolicy_Resource_FileResource_DESIRED_STATE_UNSPECIFIED,
 				},
 			},
+			wantErr: fmt.Errorf("unrecognized DesiredState for FileResource: %q", agentendpointpb.OSPolicy_Resource_FileResource_DESIRED_STATE_UNSPECIFIED),
 		},
 		{
 			name: "InvalidPathRemove",
@@ -492,24 +508,20 @@ func TestFileResourceEnforceStateErrors(t *testing.T) {
 					State: agentendpointpb.OSPolicy_Resource_FileResource_ABSENT,
 				},
 			},
+			wantErr: fmt.Errorf("error removing %q: %v", "/path/does/not/exist", errRemove),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if _, err := tt.fr.enforceState(ctx); err == nil {
-				t.Fatal("expected error, got nil")
-			}
+			_, err := tt.fr.enforceState(ctx)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 		})
 	}
 }
 
 func TestFileResourceEnforceStateDownload(t *testing.T) {
 	ctx := context.Background()
-	tmpDir, err := ioutil.TempDir("", "test_enforce_download")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(tmpDir)
+	tmpDir := t.TempDir()
 
 	dst := filepath.Join(tmpDir, "dst")
 
@@ -520,7 +532,7 @@ func TestFileResourceEnforceStateDownload(t *testing.T) {
 		wantContent string
 	}{
 		{
-			name: "EnforceStateDownloadError",
+			name: "download fails during enforce state, expect error",
 			fr: &fileResource{
 				OSPolicy_Resource_FileResource: &agentendpointpb.OSPolicy_Resource_FileResource{
 					Path:   "some/path",
@@ -534,7 +546,7 @@ func TestFileResourceEnforceStateDownload(t *testing.T) {
 			wantErr: errors.New("unrecognized Source type for FileResource: %!q(<nil>)"),
 		},
 		{
-			name: "EnforceStateDownloadSuccess",
+			name: "download succeeds during enforce state, expect success",
 			fr: &fileResource{
 				OSPolicy_Resource_FileResource: &agentendpointpb.OSPolicy_Resource_FileResource{
 					Path:  dst,
@@ -563,12 +575,7 @@ func TestFileResourceEnforceStateDownload(t *testing.T) {
 			}
 
 			utiltest.AssertEquals(t, inDesiredState, true)
-
-			b, err := ioutil.ReadFile(tt.fr.managedFile.Path)
-			if err != nil {
-				t.Fatal(err)
-			}
-			utiltest.AssertEquals(t, string(b), tt.wantContent)
+			utiltest.AssertFileContents(t, tt.fr.managedFile.Path, tt.wantContent)
 		})
 	}
 }
