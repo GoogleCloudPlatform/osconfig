@@ -16,32 +16,20 @@ package recipes
 
 import (
 	"context"
-	"io/ioutil"
-	"os"
 	"testing"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 )
 
-func setupTestDB(t *testing.T) (string, func()) {
+func setupTestDB(t *testing.T) string {
 	t.Helper()
-	tmpDir, err := ioutil.TempDir("", "recipedb_test")
-	if err != nil {
-		t.Fatalf("failed to create temp dir: %v", err)
-	}
+	tmpDir := t.TempDir()
 
-	origWindows := dbDirWindows
-	origUnix := dbDirUnix
-	dbDirWindows = tmpDir
-	dbDirUnix = tmpDir
+	utiltest.OverrideVariable(t, &dbDirWindows, tmpDir)
+	utiltest.OverrideVariable(t, &dbDirUnix, tmpDir)
 
-	cleanup := func() {
-		os.RemoveAll(tmpDir)
-		dbDirWindows = origWindows
-		dbDirUnix = origUnix
-	}
-	return tmpDir, cleanup
+	return tmpDir
 }
 
 func TestInstallRecipeDesiredStateHandling(t *testing.T) {
@@ -117,8 +105,7 @@ func TestInstallRecipeDesiredStateHandling(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, cleanup := setupTestDB(t)
-			defer cleanup()
+			setupTestDB(t)
 
 			if len(tt.initialRecipes) > 0 {
 				db, err := newRecipeDB()
@@ -133,6 +120,7 @@ func TestInstallRecipeDesiredStateHandling(t *testing.T) {
 			}
 
 			err := InstallRecipe(ctx, tt.recipe)
+			utiltest.AssertErrorMatch(t, err, nil)
 
 			db, err := newRecipeDB()
 			if err != nil {
