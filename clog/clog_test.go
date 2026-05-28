@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"regexp"
 	"testing"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
@@ -99,25 +98,25 @@ func TestDebugRPC(t *testing.T) {
 			name:     "ReqAndRespMethod",
 			req:      req,
 			resp:     resp,
-			expected: "[Debug] Called: ReqAndRespMethod with request:",
+			expected: `^\[Debug\] Called: ReqAndRespMethod with request:`,
 		},
 		{
 			name:     "RespOnlyMethod",
 			req:      nil,
 			resp:     resp,
-			expected: "[Debug] Called: RespOnlyMethod with response:",
+			expected: `^\[Debug\] Called: RespOnlyMethod with response:`,
 		},
 		{
 			name:     "ReqOnlyMethod",
 			req:      req,
 			resp:     nil,
-			expected: "[Debug] Calling: ReqOnlyMethod with request:",
+			expected: `^\[Debug\] Calling: ReqOnlyMethod with request:`,
 		},
 		{
 			name:     "NoReqNoRespMethod",
 			req:      nil,
 			resp:     nil,
-			expected: "",
+			expected: `^$`,
 		},
 	}
 
@@ -125,12 +124,7 @@ func TestDebugRPC(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tw.logs = ""
 			DebugRPC(ctx, tt.name, tt.req, tt.resp)
-
-			if tt.expected != "" {
-				utiltest.AssertFormatMatch(t, tw.logs, regexp.QuoteMeta(tt.expected))
-			} else {
-				utiltest.AssertEquals(t, len(tw.logs), 0)
-			}
+			utiltest.AssertFormatMatch(t, tw.logs, tt.expected)
 		})
 	}
 }
