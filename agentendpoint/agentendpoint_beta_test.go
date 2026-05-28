@@ -52,6 +52,11 @@ type testBetaClient struct {
 	server *grpc.Server
 }
 
+func (c *testBetaClient) close() {
+	c.client.Close()
+	c.server.Stop()
+}
+
 func newBetaTestClient(ctx context.Context, srv agentendpointpb.AgentEndpointServiceServer) (*testBetaClient, error) {
 	listener := bufconn.Listen(bufSize)
 	server := grpc.NewServer()
@@ -84,8 +89,21 @@ func newBetaTestClient(ctx context.Context, srv agentendpointpb.AgentEndpointSer
 	}, nil
 }
 
+func setupBetaClient(t *testing.T, ctx context.Context, mockErr error) *testBetaClient {
+	t.Helper()
+	srv := newAgentEndpointServiceBetaTestServer()
+	srv.mockError = mockErr
+
+	tc, err := newBetaTestClient(ctx, srv)
+	if err != nil {
+		t.Fatalf("failed to create beta test client: %v", err)
+	}
+	t.Cleanup(tc.close)
+	return tc
+}
+
 func TestBetaClientClose(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	tc, err := newBetaTestClient(ctx, newAgentEndpointServiceBetaTestServer())
 
 	if err != nil {
@@ -107,41 +125,32 @@ func TestBetaClientClose(t *testing.T) {
 }
 
 func TestLookupEffectiveGuestPolicies(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	tests := []struct {
-		name       string
-		mockErr    error
-		wantErr    error
+		name    string
+		mockErr error
+		wantErr error
 	}{
 		{
-			name:       "successful server response, want non-nil policy",
-			mockErr:    nil,
-			wantErr:    nil,
+			name:    "successful server response, expect non-nil policy",
+			mockErr: nil,
+			wantErr: nil,
 		},
 		{
-			name:       "server returns error, want error",
-			mockErr:    errors.New("mock error"),
-			wantErr:    fmt.Errorf("error calling LookupEffectiveGuestPolicies: %w", errors.New(`code: "Unknown", message: "mock error", details: []`)),
+			name:    "server returns error, expect error",
+			mockErr: errors.New("mock error"),
+			wantErr: fmt.Errorf("error calling LookupEffectiveGuestPolicies: %w", errors.New(`code: "Unknown", message: "mock error", details: []`)),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			srv := newAgentEndpointServiceBetaTestServer()
-			srv.mockError = tt.mockErr
-
-			tc, err := newBetaTestClient(ctx, srv)
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer tc.client.Close()
-			defer tc.server.Stop()
-
+			tc := setupBetaClient(t, ctx, tt.mockErr)
 			gotPolicy, gotErr := tc.client.LookupEffectiveGuestPolicies(ctx)
-			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
-			if tt.wantErr == nil && gotPolicy == nil {
-				t.Fatal("LookupEffectiveGuestPolicies() returned nil policy, want non-nil")
+			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
+			if gotPolicy == nil {
+				t.Fatal("LookupEffectiveGuestPolicies() returned nil policy, expect non-nil")
 			}
 		})
 	}
