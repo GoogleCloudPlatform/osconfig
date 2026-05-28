@@ -155,13 +155,20 @@ func TestLoadOldState(t *testing.T) {
 	}
 }
 
+// Updates the expected PathError's path since it cannot be predicted ahead of time for tmp files.
+func completePathError(got, want error) error {
+	if wantPe, ok := want.(*fs.PathError); ok {
+		if gotPe, ok := got.(*fs.PathError); ok {
+			wantPe.Path = gotPe.Path
+		}
+	}
+	return want
+}
+
 func TestStateSave(t *testing.T) {
 	td := t.TempDir()
 	testState := filepath.Join(td, "testState")
-	invalidDir := filepath.Join(td, "invalidDir")
-	if err := os.WriteFile(invalidDir, []byte(""), 0755); err != nil {
-		t.Fatalf("error creating file: %v", err)
-	}
+	invalidDir := utiltest.WriteToTempFileMust(t, "invalidDir", []byte(""))
 	invalidPath := filepath.Join(invalidDir, "testState")
 
 	roDir := filepath.Join(td, "roDir")
@@ -235,17 +242,9 @@ func TestStateSave(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			err := tt.state.save(tt.path)
-			// Update the expected PathError's path since it cannot be predicted ahead of time.
-			if pe, ok := err.(*fs.PathError); ok && tt.desc == "WriteFileTempFileError" {
-				if wantPe, ok := tt.wantErr.(*fs.PathError); ok {
-					wantPe.Path = pe.Path
-				}
-			}
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
-			if err != nil {
-				return
-			}
+			wantErr := completePathError(err, tt.wantErr)
 
+			utiltest.AssertErrorMatchAndSkip(t, err, wantErr)
 			utiltest.AssertFileContents(t, tt.path, tt.want)
 		})
 	}
