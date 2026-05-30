@@ -207,3 +207,155 @@ func TestInstallRecipesHandlesInputs(t *testing.T) {
 		})
 	}
 }
+
+// TestSetConfigYum verifies that setConfig handles yum package manager and its configurations.
+func TestSetConfigYum(t *testing.T) {
+	ctx := context.Background()
+
+	mockCtrl := gomock.NewController(t)
+	t.Cleanup(func() { mockCtrl.Finish() })
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+
+	rpmQueryArgs := []string{"--queryformat", "\\{\"architecture\":\"%{ARCH}\",\"package\":\"%{NAME}\",\"source_name\":\"%{SOURCERPM}\",\"version\":\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\"\\}\n", "-a"}
+	yumCheckUpdateArgs := []string{"check-update", "--assumeyes"}
+	yumListUpdatesArgs := []string{"update", "--assumeno", "--color=never"}
+	yumCheckUpdateErr := exec.Command("/bin/bash", "-c", "exit 100").Run()
+
+	tests := []struct {
+		name             string
+		egp              *agentendpointpb.EffectiveGuestPolicy
+		yumExists        bool
+		expectedCommands []utiltest.ExpectedCommand
+		wantErr          error
+	}{
+		{
+			name: "yum install package p1, want nil error",
+			egp: &agentendpointpb.EffectiveGuestPolicy{
+				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
+					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_INSTALLED, Manager: agentendpointpb.Package_YUM}},
+				},
+			},
+			yumExists: true,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/usr/bin/rpmquery", rpmQueryArgs...),
+					Stdout: []byte(""),
+				},
+				{
+					Cmd: exec.Command("/usr/bin/yum", "install", "--assumeyes", "p1"),
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "yum update package p1, want nil error",
+			egp: &agentendpointpb.EffectiveGuestPolicy{
+				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
+					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_UPDATED, Manager: agentendpointpb.Package_YUM}},
+				},
+			},
+			yumExists: true,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/usr/bin/rpmquery", rpmQueryArgs...),
+					Stdout: []byte(`{"package":"p1","status":"installed"}`),
+				},
+				{
+					Cmd: exec.Command("/usr/bin/yum", yumCheckUpdateArgs...),
+					Err: yumCheckUpdateErr,
+				},
+				{
+					Cmd:    exec.Command("/usr/bin/yum", yumListUpdatesArgs...),
+					Stdout: []byte("Updating:\n p1 x86_64 2.0 updates 100 k\n"),
+				},
+				{
+					Cmd: exec.Command("/usr/bin/yum", "install", "--assumeyes", "p1"),
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "yum remove package p1, want nil error",
+			egp: &agentendpointpb.EffectiveGuestPolicy{
+				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
+					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_REMOVED, Manager: agentendpointpb.Package_YUM}},
+				},
+			},
+			yumExists: true,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/usr/bin/rpmquery", rpmQueryArgs...),
+					Stdout: []byte(`{"package":"p1","status":"installed"}`),
+				},
+				{
+					Cmd: exec.Command("/usr/bin/yum", "remove", "--assumeyes", "p1"),
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "yum install p1 with failure, want installing error",
+			egp: &agentendpointpb.EffectiveGuestPolicy{
+				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
+					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_INSTALLED, Manager: agentendpointpb.Package_YUM}},
+				},
+			},
+			yumExists: true,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/usr/bin/rpmquery", rpmQueryArgs...),
+					Stdout: []byte(""),
+				},
+				{
+					Cmd: exec.Command("/usr/bin/yum", "install", "--assumeyes", "p1"),
+					Err: fmt.Errorf("yum error"),
+				},
+			},
+			wantErr: setConfigError{
+				errors: []error{
+					fmt.Errorf("Error performing yum changes: error installing yum packages: error running /usr/bin/yum with args [\"install\" \"--assumeyes\" \"p1\"]: yum error, stdout: \"\", stderr: \"\""),
+				},
+			},
+		},
+		{
+			name: "yum repository configured, want nil error",
+			egp: &agentendpointpb.EffectiveGuestPolicy{
+				PackageRepositories: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackageRepository{
+					{PackageRepository: &agentendpointpb.PackageRepository{Repository: &agentendpointpb.PackageRepository_Yum{Yum: &agentendpointpb.YumRepository{Id: "repo", BaseUrl: "http://repo"}}}},
+				},
+			},
+			yumExists: true,
+			wantErr:   nil,
+		},
+		{
+			name: "package ANY install p1, want nil error",
+			egp: &agentendpointpb.EffectiveGuestPolicy{
+				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
+					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_INSTALLED, Manager: agentendpointpb.Package_ANY}},
+				},
+			},
+			yumExists: true,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/usr/bin/rpmquery", rpmQueryArgs...),
+					Stdout: []byte(""),
+				},
+				{
+					Cmd: exec.Command("/usr/bin/yum", "install", "--assumeyes", "p1"),
+				},
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setupSetConfigTest(t, false, tt.yumExists, false, false, mockCommandRunner)
+
+			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
+			err := setConfig(context.Background(), tt.egp)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+		})
+	}
+}
