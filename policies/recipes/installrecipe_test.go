@@ -32,14 +32,43 @@ func setupTestDB(t *testing.T) string {
 	return tmpDir
 }
 
+type initRecipe struct {
+	name    string
+	version string
+	success bool
+}
+
+func populateInitialRecipes(t *testing.T, initialRecipes []initRecipe) {
+	t.Helper()
+	if len(initialRecipes) == 0 {
+		return
+	}
+	db, err := newRecipeDB()
+	if err != nil {
+		t.Fatalf("failed to init db: %v", err)
+	}
+	for _, r := range initialRecipes {
+		if err := db.addRecipe(r.name, r.version, r.success); err != nil {
+			t.Fatalf("failed to add initial recipe: %v", err)
+		}
+	}
+}
+
+func getRecipeFromDB(t *testing.T, recipeName string) Recipe {
+	t.Helper()
+	db, err := newRecipeDB()
+	if err != nil {
+		t.Fatalf("failed to read db after install: %v", err)
+	}
+	r, ok := db.getRecipe(recipeName)
+	if !ok {
+		t.Fatalf("recipe %q not found in DB", recipeName)
+	}
+	return r
+}
+
 func TestInstallRecipeDesiredStateHandling(t *testing.T) {
 	ctx := context.Background()
-
-	type initRecipe struct {
-		name    string
-		version string
-		success bool
-	}
 
 	tests := []struct {
 		name           string
@@ -106,32 +135,12 @@ func TestInstallRecipeDesiredStateHandling(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			setupTestDB(t)
-
-			if len(tt.initialRecipes) > 0 {
-				db, err := newRecipeDB()
-				if err != nil {
-					t.Fatalf("failed to init db: %v", err)
-				}
-				for _, r := range tt.initialRecipes {
-					if err := db.addRecipe(r.name, r.version, r.success); err != nil {
-						t.Fatalf("failed to add initial recipe: %v", err)
-					}
-				}
-			}
+			populateInitialRecipes(t, tt.initialRecipes)
 
 			err := InstallRecipe(ctx, tt.recipe)
 			utiltest.AssertErrorMatch(t, err, nil)
 
-			db, err := newRecipeDB()
-			if err != nil {
-				t.Fatalf("failed to read db after install: %v", err)
-			}
-
-			r, ok := db.getRecipe(tt.recipe.Name)
-			if !ok {
-				t.Fatalf("recipe %q not found in DB", tt.recipe.Name)
-			}
-
+			r := getRecipeFromDB(t, tt.recipe.Name)
 			utiltest.AssertEquals(t, r.Success, true)
 			utiltest.AssertEquals(t, r.Version.String(), tt.wantVersion)
 		})
