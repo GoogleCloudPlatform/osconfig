@@ -37,42 +37,44 @@ func setupTestDB(t *testing.T) string {
 
 func TestNewRecipeDB(t *testing.T) {
 	tests := []struct {
-		name        string
-		fileContent string
-		wantErr     error
-		wantSize    int
+		name     string
+		setup    func(t *testing.T)
+		wantErr  error
+		wantSize int
 	}{
 		{
-			name:        "no file exists, expect no error and empty db",
-			fileContent: "",
-			wantErr:     nil,
-			wantSize:    0,
+			name:     "no file exists, expect no error and empty db",
+			setup:    func(t *testing.T) { setupTestDB(t) },
+			wantErr:  nil,
+			wantSize: 0,
 		},
 		{
-			name:        "valid JSON, expect no error and db size 2",
-			fileContent: `[{"Name":"recipe1","Version":[1],"InstallTime":1,"Success":true},{"Name":"recipe2","Version":[2],"InstallTime":2,"Success":false}]`,
-			wantErr:     nil,
-			wantSize:    2,
+			name: "valid JSON, expect no error and db size 2",
+			setup: func(t *testing.T) {
+				tmpDir := setupTestDB(t)
+				if err := os.WriteFile(filepath.Join(tmpDir, dbFileName), []byte(`[{"Name":"recipe1","Version":[1],"InstallTime":1,"Success":true},{"Name":"recipe2","Version":[2],"InstallTime":2,"Success":false}]`), 0644); err != nil {
+					t.Fatalf("failed to write test file: %v", err)
+				}
+			},
+			wantErr:  nil,
+			wantSize: 2,
 		},
 		{
-			name:        "invalid JSON, expect syntax error",
-			fileContent: `invalid json`,
-			wantErr:     func() error { var dummy interface{}; return json.Unmarshal([]byte(`invalid json`), &dummy) }(),
-			wantSize:    0,
+			name: "invalid JSON, expect syntax error",
+			setup: func(t *testing.T) {
+				tmpDir := setupTestDB(t)
+				if err := os.WriteFile(filepath.Join(tmpDir, dbFileName), []byte(`invalid json`), 0644); err != nil {
+					t.Fatalf("failed to write test file: %v", err)
+				}
+			},
+			wantErr:  func() error { var dummy interface{}; return json.Unmarshal([]byte(`invalid json`), &dummy) }(),
+			wantSize: 0,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tmpDir := setupTestDB(t)
-			dbFilePath := filepath.Join(tmpDir, dbFileName)
-
-			if tt.fileContent != "" {
-				if err := os.WriteFile(dbFilePath, []byte(tt.fileContent), 0644); err != nil {
-					t.Fatalf("failed to write test file: %v", err)
-				}
-			}
-
+			tt.setup(t)
 			db, err := newRecipeDB()
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 			utiltest.AssertEquals(t, len(db), tt.wantSize)
@@ -80,7 +82,7 @@ func TestNewRecipeDB(t *testing.T) {
 	}
 }
 
-func TestAddRecipe(t *testing.T) {
+func TestAddRecipe_InMemory(t *testing.T) {
 	tests := []struct {
 		name       string
 		recipeName string
@@ -96,7 +98,7 @@ func TestAddRecipe(t *testing.T) {
 			wantErr:    nil,
 		},
 		{
-			name:       "invalid version, expect error",
+			name:       "invalid version, expect invalid Version string error",
 			recipeName: "bad-recipe",
 			version:    "invalid.version",
 			success:    false,
@@ -109,25 +111,27 @@ func TestAddRecipe(t *testing.T) {
 			setupTestDB(t)
 			db := make(RecipeDB)
 			err := db.addRecipe(tt.recipeName, tt.version, tt.success)
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			utiltest.AssertErrorMatchAndSkip(t, err, tt.wantErr)
 
-			if tt.wantErr != nil {
-				return
-			}
-			r, ok := db.getRecipe(tt.recipeName)
+			memRecipe, ok := db.getRecipe(tt.recipeName)
 			utiltest.AssertEquals(t, ok, true)
-			utiltest.AssertEquals(t, r.Name, tt.recipeName)
-			utiltest.AssertEquals(t, r.Version.String(), tt.version)
-			utiltest.AssertEquals(t, r.Success, tt.success)
-
-			readDB, err := newRecipeDB()
-			if err != nil {
-				t.Fatalf("failed to read db file: %v", err)
-			}
-
-			readRecipe, ok := readDB.getRecipe(tt.recipeName)
-			utiltest.AssertEquals(t, ok, true)
-			utiltest.AssertEquals(t, readRecipe, r)
+			utiltest.AssertEquals(t, memRecipe.Name, tt.recipeName)
+			utiltest.AssertEquals(t, memRecipe.Version.String(), tt.version)
+			utiltest.AssertEquals(t, memRecipe.Success, tt.success)
 		})
 	}
+}
+
+func TestAddRecipe_FromFile(t *testing.T) {
+	setupTestDB(t)
+	db := make(RecipeDB)
+	err := db.addRecipe("test-recipe", "1.2.3", true)
+	utiltest.AssertErrorMatch(t, err, nil)
+	memRecipe, ok := db.getRecipe("test-recipe")
+
+	readDB, err := newRecipeDB()
+	utiltest.AssertErrorMatch(t, err, nil)
+	fileRecipe, ok := readDB.getRecipe("test-recipe")
+	utiltest.AssertEquals(t, ok, true)
+	utiltest.AssertEquals(t, memRecipe, fileRecipe)
 }
