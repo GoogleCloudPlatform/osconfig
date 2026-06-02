@@ -83,6 +83,7 @@ func TestOSPolicyResource_CheckState(t *testing.T) {
 	}{
 		{
 			name:    "CheckState call before Validate, expect run before Validate error",
+			setup:   func(t *testing.T, pr *OSPolicyResource) error { return nil },
 			pr:      newTestOSPolicyFileResource(),
 			wantErr: errors.New("CheckState run before Validate"),
 		},
@@ -97,10 +98,8 @@ func TestOSPolicyResource_CheckState(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.setup != nil {
-				if err := tt.setup(t, tt.pr); err != nil {
-					t.Fatalf("setup failed: %v", err)
-				}
+			if err := tt.setup(t, tt.pr); err != nil {
+				t.Fatalf("setup failed: %v", err)
 			}
 			err := tt.pr.CheckState(ctx)
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
@@ -119,6 +118,7 @@ func TestOSPolicyResource_EnforceState(t *testing.T) {
 	}{
 		{
 			name:    "EnforceState call before Validate, expect run before Validate error",
+			setup:   func(t *testing.T, pr *OSPolicyResource) error { return nil },
 			pr:      newTestOSPolicyFileResource(),
 			wantErr: errors.New("EnforceState run before Validate"),
 		},
@@ -135,10 +135,8 @@ func TestOSPolicyResource_EnforceState(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.setup != nil {
-				if err := tt.setup(t, tt.pr); err != nil {
-					t.Fatalf("setup failed: %v", err)
-				}
+			if err := tt.setup(t, tt.pr); err != nil {
+				t.Fatalf("setup failed: %v", err)
 			}
 			err := tt.pr.EnforceState(ctx)
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
@@ -157,6 +155,7 @@ func TestOSPolicyResource_Cleanup(t *testing.T) {
 	}{
 		{
 			name:    "Cleanup call before Validate, expect run before Validate error",
+			setup:   func(t *testing.T, pr *OSPolicyResource) error { return nil },
 			pr:      newTestOSPolicyFileResource(),
 			wantErr: errors.New("Cleanup run before Validate"),
 		},
@@ -171,10 +170,8 @@ func TestOSPolicyResource_Cleanup(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.setup != nil {
-				if err := tt.setup(t, tt.pr); err != nil {
-					t.Fatalf("setup failed: %v", err)
-				}
+			if err := tt.setup(t, tt.pr); err != nil {
+				t.Fatalf("setup failed: %v", err)
 			}
 			err := tt.pr.Cleanup(ctx)
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
@@ -193,6 +190,7 @@ func TestOSPolicyResource_PopulateOutput(t *testing.T) {
 	}{
 		{
 			name:    "PopulateOutput call before Validate, expect run before Validate error",
+			setup:   func(t *testing.T, pr *OSPolicyResource) error { return nil },
 			pr:      newTestOSPolicyFileResource(),
 			wantErr: errors.New("PopulateOutput run before Validate"),
 		},
@@ -207,10 +205,8 @@ func TestOSPolicyResource_PopulateOutput(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.setup != nil {
-				if err := tt.setup(t, tt.pr); err != nil {
-					t.Fatalf("setup failed: %v", err)
-				}
+			if err := tt.setup(t, tt.pr); err != nil {
+				t.Fatalf("setup failed: %v", err)
 			}
 			err := tt.pr.PopulateOutput(nil)
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
