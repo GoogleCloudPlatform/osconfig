@@ -216,11 +216,18 @@ func TestSetConfigYum(t *testing.T) {
 	t.Cleanup(func() { mockCtrl.Finish() })
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	setupSetConfigTest(t, mockCommandRunner)
 
 	rpmQueryArgs := []string{"--queryformat", "\\{\"architecture\":\"%{ARCH}\",\"package\":\"%{NAME}\",\"source_name\":\"%{SOURCERPM}\",\"version\":\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\"\\}\n", "-a"}
 	yumCheckUpdateArgs := []string{"check-update", "--assumeyes"}
 	yumListUpdatesArgs := []string{"update", "--assumeno", "--color=never"}
 	yumCheckUpdateErr := exec.Command("/bin/bash", "-c", "exit 100").Run()
+
+	setupYumEnv := func(t *testing.T, yumExists bool) {
+		utiltest.OverrideVariable(t, &packages.YumExists, yumExists)
+		tmpDir := t.TempDir()
+		utiltest.OverrideVariable(t, &yumRepoFilePath, func() string { return filepath.Join(tmpDir, "yum.repo") })
+	}
 
 	tests := []struct {
 		name             string
@@ -351,9 +358,9 @@ func TestSetConfigYum(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setupSetConfigTest(t, false, tt.yumExists, false, false, mockCommandRunner)
-
+			setupYumEnv(t, tt.yumExists)
 			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
+
 			err := setConfig(context.Background(), tt.egp)
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 		})
