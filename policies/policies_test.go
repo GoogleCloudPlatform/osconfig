@@ -216,9 +216,16 @@ func TestSetConfigZypper(t *testing.T) {
 	t.Cleanup(func() { mockCtrl.Finish() })
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	setupSetConfigTest(t, mockCommandRunner)
 
 	rpmQueryArgs := []string{"--queryformat", "\\{\"architecture\":\"%{ARCH}\",\"package\":\"%{NAME}\",\"source_name\":\"%{SOURCERPM}\",\"version\":\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\"\\}\n", "-a"}
 	zypperListUpdatesArgs := []string{"--gpg-auto-import-keys", "-q", "list-updates"}
+
+	setupZypperEnv := func(t *testing.T, zypperExists bool) {
+		utiltest.OverrideVariable(t, &packages.ZypperExists, zypperExists)
+		tmpDir := t.TempDir()
+		utiltest.OverrideVariable(t, &zypperRepoFilePath, func() string { return filepath.Join(tmpDir, "zypper.repo") })
+	}
 
 	tests := []struct {
 		name             string
@@ -326,9 +333,9 @@ func TestSetConfigZypper(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setupSetConfigTest(t, false, false, tt.zypperExists, false, mockCommandRunner)
-
+			setupZypperEnv(t, tt.zypperExists)
 			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
+
 			err := setConfig(context.Background(), tt.egp)
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 		})
