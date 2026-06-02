@@ -222,10 +222,17 @@ func TestSetConfigApt(t *testing.T) {
 	t.Cleanup(func() { mockCtrl.Finish() })
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	setupSetConfigTest(t, mockCommandRunner)
 
 	dpkgQueryArgs := []string{"-W", "-f", "\\{\"architecture\":\"${Architecture}\",\"package\":\"${Package}\",\"source_name\":\"${source:Package}\",\"source_version\":\"${source:Version}\",\"status\":\"${db:Status-Status}\",\"version\":\"${Version}\"\\}\n"}
 	aptUpgradableArgs := []string{"--just-print", "-qq", "dist-upgrade"}
 	aptEnv := []string{"DEBIAN_FRONTEND=noninteractive"}
+
+	setupAptEnv := func(t *testing.T, aptExists bool) {
+		utiltest.OverrideVariable(t, &packages.AptExists, aptExists)
+		tmpDir := t.TempDir()
+		utiltest.OverrideVariable(t, &aptRepoFilePath, func() string { return filepath.Join(tmpDir, "apt.list") })
+	}
 
 	tests := []struct {
 		name             string
@@ -370,9 +377,9 @@ func TestSetConfigApt(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setupSetConfigTest(t, tt.aptExists, false, false, false, mockCommandRunner)
-
+			setupAptEnv(t, tt.aptExists)
 			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
+
 			err := setConfig(context.Background(), tt.egp)
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 		})
@@ -388,21 +395,10 @@ func (s policiesStubOsInfoProvider) GetOSInfo(ctx context.Context) (osinfo.OSInf
 }
 
 // setupSetConfigTest sets up the environment for SetConfig tests by mocking the command runner.
-func setupSetConfigTest(t *testing.T, apt, yum, zypper, googet bool, runner *utilmocks.MockCommandRunner) {
-	utiltest.OverrideVariable(t, &packages.AptExists, apt)
-	utiltest.OverrideVariable(t, &packages.YumExists, yum)
-	utiltest.OverrideVariable(t, &packages.ZypperExists, zypper)
-	utiltest.OverrideVariable(t, &packages.GooGetExists, googet)
+func setupSetConfigTest(t *testing.T, runner *utilmocks.MockCommandRunner) {
 	utiltest.OverrideVariable(t, &osInfoProvider, (osinfo.Provider)(policiesStubOsInfoProvider{
 		osinfo: osinfo.OSInfo{ShortName: "debian", Version: "11"},
 	}))
-
-	tmpDir := t.TempDir()
-	utiltest.OverrideVariable(t, &googetRepoFilePath, func() string { return filepath.Join(tmpDir, "googet.repo") })
-	utiltest.OverrideVariable(t, &aptRepoFilePath, func() string { return filepath.Join(tmpDir, "apt.list") })
-	utiltest.OverrideVariable(t, &yumRepoFilePath, func() string { return filepath.Join(tmpDir, "yum.repo") })
-	utiltest.OverrideVariable(t, &zypperRepoFilePath, func() string { return filepath.Join(tmpDir, "zypper.repo") })
-
 	utiltest.OverrideVariable(t, &retry, func(ctx context.Context, timeout time.Duration, desc string, f func() error) error {
 		return f()
 	})
