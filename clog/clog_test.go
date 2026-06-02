@@ -61,7 +61,7 @@ func (w *testWriter) Write(p []byte) (n int, err error) {
 }
 
 // Initializes logger and returns testWriter
-func initTestLogger(t *testing.T, ctx context.Context) *testWriter {
+func initTestLogger(ctx context.Context, t *testing.T) *testWriter {
 	t.Helper()
 	tw := &testWriter{}
 	err := logger.Init(ctx, logger.LogOpts{
@@ -84,7 +84,7 @@ func TestDebugRPC(t *testing.T) {
 	DebugEnabled = true
 	defer func() { DebugEnabled = false }()
 	ctx := context.Background()
-	tw := initTestLogger(t, ctx)
+	tw := initTestLogger(ctx, t)
 	req := wrapperspb.String("request")
 	resp := wrapperspb.String("response")
 
@@ -131,7 +131,7 @@ func TestDebugRPC(t *testing.T) {
 
 func TestLoggingFunctions(t *testing.T) {
 	ctx := context.Background()
-	tw := initTestLogger(t, ctx)
+	tw := initTestLogger(ctx, t)
 	tests := []struct {
 		name     string
 		logFunc  func(ctx context.Context)
