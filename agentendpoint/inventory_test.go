@@ -32,6 +32,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/inventory"
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/googleapis/gax-go/v2"
@@ -220,13 +221,13 @@ func generateVMInventory() *agentendpointpb.VmInventory {
 				"KbArticleId":              structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStringValue("KB1"), structpb.NewStringValue("KB2"), structpb.NewStringValue("KB3"), structpb.NewStringValue("KB4")}}),
 				"MoreInfoUrls":             structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStringValue("MoreInfoURL1"), structpb.NewStringValue("MoreInfoURL2"), structpb.NewStringValue("MoreInfoURL3"), structpb.NewStringValue("MoreInfoURL4")}}),
 				"RevisionNumber":           structpb.NewNumberValue(1),
-				"LastDeploymentChangeTime": structpb.NewStringValue(time.Date(2020, time.November, 10, 23, 0, 0, 0, time.UTC).String()),
+				"LastDeploymentChangeTime": structpb.NewStringValue("2020-11-10 23:00:00 +0000 GMT"),
 				"SupportUrl":               structpb.NewStringValue("SupportURL"),
 			}}},
 			{Name: "QFEInstalled", Type: "qfePackage", Version: "HotFixID", Purl: "pkg:generic/ShortName/QFEInstalled@HotFixID",
 				Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 					"Description": structpb.NewStringValue("Description"),
-					"InstalledOn": structpb.NewStringValue("9/1/2020"),
+					"InstalledOn": structpb.NewStringValue("2020-09-01 00:00:00 +0000 GMT"),
 				}}},
 		},
 		AvailablePackages: []*agentendpointpb.VmInventory_InventoryItem{
@@ -262,7 +263,7 @@ func generateVMInventory() *agentendpointpb.VmInventory {
 					"KbArticleId":              structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStringValue("KB1"), structpb.NewStringValue("KB2"), structpb.NewStringValue("KB3"), structpb.NewStringValue("KB4")}}),
 					"MoreInfoUrls":             structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStringValue("MoreInfoURL1"), structpb.NewStringValue("MoreInfoURL2"), structpb.NewStringValue("MoreInfoURL3"), structpb.NewStringValue("MoreInfoURL4")}}),
 					"RevisionNumber":           structpb.NewNumberValue(1),
-					"LastDeploymentChangeTime": structpb.NewStringValue("0001-01-01 00:00:00 +0000 UTC"),
+					"LastDeploymentChangeTime": structpb.NewStringValue("0001-01-01 00:00:00 +0000 GMT"),
 					"SupportUrl":               structpb.NewStringValue("SupportURL"),
 				}}},
 		},
@@ -830,5 +831,83 @@ func Benchmark_computeStableFingerprint(b *testing.B) {
 		if err != nil {
 			b.Fatalf("unable to generate fingerprint, err - %s", err)
 		}
+	}
+}
+
+func Test_reportVmInventory_parseWindowsApplicationDate(t *testing.T) {
+	apps := []*packages.WindowsApplication{{
+		DisplayName:    "TestApp",
+		DisplayVersion: "1.0",
+		InstallDate:    time.Date(2026, 4, 28, 14, 30, 0, 0, time.UTC),
+		Publisher:      "TestPublisher",
+		HelpLink:       "TestLink",
+		Purl:           "pkg:generic/TestApp@1.0",
+	}}
+
+	got := windowsApplicationToInventoryItem(apps)
+	if len(got) != 1 {
+		t.Fatalf("Expected 1 item, got %d", len(got))
+	}
+
+	fields := got[0].Metadata.Fields
+
+	utiltest.AssertEquals(t, fields["Publisher"].GetStringValue(), "TestPublisher")
+	utiltest.AssertEquals(t, fields["InstallDate"].GetStringValue(), "2026-04-28 14:30:00 +0000 GMT")
+	utiltest.AssertEquals(t, fields["HelpLink"].GetStringValue(), "TestLink")
+}
+
+func Test_reportVmInventory_parseQFEDate(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name    string
+		input   string
+		want    time.Time
+		wantErr error
+	}{
+		{
+			name:    "Format M/D/YYYY",
+			input:   "9/1/2020",
+			want:    time.Date(2020, time.September, 1, 0, 0, 0, 0, time.UTC),
+			wantErr: nil,
+		},
+		{
+			name:    "Format YYYYMMDD",
+			input:   "20200901",
+			want:    time.Date(2020, time.September, 1, 0, 0, 0, 0, time.UTC),
+			wantErr: nil,
+		},
+		{
+			name:    "Format YYYY-MM-DD",
+			input:   "2020-09-01",
+			want:    time.Date(2020, time.September, 1, 0, 0, 0, 0, time.UTC),
+			wantErr: nil,
+		},
+		{
+			name:    "Format DD-Mon-YYYY",
+			input:   "01-Sep-2020",
+			want:    time.Date(2020, time.September, 1, 0, 0, 0, 0, time.UTC),
+			wantErr: nil,
+		},
+		{
+			name:    "Empty date",
+			input:   "",
+			want:    time.Time{},
+			wantErr: fmt.Errorf("unable to parse date \"\" with any known layout"),
+		},
+		{
+			name:    "Invalid Format",
+			input:   "bad-date",
+			want:    time.Time{},
+			wantErr: fmt.Errorf("unable to parse date \"bad-date\" with any known layout"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseQFEDate(ctx, tt.input)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			utiltest.AssertEquals(t, got, tt.want)
+		})
 	}
 }
