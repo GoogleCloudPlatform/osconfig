@@ -216,6 +216,13 @@ func TestSetConfigGooget(t *testing.T) {
 	t.Cleanup(func() { mockCtrl.Finish() })
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	setupSetConfigTest(t, mockCommandRunner)
+
+	setupGooGetEnv := func(t *testing.T, googetExists bool) {
+		utiltest.OverrideVariable(t, &packages.GooGetExists, googetExists)
+		tmpDir := t.TempDir()
+		utiltest.OverrideVariable(t, &googetRepoFilePath, func() string { return filepath.Join(tmpDir, "googet.repo") })
+	}
 
 	tests := []struct {
 		name             string
@@ -323,9 +330,9 @@ func TestSetConfigGooget(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setupSetConfigTest(t, false, false, false, tt.googetExists, mockCommandRunner)
-
+			setupGooGetEnv(t, tt.googetExists)
 			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
+
 			err := setConfig(context.Background(), tt.egp)
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 		})
