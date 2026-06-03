@@ -230,6 +230,9 @@ func TestSetConfigApt(t *testing.T) {
 
 	setupAptEnv := func(t *testing.T, aptExists bool) {
 		utiltest.OverrideVariable(t, &packages.AptExists, aptExists)
+		utiltest.OverrideVariable(t, &packages.YumExists, false)
+		utiltest.OverrideVariable(t, &packages.ZypperExists, false)
+		utiltest.OverrideVariable(t, &packages.GooGetExists, false)
 		tmpDir := t.TempDir()
 		utiltest.OverrideVariable(t, &aptRepoFilePath, func() string { return filepath.Join(tmpDir, "apt.list") })
 	}
@@ -403,6 +406,9 @@ func TestSetConfigYum(t *testing.T) {
 
 	setupYumEnv := func(t *testing.T, yumExists bool) {
 		utiltest.OverrideVariable(t, &packages.YumExists, yumExists)
+		utiltest.OverrideVariable(t, &packages.AptExists, false)
+		utiltest.OverrideVariable(t, &packages.ZypperExists, false)
+		utiltest.OverrideVariable(t, &packages.GooGetExists, false)
 		tmpDir := t.TempDir()
 		utiltest.OverrideVariable(t, &yumRepoFilePath, func() string { return filepath.Join(tmpDir, "yum.repo") })
 	}
