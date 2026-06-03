@@ -20,12 +20,18 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"syscall"
 	"testing"
 	"time"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
+	"github.com/GoogleCloudPlatform/osconfig/osinfo"
+	"github.com/GoogleCloudPlatform/osconfig/packages"
+	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
+	"github.com/golang/mock/gomock"
 )
 
 // TestChecksum verifies that checksum correctly calculates the SHA256 hash of the input reader.
@@ -206,4 +212,197 @@ func TestInstallRecipesHandlesInputs(t *testing.T) {
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 		})
 	}
+}
+
+// TestSetConfigApt verifies that setConfig handles apt package manager and its configurations.
+func TestSetConfigApt(t *testing.T) {
+	ctx := context.Background()
+
+	mockCtrl := gomock.NewController(t)
+	t.Cleanup(func() { mockCtrl.Finish() })
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	setupSetConfigTest(t, mockCommandRunner)
+
+	dpkgQueryArgs := []string{"-W", "-f", "\\{\"architecture\":\"${Architecture}\",\"package\":\"${Package}\",\"source_name\":\"${source:Package}\",\"source_version\":\"${source:Version}\",\"status\":\"${db:Status-Status}\",\"version\":\"${Version}\"\\}\n"}
+	aptUpgradableArgs := []string{"--just-print", "-qq", "dist-upgrade"}
+	aptEnv := []string{"DEBIAN_FRONTEND=noninteractive"}
+
+	setupAptEnv := func(t *testing.T, aptExists bool) {
+		utiltest.OverrideVariable(t, &packages.AptExists, aptExists)
+		tmpDir := t.TempDir()
+		utiltest.OverrideVariable(t, &aptRepoFilePath, func() string { return filepath.Join(tmpDir, "apt.list") })
+	}
+
+	tests := []struct {
+		name             string
+		egp              *agentendpointpb.EffectiveGuestPolicy
+		aptExists        bool
+		expectedCommands []utiltest.ExpectedCommand
+		wantErr          error
+	}{
+		{
+			name:    "empty policy, want nil error",
+			egp:     &agentendpointpb.EffectiveGuestPolicy{},
+			wantErr: nil,
+		},
+		{
+			name: "apt install package p1, want nil error",
+			egp: &agentendpointpb.EffectiveGuestPolicy{
+				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
+					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_INSTALLED, Manager: agentendpointpb.Package_APT}},
+				},
+			},
+			aptExists: true,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...),
+					Stdout: []byte(""),
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "update"),
+					Envs: aptEnv,
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "install", "-y", "p1"),
+					Envs: aptEnv,
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "apt install manager not found, want nil error",
+			egp: &agentendpointpb.EffectiveGuestPolicy{
+				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
+					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_INSTALLED, Manager: agentendpointpb.Package_APT}},
+				},
+			},
+			aptExists: false,
+			wantErr:   nil,
+		},
+		{
+			name: "apt update package p1, want nil error",
+			egp: &agentendpointpb.EffectiveGuestPolicy{
+				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
+					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_UPDATED, Manager: agentendpointpb.Package_APT}},
+				},
+			},
+			aptExists: true,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...),
+					Stdout: []byte(`{"package":"p1","status":"installed"}`),
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "update"),
+					Envs: aptEnv,
+				},
+				{
+					Cmd:    exec.Command("/usr/bin/apt-get", aptUpgradableArgs...),
+					Stdout: []byte("Inst p1 [1.0] (2.0 repo [amd64])\n"),
+					Envs:   aptEnv,
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "install", "-y", "p1"),
+					Envs: aptEnv,
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "apt remove package p1, want nil error",
+			egp: &agentendpointpb.EffectiveGuestPolicy{
+				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
+					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_REMOVED, Manager: agentendpointpb.Package_APT}},
+				},
+			},
+			aptExists: true,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...),
+					Stdout: []byte(`{"package":"p1","status":"installed"}`),
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "remove", "-y", "p1"),
+					Envs: aptEnv,
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "apt install p1 with failure, want installing error",
+			egp: &agentendpointpb.EffectiveGuestPolicy{
+				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
+					{Package: &agentendpointpb.Package{Name: "p1", DesiredState: agentendpointpb.DesiredState_INSTALLED, Manager: agentendpointpb.Package_APT}},
+				},
+			},
+			aptExists: true,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/usr/bin/dpkg-query", dpkgQueryArgs...),
+					Stdout: []byte(""),
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "update"),
+					Envs: aptEnv,
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "install", "-y", "p1"),
+					Envs: aptEnv,
+					Err:  fmt.Errorf("individual install error"),
+				},
+				{
+					Cmd:  exec.Command("/usr/bin/apt-get", "install", "-y", "p1"),
+					Envs: aptEnv,
+					Err:  fmt.Errorf("individual install error"),
+				},
+			},
+			wantErr: setConfigError{
+				errors: []error{
+					fmt.Errorf("Error performing apt changes: error installing apt packages: Error installing apt package: p1. Error details: error running /usr/bin/apt-get with args [\"install\" \"-y\" \"p1\"]: individual install error, stdout: \"\", stderr: \"\""),
+				},
+			},
+		},
+		{
+			name: "apt repository configured, want nil error",
+			egp: &agentendpointpb.EffectiveGuestPolicy{
+				PackageRepositories: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackageRepository{
+					{PackageRepository: &agentendpointpb.PackageRepository{Repository: &agentendpointpb.PackageRepository_Apt{Apt: &agentendpointpb.AptRepository{Uri: "http://repo"}}}},
+				},
+			},
+			aptExists: true,
+			wantErr:   nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setupAptEnv(t, tt.aptExists)
+			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
+
+			err := setConfig(context.Background(), tt.egp)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+		})
+	}
+}
+
+type policiesStubOsInfoProvider struct {
+	osinfo osinfo.OSInfo
+}
+
+func (s policiesStubOsInfoProvider) GetOSInfo(ctx context.Context) (osinfo.OSInfo, error) {
+	return s.osinfo, nil
+}
+
+// setupSetConfigTest sets up the environment for SetConfig tests by mocking the command runner.
+func setupSetConfigTest(t *testing.T, runner *utilmocks.MockCommandRunner) {
+	utiltest.OverrideVariable(t, &osInfoProvider, (osinfo.Provider)(policiesStubOsInfoProvider{
+		osinfo: osinfo.OSInfo{ShortName: "debian", Version: "11"},
+	}))
+	utiltest.OverrideVariable(t, &retry, func(ctx context.Context, timeout time.Duration, desc string, f func() error) error {
+		return f()
+	})
+
+	packages.SetCommandRunner(runner)
+	packages.SetPtyCommandRunner(runner)
 }

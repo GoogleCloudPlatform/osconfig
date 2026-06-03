@@ -38,6 +38,15 @@ import (
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
 )
 
+var (
+	googetRepoFilePath = agentconfig.GooGetRepoFilePath
+	aptRepoFilePath    = agentconfig.AptRepoFilePath
+	yumRepoFilePath    = agentconfig.YumRepoFilePath
+	zypperRepoFilePath = agentconfig.ZypperRepoFilePath
+
+	retry = retryutil.RetryFunc
+)
+
 func run(ctx context.Context) {
 	var resp *agentendpointpb.EffectiveGuestPolicy
 
@@ -59,8 +68,9 @@ func run(ctx context.Context) {
 
 	effective := mergeConfigs(local, resp)
 
-	// We don't check the error from setConfig as all errors are already logged.
-	setConfig(ctx, effective)
+	if err := setConfig(ctx, effective); err != nil {
+		clog.Errorf(ctx, "%v", err)
+	}
 	if err := installRecipes(ctx, effective); err != nil {
 		clog.Errorf(ctx, "%v", err)
 	}
@@ -84,6 +94,19 @@ func (e installRecipesError) Error() string {
 	return fmt.Sprintf("unable to install recipes:\n%s", strings.Join(results, ",\n"))
 }
 
+type setConfigError struct {
+	errors []error
+}
+
+func (e setConfigError) Error() string {
+	results := make([]string, len(e.errors))
+	for i, err := range e.errors {
+		results[i] = err.Error()
+	}
+
+	return fmt.Sprintf("error applying config:\n%s", strings.Join(results, ",\n"))
+}
+
 func installRecipes(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) error {
 	var errors []error
 	for _, recipe := range egp.GetSoftwareRecipes() {
@@ -99,7 +122,7 @@ func installRecipes(ctx context.Context, egp *agentendpointpb.EffectiveGuestPoli
 	return nil
 }
 
-func setConfig(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) {
+func setConfig(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) error {
 	var aptRepos []*agentendpointpb.AptRepository
 	var yumRepos []*agentendpointpb.YumRepository
 	var zypperRepos []*agentendpointpb.ZypperRepository
@@ -187,49 +210,63 @@ func setConfig(ctx context.Context, egp *agentendpointpb.EffectiveGuestPolicy) {
 		}
 	}
 
+	var errs []error
 	if packages.GooGetExists {
-		if err := googetRepositories(ctx, gooRepos, agentconfig.GooGetRepoFilePath()); err != nil {
+		if err := googetRepositories(ctx, gooRepos, googetRepoFilePath()); err != nil {
+			errs = append(errs, fmt.Errorf("Error writing googet repo file: %v", err))
 			clog.Errorf(ctx, "Error writing googet repo file: %v", err)
 		}
-		if err := retryutil.RetryFunc(ctx, 1*time.Minute, "Applying googet changes", func() error {
+		if err := retry(ctx, 1*time.Minute, "Applying googet changes", func() error {
 			return googetChanges(ctx, gooInstallPkgs, gooRemovePkgs, gooUpdatePkgs)
 		}); err != nil {
+			errs = append(errs, fmt.Errorf("Error performing googet changes: %v", err))
 			clog.Errorf(ctx, "Error performing googet changes: %v", err)
 		}
 	}
 
 	if packages.AptExists {
-		if err := aptRepositories(ctx, aptRepos, agentconfig.AptRepoFilePath()); err != nil {
+		if err := aptRepositories(ctx, aptRepos, aptRepoFilePath()); err != nil {
+			errs = append(errs, fmt.Errorf("Error writing apt repo file: %v", err))
 			clog.Errorf(ctx, "Error writing apt repo file: %v", err)
 		}
-		if err := retryutil.RetryFunc(ctx, 1*time.Minute, "Applying apt changes", func() error {
+		if err := retry(ctx, 1*time.Minute, "Applying apt changes", func() error {
 			return aptChanges(ctx, aptInstallPkgs, aptRemovePkgs, aptUpdatePkgs)
 		}); err != nil {
+			errs = append(errs, fmt.Errorf("Error performing apt changes: %v", err))
 			clog.Errorf(ctx, "Error performing apt changes: %v", err)
 		}
 	}
 
 	if packages.YumExists {
-		if err := yumRepositories(ctx, yumRepos, agentconfig.YumRepoFilePath()); err != nil {
+		if err := yumRepositories(ctx, yumRepos, yumRepoFilePath()); err != nil {
+			errs = append(errs, fmt.Errorf("Error writing yum repo file: %v", err))
 			clog.Errorf(ctx, "Error writing yum repo file: %v", err)
 		}
-		if err := retryutil.RetryFunc(ctx, 1*time.Minute, "Applying yum changes", func() error {
+		if err := retry(ctx, 1*time.Minute, "Applying yum changes", func() error {
 			return yumChanges(ctx, yumInstallPkgs, yumRemovePkgs, yumUpdatePkgs)
 		}); err != nil {
+			errs = append(errs, fmt.Errorf("Error performing yum changes: %v", err))
 			clog.Errorf(ctx, "Error performing yum changes: %v", err)
 		}
 	}
 
 	if packages.ZypperExists {
-		if err := zypperRepositories(ctx, zypperRepos, agentconfig.ZypperRepoFilePath()); err != nil {
+		if err := zypperRepositories(ctx, zypperRepos, zypperRepoFilePath()); err != nil {
+			errs = append(errs, fmt.Errorf("Error writing zypper repo file: %v", err))
 			clog.Errorf(ctx, "Error writing zypper repo file: %v", err)
 		}
-		if err := retryutil.RetryFunc(ctx, 1*time.Minute, "Applying zypper changes.", func() error {
+		if err := retry(ctx, 1*time.Minute, "Applying zypper changes.", func() error {
 			return zypperChanges(ctx, zypperInstallPkgs, zypperRemovePkgs, zypperUpdatePkgs)
 		}); err != nil {
+			errs = append(errs, fmt.Errorf("Error performing zypper changes: %v", err))
 			clog.Errorf(ctx, "Error performing zypper changes: %v", err)
 		}
 	}
+
+	if len(errs) > 0 {
+		return setConfigError{errors: errs}
+	}
+	return nil
 }
 
 func checksum(r io.Reader) hash.Hash {
