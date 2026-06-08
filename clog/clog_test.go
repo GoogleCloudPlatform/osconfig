@@ -28,7 +28,7 @@ import (
 )
 
 func TestWithLabels(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	tests := []struct {
 		name   string
@@ -81,42 +81,41 @@ func initTestLogger(ctx context.Context, t *testing.T) *testWriter {
 }
 
 func TestDebugRPC(t *testing.T) {
-	DebugEnabled = true
-	defer func() { DebugEnabled = false }()
-	ctx := context.Background()
+	utiltest.OverrideVariable(t, &DebugEnabled, true)
+	ctx := t.Context()
 	tw := initTestLogger(ctx, t)
-	req := wrapperspb.String("request")
-	resp := wrapperspb.String("response")
+	req := wrapperspb.String("req message")
+	resp := wrapperspb.String("resp message")
 
 	tests := []struct {
-		name     string
-		req      proto.Message
-		resp     proto.Message
-		expected string
+		name string
+		req  proto.Message
+		resp proto.Message
+		want string
 	}{
 		{
-			name:     "ReqAndRespMethod",
-			req:      req,
-			resp:     resp,
-			expected: `^\[Debug\] Called: ReqAndRespMethod with request:`,
+			name: "ReqAndRespMethod",
+			req:  req,
+			resp: resp,
+			want: `(?s)^\[Debug\] Called: ReqAndRespMethod with request:.*"req message".*\nresponse:\n.*"resp message".*`,
 		},
 		{
-			name:     "RespOnlyMethod",
-			req:      nil,
-			resp:     resp,
-			expected: `^\[Debug\] Called: RespOnlyMethod with response:`,
+			name: "RespOnlyMethod",
+			req:  nil,
+			resp: resp,
+			want: `(?s)^\[Debug\] Called: RespOnlyMethod with response:\n.*"resp message".*`,
 		},
 		{
-			name:     "ReqOnlyMethod",
-			req:      req,
-			resp:     nil,
-			expected: `^\[Debug\] Calling: ReqOnlyMethod with request:`,
+			name: "ReqOnlyMethod",
+			req:  req,
+			resp: nil,
+			want: `(?s)^\[Debug\] Calling: ReqOnlyMethod with request:\n.*"req message".*`,
 		},
 		{
-			name:     "NoReqNoRespMethod",
-			req:      nil,
-			resp:     nil,
-			expected: `^$`,
+			name: "NoReqNoRespMethod",
+			req:  nil,
+			resp: nil,
+			want: `^$`,
 		},
 	}
 
@@ -124,45 +123,45 @@ func TestDebugRPC(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tw.logs = ""
 			DebugRPC(ctx, tt.name, tt.req, tt.resp)
-			utiltest.AssertFormatMatch(t, tw.logs, tt.expected)
+			utiltest.AssertFormatMatch(t, tw.logs, tt.want)
 		})
 	}
 }
 
 func TestLoggingFunctions(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	tw := initTestLogger(ctx, t)
 	tests := []struct {
-		name     string
-		logFunc  func(ctx context.Context)
-		expected string
+		name    string
+		logFunc func(ctx context.Context)
+		want    string
 	}{
 		{
-			name:     "Debugf",
-			logFunc:  func(ctx context.Context) { Debugf(ctx, "test debug %s", "msg") },
-			expected: "[Debug] test debug msg\n",
+			name:    "Debugf",
+			logFunc: func(ctx context.Context) { Debugf(ctx, "test debug %s", "msg") },
+			want:    "[Debug] test debug msg\n",
 		},
 		{
-			name:     "Infof",
-			logFunc:  func(ctx context.Context) { Infof(ctx, "test info %s", "msg") },
-			expected: "[Info] test info msg\n",
+			name:    "Infof",
+			logFunc: func(ctx context.Context) { Infof(ctx, "test info %s", "msg") },
+			want:    "[Info] test info msg\n",
 		},
 		{
-			name:     "Warningf",
-			logFunc:  func(ctx context.Context) { Warningf(ctx, "test warn %s", "msg") },
-			expected: "[Warning] test warn msg\n",
+			name:    "Warningf",
+			logFunc: func(ctx context.Context) { Warningf(ctx, "test warn %s", "msg") },
+			want:    "[Warning] test warn msg\n",
 		},
 		{
-			name:     "Errorf",
-			logFunc:  func(ctx context.Context) { Errorf(ctx, "test error %s", "msg") },
-			expected: "[Error] test error msg\n",
+			name:    "Errorf",
+			logFunc: func(ctx context.Context) { Errorf(ctx, "test error %s", "msg") },
+			want:    "[Error] test error msg\n",
 		},
 		{
 			name: "DebugStructured",
 			logFunc: func(ctx context.Context) {
 				DebugStructured(ctx, map[string]string{"key": "value"}, "test structured %s", "msg")
 			},
-			expected: "[Debug] test structured msg\n",
+			want: "[Debug] test structured msg\n",
 		},
 	}
 
@@ -170,7 +169,7 @@ func TestLoggingFunctions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tw.logs = ""
 			tt.logFunc(ctx)
-			utiltest.AssertEquals(t, tw.logs, tt.expected)
+			utiltest.AssertEquals(t, tw.logs, tt.want)
 		})
 	}
 }
