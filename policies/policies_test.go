@@ -383,8 +383,8 @@ func TestSetConfigApt(t *testing.T) {
 			setupAptEnv(t, tt.aptExists)
 			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
 
-			err := setConfig(context.Background(), tt.egp)
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			gotErr := setConfig(context.Background(), tt.egp)
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
 		})
 	}
 }
@@ -545,8 +545,8 @@ func TestSetConfigYum(t *testing.T) {
 			setupYumEnv(t, tt.yumExists)
 			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
 
-			err := setConfig(context.Background(), tt.egp)
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			gotErr := setConfig(context.Background(), tt.egp)
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
 		})
 	}
 }
