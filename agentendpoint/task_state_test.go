@@ -61,10 +61,6 @@ func TestLoadState(t *testing.T) {
 	defer os.RemoveAll(td)
 	testState := filepath.Join(td, "testState")
 
-	// test read error by attempting to read a directory
-	_, err = loadState(td)
-	utiltest.AssertErrorMatch(t, err, &fs.PathError{Op: "read", Path: td, Err: errors.New("is a directory")})
-
 	// test no state file
 	if _, err := loadState(testState); err != nil {
 		t.Errorf("no state file: unexpected error: %v", err)
@@ -73,33 +69,53 @@ func TestLoadState(t *testing.T) {
 	// We don't test execTask as reboots during that task type is not supported.
 	var tests = []struct {
 		name    string
-		state   []byte
+		setup   func(t *testing.T) string
 		wantErr bool
 		want    *taskState
 	}{
 		{
-			"BlankState",
-			[]byte("{}"),
-			false,
-			&taskState{},
+			name: "BlankState",
+			setup: func(t *testing.T) string {
+				if err := ioutil.WriteFile(testState, []byte("{}"), 0600); err != nil {
+					t.Fatalf("error writing state: %v", err)
+				}
+				return testState
+			},
+			wantErr: false,
+			want:    &taskState{},
 		},
 		{
-			"BadState",
-			[]byte("foo"),
-			true,
-			&taskState{},
+			name: "BadState",
+			setup: func(t *testing.T) string {
+				if err := ioutil.WriteFile(testState, []byte("foo"), 0600); err != nil {
+					t.Fatalf("error writing state: %v", err)
+				}
+				return testState
+			},
+			wantErr: true,
+			want:    &taskState{},
 		},
 		{
-			"PatchTask",
-			[]byte(testPatchTaskStateString),
-			false,
-			testPatchTaskState,
+			name: "PatchTask",
+			setup: func(t *testing.T) string {
+				if err := ioutil.WriteFile(testState, []byte(testPatchTaskStateString), 0600); err != nil {
+					t.Fatalf("error writing state: %v", err)
+				}
+				return testState
+			},
+			wantErr: false,
+			want:    testPatchTaskState,
 		},
 		{
-			"IgnoresOldRebootFieldName",
-			[]byte("{\"PatchTask\":{\"Task\":{},\"RebootCount\":1}}"),
-			false,
-			&taskState{
+			name: "IgnoresOldRebootFieldName",
+			setup: func(t *testing.T) string {
+				if err := ioutil.WriteFile(testState, []byte("{\"PatchTask\":{\"Task\":{},\"RebootCount\":1}}"), 0600); err != nil {
+					t.Fatalf("error writing state: %v", err)
+				}
+				return testState
+			},
+			wantErr: false,
+			want: &taskState{
 				PatchTask: &patchTask{
 					Task: &applyPatchesTask{
 						&agentendpointpb.ApplyPatchesTask{},
@@ -109,14 +125,19 @@ func TestLoadState(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "ReadDirectoryError",
+			setup: func(t *testing.T) string {
+				return td
+			},
+			wantErr: true,
+			want:    nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := ioutil.WriteFile(testState, tt.state, 0600); err != nil {
-				t.Fatalf("error writing state: %v", err)
-			}
-
-			st, err := loadState(testState)
+			path := tt.setup(t)
+			st, err := loadState(path)
 			if err != nil && !tt.wantErr {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -215,9 +236,9 @@ func TestStateSave(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			err := tt.state.save(tt.path)
+			gotErr := tt.state.save(tt.path)
 
-			utiltest.AssertErrorMatchAndSkip(t, err, tt.wantErr)
+			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
 			utiltest.AssertFileContents(t, tt.path, tt.want)
 		})
 	}
