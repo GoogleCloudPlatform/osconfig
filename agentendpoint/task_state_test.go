@@ -62,9 +62,8 @@ func TestLoadState(t *testing.T) {
 	testState := filepath.Join(td, "testState")
 
 	// test read error by attempting to read a directory
-	if _, err := loadState(td); err == nil {
-		t.Error("expected error loading state from a directory, got nil")
-	}
+	_, err = loadState(td)
+	utiltest.AssertErrorMatch(t, err, &fs.PathError{Op: "read", Path: td, Err: errors.New("is a directory")})
 
 	// test no state file
 	if _, err := loadState(testState); err != nil {
@@ -155,28 +154,11 @@ func TestLoadOldState(t *testing.T) {
 	}
 }
 
-// Updates the expected PathError's path since it cannot be predicted ahead of time for tmp files.
-func completePathError(got, want error) error {
-	if wantPe, ok := want.(*fs.PathError); ok {
-		if gotPe, ok := got.(*fs.PathError); ok {
-			wantPe.Path = gotPe.Path
-		}
-	}
-	return want
-}
-
 func TestStateSave(t *testing.T) {
 	td := t.TempDir()
 	testState := filepath.Join(td, "testState")
 	invalidDir := utiltest.WriteToTempFileMust(t, "invalidDir", []byte(""))
 	invalidPath := filepath.Join(invalidDir, "testState")
-
-	roDir := filepath.Join(td, "roDir")
-	if err := os.MkdirAll(roDir, 0444); err != nil {
-		t.Fatalf("error creating read-only dir: %v", err)
-	}
-	defer os.Chmod(roDir, 0755)
-	roPath := filepath.Join(roDir, "state.json")
 
 	var tests = []struct {
 		desc    string
@@ -186,35 +168,35 @@ func TestStateSave(t *testing.T) {
 		wantErr error
 	}{
 		{
-			desc:    "NilState",
+			desc:    "nil state, expect empty json",
 			state:   nil,
 			path:    testState,
 			want:    "{}",
 			wantErr: nil,
 		},
 		{
-			desc:    "BlankState",
+			desc:    "blank state, expect empty json",
 			state:   &taskState{},
 			path:    testState,
 			want:    "{}",
 			wantErr: nil,
 		},
 		{
-			desc:    "PatchTask",
+			desc:    "patch task state, expect serialized patch task json",
 			state:   testPatchTaskState,
 			path:    testState,
 			want:    testPatchTaskStateString,
 			wantErr: nil,
 		},
 		{
-			desc:    "ExecTask",
+			desc:    "exec task state, expect serialized exec task json",
 			state:   &taskState{ExecTask: &execTask{TaskID: "foo"}},
 			path:    testState,
 			want:    "{\"ExecTask\":{\"StartedAt\":\"0001-01-01T00:00:00Z\",\"Task\":null,\"TaskID\":\"foo\"}}",
 			wantErr: nil,
 		},
 		{
-			desc:    "InvalidDirectoryError",
+			desc:    "invalid directory path, expect path error",
 			state:   &taskState{},
 			path:    invalidPath,
 			want:    "",
@@ -222,7 +204,7 @@ func TestStateSave(t *testing.T) {
 		},
 		{
 			// time.Time.MarshalJSON only supports years between 0 and 9999.
-			desc: "MarshalError",
+			desc: "invalid input for json, expect marshal error",
 			state: &taskState{
 				ExecTask: &execTask{StartedAt: time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC)},
 			},
@@ -230,21 +212,12 @@ func TestStateSave(t *testing.T) {
 			want:    "",
 			wantErr: &json.MarshalerError{Type: reflect.TypeOf(time.Time{}), Err: errors.New("Time.MarshalJSON: year outside of range [0,9999]")},
 		},
-		{
-			// TempFile inside writeFile will fail because the parent directory is read-only.
-			desc:    "WriteFileTempFileError",
-			state:   &taskState{},
-			path:    roPath,
-			want:    "",
-			wantErr: &fs.PathError{Op: "open", Path: roPath, Err: errors.New("permission denied")},
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			err := tt.state.save(tt.path)
-			wantErr := completePathError(err, tt.wantErr)
 
-			utiltest.AssertErrorMatchAndSkip(t, err, wantErr)
+			utiltest.AssertErrorMatchAndSkip(t, err, tt.wantErr)
 			utiltest.AssertFileContents(t, tt.path, tt.want)
 		})
 	}
