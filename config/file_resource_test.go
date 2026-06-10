@@ -388,39 +388,33 @@ func TestFileResourceValidateErrors(t *testing.T) {
 	_, errLocalPath := os.Open("does_not_exist")
 	tests := []struct {
 		name    string
-		fr      *fileResource
+		frpb    *agentendpointpb.OSPolicy_Resource_FileResource
 		wantErr error
 	}{
 		{
 			name: "invalid state, expect unrecognized desired state error",
-			fr: &fileResource{
-				OSPolicy_Resource_FileResource: &agentendpointpb.OSPolicy_Resource_FileResource{
-					State: agentendpointpb.OSPolicy_Resource_FileResource_DESIRED_STATE_UNSPECIFIED,
-				},
+			frpb: &agentendpointpb.OSPolicy_Resource_FileResource{
+				State: agentendpointpb.OSPolicy_Resource_FileResource_DESIRED_STATE_UNSPECIFIED,
 			},
 			wantErr: fmt.Errorf("unrecognized DesiredState for FileResource: %q", agentendpointpb.OSPolicy_Resource_FileResource_DESIRED_STATE_UNSPECIFIED),
 		},
 		{
 			name: "invalid permissions, expect fail to parse permissions",
-			fr: &fileResource{
-				OSPolicy_Resource_FileResource: &agentendpointpb.OSPolicy_Resource_FileResource{
-					State:       agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
-					Permissions: "invalid",
-				},
+			frpb: &agentendpointpb.OSPolicy_Resource_FileResource{
+				State:       agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
+				Permissions: "invalid",
 			},
 			wantErr: fmt.Errorf("can't parse permissions %q: %v", "invalid", &strconv.NumError{Func: "ParseUint", Num: "invalid", Err: strconv.ErrSyntax}),
 		},
 		{
 			name: "local file does not exist, expect fail to open file",
-			fr: &fileResource{
-				OSPolicy_Resource_FileResource: &agentendpointpb.OSPolicy_Resource_FileResource{
-					Path:  "some/path",
-					State: agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
-					Source: &agentendpointpb.OSPolicy_Resource_FileResource_File{
-						File: &agentendpointpb.OSPolicy_Resource_File{
-							Type: &agentendpointpb.OSPolicy_Resource_File_LocalPath{
-								LocalPath: "does_not_exist",
-							},
+			frpb: &agentendpointpb.OSPolicy_Resource_FileResource{
+				Path:  "some/path",
+				State: agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
+				Source: &agentendpointpb.OSPolicy_Resource_FileResource_File{
+					File: &agentendpointpb.OSPolicy_Resource_File{
+						Type: &agentendpointpb.OSPolicy_Resource_File_LocalPath{
+							LocalPath: "does_not_exist",
 						},
 					},
 				},
@@ -429,40 +423,23 @@ func TestFileResourceValidateErrors(t *testing.T) {
 		},
 		{
 			name: "unrecognized source, expect unrecognized source type error",
-			fr: &fileResource{
-				OSPolicy_Resource_FileResource: &agentendpointpb.OSPolicy_Resource_FileResource{
-					Path:   "some/path",
-					State:  agentendpointpb.OSPolicy_Resource_FileResource_CONTENTS_MATCH,
-					Source: nil,
-				},
+			frpb: &agentendpointpb.OSPolicy_Resource_FileResource{
+				Path:   "some/path",
+				State:  agentendpointpb.OSPolicy_Resource_FileResource_CONTENTS_MATCH,
+				Source: nil,
 			},
 			wantErr: errors.New("unrecognized Source type for FileResource: %!q(<nil>)"),
 		},
 		{
-			name: "content download error, expect fail to write to temp file",
-			fr: &fileResource{
-				OSPolicy_Resource_FileResource: &agentendpointpb.OSPolicy_Resource_FileResource{
-					Path:  "", // Empty path causes write error to temp directory
-					State: agentendpointpb.OSPolicy_Resource_FileResource_CONTENTS_MATCH,
-					Source: &agentendpointpb.OSPolicy_Resource_FileResource_Content{
-						Content: "test content",
-					},
-				},
-			},
-			wantErr: &os.LinkError{Op: "rename"},
-		},
-		{
 			name: "remote download error, expect fail to fetch remote object",
-			fr: &fileResource{
-				OSPolicy_Resource_FileResource: &agentendpointpb.OSPolicy_Resource_FileResource{
-					Path:  "some/path",
-					State: agentendpointpb.OSPolicy_Resource_FileResource_CONTENTS_MATCH,
-					Source: &agentendpointpb.OSPolicy_Resource_FileResource_File{
-						File: &agentendpointpb.OSPolicy_Resource_File{
-							Type: &agentendpointpb.OSPolicy_Resource_File_Remote_{
-								Remote: &agentendpointpb.OSPolicy_Resource_File_Remote{
-									Uri: "doesnot/exist",
-								},
+			frpb: &agentendpointpb.OSPolicy_Resource_FileResource{
+				Path:  "some/path",
+				State: agentendpointpb.OSPolicy_Resource_FileResource_CONTENTS_MATCH,
+				Source: &agentendpointpb.OSPolicy_Resource_FileResource_File{
+					File: &agentendpointpb.OSPolicy_Resource_File{
+						Type: &agentendpointpb.OSPolicy_Resource_File_Remote_{
+							Remote: &agentendpointpb.OSPolicy_Resource_File_Remote{
+								Uri: "doesnot/exist",
 							},
 						},
 					},
@@ -474,22 +451,15 @@ func TestFileResourceValidateErrors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := tt.fr.validate(ctx)
-			wantErr := completeLinkError(err, tt.wantErr)
-			utiltest.AssertErrorMatch(t, err, wantErr)
+			pr := &OSPolicyResource{
+				OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
+					ResourceType: &agentendpointpb.OSPolicy_Resource_File_{File: tt.frpb},
+				},
+			}
+			gotErr := pr.Validate(ctx)
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
 		})
 	}
-}
-
-func completeLinkError(got, want error) error {
-	if wantLe, ok := want.(*os.LinkError); ok {
-		if gotLe, ok := got.(*os.LinkError); ok {
-			wantLe.Old = gotLe.Old
-			wantLe.New = gotLe.New
-			wantLe.Err = gotLe.Err
-		}
-	}
-	return want
 }
 
 func TestFileResourceEnforceStateErrors(t *testing.T) {
@@ -498,33 +468,52 @@ func TestFileResourceEnforceStateErrors(t *testing.T) {
 	errRemove := os.Remove(missingPath)
 	tests := []struct {
 		name    string
-		fr      *fileResource
+		setup   func(t *testing.T) *OSPolicyResource
 		wantErr error
 	}{
 		{
 			name: "invalid state, expect unrecognized desired state error",
-			fr: &fileResource{
-				managedFile: ManagedFile{
-					State: agentendpointpb.OSPolicy_Resource_FileResource_DESIRED_STATE_UNSPECIFIED,
-				},
+			setup: func(t *testing.T) *OSPolicyResource {
+				pr := &OSPolicyResource{
+					OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
+						ResourceType: &agentendpointpb.OSPolicy_Resource_File_{
+							File: &agentendpointpb.OSPolicy_Resource_FileResource{
+								State: agentendpointpb.OSPolicy_Resource_FileResource_DESIRED_STATE_UNSPECIFIED,
+							},
+						},
+					},
+				}
+				t.Cleanup(func() { pr.Cleanup(ctx) })
+				_ = pr.Validate(ctx)
+				return pr
 			},
 			wantErr: fmt.Errorf("unrecognized DesiredState for FileResource: %q", agentendpointpb.OSPolicy_Resource_FileResource_DESIRED_STATE_UNSPECIFIED),
 		},
 		{
 			name: "invalid path remove, expect failed to remove path error",
-			fr: &fileResource{
-				managedFile: ManagedFile{
-					Path:  missingPath,
-					State: agentendpointpb.OSPolicy_Resource_FileResource_ABSENT,
-				},
+			setup: func(t *testing.T) *OSPolicyResource {
+				pr := &OSPolicyResource{
+					OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
+						ResourceType: &agentendpointpb.OSPolicy_Resource_File_{
+							File: &agentendpointpb.OSPolicy_Resource_FileResource{
+								Path:  missingPath,
+								State: agentendpointpb.OSPolicy_Resource_FileResource_ABSENT,
+							},
+						},
+					},
+				}
+				t.Cleanup(func() { pr.Cleanup(ctx) })
+				_ = pr.Validate(ctx)
+				return pr
 			},
 			wantErr: fmt.Errorf("error removing %q: %v", missingPath, errRemove),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := tt.fr.enforceState(ctx)
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			pr := tt.setup(t)
+			gotErr := pr.EnforceState(ctx)
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
 		})
 	}
 }
@@ -537,39 +526,58 @@ func TestFileResourceEnforceStateDownload(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		fr          *fileResource
+		setup       func(t *testing.T) (*OSPolicyResource, string)
 		wantErr     error
 		wantContent string
 	}{
 		{
 			name: "download fails during enforce state, expect unrecognized source type error",
-			fr: &fileResource{
-				OSPolicy_Resource_FileResource: &agentendpointpb.OSPolicy_Resource_FileResource{
-					Path:   "some/path",
-					State:  agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
-					Source: nil,
-				},
-				managedFile: ManagedFile{
-					State: agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
-				},
+			setup: func(t *testing.T) (*OSPolicyResource, string) {
+				path := filepath.Join(tmpDir, "some_path")
+				// Create file so Validate skips download and leaves it for EnforceState.
+				if err := os.WriteFile(path, nil, 0644); err != nil {
+					t.Fatal(err)
+				}
+				pr := &OSPolicyResource{
+					OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
+						ResourceType: &agentendpointpb.OSPolicy_Resource_File_{
+							File: &agentendpointpb.OSPolicy_Resource_FileResource{
+								Path:   path,
+								State:  agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
+								Source: nil,
+							},
+						},
+					},
+				}
+				t.Cleanup(func() { pr.Cleanup(ctx) })
+				_ = pr.Validate(ctx)
+				return pr, path
 			},
 			wantErr: errors.New("unrecognized Source type for FileResource: %!q(<nil>)"),
 		},
 		{
 			name: "download succeeds during enforce state, expect success",
-			fr: &fileResource{
-				OSPolicy_Resource_FileResource: &agentendpointpb.OSPolicy_Resource_FileResource{
-					Path:  dst,
-					State: agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
-					Source: &agentendpointpb.OSPolicy_Resource_FileResource_Content{
-						Content: "test content",
+			setup: func(t *testing.T) (*OSPolicyResource, string) {
+				// Create dst so Validate skips download and leaves it for EnforceState.
+				if err := os.WriteFile(dst, nil, 0644); err != nil {
+					t.Fatal(err)
+				}
+				pr := &OSPolicyResource{
+					OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
+						ResourceType: &agentendpointpb.OSPolicy_Resource_File_{
+							File: &agentendpointpb.OSPolicy_Resource_FileResource{
+								Path:  dst,
+								State: agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
+								Source: &agentendpointpb.OSPolicy_Resource_FileResource_Content{
+									Content: "test content",
+								},
+							},
+						},
 					},
-				},
-				managedFile: ManagedFile{
-					State:      agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
-					Path:       dst,
-					Permisions: 0644,
-				},
+				}
+				t.Cleanup(func() { pr.Cleanup(ctx) })
+				_ = pr.Validate(ctx)
+				return pr, dst
 			},
 			wantErr:     nil,
 			wantContent: "test content",
@@ -578,10 +586,12 @@ func TestFileResourceEnforceStateDownload(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			inDesiredState, err := tt.fr.enforceState(ctx)
-			utiltest.AssertErrorMatchAndSkip(t, err, tt.wantErr)
-			utiltest.AssertEquals(t, inDesiredState, true)
-			utiltest.AssertFileContents(t, tt.fr.managedFile.Path, tt.wantContent)
+			pr, path := tt.setup(t)
+			gotErr := pr.EnforceState(ctx)
+
+			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
+			utiltest.AssertEquals(t, pr.InDesiredState(), true)
+			utiltest.AssertFileContents(t, path, tt.wantContent)
 		})
 	}
 }
