@@ -247,16 +247,11 @@ func Test_checkForConflicts(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var buf bytes.Buffer
-			tw := tar.NewWriter(&buf)
-			for _, f := range tt.files {
-				tw.WriteHeader(&tar.Header{Name: f})
-			}
-			tw.Close()
-			tr := tar.NewReader(&buf)
+			buf := createTarArchive(t, tt.files)
+			gotTar := tar.NewReader(buf)
 
-			err := checkForConflicts(tr, tmpDir)
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			gotErr := checkForConflicts(gotTar, tmpDir)
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
 		})
 	}
 }
@@ -318,26 +313,31 @@ func Test_decompress(t *testing.T) {
 			name:        "archive type TAR, want nil",
 			archiveType: agentendpointpb.SoftwareRecipe_Step_ExtractArchive_TAR,
 			data:        content,
+			wantErr:     nil,
 		},
 		{
 			name:        "archive type TAR_GZIP, want nil",
 			archiveType: agentendpointpb.SoftwareRecipe_Step_ExtractArchive_TAR_GZIP,
 			data:        gzipData,
+			wantErr:     nil,
 		},
 		{
 			name:        "archive type TAR_BZIP, want nil",
 			archiveType: agentendpointpb.SoftwareRecipe_Step_ExtractArchive_TAR_BZIP,
 			data:        bzip2Data,
+			wantErr:     nil,
 		},
 		{
 			name:        "archive type TAR_LZMA, want nil",
 			archiveType: agentendpointpb.SoftwareRecipe_Step_ExtractArchive_TAR_LZMA,
 			data:        lzmaData,
+			wantErr:     nil,
 		},
 		{
 			name:        "archive type TAR_XZ, want nil",
 			archiveType: agentendpointpb.SoftwareRecipe_Step_ExtractArchive_TAR_XZ,
 			data:        xzData,
+			wantErr:     nil,
 		},
 		{
 			name:        "unrecognized archive type, want error",
@@ -350,13 +350,9 @@ func Test_decompress(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			reader := bytes.NewReader(tt.data)
-			gotReader, err := decompress(reader, tt.archiveType)
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			gotReader, gotErr := decompress(reader, tt.archiveType)
 
-			if tt.wantErr != nil {
-				return
-			}
-
+			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
 			gotContent, err := io.ReadAll(gotReader)
 			if err != nil {
 				t.Fatalf("failed to read decompressed content: %v", err)
@@ -366,3 +362,17 @@ func Test_decompress(t *testing.T) {
 	}
 }
 
+func createTarArchive(t *testing.T, files []string) *bytes.Buffer {
+	t.Helper()
+	var buf bytes.Buffer
+	tw := tar.NewWriter(&buf)
+	for _, f := range files {
+		if err := tw.WriteHeader(&tar.Header{Name: f}); err != nil {
+			t.Fatalf("failed to write tar header for %q: %v", f, err)
+		}
+	}
+	if err := tw.Close(); err != nil {
+		t.Fatalf("failed to close tar writer: %v", err)
+	}
+	return &buf
+}
