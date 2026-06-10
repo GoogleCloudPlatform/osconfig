@@ -48,8 +48,6 @@ var extensionMap = map[agentendpointpb.SoftwareRecipe_Step_RunScript_Interpreter
 
 var chown = chownFunc
 
-var executeCommand = executeCommandFunc
-
 func stepCopyFile(step *agentendpointpb.SoftwareRecipe_Step_CopyFile, artifacts map[string]string, runEnvs []string, stepDir string) error {
 	dest, err := util.NormPath(step.Destination)
 	if err != nil {
@@ -559,7 +557,7 @@ func stepRunScript(ctx context.Context, step *agentendpointpb.SoftwareRecipe_Ste
 	return executeCommand(ctx, cmd, args, stepDir, runEnvs, step.AllowedExitCodes)
 }
 
-func executeCommandFunc(ctx context.Context, cmd string, args []string, workDir string, runEnvs []string, allowedExitCodes []int32) error {
+func executeCommand(ctx context.Context, cmd string, args []string, workDir string, runEnvs []string, allowedExitCodes []int32) error {
 	cmdObj := exec.Command(cmd, args...)
 	cmdObj.Dir = workDir
 	defaultEnv, err := createDefaultEnvironment()
