@@ -59,19 +59,19 @@ func TestLookupEffectiveGuestPolicies(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		mockPolicy *agentendpointpb.EffectiveGuestPolicy
+		wantPolicy *agentendpointpb.EffectiveGuestPolicy
 		mockErr    error
 		wantErr    error
 	}{
 		{
 			name:       "successful server response, expect non-nil policy",
-			mockPolicy: &agentendpointpb.EffectiveGuestPolicy{},
+			wantPolicy: &agentendpointpb.EffectiveGuestPolicy{},
 			mockErr:    nil,
 			wantErr:    nil,
 		},
 		{
 			name:       "server returns error, expect error",
-			mockPolicy: nil,
+			wantPolicy: nil,
 			mockErr:    errors.New("mock error"),
 			wantErr:    fmt.Errorf("error calling LookupEffectiveGuestPolicies: %w", errors.New("mock error")),
 		},
@@ -79,11 +79,11 @@ func TestLookupEffectiveGuestPolicies(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockClient.EXPECT().LookupEffectiveGuestPolicy(gomock.Any(), gomock.Any()).Return(tt.mockPolicy, tt.mockErr)
+			mockClient.EXPECT().LookupEffectiveGuestPolicy(gomock.Any(), gomock.Any()).Return(tt.wantPolicy, tt.mockErr)
 
 			gotPolicy, gotErr := client.LookupEffectiveGuestPolicies(ctx)
 			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
-			if diff := cmp.Diff(tt.mockPolicy, gotPolicy, protocmp.Transform()); diff != "" {
+			if diff := cmp.Diff(tt.wantPolicy, gotPolicy, protocmp.Transform()); diff != "" {
 				t.Errorf("LookupEffectiveGuestPolicies() mismatch (-want +got):\n%s", diff)
 			}
 		})
