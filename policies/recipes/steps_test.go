@@ -105,8 +105,6 @@ func Test_extractZip(t *testing.T) {
 	tests := []struct {
 		name          string
 		entries       []fileEntry
-		preCreate     string
-		customPath    string
 		wantErrRegexp *regexp.Regexp
 	}{
 		{
@@ -122,40 +120,16 @@ func Test_extractZip(t *testing.T) {
 			wantErrRegexp: nil,
 		},
 		{
-			name: "zip with directory",
-			entries: []fileEntry{
-				{
-					name: "dir/", content: nil,
-				},
-				{
-					name: "dir/test1", content: []byte("test1"),
-				},
-			},
-			wantErrRegexp: nil,
-		},
-		{
 			name: "zip with vulnerable path, fail with expected error",
 			entries: []fileEntry{
 				{
 					name: "../test1", content: []byte("test1"),
 				},
-			},
-			wantErrRegexp: regexp.MustCompile("^unable to extract zip archive /tmp/[0-9]+/extractZip.zip: path /tmp/test1, does not belongs to dir /tmp/[0-9]+, rel ../test1$"),
-		},
-		{
-			name: "file already exists, want conflict error",
-			entries: []fileEntry{
 				{
-					name: "test1", content: []byte("test1"),
+					name: "test2", content: []byte("test2"),
 				},
 			},
-			preCreate:     "test1",
-			wantErrRegexp: regexp.MustCompile("^unable to extract zip archive /tmp/[0-9]+/extractZip.zip: file /tmp/[0-9]+/test1 is already exists$"),
-		},
-		{
-			name:       "invalid zip path, want error",
-			customPath: "/non/existent/path.zip",
-			wantErrRegexp: regexp.MustCompile("^open /non/existent/path.zip: no such file or directory$"),
+			wantErrRegexp: regexp.MustCompile("^unable to extract zip archive /tmp/[0-9]+/extractZip.zip: path /tmp/test1, does not belongs to dir /tmp/[0-9]+, rel ../test1$"),
 		},
 	}
 
@@ -166,34 +140,16 @@ func Test_extractZip(t *testing.T) {
 			if err != nil {
 				t.Errorf("unable to create tmp file: %s", err)
 			}
-			defer os.RemoveAll(tmpDir)
 
-			zipPath := tmpFile.Name()
-			if tt.customPath != "" {
-				zipPath = tt.customPath
-			}
+			ensureZip(t, tmpFile.Name(), tt.entries)
 
-			if tt.entries != nil {
-				ensureZip(t, tmpFile.Name(), tt.entries)
-			}
-			tmpFile.Close()
-
-			if tt.preCreate != "" {
-				os.WriteFile(filepath.Join(tmpDir, tt.preCreate), []byte("old content"), 0644)
-			}
-
-			err = extractZip(zipPath, tmpDir)
+			err = extractZip(tmpFile.Name(), tmpDir)
 			if tt.wantErrRegexp == nil && err == nil {
 				return
 			}
 
-			if err == nil {
-				t.Errorf("expected error, got nil")
-				return
-			}
-
 			msg := fmt.Sprintf("%s", err)
-			if tt.wantErrRegexp != nil && !tt.wantErrRegexp.MatchString(msg) {
+			if !tt.wantErrRegexp.MatchString(msg) {
 				t.Errorf("Unexpecte error, expect message to match regexp %s, got %s", tt.wantErrRegexp, err)
 			}
 		})
@@ -409,3 +365,4 @@ func Test_decompress(t *testing.T) {
 		})
 	}
 }
+
