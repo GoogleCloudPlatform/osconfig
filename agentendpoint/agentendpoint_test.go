@@ -131,19 +131,21 @@ func newMockTestClient(ctx context.Context, mockAgentEndpointClient *utilmocks.M
 
 type agentEndpointServiceTestServer struct {
 	agentendpointpb.UnimplementedAgentEndpointServiceServer
-	streamClose             chan struct{}
-	streamSend              chan struct{}
-	permissionError         chan struct{}
-	resourceExhaustedError  chan struct{}
-	taskStart               bool
-	execTaskProgress        bool
-	patchTaskProgress       bool
-	applyConfigTaskProgress bool
-	execTaskComplete        bool
-	patchTaskComplete       bool
-	applyConfigTaskComplete bool
-	runTaskIDs              []string
-	registerAgentReq        *agentendpointpb.RegisterAgentRequest
+	streamClose                   chan struct{}
+	streamSend                    chan struct{}
+	permissionError               chan struct{}
+	resourceExhaustedError        chan struct{}
+	taskStart                     bool
+	execTaskProgress              bool
+	patchTaskProgress             bool
+	applyConfigTaskProgress       bool
+	execTaskComplete              bool
+	patchTaskComplete             bool
+	applyConfigTaskComplete       bool
+	runTaskIDs                    []string
+	lastReportTaskCompleteRequest *agentendpointpb.ReportTaskCompleteRequest
+	taskDirective                 agentendpointpb.TaskDirective
+	registerAgentReq              *agentendpointpb.RegisterAgentRequest
 }
 
 func newAgentEndpointServiceTestServer() *agentEndpointServiceTestServer {
@@ -151,6 +153,7 @@ func newAgentEndpointServiceTestServer() *agentEndpointServiceTestServer {
 		streamClose:            make(chan struct{}, 1),
 		streamSend:             make(chan struct{}, 1),
 		permissionError:        make(chan struct{}, 1),
+		taskDirective:          agentendpointpb.TaskDirective_CONTINUE,
 		resourceExhaustedError: make(chan struct{}, 1),
 	}
 }
@@ -213,10 +216,11 @@ func (s *agentEndpointServiceTestServer) ReportTaskProgress(ctx context.Context,
 	default:
 		return &agentendpointpb.ReportTaskProgressResponse{}, status.Errorf(codes.Unimplemented, "task type %q not implemented", req.GetTaskType())
 	}
-	return &agentendpointpb.ReportTaskProgressResponse{TaskDirective: agentendpointpb.TaskDirective_STOP}, nil
+	return &agentendpointpb.ReportTaskProgressResponse{TaskDirective: s.taskDirective}, nil
 }
 
 func (s *agentEndpointServiceTestServer) ReportTaskComplete(ctx context.Context, req *agentendpointpb.ReportTaskCompleteRequest) (*agentendpointpb.ReportTaskCompleteResponse, error) {
+	s.lastReportTaskCompleteRequest = req
 	// Record what task types we have seen, when the complete is called for TaskType_APPLY_CONFIG_TASK, close the stream.
 	s.runTaskIDs = append(s.runTaskIDs, req.GetTaskId())
 	switch req.GetTaskType() {
