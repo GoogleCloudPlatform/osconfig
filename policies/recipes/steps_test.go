@@ -222,37 +222,40 @@ func ensureTar(t *testing.T, dst string, entries []fileEntry) {
 // Test_parsePermissions verifies that octal permission strings are correctly parsed into os.FileMode.
 func Test_parsePermissions(t *testing.T) {
 	tests := []struct {
-		name    string
-		input   string
-		want    os.FileMode
-		wantErr error
+		name     string
+		input    string
+		wantPerm os.FileMode
+		wantErr  error
 	}{
 		{
-			name:  "empty string, want 0755",
-			input: "",
-			want:  0755,
+			name:     "empty string, want 0755",
+			input:    "",
+			wantPerm: 0755,
+			wantErr:  nil,
 		},
 		{
-			name:  "valid octal 0644, want 0644",
-			input: "0644",
-			want:  0644,
+			name:     "valid octal 0644, want 0644",
+			input:    "0644",
+			wantPerm: 0644,
+			wantErr:  nil,
 		},
 		{
-			name:  "valid octal 755, want 0755",
-			input: "755",
-			want:  0755,
+			name:     "valid octal 755, want 0755",
+			input:    "755",
+			wantPerm: 0755,
+			wantErr:  nil,
 		},
 		{
-			name:    "invalid octal, want parse error",
-			input:   "888",
-			wantErr: &strconv.NumError{Func: "ParseUint", Num: "888", Err: strconv.ErrSyntax},
+			name:     "invalid octal, want parse error",
+			input:    "888",
+			wantErr:  &strconv.NumError{Func: "ParseUint", Num: "888", Err: strconv.ErrSyntax},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parsePermissions(tt.input)
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
-			utiltest.AssertEquals(t, got, tt.want)
+			gotPerm, gotErr := parsePermissions(tt.input)
+			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
+			utiltest.AssertEquals(t, gotPerm, tt.wantPerm)
 		})
 	}
 }
@@ -299,8 +302,9 @@ func Test_ensureSymlinkBelongsToDir(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name: "link target inside dir, want nil error",
-			link: linkInside,
+			name:    "link target inside dir, want nil error",
+			link:    linkInside,
+			wantErr: nil,
 		},
 		{
 			name:    "link target outside dir, want outside link error",
@@ -328,12 +332,12 @@ func Test_stepCopyFile(t *testing.T) {
 	destPath := filepath.Join(tmpDir, "dest")
 
 	tests := []struct {
-		name         string
-		step         *agentendpointpb.SoftwareRecipe_Step_CopyFile
-		artifacts    map[string]string
-		setupFunc    func()
-		wantErr      error
-		expectedPerm os.FileMode
+		name      string
+		step      *agentendpointpb.SoftwareRecipe_Step_CopyFile
+		artifacts map[string]string
+		setupFunc func()
+		wantErr   error
+		wantPerm  os.FileMode
 	}{
 		{
 			name: "successful copy, want nil error and 0644",
@@ -342,8 +346,8 @@ func Test_stepCopyFile(t *testing.T) {
 				Destination: destPath,
 				Permissions: "0644",
 			},
-			artifacts:    map[string]string{"art1": artifactPath},
-			expectedPerm: 0644,
+			artifacts: map[string]string{"art1": artifactPath},
+			wantPerm:  0644,
 		},
 		{
 			name: "file already exists and overwrite false, want file exists error",
@@ -357,16 +361,16 @@ func Test_stepCopyFile(t *testing.T) {
 			wantErr:   fmt.Errorf("file already exists at path %q and Overwrite = false", destPath),
 		},
 		{
-			name: "file already exists and overwrite true, want nil error and 0644",
+			name: "file already exists and overwrite true, want nil error and 0755",
 			step: &agentendpointpb.SoftwareRecipe_Step_CopyFile{
 				ArtifactId:  "art1",
 				Destination: destPath,
 				Overwrite:   true,
 				Permissions: "0755",
 			},
-			artifacts:    map[string]string{"art1": artifactPath},
-			setupFunc:    func() { os.WriteFile(destPath, []byte("old content"), 0644) },
-			expectedPerm: 0755,
+			artifacts: map[string]string{"art1": artifactPath},
+			setupFunc: func() { os.WriteFile(destPath, []byte("old content"), 0644) },
+			wantPerm:  0755,
 		},
 		{
 			name: "invalid permissions, want parse error",
@@ -400,24 +404,21 @@ func Test_stepCopyFile(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			os.Remove(destPath)
+			t.Cleanup(func() {
+				os.Remove(destPath)
+			})
 			if tt.setupFunc != nil {
 				tt.setupFunc()
 			}
 
-			err := stepCopyFile(tt.step, tt.artifacts, nil, "")
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
-
-			if tt.wantErr != nil {
-				return
-			}
-
+			gotErr := stepCopyFile(tt.step, tt.artifacts, nil, "")
+			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
 			utiltest.AssertFileContents(t, destPath, content)
 			info, err := os.Stat(destPath)
 			if err != nil {
 				t.Fatal(err)
 			}
-			utiltest.AssertEquals(t, info.Mode().Perm(), tt.expectedPerm)
+			utiltest.AssertEquals(t, info.Mode().Perm(), tt.wantPerm)
 		})
 	}
 }
