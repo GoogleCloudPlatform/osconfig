@@ -75,8 +75,8 @@ func TestNewRecipeDB(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup(t)
-			db, err := newRecipeDB()
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			db, gotErr := newRecipeDB()
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
 			utiltest.AssertEquals(t, len(db), tt.wantSize)
 		})
 	}
@@ -110,8 +110,8 @@ func TestAddRecipe_InMemory(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			setupTestDB(t)
 			db := make(RecipeDB)
-			err := db.addRecipe(tt.recipeName, tt.version, tt.success)
-			utiltest.AssertErrorMatchAndSkip(t, err, tt.wantErr)
+			gotErr := db.addRecipe(tt.recipeName, tt.version, tt.success)
+			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
 
 			memRecipe, ok := db.getRecipe(tt.recipeName)
 			utiltest.AssertEquals(t, ok, true)
