@@ -236,9 +236,13 @@ func TestRepositoryResourceValidateAptGPG(t *testing.T) {
 
 	aptRepo := mr.Repositories[0].Apt
 	utiltest.AssertEquals(t, aptRepo != nil, true)
-	utiltest.AssertEquals(t, aptRepo.GpgFilePath != "", true)
-	utiltest.AssertEquals(t, aptRepo.GpgChecksum != "", true)
 	utiltest.AssertEquals(t, len(aptRepo.GpgFileContents) > 0, true)
+
+	expectedChecksum := checksum(bytes.NewReader(aptRepo.GpgFileContents))
+	expectedPath := filepath.Join(aptGPGDir, "osconfig_added_"+expectedChecksum+".gpg")
+
+	utiltest.AssertEquals(t, aptRepo.GpgChecksum, expectedChecksum)
+	utiltest.AssertEquals(t, aptRepo.GpgFilePath, expectedPath)
 }
 
 func TestRepositoryResourceCheckState(t *testing.T) {
@@ -319,6 +323,10 @@ func TestRepositoryResourceCheckState(t *testing.T) {
 func TestRepositoryResourceCheckStateWithGPG(t *testing.T) {
 	ctx := t.Context()
 
+	dir := t.TempDir()
+	repoPath := filepath.Join(dir, "repo")
+	gpgPath := filepath.Join(dir, "key.gpg")
+	os.WriteFile(repoPath, []byte("repo contents"), 0644)
 	tests := []struct {
 		name               string
 		setup              func(t *testing.T) ManagedRepository
@@ -327,10 +335,6 @@ func TestRepositoryResourceCheckStateWithGPG(t *testing.T) {
 		{
 			name: "Apt GPG matches, expect InDesiredState=true",
 			setup: func(t *testing.T) ManagedRepository {
-				dir := t.TempDir()
-				repoPath := filepath.Join(dir, "repo")
-				gpgPath := filepath.Join(dir, "key.gpg")
-				os.WriteFile(repoPath, []byte("repo contents"), 0644)
 				os.WriteFile(gpgPath, []byte("gpg contents"), 0644)
 				return ManagedRepository{
 					RepoFilePath: repoPath,
@@ -347,10 +351,6 @@ func TestRepositoryResourceCheckStateWithGPG(t *testing.T) {
 		{
 			name: "Apt GPG corrupted file, expect InDesiredState=false",
 			setup: func(t *testing.T) ManagedRepository {
-				dir := t.TempDir()
-				repoPath := filepath.Join(dir, "repo")
-				gpgPath := filepath.Join(dir, "key.gpg")
-				os.WriteFile(repoPath, []byte("repo contents"), 0644)
 				os.WriteFile(gpgPath, []byte("bad gpg contents"), 0644)
 				return ManagedRepository{
 					RepoFilePath: repoPath,
