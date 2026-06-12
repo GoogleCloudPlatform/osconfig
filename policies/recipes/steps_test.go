@@ -226,9 +226,9 @@ func ensureTar(t *testing.T, dst string, entries []fileEntry) {
 
 // Test_checkForConflicts verifies that archive extraction does not overwrite existing files.
 func Test_checkForConflicts(t *testing.T) {
-	tmpDir := t.TempDir()
 	existingFile := "exists.txt"
-	os.WriteFile(filepath.Join(tmpDir, existingFile), []byte("content"), 0644)
+	existingFilePath := utiltest.WriteToTempFileMust(t, existingFile, []byte("content"))
+	tmpDir := filepath.Dir(existingFilePath)
 
 	tests := []struct {
 		name    string
@@ -242,7 +242,7 @@ func Test_checkForConflicts(t *testing.T) {
 		{
 			name:    "conflict with existing file, want file exists error",
 			files:   []string{"exists.txt"},
-			wantErr: fmt.Errorf("file exists: %s", filepath.Join(tmpDir, existingFile)),
+			wantErr: fmt.Errorf("file exists: %s", existingFilePath),
 		},
 	}
 	for _, tt := range tests {
