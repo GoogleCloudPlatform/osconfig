@@ -246,9 +246,9 @@ func Test_parsePermissions(t *testing.T) {
 			wantErr:  nil,
 		},
 		{
-			name:     "invalid octal, want parse error",
-			input:    "888",
-			wantErr:  &strconv.NumError{Func: "ParseUint", Num: "888", Err: strconv.ErrSyntax},
+			name:    "invalid octal, want parse error",
+			input:   "888",
+			wantErr: &strconv.NumError{Func: "ParseUint", Num: "888", Err: strconv.ErrSyntax},
 		},
 	}
 	for _, tt := range tests {
@@ -347,6 +347,7 @@ func Test_stepCopyFile(t *testing.T) {
 				Permissions: "0644",
 			},
 			artifacts: map[string]string{"art1": artifactPath},
+			setupFunc: func() {},
 			wantPerm:  0644,
 		},
 		{
@@ -380,6 +381,7 @@ func Test_stepCopyFile(t *testing.T) {
 				Permissions: "888",
 			},
 			artifacts: map[string]string{"art1": artifactPath},
+			setupFunc: func() {},
 			wantErr:   &strconv.NumError{Func: "ParseUint", Num: "888", Err: strconv.ErrSyntax},
 		},
 		{
@@ -389,6 +391,7 @@ func Test_stepCopyFile(t *testing.T) {
 				Destination: destPath,
 			},
 			artifacts: map[string]string{"art1": artifactPath},
+			setupFunc: func() {},
 			wantErr:   fmt.Errorf("could not find location for artifact \"unknown\""),
 		},
 		{
@@ -398,6 +401,7 @@ func Test_stepCopyFile(t *testing.T) {
 				Destination: destPath,
 			},
 			artifacts: map[string]string{"art2": filepath.Join(tmpDir, "missing")},
+			setupFunc: func() {},
 			wantErr:   &os.PathError{Op: "open", Path: filepath.Join(tmpDir, "missing"), Err: fmt.Errorf("no such file or directory")},
 		},
 	}
@@ -407,9 +411,7 @@ func Test_stepCopyFile(t *testing.T) {
 			t.Cleanup(func() {
 				os.Remove(destPath)
 			})
-			if tt.setupFunc != nil {
-				tt.setupFunc()
-			}
+			tt.setupFunc()
 
 			gotErr := stepCopyFile(tt.step, tt.artifacts, nil, "")
 			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
