@@ -1,4 +1,4 @@
-//  Copyright 2019 Google Inc. All Rights Reserved.
+//  Copyright 2026 Google Inc. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -29,160 +29,127 @@ import (
 // Test_mkCharDevice tests the mkCharDevice function.
 func Test_mkCharDevice(t *testing.T) {
 	tmpDir := t.TempDir()
+	var major, minor uint32 = 1, 3
+
+	alreadyExistsPath := utiltest.WriteToTempFileMust(t, "already_exists", []byte("test"))
+	t.Cleanup(func() { os.Remove(alreadyExistsPath) })
 
 	tests := []struct {
 		name    string
 		path    string
-		major   uint32
-		minor   uint32
 		wantErr error
 	}{
 		{
-			name:    "valid path, success",
+			name:    "valid path, want nil error",
 			path:    filepath.Join(tmpDir, "char_dev"),
-			major:   1,
-			minor:   3,
 			wantErr: nil,
 		},
 		{
-			name:    "invalid path, ENOENT",
+			name:    "invalid path, want ENOENT error",
 			path:    filepath.Join(tmpDir, "non_existent_dir", "char_dev"),
-			major:   1,
-			minor:   3,
 			wantErr: unix.ENOENT,
+		},
+		{
+			name:    "path already exists, want EEXIST error",
+			path:    alreadyExistsPath,
+			wantErr: unix.EEXIST,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := mkCharDevice(tt.path, tt.major, tt.minor)
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			gotErr := mkCharDevice(tt.path, major, minor)
 
-			if err == nil {
-				fi, err := os.Stat(tt.path)
-				if err != nil {
-					t.Fatalf("failed to stat created device: %v", err)
-				}
-				if fi.Mode()&os.ModeDevice == 0 || fi.Mode()&os.ModeCharDevice == 0 {
-					t.Errorf("expected char device, got mode: %v", fi.Mode())
-				}
-			}
+			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
+			checkOsStat(t, tt.path)
 		})
 	}
-
-	t.Run("path already exists, EEXIST", func(t *testing.T) {
-		path := filepath.Join(tmpDir, "already_exists")
-		if err := os.WriteFile(path, []byte("test"), 0644); err != nil {
-			t.Fatal(err)
-		}
-		err := mkCharDevice(path, 1, 3)
-		utiltest.AssertErrorMatch(t, err, unix.EEXIST)
-	})
 }
 
 // Test_mkBlockDevice tests the mkBlockDevice function.
 func Test_mkBlockDevice(t *testing.T) {
 	tmpDir := t.TempDir()
+	var major, minor uint32 = 1, 3
+
+	alreadyExistsPath := utiltest.WriteToTempFileMust(t, "already_exists_block", []byte("test"))
+	t.Cleanup(func() { os.Remove(alreadyExistsPath) })
 
 	tests := []struct {
 		name    string
 		path    string
-		major   uint32
-		minor   uint32
 		wantErr error
 	}{
 		{
-			name:    "valid path, success",
+			name:    "valid path, want nil error",
 			path:    filepath.Join(tmpDir, "block_dev"),
-			major:   1,
-			minor:   3,
 			wantErr: nil,
 		},
 		{
-			name:    "invalid path, ENOENT",
+			name:    "invalid path, want ENOENT error",
 			path:    filepath.Join(tmpDir, "non_existent_dir", "block_dev"),
-			major:   1,
-			minor:   3,
 			wantErr: unix.ENOENT,
+		},
+		{
+			name:    "path already exists, want EEXIST error",
+			path:    alreadyExistsPath,
+			wantErr: unix.EEXIST,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := mkBlockDevice(tt.path, tt.major, tt.minor)
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			gotErr := mkBlockDevice(tt.path, major, minor)
 
-			if err == nil {
-				fi, err := os.Stat(tt.path)
-				if err != nil {
-					t.Fatalf("failed to stat created device: %v", err)
-				}
-				if fi.Mode()&os.ModeDevice == 0 || fi.Mode()&os.ModeCharDevice != 0 {
-					// In some environments block devices might be tricky, but it should have ModeDevice set.
-					// And it should NOT have ModeCharDevice set.
-					t.Logf("Mode for block device: %v", fi.Mode())
-				}
-			}
+			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
+			checkOsStat(t, tt.path)
 		})
 	}
-
-	t.Run("path already exists, EEXIST", func(t *testing.T) {
-		path := filepath.Join(tmpDir, "already_exists_block")
-		if err := os.WriteFile(path, []byte("test"), 0644); err != nil {
-			t.Fatal(err)
-		}
-		err := mkBlockDevice(path, 1, 3)
-		utiltest.AssertErrorMatch(t, err, unix.EEXIST)
-	})
 }
 
 // Test_mkFifo tests the mkFifo function.
 func Test_mkFifo(t *testing.T) {
 	tmpDir := t.TempDir()
+	var mode uint32 = 0666
+
+	alreadyExistsPath := utiltest.WriteToTempFileMust(t, "already_exists_fifo", []byte("test"))
+	t.Cleanup(func() { os.Remove(alreadyExistsPath) })
 
 	tests := []struct {
-		name     string
-		path     string
-		mode     uint32
-		wantErr  error
+		name    string
+		path    string
+		wantErr error
 	}{
 		{
-			name:    "valid path, success",
+			name:    "valid path, want nil error",
 			path:    filepath.Join(tmpDir, "test_fifo"),
-			mode:    0666,
 			wantErr: nil,
 		},
 		{
-			name:    "invalid path, ENOENT",
+			name:    "invalid path, want ENOENT error",
 			path:    filepath.Join(tmpDir, "non_existent_dir", "test_fifo"),
-			mode:    0666,
 			wantErr: unix.ENOENT,
+		},
+		{
+			name:    "path already exists, want EEXIST error",
+			path:    alreadyExistsPath,
+			wantErr: unix.EEXIST,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := mkFifo(tt.path, tt.mode)
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			gotErr := mkFifo(tt.path, mode)
 
-			if err == nil {
-				fi, err := os.Stat(tt.path)
-				if err != nil {
-					t.Fatalf("failed to stat created fifo: %v", err)
-				}
-				if fi.Mode()&os.ModeNamedPipe == 0 {
-					t.Errorf("expected FIFO, got mode: %v", fi.Mode())
-				}
-			}
+			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
+			checkOsStat(t, tt.path)
 		})
 	}
+}
 
-	t.Run("path already exists, EEXIST", func(t *testing.T) {
-		path := filepath.Join(tmpDir, "already_exists_fifo")
-		if err := os.WriteFile(path, []byte("test"), 0644); err != nil {
-			t.Fatal(err)
-		}
-		err := mkFifo(path, 0666)
-		utiltest.AssertErrorMatch(t, err, unix.EEXIST)
-	})
+// checkOsStat is a helper function that checks if a file was created.
+func checkOsStat(t *testing.T, path string) {
+	t.Helper()
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("failed to stat: %v", err)
+	}
 }
