@@ -176,7 +176,7 @@ func TestRunAptGetUpgrade(t *testing.T) {
 				)
 			},
 			wantErr: errors.New("exclusivePackages and excludes can not both be non 0"),
-    },:G
+		},
 	}
 
 	for _, tt := range tests {
