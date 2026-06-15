@@ -62,6 +62,7 @@ func (mr *mockInstalledPackagesProviderMockRecorder) GetInstalledPackages(ctx in
 
 func runGetInstalledPackages(ctx context.Context, tp *mockInstalledPackagesProvider, op *utilmocks.MockOSInfoProvider, testInfo osinfo.OSInfo, wantPkgs Packages, tracedErr, osInfoErr error) (Packages, error) {
 	call1 := tp.EXPECT().GetInstalledPackages(gomock.Any()).DoAndReturn(func(ctx context.Context) (Packages, error) {
+		// Wait at least 110ms to ensure TraceMemory (100ms interval) samples at least once.
 		time.Sleep(110 * time.Millisecond)
 		return wantPkgs, tracedErr
 	}).Times(1)
