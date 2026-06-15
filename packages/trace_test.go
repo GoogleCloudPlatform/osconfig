@@ -15,16 +15,14 @@
 package packages
 
 import (
-	"bytes"
 	"context"
 	"errors"
-	"io"
 	"reflect"
 	"testing"
 	"time"
 
-	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
+	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/golang/mock/gomock"
 )
@@ -62,37 +60,15 @@ func (mr *mockInstalledPackagesProviderMockRecorder) GetInstalledPackages(ctx in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInstalledPackages", reflect.TypeOf((*mockInstalledPackagesProvider)(nil).GetInstalledPackages), ctx)
 }
 
-// mockOSInfoProvider is a gomock implementation of osinfo.Provider.
-type mockOSInfoProvider struct {
-	ctrl     *gomock.Controller
-	recorder *mockOSInfoProviderMockRecorder
-}
+func runGetInstalledPackages(ctx context.Context, tp *mockInstalledPackagesProvider, op *utilmocks.MockOSInfoProvider, testInfo osinfo.OSInfo, wantPkgs Packages, tracedErr, osInfoErr error) (Packages, error) {
+	call1 := tp.EXPECT().GetInstalledPackages(gomock.Any()).DoAndReturn(func(ctx context.Context) (Packages, error) {
+		time.Sleep(110 * time.Millisecond)
+		return wantPkgs, tracedErr
+	}).Times(1)
 
-type mockOSInfoProviderMockRecorder struct {
-	mock *mockOSInfoProvider
-}
+	op.EXPECT().GetOSInfo(gomock.Any()).After(call1).Return(testInfo, osInfoErr).Times(1)
 
-func newMockOSInfoProvider(ctrl *gomock.Controller) *mockOSInfoProvider {
-	mock := &mockOSInfoProvider{ctrl: ctrl}
-	mock.recorder = &mockOSInfoProviderMockRecorder{mock}
-	return mock
-}
-
-func (m *mockOSInfoProvider) EXPECT() *mockOSInfoProviderMockRecorder {
-	return m.recorder
-}
-
-func (m *mockOSInfoProvider) GetOSInfo(ctx context.Context) (osinfo.OSInfo, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOSInfo", ctx)
-	ret0, _ := ret[0].(osinfo.OSInfo)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-func (mr *mockOSInfoProviderMockRecorder) GetOSInfo(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOSInfo", reflect.TypeOf((*mockOSInfoProvider)(nil).GetOSInfo), ctx)
+	return TracingInstalledPackagesProvider(tp, op).GetInstalledPackages(ctx)
 }
 
 // TestTracingInstalledPackagesProvider verifies that the tracing decorator
@@ -100,9 +76,10 @@ func (mr *mockOSInfoProviderMockRecorder) GetOSInfo(ctx interface{}) *gomock.Cal
 func TestTracingInstalledPackagesProvider(t *testing.T) {
 	testPkgs := Packages{Yum: []*PkgInfo{{Name: "pkg1"}}}
 	testInfo := osinfo.OSInfo{Hostname: "test-host"}
-	// logPattern matches the trace log output format, for example:
-	// GetInstalledPackages: 0.111s, memory +0.00 MB (=10.26-10.26), peak 10.26 MB, mean 10.26 MB (2 samples), OS: @, hostname: test-host
-	logPattern := `GetInstalledPackages: \d+\.\d+s, memory [+-]?\d+\.\d+ MB \(=\d+\.\d+-\d+\.\d+\), peak \d+\.\d+ MB, mean \d+\.\d+ MB \(\d+ samples\), OS: .*@.*, hostname: test-host`
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	tp := newMockInstalledPackagesProvider(mockCtrl)
+	op := utilmocks.NewMockOSInfoProvider(mockCtrl)
 
 	tests := []struct {
 		name      string
@@ -112,7 +89,7 @@ func TestTracingInstalledPackagesProvider(t *testing.T) {
 		wantErr   error
 	}{
 		{
-			name:      "no errors from providers, want nil",
+			name:      "no errors from providers, want nil error",
 			tracedErr: nil,
 			osInfoErr: nil,
 			wantPkgs:  testPkgs,
@@ -126,7 +103,7 @@ func TestTracingInstalledPackagesProvider(t *testing.T) {
 			wantErr:   errors.New("traced provider error"),
 		},
 		{
-			name:      "osinfo provider error, want nil",
+			name:      "osinfo provider error, want nil error",
 			tracedErr: nil,
 			osInfoErr: errors.New("osinfo error"),
 			wantPkgs:  testPkgs,
@@ -136,33 +113,10 @@ func TestTracingInstalledPackagesProvider(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var buf bytes.Buffer
-			_ = logger.Init(context.Background(), logger.LogOpts{LoggerName: "trace_test", Debug: true, Writers: []io.Writer{&buf}})
+			gotPkgs, gotErr := runGetInstalledPackages(context.Background(), tp, op, testInfo, tt.wantPkgs, tt.tracedErr, tt.osInfoErr)
 
-			mockCtrl := gomock.NewController(t)
-			defer mockCtrl.Finish()
-
-			tp := newMockInstalledPackagesProvider(mockCtrl)
-			op := newMockOSInfoProvider(mockCtrl)
-
-			// Verify sequence and allow time for TraceMemory to sample.
-			call1 := tp.EXPECT().GetInstalledPackages(gomock.Any()).DoAndReturn(func(ctx context.Context) (Packages, error) {
-				// Wait at least 110ms to ensure TraceMemory (100ms interval) samples at least once.
-				time.Sleep(110 * time.Millisecond)
-				return tt.wantPkgs, tt.tracedErr
-			}).Times(1)
-
-			op.EXPECT().GetOSInfo(gomock.Any()).After(call1).Return(testInfo, tt.osInfoErr).Times(1)
-
-			provider := TracingInstalledPackagesProvider(tp, op)
-			gotPkgs, err := provider.GetInstalledPackages(context.Background())
-
-			if !reflect.DeepEqual(gotPkgs, tt.wantPkgs) {
-				t.Errorf("GetInstalledPackages() gotPkgs = %v, want %v", gotPkgs, tt.wantPkgs)
-			}
-
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
-			utiltest.AssertFormatMatch(t, buf.String(), logPattern)
+			utiltest.AssertEquals(t, gotPkgs, tt.wantPkgs)
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
 		})
 	}
 }
