@@ -28,11 +28,8 @@ import (
 
 // Test_mkCharDevice tests the mkCharDevice function.
 func Test_mkCharDevice(t *testing.T) {
-	tmpDir := t.TempDir()
+	tmpDir, alreadyExistsPath := setupPrepareTempFile(t, "already_exists")
 	var major, minor uint32 = 1, 3
-
-	alreadyExistsPath := utiltest.WriteToTempFileMust(t, "already_exists", []byte("test"))
-	t.Cleanup(func() { os.Remove(alreadyExistsPath) })
 
 	tests := []struct {
 		name    string
@@ -68,11 +65,8 @@ func Test_mkCharDevice(t *testing.T) {
 
 // Test_mkBlockDevice tests the mkBlockDevice function.
 func Test_mkBlockDevice(t *testing.T) {
-	tmpDir := t.TempDir()
+	tmpDir, alreadyExistsPath := setupPrepareTempFile(t, "already_exists_block")
 	var major, minor uint32 = 1, 3
-
-	alreadyExistsPath := utiltest.WriteToTempFileMust(t, "already_exists_block", []byte("test"))
-	t.Cleanup(func() { os.Remove(alreadyExistsPath) })
 
 	tests := []struct {
 		name    string
@@ -108,11 +102,8 @@ func Test_mkBlockDevice(t *testing.T) {
 
 // Test_mkFifo tests the mkFifo function.
 func Test_mkFifo(t *testing.T) {
-	tmpDir := t.TempDir()
+	tmpDir, alreadyExistsPath := setupPrepareTempFile(t, "already_exists_fifo")
 	var mode uint32 = 0666
-
-	alreadyExistsPath := utiltest.WriteToTempFileMust(t, "already_exists_fifo", []byte("test"))
-	t.Cleanup(func() { os.Remove(alreadyExistsPath) })
 
 	tests := []struct {
 		name    string
@@ -152,4 +143,13 @@ func checkOsStat(t *testing.T, path string) {
 	if _, err := os.Stat(path); err != nil {
 		t.Fatalf("failed to stat: %v", err)
 	}
+}
+
+// setupPrepareTempFile writes content to a temporary file and schedules its removal.
+func setupPrepareTempFile(t *testing.T, name string) (string, string) {
+	t.Helper()
+	tmpDir := t.TempDir()
+	path := utiltest.WriteToTempFileMust(t, name, []byte("test"))
+	t.Cleanup(func() { os.Remove(path) })
+	return tmpDir, path
 }
