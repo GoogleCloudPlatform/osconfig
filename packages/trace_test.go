@@ -66,7 +66,7 @@ func runGetInstalledPackages(ctx context.Context, tp *mockInstalledPackagesProvi
 		time.Sleep(110 * time.Millisecond)
 		return wantPkgs, tracedErr
 	}).Times(1)
-	op.EXPECT().GetOSInfo(gomock.Any()).After(call1).Return(testInfo, osInfoErr).Times(1)
+	op.EXPECT().GetOSInfo(gomock.Any()).After(call).Return(testInfo, osInfoErr).Times(1)
 
 	return TracingInstalledPackagesProvider(tp, op).GetInstalledPackages(ctx)
 }
