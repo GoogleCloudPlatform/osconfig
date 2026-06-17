@@ -17,6 +17,8 @@ package config
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"errors"
 	"io/ioutil"
 	"os"
@@ -305,64 +307,114 @@ func TestPopulateInstalledCache(t *testing.T) {
 
 func TestPackageResourceCheckState(t *testing.T) {
 	ctx := context.Background()
+
+	tmpDir := t.TempDir()
+	tmpFile := filepath.Join(tmpDir, "foo.deb")
+	if err := os.WriteFile(tmpFile, nil, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	tmpRpmFile := filepath.Join(tmpDir, "foo.rpm")
+	if err := os.WriteFile(tmpRpmFile, nil, 0644); err != nil {
+		t.Fatal(err)
+	}
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	packages.SetCommandRunner(mockCommandRunner)
+
+	dpkgCmd := exec.Command("/usr/bin/dpkg-deb", "-I", tmpFile)
+	mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(dpkgCmd)).Return([]byte("Package: foo\nVersion: 1:1dummy-g1\nArchitecture: amd64"), nil, nil).AnyTimes()
+
+	rpmqueryCmd := exec.Command("/usr/bin/rpmquery", "--queryformat", "\\{\"architecture\":\"%{ARCH}\",\"package\":\"%{NAME}\",\"source_name\":\"%{SOURCERPM}\",\"version\":\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\"\\}\n", "-p", tmpRpmFile)
+	mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(rpmqueryCmd)).Return([]byte("{\"architecture\":\"x86_64\",\"package\":\"foo\",\"source_name\":\"foo.src.rpm\",\"version\":\"1.0\"}"), nil, nil).AnyTimes()
+
+
 	var tests = []struct {
 		name               string
 		installedCache     map[string]struct{}
 		cachePointer       *packageCache
 		prpb               *agentendpointpb.OSPolicy_Resource_PackageResource
 		wantInDesiredState bool
+		wantErr 		   error
 	}{
-		// We only need to test the full set once as all the logic is shared.
 		{
-			"AptInstalledNeedsInstalled",
-			map[string]struct{}{"foo": {}},
-			aptInstalled,
-			aptInstalledPR,
-			true,
+			name:               "AptInstalledNeedsInstalled",
+			installedCache:     map[string]struct{}{"foo": {}},
+			cachePointer:       aptInstalled,
+			prpb:               aptInstalledPR,
+			wantInDesiredState: true,
 		},
 		{
-			"AptInstalledNeedsRemoved",
-			map[string]struct{}{"foo": {}},
-			aptInstalled,
-			aptRemovedPR,
-			false,
+			name:               "AptInstalledNeedsRemoved",
+			installedCache:     map[string]struct{}{"foo": {}},
+			cachePointer:       aptInstalled,
+			prpb:               aptRemovedPR,
+			wantInDesiredState: false,
 		},
 		{
-			"AptRemovedNeedsInstalled",
-			map[string]struct{}{},
-			aptInstalled,
-			aptInstalledPR,
-			false,
+			name:               "AptRemovedNeedsInstalled",
+			installedCache:     map[string]struct{}{},
+			cachePointer:       aptInstalled,
+			prpb:               aptInstalledPR,
+			wantInDesiredState: false,
 		},
 		{
-			"AptRemovedNeedsRemoved",
-			map[string]struct{}{},
-			aptInstalled,
-			aptRemovedPR,
-			true,
+			name:               "AptRemovedNeedsRemoved",
+			installedCache:     map[string]struct{}{},
+			cachePointer:       aptInstalled,
+			prpb:               aptRemovedPR,
+			wantInDesiredState: true,
 		},
 
 		// For the rest of the package types we only need to test one scenario.
 		{
-			"GooGetInstalledNeedsInstalled",
-			map[string]struct{}{"foo": {}},
-			gooInstalled,
-			googetInstalledPR,
-			true,
+			name:               "GooGetInstalledNeedsInstalled",
+			installedCache:     map[string]struct{}{"foo": {}},
+			cachePointer:       gooInstalled,
+			prpb:               googetInstalledPR,
+			wantInDesiredState: true,
 		},
 		{
-			"YUMInstalledNeedsInstalled",
-			map[string]struct{}{"foo": {}},
-			yumInstalled,
-			yumInstalledPR,
-			true,
+			name:               "YUMInstalledNeedsInstalled",
+			installedCache:     map[string]struct{}{"foo": {}},
+			cachePointer:       yumInstalled,
+			prpb:               yumInstalledPR,
+			wantInDesiredState: true,
 		},
 		{
-			"ZypperInstalledNeedsInstalled",
-			map[string]struct{}{"foo": {}},
-			zypperInstalled,
-			zypperInstalledPR,
-			true,
+			name:               "ZypperInstalledNeedsInstalled",
+			installedCache:     map[string]struct{}{"foo": {}},
+			cachePointer:       zypperInstalled,
+			prpb:               zypperInstalledPR,
+			wantInDesiredState: true,
+		},
+		{
+			name:               "DebInstalledNeedsInstalled",
+			installedCache:     map[string]struct{}{"foo": {}},
+			cachePointer:       debInstalled,
+			prpb:               createTestDebPackageResource(tmpFile, false),
+			wantInDesiredState: true,
+		},
+		{
+			name:               "RPMInstalledNeedsInstalled",
+			installedCache:     map[string]struct{}{"foo": {}},
+			cachePointer:       rpmInstalled,
+			prpb:               createRPMPackageResource(tmpRpmFile, false),
+			wantInDesiredState: true,
+		},
+		{
+			name: "UnknownDesiredState",
+			prpb: &agentendpointpb.OSPolicy_Resource_PackageResource{
+				DesiredState: agentendpointpb.OSPolicy_Resource_PackageResource_DESIRED_STATE_UNSPECIFIED,
+				SystemPackage: &agentendpointpb.OSPolicy_Resource_PackageResource_Apt{
+					Apt: &agentendpointpb.OSPolicy_Resource_PackageResource_APT{Name: "foo"},
+				},
+			},
+			cachePointer:   aptInstalled,
+			installedCache: map[string]struct{}{"foo": {}},
+			wantErr:        errors.New("DesiredState field not set or references state: \"DESIRED_STATE_UNSPECIFIED\""),
 		},
 	}
 
@@ -384,9 +436,8 @@ func TestPackageResourceCheckState(t *testing.T) {
 
 			tt.cachePointer.cache = tt.installedCache
 			tt.cachePointer.refreshed = time.Now()
-			if err := pr.CheckState(ctx); err != nil {
-				t.Fatalf("Unexpected error: %v", err)
-			}
+			gotErr := pr.CheckState(ctx)
+			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
 
 			if tt.wantInDesiredState != pr.InDesiredState() {
 				t.Fatalf("Unexpected InDesiredState, want: %t, got: %t", tt.wantInDesiredState, pr.InDesiredState())
@@ -709,6 +760,11 @@ func TestUpdatePackageInfoCacheTimeout(t *testing.T) {
 func TestPackageResourceValidateErrors(t *testing.T) {
 	ctx := t.Context()
 
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer server.Close()
+
 	tests := []struct {
 		name    string
 		setup   func(t *testing.T)
@@ -824,6 +880,23 @@ func TestPackageResourceValidateErrors(t *testing.T) {
 				},
 			},
 			wantErr: errors.New("\"doesnotexist.rpm\" does not exist"),
+		},
+		{
+			name: "DebDownloadError",
+			setup:   func(t *testing.T) {utiltest.OverrideVariable(t, &packages.DpkgExists, true)},
+			prpb: &agentendpointpb.OSPolicy_Resource_PackageResource{
+				DesiredState: agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
+				SystemPackage: &agentendpointpb.OSPolicy_Resource_PackageResource_Deb_{
+					Deb: &agentendpointpb.OSPolicy_Resource_PackageResource_Deb{
+						Source: &agentendpointpb.OSPolicy_Resource_File{
+							Type: &agentendpointpb.OSPolicy_Resource_File_Remote_{
+								Remote: &agentendpointpb.OSPolicy_Resource_File_Remote{Uri: server.URL},
+							},
+						},
+					},
+				},
+			},
+			wantErr: errors.New("got http status 404 when attempting to download artifact"),
 		},
 	}
 
