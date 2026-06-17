@@ -452,6 +452,8 @@ func TestPackageResourceEnforceState(t *testing.T) {
 		cachePointer *packageCache
 		expectedCmds []*exec.Cmd
 		setup        func(t *testing.T)
+		mockCmdErr   error
+		wantErr      error
 	}{
 		{
 			name:         "AptInstalled",
@@ -577,6 +579,29 @@ func TestPackageResourceEnforceState(t *testing.T) {
 				utiltest.OverrideVariable(t, &packages.ZypperExists, true)
 			},
 		},
+		{
+			name: "RPMPullDepsWithoutPackageManagers",
+			prpb: createRPMPackageResource(tmpRpmFile, true),
+			cachePointer: rpmInstalled,
+			setup: func(t *testing.T) {
+				utiltest.OverrideVariable(t, &packages.YumExists, false)
+				utiltest.OverrideVariable(t, &packages.ZypperExists, false)
+			},
+			wantErr: errors.New("cannot install rpm \"foo\" with 'PullDeps' option as neither yum or zypper exist on system"),
+		},
+		{
+			name:  "AptInstallCommandFailure",
+			prpb:  aptInstalledPR,
+			cachePointer: aptInstalled,
+			setup: func(t *testing.T) {},
+			expectedCmds: func() []*exec.Cmd {
+				cmd := exec.Command("/usr/bin/apt-get", "update")
+				cmd.Env = append(os.Environ(), "DEBIAN_FRONTEND=noninteractive")
+				return []*exec.Cmd{cmd}
+			}(),
+			mockCmdErr: errors.New("apt-get update failed"),
+			wantErr:    errors.New("error installing apt package \"foo\""),
+		},
 	}
 
 	for _, tt := range tests {
@@ -601,12 +626,11 @@ func TestPackageResourceEnforceState(t *testing.T) {
 			tt.cachePointer.cache = map[string]struct{}{"foo": {}}
 
 			for _, expectedCmd := range tt.expectedCmds {
-				mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(expectedCmd))
+				mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(expectedCmd)).Return(nil, nil, tt.mockCmdErr)
 			}
 
-			if err := pr.EnforceState(ctx); err != nil {
-				t.Fatalf("Unexpected error: %v", err)
-			}
+			err := pr.EnforceState(ctx)
+			utiltest.AssertErrorMatchAndSkip(t, err, tt.wantErr)
 
 			if tt.cachePointer.cache != nil {
 				t.Errorf("Enforce function did not set package cache to nil")
