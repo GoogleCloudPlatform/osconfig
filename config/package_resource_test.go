@@ -579,6 +579,11 @@ func TestUpdatePackageInfoCacheTimeout(t *testing.T) {
 func TestPackageResourceValidateErrors(t *testing.T) {
 	ctx := t.Context()
 
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer server.Close()
+
 	tests := []struct {
 		name    string
 		setup   func(t *testing.T)
@@ -694,6 +699,23 @@ func TestPackageResourceValidateErrors(t *testing.T) {
 				},
 			},
 			wantErr: errors.New("\"doesnotexist.rpm\" does not exist"),
+		},
+		{
+			name:  "Deb remote file download fails, expect error",
+			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.DpkgExists, true) },
+			prpb: &agentendpointpb.OSPolicy_Resource_PackageResource{
+				DesiredState: agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
+				SystemPackage: &agentendpointpb.OSPolicy_Resource_PackageResource_Deb_{
+					Deb: &agentendpointpb.OSPolicy_Resource_PackageResource_Deb{
+						Source: &agentendpointpb.OSPolicy_Resource_File{
+							Type: &agentendpointpb.OSPolicy_Resource_File_Remote_{
+								Remote: &agentendpointpb.OSPolicy_Resource_File_Remote{Uri: server.URL},
+							},
+						},
+					},
+				},
+			},
+			wantErr: errors.New("got http status 404 when attempting to download artifact"),
 		},
 	}
 
