@@ -204,8 +204,9 @@ func TestAptRepositories(t *testing.T) {
 	}
 }
 
-// TestGetAptGPGKey tests the retrieval and validation of apt GPG keys.
-func TestGetAptGPGKey(t *testing.T) {
+// setupGetAptGPGKeyTest sets up a test server for GPG key retrieval tests.
+func setupGetAptGPGKeyTest(t *testing.T) string {
+	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/large":
@@ -220,6 +221,12 @@ func TestGetAptGPGKey(t *testing.T) {
 		}
 	}))
 	t.Cleanup(srv.Close)
+	return srv.URL
+}
+
+// TestGetAptGPGKey tests the retrieval and validation of apt GPG keys.
+func TestGetAptGPGKey(t *testing.T) {
+	srvUrl := setupGetAptGPGKeyTest(t)
 
 	tests := []struct {
 		name    string
@@ -228,22 +235,22 @@ func TestGetAptGPGKey(t *testing.T) {
 	}{
 		{
 			name:    "empty armored key, want nil error",
-			url:     srv.URL + "/empty_armored",
+			url:     srvUrl + "/empty_armored",
 			wantErr: nil,
 		},
 		{
 			name:    "invalid data, want invalid data error",
-			url:     srv.URL + "/invalid",
+			url:     srvUrl + "/invalid",
 			wantErr: errors.New("openpgp: invalid data: tag byte does not have MSB set"),
 		},
 		{
 			name:    "binary key, want unexpected EOF error",
-			url:     srv.URL + "/binary",
+			url:     srvUrl + "/binary",
 			wantErr: errors.New("unexpected EOF"),
 		},
 		{
 			name:    "large key, want too large error",
-			url:     srv.URL + "/large",
+			url:     srvUrl + "/large",
 			wantErr: errors.New("key size of 2000000 too large"),
 		},
 		{
