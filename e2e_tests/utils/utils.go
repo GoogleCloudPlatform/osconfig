@@ -391,7 +391,6 @@ var OldSUSEImages = func() map[string]string {
 var HeadEL8Images = map[string]string{
 	"rhel-cloud/rhel-8": "projects/rhel-cloud/global/images/family/rhel-8",
 
-	"rhel-sap-cloud/rhel-8-6-sap":  "projects/rhel-sap-cloud/global/images/family/rhel-8-6-sap-ha",
 	"rhel-sap-cloud/rhel-8-8-sap":  "projects/rhel-sap-cloud/global/images/family/rhel-8-8-sap-ha",
 	"rhel-sap-cloud/rhel-8-10-sap": "projects/rhel-sap-cloud/global/images/family/rhel-8-10-sap-ha",
 
@@ -410,8 +409,9 @@ var HeadEL9Images = map[string]string{
 
 	"rhel-cloud/rhel-9": "projects/rhel-cloud/global/images/family/rhel-9",
 
-	"rhel-sap-cloud/rhel-9-0-sap": "projects/rhel-sap-cloud/global/images/family/rhel-9-0-sap-ha",
 	"rhel-sap-cloud/rhel-9-2-sap": "projects/rhel-sap-cloud/global/images/family/rhel-9-2-sap-ha",
+	"rhel-sap-cloud/rhel-9-4-sap": "projects/rhel-sap-cloud/global/images/family/rhel-9-4-sap-ha",
+	"rhel-sap-cloud/rhel-9-6-sap": "projects/rhel-sap-cloud/global/images/family/rhel-9-6-sap-ha",
 
 	"rocky-linux-cloud/rocky-linux-9":               "projects/rocky-linux-cloud/global/images/family/rocky-linux-9",
 	"rocky-linux-cloud/rocky-linux-9-optimized-gcp": "projects/rocky-linux-cloud/global/images/family/rocky-linux-9-optimized-gcp",
