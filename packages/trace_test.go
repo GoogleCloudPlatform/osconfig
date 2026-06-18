@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
-	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/golang/mock/gomock"
 )
@@ -60,7 +59,40 @@ func (mr *mockInstalledPackagesProviderMockRecorder) GetInstalledPackages(ctx in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInstalledPackages", reflect.TypeOf((*mockInstalledPackagesProvider)(nil).GetInstalledPackages), ctx)
 }
 
-func runGetInstalledPackages(ctx context.Context, tp *mockInstalledPackagesProvider, op *utilmocks.MockOSInfoProvider, testInfo osinfo.OSInfo, wantPkgs Packages, tracedErr, osInfoErr error) (Packages, error) {
+// mockOSInfoProvider is a gomock implementation of osinfo.Provider.
+type mockOSInfoProvider struct {
+	ctrl     *gomock.Controller
+	recorder *mockOSInfoProviderMockRecorder
+}
+
+type mockOSInfoProviderMockRecorder struct {
+	mock *mockOSInfoProvider
+}
+
+func newMockOSInfoProvider(ctrl *gomock.Controller) *mockOSInfoProvider {
+	mock := &mockOSInfoProvider{ctrl: ctrl}
+	mock.recorder = &mockOSInfoProviderMockRecorder{mock}
+	return mock
+}
+
+func (m *mockOSInfoProvider) EXPECT() *mockOSInfoProviderMockRecorder {
+	return m.recorder
+}
+
+func (m *mockOSInfoProvider) GetOSInfo(ctx context.Context) (osinfo.OSInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOSInfo", ctx)
+	ret0, _ := ret[0].(osinfo.OSInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+func (mr *mockOSInfoProviderMockRecorder) GetOSInfo(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOSInfo", reflect.TypeOf((*mockOSInfoProvider)(nil).GetOSInfo), ctx)
+}
+
+func runGetInstalledPackages(ctx context.Context, tp *mockInstalledPackagesProvider, op *mockOSInfoProvider, testInfo osinfo.OSInfo, wantPkgs Packages, tracedErr, osInfoErr error) (Packages, error) {
 	call := tp.EXPECT().GetInstalledPackages(gomock.Any()).DoAndReturn(func(ctx context.Context) (Packages, error) {
 		// Wait at least 110ms to ensure TraceMemory (100ms interval) samples at least once.
 		time.Sleep(110 * time.Millisecond)
@@ -79,7 +111,7 @@ func TestTracingInstalledPackagesProvider(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	tp := newMockInstalledPackagesProvider(mockCtrl)
-	op := utilmocks.NewMockOSInfoProvider(mockCtrl)
+	op := newMockOSInfoProvider(mockCtrl)
 
 	tests := []struct {
 		name      string
