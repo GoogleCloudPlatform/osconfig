@@ -584,7 +584,7 @@ func TestPackageResourceValidateErrors(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	}))
-	defer server.Close()
+	t.Cleanup(server.Close)
 
 	tests := []struct {
 		name    string
@@ -593,13 +593,13 @@ func TestPackageResourceValidateErrors(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name:    "Apt does not exist, expect error",
+			name:    "Apt does not exist, expect apt-get missing error",
 			setup:   func(t *testing.T) { utiltest.OverrideVariable(t, &packages.AptExists, false) },
 			prpb:    aptInstalledPR,
 			wantErr: errors.New("cannot manage Apt package \"foo\" because apt-get does not exist on the system"),
 		},
 		{
-			name:  "Deb does not exist, expect error",
+			name:  "Deb does not exist, expect dpkg missing error",
 			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.DpkgExists, false) },
 			prpb: &agentendpointpb.OSPolicy_Resource_PackageResource{
 				SystemPackage: &agentendpointpb.OSPolicy_Resource_PackageResource_Deb_{
@@ -609,7 +609,7 @@ func TestPackageResourceValidateErrors(t *testing.T) {
 			wantErr: errors.New("cannot manage Deb package because dpkg does not exist on the system"),
 		},
 		{
-			name:  "Deb not installed state, expect error",
+			name:  "Deb not installed state, expect state not applicable error",
 			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.DpkgExists, true) },
 			prpb: &agentendpointpb.OSPolicy_Resource_PackageResource{
 				DesiredState: agentendpointpb.OSPolicy_Resource_PackageResource_REMOVED,
@@ -620,13 +620,13 @@ func TestPackageResourceValidateErrors(t *testing.T) {
 			wantErr: errors.New("desired state of \"REMOVED\" not applicable for deb package"),
 		},
 		{
-			name:    "GooGet does not exist, expect error",
+			name:    "GooGet does not exist, expect googet missing error",
 			setup:   func(t *testing.T) { utiltest.OverrideVariable(t, &packages.GooGetExists, false) },
 			prpb:    googetInstalledPR,
 			wantErr: errors.New("cannot manage GooGet package \"foo\" because googet does not exist on the system"),
 		},
 		{
-			name:  "MSI does not exist, expect error",
+			name:  "MSI does not exist, expect msiexec missing error",
 			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.MSIExists, false) },
 			prpb: &agentendpointpb.OSPolicy_Resource_PackageResource{
 				DesiredState: agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
@@ -637,7 +637,7 @@ func TestPackageResourceValidateErrors(t *testing.T) {
 			wantErr: errors.New("cannot manage MSI package because msiexec does not exist on the system"),
 		},
 		{
-			name:  "MSI not installed state, expect error",
+			name:  "MSI not installed state, expect state not applicable error",
 			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.MSIExists, true) },
 			prpb: &agentendpointpb.OSPolicy_Resource_PackageResource{
 				DesiredState: agentendpointpb.OSPolicy_Resource_PackageResource_REMOVED,
@@ -648,19 +648,19 @@ func TestPackageResourceValidateErrors(t *testing.T) {
 			wantErr: errors.New("desired state of \"REMOVED\" not applicable for MSI package"),
 		},
 		{
-			name:    "Yum does not exist, expect error",
+			name:    "Yum does not exist, expect yum missing error",
 			setup:   func(t *testing.T) { utiltest.OverrideVariable(t, &packages.YumExists, false) },
 			prpb:    yumInstalledPR,
 			wantErr: errors.New("cannot manage Yum package \"foo\" because yum does not exist on the system"),
 		},
 		{
-			name:    "Zypper does not exist, expect error",
+			name:    "Zypper does not exist, expect zypper missing error",
 			setup:   func(t *testing.T) { utiltest.OverrideVariable(t, &packages.ZypperExists, false) },
 			prpb:    zypperInstalledPR,
 			wantErr: errors.New("cannot manage Zypper package \"foo\" because zypper does not exist on the system"),
 		},
 		{
-			name:  "RPM does not exist, expect error",
+			name:  "RPM does not exist, expect rpm missing error",
 			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.RPMExists, false) },
 			prpb: &agentendpointpb.OSPolicy_Resource_PackageResource{
 				DesiredState: agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
@@ -671,7 +671,7 @@ func TestPackageResourceValidateErrors(t *testing.T) {
 			wantErr: errors.New("cannot manage RPM package because rpm does not exist on the system"),
 		},
 		{
-			name:  "RPM not installed state, expect error",
+			name:  "RPM not installed state, expect state not applicable error",
 			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.RPMExists, true) },
 			prpb: &agentendpointpb.OSPolicy_Resource_PackageResource{
 				DesiredState: agentendpointpb.OSPolicy_Resource_PackageResource_REMOVED,
@@ -682,13 +682,13 @@ func TestPackageResourceValidateErrors(t *testing.T) {
 			wantErr: errors.New("desired state of \"REMOVED\" not applicable for rpm package"),
 		},
 		{
-			name:    "Unknown package manager, expect error",
+			name:    "Unknown package manager, expect unknown package manager error",
 			setup:   func(t *testing.T) {},
 			prpb:    &agentendpointpb.OSPolicy_Resource_PackageResource{},
 			wantErr: errors.New("SystemPackage field not set or references unknown package manager: <nil>"),
 		},
 		{
-			name:  "Local path does not exist, expect error",
+			name:  "Local path does not exist, expect file not found error",
 			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.RPMExists, true) },
 			prpb: &agentendpointpb.OSPolicy_Resource_PackageResource{
 				DesiredState: agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
@@ -703,7 +703,7 @@ func TestPackageResourceValidateErrors(t *testing.T) {
 			wantErr: errors.New("\"doesnotexist.rpm\" does not exist"),
 		},
 		{
-			name:  "Deb remote file download fails, expect error",
+			name:  "Deb remote file download fails, expect 404 error",
 			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.DpkgExists, true) },
 			prpb: &agentendpointpb.OSPolicy_Resource_PackageResource{
 				DesiredState: agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
@@ -735,8 +735,8 @@ func TestPackageResourceValidateErrors(t *testing.T) {
 	}
 }
 
-func TestPackageResourceCleanup(t *testing.T) {
-	ctx := t.Context()
+func setupPackageResourceCleanupTest(t *testing.T, ctx context.Context) (*OSPolicyResource, string, string) {
+	t.Helper()
 	dir := t.TempDir()
 
 	tmpCacheFile := filepath.Join(t.TempDir(), "test.cache")
@@ -753,6 +753,12 @@ func TestPackageResourceCleanup(t *testing.T) {
 	}
 
 	pr.resource.(*packageResouce).managedPackage.tempDir = dir
+	return pr, dir, tmpCacheFile
+}
+
+func TestPackageResourceCleanup(t *testing.T) {
+	ctx := t.Context()
+	pr, dir, tmpCacheFile := setupPackageResourceCleanupTest(t, ctx)
 
 	gotErr := pr.Cleanup(ctx)
 
