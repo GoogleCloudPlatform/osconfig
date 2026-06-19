@@ -224,11 +224,3 @@ func WriteToTempFileMust(t *testing.T, filename string, content []byte) string {
 	}
 	return path
 }
-
-// NormalizeErrorType normalizes any error to a standard errors.New(err.Error()) or returns nil.
-func NormalizeErrorType(err error) error {
-	if err == nil {
-		return nil
-	}
-	return errors.New(err.Error())
-}

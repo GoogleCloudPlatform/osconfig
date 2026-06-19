@@ -21,6 +21,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os/exec"
 	"path/filepath"
 	"testing"
@@ -33,6 +34,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/golang/mock/gomock"
 	"golang.org/x/crypto/openpgp"
+	openpgp_errors "golang.org/x/crypto/openpgp/errors"
 	"golang.org/x/crypto/openpgp/packet"
 )
 
@@ -241,12 +243,12 @@ func TestGetAptGPGKey(t *testing.T) {
 		{
 			name:    "invalid data, want invalid data error",
 			url:     srvUrl + "/invalid",
-			wantErr: errors.New("openpgp: invalid data: tag byte does not have MSB set"),
+			wantErr: openpgp_errors.StructuralError("tag byte does not have MSB set"),
 		},
 		{
 			name:    "binary key, want unexpected EOF error",
 			url:     srvUrl + "/binary",
-			wantErr: errors.New("unexpected EOF"),
+			wantErr: io.ErrUnexpectedEOF,
 		},
 		{
 			name:    "large key, want too large error",
@@ -254,17 +256,19 @@ func TestGetAptGPGKey(t *testing.T) {
 			wantErr: errors.New("key size of 2000000 too large"),
 		},
 		{
-			name:    "invalid url, want parse error",
-			url:     "http://invalid:url",
-			wantErr: errors.New(`parse "http://invalid:url": invalid port ":url" after host`),
+			name: "invalid url, want parse error",
+			url:  "http://invalid:url",
+			wantErr: &url.Error{
+				Op:  "parse",
+				URL: "http://invalid:url",
+				Err: errors.New(`invalid port ":url" after host`),
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, gotErr := getAptGPGKey(tt.url)
-			gotErr = utiltest.NormalizeErrorType(gotErr)
-
 			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
 		})
 	}
