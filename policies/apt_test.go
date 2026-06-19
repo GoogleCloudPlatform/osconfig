@@ -74,7 +74,7 @@ func setupAptRepositoriesTest(t *testing.T) (string, string) {
 // TestAptRepositories tests the adding of apt repository files.
 func TestAptRepositories(t *testing.T) {
 	ctx := context.Background()
-	srvUrl, testRepo := setupAptRepositoriesTest(t)
+	srvURL, testRepo := setupAptRepositoriesTest(t)
 
 	tests := []struct {
 		name     string
@@ -144,7 +144,7 @@ func TestAptRepositories(t *testing.T) {
 				return "debian", "Debian", "10"
 			}},
 			repos: []*agentendpointpb.AptRepository{
-				{Uri: "http://repo", Distribution: "dist", GpgKey: srvUrl + "/valid-key"},
+				{Uri: "http://repo", Distribution: "dist", GpgKey: srvURL + "/valid-key"},
 			},
 			wantRepo: "# Repo file managed by Google OSConfig agent\n\ndeb http://repo dist\n",
 			wantErr:  "",
@@ -186,7 +186,7 @@ func TestAptRepositories(t *testing.T) {
 				return "debian", "Debian", "10"
 			}},
 			repos: []*agentendpointpb.AptRepository{
-				{Uri: "http://repo", Distribution: "dist", GpgKey: srvUrl + "/invalid-key"},
+				{Uri: "http://repo", Distribution: "dist", GpgKey: srvURL + "/invalid-key"},
 			},
 			wantRepo: "# Repo file managed by Google OSConfig agent\n\ndeb http://repo dist\n",
 			wantErr:  `.*Error fetching gpg key "http://127.0.0.1:.*/invalid-key": openpgp: invalid data: tag byte does not have MSB set.*`,
@@ -228,7 +228,7 @@ func setupGetAptGPGKeyTest(t *testing.T) string {
 
 // TestGetAptGPGKey tests the retrieval and validation of apt GPG keys.
 func TestGetAptGPGKey(t *testing.T) {
-	srvUrl := setupGetAptGPGKeyTest(t)
+	srvURL := setupGetAptGPGKeyTest(t)
 
 	tests := []struct {
 		name    string
@@ -237,22 +237,22 @@ func TestGetAptGPGKey(t *testing.T) {
 	}{
 		{
 			name:    "empty armored key, want nil error",
-			url:     srvUrl + "/empty_armored",
+			url:     srvURL + "/empty_armored",
 			wantErr: nil,
 		},
 		{
 			name:    "invalid data, want invalid data error",
-			url:     srvUrl + "/invalid",
+			url:     srvURL + "/invalid",
 			wantErr: openpgp_errors.StructuralError("tag byte does not have MSB set"),
 		},
 		{
 			name:    "binary key, want unexpected EOF error",
-			url:     srvUrl + "/binary",
+			url:     srvURL + "/binary",
 			wantErr: io.ErrUnexpectedEOF,
 		},
 		{
 			name:    "large key, want too large error",
-			url:     srvUrl + "/large",
+			url:     srvURL + "/large",
 			wantErr: errors.New("key size of 2000000 too large"),
 		},
 		{
