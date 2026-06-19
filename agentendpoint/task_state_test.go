@@ -22,6 +22,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"syscall"
 	"testing"
 	"time"
 
@@ -70,51 +71,51 @@ func TestLoadState(t *testing.T) {
 	var tests = []struct {
 		name    string
 		setup   func(t *testing.T) string
-		wantErr bool
+		wantErr error
 		want    *taskState
 	}{
 		{
-			name: "BlankState",
+			name: "empty json, want blank state",
 			setup: func(t *testing.T) string {
 				if err := ioutil.WriteFile(testState, []byte("{}"), 0600); err != nil {
 					t.Fatalf("error writing state: %v", err)
 				}
 				return testState
 			},
-			wantErr: false,
+			wantErr: nil,
 			want:    &taskState{},
 		},
 		{
-			name: "BadState",
+			name: "invalid json, want json syntax error",
 			setup: func(t *testing.T) string {
 				if err := ioutil.WriteFile(testState, []byte("foo"), 0600); err != nil {
 					t.Fatalf("error writing state: %v", err)
 				}
 				return testState
 			},
-			wantErr: true,
+			wantErr: json.Unmarshal([]byte("foo"), &taskState{}),
 			want:    &taskState{},
 		},
 		{
-			name: "PatchTask",
+			name: "valid patch task json, want patch task state",
 			setup: func(t *testing.T) string {
 				if err := ioutil.WriteFile(testState, []byte(testPatchTaskStateString), 0600); err != nil {
 					t.Fatalf("error writing state: %v", err)
 				}
 				return testState
 			},
-			wantErr: false,
+			wantErr: nil,
 			want:    testPatchTaskState,
 		},
 		{
-			name: "IgnoresOldRebootFieldName",
+			name: "json with old reboot field, want state with zero reboot counts",
 			setup: func(t *testing.T) string {
 				if err := ioutil.WriteFile(testState, []byte("{\"PatchTask\":{\"Task\":{},\"RebootCount\":1}}"), 0600); err != nil {
 					t.Fatalf("error writing state: %v", err)
 				}
 				return testState
 			},
-			wantErr: false,
+			wantErr: nil,
 			want: &taskState{
 				PatchTask: &patchTask{
 					Task: &applyPatchesTask{
@@ -126,11 +127,11 @@ func TestLoadState(t *testing.T) {
 			},
 		},
 		{
-			name: "ReadDirectoryError",
+			name: "directory path, want path error",
 			setup: func(t *testing.T) string {
 				return td
 			},
-			wantErr: true,
+			wantErr: &fs.PathError{Op: "read", Path: td, Err: syscall.EISDIR},
 			want:    nil,
 		},
 	}
@@ -138,12 +139,7 @@ func TestLoadState(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			path := tt.setup(t)
 			st, err := loadState(path)
-			if err != nil && !tt.wantErr {
-				t.Fatalf("unexpected error: %v", err)
-			}
-			if err == nil && tt.wantErr {
-				t.Fatalf("expected error")
-			}
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 
 			if diff := cmp.Diff(tt.want, st, cmpopts.IgnoreUnexported(patchTask{}), protocmp.Transform()); diff != "" {
 				t.Errorf("State does not match expectation: (-got +want)\n%s", diff)
