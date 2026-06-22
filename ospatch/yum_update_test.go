@@ -16,11 +16,13 @@ package ospatch
 
 import (
 	"context"
+	"errors"
 	"os/exec"
 	"testing"
 
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/golang/mock/gomock"
 )
 
@@ -89,5 +91,145 @@ func TestRunYumUpdateWithSecurityWithExclusives(t *testing.T) {
 	err := RunYumUpdate(ctx, YumUpdateMinimal(false), YumUpdateSecurity(true), YumExclusivePackages(exclusivePackages))
 	if err != nil {
 		t.Errorf("did not expect error: %+v", err)
+	}
+}
+
+// TestRunYumUpdate_DryRun verifies that RunYumUpdate does not install packages when dryrun is true.
+func TestRunYumUpdate_DryRun(t *testing.T) {
+	data := []byte(`
+	=================================================================================================================================================================================
+	Package                                      Arch                           Version                                              Repository                                Size
+	=================================================================================================================================================================================
+	Upgrading:
+	  foo                                       noarch                         2.0.0-1                           BaseOS                                   361 k
+`)
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	ctx := context.Background()
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	packages.SetCommandRunner(mockCommandRunner)
+	packages.SetPtyCommandRunner(mockCommandRunner)
+
+	errExit100 := exec.Command("/bin/bash", "-c", "exit 100").Run()
+
+	checkUpdateCall := mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"check-update", "--assumeyes"}...))).Return([]byte("stdout"), []byte("stderr"), errExit100).Times(1)
+	mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"update", "--assumeno", "--color=never"}...))).After(checkUpdateCall).Return(data, []byte("stderr"), nil).Times(1)
+
+	err := RunYumUpdate(ctx, YumDryRun(true))
+	if err != nil {
+		t.Errorf("did not expect error: %+v", err)
+	}
+}
+
+// TestRunYumUpdate_Excludes verifies that packages matched by excludes are filtered out.
+func TestRunYumUpdate_Excludes(t *testing.T) {
+	data := []byte(`
+	=================================================================================================================================================================================
+	Package                                      Arch                           Version                                              Repository                                Size
+	=================================================================================================================================================================================
+	Upgrading:
+	  foo                                       noarch                         2.0.0-1                           BaseOS                                   361 k
+	  bar                                       x86_64                         2.0.0-1                           BaseOS                                   10 M
+`)
+
+	errExit100 := exec.Command("/bin/bash", "-c", "exit 100").Run()
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	ctx := context.Background()
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	packages.SetCommandRunner(mockCommandRunner)
+	packages.SetPtyCommandRunner(mockCommandRunner)
+
+	checkUpdateCall := mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"check-update", "--assumeyes"}...))).Return([]byte("stdout"), []byte("stderr"), errExit100).Times(1)
+	mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"install", "--assumeyes", "foo.noarch"}...))).After(checkUpdateCall).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
+
+	packages.SetPtyCommandRunner(mockCommandRunner)
+	mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"update", "--assumeno", "--color=never"}...))).Return(data, []byte("stderr"), nil).Times(1)
+
+	excludeStr := "bar"
+	err := RunYumUpdate(ctx, YumUpdateExcludes([]*Exclude{CreateStringExclude(&excludeStr)}))
+	if err != nil {
+		t.Errorf("did not expect error: %+v", err)
+	}
+}
+
+// TestRunYumUpdate_Errors tests different error scenarios of RunYumUpdate.
+func TestRunYumUpdate_Errors(t *testing.T) {
+	ctx := context.Background()
+	tests := []struct {
+		name    string
+		setup   func(t *testing.T, mockRunner *utilmocks.MockCommandRunner)
+		opts    []YumUpdateOption
+		wantErr error
+	}{
+		{
+			name: "conflicting excludes and exclusives, want error",
+			setup: func(t *testing.T, mockRunner *utilmocks.MockCommandRunner) {
+				packages.SetCommandRunner(mockRunner)
+				packages.SetPtyCommandRunner(mockRunner)
+
+				errExit100 := exec.Command("/bin/bash", "-c", "exit 100").Run()
+				checkUpdateCall := mockRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"check-update", "--assumeyes"}...))).Return([]byte("stdout"), []byte("stderr"), errExit100).Times(1)
+				mockRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"update", "--assumeno", "--color=never"}...))).After(checkUpdateCall).Return([]byte("Upgrading:\n foo noarch 2.0.0-1 BaseOS 361 k"), nil, nil).Times(1)
+			},
+			opts: []YumUpdateOption{
+				YumExclusivePackages([]string{"foo"}),
+				YumUpdateExcludes([]*Exclude{CreateStringExclude(new(string))}),
+			},
+			wantErr: errors.New("exclusivePackages and excludes can not both be non 0"),
+		},
+		{
+			name: "no package upgrades available, want nil error",
+			setup: func(t *testing.T, mockRunner *utilmocks.MockCommandRunner) {
+				packages.SetCommandRunner(mockRunner)
+				packages.SetPtyCommandRunner(mockRunner)
+
+				mockRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"check-update", "--assumeyes"}...))).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
+			},
+			opts:    nil,
+			wantErr: nil,
+		},
+		{
+			name: "yum updates query fails, want error",
+			setup: func(t *testing.T, mockRunner *utilmocks.MockCommandRunner) {
+				packages.SetCommandRunner(mockRunner)
+				packages.SetPtyCommandRunner(mockRunner)
+
+				mockRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"check-update", "--assumeyes"}...))).Return(nil, nil, errors.New("yum updates error")).Times(1)
+			},
+			opts:    nil,
+			wantErr: errors.New("error running /usr/bin/yum with args [\"check-update\" \"--assumeyes\"]: yum updates error, stdout: \"\", stderr: \"\""),
+		},
+		{
+			name: "yum packages installation fails, want error",
+			setup: func(t *testing.T, mockRunner *utilmocks.MockCommandRunner) {
+				packages.SetCommandRunner(mockRunner)
+				packages.SetPtyCommandRunner(mockRunner)
+
+				errExit100 := exec.Command("/bin/bash", "-c", "exit 100").Run()
+				checkUpdateCall := mockRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"check-update", "--assumeyes"}...))).Return([]byte("stdout"), []byte("stderr"), errExit100).Times(1)
+				updateCall := mockRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"update", "--assumeno", "--color=never"}...))).After(checkUpdateCall).Return([]byte("Upgrading:\n foo noarch 2.0.0-1 BaseOS 361 k"), nil, nil).Times(1)
+				mockRunner.EXPECT().Run(gomock.Any(), utilmocks.EqCmd(exec.Command("/usr/bin/yum", []string{"install", "--assumeyes", "foo.noarch"}...))).After(updateCall).Return(nil, nil, errors.New("install error")).Times(1)
+			},
+			opts:    nil,
+			wantErr: errors.New("error running /usr/bin/yum with args [\"install\" \"--assumeyes\" \"foo.noarch\"]: install error, stdout: \"\", stderr: \"\""),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			mockRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+			tt.setup(t, mockRunner)
+
+			err := RunYumUpdate(ctx, tt.opts...)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+		})
 	}
 }
