@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"os/exec"
 	"syscall"
 	"testing"
 
@@ -57,6 +58,19 @@ func setRpmquery(t *testing.T, path string) {
 	original := rpmquery
 	rpmquery = path
 	t.Cleanup(func() { rpmquery = original })
+}
+
+// getExitError returns an *exec.ExitError instance by running a failing command.
+func getExitError(t *testing.T) error {
+	t.Helper()
+	cmd := exec.Command("false")
+	err := cmd.Run()
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) {
+		return exitErr
+	}
+	t.Fatalf("failed to get ExitError: %v", err)
+	return nil
 }
 
 func TestSystemRebootRequiredApt(t *testing.T) {
@@ -141,6 +155,44 @@ func TestSystemRebootRequiredRpm(t *testing.T) {
 				setRpmquery(t, "/non_existing_file")
 			},
 			wantErr: errors.New("no recognized package manager installed, can't determine if reboot is required"),
+		},
+		{
+			desc: "rpmquery returns exit error, want no reboot and nil error",
+			setup: func(t *testing.T) {
+				setAptExists(t, false)
+				setRpmquery(t, "/dev/null")
+
+				mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+				runner = mockCommandRunner
+				mockCommandRunner.EXPECT().Run(ctx, gomock.Any()).Return([]byte("1000\n"), nil, getExitError(t)).Times(1)
+			},
+			wantReboot: false,
+			wantErr:    nil,
+		},
+		{
+			desc: "rpmquery returns runner error, want error",
+			setup: func(t *testing.T) {
+				setAptExists(t, false)
+				setRpmquery(t, "/dev/null")
+
+				mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+				runner = mockCommandRunner
+				mockCommandRunner.EXPECT().Run(ctx, gomock.Any()).Return(nil, nil, errors.New("runner error")).Times(1)
+			},
+			wantErr: errors.New("error running /dev/null: runner error"),
+		},
+		{
+			desc: "proc stat file is missing, want error",
+			setup: func(t *testing.T) {
+				setAptExists(t, false)
+				setRpmquery(t, "/dev/null")
+				utiltest.OverrideVariable(t, &procStatPath, "/nonexistent/stat")
+
+				mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+				runner = mockCommandRunner
+				mockCommandRunner.EXPECT().Run(ctx, gomock.Any()).Return([]byte("1000\n"), nil, nil).Times(1)
+			},
+			wantErr: errors.New("error opening /nonexistent/stat: open /nonexistent/stat: no such file or directory"),
 		},
 	}
 
