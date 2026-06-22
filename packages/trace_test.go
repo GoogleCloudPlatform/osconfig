@@ -93,12 +93,12 @@ func (mr *mockOSInfoProviderMockRecorder) GetOSInfo(ctx interface{}) *gomock.Cal
 }
 
 func runGetInstalledPackages(ctx context.Context, tp *mockInstalledPackagesProvider, op *mockOSInfoProvider, testInfo osinfo.OSInfo, wantPkgs Packages, tracedErr, osInfoErr error) (Packages, error) {
-	call := tp.EXPECT().GetInstalledPackages(gomock.Any()).DoAndReturn(func(ctx context.Context) (Packages, error) {
+	call := op.EXPECT().GetOSInfo(gomock.Any()).Return(testInfo, osInfoErr).Times(1)
+	tp.EXPECT().GetInstalledPackages(gomock.Any()).After(call).DoAndReturn(func(ctx context.Context) (Packages, error) {
 		// Wait at least 110ms to ensure TraceMemory (100ms interval) samples at least once.
 		time.Sleep(110 * time.Millisecond)
 		return wantPkgs, tracedErr
 	}).Times(1)
-	op.EXPECT().GetOSInfo(gomock.Any()).After(call).Return(testInfo, osInfoErr).Times(1)
 
 	return TracingInstalledPackagesProvider(tp, op).GetInstalledPackages(ctx)
 }
