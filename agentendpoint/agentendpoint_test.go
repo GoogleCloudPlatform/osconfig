@@ -252,6 +252,7 @@ func (*agentEndpointServiceTestServer) ReportInventory(ctx context.Context, req 
 func TestWaitForTask(t *testing.T) {
 	ctx := context.Background()
 	srv := newAgentEndpointServiceTestServer()
+	disableAllPackageManagers(t)
 	tc, err := newTestClient(ctx, srv)
 	if err != nil {
 		t.Fatal(err)
@@ -333,8 +334,6 @@ func TestLoadPatchTaskFromState(t *testing.T) {
 	}
 	defer os.RemoveAll(td)
 	taskStateFile = filepath.Join(td, "testState")
-
-	srv.streamSend <- struct{}{}
 
 	// No state.
 	if err := tc.client.loadTaskFromState(ctx); err != nil {
