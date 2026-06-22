@@ -160,6 +160,10 @@ func TestRunYumUpdate_Excludes(t *testing.T) {
 // TestRunYumUpdate_Errors tests different error scenarios of RunYumUpdate.
 func TestRunYumUpdate_Errors(t *testing.T) {
 	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+	t.Cleanup(func() { mockCtrl.Finish() })
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+
 	tests := []struct {
 		name    string
 		setup   func(t *testing.T, mockRunner *utilmocks.MockCommandRunner)
@@ -167,7 +171,7 @@ func TestRunYumUpdate_Errors(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name: "conflicting excludes and exclusives, want error",
+			name: "conflicting excludes and exclusives, want excludes error",
 			setup: func(t *testing.T, mockRunner *utilmocks.MockCommandRunner) {
 				packages.SetCommandRunner(mockRunner)
 				packages.SetPtyCommandRunner(mockRunner)
@@ -194,7 +198,7 @@ func TestRunYumUpdate_Errors(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "yum updates query fails, want error",
+			name: "yum updates query fails, want updates error",
 			setup: func(t *testing.T, mockRunner *utilmocks.MockCommandRunner) {
 				packages.SetCommandRunner(mockRunner)
 				packages.SetPtyCommandRunner(mockRunner)
@@ -205,7 +209,7 @@ func TestRunYumUpdate_Errors(t *testing.T) {
 			wantErr: errors.New("error running /usr/bin/yum with args [\"check-update\" \"--assumeyes\"]: yum updates error, stdout: \"\", stderr: \"\""),
 		},
 		{
-			name: "yum packages installation fails, want error",
+			name: "yum packages installation fails, want install error",
 			setup: func(t *testing.T, mockRunner *utilmocks.MockCommandRunner) {
 				packages.SetCommandRunner(mockRunner)
 				packages.SetPtyCommandRunner(mockRunner)
@@ -222,14 +226,10 @@ func TestRunYumUpdate_Errors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockCtrl := gomock.NewController(t)
-			defer mockCtrl.Finish()
+			tt.setup(t, mockCommandRunner)
 
-			mockRunner := utilmocks.NewMockCommandRunner(mockCtrl)
-			tt.setup(t, mockRunner)
-
-			err := RunYumUpdate(ctx, tt.opts...)
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			gotErr := RunYumUpdate(ctx, tt.opts...)
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
 		})
 	}
 }
