@@ -598,6 +598,11 @@ Conflicts   : [5]
 }
 
 func TestZypperPackagesInPatch(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	runner = mockCommandRunner
 	tests := []struct {
 		name         string
 		patches      []*ZypperPatch
@@ -636,12 +641,6 @@ Conflicts   : [1]
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockCtrl := gomock.NewController(t)
-			defer mockCtrl.Finish()
-
-			mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
-			runner = mockCommandRunner
-
 			if tt.expectedCmd != nil {
 				mockCommandRunner.EXPECT().
 					Run(testCtx, utilmocks.EqCmd(tt.expectedCmd)).
@@ -656,6 +655,12 @@ Conflicts   : [1]
 }
 
 func TestZypperInstall(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	runner = mockCommandRunner
+
 	exitErr := exec.Command("false").Run()
 	exitErr102 := exec.Command("bash", "-c", "exit 102").Run()
 	patches := []*ZypperPatch{{Name: "patch1"}}
@@ -692,12 +697,6 @@ func TestZypperInstall(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockCtrl := gomock.NewController(t)
-			defer mockCtrl.Finish()
-
-			mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
-			runner = mockCommandRunner
-
 			mockCommandRunner.EXPECT().
 				Run(testCtx, utilmocks.EqCmd(expectedCmd)).
 				Return(tt.stdout, []byte("stderr"), tt.mockErr).
@@ -710,6 +709,12 @@ func TestZypperInstall(t *testing.T) {
 }
 
 func TestZypperPatchesWithOptions(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	runner = mockCommandRunner
+
 	tests := []struct {
 		name        string
 		options     []ZypperListOption
@@ -739,12 +744,6 @@ func TestZypperPatchesWithOptions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockCtrl := gomock.NewController(t)
-			defer mockCtrl.Finish()
-
-			mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
-			runner = mockCommandRunner
-
 			mockCommandRunner.EXPECT().
 				Run(testCtx, utilmocks.EqCmd(tt.expectedCmd)).
 				Return([]byte(""), []byte(""), nil).
