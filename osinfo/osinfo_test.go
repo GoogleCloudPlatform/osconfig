@@ -19,7 +19,6 @@ package osinfo
 
 import (
 	"context"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -39,21 +38,22 @@ func TestNewProvider(t *testing.T) {
 
 // TestDefaultProvider_GetOSInfo tests the GetOSInfo method of the defaultProvider.
 func TestDefaultProvider_GetOSInfo(t *testing.T) {
+	tmpDir := t.TempDir()
 	tests := []struct {
-		name                      string
-		enforceTestingEnvironment func(t *testing.T)
-		wantInfo                  OSInfo
-		wantErr                   error
+		name      string
+		setupFunc func(t *testing.T)
+		wantInfo  OSInfo
+		wantErr   error
 	}{
 		{
 			name: "valid release file, want expected OSInfo and nil error",
-			enforceTestingEnvironment: func(t *testing.T) {
-				doesNotExists := filepath.Join(os.TempDir(), "does_not_exists")
-				debianReleaseFile := filepath.Join(os.TempDir(), "debian_release_file")
+			setupFunc: func(t *testing.T) {
+				doesNotExist := filepath.Join(tmpDir, "does_not_exist")
+				debianReleaseFile := filepath.Join(tmpDir, "debian_release_file")
 				enforceFileWithContent(t, debianReleaseFile, []byte(debianReleaseFileContent))
 				overrideDefaultReleaseFilepath(t, debianReleaseFile)
-				overrideOracleReleaseFilepath(t, doesNotExists)
-				overrideRedHatReleaseFilepath(t, doesNotExists)
+				overrideOracleReleaseFilepath(t, doesNotExist)
+				overrideRedHatReleaseFilepath(t, doesNotExist)
 			},
 			wantInfo: OSInfo{
 				ShortName: "debian",
@@ -64,12 +64,11 @@ func TestDefaultProvider_GetOSInfo(t *testing.T) {
 		},
 		{
 			name: "release file is a directory causing read error, want fallback OSInfo and nil error",
-			enforceTestingEnvironment: func(t *testing.T) {
-				tmpDir := os.TempDir()
-				doesNotExists := filepath.Join(os.TempDir(), "does_not_exists")
+			setupFunc: func(t *testing.T) {
+				doesNotExist := filepath.Join(tmpDir, "does_not_exist")
 				overrideDefaultReleaseFilepath(t, tmpDir)
-				overrideOracleReleaseFilepath(t, doesNotExists)
-				overrideRedHatReleaseFilepath(t, doesNotExists)
+				overrideOracleReleaseFilepath(t, doesNotExist)
+				overrideRedHatReleaseFilepath(t, doesNotExist)
 			},
 			wantInfo: OSInfo{
 				ShortName: "linux",
@@ -82,7 +81,7 @@ func TestDefaultProvider_GetOSInfo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.enforceTestingEnvironment(t)
+			tt.setupFunc(t)
 			populateHostFields(t, &tt.wantInfo)
 			p := NewProvider()
 			gotInfo, gotErr := p.GetOSInfo(context.Background())
