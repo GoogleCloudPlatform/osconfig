@@ -252,7 +252,6 @@ func (*agentEndpointServiceTestServer) ReportInventory(ctx context.Context, req 
 func TestWaitForTask(t *testing.T) {
 	ctx := context.Background()
 	srv := newAgentEndpointServiceTestServer()
-	disableAllPackageManagers(t)
 	tc, err := newTestClient(ctx, srv)
 	if err != nil {
 		t.Fatal(err)
