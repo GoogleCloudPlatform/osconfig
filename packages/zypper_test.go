@@ -703,8 +703,8 @@ func TestZypperInstall(t *testing.T) {
 				Return(tt.stdout, []byte("stderr"), tt.mockErr).
 				Times(1)
 
-			err := ZypperInstall(testCtx, patches, pkgs)
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			gotErr := ZypperInstall(testCtx, patches, pkgs)
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
 		})
 	}
 }
@@ -828,8 +828,8 @@ Conflicts   : [999999999999999999999999999999]
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := parseZypperPatchInfo([]byte(tt.input))
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			_, gotErr := parseZypperPatchInfo([]byte(tt.input))
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
 		})
 	}
 }
