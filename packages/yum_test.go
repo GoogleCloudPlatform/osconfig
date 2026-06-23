@@ -45,6 +45,25 @@ func TestInstallYumPackages(t *testing.T) {
 	}
 }
 
+func TestUpdateYumPackages(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	runner = mockCommandRunner
+	expectedCmd := utilmocks.EqCmd(exec.Command(yum, append(yumUpdateArgs, pkgs...)...))
+
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
+	if err := UpdateYumPackages(testCtx, pkgs); err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), errors.New("could not update")).Times(1)
+	if err := UpdateYumPackages(testCtx, pkgs); err == nil {
+		t.Errorf("did not get expected error")
+	}
+}
+
 func TestRemoveYum(t *testing.T) {
 	ctx := context.Background()
 	mockCtrl := gomock.NewController(t)
