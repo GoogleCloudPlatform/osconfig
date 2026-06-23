@@ -170,7 +170,7 @@ func TestSystemRebootRequiredRpm(t *testing.T) {
 			wantErr:    nil,
 		},
 		{
-			desc: "rpmquery returns runner error, want error",
+			desc: "rpmquery returns runner error, want running error",
 			setup: func(t *testing.T) {
 				setAptExists(t, false)
 				setRpmquery(t, "/dev/null")
@@ -182,7 +182,7 @@ func TestSystemRebootRequiredRpm(t *testing.T) {
 			wantErr: errors.New("error running /dev/null: runner error"),
 		},
 		{
-			desc: "proc stat file is missing, want error",
+			desc: "proc stat file is missing, want no file error",
 			setup: func(t *testing.T) {
 				setAptExists(t, false)
 				setRpmquery(t, "/dev/null")
