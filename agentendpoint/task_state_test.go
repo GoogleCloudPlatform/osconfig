@@ -15,16 +15,23 @@
 package agentendpoint
 
 import (
+	"encoding/json"
+	"errors"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
+	"syscall"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 )
 
 var (
@@ -63,33 +70,53 @@ func TestLoadState(t *testing.T) {
 	// We don't test execTask as reboots during that task type is not supported.
 	var tests = []struct {
 		name    string
-		state   []byte
-		wantErr bool
+		setup   func(t *testing.T) string
+		wantErr error
 		want    *taskState
 	}{
 		{
-			"BlankState",
-			[]byte("{}"),
-			false,
-			&taskState{},
+			name: "empty json, want blank state",
+			setup: func(t *testing.T) string {
+				if err := ioutil.WriteFile(testState, []byte("{}"), 0600); err != nil {
+					t.Fatalf("error writing state: %v", err)
+				}
+				return testState
+			},
+			wantErr: nil,
+			want:    &taskState{},
 		},
 		{
-			"BadState",
-			[]byte("foo"),
-			true,
-			&taskState{},
+			name: "invalid json, want json syntax error",
+			setup: func(t *testing.T) string {
+				if err := ioutil.WriteFile(testState, []byte("foo"), 0600); err != nil {
+					t.Fatalf("error writing state: %v", err)
+				}
+				return testState
+			},
+			wantErr: json.Unmarshal([]byte("foo"), &taskState{}),
+			want:    &taskState{},
 		},
 		{
-			"PatchTask",
-			[]byte(testPatchTaskStateString),
-			false,
-			testPatchTaskState,
+			name: "valid patch task json, want patch task state",
+			setup: func(t *testing.T) string {
+				if err := ioutil.WriteFile(testState, []byte(testPatchTaskStateString), 0600); err != nil {
+					t.Fatalf("error writing state: %v", err)
+				}
+				return testState
+			},
+			wantErr: nil,
+			want:    testPatchTaskState,
 		},
 		{
-			"IgnoresOldRebootFieldName",
-			[]byte("{\"PatchTask\":{\"Task\":{},\"RebootCount\":1}}"),
-			false,
-			&taskState{
+			name: "json with old reboot field, want state with zero reboot counts",
+			setup: func(t *testing.T) string {
+				if err := ioutil.WriteFile(testState, []byte("{\"PatchTask\":{\"Task\":{},\"RebootCount\":1}}"), 0600); err != nil {
+					t.Fatalf("error writing state: %v", err)
+				}
+				return testState
+			},
+			wantErr: nil,
+			want: &taskState{
 				PatchTask: &patchTask{
 					Task: &applyPatchesTask{
 						&agentendpointpb.ApplyPatchesTask{},
@@ -99,20 +126,20 @@ func TestLoadState(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "directory path, want path error",
+			setup: func(t *testing.T) string {
+				return td
+			},
+			wantErr: &fs.PathError{Op: "read", Path: td, Err: syscall.EISDIR},
+			want:    nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := ioutil.WriteFile(testState, tt.state, 0600); err != nil {
-				t.Fatalf("error writing state: %v", err)
-			}
-
-			st, err := loadState(testState)
-			if err != nil && !tt.wantErr {
-				t.Fatalf("unexpected error: %v", err)
-			}
-			if err == nil && tt.wantErr {
-				t.Fatalf("expected error")
-			}
+			path := tt.setup(t)
+			st, err := loadState(path)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 
 			if diff := cmp.Diff(tt.want, st, cmpopts.IgnoreUnexported(patchTask{}), protocmp.Transform()); diff != "" {
 				t.Errorf("State does not match expectation: (-got +want)\n%s", diff)
@@ -145,55 +172,71 @@ func TestLoadOldState(t *testing.T) {
 }
 
 func TestStateSave(t *testing.T) {
-	td, err := ioutil.TempDir(os.TempDir(), "")
-	if err != nil {
-		t.Fatalf("error creating temp dir: %v", err)
-	}
-	defer os.RemoveAll(td)
+	td := t.TempDir()
 	testState := filepath.Join(td, "testState")
+	invalidDir := utiltest.WriteToTempFileMust(t, "invalidDir", []byte(""))
+	invalidPath := filepath.Join(invalidDir, "testState")
 
 	var tests = []struct {
-		desc  string
-		state *taskState
-		want  string
+		desc    string
+		state   *taskState
+		path    string
+		want    string
+		wantErr error
 	}{
 		{
-			"NilState",
-			nil,
-			"{}",
+			desc:    "nil state, expect empty json",
+			state:   nil,
+			path:    testState,
+			want:    "{}",
+			wantErr: nil,
 		},
 		{
-			"BlankState",
-			&taskState{},
-			"{}",
+			desc:    "blank state, expect empty json",
+			state:   &taskState{},
+			path:    testState,
+			want:    "{}",
+			wantErr: nil,
 		},
 		{
-			"PatchTask",
-			testPatchTaskState,
-			testPatchTaskStateString,
+			desc:    "patch task state, expect serialized patch task json",
+			state:   testPatchTaskState,
+			path:    testState,
+			want:    testPatchTaskStateString,
+			wantErr: nil,
 		},
 		{
-			"ExecTask",
-			&taskState{ExecTask: &execTask{TaskID: "foo"}},
-			"{\"ExecTask\":{\"StartedAt\":\"0001-01-01T00:00:00Z\",\"Task\":null,\"TaskID\":\"foo\"}}",
+			desc:    "exec task state, expect serialized exec task json",
+			state:   &taskState{ExecTask: &execTask{TaskID: "foo"}},
+			path:    testState,
+			want:    "{\"ExecTask\":{\"StartedAt\":\"0001-01-01T00:00:00Z\",\"Task\":null,\"TaskID\":\"foo\"}}",
+			wantErr: nil,
+		},
+		{
+			desc:    "invalid directory path, expect path error",
+			state:   &taskState{},
+			path:    invalidPath,
+			want:    "",
+			wantErr: &fs.PathError{Op: "mkdir", Path: invalidDir, Err: errors.New("not a directory")},
+		},
+		{
+			// time.Time.MarshalJSON only supports years between 0 and 9999.
+			desc: "invalid input for json, expect marshal error",
+			state: &taskState{
+				ExecTask: &execTask{StartedAt: time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC)},
+			},
+			path:    testState,
+			want:    "",
+			wantErr: &json.MarshalerError{Type: reflect.TypeOf(time.Time{}), Err: errors.New("Time.MarshalJSON: year outside of range [0,9999]")},
 		},
 	}
 	for _, tt := range tests {
-		err := tt.state.save(testState)
-		if err != nil {
-			t.Errorf("%s: unexpected save error: %v", tt.desc, err)
-			continue
-		}
+		t.Run(tt.desc, func(t *testing.T) {
+			gotErr := tt.state.save(tt.path)
 
-		got, err := ioutil.ReadFile(testState)
-		if err != nil {
-			t.Errorf("%s: error reading state: %v", tt.desc, err)
-			continue
-		}
-
-		if string(got) != tt.want {
-			t.Errorf("%s:\ngot:\n%q\nwant:\n%q", tt.desc, got, tt.want)
-		}
+			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
+			utiltest.AssertFileContents(t, tt.path, tt.want)
+		})
 	}
 }
 
