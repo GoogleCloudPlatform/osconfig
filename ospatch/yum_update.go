@@ -131,7 +131,7 @@ func RunYumUpdate(ctx context.Context, opts ...YumUpdateOption) error {
 
 	logOps(ctx, ops)
 
-	err = packages.InstallYumPackages(ctx, pkgNames)
+	err = packages.UpdateYumPackages(ctx, pkgNames)
 	if err == nil {
 		logSuccess(ctx, ops)
 	} else {
