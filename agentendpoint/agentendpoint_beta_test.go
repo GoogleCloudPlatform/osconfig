@@ -23,8 +23,6 @@ import (
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/golang/mock/gomock"
-	"github.com/google/go-cmp/cmp"
-	"google.golang.org/protobuf/testing/protocmp"
 )
 
 func TestBetaClientClose(t *testing.T) {
@@ -59,33 +57,34 @@ func TestLookupEffectiveGuestPolicies(t *testing.T) {
 
 	tests := []struct {
 		name       string
+		setup      func(*testing.T)
 		wantPolicy *agentendpointpb.EffectiveGuestPolicy
-		mockErr    error
 		wantErr    error
 	}{
 		{
-			name:       "successful server response, expect non-nil policy",
+			name: "successful server response, expect non-nil policy",
+			setup: func(t *testing.T) {
+				mockClient.EXPECT().LookupEffectiveGuestPolicy(gomock.Any(), gomock.Any()).Return(&agentendpointpb.EffectiveGuestPolicy{}, nil)
+			},
 			wantPolicy: &agentendpointpb.EffectiveGuestPolicy{},
-			mockErr:    nil,
-			wantErr:    nil,
+			wantErr: nil,
 		},
 		{
-			name:       "server returns error, expect error",
-			wantPolicy: nil,
-			mockErr:    errors.New("mock error"),
-			wantErr:    fmt.Errorf("error calling LookupEffectiveGuestPolicies: %w", errors.New("mock error")),
+			name: "server returns error, expect error",
+			setup: func(t *testing.T) {
+				mockClient.EXPECT().LookupEffectiveGuestPolicy(gomock.Any(), gomock.Any()).Return(nil, errors.New("mock error"))
+			},
+			wantErr: fmt.Errorf("error calling LookupEffectiveGuestPolicies: %w", errors.New("mock error")),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockClient.EXPECT().LookupEffectiveGuestPolicy(gomock.Any(), gomock.Any()).Return(tt.wantPolicy, tt.mockErr)
+			tt.setup(t)
 
 			gotPolicy, gotErr := client.LookupEffectiveGuestPolicies(ctx)
 			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
-			if diff := cmp.Diff(tt.wantPolicy, gotPolicy, protocmp.Transform()); diff != "" {
-				t.Errorf("LookupEffectiveGuestPolicies() mismatch (-want +got):\n%s", diff)
-			}
+			utiltest.AssertEquals(t, gotPolicy, tt.wantPolicy)
 		})
 	}
 }
