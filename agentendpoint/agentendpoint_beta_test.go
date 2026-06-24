@@ -67,7 +67,7 @@ func TestLookupEffectiveGuestPolicies(t *testing.T) {
 				mockClient.EXPECT().LookupEffectiveGuestPolicy(gomock.Any(), gomock.Any()).Return(&agentendpointpb.EffectiveGuestPolicy{}, nil)
 			},
 			wantPolicy: &agentendpointpb.EffectiveGuestPolicy{},
-			wantErr: nil,
+			wantErr:    nil,
 		},
 		{
 			name: "server returns error, expect error",
