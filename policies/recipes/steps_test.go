@@ -236,11 +236,11 @@ func Test_stepInstallDpkg(t *testing.T) {
 	step := &agentendpointpb.SoftwareRecipe_Step_InstallDpkg{ArtifactId: artifactID}
 
 	tests := []struct {
-		name         string
-		dpkgExists   bool
-		artifacts    map[string]string
+		name             string
+		dpkgExists       bool
+		artifacts        map[string]string
 		expectedCommands []utiltest.ExpectedCommand
-		wantErr      error
+		wantErr          error
 	}{
 		{
 			name:       "dpkg missing, want dpkg error",
@@ -289,11 +289,11 @@ func Test_stepInstallRpm(t *testing.T) {
 	step := &agentendpointpb.SoftwareRecipe_Step_InstallRpm{ArtifactId: artifactID}
 
 	tests := []struct {
-		name         string
-		rpmExists    bool
-		artifacts    map[string]string
+		name             string
+		rpmExists        bool
+		artifacts        map[string]string
 		expectedCommands []utiltest.ExpectedCommand
-		wantErr      error
+		wantErr          error
 	}{
 		{
 			name:      "rpm missing, want rpm error",
@@ -308,7 +308,7 @@ func Test_stepInstallRpm(t *testing.T) {
 		},
 		{
 			name:      "successful install, want nil",
-      rpmExists: true,
+			rpmExists: true,
 			artifacts: map[string]string{artifactID: artifactPath},
 			expectedCommands: []utiltest.ExpectedCommand{
 				{Cmd: exec.Command("/bin/rpm", "--upgrade", "--replacepkgs", "-v", artifactPath)},
