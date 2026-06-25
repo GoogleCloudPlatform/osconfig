@@ -15,6 +15,7 @@
 package ospatch
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -22,6 +23,7 @@ import (
 	"testing"
 
 	"github.com/GoogleCloudPlatform/osconfig/packages"
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 )
 
 func TestGetBtime(t *testing.T) {
@@ -68,10 +70,10 @@ func TestGetBtime(t *testing.T) {
 
 // TestGetBtime_FileOpenError verifies that getBtime returns an error when the file cannot be opened.
 func TestGetBtime_FileOpenError(t *testing.T) {
-	_, err := getBtime("/nonexistent/file/path")
-	if err == nil {
-		t.Error("getBtime() with nonexistent file want error, got nil")
-	}
+	path := "/nonexistent/file/path"
+	_, err := getBtime(path)
+	wantErr := fmt.Errorf("error opening %s: open %s: no such file or directory", path, path)
+	utiltest.AssertErrorMatch(t, err, wantErr)
 }
 
 func TestRpmRebootRequired(t *testing.T) {
