@@ -332,23 +332,25 @@ func Test_stepCopyFile(t *testing.T) {
 	destPath := filepath.Join(tmpDir, "dest")
 
 	tests := []struct {
-		name      string
-		step      *agentendpointpb.SoftwareRecipe_Step_CopyFile
-		artifacts map[string]string
-		setupFunc func()
-		wantErr   error
-		wantPerm  os.FileMode
+		name        string
+		step        *agentendpointpb.SoftwareRecipe_Step_CopyFile
+		artifacts   map[string]string
+		setupFunc   func()
+		wantErr     error
+		wantContent string
+		wantPerm    os.FileMode
 	}{
 		{
-			name: "successful copy, want nil error and 0644",
+			name: "successful copy, want nil error and 0644 permission",
 			step: &agentendpointpb.SoftwareRecipe_Step_CopyFile{
 				ArtifactId:  "art1",
 				Destination: destPath,
 				Permissions: "0644",
 			},
-			artifacts: map[string]string{"art1": artifactPath},
-			setupFunc: func() {},
-			wantPerm:  0644,
+			artifacts:   map[string]string{"art1": artifactPath},
+			setupFunc:   func() {},
+			wantContent: content,
+			wantPerm:    0644,
 		},
 		{
 			name: "file already exists and overwrite false, want file exists error",
@@ -357,9 +359,11 @@ func Test_stepCopyFile(t *testing.T) {
 				Destination: destPath,
 				Overwrite:   false,
 			},
-			artifacts: map[string]string{"art1": artifactPath},
-			setupFunc: func() { os.WriteFile(destPath, []byte("old content"), 0644) },
-			wantErr:   fmt.Errorf("file already exists at path %q and Overwrite = false", destPath),
+			artifacts:   map[string]string{"art1": artifactPath},
+			setupFunc:   func() { os.WriteFile(destPath, []byte("old content"), 0644) },
+			wantErr:     fmt.Errorf("file already exists at path %q and Overwrite = false", destPath),
+			wantContent: "old content",
+			wantPerm:    0644,
 		},
 		{
 			name: "file already exists and overwrite true, want nil error and 0755",
@@ -369,9 +373,10 @@ func Test_stepCopyFile(t *testing.T) {
 				Overwrite:   true,
 				Permissions: "0755",
 			},
-			artifacts: map[string]string{"art1": artifactPath},
-			setupFunc: func() { os.WriteFile(destPath, []byte("old content"), 0644) },
-			wantPerm:  0755,
+			artifacts:   map[string]string{"art1": artifactPath},
+			setupFunc:   func() { os.WriteFile(destPath, []byte("old content"), 0644) },
+			wantContent: content,
+			wantPerm:    0755,
 		},
 		{
 			name: "invalid permissions, want parse error",
@@ -380,9 +385,11 @@ func Test_stepCopyFile(t *testing.T) {
 				Destination: destPath,
 				Permissions: "888",
 			},
-			artifacts: map[string]string{"art1": artifactPath},
-			setupFunc: func() {},
-			wantErr:   &strconv.NumError{Func: "ParseUint", Num: "888", Err: strconv.ErrSyntax},
+			artifacts:   map[string]string{"art1": artifactPath},
+			setupFunc:   func() {},
+			wantErr:     &strconv.NumError{Func: "ParseUint", Num: "888", Err: strconv.ErrSyntax},
+			wantContent: "",
+			wantPerm:    0,
 		},
 		{
 			name: "artifact not found, want find error",
@@ -390,9 +397,11 @@ func Test_stepCopyFile(t *testing.T) {
 				ArtifactId:  "unknown",
 				Destination: destPath,
 			},
-			artifacts: map[string]string{"art1": artifactPath},
-			setupFunc: func() {},
-			wantErr:   fmt.Errorf("could not find location for artifact \"unknown\""),
+			artifacts:   map[string]string{"art1": artifactPath},
+			setupFunc:   func() {},
+			wantErr:     fmt.Errorf("could not find location for artifact \"unknown\""),
+			wantContent: "",
+			wantPerm:    0,
 		},
 		{
 			name: "artifact file missing, want no file error",
@@ -400,9 +409,11 @@ func Test_stepCopyFile(t *testing.T) {
 				ArtifactId:  "art2",
 				Destination: destPath,
 			},
-			artifacts: map[string]string{"art2": filepath.Join(tmpDir, "missing")},
-			setupFunc: func() {},
-			wantErr:   &os.PathError{Op: "open", Path: filepath.Join(tmpDir, "missing"), Err: fmt.Errorf("no such file or directory")},
+			artifacts:   map[string]string{"art2": filepath.Join(tmpDir, "missing")},
+			setupFunc:   func() {},
+			wantErr:     &os.PathError{Op: "open", Path: filepath.Join(tmpDir, "missing"), Err: fmt.Errorf("no such file or directory")},
+			wantContent: "",
+			wantPerm:    0,
 		},
 	}
 
@@ -414,8 +425,8 @@ func Test_stepCopyFile(t *testing.T) {
 			tt.setupFunc()
 
 			gotErr := stepCopyFile(tt.step, tt.artifacts, nil, "")
-			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
-			utiltest.AssertFileContents(t, destPath, content)
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
+			utiltest.AssertFileExistsAndContents(t, destPath, tt.wantContent)
 			info, err := os.Stat(destPath)
 			if err != nil {
 				t.Fatal(err)
