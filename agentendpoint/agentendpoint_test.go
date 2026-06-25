@@ -334,8 +334,6 @@ func TestLoadPatchTaskFromState(t *testing.T) {
 	defer os.RemoveAll(td)
 	taskStateFile = filepath.Join(td, "testState")
 
-	srv.streamSend <- struct{}{}
-
 	// No state.
 	if err := tc.client.loadTaskFromState(ctx); err != nil {
 		t.Error(err)
