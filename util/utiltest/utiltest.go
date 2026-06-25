@@ -225,3 +225,8 @@ func WriteToTempFileMust(t *testing.T, filename string, content []byte) string {
 	}
 	return path
 }
+
+// StringPtr returns a pointer to the passed string.
+func StringPtr(s string) *string {
+	return &s
+}

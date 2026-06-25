@@ -26,10 +26,6 @@ import (
 	"github.com/golang/mock/gomock"
 )
 
-func stringPtr(s string) *string {
-	return &s
-}
-
 func setupYumUpdateTestData() (dataSecurity, dataExclusives, dataDryRun, dataExcludes []byte) {
 	dataSecurity = []byte(`
 	=================================================================================================================================================================================
@@ -109,7 +105,7 @@ func TestRunYumUpdate(t *testing.T) {
 					Stderr: []byte("stderr"),
 				},
 				{
-					Cmd:    exec.Command("/usr/bin/yum", "install", "--assumeyes", "foo.noarch"),
+					Cmd:    exec.Command("/usr/bin/yum", "update", "--assumeyes", "foo.noarch"),
 					Stdout: []byte("stdout"),
 					Stderr: []byte("stderr"),
 				},
@@ -135,7 +131,7 @@ func TestRunYumUpdate(t *testing.T) {
 					Stderr: []byte("stderr"),
 				},
 				{
-					Cmd:    exec.Command("/usr/bin/yum", "install", "--assumeyes", "foo.noarch", "bar.x86_64"),
+					Cmd:    exec.Command("/usr/bin/yum", "update", "--assumeyes", "foo.noarch", "bar.x86_64"),
 					Stdout: []byte("stdout"),
 					Stderr: []byte("stderr"),
 				},
@@ -182,13 +178,13 @@ func TestRunYumUpdate(t *testing.T) {
 					Stderr: []byte("stderr"),
 				},
 				{
-					Cmd:    exec.Command("/usr/bin/yum", "install", "--assumeyes", "foo.noarch"),
+					Cmd:    exec.Command("/usr/bin/yum", "update", "--assumeyes", "foo.noarch"),
 					Stdout: []byte("stdout"),
 					Stderr: []byte("stderr"),
 				},
 			},
 			opts: []YumUpdateOption{
-				YumUpdateExcludes([]*Exclude{CreateStringExclude(stringPtr("bar"))}),
+				YumUpdateExcludes([]*Exclude{CreateStringExclude(utiltest.StringPtr("bar"))}),
 			},
 			wantErr: nil,
 		},
@@ -249,12 +245,12 @@ func TestRunYumUpdate(t *testing.T) {
 					Stdout: []byte("Upgrading:\n foo noarch 2.0.0-1 BaseOS 361 k"),
 				},
 				{
-					Cmd: exec.Command("/usr/bin/yum", "install", "--assumeyes", "foo.noarch"),
+					Cmd: exec.Command("/usr/bin/yum", "update", "--assumeyes", "foo.noarch"),
 					Err: errors.New("install error"),
 				},
 			},
 			opts:    nil,
-			wantErr: errors.New("error running /usr/bin/yum with args [\"install\" \"--assumeyes\" \"foo.noarch\"]: install error, stdout: \"\", stderr: \"\""),
+			wantErr: errors.New("error running /usr/bin/yum with args [\"update\" \"--assumeyes\" \"foo.noarch\"]: install error, stdout: \"\", stderr: \"\""),
 		},
 	}
 
