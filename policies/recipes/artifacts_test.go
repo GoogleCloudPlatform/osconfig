@@ -86,89 +86,134 @@ func TestGetHTTPArtifact(t *testing.T) {
 	}
 }
 
-// TestFetchArtifact_Remote ensures remote artifacts are correctly downloaded and saved to a local directory.
-func TestFetchArtifact_Remote(t *testing.T) {
+// setupFetchArtifactsTest sets up a mock HTTP server and GCS emulator environment for fetchArtifacts tests.
+func setupFetchArtifactsTest(t *testing.T) *httptest.Server {
+	t.Helper()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "remote data")
-	}))
-	defer ts.Close()
-
-	tdir := t.TempDir()
-	artifact := &agentendpointpb.SoftwareRecipe_Artifact{
-		Id: "test-artifact",
-		Artifact: &agentendpointpb.SoftwareRecipe_Artifact_Remote_{
-			Remote: &agentendpointpb.SoftwareRecipe_Artifact_Remote{
-				Uri: ts.URL,
-			},
-		},
-	}
-
-	path, err := fetchArtifact(context.Background(), artifact, tdir)
-	utiltest.AssertErrorMatch(t, err, nil)
-	utiltest.AssertFileContents(t, path, "remote data")
-}
-
-// TestFetchArtifact_GCS ensures artifacts can be downloaded from GCS using a storage emulator.
-func TestFetchArtifact_GCS(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "GET" && strings.Contains(r.URL.Path, "test-bucket/test-object") {
-			fmt.Fprint(w, "gcs data")
+		if r.Method == "GET" {
+			if strings.Contains(r.URL.Path, "test-bucket/test-object") {
+				fmt.Fprint(w, "gcs data")
+				return
+			}
+			if strings.Contains(r.URL.Path, "remote-artifact") {
+				fmt.Fprint(w, "remote data")
+				return
+			}
+			fmt.Fprint(w, "data")
 			return
 		}
 		w.WriteHeader(http.StatusNotFound)
 	}))
-	defer ts.Close()
+	t.Cleanup(ts.Close)
 
 	t.Setenv("STORAGE_EMULATOR_HOST", ts.URL)
-
-	tdir := t.TempDir()
-	artifact := &agentendpointpb.SoftwareRecipe_Artifact{
-		Id: "gcs-artifact",
-		Artifact: &agentendpointpb.SoftwareRecipe_Artifact_Gcs_{
-			Gcs: &agentendpointpb.SoftwareRecipe_Artifact_Gcs{
-				Bucket: "test-bucket",
-				Object: "test-object",
-			},
-		},
-	}
-
-	path, err := fetchArtifact(context.Background(), artifact, tdir)
-	utiltest.AssertErrorMatch(t, err, nil)
-	utiltest.AssertFileContents(t, path, "gcs data")
+	return ts
 }
 
-// TestFetchArtifacts verifies that multiple artifacts can be downloaded and mapped to their local paths.
+// TestFetchArtifacts verifies that single or multiple artifacts can be correctly downloaded from HTTP/HTTPS sources and GCS.
 func TestFetchArtifacts(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "data")
-	}))
-	defer ts.Close()
+	ts := setupFetchArtifactsTest(t)
 
-	tdir := t.TempDir()
-	artifacts := []*agentendpointpb.SoftwareRecipe_Artifact{
+	tests := []struct {
+		name      string
+		artifacts []*agentendpointpb.SoftwareRecipe_Artifact
+		want      map[string]string
+		wantErr   error
+	}{
 		{
-			Id: "art1",
-			Artifact: &agentendpointpb.SoftwareRecipe_Artifact_Remote_{
-				Remote: &agentendpointpb.SoftwareRecipe_Artifact_Remote{
-					Uri: ts.URL,
+			name: "remote artifact, want remote data and nil error",
+			artifacts: []*agentendpointpb.SoftwareRecipe_Artifact{
+				{
+					Id: "remote-art",
+					Artifact: &agentendpointpb.SoftwareRecipe_Artifact_Remote_{
+						Remote: &agentendpointpb.SoftwareRecipe_Artifact_Remote{
+							Uri: ts.URL + "/remote-artifact",
+						},
+					},
 				},
+			},
+			want: map[string]string{
+				"remote-art": "remote data",
 			},
 		},
 		{
-			Id: "art2",
-			Artifact: &agentendpointpb.SoftwareRecipe_Artifact_Remote_{
-				Remote: &agentendpointpb.SoftwareRecipe_Artifact_Remote{
-					Uri: ts.URL,
+			name: "GCS artifact, want gcs data and nil error",
+			artifacts: []*agentendpointpb.SoftwareRecipe_Artifact{
+				{
+					Id: "gcs-art",
+					Artifact: &agentendpointpb.SoftwareRecipe_Artifact_Gcs_{
+						Gcs: &agentendpointpb.SoftwareRecipe_Artifact_Gcs{
+							Bucket: "test-bucket",
+							Object: "test-object",
+						},
+					},
 				},
 			},
+			want: map[string]string{
+				"gcs-art": "gcs data",
+			},
+		},
+		{
+			name: "multiple artifacts, want data and nil error",
+			artifacts: []*agentendpointpb.SoftwareRecipe_Artifact{
+				{
+					Id: "art1",
+					Artifact: &agentendpointpb.SoftwareRecipe_Artifact_Remote_{
+						Remote: &agentendpointpb.SoftwareRecipe_Artifact_Remote{
+							Uri: ts.URL,
+						},
+					},
+				},
+				{
+					Id: "art2",
+					Artifact: &agentendpointpb.SoftwareRecipe_Artifact_Remote_{
+						Remote: &agentendpointpb.SoftwareRecipe_Artifact_Remote{
+							Uri: ts.URL,
+						},
+					},
+				},
+			},
+			want: map[string]string{
+				"art1": "data",
+				"art2": "data",
+			},
+		},
+		{
+			name: "remote artifact unsupported protocol, want protocol error",
+			artifacts: []*agentendpointpb.SoftwareRecipe_Artifact{
+				{
+					Id: "ftp-art",
+					Artifact: &agentendpointpb.SoftwareRecipe_Artifact_Remote_{
+						Remote: &agentendpointpb.SoftwareRecipe_Artifact_Remote{
+							Uri: "ftp://localhost",
+						},
+					},
+				},
+			},
+			wantErr: fmt.Errorf("error fetching artifact %q: error, unsupported protocol scheme ftp", "ftp-art"),
+		},
+		{
+			name: "unknown artifact type, want unknown artifact error",
+			artifacts: []*agentendpointpb.SoftwareRecipe_Artifact{
+				{
+					Id: "unknown-art",
+				},
+			},
+			wantErr: fmt.Errorf("unknown artifact type for artifact unknown-art"),
 		},
 	}
 
-	res, err := fetchArtifacts(context.Background(), artifacts, tdir)
-	utiltest.AssertErrorMatch(t, err, nil)
-	utiltest.AssertEquals(t, len(res), 2)
-	for _, path := range res {
-		utiltest.AssertFileContents(t, path, "data")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			gotArtifacts, gotErr := fetchArtifacts(context.Background(), tt.artifacts, tmpDir)
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
+			utiltest.AssertEquals(t, len(gotArtifacts), len(tt.want))
+			for id, wantContent := range tt.want {
+				path, _ := gotArtifacts[id]
+				utiltest.AssertFileContents(t, path, wantContent)
+			}
+		})
 	}
 }
 
