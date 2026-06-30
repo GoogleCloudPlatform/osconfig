@@ -184,6 +184,20 @@ func AssertFileContents(t *testing.T, filePath string, wantContents string) {
 	}
 }
 
+// AssertFileExistsAndContents verifies that the file at filePath exists and matches wantContent.
+// If the file does not exist and wantContent is empty, the test is skipped.
+func AssertFileExistsAndContents(t *testing.T, filePath string, wantContent string) {
+	t.Helper()
+	_, err := os.Stat(filePath)
+	if os.IsNotExist(err) {
+		if wantContent == "" {
+			t.SkipNow()
+		}
+		t.Fatalf("Failed to read file %q: %v", filePath, err)
+	}
+	AssertFileContents(t, filePath, wantContent)
+}
+
 // OverrideVariable overrides the value of a variable and returns a function to restore it.
 func OverrideVariable[T any](t *testing.T, ptr *T, val T) {
 	original := *ptr
