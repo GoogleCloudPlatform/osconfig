@@ -47,18 +47,18 @@ func TestFileResourceValidate(t *testing.T) {
 	_, errLocalPath := os.Open("does_not_exist")
 
 	var tests = []struct {
-		name    string
-		frpb    *agentendpointpb.OSPolicy_Resource_FileResource
-		wantMR  ManagedFile
-		wantErr error
+		name            string
+		fileResourcePB  *agentendpointpb.OSPolicy_Resource_FileResource
+		wantManagedFile ManagedFile
+		wantErr         error
 	}{
 		{
 			name: "state absent, want absent managed file",
-			frpb: &agentendpointpb.OSPolicy_Resource_FileResource{
+			fileResourcePB: &agentendpointpb.OSPolicy_Resource_FileResource{
 				Path:  tmpFile,
 				State: agentendpointpb.OSPolicy_Resource_FileResource_ABSENT,
 			},
-			wantMR: ManagedFile{
+			wantManagedFile: ManagedFile{
 				Path:  tmpFile,
 				State: agentendpointpb.OSPolicy_Resource_FileResource_ABSENT,
 			},
@@ -66,11 +66,11 @@ func TestFileResourceValidate(t *testing.T) {
 		},
 		{
 			name: "state present, want present managed file",
-			frpb: &agentendpointpb.OSPolicy_Resource_FileResource{
+			fileResourcePB: &agentendpointpb.OSPolicy_Resource_FileResource{
 				Path:  tmpFile,
 				State: agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
 			},
-			wantMR: ManagedFile{
+			wantManagedFile: ManagedFile{
 				Path:       tmpFile,
 				State:      agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
 				Permisions: defaultFilePerms,
@@ -79,7 +79,7 @@ func TestFileResourceValidate(t *testing.T) {
 		},
 		{
 			name: "state contents match and local path source, want contents match managed file with checksum",
-			frpb: &agentendpointpb.OSPolicy_Resource_FileResource{
+			fileResourcePB: &agentendpointpb.OSPolicy_Resource_FileResource{
 				Path: tmpFile,
 				Source: &agentendpointpb.OSPolicy_Resource_FileResource_File{
 					File: &agentendpointpb.OSPolicy_Resource_File{
@@ -90,7 +90,7 @@ func TestFileResourceValidate(t *testing.T) {
 				},
 				State: agentendpointpb.OSPolicy_Resource_FileResource_CONTENTS_MATCH,
 			},
-			wantMR: ManagedFile{
+			wantManagedFile: ManagedFile{
 				Path:       tmpFile,
 				source:     tmpFile,
 				checksum:   "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -101,12 +101,12 @@ func TestFileResourceValidate(t *testing.T) {
 		},
 		{
 			name: "state present and custom permissions, want present managed file with custom permissions",
-			frpb: &agentendpointpb.OSPolicy_Resource_FileResource{
+			fileResourcePB: &agentendpointpb.OSPolicy_Resource_FileResource{
 				Path:        tmpFile,
 				State:       agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
 				Permissions: "0777",
 			},
-			wantMR: ManagedFile{
+			wantManagedFile: ManagedFile{
 				Path:       tmpFile,
 				State:      agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
 				Permisions: 0777,
@@ -115,7 +115,7 @@ func TestFileResourceValidate(t *testing.T) {
 		},
 		{
 			name: "state present and local path source, want present managed file with checksum",
-			frpb: &agentendpointpb.OSPolicy_Resource_FileResource{
+			fileResourcePB: &agentendpointpb.OSPolicy_Resource_FileResource{
 				Path: tmpFile,
 				Source: &agentendpointpb.OSPolicy_Resource_FileResource_File{
 					File: &agentendpointpb.OSPolicy_Resource_File{
@@ -126,7 +126,7 @@ func TestFileResourceValidate(t *testing.T) {
 				},
 				State: agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
 			},
-			wantMR: ManagedFile{
+			wantManagedFile: ManagedFile{
 				Path:       tmpFile,
 				State:      agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
 				Permisions: defaultFilePerms,
@@ -137,14 +137,14 @@ func TestFileResourceValidate(t *testing.T) {
 		},
 		{
 			name: "invalid state, expect unrecognized desired state error",
-			frpb: &agentendpointpb.OSPolicy_Resource_FileResource{
+			fileResourcePB: &agentendpointpb.OSPolicy_Resource_FileResource{
 				State: agentendpointpb.OSPolicy_Resource_FileResource_DESIRED_STATE_UNSPECIFIED,
 			},
 			wantErr: fmt.Errorf("unrecognized DesiredState for FileResource: %q", agentendpointpb.OSPolicy_Resource_FileResource_DESIRED_STATE_UNSPECIFIED),
 		},
 		{
 			name: "invalid permissions, expect fail to parse permissions",
-			frpb: &agentendpointpb.OSPolicy_Resource_FileResource{
+			fileResourcePB: &agentendpointpb.OSPolicy_Resource_FileResource{
 				State:       agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
 				Permissions: "invalid",
 			},
@@ -152,7 +152,7 @@ func TestFileResourceValidate(t *testing.T) {
 		},
 		{
 			name: "local file does not exist, expect fail to open file",
-			frpb: &agentendpointpb.OSPolicy_Resource_FileResource{
+			fileResourcePB: &agentendpointpb.OSPolicy_Resource_FileResource{
 				Path:  "some/path",
 				State: agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
 				Source: &agentendpointpb.OSPolicy_Resource_FileResource_File{
@@ -167,7 +167,7 @@ func TestFileResourceValidate(t *testing.T) {
 		},
 		{
 			name: "unrecognized source, expect unrecognized source type error",
-			frpb: &agentendpointpb.OSPolicy_Resource_FileResource{
+			fileResourcePB: &agentendpointpb.OSPolicy_Resource_FileResource{
 				Path:   "some/path",
 				State:  agentendpointpb.OSPolicy_Resource_FileResource_CONTENTS_MATCH,
 				Source: nil,
@@ -176,7 +176,7 @@ func TestFileResourceValidate(t *testing.T) {
 		},
 		{
 			name: "remote download error, expect fail to fetch remote object",
-			frpb: &agentendpointpb.OSPolicy_Resource_FileResource{
+			fileResourcePB: &agentendpointpb.OSPolicy_Resource_FileResource{
 				Path:  "some/path",
 				State: agentendpointpb.OSPolicy_Resource_FileResource_CONTENTS_MATCH,
 				Source: &agentendpointpb.OSPolicy_Resource_FileResource_File{
@@ -197,17 +197,17 @@ func TestFileResourceValidate(t *testing.T) {
 			pr := &OSPolicyResource{
 				OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
 					ResourceType: &agentendpointpb.OSPolicy_Resource_File_{
-						File: tt.frpb,
+						File: tt.fileResourcePB,
 					},
 				},
 			}
 			gotErr := pr.Validate(ctx)
 			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
 
-			if diff := cmp.Diff(pr.ManagedResources(), &ManagedResources{Files: []ManagedFile{tt.wantMR}}, cmp.AllowUnexported(ManagedFile{})); diff != "" {
+			if diff := cmp.Diff(pr.ManagedResources(), &ManagedResources{Files: []ManagedFile{tt.wantManagedFile}}, cmp.AllowUnexported(ManagedFile{})); diff != "" {
 				t.Errorf("OSPolicyResource does not match expectation: (-got +want)\n%s", diff)
 			}
-			if diff := cmp.Diff(pr.resource.(*fileResource).managedFile, tt.wantMR, cmp.AllowUnexported(ManagedFile{})); diff != "" {
+			if diff := cmp.Diff(pr.resource.(*fileResource).managedFile, tt.wantManagedFile, cmp.AllowUnexported(ManagedFile{})); diff != "" {
 				t.Errorf("fileResource does not match expectation: (-got +want)\n%s", diff)
 			}
 		})
@@ -232,7 +232,7 @@ func TestFileResourceCheckState(t *testing.T) {
 
 	var tests = []struct {
 		name               string
-		frpb               *agentendpointpb.OSPolicy_Resource_FileResource
+		fileResourcePB     *agentendpointpb.OSPolicy_Resource_FileResource
 		wantInDesiredState bool
 	}{
 		{
@@ -347,7 +347,7 @@ func TestFileResourceCheckState(t *testing.T) {
 			pr := &OSPolicyResource{
 				OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
 					ResourceType: &agentendpointpb.OSPolicy_Resource_File_{
-						File: tt.frpb,
+						File: tt.fileResourcePB,
 					},
 				},
 			}
@@ -378,13 +378,13 @@ func TestFileResourceEnforceStateAbsent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	frpb := &agentendpointpb.OSPolicy_Resource_FileResource{
+	fileResourcePB := &agentendpointpb.OSPolicy_Resource_FileResource{
 		Path:  tmpFile,
 		State: agentendpointpb.OSPolicy_Resource_FileResource_ABSENT,
 	}
 	pr := &OSPolicyResource{
 		OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
-			ResourceType: &agentendpointpb.OSPolicy_Resource_File_{File: frpb},
+			ResourceType: &agentendpointpb.OSPolicy_Resource_File_{File: fileResourcePB},
 		},
 	}
 	if err := pr.Validate(ctx); err != nil {
@@ -413,7 +413,7 @@ func TestFileResourceEnforceStatePresent(t *testing.T) {
 	}
 	wantFile := filepath.Join(tmpDir, "bar")
 
-	frpb := &agentendpointpb.OSPolicy_Resource_FileResource{
+	fileResourcePB := &agentendpointpb.OSPolicy_Resource_FileResource{
 		Path: wantFile,
 		Source: &agentendpointpb.OSPolicy_Resource_FileResource_File{
 			File: &agentendpointpb.OSPolicy_Resource_File{
@@ -426,7 +426,7 @@ func TestFileResourceEnforceStatePresent(t *testing.T) {
 	}
 	pr := &OSPolicyResource{
 		OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
-			ResourceType: &agentendpointpb.OSPolicy_Resource_File_{File: frpb},
+			ResourceType: &agentendpointpb.OSPolicy_Resource_File_{File: fileResourcePB},
 		},
 	}
 	if err := pr.Validate(ctx); err != nil {
@@ -458,19 +458,19 @@ func TestFileResourceEnforceStateErrors(t *testing.T) {
 		{
 			name: "invalid state, expect unrecognized desired state error",
 			setup: func(t *testing.T) *OSPolicyResource {
-				frpb := &agentendpointpb.OSPolicy_Resource_FileResource{
+				fileResourcePB := &agentendpointpb.OSPolicy_Resource_FileResource{
 					State: agentendpointpb.OSPolicy_Resource_FileResource_DESIRED_STATE_UNSPECIFIED,
 				}
 				return &OSPolicyResource{
 					OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
 						ResourceType: &agentendpointpb.OSPolicy_Resource_File_{
-							File: frpb,
+							File: fileResourcePB,
 						},
 					},
 					resource: &fileResource{
-						OSPolicy_Resource_FileResource: frpb,
+						OSPolicy_Resource_FileResource: fileResourcePB,
 						managedFile: ManagedFile{
-							State: frpb.GetState(),
+							State: fileResourcePB.GetState(),
 						},
 					},
 				}
@@ -480,21 +480,21 @@ func TestFileResourceEnforceStateErrors(t *testing.T) {
 		{
 			name: "invalid path remove, expect failed to remove path error",
 			setup: func(t *testing.T) *OSPolicyResource {
-				frpb := &agentendpointpb.OSPolicy_Resource_FileResource{
+				fileResourcePB := &agentendpointpb.OSPolicy_Resource_FileResource{
 					Path:  missingPath,
 					State: agentendpointpb.OSPolicy_Resource_FileResource_ABSENT,
 				}
 				return &OSPolicyResource{
 					OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
 						ResourceType: &agentendpointpb.OSPolicy_Resource_File_{
-							File: frpb,
+							File: fileResourcePB,
 						},
 					},
 					resource: &fileResource{
-						OSPolicy_Resource_FileResource: frpb,
+						OSPolicy_Resource_FileResource: fileResourcePB,
 						managedFile: ManagedFile{
-							Path:  frpb.GetPath(),
-							State: frpb.GetState(),
+							Path:  fileResourcePB.GetPath(),
+							State: fileResourcePB.GetState(),
 						},
 					},
 				}
@@ -527,7 +527,7 @@ func TestFileResourceEnforceStateDownload(t *testing.T) {
 			name: "download fails during enforce state, expect unrecognized source type error",
 			setup: func(t *testing.T) (*OSPolicyResource, string) {
 				path := filepath.Join(tmpDir, "some_path")
-				frpb := &agentendpointpb.OSPolicy_Resource_FileResource{
+				fileResourcePB := &agentendpointpb.OSPolicy_Resource_FileResource{
 					Path:   path,
 					State:  agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
 					Source: nil,
@@ -535,14 +535,14 @@ func TestFileResourceEnforceStateDownload(t *testing.T) {
 				pr := &OSPolicyResource{
 					OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
 						ResourceType: &agentendpointpb.OSPolicy_Resource_File_{
-							File: frpb,
+							File: fileResourcePB,
 						},
 					},
 					resource: &fileResource{
-						OSPolicy_Resource_FileResource: frpb,
+						OSPolicy_Resource_FileResource: fileResourcePB,
 						managedFile: ManagedFile{
-							Path:       frpb.GetPath(),
-							State:      frpb.GetState(),
+							Path:       fileResourcePB.GetPath(),
+							State:      fileResourcePB.GetState(),
 							Permisions: defaultFilePerms,
 						},
 					},
@@ -555,7 +555,7 @@ func TestFileResourceEnforceStateDownload(t *testing.T) {
 		{
 			name: "download succeeds during enforce state, expect success",
 			setup: func(t *testing.T) (*OSPolicyResource, string) {
-				frpb := &agentendpointpb.OSPolicy_Resource_FileResource{
+				fileResourcePB := &agentendpointpb.OSPolicy_Resource_FileResource{
 					Path:  dst,
 					State: agentendpointpb.OSPolicy_Resource_FileResource_PRESENT,
 					Source: &agentendpointpb.OSPolicy_Resource_FileResource_Content{
@@ -565,14 +565,14 @@ func TestFileResourceEnforceStateDownload(t *testing.T) {
 				pr := &OSPolicyResource{
 					OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
 						ResourceType: &agentendpointpb.OSPolicy_Resource_File_{
-							File: frpb,
+							File: fileResourcePB,
 						},
 					},
 					resource: &fileResource{
-						OSPolicy_Resource_FileResource: frpb,
+						OSPolicy_Resource_FileResource: fileResourcePB,
 						managedFile: ManagedFile{
-							Path:       frpb.GetPath(),
-							State:      frpb.GetState(),
+							Path:       fileResourcePB.GetPath(),
+							State:      fileResourcePB.GetState(),
 							Permisions: defaultFilePerms,
 						},
 					},
