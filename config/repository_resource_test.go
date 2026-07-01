@@ -26,8 +26,6 @@ import (
 
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
-	"github.com/google/go-cmp/cmp"
-	"google.golang.org/protobuf/testing/protocmp"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
 )
@@ -60,21 +58,21 @@ var (
 func TestRepositoryResourceValidate(t *testing.T) {
 	ctx := t.Context()
 	var tests = []struct {
-		name    string
-		setup   func(t *testing.T)
-		rrpb    *agentendpointpb.OSPolicy_Resource_RepositoryResource
-		wantMR  *ManagedRepository
-		wantErr error
+		name                  string
+		setup                 func(t *testing.T)
+		repositoryResourcePB  *agentendpointpb.OSPolicy_Resource_RepositoryResource
+		wantManagedRepository *ManagedRepository
+		wantErr               error
 	}{
 		{
-			name:  "Apt",
+			name:  "valid apt repository, expect success",
 			setup: func(t *testing.T) {},
-			rrpb: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
+			repositoryResourcePB: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
 				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Apt{
 					Apt: aptRepositoryResource,
 				},
 			},
-			wantMR: &ManagedRepository{
+			wantManagedRepository: &ManagedRepository{
 				Apt: &AptRepository{
 					RepositoryResource: aptRepositoryResource,
 				},
@@ -85,14 +83,14 @@ func TestRepositoryResourceValidate(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:  "GooGet",
+			name:  "valid googet repository, expect success",
 			setup: func(t *testing.T) {},
-			rrpb: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
+			repositoryResourcePB: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
 				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Goo{
 					Goo: gooRepositoryResource,
 				},
 			},
-			wantMR: &ManagedRepository{
+			wantManagedRepository: &ManagedRepository{
 				GooGet: &GooGetRepository{
 					RepositoryResource: gooRepositoryResource,
 				},
@@ -102,14 +100,14 @@ func TestRepositoryResourceValidate(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:  "Yum",
+			name:  "valid yum repository, expect success",
 			setup: func(t *testing.T) {},
-			rrpb: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
+			repositoryResourcePB: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
 				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Yum{
 					Yum: yumRepositoryResource,
 				},
 			},
-			wantMR: &ManagedRepository{
+			wantManagedRepository: &ManagedRepository{
 				Yum: &YumRepository{
 					RepositoryResource: yumRepositoryResource,
 				},
@@ -120,14 +118,14 @@ func TestRepositoryResourceValidate(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:  "Zypper",
+			name:  "valid zypper repository, expect success",
 			setup: func(t *testing.T) {},
-			rrpb: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
+			repositoryResourcePB: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
 				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Zypper{
 					Zypper: zypperRepositoryResource,
 				},
 			},
-			wantMR: &ManagedRepository{
+			wantManagedRepository: &ManagedRepository{
 				Zypper: &ZypperRepository{
 					RepositoryResource: zypperRepositoryResource,
 				},
@@ -140,7 +138,7 @@ func TestRepositoryResourceValidate(t *testing.T) {
 		{
 			name:  "Apt-get does not exist, expect error",
 			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.AptExists, false) },
-			rrpb: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
+			repositoryResourcePB: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
 				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Apt{
 					Apt: aptRepositoryResource,
 				},
@@ -150,7 +148,7 @@ func TestRepositoryResourceValidate(t *testing.T) {
 		{
 			name:  "GooGet does not exist, expect error",
 			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.GooGetExists, false) },
-			rrpb: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
+			repositoryResourcePB: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
 				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Goo{
 					Goo: gooRepositoryResource,
 				},
@@ -160,7 +158,7 @@ func TestRepositoryResourceValidate(t *testing.T) {
 		{
 			name:  "Yum does not exist, expect error",
 			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.YumExists, false) },
-			rrpb: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
+			repositoryResourcePB: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
 				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Yum{
 					Yum: yumRepositoryResource,
 				},
@@ -170,7 +168,7 @@ func TestRepositoryResourceValidate(t *testing.T) {
 		{
 			name:  "Zypper does not exist, expect error",
 			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.ZypperExists, false) },
-			rrpb: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
+			repositoryResourcePB: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
 				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Zypper{
 					Zypper: zypperRepositoryResource,
 				},
@@ -178,10 +176,10 @@ func TestRepositoryResourceValidate(t *testing.T) {
 			wantErr: errors.New("cannot manage zypper repository because zypper does not exist on the system"),
 		},
 		{
-			name:    "Unknown repository type, expect error",
-			setup:   func(t *testing.T) {},
-			rrpb:    &agentendpointpb.OSPolicy_Resource_RepositoryResource{},
-			wantErr: errors.New("Repository field not set or references unknown repository type: <nil>"),
+			name:                 "Unknown repository type, expect error",
+			setup:                func(t *testing.T) {},
+			repositoryResourcePB: &agentendpointpb.OSPolicy_Resource_RepositoryResource{},
+			wantErr:              errors.New("Repository field not set or references unknown repository type: <nil>"),
 		},
 	}
 	for _, tt := range tests {
@@ -189,18 +187,14 @@ func TestRepositoryResourceValidate(t *testing.T) {
 			tt.setup(t)
 			pr := &OSPolicyResource{
 				OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
-					ResourceType: &agentendpointpb.OSPolicy_Resource_Repository{Repository: tt.rrpb},
+					ResourceType: &agentendpointpb.OSPolicy_Resource_Repository{Repository: tt.repositoryResourcePB},
 				},
 			}
 			gotErr := pr.Validate(ctx)
 			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
 
-			if diff := cmp.Diff(pr.ManagedResources(), &ManagedResources{Repositories: []ManagedRepository{*tt.wantMR}}, protocmp.Transform()); diff != "" {
-				t.Errorf("OSPolicyResource does not match expectation: (-got +want)\n%s", diff)
-			}
-			if diff := cmp.Diff(pr.resource.(*repositoryResource).managedRepository, *tt.wantMR, protocmp.Transform()); diff != "" {
-				t.Errorf("packageResouce does not match expectation: (-got +want)\n%s", diff)
-			}
+			utiltest.AssertEquals(t, pr.ManagedResources(), &ManagedResources{Repositories: []ManagedRepository{*tt.wantManagedRepository}})
+			utiltest.AssertEquals(t, pr.resource.(*repositoryResource).managedRepository, *tt.wantManagedRepository)
 		})
 	}
 }
@@ -248,10 +242,10 @@ func TestRepositoryResourceValidateAptGPG(t *testing.T) {
 func TestRepositoryResourceCheckState(t *testing.T) {
 	ctx := context.Background()
 	var tests = []struct {
-		name               string
-		rrpb               *agentendpointpb.OSPolicy_Resource_RepositoryResource
-		contents           []byte
-		wantInDesiredState bool
+		name                 string
+		repositoryResourcePB *agentendpointpb.OSPolicy_Resource_RepositoryResource
+		contents             []byte
+		wantInDesiredState   bool
 	}{
 		{
 			"Matches",
@@ -288,7 +282,7 @@ func TestRepositoryResourceCheckState(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			pr := &OSPolicyResource{
 				OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
-					ResourceType: &agentendpointpb.OSPolicy_Resource_Repository{Repository: tt.rrpb},
+					ResourceType: &agentendpointpb.OSPolicy_Resource_Repository{Repository: tt.repositoryResourcePB},
 				},
 			}
 			if err := pr.Validate(ctx); err != nil {
@@ -393,7 +387,7 @@ func TestRepositoryResourceEnforceState(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rrpb := &agentendpointpb.OSPolicy_Resource_RepositoryResource{
+	repositoryResourcePB := &agentendpointpb.OSPolicy_Resource_RepositoryResource{
 		Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Apt{
 			Apt: aptRepositoryResource,
 		},
@@ -415,7 +409,7 @@ func TestRepositoryResourceEnforceState(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			pr := &OSPolicyResource{
 				OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
-					ResourceType: &agentendpointpb.OSPolicy_Resource_Repository{Repository: rrpb},
+					ResourceType: &agentendpointpb.OSPolicy_Resource_Repository{Repository: repositoryResourcePB},
 				},
 			}
 			if err := pr.Validate(ctx); err != nil {
