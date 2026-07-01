@@ -20,6 +20,11 @@ func TracingInstalledPackagesProvider(tracedProvider InstalledPackagesProvider, 
 }
 
 func (p tracingInstalledPackagesProvider) GetInstalledPackages(ctx context.Context) (Packages, error) {
+	osinfo, err := p.osInfoProvider.GetOSInfo(ctx)
+	if err != nil {
+		clog.Errorf(ctx, "GetOSInfo() error: %v", err)
+	}
+
 	ctx, cancel := context.WithCancel(ctx)
 	resultChannel := make(chan utiltrace.TraceMemoryResult)
 	go utiltrace.TraceMemory(ctx, 100*time.Millisecond, resultChannel)
@@ -31,10 +36,6 @@ func (p tracingInstalledPackagesProvider) GetInstalledPackages(ctx context.Conte
 	cancel()
 	result := <-resultChannel
 
-	osinfo, err := p.osInfoProvider.GetOSInfo(ctx)
-	if err != nil {
-		clog.Errorf(ctx, "GetOSInfo() error: %v", err)
-	}
 	logTraceResult(ctx, result, duration, osinfo)
 
 	return pkgs, err
