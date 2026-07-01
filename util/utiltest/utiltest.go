@@ -14,6 +14,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/kr/pretty"
+	"google.golang.org/protobuf/testing/protocmp"
 )
 
 // AssertFormatMatch verifies that the got matches the wantFormat regular expression.
@@ -113,7 +114,7 @@ type ExpectedCommand struct {
 // AssertEquals checks if got and want are deeply equal. If not, it fails the test.
 func AssertEquals(t *testing.T, got interface{}, want interface{}) {
 	t.Helper()
-	if diff := cmp.Diff(want, got); diff != "" {
+	if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
 		t.Errorf("got != want (-want +got):\n%s", diff)
 	}
 }
@@ -181,6 +182,20 @@ func AssertFileContents(t *testing.T, filePath string, wantContents string) {
 	if diff := cmp.Diff(wantContents, string(data)); diff != "" {
 		t.Errorf("File contents mismatch (-want +got):\n%s", diff)
 	}
+}
+
+// AssertFileExistsAndContents verifies that the file at filePath exists and matches wantContent.
+// If the file does not exist and wantContent is empty, the test is skipped.
+func AssertFileExistsAndContents(t *testing.T, filePath string, wantContent string) {
+	t.Helper()
+	_, err := os.Stat(filePath)
+	if os.IsNotExist(err) {
+		if wantContent == "" {
+			t.SkipNow()
+		}
+		t.Fatalf("Failed to read file %q: %v", filePath, err)
+	}
+	AssertFileContents(t, filePath, wantContent)
 }
 
 // OverrideVariable overrides the value of a variable and returns a function to restore it.
