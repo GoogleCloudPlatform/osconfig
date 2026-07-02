@@ -8,10 +8,12 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"testing"
 	"time"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 )
 
 type fileEntry struct {
@@ -214,5 +216,222 @@ func ensureTar(t *testing.T, dst string, entries []fileEntry) {
 
 	if err := w.Close(); err != err {
 		t.Errorf("unable to close file: %s", err)
+	}
+}
+
+// Test_parsePermissions verifies that octal permission strings are correctly parsed into os.FileMode.
+func Test_parsePermissions(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		wantPerm os.FileMode
+		wantErr  error
+	}{
+		{
+			name:     "empty string, want 0755",
+			input:    "",
+			wantPerm: 0755,
+			wantErr:  nil,
+		},
+		{
+			name:     "valid octal 0644, want 0644",
+			input:    "0644",
+			wantPerm: 0644,
+			wantErr:  nil,
+		},
+		{
+			name:     "valid octal 755, want 0755",
+			input:    "755",
+			wantPerm: 0755,
+			wantErr:  nil,
+		},
+		{
+			name:    "invalid octal, want parse error",
+			input:   "888",
+			wantErr: &strconv.NumError{Func: "ParseUint", Num: "888", Err: strconv.ErrSyntax},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotPerm, gotErr := parsePermissions(tt.input)
+			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
+			utiltest.AssertEquals(t, gotPerm, tt.wantPerm)
+		})
+	}
+}
+
+func setupSymlinkTest(t *testing.T) (dir, linkInside, linkOutside string) {
+	tmpDir := t.TempDir()
+	dir = filepath.Join(tmpDir, "dir")
+	otherDir := filepath.Join(tmpDir, "other")
+	if err := os.Mkdir(dir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(otherDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	file := filepath.Join(dir, "file")
+	if err := os.WriteFile(file, []byte("test"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	otherFile := filepath.Join(otherDir, "other_file")
+	if err := os.WriteFile(otherFile, []byte("test"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	linkInside = filepath.Join(dir, "link_inside")
+	if err := os.Symlink(file, linkInside); err != nil {
+		t.Fatal(err)
+	}
+	linkOutside = filepath.Join(dir, "link_outside")
+	if err := os.Symlink(otherFile, linkOutside); err != nil {
+		t.Fatal(err)
+	}
+
+	return dir, linkInside, linkOutside
+}
+
+// Test_ensureSymlinkBelongsToDir ensures that symlinks do not point to locations outside the designated directory.
+func Test_ensureSymlinkBelongsToDir(t *testing.T) {
+	dir, linkInside, linkOutside := setupSymlinkTest(t)
+
+	tests := []struct {
+		name    string
+		link    string
+		wantErr error
+	}{
+		{
+			name:    "link target inside dir, want nil error",
+			link:    linkInside,
+			wantErr: nil,
+		},
+		{
+			name:    "link target outside dir, want outside link error",
+			link:    linkOutside,
+			wantErr: fmt.Errorf("symlink %s, does not belongs to dir %s, rel ../other/other_file", linkOutside, dir),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ensureSymlinkBelongsToDir(dir, tt.link)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+		})
+	}
+}
+
+// Test_stepCopyFile verifies the file copying logic, including artifact resolution, overwrite behavior, and permission setting.
+func Test_stepCopyFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	artifactPath := filepath.Join(tmpDir, "artifact")
+	content := "artifact content"
+	if err := os.WriteFile(artifactPath, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	destPath := filepath.Join(tmpDir, "dest")
+
+	tests := []struct {
+		name        string
+		step        *agentendpointpb.SoftwareRecipe_Step_CopyFile
+		artifacts   map[string]string
+		setupFunc   func()
+		wantErr     error
+		wantContent string
+		wantPerm    os.FileMode
+	}{
+		{
+			name: "successful copy, want nil error and 0644 permission",
+			step: &agentendpointpb.SoftwareRecipe_Step_CopyFile{
+				ArtifactId:  "art1",
+				Destination: destPath,
+				Permissions: "0644",
+			},
+			artifacts:   map[string]string{"art1": artifactPath},
+			setupFunc:   func() {},
+			wantContent: content,
+			wantPerm:    0644,
+		},
+		{
+			name: "file already exists and overwrite false, want file exists error",
+			step: &agentendpointpb.SoftwareRecipe_Step_CopyFile{
+				ArtifactId:  "art1",
+				Destination: destPath,
+				Overwrite:   false,
+			},
+			artifacts:   map[string]string{"art1": artifactPath},
+			setupFunc:   func() { os.WriteFile(destPath, []byte("old content"), 0644) },
+			wantErr:     fmt.Errorf("file already exists at path %q and Overwrite = false", destPath),
+			wantContent: "old content",
+			wantPerm:    0644,
+		},
+		{
+			name: "file already exists and overwrite true, want nil error and 0755",
+			step: &agentendpointpb.SoftwareRecipe_Step_CopyFile{
+				ArtifactId:  "art1",
+				Destination: destPath,
+				Overwrite:   true,
+				Permissions: "0755",
+			},
+			artifacts:   map[string]string{"art1": artifactPath},
+			setupFunc:   func() { os.WriteFile(destPath, []byte("old content"), 0644) },
+			wantContent: content,
+			wantPerm:    0755,
+		},
+		{
+			name: "invalid permissions, want parse error",
+			step: &agentendpointpb.SoftwareRecipe_Step_CopyFile{
+				ArtifactId:  "art1",
+				Destination: destPath,
+				Permissions: "888",
+			},
+			artifacts:   map[string]string{"art1": artifactPath},
+			setupFunc:   func() {},
+			wantErr:     &strconv.NumError{Func: "ParseUint", Num: "888", Err: strconv.ErrSyntax},
+			wantContent: "",
+			wantPerm:    0,
+		},
+		{
+			name: "artifact not found, want find error",
+			step: &agentendpointpb.SoftwareRecipe_Step_CopyFile{
+				ArtifactId:  "unknown",
+				Destination: destPath,
+			},
+			artifacts:   map[string]string{"art1": artifactPath},
+			setupFunc:   func() {},
+			wantErr:     fmt.Errorf("could not find location for artifact \"unknown\""),
+			wantContent: "",
+			wantPerm:    0,
+		},
+		{
+			name: "artifact file missing, want no file error",
+			step: &agentendpointpb.SoftwareRecipe_Step_CopyFile{
+				ArtifactId:  "art2",
+				Destination: destPath,
+			},
+			artifacts:   map[string]string{"art2": filepath.Join(tmpDir, "missing")},
+			setupFunc:   func() {},
+			wantErr:     &os.PathError{Op: "open", Path: filepath.Join(tmpDir, "missing"), Err: fmt.Errorf("no such file or directory")},
+			wantContent: "",
+			wantPerm:    0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Cleanup(func() {
+				os.Remove(destPath)
+			})
+			tt.setupFunc()
+
+			gotErr := stepCopyFile(tt.step, tt.artifacts, nil, "")
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
+			utiltest.AssertFileExistsAndContents(t, destPath, tt.wantContent)
+			info, err := os.Stat(destPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			utiltest.AssertEquals(t, info.Mode().Perm(), tt.wantPerm)
+		})
 	}
 }
