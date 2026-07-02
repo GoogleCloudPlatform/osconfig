@@ -57,7 +57,7 @@ func TestFormat(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "empty message, want formatted JSON with unpopulated fields",
+			name:  "empty message, want formatted JSON with unpopulated fields",
 			input: &agentendpointpb.Inventory_OsInfo{},
 			wantMap: map[string]any{
 				"hostname":               "",
