@@ -1,7 +1,17 @@
 package util
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
+	"strings"
 	"testing"
+
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 )
 
 func TestSanitizePath(t *testing.T) {
@@ -41,6 +51,192 @@ func TestSanitizePath(t *testing.T) {
 		if result := SanitizePath(tt.input); result != tt.expectedOutput {
 			t.Errorf("Test %q failed, expectedOutput %q, got %q", tt.name, tt.expectedOutput, result)
 		}
+	}
+}
 
+func TestExists(t *testing.T) {
+	tmpPath := utiltest.WriteToTempFileMust(t, "exists-test", []byte(""))
+
+	tests := []struct {
+		name       string
+		input      string
+		wantExists bool
+	}{
+		{
+			name:       "valid file path, expect true",
+			input:      tmpPath,
+			wantExists: true,
+		},
+		{
+			name:       "non-existent file path, expect false",
+			input:      tmpPath + "-does-not-exist",
+			wantExists: false,
+		},
+		{
+			name:       "empty string, expect false",
+			input:      "",
+			wantExists: false,
+		},
+		{
+			name:       "whitespace string, expect false",
+			input:      "   ",
+			wantExists: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotExists := Exists(tt.input)
+			utiltest.AssertEquals(t, gotExists, tt.wantExists)
+		})
+	}
+}
+
+func testSuccessCmd() *exec.Cmd {
+	if runtime.GOOS == "windows" {
+		return exec.Command("cmd", "/c", "echo success msg")
+	}
+	return exec.Command("echo", "success msg")
+}
+
+func testFailCmd() *exec.Cmd {
+	if runtime.GOOS == "windows" {
+		return exec.Command("cmd", "/c", "echo error msg 1>&2 & exit 1")
+	}
+	return exec.Command("sh", "-c", "echo 'error msg' >&2; exit 1")
+}
+
+func TestDefaultRunnerRun(t *testing.T) {
+	runner := &DefaultRunner{}
+	ctx := t.Context()
+
+	tests := []struct {
+		name       string
+		cmd        *exec.Cmd
+		wantStdout string
+		wantStderr string
+		wantErr    string
+	}{
+		{
+			name:       "successful command execution, expect stdout output",
+			cmd:        testSuccessCmd(),
+			wantStdout: "success msg",
+			wantStderr: "",
+			wantErr:    "^<nil>$",
+		},
+		{
+			name:       "failing command execution, expect stderr output and error",
+			cmd:        testFailCmd(),
+			wantStdout: "",
+			wantStderr: "error msg",
+			wantErr:    "exit status 1",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			stdout, stderr, err := runner.Run(ctx, tt.cmd)
+
+			utiltest.AssertFormatMatch(t, fmt.Sprint(err), tt.wantErr)
+			utiltest.AssertEquals(t, strings.TrimSpace(string(stdout)), tt.wantStdout)
+			utiltest.AssertEquals(t, strings.TrimSpace(string(stderr)), tt.wantStderr)
+		})
+	}
+}
+
+func TestAtomicWriteFileStream(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	content := "test content"
+	hasher := sha256.New()
+	hasher.Write([]byte(content))
+	validChecksum := hex.EncodeToString(hasher.Sum(nil))
+
+	tests := []struct {
+		name            string
+		input           string
+		checksum        string
+		content         string
+		mode            os.FileMode
+		wantChecksum    string
+		wantErrorFormat string
+	}{
+		{
+			name:            "valid file path, expect checksum output",
+			input:           filepath.Join(tmpDir, "test-stream-1.txt"),
+			checksum:        validChecksum,
+			content:         content,
+			mode:            0644,
+			wantChecksum:    validChecksum,
+			wantErrorFormat: "^<nil>$",
+		},
+		{
+			name:            "invalid checksum string, expect error",
+			input:           filepath.Join(tmpDir, "test-stream-2.txt"),
+			checksum:        "bad-checksum",
+			content:         content,
+			mode:            0644,
+			wantChecksum:    "",
+			wantErrorFormat: fmt.Sprintf("^got %q for checksum, expected %q", validChecksum, "bad-checksum"),
+		},
+		{
+			name:            "invalid directory path, expect error",
+			input:           filepath.Join(tmpDir, "does-not-exist", "test-stream.txt"),
+			checksum:        "",
+			content:         content,
+			mode:            0644,
+			wantChecksum:    "",
+			wantErrorFormat: "^unable to create temp file",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reader := strings.NewReader(tt.content)
+			gotChecksum, err := AtomicWriteFileStream(reader, tt.checksum, tt.input, tt.mode)
+
+			utiltest.AssertFormatMatch(t, fmt.Sprint(err), tt.wantErrorFormat)
+			utiltest.AssertEquals(t, gotChecksum, tt.wantChecksum)
+			if err == nil {
+				utiltest.AssertFileContents(t, tt.input, tt.content)
+			}
+		})
+	}
+}
+
+func TestAtomicWrite(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	tests := []struct {
+		name            string
+		input           string
+		content         []byte
+		mode            os.FileMode
+		wantErrorFormat string
+	}{
+		{
+			name:            "valid file path, expect success",
+			input:           filepath.Join(tmpDir, "test-write-1.txt"),
+			content:         []byte("test content"),
+			mode:            0644,
+			wantErrorFormat: "^<nil>$",
+		},
+		{
+			name:            "invalid directory path, expect error",
+			input:           filepath.Join(tmpDir, "does-not-exist", "test-write.txt"),
+			content:         []byte("test content"),
+			mode:            0644,
+			wantErrorFormat: "^unable to create temp file",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := AtomicWrite(tt.input, tt.content, tt.mode)
+			utiltest.AssertFormatMatch(t, fmt.Sprint(err), tt.wantErrorFormat)
+			if err == nil {
+				utiltest.AssertFileContents(t, tt.input, string(tt.content))
+			}
+		})
 	}
 }
