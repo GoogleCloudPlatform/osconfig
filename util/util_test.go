@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -91,18 +92,18 @@ func TestExists(t *testing.T) {
 	}
 }
 
-// TestHelperProcess is a helper to mock command execution.
-// It runs as a subprocess and exits with 1 if GO_HELPER_FAIL is set.
-func TestHelperProcess(t *testing.T) {
-	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
-		return
+func testSuccessCmd() *exec.Cmd {
+	if runtime.GOOS == "windows" {
+		return exec.Command("cmd", "/c", "echo success msg")
 	}
-	if os.Getenv("GO_HELPER_FAIL") == "1" {
-		fmt.Fprint(os.Stderr, "error msg")
-		os.Exit(1)
+	return exec.Command("echo", "success msg")
+}
+
+func testFailCmd() *exec.Cmd {
+	if runtime.GOOS == "windows" {
+		return exec.Command("cmd", "/c", "echo error msg 1>&2 & exit 1")
 	}
-	fmt.Fprint(os.Stdout, "success msg")
-	os.Exit(0)
+	return exec.Command("sh", "-c", "echo 'error msg' >&2; exit 1")
 }
 
 func TestDefaultRunnerRun(t *testing.T) {
@@ -111,75 +112,39 @@ func TestDefaultRunnerRun(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		env        []string
+		cmd        *exec.Cmd
 		wantStdout string
 		wantStderr string
+		wantErr    string
 	}{
 		{
 			name:       "successful command execution, expect stdout output",
-			env:        []string{"GO_WANT_HELPER_PROCESS=1"},
+			cmd:        testSuccessCmd(),
 			wantStdout: "success msg",
 			wantStderr: "",
+			wantErr:    "^<nil>$",
 		},
 		{
 			name:       "failing command execution, expect stderr output and error",
-			env:        []string{"GO_WANT_HELPER_PROCESS=1", "GO_HELPER_FAIL=1"},
+			cmd:        testFailCmd(),
 			wantStdout: "",
 			wantStderr: "error msg",
+			wantErr:    "exit status 1",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cmd := exec.Command(os.Args[0], "-test.run=TestHelperProcess")
-			cmd.Env = append(os.Environ(), tt.env...)
-			stdout, stderr, _ := runner.Run(ctx, cmd)
+			stdout, stderr, err := runner.Run(ctx, tt.cmd)
 
-			utiltest.AssertEquals(t, string(stdout), tt.wantStdout)
-			utiltest.AssertEquals(t, string(stderr), tt.wantStderr)
+			utiltest.AssertFormatMatch(t, fmt.Sprint(err), tt.wantErr)
+			utiltest.AssertEquals(t, strings.TrimSpace(string(stdout)), tt.wantStdout)
+			utiltest.AssertEquals(t, strings.TrimSpace(string(stderr)), tt.wantStderr)
 		})
 	}
 }
 
-func TestAtomicWriteFileStream_Success(t *testing.T) {
-	tmpDir := t.TempDir()
-
-	content := "test content"
-	hasher := sha256.New()
-	hasher.Write([]byte(content))
-	validChecksum := hex.EncodeToString(hasher.Sum(nil))
-
-	tests := []struct {
-		name         string
-		input        string
-		checksum     string
-		content      string
-		mode         os.FileMode
-		wantChecksum string
-	}{
-		{
-			name:         "valid file path, expect checksum output",
-			input:        filepath.Join(tmpDir, "test-stream-1.txt"),
-			checksum:     validChecksum,
-			content:      content,
-			mode:         0644,
-			wantChecksum: validChecksum,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			r := strings.NewReader(tt.content)
-			gotChecksum, err := AtomicWriteFileStream(r, tt.checksum, tt.input, tt.mode)
-
-			utiltest.AssertErrorMatch(t, err, nil)
-			utiltest.AssertEquals(t, gotChecksum, tt.wantChecksum)
-			utiltest.AssertFileContents(t, tt.input, tt.content)
-		})
-	}
-}
-
-func TestAtomicWriteFileStream_Error(t *testing.T) {
+func TestAtomicWriteFileStream(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	content := "test content"
@@ -193,14 +158,25 @@ func TestAtomicWriteFileStream_Error(t *testing.T) {
 		checksum        string
 		content         string
 		mode            os.FileMode
+		wantChecksum    string
 		wantErrorFormat string
 	}{
+		{
+			name:            "valid file path, expect checksum output",
+			input:           filepath.Join(tmpDir, "test-stream-1.txt"),
+			checksum:        validChecksum,
+			content:         content,
+			mode:            0644,
+			wantChecksum:    validChecksum,
+			wantErrorFormat: "^<nil>$",
+		},
 		{
 			name:            "invalid checksum string, expect error",
 			input:           filepath.Join(tmpDir, "test-stream-2.txt"),
 			checksum:        "bad-checksum",
 			content:         content,
 			mode:            0644,
+			wantChecksum:    "",
 			wantErrorFormat: fmt.Sprintf("^got %q for checksum, expected %q", validChecksum, "bad-checksum"),
 		},
 		{
@@ -209,48 +185,26 @@ func TestAtomicWriteFileStream_Error(t *testing.T) {
 			checksum:        "",
 			content:         content,
 			mode:            0644,
+			wantChecksum:    "",
 			wantErrorFormat: "^unable to create temp file",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := strings.NewReader(tt.content)
-			gotChecksum, gotErr := AtomicWriteFileStream(r, tt.checksum, tt.input, tt.mode)
+			reader := strings.NewReader(tt.content)
+			gotChecksum, err := AtomicWriteFileStream(reader, tt.checksum, tt.input, tt.mode)
 
-			utiltest.AssertFormatMatch(t, fmt.Sprint(gotErr), tt.wantErrorFormat)
-			utiltest.AssertEquals(t, gotChecksum, "")
+			utiltest.AssertFormatMatch(t, fmt.Sprint(err), tt.wantErrorFormat)
+			utiltest.AssertEquals(t, gotChecksum, tt.wantChecksum)
+			if err == nil {
+				utiltest.AssertFileContents(t, tt.input, tt.content)
+			}
 		})
 	}
 }
 
-func TestAtomicWrite_Success(t *testing.T) {
-	tmpDir := t.TempDir()
-
-	tests := []struct {
-		name    string
-		input   string
-		content []byte
-		mode    os.FileMode
-	}{
-		{
-			name:    "valid file path, expect success",
-			input:   filepath.Join(tmpDir, "test-write-1.txt"),
-			content: []byte("test content"),
-			mode:    0644,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := AtomicWrite(tt.input, tt.content, tt.mode)
-			utiltest.AssertErrorMatch(t, err, nil)
-			utiltest.AssertFileContents(t, tt.input, string(tt.content))
-		})
-	}
-}
-
-func TestAtomicWrite_Error(t *testing.T) {
+func TestAtomicWrite(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	tests := []struct {
@@ -260,6 +214,13 @@ func TestAtomicWrite_Error(t *testing.T) {
 		mode            os.FileMode
 		wantErrorFormat string
 	}{
+		{
+			name:            "valid file path, expect success",
+			input:           filepath.Join(tmpDir, "test-write-1.txt"),
+			content:         []byte("test content"),
+			mode:            0644,
+			wantErrorFormat: "^<nil>$",
+		},
 		{
 			name:            "invalid directory path, expect error",
 			input:           filepath.Join(tmpDir, "does-not-exist", "test-write.txt"),
@@ -273,6 +234,9 @@ func TestAtomicWrite_Error(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := AtomicWrite(tt.input, tt.content, tt.mode)
 			utiltest.AssertFormatMatch(t, fmt.Sprint(err), tt.wantErrorFormat)
+			if err == nil {
+				utiltest.AssertFileContents(t, tt.input, string(tt.content))
+			}
 		})
 	}
 }
