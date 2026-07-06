@@ -2,13 +2,16 @@ package packages
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path"
-	"reflect"
 	"testing"
 
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
-	"github.com/google/go-cmp/cmp"
+	"github.com/GoogleCloudPlatform/osconfig/util"
+	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
+	"github.com/golang/mock/gomock"
 	scalibr "github.com/google/osv-scalibr"
 	"github.com/google/osv-scalibr/extractor"
 	scalibrcos "github.com/google/osv-scalibr/extractor/filesystem/os/cos/metadata"
@@ -84,13 +87,23 @@ func TestExtractedPackageMappings(t *testing.T) {
 				{Name: "virtual/chromeos-bsp", Version: "17412.448.8", Arch: "x86_64", Type: "cos", Purl: "pkg:cos/chromeos-bsp@17412.448.8?distro=cos-105"},
 			}},
 		},
+		{
+			name: "unknown package metadata type is ignored",
+			pkgs: []*extractor.Package{
+				{
+					Name:     "unknown",
+					Version:  "1.0",
+					PURLType: "unknown",
+					Metadata: "invalid-metadata-type",
+				},
+			},
+			want: Packages{},
+		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(*testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			got := pkgInfosFromExtractorPackages(context.TODO(), &scalibr.ScanResult{Inventory: inventory.Inventory{Packages: tt.pkgs}}, &osinfo.OSInfo{Architecture: tt.arch})
-			if diff := cmp.Diff(tt.want, got); diff != "" {
-				t.Errorf("mismatch (-want +got):\n%s", diff)
-			}
+			utiltest.AssertEquals(t, got, tt.want)
 		})
 	}
 }
@@ -124,6 +137,12 @@ func (stubProvider) GetOSInfo(ctx context.Context) (osinfo.OSInfo, error) {
 	return osinfo.OSInfo{}, nil
 }
 
+type errorProvider struct{}
+
+func (errorProvider) GetOSInfo(ctx context.Context) (osinfo.OSInfo, error) {
+	return osinfo.OSInfo{}, errors.New("osinfo error")
+}
+
 func withZypperDisabled(t *testing.T) {
 	prev := ZypperExists
 	ZypperExists = false
@@ -132,12 +151,20 @@ func withZypperDisabled(t *testing.T) {
 
 func TestScalibrIntegration(t *testing.T) {
 	withZypperDisabled(t)
+	mockCtrl := gomock.NewController(t)
+	t.Cleanup(mockCtrl.Finish)
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+
 	tests := []struct {
+		name     string
+		setup    func(t *testing.T)
 		provider InstalledPackagesProvider
 		wantErr  error
 		wantPkgs Packages
 	}{
 		{
+			name:  "successful scan, expect packages",
+			setup: func(t *testing.T) {},
 			provider: scalibrInstalledPackagesProvider{
 				osinfoProvider: stubProvider{},
 				extractors:     []string{"os/dpkg"},
@@ -149,16 +176,103 @@ func TestScalibrIntegration(t *testing.T) {
 				{Name: "llvm-16", Version: "1:16.0.6-27+build3", Arch: "x86_64", Source: Source{Name: "llvm-toolchain-16", Version: "1:16.0.6-27+build3"}, Type: "deb", Purl: "pkg:deb/linux/llvm-16@1%3A16.0.6-27%2Bbuild3?arch=amd64&source=llvm-toolchain-16"},
 			}},
 		},
+		{
+			name:  "osinfo provider error, expect osinfo error",
+			setup: func(t *testing.T) {},
+			provider: scalibrInstalledPackagesProvider{
+				osinfoProvider: errorProvider{},
+				extractors:     []string{"os/dpkg"},
+				scanRootPaths:  []string{arrangeVirtualRoot(t, "./testdata/debian.dpkg-status", "/var/lib/dpkg/status")},
+				dirsToSkip:     []string{},
+			},
+			wantErr: errors.New("osinfo error"),
+		},
+		{
+			name:  "invalid extractor, expect unknown plugin error",
+			setup: func(t *testing.T) {},
+			provider: scalibrInstalledPackagesProvider{
+				osinfoProvider: stubProvider{},
+				extractors:     []string{"invalid/extractor"},
+				scanRootPaths:  []string{arrangeVirtualRoot(t, "./testdata/debian.dpkg-status", "/var/lib/dpkg/status")},
+				dirsToSkip:     []string{},
+			},
+			wantErr: errors.New("unknown plugin \"invalid/extractor\""),
+		},
+		{
+			name:  "skipped directory, expect no packages",
+			setup: func(t *testing.T) {},
+			provider: scalibrInstalledPackagesProvider{
+				osinfoProvider: stubProvider{},
+				extractors:     []string{"os/dpkg"},
+				scanRootPaths:  []string{arrangeVirtualRoot(t, "./testdata/debian.dpkg-status", "/var/lib/dpkg/status")},
+				dirsToSkip:     []string{"testdata/virtualTestRoot/var"},
+			},
+			wantPkgs: Packages{},
+		},
+		{
+			name: "zypper patches succeeds, expect patches in output",
+			setup: func(t *testing.T) {
+				utiltest.OverrideVariable[util.CommandRunner](t, &runner, mockCommandRunner)
+				utiltest.OverrideVariable(t, &ZypperExists, true)
+				mockCommandRunner.EXPECT().Run(gomock.Any(), gomock.Any()).Return([]byte("Repo | PatchName | security | critical | --- | applied | Patch summary\n"), []byte(""), nil).Times(1)
+			},
+			provider: scalibrInstalledPackagesProvider{
+				osinfoProvider: stubProvider{},
+				extractors:     []string{"os/dpkg"},
+				scanRootPaths:  []string{arrangeVirtualRoot(t, "./testdata/debian.dpkg-status", "/var/lib/dpkg/status")},
+				dirsToSkip:     []string{},
+			},
+			wantErr: nil,
+			wantPkgs: Packages{
+				Deb: []*PkgInfo{
+					{Name: "7zip", Version: "24.09+dfsg-4", Arch: "x86_64", Source: Source{Name: "7zip", Version: "24.09+dfsg-4"}, Type: "deb", Purl: "pkg:deb/linux/7zip@24.09%2Bdfsg-4?arch=amd64"},
+					{Name: "llvm-16", Version: "1:16.0.6-27+build3", Arch: "x86_64", Source: Source{Name: "llvm-toolchain-16", Version: "1:16.0.6-27+build3"}, Type: "deb", Purl: "pkg:deb/linux/llvm-16@1%3A16.0.6-27%2Bbuild3?arch=amd64&source=llvm-toolchain-16"},
+				},
+				ZypperPatches: []*ZypperPatch{
+					{Name: "PatchName", Category: "security", Severity: "critical", Summary: "Patch summary"},
+				},
+			},
+		},
+		{
+			name: "zypper patches fails, expect error",
+			setup: func(t *testing.T) {
+				utiltest.OverrideVariable[util.CommandRunner](t, &runner, mockCommandRunner)
+				utiltest.OverrideVariable(t, &ZypperExists, true)
+				mockCommandRunner.EXPECT().Run(gomock.Any(), gomock.Any()).Return(nil, nil, errors.New("zypper error")).Times(1)
+			},
+			provider: scalibrInstalledPackagesProvider{
+				osinfoProvider: stubProvider{},
+				extractors:     []string{"os/dpkg"},
+				scanRootPaths:  []string{arrangeVirtualRoot(t, "./testdata/debian.dpkg-status", "/var/lib/dpkg/status")},
+				dirsToSkip:     []string{},
+			},
+			wantErr: errors.New("error getting zypper installed patches: error running /usr/bin/zypper with args [\"--gpg-auto-import-keys\" \"-q\" \"list-patches\" \"--all\"]: zypper error, stdout: \"\", stderr: \"\""),
+			wantPkgs: Packages{
+				Deb: []*PkgInfo{
+					{Name: "7zip", Version: "24.09+dfsg-4", Arch: "x86_64", Source: Source{Name: "7zip", Version: "24.09+dfsg-4"}, Type: "deb", Purl: "pkg:deb/linux/7zip@24.09%2Bdfsg-4?arch=amd64"},
+					{Name: "llvm-16", Version: "1:16.0.6-27+build3", Arch: "x86_64", Source: Source{Name: "llvm-toolchain-16", Version: "1:16.0.6-27+build3"}, Type: "deb", Purl: "pkg:deb/linux/llvm-16@1%3A16.0.6-27%2Bbuild3?arch=amd64&source=llvm-toolchain-16"},
+				},
+			},
+		},
+		{
+			name:  "scalibr scan fails, expect FAILED status error",
+			setup: func(t *testing.T) {},
+			provider: scalibrInstalledPackagesProvider{
+				osinfoProvider: stubProvider{},
+				extractors:     []string{"os/dpkg"},
+				scanRootPaths:  []string{arrangeVirtualRoot(t, "./testdata/debian.dpkg-status", "/var/lib/dpkg/status")},
+				dirsToSkip:     []string{"/proc"},
+			},
+			wantErr: errors.New("scalibr scan.Status is unhealthy, status: FAILED: path not relative to any of the scan roots, plugins: []"),
+		},
 	}
 	for _, tt := range tests {
-		pkgs, err := tt.provider.GetInstalledPackages(context.Background())
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setup(t)
 
-		if !reflect.DeepEqual(err, tt.wantErr) {
-			t.Errorf("err: want %v, got %v", tt.wantErr, err)
-		}
-
-		if !reflect.DeepEqual(pkgs, tt.wantPkgs) {
-			t.Errorf("pkgs: want %v, got %v", tt.wantPkgs, pkgs)
-		}
+			gotPkgs, gotErr := tt.provider.GetInstalledPackages(context.Background())
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
+			utiltest.AssertEquals(t, gotPkgs, tt.wantPkgs)
+		})
 	}
 }
