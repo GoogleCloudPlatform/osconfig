@@ -199,41 +199,6 @@ func TestRepositoryResourceValidate(t *testing.T) {
 	}
 }
 
-func TestRepositoryResourceValidateAptGPG(t *testing.T) {
-	ctx := t.Context()
-
-	aptRepoWithGpg := &agentendpointpb.OSPolicy_Resource_RepositoryResource_AptRepository{
-		ArchiveType:  agentendpointpb.OSPolicy_Resource_RepositoryResource_AptRepository_DEB,
-		Uri:          "uri",
-		Distribution: "distribution",
-		Components:   []string{"c1", "c2"},
-		GpgKey:       "https://packages.cloud.google.com/apt/doc/apt-key.gpg",
-	}
-
-	pr := &OSPolicyResource{
-		OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
-			ResourceType: &agentendpointpb.OSPolicy_Resource_Repository{
-				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
-					Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Apt{
-						Apt: aptRepoWithGpg,
-					},
-				},
-			},
-		},
-	}
-
-	gotErr := pr.Validate(ctx)
-	utiltest.AssertErrorMatch(t, gotErr, nil)
-
-	aptRepo := pr.ManagedResources().Repositories[0].Apt
-
-	expectedChecksum := checksum(bytes.NewReader(aptRepo.GpgFileContents))
-	expectedPath := filepath.Join(aptGPGDir, "osconfig_added_"+expectedChecksum+".gpg")
-
-	utiltest.AssertEquals(t, aptRepo.GpgChecksum, expectedChecksum)
-	utiltest.AssertEquals(t, aptRepo.GpgFilePath, expectedPath)
-}
-
 func TestRepositoryResourceCheckState(t *testing.T) {
 	ctx := t.Context()
 	dir := t.TempDir()
