@@ -207,13 +207,13 @@ func TestRepositoryResourceCheckState(t *testing.T) {
 
 	tests := []struct {
 		name               string
-		setup              func(t *testing.T, ctx context.Context) *OSPolicyResource
+		setup              func(t *testing.T) *OSPolicyResource
 		wantInDesiredState bool
 		wantErr            error
 	}{
 		{
 			name: "repo file contents match checksum, expect in desired state",
-			setup: func(t *testing.T, ctx context.Context) *OSPolicyResource {
+			setup: func(t *testing.T) *OSPolicyResource {
 				contents := []byte("# Repo file managed by Google OSConfig agent\ndeb uri distribution c1 c2\n")
 				if err := os.WriteFile(repoPath, contents, 0755); err != nil {
 					t.Fatal(err)
@@ -232,7 +232,7 @@ func TestRepositoryResourceCheckState(t *testing.T) {
 		},
 		{
 			name: "repo file contents do not match checksum, expect not in desired state",
-			setup: func(t *testing.T, ctx context.Context) *OSPolicyResource {
+			setup: func(t *testing.T) *OSPolicyResource {
 				contents := []byte("# Repo file managed by Google OSConfig agent\nsome other repo\n")
 				if err := os.WriteFile(repoPath, contents, 0755); err != nil {
 					t.Fatal(err)
@@ -251,7 +251,7 @@ func TestRepositoryResourceCheckState(t *testing.T) {
 		},
 		{
 			name: "repo file does not exist, expect not in desired state",
-			setup: func(t *testing.T, ctx context.Context) *OSPolicyResource {
+			setup: func(t *testing.T) *OSPolicyResource {
 				return &OSPolicyResource{
 					resource: &repositoryResource{
 						managedRepository: ManagedRepository{
@@ -266,7 +266,7 @@ func TestRepositoryResourceCheckState(t *testing.T) {
 		},
 		{
 			name: "gpg key and repo file both match, expect in desired state",
-			setup: func(t *testing.T, ctx context.Context) *OSPolicyResource {
+			setup: func(t *testing.T) *OSPolicyResource {
 				os.WriteFile(repoPath, []byte("repo contents"), 0644)
 				os.WriteFile(gpgPath, []byte("gpg contents"), 0644)
 				return &OSPolicyResource{
@@ -288,7 +288,7 @@ func TestRepositoryResourceCheckState(t *testing.T) {
 		},
 		{
 			name: "gpg key corrupted and repo file matches, expect not in desired state",
-			setup: func(t *testing.T, ctx context.Context) *OSPolicyResource {
+			setup: func(t *testing.T) *OSPolicyResource {
 				os.WriteFile(repoPath, []byte("repo contents"), 0644)
 				os.WriteFile(gpgPath, []byte("bad gpg contents"), 0644)
 				return &OSPolicyResource{
@@ -312,7 +312,7 @@ func TestRepositoryResourceCheckState(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			pr := tt.setup(t, ctx)
+			pr := tt.setup(t)
 
 			gotErr := pr.CheckState(ctx)
 			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
