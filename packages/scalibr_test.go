@@ -202,7 +202,7 @@ func TestScalibrIntegration(t *testing.T) {
 				scanRootPaths:  []string{arrangeVirtualRoot(t, "./testdata/debian.dpkg-status", "/var/lib/dpkg/status")},
 				dirsToSkip:     []string{"testdata/virtualTestRoot/var"},
 			},
-			wantErr: nil,
+			wantErr:  nil,
 			wantPkgs: Packages{},
 		},
 		{
