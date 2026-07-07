@@ -143,14 +143,8 @@ func (errorProvider) GetOSInfo(ctx context.Context) (osinfo.OSInfo, error) {
 	return osinfo.OSInfo{}, errors.New("osinfo error")
 }
 
-func withZypperDisabled(t *testing.T) {
-	prev := ZypperExists
-	ZypperExists = false
-	t.Cleanup(func() { ZypperExists = prev })
-}
-
 func TestScalibrIntegration(t *testing.T) {
-	withZypperDisabled(t)
+	utiltest.OverrideVariable(t, &ZypperExists, false)
 	mockCtrl := gomock.NewController(t)
 	t.Cleanup(mockCtrl.Finish)
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
@@ -171,6 +165,7 @@ func TestScalibrIntegration(t *testing.T) {
 				scanRootPaths:  []string{arrangeVirtualRoot(t, "./testdata/debian.dpkg-status", "/var/lib/dpkg/status")},
 				dirsToSkip:     []string{},
 			},
+			wantErr: nil,
 			wantPkgs: Packages{Deb: []*PkgInfo{
 				{Name: "7zip", Version: "24.09+dfsg-4", Arch: "x86_64", Source: Source{Name: "7zip", Version: "24.09+dfsg-4"}, Type: "deb", Purl: "pkg:deb/linux/7zip@24.09%2Bdfsg-4?arch=amd64"},
 				{Name: "llvm-16", Version: "1:16.0.6-27+build3", Arch: "x86_64", Source: Source{Name: "llvm-toolchain-16", Version: "1:16.0.6-27+build3"}, Type: "deb", Purl: "pkg:deb/linux/llvm-16@1%3A16.0.6-27%2Bbuild3?arch=amd64&source=llvm-toolchain-16"},
@@ -207,6 +202,7 @@ func TestScalibrIntegration(t *testing.T) {
 				scanRootPaths:  []string{arrangeVirtualRoot(t, "./testdata/debian.dpkg-status", "/var/lib/dpkg/status")},
 				dirsToSkip:     []string{"testdata/virtualTestRoot/var"},
 			},
+			wantErr: nil,
 			wantPkgs: Packages{},
 		},
 		{
@@ -255,7 +251,7 @@ func TestScalibrIntegration(t *testing.T) {
 			},
 		},
 		{
-			name:  "scalibr scan fails, expect FAILED status error",
+			name:  "scalibr scan fails, expect unhealthy status error",
 			setup: func(t *testing.T) {},
 			provider: scalibrInstalledPackagesProvider{
 				osinfoProvider: stubProvider{},
