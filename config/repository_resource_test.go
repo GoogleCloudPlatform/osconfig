@@ -65,7 +65,7 @@ func TestRepositoryResourceValidate(t *testing.T) {
 		wantErr               error
 	}{
 		{
-			name:  "valid apt repository, expect success",
+			name:  "valid apt repository, expect populated apt managed repository",
 			setup: func(t *testing.T) {},
 			repositoryResourcePB: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
 				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Apt{
@@ -83,7 +83,7 @@ func TestRepositoryResourceValidate(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:  "valid googet repository, expect success",
+			name:  "valid googet repository, expect populated googet managed repository",
 			setup: func(t *testing.T) {},
 			repositoryResourcePB: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
 				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Goo{
@@ -100,7 +100,7 @@ func TestRepositoryResourceValidate(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:  "valid yum repository, expect success",
+			name:  "valid yum repository, expect populated yum managed repository",
 			setup: func(t *testing.T) {},
 			repositoryResourcePB: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
 				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Yum{
@@ -118,7 +118,7 @@ func TestRepositoryResourceValidate(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:  "valid zypper repository, expect success",
+			name:  "valid zypper repository, expect populated zypper managed repository",
 			setup: func(t *testing.T) {},
 			repositoryResourcePB: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
 				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Zypper{
@@ -136,7 +136,7 @@ func TestRepositoryResourceValidate(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:  "Apt-get does not exist, expect error",
+			name:  "Apt-get does not exist, expect Apt manager missing error",
 			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.AptExists, false) },
 			repositoryResourcePB: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
 				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Apt{
@@ -146,7 +146,7 @@ func TestRepositoryResourceValidate(t *testing.T) {
 			wantErr: errors.New("cannot manage Apt repository because apt-get does not exist on the system"),
 		},
 		{
-			name:  "GooGet does not exist, expect error",
+			name:  "GooGet does not exist, expect GooGet manager missing error",
 			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.GooGetExists, false) },
 			repositoryResourcePB: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
 				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Goo{
@@ -156,7 +156,7 @@ func TestRepositoryResourceValidate(t *testing.T) {
 			wantErr: errors.New("cannot manage googet repository because googet does not exist on the system"),
 		},
 		{
-			name:  "Yum does not exist, expect error",
+			name:  "Yum does not exist, expect Yum manager missing error",
 			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.YumExists, false) },
 			repositoryResourcePB: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
 				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Yum{
@@ -166,7 +166,7 @@ func TestRepositoryResourceValidate(t *testing.T) {
 			wantErr: errors.New("cannot manage yum repository because yum does not exist on the system"),
 		},
 		{
-			name:  "Zypper does not exist, expect error",
+			name:  "Zypper does not exist, expect Zypper manager missing error",
 			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.ZypperExists, false) },
 			repositoryResourcePB: &agentendpointpb.OSPolicy_Resource_RepositoryResource{
 				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Zypper{
@@ -176,7 +176,7 @@ func TestRepositoryResourceValidate(t *testing.T) {
 			wantErr: errors.New("cannot manage zypper repository because zypper does not exist on the system"),
 		},
 		{
-			name:                 "Unknown repository type, expect error",
+			name:                 "Unknown repository type, expect unknown repository type error",
 			setup:                func(t *testing.T) {},
 			repositoryResourcePB: &agentendpointpb.OSPolicy_Resource_RepositoryResource{},
 			wantErr:              errors.New("Repository field not set or references unknown repository type: <nil>"),
@@ -225,12 +225,7 @@ func TestRepositoryResourceValidateAptGPG(t *testing.T) {
 	gotErr := pr.Validate(ctx)
 	utiltest.AssertErrorMatch(t, gotErr, nil)
 
-	mr := pr.ManagedResources()
-	utiltest.AssertEquals(t, len(mr.Repositories), 1)
-
-	aptRepo := mr.Repositories[0].Apt
-	utiltest.AssertEquals(t, aptRepo != nil, true)
-	utiltest.AssertEquals(t, len(aptRepo.GpgFileContents) > 0, true)
+	aptRepo := pr.ManagedResources().Repositories[0].Apt
 
 	expectedChecksum := checksum(bytes.NewReader(aptRepo.GpgFileContents))
 	expectedPath := filepath.Join(aptGPGDir, "osconfig_added_"+expectedChecksum+".gpg")
@@ -240,136 +235,123 @@ func TestRepositoryResourceValidateAptGPG(t *testing.T) {
 }
 
 func TestRepositoryResourceCheckState(t *testing.T) {
-	ctx := context.Background()
-	var tests = []struct {
-		name                 string
-		repositoryResourcePB *agentendpointpb.OSPolicy_Resource_RepositoryResource
-		contents             []byte
-		wantInDesiredState   bool
-	}{
-		{
-			"Matches",
-			&agentendpointpb.OSPolicy_Resource_RepositoryResource{
-				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Apt{
-					Apt: aptRepositoryResource,
-				},
-			},
-			[]byte("# Repo file managed by Google OSConfig agent\ndeb uri distribution c1 c2\n"),
-			true,
-		},
-		{
-			"DoesNotMatch",
-			&agentendpointpb.OSPolicy_Resource_RepositoryResource{
-				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Apt{
-					Apt: aptRepositoryResource,
-				},
-			},
-			[]byte("# Repo file managed by Google OSConfig agent\nsome other repo\n"),
-			false,
-		},
-		{
-			"NoRepoFile",
-			&agentendpointpb.OSPolicy_Resource_RepositoryResource{
-				Repository: &agentendpointpb.OSPolicy_Resource_RepositoryResource_Apt{
-					Apt: aptRepositoryResource,
-				},
-			},
-			nil,
-			false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pr := &OSPolicyResource{
-				OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
-					ResourceType: &agentendpointpb.OSPolicy_Resource_Repository{Repository: tt.repositoryResourcePB},
-				},
-			}
-			if err := pr.Validate(ctx); err != nil {
-				t.Fatalf("Unexpected Validate error: %v", err)
-			}
-
-			dir, err := ioutil.TempDir("", "")
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer os.Remove(dir)
-
-			path := filepath.Join(dir, "repo")
-			if tt.contents != nil {
-				if err := ioutil.WriteFile(path, tt.contents, 0755); err != nil {
-					t.Fatal(err)
-				}
-			}
-			pr.resource.(*repositoryResource).managedRepository.RepoFilePath = path
-
-			if err := pr.CheckState(ctx); err != nil {
-				t.Fatalf("Unexpected CheckState error: %v", err)
-			}
-
-			if tt.wantInDesiredState != pr.InDesiredState() {
-				t.Fatalf("Unexpected InDesiredState, want: %t, got: %t", tt.wantInDesiredState, pr.InDesiredState())
-			}
-		})
-	}
-}
-
-func TestRepositoryResourceCheckStateWithGPG(t *testing.T) {
 	ctx := t.Context()
-
 	dir := t.TempDir()
 	repoPath := filepath.Join(dir, "repo")
 	gpgPath := filepath.Join(dir, "key.gpg")
-	os.WriteFile(repoPath, []byte("repo contents"), 0644)
+
 	tests := []struct {
 		name               string
-		setup              func(t *testing.T) ManagedRepository
+		setup              func(t *testing.T, ctx context.Context) *OSPolicyResource
 		wantInDesiredState bool
+		wantErr            error
 	}{
 		{
-			name: "Apt GPG matches, expect InDesiredState=true",
-			setup: func(t *testing.T) ManagedRepository {
-				os.WriteFile(gpgPath, []byte("gpg contents"), 0644)
-				return ManagedRepository{
-					RepoFilePath: repoPath,
-					RepoChecksum: checksum(bytes.NewReader([]byte("repo contents"))),
-					Apt: &AptRepository{
-						GpgFilePath:     gpgPath,
-						GpgFileContents: []byte("gpg contents"),
-						GpgChecksum:     checksum(bytes.NewReader([]byte("gpg contents"))),
+			name: "repo file contents match checksum, expect in desired state",
+			setup: func(t *testing.T, ctx context.Context) *OSPolicyResource {
+				contents := []byte("# Repo file managed by Google OSConfig agent\ndeb uri distribution c1 c2\n")
+				if err := os.WriteFile(repoPath, contents, 0755); err != nil {
+					t.Fatal(err)
+				}
+				return &OSPolicyResource{
+					resource: &repositoryResource{
+						managedRepository: ManagedRepository{
+							RepoFilePath: repoPath,
+							RepoChecksum: checksum(bytes.NewReader(contents)),
+						},
 					},
 				}
 			},
 			wantInDesiredState: true,
+			wantErr:            nil,
 		},
 		{
-			name: "Apt GPG corrupted file, expect InDesiredState=false",
-			setup: func(t *testing.T) ManagedRepository {
-				os.WriteFile(gpgPath, []byte("bad gpg contents"), 0644)
-				return ManagedRepository{
-					RepoFilePath: repoPath,
-					RepoChecksum: checksum(bytes.NewReader([]byte("repo contents"))),
-					Apt: &AptRepository{
-						GpgFilePath:     gpgPath,
-						GpgFileContents: []byte("gpg contents"),
-						GpgChecksum:     checksum(bytes.NewReader([]byte("gpg contents"))),
+			name: "repo file contents do not match checksum, expect not in desired state",
+			setup: func(t *testing.T, ctx context.Context) *OSPolicyResource {
+				contents := []byte("# Repo file managed by Google OSConfig agent\nsome other repo\n")
+				if err := os.WriteFile(repoPath, contents, 0755); err != nil {
+					t.Fatal(err)
+				}
+				return &OSPolicyResource{
+					resource: &repositoryResource{
+						managedRepository: ManagedRepository{
+							RepoFilePath: repoPath,
+							RepoChecksum: checksum(bytes.NewReader([]byte("# Repo file managed by Google OSConfig agent\ndeb uri distribution c1 c2\n"))),
+						},
 					},
 				}
 			},
 			wantInDesiredState: false,
+			wantErr:            nil,
+		},
+		{
+			name: "repo file does not exist, expect not in desired state",
+			setup: func(t *testing.T, ctx context.Context) *OSPolicyResource {
+				return &OSPolicyResource{
+					resource: &repositoryResource{
+						managedRepository: ManagedRepository{
+							RepoFilePath: repoPath,
+							RepoChecksum: checksum(bytes.NewReader([]byte("# Repo file managed by Google OSConfig agent\ndeb uri distribution c1 c2\n"))),
+						},
+					},
+				}
+			},
+			wantInDesiredState: false,
+			wantErr:            nil,
+		},
+		{
+			name: "gpg key and repo file both match, expect in desired state",
+			setup: func(t *testing.T, ctx context.Context) *OSPolicyResource {
+				os.WriteFile(repoPath, []byte("repo contents"), 0644)
+				os.WriteFile(gpgPath, []byte("gpg contents"), 0644)
+				return &OSPolicyResource{
+					resource: &repositoryResource{
+						managedRepository: ManagedRepository{
+							RepoFilePath: repoPath,
+							RepoChecksum: checksum(bytes.NewReader([]byte("repo contents"))),
+							Apt: &AptRepository{
+								GpgFilePath:     gpgPath,
+								GpgFileContents: []byte("gpg contents"),
+								GpgChecksum:     checksum(bytes.NewReader([]byte("gpg contents"))),
+							},
+						},
+					},
+				}
+			},
+			wantInDesiredState: true,
+			wantErr:            nil,
+		},
+		{
+			name: "gpg key corrupted and repo file matches, expect not in desired state",
+			setup: func(t *testing.T, ctx context.Context) *OSPolicyResource {
+				os.WriteFile(repoPath, []byte("repo contents"), 0644)
+				os.WriteFile(gpgPath, []byte("bad gpg contents"), 0644)
+				return &OSPolicyResource{
+					resource: &repositoryResource{
+						managedRepository: ManagedRepository{
+							RepoFilePath: repoPath,
+							RepoChecksum: checksum(bytes.NewReader([]byte("repo contents"))),
+							Apt: &AptRepository{
+								GpgFilePath:     gpgPath,
+								GpgFileContents: []byte("gpg contents"),
+								GpgChecksum:     checksum(bytes.NewReader([]byte("gpg contents"))),
+							},
+						},
+					},
+				}
+			},
+			wantInDesiredState: false,
+			wantErr:            nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			pr := &OSPolicyResource{
-				resource: &repositoryResource{
-					managedRepository: tt.setup(t),
-				},
-			}
-			inDesiredState, gotErr := pr.resource.checkState(ctx)
-			utiltest.AssertErrorMatch(t, gotErr, nil)
-			utiltest.AssertEquals(t, inDesiredState, tt.wantInDesiredState)
+			pr := tt.setup(t, ctx)
+
+			gotErr := pr.CheckState(ctx)
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
+			utiltest.AssertEquals(t, pr.InDesiredState(), tt.wantInDesiredState)
 		})
 	}
 }
