@@ -597,3 +597,158 @@ func createTarArchive(t *testing.T, files []string) *bytes.Buffer {
 	}
 	return &buf
 }
+
+// Test_stepInstallDpkg verifies that stepInstallDpkg correctly handles system state and artifact mapping.
+func Test_stepInstallDpkg(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	packages.SetCommandRunner(mockCommandRunner)
+
+	ctx := context.Background()
+	artifactID := "test-artifact"
+	artifactPath := "/path/to/artifact.deb"
+	step := &agentendpointpb.SoftwareRecipe_Step_InstallDpkg{ArtifactId: artifactID}
+
+	tests := []struct {
+		name             string
+		dpkgExists       bool
+		artifacts        map[string]string
+		expectedCommands []utiltest.ExpectedCommand
+		wantErr          error
+	}{
+		{
+			name:       "dpkg missing, want dpkg error",
+			dpkgExists: false,
+			wantErr:    fmt.Errorf("dpkg does not exist on system"),
+		},
+		{
+			name:       "artifact missing, want not found error",
+			dpkgExists: true,
+			artifacts:  map[string]string{"other": "path"},
+			wantErr:    fmt.Errorf("%q not found in artifact map", artifactID),
+		},
+		{
+			name:       "successful install, want nil",
+			dpkgExists: true,
+			artifacts:  map[string]string{artifactID: artifactPath},
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/dpkg", "--install", artifactPath)},
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			utiltest.OverrideVariable(t, &packages.DpkgExists, tt.dpkgExists)
+			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
+
+			gotErr := stepInstallDpkg(ctx, step, tt.artifacts)
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
+		})
+	}
+}
+
+// Test_stepInstallRpm verifies that stepInstallRpm correctly handles system state and artifact mapping.
+func Test_stepInstallRpm(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	packages.SetCommandRunner(mockCommandRunner)
+
+	ctx := context.Background()
+	artifactID := "test-artifact"
+	artifactPath := "/path/to/artifact.rpm"
+	step := &agentendpointpb.SoftwareRecipe_Step_InstallRpm{ArtifactId: artifactID}
+
+	tests := []struct {
+		name             string
+		rpmExists        bool
+		artifacts        map[string]string
+		expectedCommands []utiltest.ExpectedCommand
+		wantErr          error
+	}{
+		{
+			name:      "rpm missing, want rpm error",
+			rpmExists: false,
+			wantErr:   fmt.Errorf("rpm does not exist on system"),
+		},
+		{
+			name:      "artifact missing, want not found error",
+			rpmExists: true,
+			artifacts: map[string]string{"other": "path"},
+			wantErr:   fmt.Errorf("%q not found in artifact map", artifactID),
+		},
+		{
+			name:      "successful install, want nil",
+			rpmExists: true,
+			artifacts: map[string]string{artifactID: artifactPath},
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/bin/rpm", "--upgrade", "--replacepkgs", "-v", artifactPath)},
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			utiltest.OverrideVariable(t, &packages.RPMExists, tt.rpmExists)
+			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
+
+			gotErr := stepInstallRpm(ctx, step, tt.artifacts)
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
+		})
+	}
+}
+
+// Test_executeCommand verifies the command execution logic, including allowed exit codes.
+func Test_executeCommand(t *testing.T) {
+	ctx := context.Background()
+
+	// Pre-generate expected errors to match types and messages exactly.
+	exit1Err := exec.Command("sh", "-c", "exit 1").Run()
+	noSuchCmdErr := exec.Command("non-existent-command").Run()
+
+	tests := []struct {
+		name             string
+		cmd              string
+		args             []string
+		allowedExitCodes []int32
+		wantErr          error
+	}{
+		{
+			name:    "exit 0, want nil",
+			cmd:     "sh",
+			args:    []string{"-c", "exit 0"},
+			wantErr: nil,
+		},
+		{
+			name:             "allowed exit code 1, want nil error",
+			cmd:              "sh",
+			args:             []string{"-c", "exit 1"},
+			allowedExitCodes: []int32{1},
+			wantErr:          nil,
+		},
+		{
+			name:    "unallowed exit code 1, want exit 1 error",
+			cmd:     "sh",
+			args:    []string{"-c", "exit 1"},
+			wantErr: exit1Err,
+		},
+		{
+			name:    "command not found, want no command error",
+			cmd:     "non-existent-command",
+			wantErr: noSuchCmdErr,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotErr := executeCommand(ctx, tt.cmd, tt.args, "", nil, tt.allowedExitCodes)
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
+		})
+	}
+}
