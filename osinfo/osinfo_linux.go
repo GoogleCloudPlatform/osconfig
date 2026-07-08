@@ -36,6 +36,7 @@ var (
 	defaultReleaseFilepath = "/etc/os-release"
 	oracleReleaseFilepath  = "/etc/oracle-release"
 	redHatReleaseFilepath  = "/etc/redhat-release"
+	unameFn                = unix.Uname
 )
 
 // Get reports OSInfo.
@@ -67,7 +68,7 @@ type LinuxOsInfoProvider struct {
 // NewLinuxOsInfoProvider is a constructor function for LinuxOsInfoProvider.
 func NewLinuxOsInfoProvider(nameAndVersionProvider osNameAndVersionProvider) (*LinuxOsInfoProvider, error) {
 	var uts unix.Utsname
-	if err := unix.Uname(&uts); err != nil {
+	if err := unameFn(&uts); err != nil {
 		return nil, fmt.Errorf("unable to get unix.Uname, err: %w", err)
 	}
 

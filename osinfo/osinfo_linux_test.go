@@ -16,10 +16,13 @@ package osinfo
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/google/go-cmp/cmp"
 	"golang.org/x/sys/unix"
 )
@@ -381,18 +384,119 @@ func toUtsField(val string) [65]byte {
 	return result
 }
 
+// TestNewLinuxOsInfoProvider tests the NewLinuxOsInfoProvider constructor.
 func TestNewLinuxOsInfoProvider(t *testing.T) {
 	ctx := context.Background()
+	dummyProvider := getOsNameAndVersionProvider(ctx)
+	unameErr := errors.New("uname error")
 
-	osInfoProvider, err := NewLinuxOsInfoProvider(getOsNameAndVersionProvider(ctx))
-	if err != nil {
-		t.Errorf("unable to create osInfoProvider, err: %v", err)
-		return
+	tests := []struct {
+		name      string
+		unameFunc func(buf *unix.Utsname) error
+		wantErr   error
+	}{
+		{
+			name: "uname succeeds, want nil error",
+			unameFunc: func(buf *unix.Utsname) error {
+				return nil
+			},
+			wantErr: nil,
+		},
+		{
+			name: "failed uname syscall, want error",
+			unameFunc: func(buf *unix.Utsname) error {
+				return unameErr
+			},
+			wantErr: fmt.Errorf("unable to get unix.Uname, err: %w", unameErr),
+		},
 	}
 
-	if osInfoProvider == nil {
-		t.Errorf("expected fully functional os info provider, but get nil")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			utiltest.OverrideVariable(t, &unameFn, tt.unameFunc)
+			gotProvider, gotErr := NewLinuxOsInfoProvider(dummyProvider)
+
+			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
+			if gotProvider == nil {
+				t.Error("expected non-nil provider, got nil")
+			}
+		})
 	}
+}
+
+// TestGet tests the Get function.
+func TestGet(t *testing.T) {
+	var uts unix.Utsname
+	if err := unix.Uname(&uts); err != nil {
+		t.Fatalf("unix.Uname() err: %v", err)
+	}
+
+	wantHostname := stringFromUtsField(uts.Nodename)
+	wantArch := NormalizeArchitecture(stringFromUtsField(uts.Machine))
+	wantKernelRelease := stringFromUtsField(uts.Release)
+	wantKernelVersion := stringFromUtsField(uts.Version)
+	unameErr := errors.New("uname error")
+
+	tests := []struct {
+		name               string
+		releaseFileContent string
+		unameFunc          func(buf *unix.Utsname) error
+		wantOSInfo         OSInfo
+		wantErr            error
+	}{
+		{
+			name:               "Debian release file, want expected OSInfo and nil error",
+			releaseFileContent: debianReleaseFileContent,
+			unameFunc: func(buf *unix.Utsname) error {
+				*buf = uts
+				return nil
+			},
+			wantOSInfo: OSInfo{
+				ShortName:     "debian",
+				LongName:      "Debian buster",
+				Version:       "10",
+				Hostname:      wantHostname,
+				Architecture:  wantArch,
+				KernelRelease: wantKernelRelease,
+				KernelVersion: wantKernelVersion,
+			},
+			wantErr: nil,
+		},
+		{
+			name:               "failed uname syscall, want error",
+			releaseFileContent: debianReleaseFileContent,
+			unameFunc: func(buf *unix.Utsname) error {
+				return unameErr
+			},
+			wantOSInfo: OSInfo{},
+			wantErr:    fmt.Errorf("unable to extract osinfo, err:  %w", fmt.Errorf("unable to get unix.Uname, err: %w", unameErr)),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setupGetTest(t, tt.releaseFileContent, tt.unameFunc)
+			gotOSInfo, gotErr := Get()
+
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
+			utiltest.AssertEquals(t, gotOSInfo, tt.wantOSInfo)
+		})
+	}
+}
+
+// setupGetTest sets up the mock release files and uname function for TestGet.
+func setupGetTest(t *testing.T, releaseFileContent string, unameFunc func(buf *unix.Utsname) error) {
+	t.Helper()
+	doesNotExist := filepath.Join(t.TempDir(), "does_not_exist")
+	releaseFile := filepath.Join(t.TempDir(), "os-release")
+
+	enforceFileWithContent(t, releaseFile, []byte(releaseFileContent))
+
+	overrideDefaultReleaseFilepath(t, releaseFile)
+	overrideOracleReleaseFilepath(t, doesNotExist)
+	overrideRedHatReleaseFilepath(t, doesNotExist)
+
+	utiltest.OverrideVariable(t, &unameFn, unameFunc)
 }
 
 func overrideDefaultReleaseFilepath(t *testing.T, filepath string) {
