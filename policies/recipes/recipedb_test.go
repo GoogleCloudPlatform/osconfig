@@ -25,15 +25,14 @@ import (
 )
 
 // setupTestDB creates a temporary directory for the test database.
-func setupTestDB(t *testing.T, recipes []Recipe) string {
+func setupTestDB(t *testing.T, contentRecipes []Recipe, contentBytes []byte) {
 	t.Helper()
 	tmpDir := t.TempDir()
-
 	utiltest.OverrideVariable(t, &dbDirWindows, tmpDir)
 	utiltest.OverrideVariable(t, &dbDirUnix, tmpDir)
 
-	if len(recipes) > 0 {
-		dbBytes, err := json.Marshal(recipes)
+	if len(contentRecipes) > 0 {
+		dbBytes, err := json.Marshal(contentRecipes)
 		if err != nil {
 			t.Fatalf("failed to marshal recipes: %v", err)
 		}
@@ -42,7 +41,20 @@ func setupTestDB(t *testing.T, recipes []Recipe) string {
 		}
 	}
 
-	return tmpDir
+	if len(contentBytes) > 0 {
+		if err := os.WriteFile(filepath.Join(tmpDir, dbFileName), contentBytes, 0644); err != nil {
+			t.Fatalf("failed to write recipes to file: %v", err)
+		}
+	}
+}
+
+func getTestDB(t *testing.T) RecipeDB {
+	t.Helper()
+	db, err := newRecipeDB()
+	if err != nil {
+		t.Fatalf("failed to load recipe DB: %v", err)
+	}
+	return db
 }
 
 func TestNewRecipeDB(t *testing.T) {
@@ -54,28 +66,20 @@ func TestNewRecipeDB(t *testing.T) {
 	}{
 		{
 			name:    "no file exists, expect no error and empty db",
-			setup:   func(t *testing.T) { setupTestDB(t, nil) },
+			setup:   func(t *testing.T) { setupTestDB(t, nil, nil) },
 			wantErr: nil,
 			wantDB:  RecipeDB{},
 		},
 		{
-			name: "empty JSON array, expect no error and empty db",
-			setup: func(t *testing.T) {
-				tmpDir := setupTestDB(t, nil)
-				if err := os.WriteFile(filepath.Join(tmpDir, dbFileName), []byte(`[]`), 0644); err != nil {
-					t.Fatalf("failed to write test file: %v", err)
-				}
-			},
+			name:    "empty JSON array, expect no error and empty db",
+			setup:   func(t *testing.T) { setupTestDB(t, nil, []byte(`[]`)) },
 			wantErr: nil,
 			wantDB:  RecipeDB{},
 		},
 		{
 			name: "valid JSON, expect no error and db content",
 			setup: func(t *testing.T) {
-				tmpDir := setupTestDB(t, nil)
-				if err := os.WriteFile(filepath.Join(tmpDir, dbFileName), []byte(`[{"Name":"recipe1","Version":[1],"InstallTime":1,"Success":true},{"Name":"recipe2","Version":[2],"InstallTime":2,"Success":false}]`), 0644); err != nil {
-					t.Fatalf("failed to write test file: %v", err)
-				}
+				setupTestDB(t, nil, []byte(`[{"Name":"recipe1","Version":[1],"InstallTime":1,"Success":true},{"Name":"recipe2","Version":[2],"InstallTime":2,"Success":false}]`))
 			},
 			wantErr: nil,
 			wantDB: RecipeDB{
@@ -84,24 +88,30 @@ func TestNewRecipeDB(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid JSON, expect syntax error",
-			setup: func(t *testing.T) {
-				tmpDir := setupTestDB(t, nil)
-				if err := os.WriteFile(filepath.Join(tmpDir, dbFileName), []byte(`invalid json`), 0644); err != nil {
-					t.Fatalf("failed to write test file: %v", err)
-				}
-			},
+			name:    "invalid JSON, expect syntax error",
+			setup:   func(t *testing.T) { setupTestDB(t, nil, []byte(`invalid json`)) },
 			wantErr: func() error { var dummy interface{}; return json.Unmarshal([]byte(`invalid json`), &dummy) }(),
 			wantDB:  nil,
+		},
+		{
+			name: "one valid recipe and malformed entry, expect syntax error",
+			setup: func(t *testing.T) {
+				setupTestDB(t, nil, []byte(`[{"Name":"recipe1","Version":[1],"InstallTime":1,"Success":true}, invalid json]`))
+			},
+			wantErr: func() error {
+				var dummy interface{}
+				return json.Unmarshal([]byte(`[{"Name":"recipe1","Version":[1],"InstallTime":1,"Success":true}, invalid json]`), &dummy)
+			}(),
+			wantDB: nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup(t)
-			db, gotErr := newRecipeDB()
+			gotDB, gotErr := newRecipeDB()
 			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
-			utiltest.AssertEquals(t, db, tt.wantDB)
+			utiltest.AssertEquals(t, gotDB, tt.wantDB)
 		})
 	}
 }
@@ -122,14 +132,10 @@ func TestAddRecipe(t *testing.T) {
 		wantErr        error
 	}{
 		{
-			name: "empty DB, valid version, expect success",
+			name: "empty DB, valid version, expect new recipe added",
 			setup: func(t *testing.T) RecipeDB {
-				setupTestDB(t, nil)
-				db, err := newRecipeDB()
-				if err != nil {
-					t.Fatalf("failed to load recipe DB: %v", err)
-				}
-				return db
+				setupTestDB(t, nil, nil)
+				return getTestDB(t)
 			},
 			initialRecipes: nil,
 			recipeName:     "test-recipe",
@@ -138,14 +144,10 @@ func TestAddRecipe(t *testing.T) {
 			wantErr:        nil,
 		},
 		{
-			name: "empty DB, invalid version, expect error",
+			name: "empty DB, invalid version, expect version error and no recipe added",
 			setup: func(t *testing.T) RecipeDB {
-				setupTestDB(t, nil)
-				db, err := newRecipeDB()
-				if err != nil {
-					t.Fatalf("failed to load recipe DB: %v", err)
-				}
-				return db
+				setupTestDB(t, nil, nil)
+				return getTestDB(t)
 			},
 			initialRecipes: nil,
 			recipeName:     "bad-recipe",
@@ -154,14 +156,10 @@ func TestAddRecipe(t *testing.T) {
 			wantErr:        errors.New("invalid Version string"),
 		},
 		{
-			name: "non-empty DB, valid version, expect success and existing preserved",
+			name: "non-empty DB, valid version, expect new recipe added and existing preserved",
 			setup: func(t *testing.T) RecipeDB {
-				setupTestDB(t, existingRecipes)
-				db, err := newRecipeDB()
-				if err != nil {
-					t.Fatalf("failed to load recipe DB: %v", err)
-				}
-				return db
+				setupTestDB(t, existingRecipes, nil)
+				return getTestDB(t)
 			},
 			initialRecipes: existingRecipes,
 			recipeName:     "test-recipe",
@@ -170,14 +168,10 @@ func TestAddRecipe(t *testing.T) {
 			wantErr:        nil,
 		},
 		{
-			name: "non-empty DB, invalid version, expect error and existing preserved",
+			name: "non-empty DB, invalid version, expect version error and existing preserved",
 			setup: func(t *testing.T) RecipeDB {
-				setupTestDB(t, existingRecipes)
-				db, err := newRecipeDB()
-				if err != nil {
-					t.Fatalf("failed to load recipe DB: %v", err)
-				}
-				return db
+				setupTestDB(t, existingRecipes, nil)
+				return getTestDB(t)
 			},
 			initialRecipes: existingRecipes,
 			recipeName:     "bad-recipe",
@@ -186,14 +180,10 @@ func TestAddRecipe(t *testing.T) {
 			wantErr:        errors.New("invalid Version string"),
 		},
 		{
-			name: "non-empty DB, overwrite existing recipe, expect success",
+			name: "non-empty DB, overwrite existing recipe, expect recipe updated and others preserved",
 			setup: func(t *testing.T) RecipeDB {
-				setupTestDB(t, existingRecipes)
-				db, err := newRecipeDB()
-				if err != nil {
-					t.Fatalf("failed to load recipe DB: %v", err)
-				}
-				return db
+				setupTestDB(t, existingRecipes, nil)
+				return getTestDB(t)
 			},
 			initialRecipes: existingRecipes,
 			recipeName:     existingRecipes[0].Name,
@@ -220,21 +210,18 @@ func TestAddRecipe(t *testing.T) {
 				utiltest.AssertEquals(t, gotRecipe, wantRecipe)
 			}
 
-			memRecipe, ok := db.getRecipe(tt.recipeName)
+			recipe, ok := db.getRecipe(tt.recipeName)
 			if tt.wantErr != nil {
 				utiltest.AssertEquals(t, ok, false)
 				return
 			}
 			utiltest.AssertEquals(t, ok, true)
-			utiltest.AssertEquals(t, memRecipe.Name, tt.recipeName)
-			utiltest.AssertEquals(t, memRecipe.Version.String(), tt.version)
-			utiltest.AssertEquals(t, memRecipe.Success, tt.success)
+			utiltest.AssertEquals(t, recipe.Name, tt.recipeName)
+			utiltest.AssertEquals(t, recipe.Version.String(), tt.version)
+			utiltest.AssertEquals(t, recipe.Success, tt.success)
 
 			// Verify file persistence.
-			readDB, err := newRecipeDB()
-			if err != nil {
-				t.Fatalf("failed to load recipe DB from file: %v", err)
-			}
+			readDB := getTestDB(t)
 			utiltest.AssertEquals(t, db, readDB)
 		})
 	}
