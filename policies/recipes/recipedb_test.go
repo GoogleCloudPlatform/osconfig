@@ -57,6 +57,18 @@ func getTestDB(t *testing.T) RecipeDB {
 	return db
 }
 
+func assertOtherDBEntriesUnchanged(t *testing.T, initialRecipes []Recipe, db RecipeDB, recipeName string) {
+	t.Helper()
+	for _, wantRecipe := range initialRecipes {
+		if wantRecipe.Name == recipeName {
+			continue
+		}
+		gotRecipe, ok := db.getRecipe(wantRecipe.Name)
+		utiltest.AssertEquals(t, ok, true)
+		utiltest.AssertEquals(t, gotRecipe, wantRecipe)
+	}
+}
+
 func TestNewRecipeDB(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -201,14 +213,7 @@ func TestAddRecipe(t *testing.T) {
 			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
 
 			// Verify initial entries are still there and unchanged (except the one being updated).
-			for _, wantRecipe := range tt.initialRecipes {
-				if wantRecipe.Name == tt.recipeName {
-					continue
-				}
-				gotRecipe, ok := db.getRecipe(wantRecipe.Name)
-				utiltest.AssertEquals(t, ok, true)
-				utiltest.AssertEquals(t, gotRecipe, wantRecipe)
-			}
+			assertOtherDBEntriesUnchanged(t, tt.initialRecipes, db, tt.recipeName)
 
 			recipe, ok := db.getRecipe(tt.recipeName)
 			if tt.wantErr != nil {
