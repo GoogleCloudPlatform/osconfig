@@ -391,20 +391,25 @@ func TestNewLinuxOsInfoProvider(t *testing.T) {
 	unameErr := errors.New("uname error")
 
 	tests := []struct {
-		name      string
-		unameFunc func(buf *unix.Utsname) error
-		wantErr   error
+		name    string
+		uname   func(buf *unix.Utsname) error
+		wantUts unix.Utsname
+		wantErr error
 	}{
 		{
-			name: "uname succeeds, want nil error",
-			unameFunc: func(buf *unix.Utsname) error {
+			name: "uname succeeds, want succesful provider creation and nil error",
+			uname: func(buf *unix.Utsname) error {
+				buf.Nodename = toUtsField("test-hostname")
 				return nil
+			},
+			wantUts: unix.Utsname{
+				Nodename: toUtsField("test-hostname"),
 			},
 			wantErr: nil,
 		},
 		{
-			name: "failed uname syscall, want error",
-			unameFunc: func(buf *unix.Utsname) error {
+			name: "failed uname syscall, want uname error",
+			uname: func(buf *unix.Utsname) error {
 				return unameErr
 			},
 			wantErr: fmt.Errorf("unable to get unix.Uname, err: %w", unameErr),
@@ -413,13 +418,11 @@ func TestNewLinuxOsInfoProvider(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			utiltest.OverrideVariable(t, &unameFn, tt.unameFunc)
+			utiltest.OverrideVariable(t, &unameFn, tt.uname)
 			gotProvider, gotErr := NewLinuxOsInfoProvider(dummyProvider)
 
 			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
-			if gotProvider == nil {
-				t.Error("expected non-nil provider, got nil")
-			}
+			utiltest.AssertEquals(t, gotProvider.uts, tt.wantUts)
 		})
 	}
 }
