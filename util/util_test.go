@@ -3,6 +3,7 @@ package util
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -115,31 +116,31 @@ func TestDefaultRunnerRun(t *testing.T) {
 		cmd        *exec.Cmd
 		wantStdout string
 		wantStderr string
-		wantErr    string
+		wantErr    error
 	}{
 		{
 			name:       "successful command execution, expect stdout output",
 			cmd:        testSuccessCmd(),
 			wantStdout: "success msg",
 			wantStderr: "",
-			wantErr:    "^<nil>$",
+			wantErr:    nil,
 		},
 		{
 			name:       "failing command execution, expect stderr output and error",
 			cmd:        testFailCmd(),
 			wantStdout: "",
 			wantStderr: "error msg",
-			wantErr:    "exit status 1",
+			wantErr:    errors.New("exit status 1"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			stdout, stderr, err := runner.Run(ctx, tt.cmd)
+			gotStdout, gotStderr, gotErr := runner.Run(ctx, tt.cmd)
 
-			utiltest.AssertFormatMatch(t, fmt.Sprint(err), tt.wantErr)
-			utiltest.AssertEquals(t, strings.TrimSpace(string(stdout)), tt.wantStdout)
-			utiltest.AssertEquals(t, strings.TrimSpace(string(stderr)), tt.wantStderr)
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr, utiltest.EquateErrorMessage)
+			utiltest.AssertEquals(t, strings.TrimSpace(string(gotStdout)), tt.wantStdout)
+			utiltest.AssertEquals(t, strings.TrimSpace(string(gotStderr)), tt.wantStderr)
 		})
 	}
 }
@@ -153,53 +154,51 @@ func TestAtomicWriteFileStream(t *testing.T) {
 	validChecksum := hex.EncodeToString(hasher.Sum(nil))
 
 	tests := []struct {
-		name            string
-		input           string
-		checksum        string
-		content         string
-		mode            os.FileMode
-		wantChecksum    string
-		wantErrorFormat string
+		name         string
+		input        string
+		checksum     string
+		content      string
+		mode         os.FileMode
+		wantChecksum string
+		wantErr      error
 	}{
 		{
-			name:            "valid file path, expect checksum output",
-			input:           filepath.Join(tmpDir, "test-stream-1.txt"),
-			checksum:        validChecksum,
-			content:         content,
-			mode:            0644,
-			wantChecksum:    validChecksum,
-			wantErrorFormat: "^<nil>$",
+			name:         "valid file path, expect checksum output",
+			input:        filepath.Join(tmpDir, "test-stream-1.txt"),
+			checksum:     validChecksum,
+			content:      content,
+			mode:         0644,
+			wantChecksum: validChecksum,
+			wantErr:      nil,
 		},
 		{
-			name:            "invalid checksum string, expect error",
-			input:           filepath.Join(tmpDir, "test-stream-2.txt"),
-			checksum:        "bad-checksum",
-			content:         content,
-			mode:            0644,
-			wantChecksum:    "",
-			wantErrorFormat: fmt.Sprintf("^got %q for checksum, expected %q", validChecksum, "bad-checksum"),
+			name:         "invalid checksum string, expect error",
+			input:        filepath.Join(tmpDir, "test-stream-2.txt"),
+			checksum:     "bad-checksum",
+			content:      content,
+			mode:         0644,
+			wantChecksum: "",
+			wantErr:      fmt.Errorf("got %q for checksum, expected %q", validChecksum, "bad-checksum"),
 		},
 		{
-			name:            "invalid directory path, expect error",
-			input:           filepath.Join(tmpDir, "does-not-exist", "test-stream.txt"),
-			checksum:        "",
-			content:         content,
-			mode:            0644,
-			wantChecksum:    "",
-			wantErrorFormat: "^unable to create temp file",
+			name:         "invalid directory path, expect error",
+			input:        filepath.Join(tmpDir, "does-not-exist", "test-stream.txt"),
+			checksum:     "",
+			content:      content,
+			mode:         0644,
+			wantChecksum: "",
+			wantErr:      errors.New("unable to create temp file"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			reader := strings.NewReader(tt.content)
-			gotChecksum, err := AtomicWriteFileStream(reader, tt.checksum, tt.input, tt.mode)
+			gotChecksum, gotErr := AtomicWriteFileStream(reader, tt.checksum, tt.input, tt.mode)
 
-			utiltest.AssertFormatMatch(t, fmt.Sprint(err), tt.wantErrorFormat)
+			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr, utiltest.EquateErrorMessagePrefix)
 			utiltest.AssertEquals(t, gotChecksum, tt.wantChecksum)
-			if err == nil {
-				utiltest.AssertFileContents(t, tt.input, tt.content)
-			}
+			utiltest.AssertFileContents(t, tt.input, tt.content)
 		})
 	}
 }
@@ -208,35 +207,33 @@ func TestAtomicWrite(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	tests := []struct {
-		name            string
-		input           string
-		content         []byte
-		mode            os.FileMode
-		wantErrorFormat string
+		name    string
+		input   string
+		content []byte
+		mode    os.FileMode
+		wantErr error
 	}{
 		{
-			name:            "valid file path, expect success",
-			input:           filepath.Join(tmpDir, "test-write-1.txt"),
-			content:         []byte("test content"),
-			mode:            0644,
-			wantErrorFormat: "^<nil>$",
+			name:    "valid file path, expect success",
+			input:   filepath.Join(tmpDir, "test-write-1.txt"),
+			content: []byte("test content"),
+			mode:    0644,
+			wantErr: nil,
 		},
 		{
-			name:            "invalid directory path, expect error",
-			input:           filepath.Join(tmpDir, "does-not-exist", "test-write.txt"),
-			content:         []byte("test content"),
-			mode:            0644,
-			wantErrorFormat: "^unable to create temp file",
+			name:    "invalid directory path, expect error",
+			input:   filepath.Join(tmpDir, "does-not-exist", "test-write.txt"),
+			content: []byte("test content"),
+			mode:    0644,
+			wantErr: errors.New("unable to create temp file"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := AtomicWrite(tt.input, tt.content, tt.mode)
-			utiltest.AssertFormatMatch(t, fmt.Sprint(err), tt.wantErrorFormat)
-			if err == nil {
-				utiltest.AssertFileContents(t, tt.input, string(tt.content))
-			}
+			gotErr := AtomicWrite(tt.input, tt.content, tt.mode)
+			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr, utiltest.EquateErrorMessagePrefix)
+			utiltest.AssertFileContents(t, tt.input, string(tt.content))
 		})
 	}
 }
