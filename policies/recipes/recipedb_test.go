@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 // setupTestDB sets up a temp directory for the test db and initializes it with the given content.
@@ -56,7 +57,7 @@ func getTestDB(t *testing.T) RecipeDB {
 	return db
 }
 
-func TestNewRecipeDB(t *testing.T) {
+func Test_newRecipeDB(t *testing.T) {
 	tests := []struct {
 		name    string
 		setup   func(t *testing.T)
@@ -113,14 +114,6 @@ func TestNewRecipeDB(t *testing.T) {
 			utiltest.AssertEquals(t, gotDB, tt.wantDB)
 		})
 	}
-}
-
-func setInstallTime(db RecipeDB, recipeName string, installTime int64) RecipeDB {
-	if recipe, ok := db[recipeName]; ok {
-		recipe.InstallTime = installTime
-		db[recipeName] = recipe
-	}
-	return db
 }
 
 func TestAddRecipe(t *testing.T) {
@@ -218,10 +211,7 @@ func TestAddRecipe(t *testing.T) {
 
 			gotErr := db.addRecipe(tt.recipeName, tt.recipeVersion, tt.recipeSuccess)
 			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
-
-			// Sync dynamic InstallTime timestamp before comparing DB states.
-			tt.wantDB = setInstallTime(tt.wantDB, tt.recipeName, db[tt.recipeName].InstallTime)
-			utiltest.AssertEquals(t, db, tt.wantDB)
+			utiltest.AssertEquals(t, db, tt.wantDB, cmpopts.IgnoreFields(Recipe{}, "InstallTime"))
 		})
 	}
 }
