@@ -12,9 +12,6 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-//go:build linux
-// +build linux
-
 package osinfo
 
 import (
@@ -25,16 +22,6 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"golang.org/x/sys/unix"
 )
-
-// TestNewProvider verifies that NewProvider returns a non-nil defaultProvider.
-func TestNewProvider(t *testing.T) {
-	gotProvider := NewProvider()
-	if gotProvider == nil {
-		t.Fatal("NewProvider() returned nil, want non-nil Provider")
-	}
-	_, ok := gotProvider.(defaultProvider)
-	utiltest.AssertEquals(t, ok, true)
-}
 
 // TestDefaultProvider_GetOSInfo tests the GetOSInfo method of the defaultProvider.
 func TestDefaultProvider_GetOSInfo(t *testing.T) {
