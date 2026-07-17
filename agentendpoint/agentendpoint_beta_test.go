@@ -23,6 +23,7 @@ import (
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/golang/mock/gomock"
+	"google.golang.org/protobuf/testing/protocmp"
 )
 
 func TestBetaClientClose(t *testing.T) {
@@ -84,7 +85,7 @@ func TestLookupEffectiveGuestPolicies(t *testing.T) {
 
 			gotPolicy, gotErr := client.LookupEffectiveGuestPolicies(ctx)
 			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
-			utiltest.AssertEquals(t, gotPolicy, tt.wantPolicy)
+			utiltest.AssertEquals(t, gotPolicy, tt.wantPolicy, protocmp.Transform())
 		})
 	}
 }
