@@ -14,7 +14,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/kr/pretty"
-	"google.golang.org/protobuf/testing/protocmp"
 )
 
 // AssertFormatMatch verifies that the got matches the wantFormat regular expression.
@@ -112,9 +111,9 @@ type ExpectedCommand struct {
 }
 
 // AssertEquals checks if got and want are deeply equal. If not, it fails the test.
-func AssertEquals(t *testing.T, got interface{}, want interface{}) {
+func AssertEquals(t *testing.T, got interface{}, want interface{}, opts ...cmp.Option) {
 	t.Helper()
-	if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
+	if diff := cmp.Diff(want, got, opts...); diff != "" {
 		t.Errorf("got != want (-want +got):\n%s", diff)
 	}
 }
