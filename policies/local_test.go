@@ -140,6 +140,8 @@ func setupMockMetadataServer(t *testing.T, handler http.HandlerFunc) *httptest.S
 }
 
 func TestReadLocalConfig(t *testing.T) {
+	unmarshalError := json.Unmarshal([]byte(`invalid json`), &localConfig{})
+
 	tests := []struct {
 		name        string
 		mockHandler http.HandlerFunc
@@ -174,7 +176,7 @@ func TestReadLocalConfig(t *testing.T) {
 				w.Write([]byte(`invalid json`))
 			},
 			wantConfig: &localConfig{},
-			wantErr:    json.Unmarshal([]byte(`invalid json`), &localConfig{}),
+			wantErr:    unmarshalError,
 		},
 	}
 
@@ -190,16 +192,16 @@ func TestReadLocalConfig(t *testing.T) {
 
 func TestMergeConfigs(t *testing.T) {
 	tests := []struct {
-		name  string
-		local *localConfig
-		egp   *agentendpointpb.EffectiveGuestPolicy
-		want  *agentendpointpb.EffectiveGuestPolicy
+		name                 string
+		local                *localConfig
+		effectiveGuestPolicy *agentendpointpb.EffectiveGuestPolicy
+		want                 *agentendpointpb.EffectiveGuestPolicy
 	}{
 		{
-			name:  "egp is nil, local is nil, want empty guest policy",
-			local: nil,
-			egp:   nil,
-			want:  &agentendpointpb.EffectiveGuestPolicy{},
+			name:                 "egp is nil, local is nil, want empty guest policy",
+			local:                nil,
+			effectiveGuestPolicy: nil,
+			want:                 &agentendpointpb.EffectiveGuestPolicy{},
 		},
 		{
 			name: "egp is nil, local is not nil, want local config merged",
@@ -208,7 +210,7 @@ func TestMergeConfigs(t *testing.T) {
 					{Package: agentendpointpb.Package{Name: "p1"}},
 				},
 			},
-			egp: nil,
+			effectiveGuestPolicy: nil,
 			want: &agentendpointpb.EffectiveGuestPolicy{
 				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
 					{Package: &agentendpointpb.Package{Name: "p1"}},
@@ -218,7 +220,7 @@ func TestMergeConfigs(t *testing.T) {
 		{
 			name:  "local is nil, egp is not nil, want egp returned unchanged",
 			local: nil,
-			egp: &agentendpointpb.EffectiveGuestPolicy{
+			effectiveGuestPolicy: &agentendpointpb.EffectiveGuestPolicy{
 				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
 					{Package: &agentendpointpb.Package{Name: "p1"}},
 				},
@@ -236,7 +238,7 @@ func TestMergeConfigs(t *testing.T) {
 					{Package: agentendpointpb.Package{Name: "p1"}},
 				},
 			},
-			egp: &agentendpointpb.EffectiveGuestPolicy{
+			effectiveGuestPolicy: &agentendpointpb.EffectiveGuestPolicy{
 				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
 					{Package: &agentendpointpb.Package{Name: "p1"}},
 				},
@@ -260,7 +262,7 @@ func TestMergeConfigs(t *testing.T) {
 					},
 				},
 			},
-			egp: &agentendpointpb.EffectiveGuestPolicy{
+			effectiveGuestPolicy: &agentendpointpb.EffectiveGuestPolicy{
 				PackageRepositories: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackageRepository{
 					{
 						PackageRepository: &agentendpointpb.PackageRepository{
@@ -296,7 +298,7 @@ func TestMergeConfigs(t *testing.T) {
 					},
 				},
 			},
-			egp: &agentendpointpb.EffectiveGuestPolicy{
+			effectiveGuestPolicy: &agentendpointpb.EffectiveGuestPolicy{
 				PackageRepositories: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackageRepository{
 					{
 						PackageRepository: &agentendpointpb.PackageRepository{
@@ -323,7 +325,7 @@ func TestMergeConfigs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := mergeConfigs(tt.local, tt.egp)
+			got := mergeConfigs(tt.local, tt.effectiveGuestPolicy)
 			utiltest.AssertEquals(t, got, tt.want)
 		})
 	}
