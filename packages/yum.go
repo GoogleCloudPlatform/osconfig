@@ -34,6 +34,7 @@ var (
 
 	yumInstallArgs           = []string{"install", "--assumeyes"}
 	yumRemoveArgs            = []string{"remove", "--assumeyes"}
+	yumUpdateArgs            = []string{"update", "--assumeyes"}
 	yumCheckUpdateArgs       = []string{"check-update", "--assumeyes"}
 	yumListUpdatesArgs       = []string{"update", "--assumeno", "--color=never"}
 	yumListUpdateMinimalArgs = []string{"update-minimal", "--assumeno", "--color=never"}
@@ -73,6 +74,12 @@ func YumUpdateMinimal(minimal bool) YumUpdateOption {
 // InstallYumPackages installs yum packages.
 func InstallYumPackages(ctx context.Context, pkgs []string) error {
 	_, err := run(ctx, yum, append(yumInstallArgs, pkgs...))
+	return err
+}
+
+// UpdateYumPackages updates yum packages.
+func UpdateYumPackages(ctx context.Context, pkgs []string) error {
+	_, err := run(ctx, yum, append(yumUpdateArgs, pkgs...))
 	return err
 }
 

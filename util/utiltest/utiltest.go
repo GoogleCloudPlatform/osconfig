@@ -111,9 +111,9 @@ type ExpectedCommand struct {
 }
 
 // AssertEquals checks if got and want are deeply equal. If not, it fails the test.
-func AssertEquals(t *testing.T, got interface{}, want interface{}) {
+func AssertEquals(t *testing.T, got interface{}, want interface{}, opts ...cmp.Option) {
 	t.Helper()
-	if diff := cmp.Diff(want, got); diff != "" {
+	if diff := cmp.Diff(want, got, opts...); diff != "" {
 		t.Errorf("got != want (-want +got):\n%s", diff)
 	}
 }
@@ -181,6 +181,20 @@ func AssertFileContents(t *testing.T, filePath string, wantContents string) {
 	if diff := cmp.Diff(wantContents, string(data)); diff != "" {
 		t.Errorf("File contents mismatch (-want +got):\n%s", diff)
 	}
+}
+
+// AssertFileExistsAndContents verifies that the file at filePath exists and matches wantContent.
+// If the file does not exist and wantContent is empty, the test is skipped.
+func AssertFileExistsAndContents(t *testing.T, filePath string, wantContent string) {
+	t.Helper()
+	_, err := os.Stat(filePath)
+	if os.IsNotExist(err) {
+		if wantContent == "" {
+			t.SkipNow()
+		}
+		t.Fatalf("Failed to read file %q: %v", filePath, err)
+	}
+	AssertFileContents(t, filePath, wantContent)
 }
 
 // OverrideVariable overrides the value of a variable and returns a function to restore it.
