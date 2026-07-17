@@ -15,83 +15,67 @@
 package recipes
 
 import (
-	"context"
-	"encoding/json"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
-func setupTestDB(t *testing.T, recipes []Recipe) string {
-	t.Helper()
-	tmpDir := t.TempDir()
-
-	utiltest.OverrideVariable(t, &dbDirWindows, tmpDir)
-	utiltest.OverrideVariable(t, &dbDirUnix, tmpDir)
-
-	if len(recipes) > 0 {
-		dbBytes, err := json.Marshal(recipes)
-		if err != nil {
-			t.Fatalf("failed to marshal recipes: %v", err)
-		}
-		if err := os.WriteFile(filepath.Join(tmpDir, dbFileName), dbBytes, 0644); err != nil {
-			t.Fatalf("failed to write recipes to file: %v", err)
-		}
-	}
-	return tmpDir
-}
-
-func TestInstallRecipeDesiredStateHandling(t *testing.T) {
-	ctx := context.Background()
+func TestInstallRecipe(t *testing.T) {
+	ctx := t.Context()
 
 	tests := []struct {
-		name        string
-		setup       func(t *testing.T, recipe *agentendpointpb.SoftwareRecipe)
-		recipe      *agentendpointpb.SoftwareRecipe
-		wantRecipes []Recipe
+		name   string
+		setup  func(t *testing.T, recipe *agentendpointpb.SoftwareRecipe)
+		recipe *agentendpointpb.SoftwareRecipe
+		wantDB RecipeDB
 	}{
 		{
 			name: "fresh install, expect success",
 			setup: func(t *testing.T, recipe *agentendpointpb.SoftwareRecipe) {
-				setupTestDB(t, nil)
+				setupTestDBFromRecipes(t, nil)
 			},
 			recipe: &agentendpointpb.SoftwareRecipe{
 				Name:    "recipe1",
 				Version: "1.0.0",
 			},
-			wantRecipes: []Recipe{{Name: "recipe1", Version: recipeVersion{1, 0, 0}, Success: true}},
+			wantDB: RecipeDB{
+				"recipe1": Recipe{Name: "recipe1", Version: recipeVersion{1, 0, 0}, Success: true},
+			},
 		},
 		{
 			name: "already installed same version, expect skip",
 			setup: func(t *testing.T, recipe *agentendpointpb.SoftwareRecipe) {
-				setupTestDB(t, []Recipe{{Name: "recipe1", Version: recipeVersion{1, 0, 0}, Success: true}})
+				setupTestDBFromRecipes(t, []Recipe{{Name: "recipe1", Version: recipeVersion{1, 0, 0}, Success: true}})
 			},
 			recipe: &agentendpointpb.SoftwareRecipe{
 				Name:         "recipe1",
 				Version:      "1.0.0",
 				DesiredState: agentendpointpb.DesiredState_INSTALLED,
 			},
-			wantRecipes: []Recipe{{Name: "recipe1", Version: recipeVersion{1, 0, 0}, Success: true}},
+			wantDB: RecipeDB{
+				"recipe1": Recipe{Name: "recipe1", Version: recipeVersion{1, 0, 0}, Success: true},
+			},
 		},
 		{
 			name: "already installed older version but desired state INSTALLED, expect skip",
 			setup: func(t *testing.T, recipe *agentendpointpb.SoftwareRecipe) {
-				setupTestDB(t, []Recipe{{Name: "recipe1", Version: recipeVersion{1, 0, 0}, Success: true}})
+				setupTestDBFromRecipes(t, []Recipe{{Name: "recipe1", Version: recipeVersion{1, 0, 0}, Success: true}})
 			},
 			recipe: &agentendpointpb.SoftwareRecipe{
 				Name:         "recipe1",
 				Version:      "2.0.0",
 				DesiredState: agentendpointpb.DesiredState_INSTALLED,
 			},
-			wantRecipes: []Recipe{{Name: "recipe1", Version: recipeVersion{1, 0, 0}, Success: true}},
+			wantDB: RecipeDB{
+				"recipe1": Recipe{Name: "recipe1", Version: recipeVersion{1, 0, 0}, Success: true},
+			},
 		},
 		{
 			name: "already installed needs update, expect success",
 			setup: func(t *testing.T, recipe *agentendpointpb.SoftwareRecipe) {
-				setupTestDB(t, []Recipe{{Name: "recipe1", Version: recipeVersion{1, 0, 0}, Success: true}})
+				setupTestDBFromRecipes(t, []Recipe{{Name: "recipe1", Version: recipeVersion{1, 0, 0}, Success: true}})
 			},
 			recipe: &agentendpointpb.SoftwareRecipe{
 				Name:         "recipe1",
@@ -108,12 +92,14 @@ func TestInstallRecipeDesiredStateHandling(t *testing.T) {
 					},
 				},
 			},
-			wantRecipes: []Recipe{{Name: "recipe1", Version: recipeVersion{2, 0, 0}, Success: true}},
+			wantDB: RecipeDB{
+				"recipe1": Recipe{Name: "recipe1", Version: recipeVersion{2, 0, 0}, Success: true},
+			},
 		},
 		{
 			name: "multiple recipes in DB, expect target updated and others preserved",
 			setup: func(t *testing.T, recipe *agentendpointpb.SoftwareRecipe) {
-				setupTestDB(t, []Recipe{
+				setupTestDBFromRecipes(t, []Recipe{
 					{Name: "recipe1", Version: recipeVersion{1, 0, 0}, Success: true},
 					{Name: "recipe2", Version: recipeVersion{1, 0, 0}, Success: true},
 				})
@@ -133,15 +119,15 @@ func TestInstallRecipeDesiredStateHandling(t *testing.T) {
 					},
 				},
 			},
-			wantRecipes: []Recipe{
-				{Name: "recipe1", Version: recipeVersion{2, 0, 0}, Success: true},
-				{Name: "recipe2", Version: recipeVersion{1, 0, 0}, Success: true},
+			wantDB: RecipeDB{
+				"recipe1": Recipe{Name: "recipe1", Version: recipeVersion{2, 0, 0}, Success: true},
+				"recipe2": Recipe{Name: "recipe2", Version: recipeVersion{1, 0, 0}, Success: true},
 			},
 		},
 		{
 			name: "valid run script step, expect success",
 			setup: func(t *testing.T, recipe *agentendpointpb.SoftwareRecipe) {
-				setupTestDB(t, nil)
+				setupTestDBFromRecipes(t, nil)
 			},
 			recipe: &agentendpointpb.SoftwareRecipe{
 				Name:    "recipe-script-success",
@@ -157,7 +143,9 @@ func TestInstallRecipeDesiredStateHandling(t *testing.T) {
 					},
 				},
 			},
-			wantRecipes: []Recipe{{Name: "recipe-script-success", Version: recipeVersion{1, 0, 0}, Success: true}},
+			wantDB: RecipeDB{
+				"recipe-script-success": Recipe{Name: "recipe-script-success", Version: recipeVersion{1, 0, 0}, Success: true},
+			},
 		},
 	}
 
@@ -168,17 +156,8 @@ func TestInstallRecipeDesiredStateHandling(t *testing.T) {
 			gotErr := InstallRecipe(ctx, tt.recipe)
 			utiltest.AssertErrorMatch(t, gotErr, nil)
 
-			// Load the recipe database and assert that it contains only expected recipes.
-			db, err := newRecipeDB()
-			utiltest.AssertErrorMatch(t, err, nil)
-			utiltest.AssertEquals(t, len(db), len(tt.wantRecipes))
-
-			for _, wantRecipe := range tt.wantRecipes {
-				recipe, ok := db.getRecipe(wantRecipe.Name)
-				utiltest.AssertEquals(t, ok, true)
-				utiltest.AssertEquals(t, recipe.Success, wantRecipe.Success)
-				utiltest.AssertEquals(t, recipe.Version.String(), wantRecipe.Version.String())
-			}
+			gotDB := getTestDB(t)
+			utiltest.AssertEquals(t, gotDB, tt.wantDB, cmpopts.IgnoreFields(Recipe{}, "InstallTime"))
 		})
 	}
 }
