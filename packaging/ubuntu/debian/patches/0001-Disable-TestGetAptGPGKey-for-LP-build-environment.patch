@@ -1,0 +1,21 @@
+Author: mitchdz <mitchell.dzurick@canonical.com>
+Date: Thu, 2 May 2024 19:01:09 -0700
+Subject: Disable TestGetAptGPGKey for LP build environment
+Origin: vendor
+Forwarded: not-needed
+Last-Updated: 2020-05-02
+---
+ policies/apt_test.go | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/policies/apt_test.go
++++ b/policies/apt_test.go
+@@ -83,6 +83,8 @@
+ }
+ 
+ func TestGetAptGPGKey(t *testing.T) {
++    t.Skip("Skipping this test due to LP environment not having access to outside world")
++
+ 	key := "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+ 
+ 	entityList, err := getAptGPGKey(key)
