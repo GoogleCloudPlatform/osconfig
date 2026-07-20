@@ -19,7 +19,6 @@ import (
 	"errors"
 	"os/exec"
 	"reflect"
-	"strings"
 	"testing"
 
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
@@ -28,6 +27,7 @@ import (
 )
 
 func TestZypperInstalls(t *testing.T) {
+	ctx := t.Context()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -35,18 +35,19 @@ func TestZypperInstalls(t *testing.T) {
 	runner = mockCommandRunner
 	expectedCmd := utilmocks.EqCmd(exec.Command(zypper, append(zypperInstallArgs, pkgs...)...))
 
-	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
-	if err := InstallZypperPackages(testCtx, pkgs); err != nil {
+	mockCommandRunner.EXPECT().Run(ctx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
+	if err := InstallZypperPackages(ctx, pkgs); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), errors.New("error")).Times(1)
-	if err := InstallZypperPackages(testCtx, pkgs); err == nil {
+	mockCommandRunner.EXPECT().Run(ctx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), errors.New("error")).Times(1)
+	if err := InstallZypperPackages(ctx, pkgs); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }
 
 func TestRemoveZypper(t *testing.T) {
+	ctx := t.Context()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -54,13 +55,13 @@ func TestRemoveZypper(t *testing.T) {
 	runner = mockCommandRunner
 	expectedCmd := utilmocks.EqCmd(exec.Command(zypper, append(zypperRemoveArgs, pkgs...)...))
 
-	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
-	if err := RemoveZypperPackages(testCtx, pkgs); err != nil {
+	mockCommandRunner.EXPECT().Run(ctx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), nil).Times(1)
+	if err := RemoveZypperPackages(ctx, pkgs); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), errors.New("error")).Times(1)
-	if err := RemoveZypperPackages(testCtx, pkgs); err == nil {
+	mockCommandRunner.EXPECT().Run(ctx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), errors.New("error")).Times(1)
+	if err := RemoveZypperPackages(ctx, pkgs); err == nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
@@ -168,9 +169,10 @@ func TestZypperUpdates(t *testing.T) {
 		SetCommandRunner(mockCommandRunner)
 
 		t.Run(tt.name, func(t *testing.T) {
+			ctx := t.Context()
 			setExpectations(mockCommandRunner, tt.expectedCommandsChain)
 
-			pkgs, err := ZypperUpdates(testCtx)
+			pkgs, err := ZypperUpdates(ctx)
 
 			if !reflect.DeepEqual(err, tt.expectedError) {
 				t.Errorf("unexpected err: expected %q, got %q", tt.expectedError, err)
@@ -313,9 +315,10 @@ func TestZypperPatches(t *testing.T) {
 		SetCommandRunner(mockCommandRunner)
 
 		t.Run(tt.name, func(t *testing.T) {
+			ctx := t.Context()
 			setExpectations(mockCommandRunner, tt.expectedCommandsChain)
 
-			pkgs, err := ZypperPatches(testCtx)
+			pkgs, err := ZypperPatches(ctx)
 
 			if !reflect.DeepEqual(err, tt.expectedError) {
 				t.Errorf("unexpected err: expected %q, got %q", tt.expectedError, err)
@@ -330,6 +333,7 @@ func TestZypperPatches(t *testing.T) {
 }
 
 func TestZypperInstalledPatches(t *testing.T) {
+	ctx := t.Context()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -338,8 +342,8 @@ func TestZypperInstalledPatches(t *testing.T) {
 	expectedCmd := utilmocks.EqCmd(exec.Command(zypper, append(zypperListPatchesArgs, "--all")...))
 
 	data := []byte("SLE-Module-Basesystem15-SP1-Updates | SUSE-SLE-Module-Basesystem-15-SP1-2019-1258 | recommended | moderate  | ---         | applied     | Recommended update for postfix")
-	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return(data, []byte("stderr"), nil).Times(1)
-	ret, err := ZypperInstalledPatches(testCtx)
+	mockCommandRunner.EXPECT().Run(ctx, expectedCmd).Return(data, []byte("stderr"), nil).Times(1)
+	ret, err := ZypperInstalledPatches(ctx)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -349,14 +353,14 @@ func TestZypperInstalledPatches(t *testing.T) {
 		t.Errorf("ZypperInstalledPatches() = %v, want %v", ret, want)
 	}
 
-	mockCommandRunner.EXPECT().Run(testCtx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), errors.New("error")).Times(1)
-	if _, err := ZypperInstalledPatches(testCtx); err == nil {
+	mockCommandRunner.EXPECT().Run(ctx, expectedCmd).Return([]byte("stdout"), []byte("stderr"), errors.New("error")).Times(1)
+	if _, err := ZypperInstalledPatches(ctx); err == nil {
 		t.Errorf("did not get expected error")
 	}
 }
 
-func TestParsePatchInfo(t *testing.T) {
-	patchInfo := `
+func TestParseZypperPatchInfo(t *testing.T) {
+	patchInfo1 := `
 Loading repository data...
 Reading installed packages...
 Information for patch SUSE-SLE-SERVER-12-SP4-2019-2974:
@@ -395,88 +399,15 @@ Created On  : Tue Jul 30 17:20:02 2019
 Interactive : ---
 Summary     : Recommended update for Azure Python SDK
 Description :
-    This update brings the following python modules for the Azure Python SDK:
-    - python-Flask
-    - python-Werkzeug
-    - python-click
-    - python-decorator
-    - python-httpbin
-    - python-idna
-    - python-itsdangerous
-    - python-py
-    - python-pytest-httpbin
-    - python-pytest-mock
-    - python-requests
+    This update brings the following python modules:
 Provides    : patch:SUSE-SLE-Module-Public-Cloud-12-2019-2026 = 1
-Conflicts   : [32]
-    python-Flask.noarch < 0.12.1-7.4.2
-    python-Flask.src < 0.12.1-7.4.2
-    python-Werkzeug.noarch < 0.12.2-10.4.2
-    python-Werkzeug.src < 0.12.2-10.4.2
-    python-click.noarch < 6.7-2.4.2
-    python-click.src < 6.7-2.4.2
-    python-decorator.noarch < 4.1.2-4.4.2
-    python-decorator.src < 4.1.2-4.4.2
-    python-httpbin.noarch < 0.5.0-2.4.2
-    python-httpbin.src < 0.5.0-2.4.2
-    python-idna.noarch < 2.5-3.10.2
-    python-idna.src < 2.5-3.10.2
-    python-itsdangerous.noarch < 0.24-7.4.2
-    python-itsdangerous.src < 0.24-7.4.2
-    python-py.noarch < 1.5.2-8.8.2
-    python-py.src < 1.5.2-8.8.2
-    python-requests.noarch < 2.18.2-8.4.2
-    python-requests.src < 2.18.2-8.4.2
-    python-six.noarch < 1.11.0-9.21.2
-    python-six.src < 1.11.0-9.21.2
-    python3-Flask.noarch < 0.12.1-7.4.2
-    python3-Werkzeug.noarch < 0.12.2-10.4.2
-    python3-click.noarch < 6.7-2.4.2
-    python3-decorator.noarch < 4.1.2-4.4.2
-    python3-httpbin.noarch < 0.5.0-2.4.2
-    python3-idna.noarch < 2.5-3.10.2
-    python3-itsdangerous.noarch < 0.24-7.4.2
-    python3-py.noarch < 1.5.2-8.8.2
+Conflicts   : [3]
     python3-requests.noarch < 2.18.2-8.4.2
-    python3-six.noarch < 1.11.0-9.21.2
     common-package.src < 1.1.0-9.3.1
     common-package.x86_64 < 1.1.0-9.3.1
-    zypper.src < 1.14.46-13.1
-    zypper.noarch < 1.14.46-13.1
-    zypper.x86_64 < 1.14.46-13.1
-    zypper-log < 1.14.46-13.1
-    zypper-needs-restarting < 1.14.46-13.1
-
 `
-	ppMap, err := parseZypperPatchInfo([]byte(patchInfo))
-	if err != nil {
-		t.Errorf("unexpected error: %+v", err)
-	}
 
-	if _, ok := ppMap["python3-requests"]; !ok {
-		t.Errorf("Unexpected result: expected a patch for python3-requests")
-	}
-
-	if _, ok := ppMap["random-package"]; ok {
-		t.Errorf("Unexpected result: did not expect patch for random-package")
-	}
-
-	if _, ok := ppMap["random-package"]; ok {
-		t.Errorf("Unexpected result: did not expect patch for random-package")
-	}
-
-	if patches, ok := ppMap["common-package"]; !ok {
-		t.Errorf("Unexpected result: did not expect patch for common-package")
-		for _, patch := range patches {
-			if (strings.Compare(patch, "SUSE-SLE-Module-Public-Cloud-12-2019-2026") != 0) || (strings.Compare(patch, "SUSE-SLE-SERVER-12-SP4-2019-2974") != 0) {
-				t.Errorf("Unexptected result: patch name should be one of SUSE-SLE-SERVER-12-SP4-2019-2974 or SUSE-SLE-Module-Public-Cloud-12-2019-2026")
-			}
-		}
-	}
-}
-
-func TestParsePatchInfo_differentFormatsOfConflictPkgsVersions(t *testing.T) {
-	patchInfo := `
+	patchInfo2 := `
 Information for patch SUSE-SLE-Module-Basesystem-15-SP5-2023-4176:
 ------------------------------------------------------------------
 Repository  : SLE-Module-Basesystem15-SP5-Updates
@@ -492,24 +423,11 @@ Interactive : ---
 Summary     : Security update for ruby2.5
 Description :
     This update for ruby2.5 fixes the following issues:
-
-    - CVE-2023-28755: Fixed a ReDoS vulnerability in URI. (bsc#1209891)
-    - CVE-2023-28756: Fixed an expensive regexp in the RFC2822 time parser. (bsc#1209967)
-    - CVE-2021-41817: Fixed a Regular Expression Denial of Service Vulnerability of Date Parsing Methods. (bsc#1193035)
-    - CVE-2021-33621: Fixed a HTTP response splitting vulnerability in CGI gem. (bsc#1205726)
 Provides    : patch:SUSE-SLE-Module-Basesystem-15-SP5-2023-4176 = 1
-Conflicts   : [11]
+Conflicts   : [3]
     libruby2_5-2_5.x86_64 < 2.5.9-150000.4.29.1
-    libruby2_5-2_5.noarch < 2.5.9-150000.4.29.1
     srcpackage:ruby2.5 < 2.5.9-150000.4.29.1
     ruby2.5.noarch < 2.5.9-150000.4.29.1
-    ruby2.5.x86_64 < 2.5.9-150000.4.29.1
-    ruby2.5-devel.x86_64 < 2.5.9-150000.4.29.1
-    ruby2.5-devel.noarch < 2.5.9-150000.4.29.1
-    ruby2.5-devel-extra.x86_64 < 2.5.9-150000.4.29.1
-    ruby2.5-devel-extra.noarch < 2.5.9-150000.4.29.1
-    ruby2.5-stdlib.x86_64 < 2.5.9-150000.4.29.1
-    ruby2.5-stdlib.noarch < 2.5.9-150000.4.29.1
 Information for patch SUSE-SLE-Module-Basesystem-15-SP5-2023-4843:
 ------------------------------------------------------------------
 Repository  : SLE-Module-Basesystem15-SP5-Updates
@@ -525,244 +443,45 @@ Interactive : ---
 Summary     : Security update for python3-cryptography
 Description :
     This update for python3-cryptography fixes the following issues:
-    - CVE-2023-49083: Fixed a NULL pointer dereference when loading certificates from a PKCS#7 bundle (bsc#1217592).
 Provides    : patch:SUSE-SLE-Module-Basesystem-15-SP5-2023-4843 = 1
-Conflicts   : [3]
+Conflicts   : [4]
     srcpackage:python3-cryptography < 3.3.2-150400.23.1
     python3-cryptography.noarch < 3.3.2-150400.23.1
     python3-cryptography.x86_64 < 3.3.2-150400.23.1
-Information for patch SUSE-SLE-Module-Basesystem-15-SP5-2023-3973:
-------------------------------------------------------------------
-Repository  : SLE-Module-Basesystem15-SP5-Updates
-Name        : SUSE-SLE-Module-Basesystem-15-SP5-2023-3973
-Version     : 1
-Arch        : noarch
-Vendor      : maint-coord@suse.de
-Status      : needed
-Category    : recommended
-Severity    : moderate
-Created On  : Thu Oct  5 08:17:12 2023
-Interactive : restart
-Summary     : Recommended update for zypper
-Description :
-    This update for zypper fixes the following issues:
-
-    - Fix name of the bash completion script (bsc#1215007)
-    - Update notes about failing signature checks (bsc#1214395)
-    - Improve the SIGINT handler to be signal safe (bsc#1214292)
-    - Update to version 1.14.64
-    - Changed location of bash completion script (bsc#1213854).
-Provides    : patch:SUSE-SLE-Module-Basesystem-15-SP5-2023-3973 = 1
-Conflicts   : [5]
-    srcpackage:zypper < 1.14.64-150400.3.32.1
-    zypper.noarch < 1.14.64-150400.3.32.1
-    zypper.x86_64 < 1.14.64-150400.3.32.1
     zypper-log < 1.14.64-150400.3.32.1
-    zypper-needs-restarting < 1.14.64-150400.3.32.1
 `
-	ppMap, err := parseZypperPatchInfo([]byte(patchInfo))
-	if err != nil {
-		t.Errorf("unexpected error: %+v", err)
-	}
 
-	if _, ok := ppMap["libruby2_5-2_5"]; !ok {
-		t.Errorf("Unexpected result: expected a patch for libruby2_5-2_5")
-	}
-
-	if _, ok := ppMap["ruby2.5"]; !ok {
-		t.Errorf("Unexpected result: expected a patch for ruby2.5")
-	}
-
-	if _, ok := ppMap["python3-cryptography"]; !ok {
-		t.Errorf("Unexpected result: expected a patch for python3-cryptography")
-	}
-
-	if _, ok := ppMap["zypper-log"]; !ok {
-		t.Errorf("Unexpected result: expected a patch for zypper-log")
-	}
-
-	if _, ok := ppMap["zypper-needs-restarting"]; !ok {
-		t.Errorf("Unexpected result: expected a patch for zypper-needs-restarting")
-	}
-
-	patches, ok := ppMap["python3-cryptography"]
-	if !ok {
-		t.Errorf("Unexpected result: expected a patch for python3-cryptography")
-	} else {
-		for _, patch := range patches {
-			if strings.Compare(patch, "SUSE-SLE-Module-Basesystem-15-SP5-2023-4843") != 0 {
-				t.Errorf("Unexptected result: patch name should be SUSE-SLE-Module-Basesystem-15-SP5-2023-4843")
-			}
-		}
-	}
-}
-
-func TestZypperPackagesInPatch(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
-	runner = mockCommandRunner
-	tests := []struct {
-		name         string
-		patches      []*ZypperPatch
-		expectedCmd  *exec.Cmd
-		stdout       []byte
-		mockErr      error
-		wantErr      error
-		wantMappings map[string][]string
-	}{
-		{
-			name:         "nil patches, want empty map",
-			patches:      nil,
-			wantMappings: map[string][]string{},
-		},
-		{
-			name:        "successful query, want mappings",
-			patches:     []*ZypperPatch{{Name: "patch1"}},
-			expectedCmd: exec.Command(zypper, "info", "-t", "patch", "patch1"),
-			stdout: []byte(`
-Information for patch patch1:
------------------------------
-Name        : patch1
-Conflicts   : [1]
-    pkg1 < 1.0
-`),
-			wantMappings: map[string][]string{"pkg1": {"patch1"}},
-		},
-		{
-			name:        "generic error, want wrapped error",
-			patches:     []*ZypperPatch{{Name: "patch1"}},
-			expectedCmd: exec.Command(zypper, "info", "-t", "patch", "patch1"),
-			mockErr:     errors.New("generic error"),
-			wantErr:     errors.New(`error running /usr/bin/zypper with args ["info" "-t" "patch" "patch1"]: generic error, stdout: "", stderr: "stderr"`),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.expectedCmd != nil {
-				mockCommandRunner.EXPECT().
-					Run(testCtx, utilmocks.EqCmd(tt.expectedCmd)).
-					Return(tt.stdout, []byte("stderr"), tt.mockErr).
-					Times(1)
-			}
-			gotMappings, gotErr := ZypperPackagesInPatch(testCtx, tt.patches)
-			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
-			utiltest.AssertEquals(t, gotMappings, tt.wantMappings)
-		})
-	}
-}
-
-func TestZypperInstall(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
-	runner = mockCommandRunner
-
-	exitErr := exec.Command("false").Run()
-	exitErr102 := exec.Command("bash", "-c", "exit 102").Run()
-	patches := []*ZypperPatch{{Name: "patch1"}}
-	pkgs := []*PkgInfo{{Name: "pkg1"}}
-	expectedCmd := exec.Command(zypper, append(zypperInstallArgs, "patch:patch1", "package:pkg1")...)
-
-	tests := []struct {
-		name    string
-		stdout  []byte
-		mockErr error
-		wantErr error
-	}{
-		{
-			name:    "successful run, want nil error",
-			wantErr: nil,
-		},
-		{
-			name:    "exit code 102 (reboot needed), want nil error",
-			mockErr: exitErr102,
-			wantErr: nil,
-		},
-		{
-			name:    "exit code 1, want exit error propagated",
-			mockErr: exitErr,
-			wantErr: exitErr,
-		},
-		{
-			name:    "generic error, want wrapped error",
-			stdout:  []byte("stdout"),
-			mockErr: errors.New("generic error"),
-			wantErr: errors.New(`error running /usr/bin/zypper with args ["--gpg-auto-import-keys" "--non-interactive" "install" "--auto-agree-with-licenses" "patch:patch1" "package:pkg1"]: generic error, stdout: "stdout", stderr: "stderr"`),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockCommandRunner.EXPECT().
-				Run(testCtx, utilmocks.EqCmd(expectedCmd)).
-				Return(tt.stdout, []byte("stderr"), tt.mockErr).
-				Times(1)
-
-			gotErr := ZypperInstall(testCtx, patches, pkgs)
-			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
-		})
-	}
-}
-
-func TestZypperPatchesWithOptions(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
-	runner = mockCommandRunner
-
-	tests := []struct {
-		name        string
-		options     []ZypperListOption
-		expectedCmd *exec.Cmd
-	}{
-		{
-			name:        "category filter, want category flags in command",
-			options:     []ZypperListOption{ZypperListPatchCategories([]string{"security", "recommended"})},
-			expectedCmd: exec.Command(zypper, append(zypperListPatchesArgs, "--category=security", "--category=recommended")...),
-		},
-		{
-			name:        "severity filter, want severity flags in command",
-			options:     []ZypperListOption{ZypperListPatchSeverities([]string{"critical", "important"})},
-			expectedCmd: exec.Command(zypper, append(zypperListPatchesArgs, "--severity=critical", "--severity=important")...),
-		},
-		{
-			name:        "with optional, want with-optional and all flags in command",
-			options:     []ZypperListOption{ZypperListPatchWithOptional(true)},
-			expectedCmd: exec.Command(zypper, append(zypperListPatchesArgs, "--with-optional", "--all")...),
-		},
-		{
-			name:        "all, want all flag in command",
-			options:     []ZypperListOption{ZypperListPatchAll(true)},
-			expectedCmd: exec.Command(zypper, append(zypperListPatchesArgs, "--all")...),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockCommandRunner.EXPECT().
-				Run(testCtx, utilmocks.EqCmd(tt.expectedCmd)).
-				Return([]byte(""), []byte(""), nil).
-				Times(1)
-
-			_, _ = ZypperPatches(testCtx, tt.options...)
-		})
-	}
-}
-
-func TestParseZypperPatchInfo_Errors(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   string
+		wantMap map[string][]string
 		wantErr error
 	}{
 		{
+			name:  "multiple patch blobs, want parsed mapping",
+			input: patchInfo1,
+			wantMap: map[string][]string{
+				"irqbalance":       {"SUSE-SLE-SERVER-12-SP4-2019-2974", "SUSE-SLE-SERVER-12-SP4-2019-2974"},
+				"common-package":   {"SUSE-SLE-SERVER-12-SP4-2019-2974", "SUSE-SLE-SERVER-12-SP4-2019-2974", "SUSE-SLE-Module-Public-Cloud-12-2019-2026", "SUSE-SLE-Module-Public-Cloud-12-2019-2026"},
+				"python3-requests": {"SUSE-SLE-Module-Public-Cloud-12-2019-2026"},
+			},
+			wantErr: nil,
+		},
+		{
+			name:  "various package name and version formats, want parsed mapping",
+			input: patchInfo2,
+			wantMap: map[string][]string{
+				"libruby2_5-2_5":       {"SUSE-SLE-Module-Basesystem-15-SP5-2023-4176"},
+				"ruby2.5":              {"SUSE-SLE-Module-Basesystem-15-SP5-2023-4176", "SUSE-SLE-Module-Basesystem-15-SP5-2023-4176"},
+				"python3-cryptography": {"SUSE-SLE-Module-Basesystem-15-SP5-2023-4843", "SUSE-SLE-Module-Basesystem-15-SP5-2023-4843", "SUSE-SLE-Module-Basesystem-15-SP5-2023-4843"},
+				"zypper-log":           {"SUSE-SLE-Module-Basesystem-15-SP5-2023-4843"},
+			},
+			wantErr: nil,
+		},
+		{
 			name:    "empty input, want invalid patch information error",
 			input:   "",
+			wantMap: nil,
 			wantErr: errors.New("invalid patch information, did not find patch blobs"),
 		},
 		{
@@ -773,6 +492,7 @@ Name        : foo : bar
 Conflicts   : [1]
     pkg1 < 1.0
 `,
+			wantMap: nil,
 			wantErr: errors.New("invalid name output"),
 		},
 		{
@@ -781,6 +501,7 @@ Conflicts   : [1]
 Information for patch SUSE-SLE-SERVER-12-SP4-2019-2974:
 Name        : patch1
 `,
+			wantMap: nil,
 			wantErr: nil,
 		},
 		{
@@ -791,6 +512,7 @@ Name        : patch1
 Conflicts   : []
     pkg1 < 1.0
 `,
+			wantMap: nil,
 			wantErr: errors.New("invalid patch info"),
 		},
 		{
@@ -801,6 +523,7 @@ Name        : patch1
 Conflicts   : [1]
     pkg1 1.0
 `,
+			wantMap: nil,
 			wantErr: errors.New("invalid package info, can't parse line:     pkg1 1.0"),
 		},
 		{
@@ -811,6 +534,7 @@ Name        : patch1
 Conflicts   : [1]
     srcpackage: < 1.0
 `,
+			wantMap: nil,
 			wantErr: errors.New("invalid package info, can't parse line:     srcpackage: < 1.0"),
 		},
 		{
@@ -821,14 +545,211 @@ Name        : patch1
 Conflicts   : [999999999999999999999999999999]
     pkg1 < 1.0
 `,
+			wantMap: nil,
 			wantErr: errors.New("invalid patch info: invalid conflict info"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, gotErr := parseZypperPatchInfo([]byte(tt.input))
+			gotMap, gotErr := parseZypperPatchInfo([]byte(tt.input))
 			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
+			utiltest.AssertEquals(t, gotMap, tt.wantMap)
+		})
+	}
+}
+
+func TestZypperPackagesInPatch(t *testing.T) {
+	ctx := t.Context()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	runner = mockCommandRunner
+
+	wantZypperPackagesInPatchErr := errors.New(`error running /usr/bin/zypper with args ["info" "-t" "patch" "patch1"]: generic error, stdout: "", stderr: "stderr"`)
+
+	tests := []struct {
+		name             string
+		patches          []*ZypperPatch
+		expectedCommands []utiltest.ExpectedCommand
+		wantErr          error
+		wantMappings     map[string][]string
+	}{
+		{
+			name:         "nil patches, want empty map",
+			patches:      nil,
+			wantMappings: map[string][]string{},
+		},
+		{
+			name:    "successful query, want mappings",
+			patches: []*ZypperPatch{{Name: "patch1"}},
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command(zypper, "info", "-t", "patch", "patch1"),
+					Stdout: []byte("\nInformation for patch patch1:\n-----------------------------\nName        : patch1\nConflicts   : [1]\n    pkg1 < 1.0\n"),
+					Stderr: []byte("stderr"),
+				},
+			},
+			wantMappings: map[string][]string{"pkg1": {"patch1"}},
+		},
+		{
+			name:    "generic error, want wrapped error",
+			patches: []*ZypperPatch{{Name: "patch1"}},
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command(zypper, "info", "-t", "patch", "patch1"),
+					Stderr: []byte("stderr"),
+					Err:    errors.New("generic error"),
+				},
+			},
+			wantErr: wantZypperPackagesInPatchErr,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
+
+			gotMappings, gotErr := ZypperPackagesInPatch(ctx, tt.patches)
+			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
+			utiltest.AssertEquals(t, gotMappings, tt.wantMappings)
+		})
+	}
+}
+
+func TestZypperInstall(t *testing.T) {
+	ctx := t.Context()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	runner = mockCommandRunner
+
+	exitErr := exec.Command("false").Run()
+	exitErr102 := exec.Command("bash", "-c", "exit 102").Run()
+	wantZypperInstallErr := errors.New(`error running /usr/bin/zypper with args ["--gpg-auto-import-keys" "--non-interactive" "install" "--auto-agree-with-licenses" "patch:patch1" "package:pkg1"]: generic error, stdout: "stdout", stderr: "stderr"`)
+	patches := []*ZypperPatch{{Name: "patch1"}}
+	pkgs := []*PkgInfo{{Name: "pkg1"}}
+	expectedCmd := exec.Command(zypper, append(zypperInstallArgs, "patch:patch1", "package:pkg1")...)
+
+	tests := []struct {
+		name             string
+		expectedCommands []utiltest.ExpectedCommand
+		wantErr          error
+	}{
+		{
+			name: "successful run, want nil error",
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    expectedCmd,
+					Stderr: []byte("stderr"),
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "exit code 102 (reboot needed), want nil error",
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    expectedCmd,
+					Stderr: []byte("stderr"),
+					Err:    exitErr102,
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "exit code 1, want exit error propagated",
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    expectedCmd,
+					Stderr: []byte("stderr"),
+					Err:    exitErr,
+				},
+			},
+			wantErr: exitErr,
+		},
+		{
+			name: "generic error, want wrapped error",
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    expectedCmd,
+					Stdout: []byte("stdout"),
+					Stderr: []byte("stderr"),
+					Err:    errors.New("generic error"),
+				},
+			},
+			wantErr: wantZypperInstallErr,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
+
+			gotErr := ZypperInstall(ctx, patches, pkgs)
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
+		})
+	}
+}
+
+func TestZypperPatchesWithOptions(t *testing.T) {
+	ctx := t.Context()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	runner = mockCommandRunner
+
+	tests := []struct {
+		name             string
+		options          []ZypperListOption
+		expectedCommands []utiltest.ExpectedCommand
+	}{
+		{
+			name:    "category filter, want category flags in command",
+			options: []ZypperListOption{ZypperListPatchCategories([]string{"security", "recommended"})},
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd: exec.Command(zypper, append(zypperListPatchesArgs, "--category=security", "--category=recommended")...),
+				},
+			},
+		},
+		{
+			name:    "severity filter, want severity flags in command",
+			options: []ZypperListOption{ZypperListPatchSeverities([]string{"critical", "important"})},
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd: exec.Command(zypper, append(zypperListPatchesArgs, "--severity=critical", "--severity=important")...),
+				},
+			},
+		},
+		{
+			name:    "with optional, want with-optional and all flags in command",
+			options: []ZypperListOption{ZypperListPatchWithOptional(true)},
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd: exec.Command(zypper, append(zypperListPatchesArgs, "--with-optional", "--all")...),
+				},
+			},
+		},
+		{
+			name:    "all, want all flag in command",
+			options: []ZypperListOption{ZypperListPatchAll(true)},
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd: exec.Command(zypper, append(zypperListPatchesArgs, "--all")...),
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
+
+			_, _ = ZypperPatches(ctx, tt.options...)
 		})
 	}
 }
