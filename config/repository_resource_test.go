@@ -28,6 +28,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
+	"google.golang.org/protobuf/testing/protocmp"
 )
 
 var (
@@ -193,17 +194,17 @@ func TestRepositoryResourceValidate(t *testing.T) {
 			gotErr := pr.Validate(ctx)
 			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
 
-			utiltest.AssertEquals(t, pr.ManagedResources(), &ManagedResources{Repositories: []ManagedRepository{*tt.wantManagedRepository}})
-			utiltest.AssertEquals(t, pr.resource.(*repositoryResource).managedRepository, *tt.wantManagedRepository)
+			utiltest.AssertEquals(t, pr.ManagedResources(), &ManagedResources{Repositories: []ManagedRepository{*tt.wantManagedRepository}}, protocmp.Transform())
+			utiltest.AssertEquals(t, pr.resource.(*repositoryResource).managedRepository, *tt.wantManagedRepository, protocmp.Transform())
 		})
 	}
 }
 
 func TestRepositoryResourceCheckState(t *testing.T) {
 	ctx := t.Context()
-	dir := t.TempDir()
-	repoPath := filepath.Join(dir, "repo")
-	gpgPath := filepath.Join(dir, "key.gpg")
+	tmp := t.TempDir()
+	repoPath := filepath.Join(tmp, "repo")
+	gpgPath := filepath.Join(tmp, "key.gpg")
 
 	tests := []struct {
 		name               string
