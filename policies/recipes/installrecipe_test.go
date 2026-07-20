@@ -31,9 +31,9 @@ import (
 func TestInstallRecipe(t *testing.T) {
 	ctx := t.Context()
 
-	tarData := createTarArchive(t, []string{"file.txt"}).Bytes()
+	tar := createTarArchive(t, []string{"file.txt"}).Bytes()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write(tarData)
+		w.Write(tar)
 	}))
 	t.Cleanup(ts.Close)
 
