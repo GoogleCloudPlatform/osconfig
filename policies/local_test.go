@@ -24,6 +24,7 @@ import (
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"google.golang.org/protobuf/encoding/prototext"
+	"google.golang.org/protobuf/testing/protocmp"
 )
 
 const sampleConfig = `
@@ -185,7 +186,7 @@ func TestReadLocalConfig(t *testing.T) {
 			setupMockMetadataServer(t, tt.mockHandler)
 			gotConfig, gotErr := readLocalConfig(context.Background())
 			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
-			utiltest.AssertEquals(t, gotConfig, tt.wantConfig)
+			utiltest.AssertEquals(t, gotConfig, tt.wantConfig, protocmp.Transform())
 		})
 	}
 }
@@ -326,7 +327,7 @@ func TestMergeConfigs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := mergeConfigs(tt.local, tt.effectiveGuestPolicy)
-			utiltest.AssertEquals(t, got, tt.want)
+			utiltest.AssertEquals(t, got, tt.want, protocmp.Transform())
 		})
 	}
 }
