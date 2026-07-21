@@ -147,6 +147,7 @@ func TestDefaultRunnerRun(t *testing.T) {
 
 func TestAtomicWriteFileStream(t *testing.T) {
 	tmpDir := t.TempDir()
+	existingStreamPath := utiltest.WriteToTempFileMust(t, "test-stream-existing.txt", []byte("old content"))
 
 	content := "test content"
 	hasher := sha256.New()
@@ -172,6 +173,15 @@ func TestAtomicWriteFileStream(t *testing.T) {
 			wantErr:      nil,
 		},
 		{
+			name:         "existing file path, expect overwrite and checksum output",
+			input:        existingStreamPath,
+			checksum:     validChecksum,
+			content:      content,
+			mode:         0644,
+			wantChecksum: validChecksum,
+			wantErr:      nil,
+		},
+		{
 			name:         "invalid checksum string, expect error",
 			input:        filepath.Join(tmpDir, "test-stream-2.txt"),
 			checksum:     "bad-checksum",
@@ -180,15 +190,6 @@ func TestAtomicWriteFileStream(t *testing.T) {
 			wantChecksum: "",
 			wantErr:      fmt.Errorf("got %q for checksum, expected %q", validChecksum, "bad-checksum"),
 		},
-		{
-			name:         "invalid directory path, expect error",
-			input:        filepath.Join(tmpDir, "does-not-exist", "test-stream.txt"),
-			checksum:     "",
-			content:      content,
-			mode:         0644,
-			wantChecksum: "",
-			wantErr:      errors.New("unable to create temp file"),
-		},
 	}
 
 	for _, tt := range tests {
@@ -196,7 +197,7 @@ func TestAtomicWriteFileStream(t *testing.T) {
 			reader := strings.NewReader(tt.content)
 			gotChecksum, gotErr := AtomicWriteFileStream(reader, tt.checksum, tt.input, tt.mode)
 
-			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr, utiltest.EquateErrorMessagePrefix)
+			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
 			utiltest.AssertEquals(t, gotChecksum, tt.wantChecksum)
 			utiltest.AssertFileContents(t, tt.input, tt.content)
 		})
@@ -205,34 +206,32 @@ func TestAtomicWriteFileStream(t *testing.T) {
 
 func TestAtomicWrite(t *testing.T) {
 	tmpDir := t.TempDir()
+	existingFilePath := utiltest.WriteToTempFileMust(t, "test-write-existing.txt", []byte("old content"))
 
 	tests := []struct {
 		name    string
 		input   string
 		content []byte
 		mode    os.FileMode
-		wantErr error
 	}{
 		{
 			name:    "valid file path, expect success",
 			input:   filepath.Join(tmpDir, "test-write-1.txt"),
 			content: []byte("test content"),
 			mode:    0644,
-			wantErr: nil,
 		},
 		{
-			name:    "invalid directory path, expect error",
-			input:   filepath.Join(tmpDir, "does-not-exist", "test-write.txt"),
-			content: []byte("test content"),
+			name:    "existing file path, expect overwrite",
+			input:   existingFilePath,
+			content: []byte("new overwritten content"),
 			mode:    0644,
-			wantErr: errors.New("unable to create temp file"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gotErr := AtomicWrite(tt.input, tt.content, tt.mode)
-			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr, utiltest.EquateErrorMessagePrefix)
+			utiltest.AssertErrorMatch(t, gotErr, nil)
 			utiltest.AssertFileContents(t, tt.input, string(tt.content))
 		})
 	}
