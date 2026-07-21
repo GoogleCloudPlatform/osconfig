@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
-	"strings"
 	"testing"
 
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
@@ -23,15 +22,15 @@ func filterErrors(got, want any) bool {
 	return gotOk && wantOk
 }
 
+// EquateError is a cmp.Option that compares errors by exact match of their type and Error() string representation.
+var EquateError = cmp.FilterValues(filterErrors, cmp.Comparer(func(got, want any) bool {
+	gotErr, wantErr := got.(error), want.(error)
+	return reflect.TypeOf(gotErr) == reflect.TypeOf(wantErr) && gotErr.Error() == wantErr.Error()
+}))
+
 // EquateErrorMessage is a cmp.Option that compares errors by exact match of their Error() string representation.
 var EquateErrorMessage = cmp.FilterValues(filterErrors, cmp.Comparer(func(got, want any) bool {
 	return got.(error).Error() == want.(error).Error()
-}))
-
-// EquateErrorMessagePrefix is a cmp.Option that compares errors by checking if either error string is a prefix of the other.
-var EquateErrorMessagePrefix = cmp.FilterValues(filterErrors, cmp.Comparer(func(got, want any) bool {
-	gotErr, wantErr := got.(error).Error(), want.(error).Error()
-	return strings.HasPrefix(gotErr, wantErr) || strings.HasPrefix(wantErr, gotErr)
 }))
 
 // AssertFormatMatch verifies that the got matches the wantFormat regular expression.
@@ -161,15 +160,11 @@ func assertErrorMatch(t *testing.T, gotErr, wantErr error, failNow bool, skipNow
 	if gotErr == nil && wantErr == nil {
 		return
 	}
-	if len(opts) > 0 {
-		if diff := cmp.Diff(wantErr, gotErr, opts...); diff != "" {
-			t.Errorf("Errors mismatch (-want +got):\n%s", diff)
-			if failNow {
-				t.FailNow()
-			}
-		}
-	} else if gotErr == nil || wantErr == nil || reflect.TypeOf(gotErr) != reflect.TypeOf(wantErr) || gotErr.Error() != wantErr.Error() {
-		t.Errorf("Errors mismatch, want %v, got %v", wantErr, gotErr)
+	if len(opts) == 0 {
+		opts = append(opts, EquateError)
+	}
+	if diff := cmp.Diff(wantErr, gotErr, opts...); diff != "" {
+		t.Errorf("Errors mismatch (-want +got):\n%s", diff)
 		if failNow {
 			t.FailNow()
 		}
