@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/packages"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/golang/mock/gomock"
@@ -303,73 +304,154 @@ func TestPopulateInstalledCache(t *testing.T) {
 }
 
 func TestPackageResourceCheckState(t *testing.T) {
-	ctx := context.Background()
-	var tests = []struct {
-		name               string
-		installedCache     map[string]struct{}
-		cachePointer       *packageCache
-		prpb               *agentendpointpb.OSPolicy_Resource_PackageResource
-		wantInDesiredState bool
-	}{
-		// We only need to test the full set once as all the logic is shared.
-		{
-			"AptInstalledNeedsInstalled",
-			map[string]struct{}{"foo": {}},
-			aptInstalled,
-			aptInstalledPR,
-			true,
-		},
-		{
-			"AptInstalledNeedsRemoved",
-			map[string]struct{}{"foo": {}},
-			aptInstalled,
-			aptRemovedPR,
-			false,
-		},
-		{
-			"AptRemovedNeedsInstalled",
-			map[string]struct{}{},
-			aptInstalled,
-			aptInstalledPR,
-			false,
-		},
-		{
-			"AptRemovedNeedsRemoved",
-			map[string]struct{}{},
-			aptInstalled,
-			aptRemovedPR,
-			true,
-		},
+	ctx := t.Context()
 
+	tmpFile := utiltest.WriteToTempFileMust(t, "foo.deb", []byte{})
+	tmpRpmFile := utiltest.WriteToTempFileMust(t, "foo.rpm", []byte{})
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	packages.SetCommandRunner(mockCommandRunner)
+
+	tests := []struct {
+		name               string
+		setup              func(t *testing.T)
+		cachePointer       *packageCache
+		packageResourcePB  *agentendpointpb.OSPolicy_Resource_PackageResource
+		wantInDesiredState bool
+		wantErr            error
+	}{
+		{
+			name: "valid Apt installed package in desired state, expect CheckState true",
+			setup: func(t *testing.T) {
+				aptInstalled.cache = map[string]struct{}{"foo": {}}
+				aptInstalled.refreshed = time.Now()
+			},
+			cachePointer:       aptInstalled,
+			packageResourcePB:  aptInstalledPR,
+			wantInDesiredState: true,
+			wantErr:            nil,
+		},
+		{
+			name: "valid Apt installed package not in desired state, expect CheckState false",
+			setup: func(t *testing.T) {
+				aptInstalled.cache = map[string]struct{}{"foo": {}}
+				aptInstalled.refreshed = time.Now()
+			},
+			cachePointer:       aptInstalled,
+			packageResourcePB:  aptRemovedPR,
+			wantInDesiredState: false,
+			wantErr:            nil,
+		},
+		{
+			name: "valid Apt removed package not in desired state, expect CheckState false",
+			setup: func(t *testing.T) {
+				aptInstalled.cache = map[string]struct{}{}
+				aptInstalled.refreshed = time.Now()
+			},
+			cachePointer:       aptInstalled,
+			packageResourcePB:  aptInstalledPR,
+			wantInDesiredState: false,
+			wantErr:            nil,
+		},
+		{
+			name: "valid Apt removed package in desired state, expect CheckState true",
+			setup: func(t *testing.T) {
+				aptInstalled.cache = map[string]struct{}{}
+				aptInstalled.refreshed = time.Now()
+			},
+			cachePointer:       aptInstalled,
+			packageResourcePB:  aptRemovedPR,
+			wantInDesiredState: true,
+			wantErr:            nil,
+		},
 		// For the rest of the package types we only need to test one scenario.
 		{
-			"GooGetInstalledNeedsInstalled",
-			map[string]struct{}{"foo": {}},
-			gooInstalled,
-			googetInstalledPR,
-			true,
+			name: "valid GooGet installed package in desired state, expect CheckState true",
+			setup: func(t *testing.T) {
+				gooInstalled.cache = map[string]struct{}{"foo": {}}
+				gooInstalled.refreshed = time.Now()
+			},
+			cachePointer:       gooInstalled,
+			packageResourcePB:  googetInstalledPR,
+			wantInDesiredState: true,
+			wantErr:            nil,
 		},
 		{
-			"YUMInstalledNeedsInstalled",
-			map[string]struct{}{"foo": {}},
-			yumInstalled,
-			yumInstalledPR,
-			true,
+			name: "valid Yum installed package in desired state, expect CheckState true",
+			setup: func(t *testing.T) {
+				yumInstalled.cache = map[string]struct{}{"foo": {}}
+				yumInstalled.refreshed = time.Now()
+			},
+			cachePointer:       yumInstalled,
+			packageResourcePB:  yumInstalledPR,
+			wantInDesiredState: true,
+			wantErr:            nil,
 		},
 		{
-			"ZypperInstalledNeedsInstalled",
-			map[string]struct{}{"foo": {}},
-			zypperInstalled,
-			zypperInstalledPR,
-			true,
+			name: "valid Zypper installed package in desired state, expect CheckState true",
+			setup: func(t *testing.T) {
+				zypperInstalled.cache = map[string]struct{}{"foo": {}}
+				zypperInstalled.refreshed = time.Now()
+			},
+			cachePointer:       zypperInstalled,
+			packageResourcePB:  zypperInstalledPR,
+			wantInDesiredState: true,
+			wantErr:            nil,
+		},
+		{
+			name: "valid Deb installed package in desired state, expect CheckState true",
+			setup: func(t *testing.T) {
+				dpkgCmd := exec.Command("/usr/bin/dpkg-deb", "-I", tmpFile)
+				mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(dpkgCmd)).Return([]byte("Package: foo\nVersion: 1:1dummy-g1\nArchitecture: amd64"), nil, nil)
+				debInstalled.cache = map[string]struct{}{"foo": {}}
+				debInstalled.refreshed = time.Now()
+			},
+			cachePointer:       debInstalled,
+			packageResourcePB:  createTestDebPackageResource(tmpFile, false),
+			wantInDesiredState: true,
+			wantErr:            nil,
+		},
+		{
+			name: "valid RPM installed package in desired state, expect CheckState true",
+			setup: func(t *testing.T) {
+				rpmqueryCmd := exec.Command("/usr/bin/rpmquery", "--queryformat", "\\{\"architecture\":\"%{ARCH}\",\"package\":\"%{NAME}\",\"source_name\":\"%{SOURCERPM}\",\"version\":\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\"\\}\n", "-p", tmpRpmFile)
+				mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(rpmqueryCmd)).Return([]byte("{\"architecture\":\"x86_64\",\"package\":\"foo\",\"source_name\":\"foo.src.rpm\",\"version\":\"1.0\"}"), nil, nil)
+				rpmInstalled.cache = map[string]struct{}{"foo": {}}
+				rpmInstalled.refreshed = time.Now()
+			},
+			cachePointer:       rpmInstalled,
+			packageResourcePB:  createRPMPackageResource(tmpRpmFile, false),
+			wantInDesiredState: true,
+			wantErr:            nil,
+		},
+		{
+			name: "unspecified desired state, expect error",
+			setup: func(t *testing.T) {
+				aptInstalled.cache = map[string]struct{}{"foo": {}}
+				aptInstalled.refreshed = time.Now()
+			},
+			packageResourcePB: &agentendpointpb.OSPolicy_Resource_PackageResource{
+				DesiredState: agentendpointpb.OSPolicy_Resource_PackageResource_DESIRED_STATE_UNSPECIFIED,
+				SystemPackage: &agentendpointpb.OSPolicy_Resource_PackageResource_Apt{
+					Apt: &agentendpointpb.OSPolicy_Resource_PackageResource_APT{Name: "foo"},
+				},
+			},
+			cachePointer:       aptInstalled,
+			wantInDesiredState: false,
+			wantErr:            errors.New("DesiredState field not set or references state: \"DESIRED_STATE_UNSPECIFIED\""),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.setup(t)
+
 			pr := &OSPolicyResource{
 				OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
-					ResourceType: &agentendpointpb.OSPolicy_Resource_Pkg{Pkg: tt.prpb},
+					ResourceType: &agentendpointpb.OSPolicy_Resource_Pkg{Pkg: tt.packageResourcePB},
 				},
 			}
 			defer pr.Cleanup(ctx)
@@ -381,15 +463,9 @@ func TestPackageResourceCheckState(t *testing.T) {
 				t.Fatalf("Unexpected Validate error: %v", err)
 			}
 
-			tt.cachePointer.cache = tt.installedCache
-			tt.cachePointer.refreshed = time.Now()
-			if err := pr.CheckState(ctx); err != nil {
-				t.Fatalf("Unexpected error: %v", err)
-			}
-
-			if tt.wantInDesiredState != pr.InDesiredState() {
-				t.Fatalf("Unexpected InDesiredState, want: %t, got: %t", tt.wantInDesiredState, pr.InDesiredState())
-			}
+			gotErr := pr.CheckState(ctx)
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
+			utiltest.AssertEquals(t, pr.InDesiredState(), tt.wantInDesiredState)
 		})
 	}
 }
@@ -700,4 +776,30 @@ func TestUpdatePackageInfoCacheTimeout(t *testing.T) {
 	if _, ok := packageInfoCacheStore[key]; ok {
 		t.Errorf("Cache should not contain expired data, cache: %+v", packageInfoCacheStore)
 	}
+}
+
+func TestPackageResourceCleanup(t *testing.T) {
+	ctx := t.Context()
+	tmpDir := t.TempDir()
+	tmpCacheFile := filepath.Join(t.TempDir(), "test.cache")
+	utiltest.OverrideVariable(t, &packageInfoCacheFile, tmpCacheFile)
+	packageInfoCacheStore = packageInfoCache{"test-key": packageInfo{}}
+
+	pr := &OSPolicyResource{
+		OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
+			ResourceType: &agentendpointpb.OSPolicy_Resource_Pkg{Pkg: aptInstalledPR},
+		},
+	}
+	if err := pr.Validate(ctx); err != nil {
+		t.Fatalf("Unexpected Validate error: %v", err)
+	}
+
+	pr.resource.(*packageResouce).managedPackage.tempDir = tmpDir
+
+	gotErr := pr.Cleanup(ctx)
+
+	utiltest.AssertErrorMatch(t, gotErr, nil)
+	utiltest.AssertEquals(t, util.Exists(tmpDir), false)
+	utiltest.AssertEquals(t, packageInfoCacheStore, packageInfoCache(nil))
+	utiltest.AssertEquals(t, util.Exists(tmpCacheFile), true)
 }
