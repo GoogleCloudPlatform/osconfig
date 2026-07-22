@@ -14,11 +14,17 @@
 package policies
 
 import (
+	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"google.golang.org/protobuf/encoding/prototext"
+	"google.golang.org/protobuf/testing/protocmp"
 )
 
 const sampleConfig = `
@@ -124,4 +130,204 @@ func TestMerging(t *testing.T) {
 		t.Errorf("Wrong recipe state. Got: %d(%s), want: %d(%s).", rs, rs.String(), want, want.String())
 	}
 
+}
+
+func setupMockMetadataServer(t *testing.T, handler http.HandlerFunc) *httptest.Server {
+	t.Helper()
+	ts := httptest.NewServer(handler)
+	t.Setenv("GCE_METADATA_HOST", strings.TrimPrefix(ts.URL, "http://"))
+	t.Cleanup(ts.Close)
+	return ts
+}
+
+func TestReadLocalConfig(t *testing.T) {
+	unmarshalError := json.Unmarshal([]byte(`invalid json`), &localConfig{})
+
+	tests := []struct {
+		name        string
+		mockHandler http.HandlerFunc
+		wantConfig  *localConfig
+		wantErr     error
+	}{
+		{
+			name: "metadata returns config, want parsed config",
+			mockHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`{"packages": [{"name": "p1"}]}`))
+			},
+			wantConfig: &localConfig{
+				Packages: []*pkg{
+					{Package: agentendpointpb.Package{Name: "p1"}},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "metadata returns error, want nil config and nil error",
+			mockHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+			},
+			wantConfig: nil,
+			wantErr:    nil,
+		},
+		{
+			name: "metadata returns invalid JSON, want unmarshal error",
+			mockHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`invalid json`))
+			},
+			wantConfig: &localConfig{},
+			wantErr:    unmarshalError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setupMockMetadataServer(t, tt.mockHandler)
+			gotConfig, gotErr := readLocalConfig(context.Background())
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
+			utiltest.AssertEquals(t, gotConfig, tt.wantConfig, protocmp.Transform())
+		})
+	}
+}
+
+func TestMergeConfigs(t *testing.T) {
+	tests := []struct {
+		name                 string
+		local                *localConfig
+		effectiveGuestPolicy *agentendpointpb.EffectiveGuestPolicy
+		want                 *agentendpointpb.EffectiveGuestPolicy
+	}{
+		{
+			name:                 "egp is nil, local is nil, want empty guest policy",
+			local:                nil,
+			effectiveGuestPolicy: nil,
+			want:                 &agentendpointpb.EffectiveGuestPolicy{},
+		},
+		{
+			name: "egp is nil, local is not nil, want local config merged",
+			local: &localConfig{
+				Packages: []*pkg{
+					{Package: agentendpointpb.Package{Name: "p1"}},
+				},
+			},
+			effectiveGuestPolicy: nil,
+			want: &agentendpointpb.EffectiveGuestPolicy{
+				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
+					{Package: &agentendpointpb.Package{Name: "p1"}},
+				},
+			},
+		},
+		{
+			name:  "local is nil, egp is not nil, want egp returned unchanged",
+			local: nil,
+			effectiveGuestPolicy: &agentendpointpb.EffectiveGuestPolicy{
+				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
+					{Package: &agentendpointpb.Package{Name: "p1"}},
+				},
+			},
+			want: &agentendpointpb.EffectiveGuestPolicy{
+				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
+					{Package: &agentendpointpb.Package{Name: "p1"}},
+				},
+			},
+		},
+		{
+			name: "local has package already in egp, want no duplicate package",
+			local: &localConfig{
+				Packages: []*pkg{
+					{Package: agentendpointpb.Package{Name: "p1"}},
+				},
+			},
+			effectiveGuestPolicy: &agentendpointpb.EffectiveGuestPolicy{
+				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
+					{Package: &agentendpointpb.Package{Name: "p1"}},
+				},
+			},
+			want: &agentendpointpb.EffectiveGuestPolicy{
+				Packages: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackage{
+					{Package: &agentendpointpb.Package{Name: "p1"}},
+				},
+			},
+		},
+		{
+			name: "local has yum repository already in egp, want yum repository overridden",
+			local: &localConfig{
+				PackageRepositories: []*packageRepository{
+					{
+						PackageRepository: agentendpointpb.PackageRepository{
+							Repository: &agentendpointpb.PackageRepository_Yum{
+								Yum: &agentendpointpb.YumRepository{Id: "repo1", BaseUrl: "http://local-url"},
+							},
+						},
+					},
+				},
+			},
+			effectiveGuestPolicy: &agentendpointpb.EffectiveGuestPolicy{
+				PackageRepositories: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackageRepository{
+					{
+						PackageRepository: &agentendpointpb.PackageRepository{
+							Repository: &agentendpointpb.PackageRepository_Yum{
+								Yum: &agentendpointpb.YumRepository{Id: "repo1", BaseUrl: "http://egp-url"},
+							},
+						},
+					},
+				},
+			},
+			want: &agentendpointpb.EffectiveGuestPolicy{
+				PackageRepositories: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackageRepository{
+					{
+						PackageRepository: &agentendpointpb.PackageRepository{
+							Repository: &agentendpointpb.PackageRepository_Yum{
+								Yum: &agentendpointpb.YumRepository{Id: "repo1", BaseUrl: "http://egp-url"},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "local has zypper repository already in egp, want zypper repository overridden",
+			local: &localConfig{
+				PackageRepositories: []*packageRepository{
+					{
+						PackageRepository: agentendpointpb.PackageRepository{
+							Repository: &agentendpointpb.PackageRepository_Zypper{
+								Zypper: &agentendpointpb.ZypperRepository{Id: "repo1", BaseUrl: "http://local-url"},
+							},
+						},
+					},
+				},
+			},
+			effectiveGuestPolicy: &agentendpointpb.EffectiveGuestPolicy{
+				PackageRepositories: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackageRepository{
+					{
+						PackageRepository: &agentendpointpb.PackageRepository{
+							Repository: &agentendpointpb.PackageRepository_Zypper{
+								Zypper: &agentendpointpb.ZypperRepository{Id: "repo1", BaseUrl: "http://egp-url"},
+							},
+						},
+					},
+				},
+			},
+			want: &agentendpointpb.EffectiveGuestPolicy{
+				PackageRepositories: []*agentendpointpb.EffectiveGuestPolicy_SourcedPackageRepository{
+					{
+						PackageRepository: &agentendpointpb.PackageRepository{
+							Repository: &agentendpointpb.PackageRepository_Zypper{
+								Zypper: &agentendpointpb.ZypperRepository{Id: "repo1", BaseUrl: "http://egp-url"},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := mergeConfigs(tt.local, tt.effectiveGuestPolicy)
+			utiltest.AssertEquals(t, got, tt.want, protocmp.Transform())
+		})
+	}
 }
