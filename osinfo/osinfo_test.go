@@ -27,8 +27,8 @@ import (
 func TestDefaultProvider_GetOSInfo(t *testing.T) {
 	tmpDir := t.TempDir()
 	doesNotExist := filepath.Join(tmpDir, "does_not_exist")
-	overrideOracleReleaseFilepath(t, doesNotExist)
-	overrideRedHatReleaseFilepath(t, doesNotExist)
+	utiltest.OverrideVariable(t, &oracleReleaseFilepath, doesNotExist)
+	utiltest.OverrideVariable(t, &redHatReleaseFilepath, doesNotExist)
 
 	tests := []struct {
 		name      string
@@ -41,7 +41,7 @@ func TestDefaultProvider_GetOSInfo(t *testing.T) {
 			setupFunc: func(t *testing.T) {
 				debianReleaseFile := filepath.Join(tmpDir, "debian_release_file")
 				enforceFileWithContent(t, debianReleaseFile, []byte(debianReleaseFileContent))
-				overrideDefaultReleaseFilepath(t, debianReleaseFile)
+				utiltest.OverrideVariable(t, &defaultReleaseFilepath, debianReleaseFile)
 			},
 			wantInfo: OSInfo{
 				ShortName: "debian",
@@ -53,7 +53,7 @@ func TestDefaultProvider_GetOSInfo(t *testing.T) {
 		{
 			name: "release file is a directory causing read error, want fallback OSInfo and nil error",
 			setupFunc: func(t *testing.T) {
-				overrideDefaultReleaseFilepath(t, tmpDir)
+				utiltest.OverrideVariable(t, &defaultReleaseFilepath, tmpDir)
 			},
 			wantInfo: OSInfo{
 				ShortName: "linux",
