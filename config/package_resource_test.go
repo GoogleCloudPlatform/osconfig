@@ -508,16 +508,16 @@ func TestPackageResourceCheckState(t *testing.T) {
 func createTestDebPackageResource(localPath string, pullDeps bool) *agentendpointpb.OSPolicy_Resource_PackageResource {
 	debPR := &agentendpointpb.OSPolicy_Resource_PackageResource_Deb{
 		PullDeps: pullDeps,
-		Source:   &agentendpointpb.OSPolicy_Resource_File{
+		Source: &agentendpointpb.OSPolicy_Resource_File{
 			Type: &agentendpointpb.OSPolicy_Resource_File_LocalPath{
 				LocalPath: localPath,
 			},
 		},
 	}
 	return &agentendpointpb.OSPolicy_Resource_PackageResource{
-			DesiredState:  agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
-			SystemPackage: &agentendpointpb.OSPolicy_Resource_PackageResource_Deb_{Deb: debPR},
-		}
+		DesiredState:  agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
+		SystemPackage: &agentendpointpb.OSPolicy_Resource_PackageResource_Deb_{Deb: debPR},
+	}
 }
 
 func createRPMPackageResource(localPath string, pullDeps bool) *agentendpointpb.OSPolicy_Resource_PackageResource {
@@ -526,197 +526,203 @@ func createRPMPackageResource(localPath string, pullDeps bool) *agentendpointpb.
 		Source:   &agentendpointpb.OSPolicy_Resource_File{Type: &agentendpointpb.OSPolicy_Resource_File_LocalPath{LocalPath: localPath}},
 	}
 	return &agentendpointpb.OSPolicy_Resource_PackageResource{
-			DesiredState:  agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
-			SystemPackage: &agentendpointpb.OSPolicy_Resource_PackageResource_Rpm{Rpm: rpmPR},
+		DesiredState:  agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
+		SystemPackage: &agentendpointpb.OSPolicy_Resource_PackageResource_Rpm{Rpm: rpmPR},
 	}
 }
 
 func TestPackageResourceEnforceState(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	packages.SetCommandRunner(mockCommandRunner)
 
-	tmpDir := t.TempDir()
-	tmpFile := filepath.Join(tmpDir, "foo.deb")
-	if err := ioutil.WriteFile(tmpFile, nil, 0644); err != nil {
-		t.Fatal(err)
-	}
-
-	tmpRpmFile := filepath.Join(tmpDir, "foo.rpm")
-	if err := ioutil.WriteFile(tmpRpmFile, nil, 0644); err != nil {
-		t.Fatal(err)
-	}
-
-	dpkgCmd := exec.Command("/usr/bin/dpkg-deb", "-I", tmpFile)
-	mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(dpkgCmd)).Return([]byte("Package: foo\nVersion: 1:1dummy-g1\nArchitecture: amd64"), nil, nil).AnyTimes()
-
-	rpmqueryCmd := exec.Command("/usr/bin/rpmquery", "--queryformat", "\\{\"architecture\":\"%{ARCH}\",\"package\":\"%{NAME}\",\"source_name\":\"%{SOURCERPM}\",\"version\":\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\"\\}\n", "-p", tmpRpmFile)
-	mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(rpmqueryCmd)).Return([]byte("{\"architecture\":\"x86_64\",\"package\":\"foo\",\"source_name\":\"foo.src.rpm\",\"version\":\"1.0\"}"), nil, nil).AnyTimes()
+	tmpFile := utiltest.WriteToTempFileMust(t, "foo.deb", []byte{})
+	tmpRpmFile := utiltest.WriteToTempFileMust(t, "foo.rpm", []byte{})
 
 	var tests = []struct {
-		name         string
-		prpb         *agentendpointpb.OSPolicy_Resource_PackageResource
-		cachePointer *packageCache
-		expectedCmds []*exec.Cmd
-		setup        func(t *testing.T)
-		mockCmdErr   error
-		wantErr      error
+		name              string
+		packageResourcePB *agentendpointpb.OSPolicy_Resource_PackageResource
+		cachePointer      *packageCache
+		expectedCommands  []utiltest.ExpectedCommand
+		setup             func(t *testing.T)
+		wantErr           error
 	}{
 		{
-			name:         "AptInstalled",
-			prpb:         aptInstalledPR,
-			cachePointer: aptInstalled,
-			expectedCmds: func() []*exec.Cmd {
-				cmd1 := exec.Command("/usr/bin/apt-get", "update")
-				cmd1.Env = append(os.Environ(),
-					"DEBIAN_FRONTEND=noninteractive",
-				)
-				cmd2 := exec.Command("/usr/bin/apt-get", "install", "-y", "foo")
-				cmd2.Env = append(os.Environ(),
-					"DEBIAN_FRONTEND=noninteractive",
-				)
-				return []*exec.Cmd{cmd1, cmd2}
-			}(),
-			setup: func(t *testing.T) {},
-		},
-		{
-			name:         "AptRemoved",
-			prpb:         aptRemovedPR,
-			cachePointer: aptInstalled,
-			expectedCmds: func() []*exec.Cmd {
-				cmd1 := exec.Command("/usr/bin/apt-get", "remove", "-y", "foo")
-				cmd1.Env = append(os.Environ(),
-					"DEBIAN_FRONTEND=noninteractive",
-				)
-				return []*exec.Cmd{cmd1}
-			}(),
-			setup: func(t *testing.T) {},
-		},
-		{
-			name:         "GooGetInstalled",
-			prpb:         googetInstalledPR,
-			cachePointer: gooInstalled,
-			expectedCmds: []*exec.Cmd{exec.Command("googet.exe", "-noconfirm", "install", "foo")},
-			setup:        func(t *testing.T) {},
-		},
-		{
-			name:         "GooGetRemoved",
-			prpb:         googetRemovedPR,
-			cachePointer: gooInstalled,
-			expectedCmds: []*exec.Cmd{exec.Command("googet.exe", "-noconfirm", "remove", "foo")},
-			setup:        func(t *testing.T) {},
-		},
-		{
-			name:         "YumInstalled",
-			prpb:         yumInstalledPR,
-			cachePointer: yumInstalled,
-			expectedCmds: []*exec.Cmd{exec.Command("/usr/bin/yum", "install", "--assumeyes", "foo")},
-			setup:        func(t *testing.T) {},
-		},
-		{
-			name:         "YumRemoved",
-			prpb:         yumRemovedPR,
-			cachePointer: yumInstalled,
-			expectedCmds: []*exec.Cmd{exec.Command("/usr/bin/yum", "remove", "--assumeyes", "foo")},
-			setup:        func(t *testing.T) {},
-		},
-		{
-			name:         "ZypperInstalled",
-			prpb:         zypperInstalledPR,
-			cachePointer: zypperInstalled,
-			expectedCmds: []*exec.Cmd{exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "foo")},
-			setup:        func(t *testing.T) {},
-		},
-		{
-			name:         "ZypperRemoved",
-			prpb:         zypperRemovedPR,
-			cachePointer: zypperInstalled,
-			expectedCmds: []*exec.Cmd{exec.Command("/usr/bin/zypper", "--non-interactive", "remove", "foo")},
-			setup:        func(t *testing.T) {},
-		},
-		{
-			name:         "DebInstalled_PullDepsFalse",
-			prpb:         createTestDebPackageResource(tmpFile, false),
-			cachePointer: debInstalled,
-			expectedCmds: []*exec.Cmd{
-				exec.Command("/usr/bin/dpkg", "--install", tmpFile),
+			name:              "valid Apt installed package, expect successful enforcement",
+			packageResourcePB: aptInstalledPR,
+			cachePointer:      aptInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/apt-get", "update"), Envs: []string{"DEBIAN_FRONTEND=noninteractive"}},
+				{Cmd: exec.Command("/usr/bin/apt-get", "install", "-y", "foo"), Envs: []string{"DEBIAN_FRONTEND=noninteractive"}},
 			},
-			setup: func(t *testing.T) {},
+			setup:   func(t *testing.T) { aptInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: nil,
 		},
 		{
-			name:         "DebInstalled_PullDepsTrue",
-			prpb:         createTestDebPackageResource(tmpFile, true),
-			cachePointer: debInstalled,
-			expectedCmds: func() []*exec.Cmd {
-				cmd2 := exec.Command("/usr/bin/apt-get", "install", "-y", tmpFile)
-				cmd2.Env = append(os.Environ(), "DEBIAN_FRONTEND=noninteractive")
-				return []*exec.Cmd{cmd2}
-			}(),
-			setup: func(t *testing.T) {},
-		},
-		{
-			name:         "RPMInstalled_PullDepsFalse",
-			prpb:         createRPMPackageResource(tmpRpmFile, false),
-			cachePointer: rpmInstalled,
-			expectedCmds: []*exec.Cmd{
-				exec.Command("/bin/rpm", "--upgrade", "--replacepkgs", "-v", tmpRpmFile),
+			name:              "valid Apt removed package, expect successful enforcement",
+			packageResourcePB: aptRemovedPR,
+			cachePointer:      aptInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/apt-get", "remove", "-y", "foo"), Envs: []string{"DEBIAN_FRONTEND=noninteractive"}},
 			},
-			setup: func(t *testing.T) {},
+			setup:   func(t *testing.T) { aptInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: nil,
 		},
 		{
-			name:         "RPMInstalled_PullDepsTrue_Yum",
-			prpb:         createRPMPackageResource(tmpRpmFile, true),
-			cachePointer: rpmInstalled,
-			expectedCmds: []*exec.Cmd{
-				exec.Command("/usr/bin/yum", "install", "--assumeyes", tmpRpmFile),
+			name:              "valid GooGet installed package, expect successful enforcement",
+			packageResourcePB: googetInstalledPR,
+			cachePointer:      gooInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("googet.exe", "-noconfirm", "install", "foo")},
+			},
+			setup:   func(t *testing.T) { gooInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: nil,
+		},
+		{
+			name:              "valid GooGet removed package, expect successful enforcement",
+			packageResourcePB: googetRemovedPR,
+			cachePointer:      gooInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("googet.exe", "-noconfirm", "remove", "foo")},
+			},
+			setup:   func(t *testing.T) { gooInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: nil,
+		},
+		{
+			name:              "valid Yum installed package, expect successful enforcement",
+			packageResourcePB: yumInstalledPR,
+			cachePointer:      yumInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/yum", "install", "--assumeyes", "foo")},
+			},
+			setup:   func(t *testing.T) { yumInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: nil,
+		},
+		{
+			name:              "valid Yum removed package, expect successful enforcement",
+			packageResourcePB: yumRemovedPR,
+			cachePointer:      yumInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/yum", "remove", "--assumeyes", "foo")},
+			},
+			setup:   func(t *testing.T) { yumInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: nil,
+		},
+		{
+			name:              "valid Zypper installed package, expect successful enforcement",
+			packageResourcePB: zypperInstalledPR,
+			cachePointer:      zypperInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "foo")},
+			},
+			setup:   func(t *testing.T) { zypperInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: nil,
+		},
+		{
+			name:              "valid Zypper removed package, expect successful enforcement",
+			packageResourcePB: zypperRemovedPR,
+			cachePointer:      zypperInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/zypper", "--non-interactive", "remove", "foo")},
+			},
+			setup:   func(t *testing.T) { zypperInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: nil,
+		},
+		{
+			name:              "valid Deb package with PullDeps false, expect dpkg command",
+			packageResourcePB: createTestDebPackageResource(tmpFile, false),
+			cachePointer:      debInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/dpkg-deb", "-I", tmpFile), Stdout: []byte("Package: foo\nVersion: 1:1dummy-g1\nArchitecture: amd64")},
+				{Cmd: exec.Command("/usr/bin/dpkg", "--install", tmpFile)},
+			},
+			setup:   func(t *testing.T) { debInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: nil,
+		},
+		{
+			name:              "valid Deb package with PullDeps true, expect apt-get command",
+			packageResourcePB: createTestDebPackageResource(tmpFile, true),
+			cachePointer:      debInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/dpkg-deb", "-I", tmpFile), Stdout: []byte("Package: foo\nVersion: 1:1dummy-g1\nArchitecture: amd64")},
+				{Cmd: exec.Command("/usr/bin/apt-get", "install", "-y", tmpFile), Envs: []string{"DEBIAN_FRONTEND=noninteractive"}},
+			},
+			setup:   func(t *testing.T) { debInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: nil,
+		},
+		{
+			name:              "valid RPM package with PullDeps false, expect rpm command",
+			packageResourcePB: createRPMPackageResource(tmpRpmFile, false),
+			cachePointer:      rpmInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/rpmquery", "--queryformat", "\\{\"architecture\":\"%{ARCH}\",\"package\":\"%{NAME}\",\"source_name\":\"%{SOURCERPM}\",\"version\":\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\"\\}\n", "-p", tmpRpmFile), Stdout: []byte("{\"architecture\":\"x86_64\",\"package\":\"foo\",\"source_name\":\"foo.src.rpm\",\"version\":\"1.0\"}")},
+				{Cmd: exec.Command("/bin/rpm", "--upgrade", "--replacepkgs", "-v", tmpRpmFile)},
+			},
+			setup:   func(t *testing.T) { rpmInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: nil,
+		},
+		{
+			name:              "valid RPM package with PullDeps true on Yum system, expect yum command",
+			packageResourcePB: createRPMPackageResource(tmpRpmFile, true),
+			cachePointer:      rpmInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/rpmquery", "--queryformat", "\\{\"architecture\":\"%{ARCH}\",\"package\":\"%{NAME}\",\"source_name\":\"%{SOURCERPM}\",\"version\":\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\"\\}\n", "-p", tmpRpmFile), Stdout: []byte("{\"architecture\":\"x86_64\",\"package\":\"foo\",\"source_name\":\"foo.src.rpm\",\"version\":\"1.0\"}")},
+				{Cmd: exec.Command("/usr/bin/yum", "install", "--assumeyes", tmpRpmFile)},
 			},
 			setup: func(t *testing.T) {
 				utiltest.OverrideVariable(t, &packages.YumExists, true)
+				rpmInstalled.cache = map[string]struct{}{"foo": {}}
 			},
+			wantErr: nil,
 		},
 		{
-			name:         "RPMInstalled_PullDepsTrue_Zypper",
-			prpb:         createRPMPackageResource(tmpRpmFile, true),
-			cachePointer: rpmInstalled,
-			expectedCmds: []*exec.Cmd{
-				exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", tmpRpmFile),
+			name:              "valid RPM package with PullDeps true on Zypper system, expect zypper command",
+			packageResourcePB: createRPMPackageResource(tmpRpmFile, true),
+			cachePointer:      rpmInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/rpmquery", "--queryformat", "\\{\"architecture\":\"%{ARCH}\",\"package\":\"%{NAME}\",\"source_name\":\"%{SOURCERPM}\",\"version\":\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\"\\}\n", "-p", tmpRpmFile), Stdout: []byte("{\"architecture\":\"x86_64\",\"package\":\"foo\",\"source_name\":\"foo.src.rpm\",\"version\":\"1.0\"}")},
+				{Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", tmpRpmFile)},
 			},
 			setup: func(t *testing.T) {
 				utiltest.OverrideVariable(t, &packages.YumExists, false)
 				utiltest.OverrideVariable(t, &packages.ZypperExists, true)
+				rpmInstalled.cache = map[string]struct{}{"foo": {}}
 			},
+			wantErr: nil,
 		},
 		{
-			name: "RPMPullDepsWithoutPackageManagers",
-			prpb: createRPMPackageResource(tmpRpmFile, true),
-			cachePointer: rpmInstalled,
+			name:              "RPM package with PullDeps true without package managers, expect error",
+			packageResourcePB: createRPMPackageResource(tmpRpmFile, true),
+			cachePointer:      rpmInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/rpmquery", "--queryformat", "\\{\"architecture\":\"%{ARCH}\",\"package\":\"%{NAME}\",\"source_name\":\"%{SOURCERPM}\",\"version\":\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\"\\}\n", "-p", tmpRpmFile), Stdout: []byte("{\"architecture\":\"x86_64\",\"package\":\"foo\",\"source_name\":\"foo.src.rpm\",\"version\":\"1.0\"}")},
+			},
 			setup: func(t *testing.T) {
 				utiltest.OverrideVariable(t, &packages.YumExists, false)
 				utiltest.OverrideVariable(t, &packages.ZypperExists, false)
+				rpmInstalled.cache = map[string]struct{}{"foo": {}}
 			},
 			wantErr: errors.New("cannot install rpm \"foo\" with 'PullDeps' option as neither yum or zypper exist on system"),
 		},
 		{
-			name:  "AptInstallCommandFailure",
-			prpb:  aptInstalledPR,
-			cachePointer: aptInstalled,
-			setup: func(t *testing.T) {},
-			expectedCmds: func() []*exec.Cmd {
-				cmd := exec.Command("/usr/bin/apt-get", "update")
-				cmd.Env = append(os.Environ(), "DEBIAN_FRONTEND=noninteractive")
-				return []*exec.Cmd{cmd}
-			}(),
-			mockCmdErr: errors.New("apt-get update failed"),
-			wantErr:    errors.New("error installing apt package \"foo\""),
+			name:              "Apt install command failure, expect error",
+			packageResourcePB: aptInstalledPR,
+			cachePointer:      aptInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/apt-get", "update"), Envs: []string{"DEBIAN_FRONTEND=noninteractive"}, Err: errors.New("apt-get update failed")},
+			},
+			setup:   func(t *testing.T) { aptInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: errors.New("error installing apt package \"foo\""),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup(t)
+			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
 
 			pr := &OSPolicyResource{
 				OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
@@ -733,18 +739,9 @@ func TestPackageResourceEnforceState(t *testing.T) {
 				t.Fatalf("Unexpected Validate error: %v", err)
 			}
 
-			tt.cachePointer.cache = map[string]struct{}{"foo": {}}
-
-			for _, expectedCmd := range tt.expectedCmds {
-				mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(expectedCmd)).Return(nil, nil, tt.mockCmdErr)
-			}
-
-			err := pr.EnforceState(ctx)
-			utiltest.AssertErrorMatchAndSkip(t, err, tt.wantErr)
-
-			if tt.cachePointer.cache != nil {
-				t.Errorf("Enforce function did not set package cache to nil")
-			}
+			gotErr := pr.EnforceState(ctx)
+			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
+			utiltest.AssertEquals(t, tt.cachePointer.cache, map[string]struct{}(nil))
 		})
 	}
 }
