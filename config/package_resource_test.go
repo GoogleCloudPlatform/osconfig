@@ -81,12 +81,7 @@ func (m *fakeCommandRunner) Run(_ context.Context, _ *exec.Cmd) ([]byte, []byte,
 
 func TestPackageResourceValidate(t *testing.T) {
 	ctx := t.Context()
-	tmpDir := t.TempDir()
-
-	tmpFile := filepath.Join(tmpDir, "foo")
-	if err := ioutil.WriteFile(tmpFile, nil, 0644); err != nil {
-		t.Fatal(err)
-	}
+	tmpFile := utiltest.WriteToTempFileMust(t, "foo", []byte{})
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
