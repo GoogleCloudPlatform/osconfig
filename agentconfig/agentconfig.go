@@ -104,6 +104,7 @@ var (
 	capabilities = []string{"PATCH_GA", "GUEST_POLICY_BETA", "CONFIG_V1"}
 
 	osConfigWatchConfigTimeout = 10 * time.Minute
+	watchConfigRetryInterval   = 5 * time.Second
 
 	defaultClient = &http.Client{
 		Transport: &http.Transport{
@@ -116,6 +117,8 @@ var (
 
 	freeOSMemory          = strings.ToLower(os.Getenv("OSCONFIG_FREE_OS_MEMORY"))
 	disableInventoryWrite = strings.ToLower(os.Getenv("OSCONFIG_DISABLE_INVENTORY_WRITE"))
+
+	goos = runtime.GOOS
 )
 
 type config struct {
@@ -487,7 +490,7 @@ func WatchConfig(ctx context.Context) error {
 	// Max watch time, after this WatchConfig will return.
 	timeout := time.After(osConfigWatchConfigTimeout)
 	// Min watch loop time.
-	loopTicker := time.NewTicker(5 * time.Second)
+	loopTicker := time.NewTicker(watchConfigRetryInterval)
 	defer loopTicker.Stop()
 	eTag := lEtag.get()
 	webErrorCount := 0
@@ -561,7 +564,7 @@ func SvcPollInterval() time.Duration {
 
 // SerialLogPort is the serial port to log to.
 func SerialLogPort() string {
-	if runtime.GOOS == "windows" {
+	if goos == "windows" {
 		return "COM1"
 	}
 	// Don't write directly to the serial port on Linux as syslog already writes there.
@@ -767,7 +770,7 @@ func Capabilities() []string {
 
 // TaskStateFile is the location of the task state file.
 func TaskStateFile() string {
-	if runtime.GOOS == "windows" {
+	if goos == "windows" {
 		return filepath.Join(GetCacheDirWindows(), "osconfig_task.state")
 	}
 
@@ -776,7 +779,7 @@ func TaskStateFile() string {
 
 // OldTaskStateFile is the location of the task state file.
 func OldTaskStateFile() string {
-	if runtime.GOOS == "windows" {
+	if goos == "windows" {
 		return oldTaskStateFileWindows
 	}
 	return oldTaskStateFileLinux
@@ -784,7 +787,7 @@ func OldTaskStateFile() string {
 
 // RestartFile is the location of the restart required file.
 func RestartFile() string {
-	if runtime.GOOS == "windows" {
+	if goos == "windows" {
 		return filepath.Join(
 			GetCacheDirWindows(), "osconfig_agent_restart_required")
 	}
@@ -799,7 +802,7 @@ func OldRestartFile() string {
 
 // CacheDir is the location of the cache directory.
 func CacheDir() string {
-	if runtime.GOOS == "windows" {
+	if goos == "windows" {
 		return GetCacheDirWindows()
 	}
 

@@ -17,7 +17,10 @@ package config
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -27,6 +30,7 @@ import (
 
 	"github.com/GoogleCloudPlatform/osconfig/packages"
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
@@ -76,16 +80,13 @@ func (m *fakeCommandRunner) Run(_ context.Context, _ *exec.Cmd) ([]byte, []byte,
 }
 
 func TestPackageResourceValidate(t *testing.T) {
-	ctx := context.Background()
-	tmpDir, err := ioutil.TempDir("", "")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(tmpDir)
-	tmpFile := filepath.Join(tmpDir, "foo")
-	if err := ioutil.WriteFile(tmpFile, nil, 0644); err != nil {
-		t.Fatal(err)
-	}
+	ctx := t.Context()
+	tmpFile := utiltest.WriteToTempFileMust(t, "foo", []byte{})
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	t.Cleanup(server.Close)
 
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -93,189 +94,301 @@ func TestPackageResourceValidate(t *testing.T) {
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	packages.SetCommandRunner(mockCommandRunner)
 
-	var tests = []struct {
-		name              string
-		wantErr           bool
-		prpb              *agentendpointpb.OSPolicy_Resource_PackageResource
-		wantMP            ManagedPackage
-		expectedCmd       *exec.Cmd
-		expectedCmdReturn []byte
+	tests := []struct {
+		name               string
+		setup              func(t *testing.T)
+		packageResourcePB  *agentendpointpb.OSPolicy_Resource_PackageResource
+		wantManagedPackage ManagedPackage
+		wantErr            error
 	}{
 		{
-			"Blank",
-			true,
-			&agentendpointpb.OSPolicy_Resource_PackageResource{},
-			ManagedPackage{},
-			nil,
-			nil,
-		},
-		{
-			"AptInstalled",
-			false,
-			aptInstalledPR,
-			ManagedPackage{Apt: &AptPackage{
+			name:              "valid Apt installed package, expect managed Apt package",
+			setup:             func(t *testing.T) {},
+			packageResourcePB: aptInstalledPR,
+			wantManagedPackage: ManagedPackage{Apt: &AptPackage{
 				DesiredState:    agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
 				PackageResource: &agentendpointpb.OSPolicy_Resource_PackageResource_APT{Name: "foo"}}},
-			nil,
-			nil,
+			wantErr: nil,
 		},
 		{
-			"AptRemoved",
-			false,
-			aptRemovedPR,
-			ManagedPackage{Apt: &AptPackage{
+			name:              "valid Apt removed package, expect managed Apt package",
+			setup:             func(t *testing.T) {},
+			packageResourcePB: aptRemovedPR,
+			wantManagedPackage: ManagedPackage{Apt: &AptPackage{
 				DesiredState:    agentendpointpb.OSPolicy_Resource_PackageResource_REMOVED,
 				PackageResource: &agentendpointpb.OSPolicy_Resource_PackageResource_APT{Name: "foo"}}},
-			nil,
-			nil,
+			wantErr: nil,
 		},
 		{
-			"DebInstalled",
-			false,
-			&agentendpointpb.OSPolicy_Resource_PackageResource{
+			name: "valid Deb installed package, expect managed Deb package",
+			setup: func(t *testing.T) {
+				cmd := exec.Command("/usr/bin/dpkg-deb", "-I", tmpFile)
+				cmdReturn := []byte("Package: foo\nVersion: 1:1dummy-g1\nArchitecture: amd64")
+				mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(cmd)).Return(cmdReturn, nil, nil)
+			},
+			packageResourcePB: &agentendpointpb.OSPolicy_Resource_PackageResource{
 				DesiredState: agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
 				SystemPackage: &agentendpointpb.OSPolicy_Resource_PackageResource_Deb_{
 					Deb: &agentendpointpb.OSPolicy_Resource_PackageResource_Deb{
 						Source: &agentendpointpb.OSPolicy_Resource_File{
 							Type: &agentendpointpb.OSPolicy_Resource_File_LocalPath{LocalPath: tmpFile}}}}},
-			ManagedPackage{Deb: &DebPackage{
+			wantManagedPackage: ManagedPackage{Deb: &DebPackage{
 				localPath: tmpFile,
 				name:      "foo",
 				PackageResource: &agentendpointpb.OSPolicy_Resource_PackageResource_Deb{
 					Source: &agentendpointpb.OSPolicy_Resource_File{
 						Type: &agentendpointpb.OSPolicy_Resource_File_LocalPath{LocalPath: tmpFile}}}}},
-			exec.Command("/usr/bin/dpkg-deb", "-I", tmpFile),
-			[]byte("Package: foo\nVersion: 1:1dummy-g1\nArchitecture: amd64"),
+			wantErr: nil,
 		},
 		{
-			"GoGetInstalled",
-			false,
-			googetInstalledPR,
-			ManagedPackage{GooGet: &GooGetPackage{
+			name:              "valid GooGet installed package, expect managed GooGet package",
+			setup:             func(t *testing.T) {},
+			packageResourcePB: googetInstalledPR,
+			wantManagedPackage: ManagedPackage{GooGet: &GooGetPackage{
 				DesiredState:    agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
 				PackageResource: &agentendpointpb.OSPolicy_Resource_PackageResource_GooGet{Name: "foo"}}},
-			nil,
-			nil,
+			wantErr: nil,
 		},
 		{
-			"GooGetRemoved",
-			false,
-			googetRemovedPR,
-			ManagedPackage{GooGet: &GooGetPackage{
+			name:              "valid GooGet removed package, expect managed GooGet package",
+			setup:             func(t *testing.T) {},
+			packageResourcePB: googetRemovedPR,
+			wantManagedPackage: ManagedPackage{GooGet: &GooGetPackage{
 				DesiredState:    agentendpointpb.OSPolicy_Resource_PackageResource_REMOVED,
 				PackageResource: &agentendpointpb.OSPolicy_Resource_PackageResource_GooGet{Name: "foo"}}},
-			nil,
-			nil,
+			wantErr: nil,
 		},
 		{
-			"MSIInstalled",
-			false,
-			&agentendpointpb.OSPolicy_Resource_PackageResource{
+			name:  "valid MSI installed package, expect managed MSI package",
+			setup: func(t *testing.T) {},
+			packageResourcePB: &agentendpointpb.OSPolicy_Resource_PackageResource{
 				DesiredState: agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
 				SystemPackage: &agentendpointpb.OSPolicy_Resource_PackageResource_Msi{
 					Msi: &agentendpointpb.OSPolicy_Resource_PackageResource_MSI{
 						Source: &agentendpointpb.OSPolicy_Resource_File{
 							Type: &agentendpointpb.OSPolicy_Resource_File_LocalPath{LocalPath: tmpFile}}}}},
-			ManagedPackage{MSI: &MSIPackage{
+			wantManagedPackage: ManagedPackage{MSI: &MSIPackage{
 				localPath: tmpFile,
 				PackageResource: &agentendpointpb.OSPolicy_Resource_PackageResource_MSI{
 					Source: &agentendpointpb.OSPolicy_Resource_File{
 						Type: &agentendpointpb.OSPolicy_Resource_File_LocalPath{LocalPath: tmpFile}}}}},
-			nil,
-			nil,
+			wantErr: nil,
 		},
 		{
-			"YumInstalled",
-			false,
-			yumInstalledPR,
-			ManagedPackage{Yum: &YumPackage{
+			name:              "valid Yum installed package, expect managed Yum package",
+			setup:             func(t *testing.T) {},
+			packageResourcePB: yumInstalledPR,
+			wantManagedPackage: ManagedPackage{Yum: &YumPackage{
 				DesiredState:    agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
 				PackageResource: &agentendpointpb.OSPolicy_Resource_PackageResource_YUM{Name: "foo"}}},
-			nil,
-			nil,
+			wantErr: nil,
 		},
 		{
-			"YumRemoved",
-			false,
-			yumRemovedPR,
-			ManagedPackage{Yum: &YumPackage{
+			name:              "valid Yum removed package, expect managed Yum package",
+			setup:             func(t *testing.T) {},
+			packageResourcePB: yumRemovedPR,
+			wantManagedPackage: ManagedPackage{Yum: &YumPackage{
 				DesiredState:    agentendpointpb.OSPolicy_Resource_PackageResource_REMOVED,
 				PackageResource: &agentendpointpb.OSPolicy_Resource_PackageResource_YUM{Name: "foo"}}},
-			nil,
-			nil,
+			wantErr: nil,
 		},
 		{
-			"ZypperInstalled",
-			false,
-			zypperInstalledPR,
-			ManagedPackage{Zypper: &ZypperPackage{
+			name:              "valid Zypper installed package, expect managed Zypper package",
+			setup:             func(t *testing.T) {},
+			packageResourcePB: zypperInstalledPR,
+			wantManagedPackage: ManagedPackage{Zypper: &ZypperPackage{
 				DesiredState:    agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
 				PackageResource: &agentendpointpb.OSPolicy_Resource_PackageResource_Zypper{Name: "foo"}}},
-			nil,
-			nil,
+			wantErr: nil,
 		},
 		{
-			"ZypperRemoved",
-			false,
-			zypperRemovedPR,
-			ManagedPackage{Zypper: &ZypperPackage{
+			name:              "valid Zypper removed package, expect managed Zypper package",
+			setup:             func(t *testing.T) {},
+			packageResourcePB: zypperRemovedPR,
+			wantManagedPackage: ManagedPackage{Zypper: &ZypperPackage{
 				DesiredState:    agentendpointpb.OSPolicy_Resource_PackageResource_REMOVED,
 				PackageResource: &agentendpointpb.OSPolicy_Resource_PackageResource_Zypper{Name: "foo"}}},
-			nil,
-			nil,
+			wantErr: nil,
 		},
 		{
-			"RPMInstalled",
-			false,
-			&agentendpointpb.OSPolicy_Resource_PackageResource{
+			name: "valid RPM installed package, expect managed RPM package",
+			setup: func(t *testing.T) {
+				cmd := exec.Command("/usr/bin/rpmquery", "--queryformat", "\\{\"architecture\":\"%{ARCH}\",\"package\":\"%{NAME}\",\"source_name\":\"%{SOURCERPM}\",\"version\":\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\"\\}\n", "-p", tmpFile)
+				cmdReturn := []byte("{\"architecture\":\"x86_64\",\"package\":\"gcc\",\"source_name\":\"gcc-11.4.1-3.el9.src.rpm\",\"version\":\"11.4.1-3.el9\"}")
+				mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(cmd)).Return(cmdReturn, nil, nil)
+			},
+			packageResourcePB: &agentendpointpb.OSPolicy_Resource_PackageResource{
 				DesiredState: agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
 				SystemPackage: &agentendpointpb.OSPolicy_Resource_PackageResource_Rpm{
 					Rpm: &agentendpointpb.OSPolicy_Resource_PackageResource_RPM{
 						Source: &agentendpointpb.OSPolicy_Resource_File{
 							Type: &agentendpointpb.OSPolicy_Resource_File_LocalPath{LocalPath: tmpFile}}}}},
-			ManagedPackage{RPM: &RPMPackage{
+			wantManagedPackage: ManagedPackage{RPM: &RPMPackage{
 				localPath: tmpFile,
 				name:      "gcc",
 				PackageResource: &agentendpointpb.OSPolicy_Resource_PackageResource_RPM{
 					Source: &agentendpointpb.OSPolicy_Resource_File{
 						Type: &agentendpointpb.OSPolicy_Resource_File_LocalPath{LocalPath: tmpFile}}}}},
-			exec.Command("/usr/bin/rpmquery", "--queryformat", "\\{\"architecture\":\"%{ARCH}\",\"package\":\"%{NAME}\",\"source_name\":\"%{SOURCERPM}\",\"version\":\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\"\\}\n", "-p", tmpFile),
-			[]byte("{\"architecture\":\"x86_64\",\"package\":\"gcc\",\"source_name\":\"gcc-11.4.1-3.el9.src.rpm\",\"version\":\"11.4.1-3.el9\"}"),
+			wantErr: nil,
+		},
+		{
+			name:               "Apt does not exist, expect apt-get missing error",
+			setup:              func(t *testing.T) { utiltest.OverrideVariable(t, &packages.AptExists, false) },
+			packageResourcePB:  aptInstalledPR,
+			wantManagedPackage: ManagedPackage{},
+			wantErr:            errors.New("cannot manage Apt package \"foo\" because apt-get does not exist on the system"),
+		},
+		{
+			name:  "Deb does not exist, expect dpkg missing error",
+			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.DpkgExists, false) },
+			packageResourcePB: &agentendpointpb.OSPolicy_Resource_PackageResource{
+				SystemPackage: &agentendpointpb.OSPolicy_Resource_PackageResource_Deb_{
+					Deb: &agentendpointpb.OSPolicy_Resource_PackageResource_Deb{},
+				},
+			},
+			wantManagedPackage: ManagedPackage{},
+			wantErr:            errors.New("cannot manage Deb package because dpkg does not exist on the system"),
+		},
+		{
+			name:  "Deb not installed state, expect state not applicable error",
+			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.DpkgExists, true) },
+			packageResourcePB: &agentendpointpb.OSPolicy_Resource_PackageResource{
+				DesiredState: agentendpointpb.OSPolicy_Resource_PackageResource_REMOVED,
+				SystemPackage: &agentendpointpb.OSPolicy_Resource_PackageResource_Deb_{
+					Deb: &agentendpointpb.OSPolicy_Resource_PackageResource_Deb{},
+				},
+			},
+			wantManagedPackage: ManagedPackage{},
+			wantErr:            errors.New("desired state of \"REMOVED\" not applicable for deb package"),
+		},
+		{
+			name:               "GooGet does not exist, expect googet missing error",
+			setup:              func(t *testing.T) { utiltest.OverrideVariable(t, &packages.GooGetExists, false) },
+			packageResourcePB:  googetInstalledPR,
+			wantManagedPackage: ManagedPackage{},
+			wantErr:            errors.New("cannot manage GooGet package \"foo\" because googet does not exist on the system"),
+		},
+		{
+			name:  "MSI does not exist, expect msiexec missing error",
+			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.MSIExists, false) },
+			packageResourcePB: &agentendpointpb.OSPolicy_Resource_PackageResource{
+				DesiredState: agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
+				SystemPackage: &agentendpointpb.OSPolicy_Resource_PackageResource_Msi{
+					Msi: &agentendpointpb.OSPolicy_Resource_PackageResource_MSI{},
+				},
+			},
+			wantManagedPackage: ManagedPackage{},
+			wantErr:            errors.New("cannot manage MSI package because msiexec does not exist on the system"),
+		},
+		{
+			name:  "MSI not installed state, expect state not applicable error",
+			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.MSIExists, true) },
+			packageResourcePB: &agentendpointpb.OSPolicy_Resource_PackageResource{
+				DesiredState: agentendpointpb.OSPolicy_Resource_PackageResource_REMOVED,
+				SystemPackage: &agentendpointpb.OSPolicy_Resource_PackageResource_Msi{
+					Msi: &agentendpointpb.OSPolicy_Resource_PackageResource_MSI{},
+				},
+			},
+			wantManagedPackage: ManagedPackage{},
+			wantErr:            errors.New("desired state of \"REMOVED\" not applicable for MSI package"),
+		},
+		{
+			name:               "Yum does not exist, expect yum missing error",
+			setup:              func(t *testing.T) { utiltest.OverrideVariable(t, &packages.YumExists, false) },
+			packageResourcePB:  yumInstalledPR,
+			wantManagedPackage: ManagedPackage{},
+			wantErr:            errors.New("cannot manage Yum package \"foo\" because yum does not exist on the system"),
+		},
+		{
+			name:               "Zypper does not exist, expect zypper missing error",
+			setup:              func(t *testing.T) { utiltest.OverrideVariable(t, &packages.ZypperExists, false) },
+			packageResourcePB:  zypperInstalledPR,
+			wantManagedPackage: ManagedPackage{},
+			wantErr:            errors.New("cannot manage Zypper package \"foo\" because zypper does not exist on the system"),
+		},
+		{
+			name:  "RPM does not exist, expect rpm missing error",
+			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.RPMExists, false) },
+			packageResourcePB: &agentendpointpb.OSPolicy_Resource_PackageResource{
+				DesiredState: agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
+				SystemPackage: &agentendpointpb.OSPolicy_Resource_PackageResource_Rpm{
+					Rpm: &agentendpointpb.OSPolicy_Resource_PackageResource_RPM{},
+				},
+			},
+			wantManagedPackage: ManagedPackage{},
+			wantErr:            errors.New("cannot manage RPM package because rpm does not exist on the system"),
+		},
+		{
+			name:  "RPM not installed state, expect state not applicable error",
+			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.RPMExists, true) },
+			packageResourcePB: &agentendpointpb.OSPolicy_Resource_PackageResource{
+				DesiredState: agentendpointpb.OSPolicy_Resource_PackageResource_REMOVED,
+				SystemPackage: &agentendpointpb.OSPolicy_Resource_PackageResource_Rpm{
+					Rpm: &agentendpointpb.OSPolicy_Resource_PackageResource_RPM{},
+				},
+			},
+			wantManagedPackage: ManagedPackage{},
+			wantErr:            errors.New("desired state of \"REMOVED\" not applicable for rpm package"),
+		},
+		{
+			name:               "unspecified system package, expect unknown package manager error",
+			setup:              func(t *testing.T) {},
+			packageResourcePB:  &agentendpointpb.OSPolicy_Resource_PackageResource{},
+			wantManagedPackage: ManagedPackage{},
+			wantErr:            errors.New("SystemPackage field not set or references unknown package manager: <nil>"),
+		},
+		{
+			name:  "Local path does not exist, expect file not found error",
+			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.RPMExists, true) },
+			packageResourcePB: &agentendpointpb.OSPolicy_Resource_PackageResource{
+				DesiredState: agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
+				SystemPackage: &agentendpointpb.OSPolicy_Resource_PackageResource_Rpm{
+					Rpm: &agentendpointpb.OSPolicy_Resource_PackageResource_RPM{
+						Source: &agentendpointpb.OSPolicy_Resource_File{
+							Type: &agentendpointpb.OSPolicy_Resource_File_LocalPath{LocalPath: "doesnotexist.rpm"},
+						},
+					},
+				},
+			},
+			wantManagedPackage: ManagedPackage{},
+			wantErr:            errors.New("\"doesnotexist.rpm\" does not exist"),
+		},
+		{
+			name:  "Deb remote file download fails, expect 404 error",
+			setup: func(t *testing.T) { utiltest.OverrideVariable(t, &packages.DpkgExists, true) },
+			packageResourcePB: &agentendpointpb.OSPolicy_Resource_PackageResource{
+				DesiredState: agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
+				SystemPackage: &agentendpointpb.OSPolicy_Resource_PackageResource_Deb_{
+					Deb: &agentendpointpb.OSPolicy_Resource_PackageResource_Deb{
+						Source: &agentendpointpb.OSPolicy_Resource_File{
+							Type: &agentendpointpb.OSPolicy_Resource_File_Remote_{
+								Remote: &agentendpointpb.OSPolicy_Resource_File_Remote{Uri: server.URL},
+							},
+						},
+					},
+				},
+			},
+			wantManagedPackage: ManagedPackage{},
+			wantErr:            errors.New("got http status 404 when attempting to download artifact"),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.setup(t)
 			pr := &OSPolicyResource{
 				OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
-					ResourceType: &agentendpointpb.OSPolicy_Resource_Pkg{Pkg: tt.prpb},
+					ResourceType: &agentendpointpb.OSPolicy_Resource_Pkg{Pkg: tt.packageResourcePB},
 				},
 			}
 			defer pr.Cleanup(ctx)
 
-			if tt.expectedCmd != nil {
-				mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(tt.expectedCmd)).Return(tt.expectedCmdReturn, nil, nil)
-			}
+			gotErr := pr.Validate(ctx)
+			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
 
-			err := pr.Validate(ctx)
-			if err != nil && !tt.wantErr {
-				t.Fatalf("Unexpected error: %v", err)
-			}
-			if err == nil && tt.wantErr {
-				t.Fatal("Expected error and did not get one.")
-			}
-
-			wantMR := &ManagedResources{Packages: []ManagedPackage{tt.wantMP}}
-			if err != nil {
-				wantMR = nil
-			}
-
+			wantManagedResources := &ManagedResources{Packages: []ManagedPackage{tt.wantManagedPackage}}
 			opts := []cmp.Option{protocmp.Transform(), cmp.AllowUnexported(ManagedPackage{}), cmp.AllowUnexported(DebPackage{}), cmp.AllowUnexported(RPMPackage{}), cmp.AllowUnexported(MSIPackage{})}
-			if diff := cmp.Diff(pr.ManagedResources(), wantMR, opts...); diff != "" {
-				t.Errorf("OSPolicyResource does not match expectation: (-got +want)\n%s", diff)
-			}
-			if diff := cmp.Diff(pr.resource.(*packageResouce).managedPackage, tt.wantMP, opts...); diff != "" {
-				t.Errorf("packageResouce does not match expectation: (-got +want)\n%s", diff)
-			}
+			utiltest.AssertEquals(t, pr.ManagedResources(), wantManagedResources, opts...)
+			utiltest.AssertEquals(t, pr.resource.(*packageResouce).managedPackage, tt.wantManagedPackage, opts...)
 		})
 	}
 }
@@ -306,7 +419,7 @@ func TestPackageResourceCheckState(t *testing.T) {
 		name               string
 		installedCache     map[string]struct{}
 		cachePointer       *packageCache
-		prpb               *agentendpointpb.OSPolicy_Resource_PackageResource
+		packageResourcePB  *agentendpointpb.OSPolicy_Resource_PackageResource
 		wantInDesiredState bool
 	}{
 		// We only need to test the full set once as all the logic is shared.
@@ -367,7 +480,7 @@ func TestPackageResourceCheckState(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			pr := &OSPolicyResource{
 				OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
-					ResourceType: &agentendpointpb.OSPolicy_Resource_Pkg{Pkg: tt.prpb},
+					ResourceType: &agentendpointpb.OSPolicy_Resource_Pkg{Pkg: tt.packageResourcePB},
 				},
 			}
 			defer pr.Cleanup(ctx)
@@ -392,91 +505,228 @@ func TestPackageResourceCheckState(t *testing.T) {
 	}
 }
 
+func createTestDebPackageResource(localPath string, pullDeps bool) *agentendpointpb.OSPolicy_Resource_PackageResource {
+	debPR := &agentendpointpb.OSPolicy_Resource_PackageResource_Deb{
+		PullDeps: pullDeps,
+		Source: &agentendpointpb.OSPolicy_Resource_File{
+			Type: &agentendpointpb.OSPolicy_Resource_File_LocalPath{
+				LocalPath: localPath,
+			},
+		},
+	}
+	return &agentendpointpb.OSPolicy_Resource_PackageResource{
+		DesiredState:  agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
+		SystemPackage: &agentendpointpb.OSPolicy_Resource_PackageResource_Deb_{Deb: debPR},
+	}
+}
+
+func createRPMPackageResource(localPath string, pullDeps bool) *agentendpointpb.OSPolicy_Resource_PackageResource {
+	rpmPR := &agentendpointpb.OSPolicy_Resource_PackageResource_RPM{
+		PullDeps: pullDeps,
+		Source:   &agentendpointpb.OSPolicy_Resource_File{Type: &agentendpointpb.OSPolicy_Resource_File_LocalPath{LocalPath: localPath}},
+	}
+	return &agentendpointpb.OSPolicy_Resource_PackageResource{
+		DesiredState:  agentendpointpb.OSPolicy_Resource_PackageResource_INSTALLED,
+		SystemPackage: &agentendpointpb.OSPolicy_Resource_PackageResource_Rpm{Rpm: rpmPR},
+	}
+}
+
 func TestPackageResourceEnforceState(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	packages.SetCommandRunner(mockCommandRunner)
 
+	tmpFile := utiltest.WriteToTempFileMust(t, "foo.deb", []byte{})
+	tmpRpmFile := utiltest.WriteToTempFileMust(t, "foo.rpm", []byte{})
+
 	var tests = []struct {
-		name         string
-		prpb         *agentendpointpb.OSPolicy_Resource_PackageResource
-		cachePointer *packageCache
-		expectedCmds []*exec.Cmd
+		name              string
+		packageResourcePB *agentendpointpb.OSPolicy_Resource_PackageResource
+		cachePointer      *packageCache
+		expectedCommands  []utiltest.ExpectedCommand
+		setup             func(t *testing.T)
+		wantErr           error
 	}{
 		{
-			"AptInstalled",
-			aptInstalledPR,
-			aptInstalled,
-			func() []*exec.Cmd {
-				cmd1 := exec.Command("/usr/bin/apt-get", "update")
-				cmd1.Env = append(os.Environ(),
-					"DEBIAN_FRONTEND=noninteractive",
-				)
-				cmd2 := exec.Command("/usr/bin/apt-get", "install", "-y", "foo")
-				cmd2.Env = append(os.Environ(),
-					"DEBIAN_FRONTEND=noninteractive",
-				)
-				return []*exec.Cmd{cmd1, cmd2}
-			}(),
+			name:              "valid Apt installed package, expect successful enforcement",
+			packageResourcePB: aptInstalledPR,
+			cachePointer:      aptInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/apt-get", "update"), Envs: []string{"DEBIAN_FRONTEND=noninteractive"}},
+				{Cmd: exec.Command("/usr/bin/apt-get", "install", "-y", "foo"), Envs: []string{"DEBIAN_FRONTEND=noninteractive"}},
+			},
+			setup:   func(t *testing.T) { aptInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: nil,
 		},
 		{
-			"AptRemoved",
-			aptRemovedPR,
-			aptInstalled,
-			func() []*exec.Cmd {
-				cmd1 := exec.Command("/usr/bin/apt-get", "remove", "-y", "foo")
-				cmd1.Env = append(os.Environ(),
-					"DEBIAN_FRONTEND=noninteractive",
-				)
-				return []*exec.Cmd{cmd1}
-			}(),
+			name:              "valid Apt removed package, expect successful enforcement",
+			packageResourcePB: aptRemovedPR,
+			cachePointer:      aptInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/apt-get", "remove", "-y", "foo"), Envs: []string{"DEBIAN_FRONTEND=noninteractive"}},
+			},
+			setup:   func(t *testing.T) { aptInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: nil,
 		},
 		{
-			"GooGetInstalled",
-			googetInstalledPR,
-			gooInstalled,
-			[]*exec.Cmd{exec.Command("googet.exe", "-noconfirm", "install", "foo")},
+			name:              "valid GooGet installed package, expect successful enforcement",
+			packageResourcePB: googetInstalledPR,
+			cachePointer:      gooInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("googet.exe", "-noconfirm", "install", "foo")},
+			},
+			setup:   func(t *testing.T) { gooInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: nil,
 		},
 		{
-			"GooGetRemoved",
-			googetRemovedPR,
-			gooInstalled,
-			[]*exec.Cmd{exec.Command("googet.exe", "-noconfirm", "remove", "foo")},
+			name:              "valid GooGet removed package, expect successful enforcement",
+			packageResourcePB: googetRemovedPR,
+			cachePointer:      gooInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("googet.exe", "-noconfirm", "remove", "foo")},
+			},
+			setup:   func(t *testing.T) { gooInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: nil,
 		},
 		{
-			"YumInstalled",
-			yumInstalledPR,
-			yumInstalled,
-			[]*exec.Cmd{exec.Command("/usr/bin/yum", "install", "--assumeyes", "foo")},
+			name:              "valid Yum installed package, expect successful enforcement",
+			packageResourcePB: yumInstalledPR,
+			cachePointer:      yumInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/yum", "install", "--assumeyes", "foo")},
+			},
+			setup:   func(t *testing.T) { yumInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: nil,
 		},
 		{
-			"YumRemoved",
-			yumRemovedPR,
-			yumInstalled,
-			[]*exec.Cmd{exec.Command("/usr/bin/yum", "remove", "--assumeyes", "foo")},
+			name:              "valid Yum removed package, expect successful enforcement",
+			packageResourcePB: yumRemovedPR,
+			cachePointer:      yumInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/yum", "remove", "--assumeyes", "foo")},
+			},
+			setup:   func(t *testing.T) { yumInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: nil,
 		},
 		{
-			"ZypperInstalled",
-			zypperInstalledPR,
-			zypperInstalled,
-			[]*exec.Cmd{exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "foo")},
+			name:              "valid Zypper installed package, expect successful enforcement",
+			packageResourcePB: zypperInstalledPR,
+			cachePointer:      zypperInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", "foo")},
+			},
+			setup:   func(t *testing.T) { zypperInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: nil,
 		},
 		{
-			"ZypperRemoved",
-			zypperRemovedPR,
-			zypperInstalled,
-			[]*exec.Cmd{exec.Command("/usr/bin/zypper", "--non-interactive", "remove", "foo")},
+			name:              "valid Zypper removed package, expect successful enforcement",
+			packageResourcePB: zypperRemovedPR,
+			cachePointer:      zypperInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/zypper", "--non-interactive", "remove", "foo")},
+			},
+			setup:   func(t *testing.T) { zypperInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: nil,
+		},
+		{
+			name:              "valid Deb package with PullDeps false, expect dpkg command",
+			packageResourcePB: createTestDebPackageResource(tmpFile, false),
+			cachePointer:      debInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/dpkg-deb", "-I", tmpFile), Stdout: []byte("Package: foo\nVersion: 1:1dummy-g1\nArchitecture: amd64")},
+				{Cmd: exec.Command("/usr/bin/dpkg", "--install", tmpFile)},
+			},
+			setup:   func(t *testing.T) { debInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: nil,
+		},
+		{
+			name:              "valid Deb package with PullDeps true, expect apt-get command",
+			packageResourcePB: createTestDebPackageResource(tmpFile, true),
+			cachePointer:      debInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/dpkg-deb", "-I", tmpFile), Stdout: []byte("Package: foo\nVersion: 1:1dummy-g1\nArchitecture: amd64")},
+				{Cmd: exec.Command("/usr/bin/apt-get", "install", "-y", tmpFile), Envs: []string{"DEBIAN_FRONTEND=noninteractive"}},
+			},
+			setup:   func(t *testing.T) { debInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: nil,
+		},
+		{
+			name:              "valid RPM package with PullDeps false, expect rpm command",
+			packageResourcePB: createRPMPackageResource(tmpRpmFile, false),
+			cachePointer:      rpmInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/rpmquery", "--queryformat", "\\{\"architecture\":\"%{ARCH}\",\"package\":\"%{NAME}\",\"source_name\":\"%{SOURCERPM}\",\"version\":\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\"\\}\n", "-p", tmpRpmFile), Stdout: []byte("{\"architecture\":\"x86_64\",\"package\":\"foo\",\"source_name\":\"foo.src.rpm\",\"version\":\"1.0\"}")},
+				{Cmd: exec.Command("/bin/rpm", "--upgrade", "--replacepkgs", "-v", tmpRpmFile)},
+			},
+			setup:   func(t *testing.T) { rpmInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: nil,
+		},
+		{
+			name:              "valid RPM package with PullDeps true on Yum system, expect yum command",
+			packageResourcePB: createRPMPackageResource(tmpRpmFile, true),
+			cachePointer:      rpmInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/rpmquery", "--queryformat", "\\{\"architecture\":\"%{ARCH}\",\"package\":\"%{NAME}\",\"source_name\":\"%{SOURCERPM}\",\"version\":\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\"\\}\n", "-p", tmpRpmFile), Stdout: []byte("{\"architecture\":\"x86_64\",\"package\":\"foo\",\"source_name\":\"foo.src.rpm\",\"version\":\"1.0\"}")},
+				{Cmd: exec.Command("/usr/bin/yum", "install", "--assumeyes", tmpRpmFile)},
+			},
+			setup: func(t *testing.T) {
+				utiltest.OverrideVariable(t, &packages.YumExists, true)
+				rpmInstalled.cache = map[string]struct{}{"foo": {}}
+			},
+			wantErr: nil,
+		},
+		{
+			name:              "valid RPM package with PullDeps true on Zypper system, expect zypper command",
+			packageResourcePB: createRPMPackageResource(tmpRpmFile, true),
+			cachePointer:      rpmInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/rpmquery", "--queryformat", "\\{\"architecture\":\"%{ARCH}\",\"package\":\"%{NAME}\",\"source_name\":\"%{SOURCERPM}\",\"version\":\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\"\\}\n", "-p", tmpRpmFile), Stdout: []byte("{\"architecture\":\"x86_64\",\"package\":\"foo\",\"source_name\":\"foo.src.rpm\",\"version\":\"1.0\"}")},
+				{Cmd: exec.Command("/usr/bin/zypper", "--gpg-auto-import-keys", "--non-interactive", "install", "--auto-agree-with-licenses", tmpRpmFile)},
+			},
+			setup: func(t *testing.T) {
+				utiltest.OverrideVariable(t, &packages.YumExists, false)
+				utiltest.OverrideVariable(t, &packages.ZypperExists, true)
+				rpmInstalled.cache = map[string]struct{}{"foo": {}}
+			},
+			wantErr: nil,
+		},
+		{
+			name:              "RPM package with PullDeps true without package managers, expect error",
+			packageResourcePB: createRPMPackageResource(tmpRpmFile, true),
+			cachePointer:      rpmInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/rpmquery", "--queryformat", "\\{\"architecture\":\"%{ARCH}\",\"package\":\"%{NAME}\",\"source_name\":\"%{SOURCERPM}\",\"version\":\"%|EPOCH?{%{EPOCH}:}:{}|%{VERSION}-%{RELEASE}\"\\}\n", "-p", tmpRpmFile), Stdout: []byte("{\"architecture\":\"x86_64\",\"package\":\"foo\",\"source_name\":\"foo.src.rpm\",\"version\":\"1.0\"}")},
+			},
+			setup: func(t *testing.T) {
+				utiltest.OverrideVariable(t, &packages.YumExists, false)
+				utiltest.OverrideVariable(t, &packages.ZypperExists, false)
+				rpmInstalled.cache = map[string]struct{}{"foo": {}}
+			},
+			wantErr: errors.New("cannot install rpm \"foo\" with 'PullDeps' option as neither yum or zypper exist on system"),
+		},
+		{
+			name:              "Apt install command failure, expect error",
+			packageResourcePB: aptInstalledPR,
+			cachePointer:      aptInstalled,
+			expectedCommands: []utiltest.ExpectedCommand{
+				{Cmd: exec.Command("/usr/bin/apt-get", "update"), Envs: []string{"DEBIAN_FRONTEND=noninteractive"}, Err: errors.New("apt-get update failed")},
+			},
+			setup:   func(t *testing.T) { aptInstalled.cache = map[string]struct{}{"foo": {}} },
+			wantErr: errors.New("error installing apt package \"foo\""),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.setup(t)
+			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
+
 			pr := &OSPolicyResource{
 				OSPolicy_Resource: &agentendpointpb.OSPolicy_Resource{
-					ResourceType: &agentendpointpb.OSPolicy_Resource_Pkg{Pkg: tt.prpb},
+					ResourceType: &agentendpointpb.OSPolicy_Resource_Pkg{Pkg: tt.packageResourcePB},
 				},
 			}
 			defer pr.Cleanup(ctx)
@@ -489,19 +739,9 @@ func TestPackageResourceEnforceState(t *testing.T) {
 				t.Fatalf("Unexpected Validate error: %v", err)
 			}
 
-			tt.cachePointer.cache = map[string]struct{}{"foo": {}}
-
-			for _, expectedCmd := range tt.expectedCmds {
-				mockCommandRunner.EXPECT().Run(ctx, utilmocks.EqCmd(expectedCmd))
-			}
-
-			if err := pr.EnforceState(ctx); err != nil {
-				t.Fatalf("Unexpected error: %v", err)
-			}
-
-			if tt.cachePointer.cache != nil {
-				t.Errorf("Enforce function did not set package cache to nil")
-			}
+			gotErr := pr.EnforceState(ctx)
+			utiltest.AssertErrorMatchAndSkip(t, gotErr, tt.wantErr)
+			utiltest.AssertEquals(t, tt.cachePointer.cache, map[string]struct{}(nil))
 		})
 	}
 }

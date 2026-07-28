@@ -26,6 +26,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/pretty"
 	"github.com/GoogleCloudPlatform/osconfig/retryutil"
+	"github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -33,9 +34,14 @@ import (
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1beta/agentendpointpb"
 )
 
+type agentEndpointBetaClient interface {
+	LookupEffectiveGuestPolicy(context.Context, *agentendpointpb.LookupEffectiveGuestPolicyRequest, ...gax.CallOption) (*agentendpointpb.EffectiveGuestPolicy, error)
+	Close() error
+}
+
 // BetaClient is a an agentendpoint client.
 type BetaClient struct {
-	raw    *agentendpoint.Client
+	raw    agentEndpointBetaClient
 	cancel context.CancelFunc
 	noti   chan struct{}
 	closed bool

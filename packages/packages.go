@@ -247,3 +247,13 @@ func SetCommandRunner(commandRunner util.CommandRunner) {
 func SetPtyCommandRunner(commandRunner util.CommandRunner) {
 	ptyrunner = commandRunner
 }
+
+// GetCommandRunner returns the current commandRunner.
+func GetCommandRunner() util.CommandRunner {
+	return runner
+}
+
+// GetPtyCommandRunner returns the current ptyCommandRunner.
+func GetPtyCommandRunner() util.CommandRunner {
+	return ptyrunner
+}
