@@ -18,10 +18,12 @@ import (
 	"context"
 	"errors"
 	"os"
+	"os/exec"
 	"syscall"
 	"testing"
 
 	"github.com/GoogleCloudPlatform/osconfig/packages"
+	"github.com/GoogleCloudPlatform/osconfig/util"
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"github.com/golang/mock/gomock"
@@ -57,6 +59,19 @@ func setRpmquery(t *testing.T, path string) {
 	original := rpmquery
 	rpmquery = path
 	t.Cleanup(func() { rpmquery = original })
+}
+
+// getExitError returns an *exec.ExitError instance by running a failing command.
+func getExitError(t *testing.T) error {
+	t.Helper()
+	cmd := exec.Command("false")
+	err := cmd.Run()
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) {
+		return exitErr
+	}
+	t.Fatalf("failed to get ExitError: %v", err)
+	return nil
 }
 
 func TestSystemRebootRequiredApt(t *testing.T) {
@@ -109,45 +124,91 @@ func TestSystemRebootRequiredApt(t *testing.T) {
 
 func TestSystemRebootRequiredRpm(t *testing.T) {
 	ctx := context.Background()
-	originalRunner := runner
+
 	mockCtrl := gomock.NewController(t)
-	t.Cleanup(func() {
-		runner = originalRunner
-		mockCtrl.Finish()
-	})
+	t.Cleanup(func() { mockCtrl.Finish() })
+	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
+	setAptExists(t, false)
+
+	provides := []string{
+		"kernel", "glibc", "gnutls",
+		"linux-firmware", "openssl-libs", "dbus",
+		"kernel-firmware", "libopenssl1_1", "libopenssl1_0_0", "dbus-1",
+	}
+	args := append([]string{"--queryformat", "%{INSTALLTIME}\n", "--whatprovides"}, provides...)
 
 	tests := []struct {
-		desc       string
-		setup      func(t *testing.T)
-		wantReboot bool
-		wantErr    error
+		desc             string
+		rpmqueryPath     string
+		procStatPath     string
+		expectedCommands []utiltest.ExpectedCommand
+		wantReboot       bool
+		wantErr          error
 	}{
 		{
-			desc: "rpm reboot check succeeds",
-			setup: func(t *testing.T) {
-				setAptExists(t, false)
-				setRpmquery(t, createTempFile(t))
-
-				mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
-				runner = mockCommandRunner
-				mockCommandRunner.EXPECT().Run(ctx, gomock.Any()).Return([]byte("1000\n"), nil, nil).Times(1)
+			desc:         "rpm reboot check succeeds",
+			rpmqueryPath: "/dev/null",
+			procStatPath: "/proc/stat",
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/dev/null", args...),
+					Stdout: []byte("1000\n"),
+				},
 			},
 			wantReboot: false,
 		},
 		{
-			desc: "unsupported package manager returns error",
-			setup: func(t *testing.T) {
-				setAptExists(t, false)
-				setRpmquery(t, "/non_existing_file")
+			desc:         "unsupported package manager returns error",
+			rpmqueryPath: "/non_existing_file",
+			procStatPath: "/proc/stat",
+			wantErr:      errors.New("no recognized package manager installed, can't determine if reboot is required"),
+		},
+		{
+			desc:         "rpmquery returns exit error, want no reboot and nil error",
+			rpmqueryPath: "/dev/null",
+			procStatPath: "/proc/stat",
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/dev/null", args...),
+					Stdout: []byte("1000\n"),
+					Err:    getExitError(t),
+				},
 			},
-			wantErr: errors.New("no recognized package manager installed, can't determine if reboot is required"),
+			wantReboot: false,
+			wantErr:    nil,
+		},
+		{
+			desc:         "rpmquery returns runner error, want running error",
+			rpmqueryPath: "/dev/null",
+			procStatPath: "/proc/stat",
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd: exec.Command("/dev/null", args...),
+					Err: errors.New("runner error"),
+				},
+			},
+			wantErr: errors.New("error running /dev/null: runner error"),
+		},
+		{
+			desc:         "proc stat file is missing, want no file error",
+			rpmqueryPath: "/dev/null",
+			procStatPath: "/nonexistent/stat",
+			expectedCommands: []utiltest.ExpectedCommand{
+				{
+					Cmd:    exec.Command("/dev/null", args...),
+					Stdout: []byte("1000\n"),
+				},
+			},
+			wantErr: errors.New("error opening /nonexistent/stat: open /nonexistent/stat: no such file or directory"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			tt.setup(t)
-
+			setRpmquery(t, tt.rpmqueryPath)
+			utiltest.OverrideVariable(t, &procStatPath, tt.procStatPath)
+			utiltest.OverrideVariable[util.CommandRunner](t, &runner, mockCommandRunner)
+			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
 			gotReboot, gotErr := SystemRebootRequired(ctx)
 
 			utiltest.AssertEquals(t, gotReboot, tt.wantReboot)
