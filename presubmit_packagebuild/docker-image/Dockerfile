@@ -14,7 +14,7 @@
 FROM gcr.io/compute-image-tools/daisy:latest
 
 # Needed for gsutil.
-FROM gcr.io/google.com/cloudsdktool/google-cloud-cli:stable
+FROM us-docker.pkg.dev/artifact-foundry-prod/docker-3p-trusted/google/cloud-sdk:530.0.0
 
 WORKDIR /
 COPY --from=0 /daisy daisy
