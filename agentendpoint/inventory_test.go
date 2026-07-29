@@ -795,12 +795,99 @@ func Test_computeStableFingerprint_testFingerprintStability(t *testing.T) {
 	}
 }
 
+func Test_computeStableFingerprintVMInventory_fingerprintNotChangedAfterReshuffle(t *testing.T) {
+	ctx := context.Background()
+	inventory := generateVMInventory()
+	initialFingerprint, err := computeStableFingerprintVMInventory(ctx, inventory)
+	if err != nil {
+		t.Fatalf("unable to generate initial fingerprint, err - %s", err)
+	}
+
+	vmInventoryPackagesMixer(time.Now().UnixNano())(inventory)
+
+	finalFingerprint, err := computeStableFingerprintVMInventory(ctx, inventory)
+	if err != nil {
+		t.Fatalf("unable to generate final fingerprint, err - %s", err)
+	}
+
+	if initialFingerprint != finalFingerprint {
+		t.Errorf("stable fingerprint is not equal for inventory with different order")
+	}
+}
+
+func Test_computeStableFingerprintVMInventory_fingerprintChangedAfterChanging(t *testing.T) {
+	ctx := context.Background()
+	inventory := generateVMInventory()
+	initialFingerprint, err := computeStableFingerprintVMInventory(ctx, inventory)
+	if err != nil {
+		t.Fatalf("unable to generate initial fingerprint, err - %s", err)
+	}
+
+	inventory.AvailablePackages = nil
+
+	finalFingerprint, err := computeStableFingerprintVMInventory(ctx, inventory)
+	if err != nil {
+		t.Fatalf("unable to generate final fingerprint, err - %s", err)
+	}
+
+	if initialFingerprint == finalFingerprint {
+		t.Errorf("stable fingerprint should not be equal if inventory is actually changed")
+	}
+}
+
+func Test_computeStableFingerprintVMInventory_testFingerprintStability(t *testing.T) {
+	ctx := context.Background()
+	inventory := generateVMInventory()
+
+	mixer := vmInventoryPackagesMixer(time.Now().UnixNano())
+
+	n := 100
+	for i := 0; i < n; i++ {
+		t.Run(fmt.Sprintf("Run %d", i), func(t *testing.T) {
+			stableFingerprintBefore, err := computeStableFingerprintVMInventory(ctx, inventory)
+			if err != nil {
+				t.Errorf("unexpected error while calculating fingerprint, err %v", err)
+			}
+
+			// Reorder pacakges in the inventory, that should change result of computeFingerprint.
+			mixer(inventory)
+
+			stableFingerprintAfter, err := computeStableFingerprintVMInventory(ctx, inventory)
+			if err != nil {
+				t.Errorf("unexpected error while calculating fingerprint, err %v", err)
+			}
+
+			if stableFingerprintBefore != stableFingerprintAfter {
+				t.Errorf("stable fingerprint is not equal for identical inventories")
+			}
+		})
+
+	}
+}
+
 func inventoryPackagesMixer(source int64) func(inventory *agentendpointpb.Inventory) {
 	fmt.Printf("Inventory packages mixer initialized with source %d\n", source)
 
 	rng := rand.New(rand.NewSource(source))
 
 	return func(inventory *agentendpointpb.Inventory) {
+		rng.Shuffle(len(inventory.InstalledPackages), func(i, j int) {
+			inventory.InstalledPackages[i], inventory.InstalledPackages[j] = inventory.InstalledPackages[j], inventory.InstalledPackages[i]
+		})
+
+		rng.Shuffle(len(inventory.AvailablePackages), func(i, j int) {
+			inventory.AvailablePackages[i], inventory.AvailablePackages[j] = inventory.AvailablePackages[j], inventory.AvailablePackages[i]
+		})
+
+	}
+}
+
+func vmInventoryPackagesMixer(source int64) func(inventory *agentendpointpb.VmInventory) {
+	fmt.Printf("Inventory packages mixer initialized with source %d\n", source)
+
+	rng := rand.New(rand.NewSource(source))
+
+	return func(inventory *agentendpointpb.VmInventory) {
 		rng.Shuffle(len(inventory.InstalledPackages), func(i, j int) {
 			inventory.InstalledPackages[i], inventory.InstalledPackages[j] = inventory.InstalledPackages[j], inventory.InstalledPackages[i]
 		})
