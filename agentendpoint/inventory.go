@@ -166,6 +166,18 @@ func formatPkgsToInventoryItems(ctx context.Context, pkgs *packages.Packages) []
 	if pkgs.GooGet != nil {
 		softwarePackages = append(softwarePackages, googetToInventoryItem(pkgs.GooGet)...)
 	}
+	if pkgs.Chocolatey != nil {
+		softwarePackages = append(softwarePackages, genericPkgInfoToInventoryItem(pkgs.Chocolatey)...)
+	}
+	if pkgs.WinGet != nil {
+		softwarePackages = append(softwarePackages, genericPkgInfoToInventoryItem(pkgs.WinGet)...)
+	}
+	if pkgs.Pip != nil {
+		softwarePackages = append(softwarePackages, genericPkgInfoToInventoryItem(pkgs.Pip)...)
+	}
+	if pkgs.Gem != nil {
+		softwarePackages = append(softwarePackages, genericPkgInfoToInventoryItem(pkgs.Gem)...)
+	}
 	if pkgs.WUA != nil {
 		softwarePackages = append(softwarePackages, wuaToInventoryItem(pkgs.WUA)...)
 	}
@@ -176,6 +188,19 @@ func formatPkgsToInventoryItems(ctx context.Context, pkgs *packages.Packages) []
 		softwarePackages = append(softwarePackages, windowsApplicationToInventoryItem(pkgs.WindowsApplication)...)
 	}
 	return softwarePackages
+}
+
+func genericPkgInfoToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInventory_InventoryItem {
+	items := make([]*agentendpointpb.VmInventory_InventoryItem, len(packages))
+	for i, pkg := range packages {
+		items[i] = &agentendpointpb.VmInventory_InventoryItem{
+			Name:    pkg.Name,
+			Type:    pkg.Type,
+			Version: pkg.Version,
+			Purl:    pkg.Purl,
+		}
+	}
+	return items
 }
 
 func aptToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInventory_InventoryItem {
