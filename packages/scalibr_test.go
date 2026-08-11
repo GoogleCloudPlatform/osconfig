@@ -14,9 +14,11 @@ import (
 	"github.com/golang/mock/gomock"
 	scalibr "github.com/google/osv-scalibr"
 	"github.com/google/osv-scalibr/extractor"
+	scalibrchoco "github.com/google/osv-scalibr/extractor/filesystem/os/chocolatey/metadata"
 	scalibrcos "github.com/google/osv-scalibr/extractor/filesystem/os/cos/metadata"
 	dpkgmetadata "github.com/google/osv-scalibr/extractor/filesystem/os/dpkg/metadata"
 	scalibrrpm "github.com/google/osv-scalibr/extractor/filesystem/os/rpm/metadata"
+	scalibrwinget "github.com/google/osv-scalibr/extractor/filesystem/os/winget/metadata"
 	"github.com/google/osv-scalibr/inventory"
 )
 
@@ -85,6 +87,47 @@ func TestExtractedPackageMappings(t *testing.T) {
 			want: Packages{COS: []*PkgInfo{
 				{Name: "dev-python/PySocks", Version: "17412.448.8", Arch: "x86_64", Type: "cos", Purl: "pkg:cos/PySocks@17412.448.8?distro=cos-105"},
 				{Name: "virtual/chromeos-bsp", Version: "17412.448.8", Arch: "x86_64", Type: "cos", Purl: "pkg:cos/chromeos-bsp@17412.448.8?distro=cos-105"},
+			}},
+		},
+		{
+			name: "os/googet extractor maps correctly",
+			pkgs: []*extractor.Package{
+				{
+					Name:     "googet-pkg",
+					Version:  "1.2.3@4",
+					PURLType: "googet",
+				},
+			},
+			want: Packages{GooGet: []*PkgInfo{
+				{Name: "googet-pkg", Version: "1.2.3@4", Type: "googet", Purl: "pkg:googet/googet-pkg@1.2.3%404"},
+			}},
+		},
+		{
+			name: "os/chocolatey extractor maps correctly",
+			pkgs: []*extractor.Package{
+				{
+					Name:     "git",
+					Version:  "2.40.1",
+					PURLType: "chocolatey",
+					Metadata: &scalibrchoco.Metadata{Name: "git", Version: "2.40.1"},
+				},
+			},
+			want: Packages{Chocolatey: []*PkgInfo{
+				{Name: "git", Version: "2.40.1", Type: "chocolatey", Purl: "pkg:chocolatey/git@2.40.1"},
+			}},
+		},
+		{
+			name: "os/winget extractor maps correctly",
+			pkgs: []*extractor.Package{
+				{
+					Name:     "Microsoft.PowerToys",
+					Version:  "0.70.1",
+					PURLType: "winget",
+					Metadata: &scalibrwinget.Metadata{Name: "Microsoft.PowerToys", Version: "0.70.1"},
+				},
+			},
+			want: Packages{WinGet: []*PkgInfo{
+				{Name: "Microsoft.PowerToys", Version: "0.70.1", Type: "winget", Purl: "pkg:winget/Microsoft.PowerToys@0.70.1"},
 			}},
 		},
 		{

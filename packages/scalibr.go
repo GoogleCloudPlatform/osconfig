@@ -10,9 +10,11 @@ import (
 	"github.com/google/osv-scalibr/binary/platform"
 	"github.com/google/osv-scalibr/binary/proto/config_go_proto"
 	"github.com/google/osv-scalibr/extractor"
+	scalibrchoco "github.com/google/osv-scalibr/extractor/filesystem/os/chocolatey/metadata"
 	scalibrcos "github.com/google/osv-scalibr/extractor/filesystem/os/cos/metadata"
 	dpkgmetadata "github.com/google/osv-scalibr/extractor/filesystem/os/dpkg/metadata"
 	scalibrrpm "github.com/google/osv-scalibr/extractor/filesystem/os/rpm/metadata"
+	scalibrwinget "github.com/google/osv-scalibr/extractor/filesystem/os/winget/metadata"
 	scalibrfs "github.com/google/osv-scalibr/fs"
 	"github.com/google/osv-scalibr/plugin"
 	pl "github.com/google/osv-scalibr/plugin/list"
@@ -77,6 +79,19 @@ func pkgInfoFromCosExtractorPackage(pkg *extractor.Package, metadata *scalibrcos
 	}
 }
 
+func pkgInfoFromGenericExtractorPackage(pkg *extractor.Package, pkgType string) *PkgInfo {
+	purlStr := ""
+	if pkg.PURL() != nil {
+		purlStr = pkg.PURL().String()
+	}
+	return &PkgInfo{
+		Name:    pkg.Name,
+		Version: pkg.Version,
+		Type:    pkgType,
+		Purl:    purlStr,
+	}
+}
+
 func pkgInfosFromExtractorPackages(ctx context.Context, scan *scalibr.ScanResult, osinfo *osinfo.OSInfo) Packages {
 	var packages Packages
 	for _, pkg := range scan.Inventory.Packages {
@@ -86,6 +101,12 @@ func pkgInfosFromExtractorPackages(ctx context.Context, scan *scalibr.ScanResult
 			packages.Rpm = append(packages.Rpm, pkgInfoFromRpmExtractorPackage(pkg, metadata))
 		} else if metadata, ok := pkg.Metadata.(*scalibrcos.Metadata); ok {
 			packages.COS = append(packages.COS, pkgInfoFromCosExtractorPackage(pkg, metadata, osinfo))
+		} else if _, ok := pkg.Metadata.(*scalibrchoco.Metadata); ok {
+			packages.Chocolatey = append(packages.Chocolatey, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeChocolatey))
+		} else if _, ok := pkg.Metadata.(*scalibrwinget.Metadata); ok {
+			packages.WinGet = append(packages.WinGet, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeWinget))
+		} else if pkg.PURLType == purl.TypeGooget || (pkg.PURL() != nil && pkg.PURL().Type == purl.TypeGooget) {
+			packages.GooGet = append(packages.GooGet, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeGooget))
 		} else {
 			clog.Errorf(ctx, "Package type not implemented: %v", pkg)
 		}
