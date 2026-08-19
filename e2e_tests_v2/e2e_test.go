@@ -26,7 +26,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	cfg, err := config.LoadFromEnvironment()
+	cfg, err := config.Load()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "E2E configuration error: %v\n", err)
 		os.Exit(2)

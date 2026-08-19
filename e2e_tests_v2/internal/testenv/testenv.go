@@ -39,6 +39,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/junitxml"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/scheduler"
 	"github.com/google/uuid"
+	"google.golang.org/api/osconfig/v1"
 )
 
 var (
@@ -149,40 +150,262 @@ type QFEPackage struct {
 	HotFixID string `json:"HotFixID"`
 }
 
-// DecodeInstalledPackages decodes, decompresses, and unmarshals the InstalledPackages guest attribute.
-func DecodeInstalledPackages(encoded string) (*InstalledPackages, error) {
+// HasPackages checks if all packages with the given names exist in any package list.
+func (pkgs *InstalledPackages) HasPackages(names ...string) bool {
+	if pkgs == nil {
+		return false
+	}
+	if len(names) == 0 {
+		return true
+	}
+	installed := make(map[string]bool)
+	for _, pkgName := range pkgs.AllPackageNames() {
+		installed[strings.ToLower(strings.TrimSpace(pkgName))] = true
+	}
+	for _, name := range names {
+		target := strings.ToLower(strings.TrimSpace(name))
+		if !installed[target] {
+			return false
+		}
+	}
+	return true
+}
+
+// HasPackage checks if a package with the given name exists in any package list.
+func (pkgs *InstalledPackages) HasPackage(name string) bool {
+	return pkgs.HasPackages(name)
+}
+
+// HasPackageIn checks if a package with the given name exists under a specific package manager.
+func (pkgs *InstalledPackages) HasPackageIn(manager, name string) bool {
+	if pkgs == nil {
+		return false
+	}
+	target := strings.ToLower(strings.TrimSpace(name))
+	var list []*PackageInfo
+	switch strings.ToLower(strings.TrimSpace(manager)) {
+	case "deb":
+		list = append(list, pkgs.Deb...)
+		list = append(list, pkgs.Apt...)
+	case "rpm":
+		list = append(list, pkgs.Rpm...)
+		list = append(list, pkgs.Yum...)
+	case "zypper":
+		list = pkgs.Zypper
+	case "cos":
+		list = pkgs.COS
+	case "googet":
+		list = pkgs.GooGet
+	case "pip":
+		list = pkgs.Pip
+	case "gem":
+		list = pkgs.Gem
+	}
+
+	for _, p := range list {
+		if p != nil && strings.ToLower(strings.TrimSpace(p.Name)) == target {
+			return true
+		}
+	}
+	return false
+}
+
+// AllPackageNames returns all package names collected across all package managers.
+func (pkgs *InstalledPackages) AllPackageNames() []string {
+	if pkgs == nil {
+		return nil
+	}
+	var names []string
+	addNames := func(list []*PackageInfo) {
+		for _, p := range list {
+			if p != nil && p.Name != "" {
+				names = append(names, p.Name)
+			}
+		}
+	}
+
+	addNames(pkgs.Deb)
+	addNames(pkgs.Apt)
+	addNames(pkgs.Rpm)
+	addNames(pkgs.Yum)
+	addNames(pkgs.Zypper)
+	addNames(pkgs.COS)
+	addNames(pkgs.GooGet)
+	addNames(pkgs.Pip)
+	addNames(pkgs.Gem)
+
+	return names
+}
+
+// HasQFE returns true if there is at least one QFE package reported.
+func (pkgs *InstalledPackages) HasQFE() bool {
+	return pkgs != nil && len(pkgs.QFE) > 0
+}
+
+// HasWUA returns true if there is at least one WUA package reported.
+func (pkgs *InstalledPackages) HasWUA() bool {
+	return pkgs != nil && len(pkgs.WUA) > 0
+}
+
+// ExtractInstalledPackages extracts installed package information from an OS Config Inventory object.
+func ExtractInstalledPackages(inv *osconfig.Inventory) *InstalledPackages {
+	if inv == nil {
+		return nil
+	}
+	pkgs := &InstalledPackages{}
+	for _, item := range inv.Items {
+		pkg := item.InstalledPackage
+		if pkg == nil {
+			continue
+		}
+		if pkg.AptPackage != nil {
+			pkgs.Deb = append(pkgs.Deb, &PackageInfo{
+				Name:    pkg.AptPackage.PackageName,
+				Arch:    pkg.AptPackage.Architecture,
+				Version: pkg.AptPackage.Version,
+			})
+		}
+		if pkg.YumPackage != nil {
+			pkgs.Rpm = append(pkgs.Rpm, &PackageInfo{
+				Name:    pkg.YumPackage.PackageName,
+				Arch:    pkg.YumPackage.Architecture,
+				Version: pkg.YumPackage.Version,
+			})
+		}
+		if pkg.ZypperPackage != nil {
+			pkgs.Zypper = append(pkgs.Zypper, &PackageInfo{
+				Name:    pkg.ZypperPackage.PackageName,
+				Arch:    pkg.ZypperPackage.Architecture,
+				Version: pkg.ZypperPackage.Version,
+			})
+		}
+		if pkg.CosPackage != nil {
+			pkgs.COS = append(pkgs.COS, &PackageInfo{
+				Name:    pkg.CosPackage.PackageName,
+				Arch:    pkg.CosPackage.Architecture,
+				Version: pkg.CosPackage.Version,
+			})
+		}
+		if pkg.GoogetPackage != nil {
+			pkgs.GooGet = append(pkgs.GooGet, &PackageInfo{
+				Name:    pkg.GoogetPackage.PackageName,
+				Arch:    pkg.GoogetPackage.Architecture,
+				Version: pkg.GoogetPackage.Version,
+			})
+		}
+		if pkg.WuaPackage != nil {
+			pkgs.WUA = append(pkgs.WUA, &WUAPackage{
+				Title: pkg.WuaPackage.Title,
+			})
+		}
+		if pkg.QfePackage != nil {
+			pkgs.QFE = append(pkgs.QFE, &QFEPackage{
+				HotFixID: pkg.QfePackage.HotFixId,
+			})
+		}
+	}
+	return pkgs
+}
+
+// ExtractAvailablePackages extracts available package updates from an OS Config Inventory object.
+func ExtractAvailablePackages(inv *osconfig.Inventory) *InstalledPackages {
+	if inv == nil {
+		return nil
+	}
+	pkgs := &InstalledPackages{}
+	for _, item := range inv.Items {
+		pkg := item.AvailablePackage
+		if pkg == nil {
+			continue
+		}
+		if pkg.AptPackage != nil {
+			pkgs.Deb = append(pkgs.Deb, &PackageInfo{
+				Name:    pkg.AptPackage.PackageName,
+				Arch:    pkg.AptPackage.Architecture,
+				Version: pkg.AptPackage.Version,
+			})
+		}
+		if pkg.YumPackage != nil {
+			pkgs.Rpm = append(pkgs.Rpm, &PackageInfo{
+				Name:    pkg.YumPackage.PackageName,
+				Arch:    pkg.YumPackage.Architecture,
+				Version: pkg.YumPackage.Version,
+			})
+		}
+		if pkg.ZypperPackage != nil {
+			pkgs.Zypper = append(pkgs.Zypper, &PackageInfo{
+				Name:    pkg.ZypperPackage.PackageName,
+				Arch:    pkg.ZypperPackage.Architecture,
+				Version: pkg.ZypperPackage.Version,
+			})
+		}
+		if pkg.CosPackage != nil {
+			pkgs.COS = append(pkgs.COS, &PackageInfo{
+				Name:    pkg.CosPackage.PackageName,
+				Arch:    pkg.CosPackage.Architecture,
+				Version: pkg.CosPackage.Version,
+			})
+		}
+		if pkg.GoogetPackage != nil {
+			pkgs.GooGet = append(pkgs.GooGet, &PackageInfo{
+				Name:    pkg.GoogetPackage.PackageName,
+				Arch:    pkg.GoogetPackage.Architecture,
+				Version: pkg.GoogetPackage.Version,
+			})
+		}
+		if pkg.WuaPackage != nil {
+			pkgs.WUA = append(pkgs.WUA, &WUAPackage{
+				Title: pkg.WuaPackage.Title,
+			})
+		}
+		if pkg.QfePackage != nil {
+			pkgs.QFE = append(pkgs.QFE, &QFEPackage{
+				HotFixID: pkg.QfePackage.HotFixId,
+			})
+		}
+	}
+	return pkgs
+}
+
+// DecodePackages decodes, decompresses, and unmarshals gzipped base64 JSON package data from guest attributes.
+func DecodePackages(encoded string) (*InstalledPackages, error) {
 	if strings.TrimSpace(encoded) == "" {
-		return nil, fmt.Errorf("InstalledPackages attribute is empty")
+		return nil, fmt.Errorf("package data attribute is empty")
 	}
 
 	decoded, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
-		return nil, fmt.Errorf("base64 decode InstalledPackages: %w", err)
+		return nil, fmt.Errorf("base64 decode: %w", err)
 	}
 
 	zr, err := gzip.NewReader(bytes.NewReader(decoded))
 	if err != nil {
-		return nil, fmt.Errorf("gzip reader for InstalledPackages: %w", err)
+		return nil, fmt.Errorf("gzip reader: %w", err)
 	}
 	defer zr.Close()
 
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, zr); err != nil {
-		return nil, fmt.Errorf("decompress InstalledPackages: %w", err)
+		return nil, fmt.Errorf("decompress: %w", err)
 	}
 
 	var pkgs InstalledPackages
 	if err := json.Unmarshal(buf.Bytes(), &pkgs); err != nil {
-		return nil, fmt.Errorf("unmarshal InstalledPackages JSON: %w", err)
+		return nil, fmt.Errorf("unmarshal JSON: %w", err)
 	}
 
 	return &pkgs, nil
 }
 
+// DecodeInstalledPackages decodes, decompresses, and unmarshals the InstalledPackages guest attribute.
+func DecodeInstalledPackages(encoded string) (*InstalledPackages, error) {
+	return DecodePackages(encoded)
+}
+
 // Suite contains process-scoped test dependencies.
 type Suite struct {
 	Config    config.Config
-	Compute   *gcp.Clients
+	Compute   *gcp.Client
 	Scheduler *scheduler.Scheduler
 	Reporter  *junitxml.Reporter
 	RunID     string
@@ -193,7 +416,7 @@ func Init(cfg config.Config) error {
 	globalMu.Lock()
 	defer globalMu.Unlock()
 
-	computeClient, err := gcp.NewClients(context.Background(), cfg)
+	computeClient, err := gcp.NewClient(context.Background(), cfg)
 	if err != nil {
 		globalInitErr = err
 		return err
@@ -223,10 +446,10 @@ func Close() error {
 	suite := globalSuite
 	globalMu.Unlock()
 
-	if suite == nil || suite.Reporter == nil || suite.Config.JUnitFile == "" {
+	if suite == nil || suite.Reporter == nil || suite.Config.ArtifactFile == "" {
 		return nil
 	}
-	return suite.Reporter.WriteToFile(suite.Config.JUnitFile)
+	return suite.Reporter.WriteToFile(suite.Config.ArtifactFile)
 }
 
 // Test manages resources and assertions for an individual test case.
@@ -242,6 +465,7 @@ type Test struct {
 }
 
 // New creates and initializes a Test environment for the calling test.
+// If timeout is > 0, it overrides the suite's configured TestTimeout.
 func New(t *testing.T, timeout time.Duration) *Test {
 	t.Helper()
 
@@ -254,7 +478,7 @@ func New(t *testing.T, timeout time.Duration) *Test {
 		t.Fatalf("test initialization failed: %v", initErr)
 	}
 	if suite == nil {
-		cfg, err := config.LoadFromEnvironment()
+		cfg, err := config.Load()
 		if err != nil {
 			t.Fatalf("load config: %v", err)
 		}
@@ -266,20 +490,24 @@ func New(t *testing.T, timeout time.Duration) *Test {
 		globalMu.Unlock()
 	}
 
-	if timeout <= 0 {
-		timeout = suite.Config.TestTimeout
-	}
+	acquireCtx, acquireCancel := context.WithTimeout(context.Background(), suite.Config.TestTimeout)
+	defer acquireCancel()
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	t.Cleanup(cancel)
-
-	attemptID := uuid.NewString()[:8]
-
-	lease, err := suite.Scheduler.Acquire(ctx)
+	lease, err := suite.Scheduler.Acquire(acquireCtx)
 	if err != nil {
 		t.Fatalf("acquire capacity lease: %v", err)
 	}
 	t.Cleanup(lease.Release)
+
+	testTimeout := suite.Config.TestTimeout
+	if timeout > 0 {
+		testTimeout = timeout
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	t.Cleanup(cancel)
+
+	attemptID := uuid.NewString()[:8]
 
 	test := &Test{
 		t:         t,
@@ -348,22 +576,23 @@ func (test *Test) CreateVM(image, machineType string, customMetadata map[string]
 		Name:    name,
 	}
 
-	// Register serial output recording before VM deletion
+	// Register serial output recording and idempotent VM deletion on test cleanup
 	test.t.Cleanup(func() {
 		diagCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 		serial, err := test.Suite.Compute.SerialOutput(diagCtx, planned.Project, planned.Zone, planned.Name)
-		if err == nil && serial != "" && test.Suite.Config.ArtifactDir != "" {
-			_ = os.MkdirAll(test.Suite.Config.ArtifactDir, 0o755)
-			logFile := filepath.Join(test.Suite.Config.ArtifactDir, fmt.Sprintf("%s-serial.log", planned.Name))
+		artDir := filepath.Dir(test.Suite.Config.ArtifactFile)
+		if err == nil && serial != "" && artDir != "" && artDir != "." {
+			_ = os.MkdirAll(artDir, 0o755)
+			logFile := filepath.Join(artDir, fmt.Sprintf("%s-serial.log", planned.Name))
+			_ = os.WriteFile(logFile, []byte(serial), 0o644)
+		} else if err == nil && serial != "" {
+			logFile := fmt.Sprintf("%s-serial.log", planned.Name)
 			_ = os.WriteFile(logFile, []byte(serial), 0o644)
 		}
-	})
 
-	// Register idempotent VM deletion on test cleanup
-	test.t.Cleanup(func() {
-		cleanupCtx, cancel := context.WithTimeout(context.Background(), test.Suite.Config.CleanupTimeout)
-		defer cancel()
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), test.Suite.Config.CleanupTimeout)
+		defer cleanupCancel()
 		if err := test.Suite.Compute.DeleteVM(cleanupCtx, planned.Project, planned.Zone, planned.Name); err != nil {
 			test.t.Errorf("cleanup instance %s/%s/%s: %v", planned.Project, planned.Zone, planned.Name, err)
 		}
@@ -410,29 +639,28 @@ func (test *Test) CreateVM(image, machineType string, customMetadata map[string]
 	return vm, nil
 }
 
-// WaitForGuestInventory polls for guestInventory/LastUpdated and returns all guest attributes under guestInventory/.
-func (test *Test) WaitForGuestInventory(vm *gcp.VM) (map[string]string, error) {
+// WaitForInventory polls the public OS Config API until inventory is reported for the instance.
+func (test *Test) WaitForInventory(vm *gcp.VM) (*osconfig.Inventory, error) {
 	test.t.Helper()
 
-	test.t.Logf("Waiting for guest inventory to be written on %q", vm.Name)
+	test.t.Logf("Waiting for OS inventory to be reported on %q", vm.Name)
 
-	var result map[string]string
-	err := gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("guest inventory on %s", vm.Name), func(ctx context.Context) (string, bool, error) {
-		attrs, err := test.Suite.Compute.GuestAttributes(ctx, vm.Project, vm.Zone, vm.Name, "guestInventory/")
+	var result *osconfig.Inventory
+	err := gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("inventory on %s", vm.Name), func(ctx context.Context) (string, bool, error) {
+		inv, err := test.Suite.Compute.GetInventory(ctx, vm.Project, vm.Zone, vm.Name, "FULL")
 		if err != nil {
 			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
-				return fmt.Sprintf("guest inventory not yet published (%v)", err), false, nil
+				return fmt.Sprintf("inventory not yet published (%v)", err), false, nil
 			}
-			return "", false, fmt.Errorf("read guestInventory: %w", err)
+			return "", false, fmt.Errorf("read inventory: %w", err)
 		}
 
-		lastUpdated := strings.TrimSpace(attrs["LastUpdated"])
-		if lastUpdated == "" {
-			return "guestInventory/LastUpdated not yet set", false, nil
+		if inv == nil || inv.OsInfo == nil || strings.TrimSpace(inv.OsInfo.Hostname) == "" {
+			return "inventory OsInfo not yet populated", false, nil
 		}
 
-		result = attrs
-		return fmt.Sprintf("LastUpdated=%s", lastUpdated), true, nil
+		result = inv
+		return fmt.Sprintf("Hostname=%s ShortName=%s Items=%d", inv.OsInfo.Hostname, inv.OsInfo.ShortName, len(inv.Items)), true, nil
 	})
 	if err != nil {
 		return nil, err

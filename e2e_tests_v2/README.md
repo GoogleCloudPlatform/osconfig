@@ -13,25 +13,42 @@ go test ./...
 
 ## Running E2E Cloud Tests
 
-1. Create a configuration file:
-   ```sh
-   cp config.example.json config.local.json
-   ```
-   Edit `config.local.json` with your test `project` and `zone`.
-
-2. Ensure you have Application Default Credentials:
+1. Ensure you have Application Default Credentials:
    ```sh
    gcloud auth application-default login
    ```
 
-3. Run the E2E tests:
+2. Run the E2E tests with default settings:
    ```sh
-   E2E_CONFIG="$PWD/config.local.json" \
-     go test -tags=e2e -v -count=1 -parallel=5 -timeout=60m .
+   go test -tags=e2e -v -count=1 -parallel=5 -timeout=60m .
    ```
 
-4. Run a specific test case:
+3. Override configuration using command-line flags:
    ```sh
-   E2E_CONFIG="$PWD/config.local.json" \
-     go test -tags=e2e -v -count=1 -run 'TestOSInventory/debian-12' .
+   go test -tags=e2e -v -count=1 -parallel=5 -timeout=60m . \
+     -project=my-test-project \
+     -zone=us-central1-b \
+     -max_concurrent_vms=10
    ```
+
+4. Run a specific test case (use `-timeout=30m` for long-running tests like Windows):
+   ```sh
+   go test -tags=e2e -v -count=1 -timeout=30m -run '^TestOSInventory/windows-2016$' . \
+     -project=my-test-project \
+     -zone=us-central1-a
+   ```
+
+### Available Configuration Flags
+
+| Flag | Default | Description |
+|---|---|---|
+| `-project` | `gcloud-parity-testing` | GCP project ID for test resources |
+| `-zone` | `us-central1-a` | GCP zone for test instances |
+| `-network` | `global/networks/default` | VPC network for test instances |
+| `-subnetwork` | `""` | VPC subnetwork for test instances |
+| `-service_account` | `default` | Service account for test instances |
+| `-test_timeout` | `60m` | Execution timeout per test run |
+| `-poll_interval` | `10s` | Polling interval for instance status and guest attributes |
+| `-cleanup_timeout` | `5m` | Timeout for VM teardown and resource cleanup |
+| `-max_concurrent_vms` | `5` | Maximum number of concurrent test instances |
+| `-artifact_file` | `./artifacts/junit.xml` | Path to JUnit XML test report (and directory for test artifacts) |

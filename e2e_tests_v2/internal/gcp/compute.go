@@ -27,6 +27,7 @@ import (
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
+	"google.golang.org/api/osconfig/v1"
 )
 
 // VM represents an active or planned Compute Engine instance.
@@ -51,28 +52,34 @@ type VMRequest struct {
 	Labels         map[string]string
 }
 
-// Clients manages the Compute Engine API client.
-type Clients struct {
+// Client manages GCP API clients for Compute Engine and OS Config.
+type Client struct {
 	compute      *compute.Service
+	osconfig     *osconfig.Service
 	pollInterval time.Duration
 }
 
-// NewClients initializes the Compute Engine API client using Application Default Credentials.
-func NewClients(ctx context.Context, cfg config.Config) (*Clients, error) {
+// NewClient initializes the Compute Engine and OS Config API clients using Application Default Credentials.
+func NewClient(ctx context.Context, cfg config.Config) (*Client, error) {
 	var opts []option.ClientOption
 	computeService, err := compute.NewService(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("create compute service: %w", err)
 	}
+	osconfigService, err := osconfig.NewService(ctx, opts...)
+	if err != nil {
+		return nil, fmt.Errorf("create osconfig service: %w", err)
+	}
 
-	return &Clients{
+	return &Client{
 		compute:      computeService,
+		osconfig:     osconfigService,
 		pollInterval: cfg.PollInterval,
 	}, nil
 }
 
 // CreateVM creates a Compute Engine instance and waits for the zonal insert operation to finish.
-func (c *Clients) CreateVM(ctx context.Context, req VMRequest) (*VM, error) {
+func (c *Client) CreateVM(ctx context.Context, req VMRequest) (*VM, error) {
 	var metadata []*compute.MetadataItems
 	for k, v := range req.Metadata {
 		val := v
@@ -141,7 +148,7 @@ func (c *Clients) CreateVM(ctx context.Context, req VMRequest) (*VM, error) {
 }
 
 // DeleteVM idempotently deletes a VM and waits for completion.
-func (c *Clients) DeleteVM(ctx context.Context, project, zone, name string) error {
+func (c *Client) DeleteVM(ctx context.Context, project, zone, name string) error {
 	op, err := c.compute.Instances.Delete(project, zone, name).Context(ctx).Do()
 	if IsNotFound(err) {
 		return nil
@@ -156,7 +163,7 @@ func (c *Clients) DeleteVM(ctx context.Context, project, zone, name string) erro
 }
 
 // SerialOutput retrieves serial port 1 output from the VM.
-func (c *Clients) SerialOutput(ctx context.Context, project, zone, name string) (string, error) {
+func (c *Client) SerialOutput(ctx context.Context, project, zone, name string) (string, error) {
 	output, err := c.compute.Instances.GetSerialPortOutput(project, zone, name).Port(1).Start(0).Context(ctx).Do()
 	if err != nil {
 		return "", fmt.Errorf("get serial output for %s: %w", name, err)
@@ -164,32 +171,17 @@ func (c *Clients) SerialOutput(ctx context.Context, project, zone, name string) 
 	return output.Contents, nil
 }
 
-// GuestAttribute returns a single guest attribute variable value.
-func (c *Clients) GuestAttribute(ctx context.Context, project, zone, name, queryPath, variableKey string) (string, error) {
-	attributes, err := c.compute.Instances.GetGuestAttributes(project, zone, name).QueryPath(queryPath).VariableKey(variableKey).Context(ctx).Do()
-	if err != nil {
-		return "", err
+// GetInventory retrieves the OS Config inventory for an instance using the public OS Config API.
+func (c *Client) GetInventory(ctx context.Context, project, zone, instance, view string) (*osconfig.Inventory, error) {
+	name := fmt.Sprintf("projects/%s/locations/%s/instances/%s/inventory", project, zone, instance)
+	call := c.osconfig.Projects.Locations.Instances.Inventories.Get(name).Context(ctx)
+	if view != "" {
+		call = call.View(view)
 	}
-	return attributes.VariableValue, nil
+	return call.Do()
 }
 
-// GuestAttributes returns all guest attributes under queryPath as a key-value map.
-func (c *Clients) GuestAttributes(ctx context.Context, project, zone, name, queryPath string) (map[string]string, error) {
-	attributes, err := c.compute.Instances.GetGuestAttributes(project, zone, name).QueryPath(queryPath).Context(ctx).Do()
-	if err != nil {
-		return nil, err
-	}
-	if attributes.QueryValue == nil {
-		return map[string]string{}, nil
-	}
-	result := make(map[string]string, len(attributes.QueryValue.Items))
-	for _, item := range attributes.QueryValue.Items {
-		result[item.Key] = item.Value
-	}
-	return result, nil
-}
-
-func (c *Clients) waitZoneOperation(ctx context.Context, project, zone, name string) error {
+func (c *Client) waitZoneOperation(ctx context.Context, project, zone, name string) error {
 	var completed *compute.Operation
 	err := PollUntil(ctx, c.pollInterval, fmt.Sprintf("zonal operation %s", name), func(ctx context.Context) (string, bool, error) {
 		op, err := c.compute.ZoneOperations.Get(project, zone, name).Context(ctx).Do()

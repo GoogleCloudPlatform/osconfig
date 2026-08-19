@@ -16,15 +16,38 @@
 package config
 
 import (
-	"encoding/json"
+	"flag"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 )
 
-const envConfigPath = "E2E_CONFIG"
+// Default configuration values.
+const (
+	DefaultProject          = "gcloud-parity-testing"
+	DefaultZone             = "us-central1-a"
+	DefaultNetwork          = "global/networks/default"
+	DefaultSubnetwork       = ""
+	DefaultServiceAccount   = "default"
+	DefaultTestTimeout      = 60 * time.Minute
+	DefaultPollInterval     = 10 * time.Second
+	DefaultCleanupTimeout   = 5 * time.Minute
+	DefaultMaxConcurrentVMs = 5
+	DefaultArtifactFile     = "./artifacts/junit.xml"
+)
+
+var (
+	projectFlag          = flag.String("project", DefaultProject, "GCP project ID for E2E tests")
+	zoneFlag             = flag.String("zone", DefaultZone, "GCP zone for E2E test VMs")
+	networkFlag          = flag.String("network", DefaultNetwork, "VPC network for E2E test VMs")
+	subnetworkFlag       = flag.String("subnetwork", DefaultSubnetwork, "VPC subnetwork for E2E test VMs")
+	serviceAccountFlag   = flag.String("service_account", DefaultServiceAccount, "Service account for E2E test VMs")
+	testTimeoutFlag      = flag.Duration("test_timeout", DefaultTestTimeout, "Timeout for E2E test execution")
+	pollIntervalFlag     = flag.Duration("poll_interval", DefaultPollInterval, "Interval between status polls")
+	cleanupTimeoutFlag   = flag.Duration("cleanup_timeout", DefaultCleanupTimeout, "Timeout for resource cleanup")
+	maxConcurrentVMsFlag = flag.Int("max_concurrent_vms", DefaultMaxConcurrentVMs, "Maximum number of VMs running concurrently")
+	artifactFileFlag     = flag.String("artifact_file", DefaultArtifactFile, "Path to artifact file (JUnit XML report)")
+)
 
 // Config contains runtime settings for E2E tests.
 type Config struct {
@@ -37,102 +60,54 @@ type Config struct {
 	PollInterval     time.Duration `json:"poll_interval"`
 	CleanupTimeout   time.Duration `json:"cleanup_timeout"`
 	MaxConcurrentVMs int           `json:"max_concurrent_vms"`
-	ArtifactDir      string        `json:"artifact_dir"`
-	JUnitFile        string        `json:"junit_file"`
+	ArtifactFile     string        `json:"artifact_file"`
 }
 
-type fileConfig struct {
-	Project          string `json:"project"`
-	Zone             string `json:"zone"`
-	Network          string `json:"network"`
-	Subnetwork       string `json:"subnetwork"`
-	ServiceAccount   string `json:"service_account"`
-	TestTimeout      string `json:"test_timeout"`
-	PollInterval     string `json:"poll_interval"`
-	CleanupTimeout   string `json:"cleanup_timeout"`
-	MaxConcurrentVMs int    `json:"max_concurrent_vms"`
-	ArtifactDir      string `json:"artifact_dir"`
-	JUnitFile        string `json:"junit_file"`
+// Load returns configuration from command-line flags and applies defaults.
+func Load() (Config, error) {
+	if !flag.Parsed() {
+		flag.Parse()
+	}
+
+	cfg := Config{
+		Project:          strings.TrimSpace(*projectFlag),
+		Zone:             strings.TrimSpace(*zoneFlag),
+		Network:          valueOrDefault(*networkFlag, DefaultNetwork),
+		Subnetwork:       strings.TrimSpace(*subnetworkFlag),
+		ServiceAccount:   valueOrDefault(*serviceAccountFlag, DefaultServiceAccount),
+		TestTimeout:      *testTimeoutFlag,
+		PollInterval:     *pollIntervalFlag,
+		CleanupTimeout:   *cleanupTimeoutFlag,
+		MaxConcurrentVMs: *maxConcurrentVMsFlag,
+		ArtifactFile:     valueOrDefault(*artifactFileFlag, DefaultArtifactFile),
+	}
+	if err := cfg.validate(); err != nil {
+		return Config{}, err
+	}
+
+	return cfg, nil
 }
 
-// LoadFromEnvironment loads configuration from the file specified in E2E_CONFIG.
-func LoadFromEnvironment() (Config, error) {
-	path := strings.TrimSpace(os.Getenv(envConfigPath))
-	if path == "" {
-		return Config{}, fmt.Errorf("%s must point to a JSON configuration file", envConfigPath)
+func (c Config) validate() error {
+	if strings.TrimSpace(c.Project) == "" {
+		return fmt.Errorf("project is required in configuration")
 	}
-	return Load(path)
-}
-
-// Load reads and validates a JSON configuration file.
-func Load(path string) (Config, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return Config{}, fmt.Errorf("read config file %q: %w", path, err)
+	if strings.TrimSpace(c.Zone) == "" {
+		return fmt.Errorf("zone is required in configuration")
 	}
-	var raw fileConfig
-	if err := json.Unmarshal(data, &raw); err != nil {
-		return Config{}, fmt.Errorf("parse config file %q: %w", path, err)
+	if c.TestTimeout <= 0 {
+		return fmt.Errorf("test_timeout must be positive, got %v", c.TestTimeout)
 	}
-
-	project := strings.TrimSpace(raw.Project)
-	if project == "" {
-		return Config{}, fmt.Errorf("project is required in configuration")
+	if c.PollInterval <= 0 {
+		return fmt.Errorf("poll_interval must be positive, got %v", c.PollInterval)
 	}
-
-	zone := strings.TrimSpace(raw.Zone)
-	if zone == "" {
-		return Config{}, fmt.Errorf("zone is required in configuration")
+	if c.CleanupTimeout <= 0 {
+		return fmt.Errorf("cleanup_timeout must be positive, got %v", c.CleanupTimeout)
 	}
-
-	testTimeout, err := durationOrDefault(raw.TestTimeout, 5*time.Minute)
-	if err != nil {
-		return Config{}, fmt.Errorf("invalid test_timeout: %w", err)
+	if c.MaxConcurrentVMs <= 0 {
+		return fmt.Errorf("invalid max VMs amount: %v", c.MaxConcurrentVMs)
 	}
-
-	pollInterval, err := durationOrDefault(raw.PollInterval, 10*time.Second)
-	if err != nil {
-		return Config{}, fmt.Errorf("invalid poll_interval: %w", err)
-	}
-
-	cleanupTimeout, err := durationOrDefault(raw.CleanupTimeout, 5*time.Minute)
-	if err != nil {
-		return Config{}, fmt.Errorf("invalid cleanup_timeout: %w", err)
-	}
-
-	artifactDir := strings.TrimSpace(raw.ArtifactDir)
-	if artifactDir == "" {
-		artifactDir = filepath.Join(filepath.Dir(path), "artifacts")
-	} else if !filepath.IsAbs(artifactDir) {
-		artifactDir = filepath.Join(filepath.Dir(path), artifactDir)
-	}
-	junitFile := filepath.Join(artifactDir, "junit.xml")
-
-	maxVMs := raw.MaxConcurrentVMs
-	if maxVMs <= 0 {
-		return Config{}, fmt.Errorf("invalid max VMs amount: %v", maxVMs)
-	}
-
-	return Config{
-		Project:          project,
-		Zone:             zone,
-		Network:          valueOrDefault(raw.Network, "global/networks/default"),
-		Subnetwork:       strings.TrimSpace(raw.Subnetwork),
-		ServiceAccount:   valueOrDefault(raw.ServiceAccount, "default"),
-		TestTimeout:      testTimeout,
-		PollInterval:     pollInterval,
-		CleanupTimeout:   cleanupTimeout,
-		MaxConcurrentVMs: maxVMs,
-		ArtifactDir:      artifactDir,
-		JUnitFile:        junitFile,
-	}, nil
-}
-
-func durationOrDefault(val string, fallback time.Duration) (time.Duration, error) {
-	if strings.TrimSpace(val) == "" {
-		return fallback, nil
-	}
-	return time.ParseDuration(val)
+	return nil
 }
 
 func valueOrDefault(val, fallback string) string {
