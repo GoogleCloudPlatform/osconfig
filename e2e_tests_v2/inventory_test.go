@@ -19,7 +19,6 @@ package e2etests_test
 import (
 	"context"
 	"fmt"
-	"runtime/debug"
 	"testing"
 	"time"
 
@@ -227,12 +226,6 @@ func TestOSInventory(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			defer func() {
-				if r := recover(); r != nil {
-					t.Fatalf("test case %q panicked: %v\n%s", tc.name, r, debug.Stack())
-				}
-			}()
-
 			test := testenv.New(t, tc.timeout)
 
 			var vm *gcp.VM
@@ -249,15 +242,18 @@ func TestOSInventory(t *testing.T) {
 				return err
 			})
 
-			if inv == nil || inv.OsInfo == nil {
-				t.Fatalf("inventory or OsInfo is nil")
-			}
-			if diff := cmp.Diff(vm.Name, inv.OsInfo.Hostname); diff != "" {
-				t.Errorf("hostname mismatch (-want +got):\n%s", diff)
-			}
-			if diff := cmp.Diff(tc.wantShortName, inv.OsInfo.ShortName); diff != "" {
-				t.Errorf("short name mismatch (-want +got):\n%s", diff)
-			}
+			test.Step("validate OsInfo names", func(ctx context.Context) error {
+				if inv == nil || inv.OsInfo == nil {
+					t.Fatalf("inventory or OsInfo is nil")
+				}
+				if diff := cmp.Diff(vm.Name, inv.OsInfo.Hostname); diff != "" {
+					t.Errorf("hostname mismatch (-want +got):\n%s", diff)
+				}
+				if diff := cmp.Diff(tc.wantShortName, inv.OsInfo.ShortName); diff != "" {
+					t.Errorf("short name mismatch (-want +got):\n%s", diff)
+				}
+				return nil
+			})
 
 			test.Step("verify installed packages", func(ctx context.Context) error {
 				pkgs := testenv.ExtractInstalledPackages(inv)
