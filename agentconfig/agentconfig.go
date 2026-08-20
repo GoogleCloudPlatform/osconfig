@@ -62,10 +62,11 @@ const (
 
 	prodEndpoint = "{zone}-osconfig.googleapis.com.:443"
 
-	osInventoryEnabledDefault      = false
-	guestPoliciesEnabledDefault    = false
-	taskNotificationEnabledDefault = false
-	debugEnabledDefault            = false
+	osInventoryEnabledDefault       = false
+	guestPoliciesEnabledDefault     = false
+	taskNotificationEnabledDefault  = false
+	debugEnabledDefault             = false
+	extendedInventoryEnabledDefault = false
 
 	oldConfigDirLinux = "/etc/osconfig"
 	cacheDirLinux     = "/var/lib/google_osconfig_agent"
@@ -122,25 +123,27 @@ var (
 )
 
 type config struct {
-	aptRepoFilePath         string
-	instanceName            string
-	instanceZone            string
-	projectID               string
-	svcEndpoint             string
-	googetRepoFilePath      string
-	zypperRepoFilePath      string
-	yumRepoFilePath         string
-	instanceID              string
-	universeDomain          string
-	numericProjectID        int64
-	osConfigPollInterval    int
-	debugEnabled            bool
-	taskNotificationEnabled bool
-	guestPoliciesEnabled    bool
-	osInventoryEnabled      bool
-	scalibrLinuxEnabled     bool
-	guestAttributesEnabled  bool
-	traceGetInventory       bool
+	aptRepoFilePath                    string
+	instanceName                       string
+	instanceZone                       string
+	projectID                          string
+	svcEndpoint                        string
+	googetRepoFilePath                 string
+	zypperRepoFilePath                 string
+	yumRepoFilePath                    string
+	instanceID                         string
+	universeDomain                     string
+	numericProjectID                   int64
+	osConfigPollInterval               int
+	debugEnabled                       bool
+	taskNotificationEnabled            bool
+	guestPoliciesEnabled               bool
+	osInventoryEnabled                 bool
+	scalibrLinuxEnabled                bool
+	guestAttributesEnabled             bool
+	traceGetInventory                  bool
+	extendedInventoryEnabled           bool
+	extendedInventoryExtractorsAllowed []string
 }
 
 func (c *config) parseFeatures(features string, enabled bool) {
@@ -196,6 +199,17 @@ func parseBool(s string) bool {
 	return enabled
 }
 
+func parseSlice(s string) []string {
+	var slice []string
+	for _, item := range strings.Split(s, ",") {
+		item = strings.TrimSpace(item)
+		if item != "" {
+			slice = append(slice, item)
+		}
+	}
+	return slice
+}
+
 type metadataJSON struct {
 	Instance instanceJSON
 	Project  projectJSON
@@ -220,32 +234,35 @@ type universeJSON struct {
 }
 
 type attributesJSON struct {
-	PollIntervalOld       *json.Number `json:"os-config-poll-interval"`
-	PollInterval          *json.Number `json:"osconfig-poll-interval"`
-	InventoryEnabledOld   string       `json:"os-inventory-enabled"`
-	InventoryEnabled      string       `json:"enable-os-inventory"`
-	PreReleaseFeaturesOld string       `json:"os-config-enabled-prerelease-features"`
-	PreReleaseFeatures    string       `json:"osconfig-enabled-prerelease-features"`
-	DebugEnabledOld       string       `json:"enable-os-config-debug"`
-	LogLevel              string       `json:"osconfig-log-level"`
-	OSConfigEndpointOld   string       `json:"os-config-endpoint"`
-	OSConfigEndpoint      string       `json:"osconfig-endpoint"`
-	OSConfigEnabled       string       `json:"enable-osconfig"`
-	DisabledFeatures      string       `json:"osconfig-disabled-features"`
-	EnableGuestAttributes string       `json:"enable-guest-attributes"`
-	TraceGetInventory     string       `json:"trace-get-inventory"`
-	ScalibrLinuxEnabled   string       `json:"enable-scalibr-linux"`
+	PollIntervalOld                    *json.Number `json:"os-config-poll-interval"`
+	PollInterval                       *json.Number `json:"osconfig-poll-interval"`
+	InventoryEnabledOld                string       `json:"os-inventory-enabled"`
+	InventoryEnabled                   string       `json:"enable-os-inventory"`
+	PreReleaseFeaturesOld              string       `json:"os-config-enabled-prerelease-features"`
+	PreReleaseFeatures                 string       `json:"osconfig-enabled-prerelease-features"`
+	DebugEnabledOld                    string       `json:"enable-os-config-debug"`
+	LogLevel                           string       `json:"osconfig-log-level"`
+	OSConfigEndpointOld                string       `json:"os-config-endpoint"`
+	OSConfigEndpoint                   string       `json:"osconfig-endpoint"`
+	OSConfigEnabled                    string       `json:"enable-osconfig"`
+	DisabledFeatures                   string       `json:"osconfig-disabled-features"`
+	EnableGuestAttributes              string       `json:"enable-guest-attributes"`
+	TraceGetInventory                  string       `json:"trace-get-inventory"`
+	ScalibrLinuxEnabled                string       `json:"enable-scalibr-linux"`
+	ExtendedInventoryEnabled           string       `json:"osconfig-extended-inventory-enabled"`
+	ExtendedInventoryExtractorsAllowed string       `json:"osconfig-extended-inventory-extractors-allowed"`
 }
 
 func createConfigFromMetadata(md metadataJSON) *config {
 	old := getAgentConfig()
 	c := &config{
-		osInventoryEnabled:      osInventoryEnabledDefault,
-		guestPoliciesEnabled:    guestPoliciesEnabledDefault,
-		taskNotificationEnabled: taskNotificationEnabledDefault,
-		debugEnabled:            debugEnabledDefault,
-		svcEndpoint:             prodEndpoint,
-		osConfigPollInterval:    osConfigPollIntervalDefault,
+		osInventoryEnabled:       osInventoryEnabledDefault,
+		guestPoliciesEnabled:     guestPoliciesEnabledDefault,
+		taskNotificationEnabled:  taskNotificationEnabledDefault,
+		debugEnabled:             debugEnabledDefault,
+		svcEndpoint:              prodEndpoint,
+		osConfigPollInterval:     osConfigPollIntervalDefault,
+		extendedInventoryEnabled: extendedInventoryEnabledDefault,
 
 		googetRepoFilePath: googetRepoFilePath,
 		zypperRepoFilePath: zypperRepoFilePath,
@@ -374,8 +391,28 @@ func createConfigFromMetadata(md metadataJSON) *config {
 	setScalibrEnablement(md, c)
 	setSVCEndpoint(md, c)
 	setTraceGetInventory(md, c)
+	setExtendedInventory(md, c)
 
 	return c
+}
+
+func setExtendedInventory(md metadataJSON, c *config) {
+	projectSettings := md.Project.Attributes
+	instanceSettings := md.Instance.Attributes
+
+	if projectSettings.ExtendedInventoryEnabled != "" {
+		c.extendedInventoryEnabled = parseBool(projectSettings.ExtendedInventoryEnabled)
+	}
+	if instanceSettings.ExtendedInventoryEnabled != "" {
+		c.extendedInventoryEnabled = parseBool(instanceSettings.ExtendedInventoryEnabled)
+	}
+
+	if projectSettings.ExtendedInventoryExtractorsAllowed != "" {
+		c.extendedInventoryExtractorsAllowed = parseSlice(projectSettings.ExtendedInventoryExtractorsAllowed)
+	}
+	if instanceSettings.ExtendedInventoryExtractorsAllowed != "" {
+		c.extendedInventoryExtractorsAllowed = parseSlice(instanceSettings.ExtendedInventoryExtractorsAllowed)
+	}
 }
 
 func setScalibrEnablement(md metadataJSON, c *config) {
@@ -599,6 +636,16 @@ func SvcEndpoint() string {
 // TraceGetInventory turns on memory tracing while gathering inventory.
 func TraceGetInventory() bool {
 	return getAgentConfig().traceGetInventory
+}
+
+// ExtendedInventoryEnabled indicates whether extended inventory collection should be enabled.
+func ExtendedInventoryEnabled() bool {
+	return getAgentConfig().extendedInventoryEnabled
+}
+
+// ExtendedInventoryExtractorsAllowed returns the allowed extractors for extended inventory.
+func ExtendedInventoryExtractorsAllowed() []string {
+	return getAgentConfig().extendedInventoryExtractorsAllowed
 }
 
 // ZypperRepoDir is the location of the zypper repo files.

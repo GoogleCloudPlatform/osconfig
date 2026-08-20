@@ -11,20 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-FROM marketplace.gcr.io/google/debian12:latest
-
-# Set environment variables for the Go version and installation
-ENV GO_VERSION 1.24.3
-ENV PATH /usr/local/go/bin:$PATH
+FROM us-docker.pkg.dev/artifact-foundry-prod/docker-3p-trusted/golang:1.25
 
 RUN apt-get update && \
     apt-get install -y wget ca-certificates && \
     rm -rf /var/lib/apt/lists/*
-
-RUN wget https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz -O go.tar.gz && \
-    tar -C /usr/local -xzf go.tar.gz && \
-    rm go.tar.gz
 
 COPY . /source
 WORKDIR /source
