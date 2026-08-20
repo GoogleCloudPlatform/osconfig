@@ -706,6 +706,7 @@ func TestZypperPatchesWithOptions(t *testing.T) {
 		name             string
 		options          []ZypperListOption
 		expectedCommands []utiltest.ExpectedCommand
+		wantPatches      []*ZypperPatch
 	}{
 		{
 			name:    "category filter, want category flags in command",
@@ -713,7 +714,15 @@ func TestZypperPatchesWithOptions(t *testing.T) {
 			expectedCommands: []utiltest.ExpectedCommand{
 				{
 					Cmd: exec.Command(zypper, append(zypperListPatchesArgs, "--category=security", "--category=recommended")...),
+					Stdout: []byte(
+						"SLE-Module-Basesystem15-SP5-Updates | SUSE-SLE-Module-Basesystem-15-SP5-2023-3821 | security    | important | --- | needed | Security update for bind\n" +
+							"SLE-Module-Basesystem15-SP5-Updates | SUSE-SLE-Module-Basesystem-15-SP5-2023-3716 | recommended | moderate  | --- | needed | Recommended update for libnvme",
+					),
 				},
+			},
+			wantPatches: []*ZypperPatch{
+				{Name: "SUSE-SLE-Module-Basesystem-15-SP5-2023-3821", Category: "security", Severity: "important", Summary: "Security update for bind"},
+				{Name: "SUSE-SLE-Module-Basesystem-15-SP5-2023-3716", Category: "recommended", Severity: "moderate", Summary: "Recommended update for libnvme"},
 			},
 		},
 		{
@@ -722,7 +731,15 @@ func TestZypperPatchesWithOptions(t *testing.T) {
 			expectedCommands: []utiltest.ExpectedCommand{
 				{
 					Cmd: exec.Command(zypper, append(zypperListPatchesArgs, "--severity=critical", "--severity=important")...),
+					Stdout: []byte(
+						"SLE-Module-Basesystem15-SP5-Updates | SUSE-SLE-Module-Basesystem-15-SP5-2023-3634 | security | critical  | --- | needed | Security update for libwebp\n" +
+							"SLE-Module-Basesystem15-SP5-Updates | SUSE-SLE-Module-Basesystem-15-SP5-2023-3823 | security | important | --- | needed | Security update for curl",
+					),
 				},
+			},
+			wantPatches: []*ZypperPatch{
+				{Name: "SUSE-SLE-Module-Basesystem-15-SP5-2023-3634", Category: "security", Severity: "critical", Summary: "Security update for libwebp"},
+				{Name: "SUSE-SLE-Module-Basesystem-15-SP5-2023-3823", Category: "security", Severity: "important", Summary: "Security update for curl"},
 			},
 		},
 		{
@@ -730,8 +747,12 @@ func TestZypperPatchesWithOptions(t *testing.T) {
 			options: []ZypperListOption{ZypperListPatchWithOptional(true)},
 			expectedCommands: []utiltest.ExpectedCommand{
 				{
-					Cmd: exec.Command(zypper, append(zypperListPatchesArgs, "--with-optional", "--all")...),
+					Cmd:    exec.Command(zypper, append(zypperListPatchesArgs, "--with-optional", "--all")...),
+					Stdout: []byte("SLE-Module-Basesystem15-SP5-Updates | SUSE-SLE-Module-Basesystem-15-SP5-2023-3146 | optional | low | --- | needed | Optional update for mono"),
 				},
+			},
+			wantPatches: []*ZypperPatch{
+				{Name: "SUSE-SLE-Module-Basesystem-15-SP5-2023-3146", Category: "optional", Severity: "low", Summary: "Optional update for mono"},
 			},
 		},
 		{
@@ -740,7 +761,15 @@ func TestZypperPatchesWithOptions(t *testing.T) {
 			expectedCommands: []utiltest.ExpectedCommand{
 				{
 					Cmd: exec.Command(zypper, append(zypperListPatchesArgs, "--all")...),
+					Stdout: []byte(
+						"SLE-Module-Basesystem15-SP5-Updates | SUSE-SLE-Module-Basesystem-15-SP5-2023-3780 | recommended | moderate | --- | needed     | Recommended update for hidapi\n" +
+							"SLE-Module-Basesystem15-SP5-Updates | SUSE-SLE-Module-Basesystem-15-SP5-2023-2240 | recommended | moderate | --- | applied    | Recommended update for systemd\n" +
+							"SLE-Module-Basesystem15-SP5-Updates | SUSE-SLE-Module-Basesystem-15-SP5-2023-335  | recommended | moderate | --- | not needed | Recommended update for hyper-v",
+					),
 				},
+			},
+			wantPatches: []*ZypperPatch{
+				{Name: "SUSE-SLE-Module-Basesystem-15-SP5-2023-3780", Category: "recommended", Severity: "moderate", Summary: "Recommended update for hidapi"},
 			},
 		},
 	}
@@ -749,7 +778,9 @@ func TestZypperPatchesWithOptions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			utiltest.SetExpectedCommands(ctx, mockCommandRunner, tt.expectedCommands)
 
-			_, _ = ZypperPatches(ctx, tt.options...)
+			gotPatches, gotErr := ZypperPatches(ctx, tt.options...)
+			utiltest.AssertErrorMatch(t, gotErr, nil)
+			utiltest.AssertEquals(t, gotPatches, tt.wantPatches)
 		})
 	}
 }
