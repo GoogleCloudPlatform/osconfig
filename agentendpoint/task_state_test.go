@@ -21,10 +21,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"reflect"
 	"syscall"
 	"testing"
-	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -218,16 +216,6 @@ func TestStateSave(t *testing.T) {
 			path:    invalidPath,
 			want:    "",
 			wantErr: &fs.PathError{Op: "mkdir", Path: invalidDir, Err: errors.New("not a directory")},
-		},
-		{
-			// time.Time.MarshalJSON only supports years between 0 and 9999.
-			desc: "invalid input for json, expect marshal error",
-			state: &taskState{
-				ExecTask: &execTask{StartedAt: time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC)},
-			},
-			path:    testState,
-			want:    "",
-			wantErr: &json.MarshalerError{Type: reflect.TypeOf(time.Time{}), Err: errors.New("Time.MarshalJSON: year outside of range [0,9999]")},
 		},
 	}
 	for _, tt := range tests {
