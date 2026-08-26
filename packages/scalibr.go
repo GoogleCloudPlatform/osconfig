@@ -97,15 +97,11 @@ func pkgInfoFromSnapExtractorPackage(pkg *extractor.Package, defaultArch string)
 }
 
 func pkgInfoFromGenericExtractorPackage(pkg *extractor.Package, pkgType string) *PkgInfo {
-	purlStr := ""
-	if pkg.PURL() != nil {
-		purlStr = pkg.PURL().String()
-	}
 	return &PkgInfo{
 		Name:    pkg.Name,
 		Version: pkg.Version,
 		Type:    pkgType,
-		Purl:    purlStr,
+		Purl:    pkg.PURL().String(),
 	}
 }
 
@@ -122,8 +118,6 @@ func pkgInfosFromExtractorPackages(ctx context.Context, scan *scalibr.ScanResult
 			packages.Chocolatey = append(packages.Chocolatey, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeChocolatey))
 		} else if _, ok := pkg.Metadata.(*scalibrwinget.Metadata); ok {
 			packages.WinGet = append(packages.WinGet, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeWinget))
-		} else if pkg.PURLType == purl.TypeGooget || (pkg.PURL() != nil && pkg.PURL().Type == purl.TypeGooget) {
-			packages.GooGet = append(packages.GooGet, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeGooget))
 		} else {
 			pkgInfo := pkgInfoFromSnapExtractorPackage(pkg, osinfo.Architecture)
 			if pkgInfo.Type == typeSnap {
