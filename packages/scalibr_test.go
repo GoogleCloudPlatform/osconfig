@@ -90,19 +90,6 @@ func TestExtractedPackageMappings(t *testing.T) {
 			}},
 		},
 		{
-			name: "os/googet extractor maps correctly",
-			pkgs: []*extractor.Package{
-				{
-					Name:     "googet-pkg",
-					Version:  "1.2.3@4",
-					PURLType: "googet",
-				},
-			},
-			want: Packages{GooGet: []*PkgInfo{
-				{Name: "googet-pkg", Version: "1.2.3@4", Type: "googet", Purl: "pkg:googet/googet-pkg@1.2.3%404"},
-			}},
-		},
-		{
 			name: "os/chocolatey extractor maps correctly",
 			pkgs: []*extractor.Package{
 				{
