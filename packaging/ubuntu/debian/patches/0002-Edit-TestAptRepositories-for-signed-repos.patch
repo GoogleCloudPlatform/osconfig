@@ -1,0 +1,29 @@
+Subject: Edit TestAptRepositories to avail of "[signed-by=<managed-GPG-file>]"
+Description: The test `TestAptRepositories` was not taking into account that
+the managed repo files are signed by a (managed) .gpg file. This patch
+adds that snippet into the expected output so the tests pass and the
+package can build.
+Author: Chloé 'kajiya' Smith <chloe.smith@canonical.com>
+Forwarded: not-needed
+Last-Update: 2024-07-15
+---
+--- a/policies/apt_test.go
++++ b/policies/apt_test.go
+@@ -58,7 +58,7 @@
+ 			[]*agentendpointpb.AptRepository{
+ 				{Uri: "http://repo1-url/", Distribution: "distribution", Components: []string{"component1"}},
+ 			},
+-			"# Repo file managed by Google OSConfig agent\n\ndeb http://repo1-url/ distribution component1\n",
++			"# Repo file managed by Google OSConfig agent\n\ndeb [signed-by=/etc/apt/trusted.gpg.d/osconfig_agent_managed.gpg] http://repo1-url/ distribution component1\n",
+ 		},
+ 		{
+ 			"2 repos",
+@@ -66,7 +66,7 @@
+ 				{Uri: "http://repo1-url/", Distribution: "distribution", Components: []string{"component1"}, ArchiveType: agentendpointpb.AptRepository_DEB_SRC},
+ 				{Uri: "http://repo2-url/", Distribution: "distribution", Components: []string{"component1", "component2"}, ArchiveType: agentendpointpb.AptRepository_DEB},
+ 			},
+-			"# Repo file managed by Google OSConfig agent\n\ndeb-src http://repo1-url/ distribution component1\n\ndeb http://repo2-url/ distribution component1 component2\n",
++			"# Repo file managed by Google OSConfig agent\n\ndeb-src [signed-by=/etc/apt/trusted.gpg.d/osconfig_agent_managed.gpg] http://repo1-url/ distribution component1\n\ndeb [signed-by=/etc/apt/trusted.gpg.d/osconfig_agent_managed.gpg] http://repo2-url/ distribution component1 component2\n",
+ 		},
+ 	}
+ 
