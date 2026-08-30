@@ -4,8 +4,8 @@ go 1.25.5
 
 require (
 	cloud.google.com/go/compute/metadata v0.9.0
-	cloud.google.com/go/osconfig v1.16.0
-	cloud.google.com/go/storage v1.59.0
+	cloud.google.com/go/osconfig v1.21.0
+	cloud.google.com/go/storage v1.62.0
 	cos.googlesource.com/cos/tools.git v0.0.0-20210329212435-a349a79f950d
 	github.com/GoogleCloudPlatform/guest-logging-go v0.0.0-20221216194522-f549ad6a1730
 	github.com/StackExchange/wmi v1.2.1
@@ -22,7 +22,7 @@ require (
 	golang.org/x/oauth2 v0.36.0
 	golang.org/x/sys v0.47.0
 	google.golang.org/api v0.287.1
-	google.golang.org/genproto v0.0.0-20260319201613-d00831a3d3e7
+	google.golang.org/genproto v0.0.0-20260519071638-aa98bba5eb94
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260630182238-925bb5da69e7
 	google.golang.org/grpc v1.82.1
 	google.golang.org/protobuf v1.36.11
@@ -33,10 +33,10 @@ require (
 	cloud.google.com/go v0.123.0 // indirect
 	cloud.google.com/go/auth v0.22.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
-	cloud.google.com/go/iam v1.5.3 // indirect
-	cloud.google.com/go/logging v1.13.2 // indirect
-	cloud.google.com/go/longrunning v0.8.0 // indirect
-	cloud.google.com/go/monitoring v1.24.3 // indirect
+	cloud.google.com/go/iam v1.11.0 // indirect
+	cloud.google.com/go/logging v1.18.0 // indirect
+	cloud.google.com/go/longrunning v1.0.0 // indirect
+	cloud.google.com/go/monitoring v1.29.0 // indirect
 	cyphar.com/go-pathrs v0.2.1 // indirect
 	deps.dev/api/v3 v3.0.0-20250903005441-604c45d5b44b // indirect
 	deps.dev/api/v3alpha v0.0.0-20250903005441-604c45d5b44b // indirect
@@ -50,8 +50,8 @@ require (
 	github.com/CycloneDX/cyclonedx-go v0.9.2 // indirect
 	github.com/GehirnInc/crypt v0.0.0-20230320061759-8cc1b52080c5 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.32.0 // indirect
-	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.54.0 // indirect
-	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.54.0 // indirect
+	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.59.0 // indirect
+	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.59.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/Microsoft/hcsshim v0.14.0-rc.1 // indirect
 	github.com/aead/serpent v0.0.0-20160714141033-fba169763ea6 // indirect
