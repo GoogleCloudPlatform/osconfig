@@ -22,7 +22,7 @@
 #        BUILD_DIR=. \
 #    ./test_build.sh 
 
-DEFAULT_TYPE='deb11'
+DEFAULT_TYPE='deb12'
 DEFAULT_PROJECT='gcp-guest'
 DEFAULT_ZONE='us-central1-a'
 DEFAULT_OWNER='GoogleCloudPlatform'
