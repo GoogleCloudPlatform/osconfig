@@ -77,6 +77,16 @@ func pkgInfoFromCosExtractorPackage(pkg *extractor.Package, metadata *scalibrcos
 	}
 }
 
+// pkgInfoFromLanguageExtractorPackage converts a language package from SCALIBR into a PkgInfo.
+func pkgInfoFromLanguageExtractorPackage(pkg *extractor.Package, pkgType string) *PkgInfo {
+	return &PkgInfo{
+		Name:    pkg.Name,
+		Version: pkg.Version,
+		Type:    pkgType,
+		Purl:    pkg.PURL().String(),
+	}
+}
+
 func pkgInfosFromExtractorPackages(ctx context.Context, scan *scalibr.ScanResult, osinfo *osinfo.OSInfo) Packages {
 	var packages Packages
 	for _, pkg := range scan.Inventory.Packages {
@@ -87,7 +97,28 @@ func pkgInfosFromExtractorPackages(ctx context.Context, scan *scalibr.ScanResult
 		} else if metadata, ok := pkg.Metadata.(*scalibrcos.Metadata); ok {
 			packages.COS = append(packages.COS, pkgInfoFromCosExtractorPackage(pkg, metadata, osinfo))
 		} else {
-			clog.Errorf(ctx, "Package type not implemented: %v", pkg)
+			switch pkg.PURL().Type {
+			case purl.TypePyPi:
+				packages.Pip = append(packages.Pip, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypePyPi))
+			case purl.TypeGem:
+				packages.Gem = append(packages.Gem, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeGem))
+			case purl.TypeNPM:
+				packages.Npm = append(packages.Npm, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeNPM))
+			case purl.TypeMaven:
+				packages.Maven = append(packages.Maven, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeMaven))
+			case purl.TypeGolang:
+				packages.Go = append(packages.Go, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeGolang))
+			case purl.TypeCargo:
+				packages.Cargo = append(packages.Cargo, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeCargo))
+			case purl.TypeComposer:
+				packages.Composer = append(packages.Composer, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeComposer))
+			case purl.TypeSwift:
+				packages.Swift = append(packages.Swift, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeSwift))
+			case purl.TypePub:
+				packages.Pub = append(packages.Pub, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypePub))
+			default:
+				clog.Errorf(ctx, "Package type not implemented: %v", pkg)
+			}
 		}
 	}
 	return packages
