@@ -271,6 +271,12 @@ func NewInstalledPackagesProvider(osinfoProvider osinfo.Provider) InstalledPacka
 				"os/cos",
 				"os/dpkg",
 				"os/rpm",
+				"os/apk",
+				"os/snap",
+				"os/pacman",
+				"os/nix",
+				"os/portage",
+				"os/spack",
 			},
 			osinfoProvider: osinfoProvider,
 		}

@@ -104,6 +104,12 @@ type Packages struct {
 	Zypper             []*PkgInfo            `json:"zypper,omitempty"`
 	ZypperPatches      []*ZypperPatch        `json:"zypperPatches,omitempty"`
 	COS                []*PkgInfo            `json:"cos,omitempty"`
+	Apk                []*PkgInfo            `json:"apk,omitempty"`
+	Snap               []*PkgInfo            `json:"snap,omitempty"`
+	Pacman             []*PkgInfo            `json:"pacman,omitempty"`
+	Nix                []*PkgInfo            `json:"nix,omitempty"`
+	Portage            []*PkgInfo            `json:"portage,omitempty"`
+	Spack              []*PkgInfo            `json:"spack,omitempty"`
 	Gem                []*PkgInfo            `json:"gem,omitempty"`
 	Pip                []*PkgInfo            `json:"pip,omitempty"`
 	GooGet             []*PkgInfo            `json:"googet,omitempty"`
@@ -120,12 +126,18 @@ type PkgInfo struct {
 }
 
 const (
-	typeRPM    = "rpm"
-	typeDebian = "deb"
-	typeCos    = "cos"
-	typeGooGet = "googet"
-	typeGem    = "gem"
-	typePypi   = "pypi"
+	typeRPM     = "rpm"
+	typeDebian  = "deb"
+	typeCos     = "cos"
+	typeGooGet  = "googet"
+	typeGem     = "gem"
+	typePypi    = "pypi"
+	typeApk     = "apk"
+	typeSnap    = "snap"
+	typePacman  = "pacman"
+	typeNix     = "nix"
+	typePortage = "portage"
+	typeSpack   = "spack"
 )
 
 // Source represents source package from which binary package was built.

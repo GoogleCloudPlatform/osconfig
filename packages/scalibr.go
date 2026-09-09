@@ -77,6 +77,23 @@ func pkgInfoFromCosExtractorPackage(pkg *extractor.Package, metadata *scalibrcos
 	}
 }
 
+// pkgInfoFromGenericExtractorPackage creates a PkgInfo from a generic SCALIBR extractor package without specific metadata extraction.
+func pkgInfoFromGenericExtractorPackage(pkg *extractor.Package, defaultArch string) *PkgInfo {
+	purlStr := ""
+	pkgType := ""
+	if p := pkg.PURL(); p != nil {
+		purlStr = p.String()
+		pkgType = p.Type
+	}
+	return &PkgInfo{
+		Name:    pkg.Name,
+		Version: pkg.Version,
+		Arch:    osinfo.NormalizeArchitecture(defaultArch),
+		Type:    pkgType,
+		Purl:    purlStr,
+	}
+}
+
 func pkgInfosFromExtractorPackages(ctx context.Context, scan *scalibr.ScanResult, osinfo *osinfo.OSInfo) Packages {
 	var packages Packages
 	for _, pkg := range scan.Inventory.Packages {
@@ -87,7 +104,23 @@ func pkgInfosFromExtractorPackages(ctx context.Context, scan *scalibr.ScanResult
 		} else if metadata, ok := pkg.Metadata.(*scalibrcos.Metadata); ok {
 			packages.COS = append(packages.COS, pkgInfoFromCosExtractorPackage(pkg, metadata, osinfo))
 		} else {
-			clog.Errorf(ctx, "Package type not implemented: %v", pkg)
+			pkgInfo := pkgInfoFromGenericExtractorPackage(pkg, osinfo.Architecture)
+			switch pkgInfo.Type {
+			case typeApk:
+				packages.Apk = append(packages.Apk, pkgInfo)
+			case typeSnap:
+				packages.Snap = append(packages.Snap, pkgInfo)
+			case typePacman:
+				packages.Pacman = append(packages.Pacman, pkgInfo)
+			case typeNix:
+				packages.Nix = append(packages.Nix, pkgInfo)
+			case typePortage:
+				packages.Portage = append(packages.Portage, pkgInfo)
+			case typeSpack:
+				packages.Spack = append(packages.Spack, pkgInfo)
+			default:
+				clog.Errorf(ctx, "Package type not implemented: %v", pkg)
+			}
 		}
 	}
 	return packages
