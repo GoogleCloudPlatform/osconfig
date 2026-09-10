@@ -14,9 +14,11 @@ import (
 	"github.com/golang/mock/gomock"
 	scalibr "github.com/google/osv-scalibr"
 	"github.com/google/osv-scalibr/extractor"
+	scalibrchoco "github.com/google/osv-scalibr/extractor/filesystem/os/chocolatey/metadata"
 	scalibrcos "github.com/google/osv-scalibr/extractor/filesystem/os/cos/metadata"
 	dpkgmetadata "github.com/google/osv-scalibr/extractor/filesystem/os/dpkg/metadata"
 	scalibrrpm "github.com/google/osv-scalibr/extractor/filesystem/os/rpm/metadata"
+	scalibrwinget "github.com/google/osv-scalibr/extractor/filesystem/os/winget/metadata"
 	"github.com/google/osv-scalibr/inventory"
 )
 
@@ -88,6 +90,34 @@ func TestExtractedPackageMappings(t *testing.T) {
 			}},
 		},
 		{
+			name: "os/chocolatey extractor maps correctly",
+			pkgs: []*extractor.Package{
+				{
+					Name:     "git",
+					Version:  "2.40.1",
+					PURLType: "chocolatey",
+					Metadata: &scalibrchoco.Metadata{Name: "git", Version: "2.40.1"},
+				},
+			},
+			want: Packages{Chocolatey: []*PkgInfo{
+				{Name: "git", Version: "2.40.1", Type: "chocolatey", Purl: "pkg:chocolatey/git@2.40.1"},
+			}},
+		},
+		{
+			name: "os/winget extractor maps correctly",
+			pkgs: []*extractor.Package{
+				{
+					Name:     "Microsoft.PowerToys",
+					Version:  "0.70.1",
+					PURLType: "winget",
+					Metadata: &scalibrwinget.Metadata{Name: "Microsoft.PowerToys", Version: "0.70.1"},
+				},
+			},
+			want: Packages{WinGet: []*PkgInfo{
+				{Name: "Microsoft.PowerToys", Version: "0.70.1", Type: "winget", Purl: "pkg:winget/Microsoft.PowerToys@0.70.1"},
+			}},
+		},
+		{
 			name: "unknown package metadata type is ignored",
 			pkgs: []*extractor.Package{
 				{
@@ -108,24 +138,31 @@ func TestExtractedPackageMappings(t *testing.T) {
 	}
 }
 
-func arrangeVirtualRoot(t *testing.T, dbFilepath string, targetFilepath string) string {
+type virtualFile struct {
+	src string
+	dst string
+}
+
+func arrangeVirtualRoot(t *testing.T, files ...virtualFile) string {
 	virtualRootPath := "./testdata/virtualTestRoot"
-	if err := os.RemoveAll(virtualRootPath); err != nil {
-		t.Error(err)
-	}
 	t.Cleanup(func() {
 		if err := os.RemoveAll(virtualRootPath); err != nil {
 			t.Error(err)
 		}
 	})
 
-	targetFilepathInsideVirtualRoot := path.Join(virtualRootPath, targetFilepath)
-	if err := os.MkdirAll(path.Dir(targetFilepathInsideVirtualRoot), 0700); err != nil {
-		t.Error(err)
-	}
+	for _, file := range files {
+		targetFilepathInsideVirtualRoot := path.Join(virtualRootPath, file.dst)
+		if err := os.Remove(targetFilepathInsideVirtualRoot); err != nil && !os.IsNotExist(err) {
+			t.Error(err)
+		}
+		if err := os.MkdirAll(path.Dir(targetFilepathInsideVirtualRoot), 0700); err != nil {
+			t.Error(err)
+		}
 
-	if err := os.Link(dbFilepath, targetFilepathInsideVirtualRoot); err != nil {
-		t.Error(err)
+		if err := os.Link(file.src, targetFilepathInsideVirtualRoot); err != nil {
+			t.Error(err)
+		}
 	}
 	return virtualRootPath
 }
@@ -162,7 +199,7 @@ func TestScalibrIntegration(t *testing.T) {
 			provider: scalibrInstalledPackagesProvider{
 				osinfoProvider: stubProvider{},
 				extractors:     []string{"os/dpkg"},
-				scanRootPaths:  []string{arrangeVirtualRoot(t, "./testdata/debian.dpkg-status", "/var/lib/dpkg/status")},
+				scanRootPaths:  []string{arrangeVirtualRoot(t, virtualFile{src: "./testdata/debian.dpkg-status", dst: "/var/lib/dpkg/status"})},
 				dirsToSkip:     []string{},
 			},
 			wantErr: nil,
@@ -172,12 +209,32 @@ func TestScalibrIntegration(t *testing.T) {
 			}},
 		},
 		{
+			name:  "scalibr scan partially succeeds when extractor fails, expect healthy status and packages from other extractors preserved",
+			setup: func(t *testing.T) {},
+			provider: scalibrInstalledPackagesProvider{
+				osinfoProvider: stubProvider{},
+				extractors:     []string{"os/winget", "os/dpkg"},
+				scanRootPaths: []string{arrangeVirtualRoot(t,
+					virtualFile{src: "./testdata/debian.dpkg-status", dst: "/var/lib/dpkg/status"},
+					virtualFile{src: "./testdata/invalid_winget.db", dst: "/ProgramData/Microsoft/Windows/AppRepository/StateRepository-Machine.srd"},
+				)},
+				dirsToSkip: []string{},
+			},
+			wantErr: nil,
+			wantPkgs: Packages{
+				Deb: []*PkgInfo{
+					{Name: "7zip", Version: "24.09+dfsg-4", Arch: "x86_64", Source: Source{Name: "7zip", Version: "24.09+dfsg-4"}, Type: "deb", Purl: "pkg:deb/linux/7zip@24.09%2Bdfsg-4?arch=amd64"},
+					{Name: "llvm-16", Version: "1:16.0.6-27+build3", Arch: "x86_64", Source: Source{Name: "llvm-toolchain-16", Version: "1:16.0.6-27+build3"}, Type: "deb", Purl: "pkg:deb/linux/llvm-16@1%3A16.0.6-27%2Bbuild3?arch=amd64&source=llvm-toolchain-16"},
+				},
+			},
+		},
+		{
 			name:  "osinfo provider error, expect osinfo error",
 			setup: func(t *testing.T) {},
 			provider: scalibrInstalledPackagesProvider{
 				osinfoProvider: errorProvider{},
 				extractors:     []string{"os/dpkg"},
-				scanRootPaths:  []string{arrangeVirtualRoot(t, "./testdata/debian.dpkg-status", "/var/lib/dpkg/status")},
+				scanRootPaths:  []string{arrangeVirtualRoot(t, virtualFile{src: "./testdata/debian.dpkg-status", dst: "/var/lib/dpkg/status"})},
 				dirsToSkip:     []string{},
 			},
 			wantErr: errors.New("osinfo error"),
@@ -188,7 +245,7 @@ func TestScalibrIntegration(t *testing.T) {
 			provider: scalibrInstalledPackagesProvider{
 				osinfoProvider: stubProvider{},
 				extractors:     []string{"invalid/extractor"},
-				scanRootPaths:  []string{arrangeVirtualRoot(t, "./testdata/debian.dpkg-status", "/var/lib/dpkg/status")},
+				scanRootPaths:  []string{arrangeVirtualRoot(t, virtualFile{src: "./testdata/debian.dpkg-status", dst: "/var/lib/dpkg/status"})},
 				dirsToSkip:     []string{},
 			},
 			wantErr: errors.New("unknown plugin \"invalid/extractor\""),
@@ -199,7 +256,7 @@ func TestScalibrIntegration(t *testing.T) {
 			provider: scalibrInstalledPackagesProvider{
 				osinfoProvider: stubProvider{},
 				extractors:     []string{"os/dpkg"},
-				scanRootPaths:  []string{arrangeVirtualRoot(t, "./testdata/debian.dpkg-status", "/var/lib/dpkg/status")},
+				scanRootPaths:  []string{arrangeVirtualRoot(t, virtualFile{src: "./testdata/debian.dpkg-status", dst: "/var/lib/dpkg/status"})},
 				dirsToSkip:     []string{"testdata/virtualTestRoot/var"},
 			},
 			wantErr:  nil,
@@ -215,7 +272,7 @@ func TestScalibrIntegration(t *testing.T) {
 			provider: scalibrInstalledPackagesProvider{
 				osinfoProvider: stubProvider{},
 				extractors:     []string{"os/dpkg"},
-				scanRootPaths:  []string{arrangeVirtualRoot(t, "./testdata/debian.dpkg-status", "/var/lib/dpkg/status")},
+				scanRootPaths:  []string{arrangeVirtualRoot(t, virtualFile{src: "./testdata/debian.dpkg-status", dst: "/var/lib/dpkg/status"})},
 				dirsToSkip:     []string{},
 			},
 			wantErr: nil,
@@ -239,7 +296,7 @@ func TestScalibrIntegration(t *testing.T) {
 			provider: scalibrInstalledPackagesProvider{
 				osinfoProvider: stubProvider{},
 				extractors:     []string{"os/dpkg"},
-				scanRootPaths:  []string{arrangeVirtualRoot(t, "./testdata/debian.dpkg-status", "/var/lib/dpkg/status")},
+				scanRootPaths:  []string{arrangeVirtualRoot(t, virtualFile{src: "./testdata/debian.dpkg-status", dst: "/var/lib/dpkg/status"})},
 				dirsToSkip:     []string{},
 			},
 			wantErr: errors.New("error getting zypper installed patches: error running /usr/bin/zypper with args [\"--gpg-auto-import-keys\" \"-q\" \"list-patches\" \"--all\"]: zypper error, stdout: \"\", stderr: \"\""),
@@ -256,7 +313,7 @@ func TestScalibrIntegration(t *testing.T) {
 			provider: scalibrInstalledPackagesProvider{
 				osinfoProvider: stubProvider{},
 				extractors:     []string{"os/dpkg"},
-				scanRootPaths:  []string{arrangeVirtualRoot(t, "./testdata/debian.dpkg-status", "/var/lib/dpkg/status")},
+				scanRootPaths:  []string{arrangeVirtualRoot(t, virtualFile{src: "./testdata/debian.dpkg-status", dst: "/var/lib/dpkg/status"})},
 				dirsToSkip:     []string{"/proc"},
 			},
 			wantErr: errors.New("scalibr scan.Status is unhealthy, status: FAILED: path not relative to any of the scan roots, plugins: []"),

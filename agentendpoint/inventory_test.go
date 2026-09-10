@@ -126,6 +126,8 @@ func generateInventoryState() *inventory.InstanceInventory {
 			Gem:           []*packages.PkgInfo{{Name: "GemInstalledPkg", Arch: "Arch", Version: "Version", Purl: "pkg:gem/GemInstalledPkg@Version"}},
 			Pip:           []*packages.PkgInfo{{Name: "PipInstalledPkg", Arch: "Arch", Version: "Version", Purl: "pkg:pypi/PipInstalledPkg@Version"}},
 			GooGet:        []*packages.PkgInfo{{Name: "GooGetInstalledPkg", Arch: "Arch", Version: "Version", Type: "googet", Purl: "pkg:googet/ShortName/GooGetInstalledPkg@Version"}},
+			Chocolatey:    []*packages.PkgInfo{{Name: "ChocoInstalledPkg", Arch: "Arch", Version: "Version", Type: "chocolatey", Purl: "pkg:chocolatey/ChocoInstalledPkg@Version"}},
+			WinGet:        []*packages.PkgInfo{{Name: "WingetInstalledPkg", Arch: "Arch", Version: "Version", Type: "winget", Purl: "pkg:winget/WingetInstalledPkg@Version"}},
 			WUA: []*packages.WUAPackage{{
 				Title:                    "WUAInstalled",
 				Description:              "Description",
@@ -149,6 +151,8 @@ func generateInventoryState() *inventory.InstanceInventory {
 			Gem:           []*packages.PkgInfo{{Name: "GemPkgUpdate", Arch: "Arch", Version: "Version", Purl: "pkg:gem/GemPkgUpdate@Version"}},
 			Pip:           []*packages.PkgInfo{{Name: "PipPkgUpdate", Arch: "Arch", Version: "Version", Purl: "pkg:pypi/PipPkgUpdate@Version"}},
 			GooGet:        []*packages.PkgInfo{{Name: "GooGetPkgUpdate", Arch: "Arch", Version: "Version", Type: "googet", Purl: "pkg:googet/ShortName/GooGetPkgUpdate@Version"}},
+			Chocolatey:    []*packages.PkgInfo{{Name: "ChocoPkgUpdate", Arch: "Arch", Version: "Version", Type: "chocolatey", Purl: "pkg:chocolatey/ChocoPkgUpdate@Version"}},
+			WinGet:        []*packages.PkgInfo{{Name: "WingetPkgUpdate", Arch: "Arch", Version: "Version", Type: "winget", Purl: "pkg:winget/WingetPkgUpdate@Version"}},
 			WUA: []*packages.WUAPackage{{
 				Title:       "WUAUpdate",
 				Description: "Description",
@@ -211,6 +215,8 @@ func generateVMInventory() *agentendpointpb.VmInventory {
 			{Name: "CosInstalledPkg", Type: "cos", Version: "Version", Purl: "pkg:cos/ShortName/CosInstalledPkg@Version?arch=Arch",
 				Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{}}},
 			{Name: "GooGetInstalledPkg", Type: "googet", Version: "Version", Purl: "pkg:googet/ShortName/GooGetInstalledPkg@Version", Metadata: &structpb.Struct{}},
+			{Name: "ChocoInstalledPkg", Type: "chocolatey", Version: "Version", Purl: "pkg:chocolatey/ChocoInstalledPkg@Version"},
+			{Name: "WingetInstalledPkg", Type: "winget", Version: "Version", Purl: "pkg:winget/WingetInstalledPkg@Version"},
 			{Name: "WUAInstalled", Type: "wuaPackage", Version: "UpdateID", Purl: "pkg:generic/ShortName/WUAInstalled@UpdateID", Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 				"Description": structpb.NewStringValue("Description"),
 				"Categories": structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID1"), "Name": structpb.NewStringValue("Category1")}}),
@@ -252,6 +258,8 @@ func generateVMInventory() *agentendpointpb.VmInventory {
 				}}},
 			{Name: "GooGetPkgUpdate", Type: "googet", Version: "Version", Purl: "pkg:googet/ShortName/GooGetPkgUpdate@Version",
 				Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{}}},
+			{Name: "ChocoPkgUpdate", Type: "chocolatey", Version: "Version", Purl: "pkg:chocolatey/ChocoPkgUpdate@Version"},
+			{Name: "WingetPkgUpdate", Type: "winget", Version: "Version", Purl: "pkg:winget/WingetPkgUpdate@Version"},
 			{Name: "WUAUpdate", Type: "wuaPackage", Version: "UpdateID", Purl: "pkg:generic/ShortName/WUAUpdate@UpdateID",
 				Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 					"Description": structpb.NewStringValue("Description"),
