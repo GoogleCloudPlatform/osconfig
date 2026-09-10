@@ -188,10 +188,11 @@ func genericPkgInfoToInventoryItem(packages []*packages.PkgInfo) []*agentendpoin
 	items := make([]*agentendpointpb.VmInventory_InventoryItem, len(packages))
 	for i, pkg := range packages {
 		items[i] = &agentendpointpb.VmInventory_InventoryItem{
-			Name:    pkg.Name,
-			Type:    pkg.Type,
-			Version: pkg.Version,
-			Purl:    pkg.Purl,
+			Name:     pkg.Name,
+			Type:     pkg.Type,
+			Version:  pkg.Version,
+			Purl:     pkg.Purl,
+			Location: []string{},
 		}
 	}
 	return items
