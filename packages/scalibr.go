@@ -158,7 +158,7 @@ func (p scalibrInstalledPackagesProvider) GetInstalledPackages(ctx context.Conte
 	}
 
 	scan := scalibr.New().Scan(ctx, config)
-	if scan.Status.Status != plugin.ScanStatusSucceeded {
+	if scan.Status.Status != plugin.ScanStatusSucceeded && scan.Status.Status != plugin.ScanStatusPartiallySucceeded {
 		return Packages{}, fmt.Errorf("scalibr scan.Status is unhealthy, status: %v, plugins: %v", scan.Status, scan.PluginStatus)
 	}
 
