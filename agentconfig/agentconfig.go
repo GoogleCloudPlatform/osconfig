@@ -33,8 +33,11 @@ import (
 	"sync"
 	"time"
 
+	"testing"
+
 	"cloud.google.com/go/compute/metadata"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
+	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
 	"golang.org/x/oauth2/jws"
 )
 
@@ -879,4 +882,16 @@ func DisableCloudLogging() bool {
 // UniverseDomain is the cloud universe domain
 func UniverseDomain() string {
 	return getAgentConfig().universeDomain
+}
+
+// SetTestScalibrConfig sets SCALIBR configuration flags for testing
+func SetTestScalibrConfig(t *testing.T, scalibrLinux bool, extendedEnabled bool, allowedExtractors []string) {
+	agentConfigMx.Lock()
+	defer agentConfigMx.Unlock()
+	newCfg := &config{
+		scalibrLinuxEnabled:                scalibrLinux,
+		extendedInventoryEnabled:           extendedEnabled,
+		extendedInventoryExtractorsAllowed: allowedExtractors,
+	}
+	utiltest.OverrideVariable(t, &agentConfig, newCfg)
 }

@@ -7,6 +7,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
@@ -240,6 +241,52 @@ func TestGetInstalledPackages(t *testing.T) {
 		t.Errorf("unexpected error, got: %v, want: <nil>", err)
 	}
 }
+
+// TestNewInstalledPackagesProvider tests the creation of InstalledPackagesProvider based on Scalibr configuration flags.
+func TestNewInstalledPackagesProvider(t *testing.T) {
+	oiProvider := &stubOsInfoProvider{}
+
+	tests := []struct {
+		name                      string
+		scalibrLinuxEnabled       bool
+		extendedInventoryEnabled  bool
+		extendedExtractorsAllowed []string
+		wantExtractors            []string
+	}{
+		{
+			name:                "scalibr disabled, no extractors will be returned",
+			scalibrLinuxEnabled: false,
+			wantExtractors:      nil,
+		},
+		{
+			name:                     "scalibr enabled, extended disabled, want base extractors",
+			scalibrLinuxEnabled:      true,
+			extendedInventoryEnabled: false,
+			wantExtractors:           []string{"os/cos", "os/dpkg", "os/rpm"},
+		},
+		{
+			name:                      "scalibr enabled, extended enabled, want extended extractors without duplicates",
+			scalibrLinuxEnabled:       true,
+			extendedInventoryEnabled:  true,
+			extendedExtractorsAllowed: []string{"python/wheelegg", "os/dpkg", "os/apk"},
+			wantExtractors:            []string{"os/cos", "os/dpkg", "os/rpm", "python/wheelegg", "os/apk"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			agentconfig.SetTestScalibrConfig(t, tt.scalibrLinuxEnabled, tt.extendedInventoryEnabled, tt.extendedExtractorsAllowed)
+			provider := NewInstalledPackagesProvider(oiProvider)
+			scalibrProvider, ok := provider.(*scalibrInstalledPackagesProvider)
+			if !ok {
+				t.Skip("Scalibr is disabled, defaultInstalledPackagesProvider returned")
+			}
+
+			utiltest.AssertEquals(t, scalibrProvider.extractors, tt.wantExtractors)
+		})
+	}
+}
+
 func Test_getInstalledPackages(t *testing.T) {
 	enableAllInstalledPackages()
 	COSPkgInfoExists = false //explicitly skip for now
