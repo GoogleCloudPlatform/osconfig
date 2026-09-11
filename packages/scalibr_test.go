@@ -88,6 +88,16 @@ func TestExtractedPackageMappings(t *testing.T) {
 			}},
 		},
 		{
+			name: "os/snap extractor maps correctly",
+			arch: "x86_64",
+			pkgs: []*extractor.Package{
+				{Name: "core22", Version: "20240111", PURLType: "snap"},
+			},
+			want: Packages{Snap: []*PkgInfo{
+				{Name: "core22", Version: "20240111", Arch: "x86_64", Type: "snap", Purl: "pkg:snap/core22@20240111"},
+			}},
+		},
+		{
 			name: "unknown package metadata type is ignored",
 			pkgs: []*extractor.Package{
 				{
