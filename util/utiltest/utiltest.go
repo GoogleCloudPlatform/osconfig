@@ -16,6 +16,23 @@ import (
 	"github.com/kr/pretty"
 )
 
+func filterErrors(got, want any) bool {
+	_, gotOk := got.(error)
+	_, wantOk := want.(error)
+	return gotOk && wantOk
+}
+
+// EquateError is a cmp.Option that compares errors by exact match of their type and Error() string representation.
+var EquateError = cmp.FilterValues(filterErrors, cmp.Comparer(func(got, want any) bool {
+	gotErr, wantErr := got.(error), want.(error)
+	return reflect.TypeOf(gotErr) == reflect.TypeOf(wantErr) && gotErr.Error() == wantErr.Error()
+}))
+
+// EquateErrorMessage is a cmp.Option that compares errors by exact match of their Error() string representation.
+var EquateErrorMessage = cmp.FilterValues(filterErrors, cmp.Comparer(func(got, want any) bool {
+	return got.(error).Error() == want.(error).Error()
+}))
+
 // AssertFormatMatch verifies that the got matches the wantFormat regular expression.
 func AssertFormatMatch(t *testing.T, got string, wantFormat string) {
 	t.Helper()
@@ -119,32 +136,35 @@ func AssertEquals(t *testing.T, got interface{}, want interface{}, opts ...cmp.O
 }
 
 // AssertErrorMatch verifies that the gotErr matches the wantErr type and message.
-func AssertErrorMatch(t *testing.T, gotErr, wantErr error) {
+func AssertErrorMatch(t *testing.T, gotErr, wantErr error, opts ...cmp.Option) {
 	t.Helper()
-	assertErrorMatch(t, gotErr, wantErr, false, false)
+	assertErrorMatch(t, gotErr, wantErr, false, false, opts...)
 }
 
 // AssertErrorMatchAndFail verifies that the gotErr matches the wantErr type and message,
 // and fails the test immediately if they don't match.
-func AssertErrorMatchAndFail(t *testing.T, gotErr, wantErr error) {
+func AssertErrorMatchAndFail(t *testing.T, gotErr, wantErr error, opts ...cmp.Option) {
 	t.Helper()
-	assertErrorMatch(t, gotErr, wantErr, true, false)
+	assertErrorMatch(t, gotErr, wantErr, true, false, opts...)
 }
 
 // AssertErrorMatchAndSkip verifies that the gotErr matches the wantErr type and message,
 // and skips the further test step immediately if they match.
-func AssertErrorMatchAndSkip(t *testing.T, gotErr, wantErr error) {
+func AssertErrorMatchAndSkip(t *testing.T, gotErr, wantErr error, opts ...cmp.Option) {
 	t.Helper()
-	assertErrorMatch(t, gotErr, wantErr, false, true)
+	assertErrorMatch(t, gotErr, wantErr, false, true, opts...)
 }
 
-func assertErrorMatch(t *testing.T, gotErr, wantErr error, failNow bool, skipNow bool) {
+func assertErrorMatch(t *testing.T, gotErr, wantErr error, failNow bool, skipNow bool, opts ...cmp.Option) {
 	t.Helper()
 	if gotErr == nil && wantErr == nil {
 		return
 	}
-	if gotErr == nil || wantErr == nil || reflect.TypeOf(gotErr) != reflect.TypeOf(wantErr) || gotErr.Error() != wantErr.Error() {
-		t.Errorf("Errors mismatch, want %v, got %v", wantErr, gotErr)
+	if len(opts) == 0 {
+		opts = append(opts, EquateError)
+	}
+	if diff := cmp.Diff(wantErr, gotErr, opts...); diff != "" {
+		t.Errorf("Errors mismatch (-want +got):\n%s", diff)
 		if failNow {
 			t.FailNow()
 		}
