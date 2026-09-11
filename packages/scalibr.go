@@ -77,8 +77,8 @@ func pkgInfoFromCosExtractorPackage(pkg *extractor.Package, metadata *scalibrcos
 	}
 }
 
-// pkgInfoFromGenericExtractorPackage creates a PkgInfo from a generic SCALIBR extractor package without specific metadata extraction.
-func pkgInfoFromGenericExtractorPackage(pkg *extractor.Package, defaultArch string) *PkgInfo {
+// pkgInfoFromSnapExtractorPackage creates a PkgInfo from a SCALIBR snap extractor package.
+func pkgInfoFromSnapExtractorPackage(pkg *extractor.Package, defaultArch string) *PkgInfo {
 	purlStr := ""
 	pkgType := ""
 	if p := pkg.PURL(); p != nil {
@@ -104,21 +104,10 @@ func pkgInfosFromExtractorPackages(ctx context.Context, scan *scalibr.ScanResult
 		} else if metadata, ok := pkg.Metadata.(*scalibrcos.Metadata); ok {
 			packages.COS = append(packages.COS, pkgInfoFromCosExtractorPackage(pkg, metadata, osinfo))
 		} else {
-			pkgInfo := pkgInfoFromGenericExtractorPackage(pkg, osinfo.Architecture)
-			switch pkgInfo.Type {
-			case typeApk:
-				packages.Apk = append(packages.Apk, pkgInfo)
-			case typeSnap:
+			pkgInfo := pkgInfoFromSnapExtractorPackage(pkg, osinfo.Architecture)
+			if pkgInfo.Type == typeSnap {
 				packages.Snap = append(packages.Snap, pkgInfo)
-			case typePacman:
-				packages.Pacman = append(packages.Pacman, pkgInfo)
-			case typeNix:
-				packages.Nix = append(packages.Nix, pkgInfo)
-			case typePortage:
-				packages.Portage = append(packages.Portage, pkgInfo)
-			case typeSpack:
-				packages.Spack = append(packages.Spack, pkgInfo)
-			default:
+			} else {
 				clog.Errorf(ctx, "Package type not implemented: %v", pkg)
 			}
 		}

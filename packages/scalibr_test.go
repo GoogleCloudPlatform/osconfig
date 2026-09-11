@@ -88,16 +88,6 @@ func TestExtractedPackageMappings(t *testing.T) {
 			}},
 		},
 		{
-			name: "os/apk extractor maps correctly",
-			arch: "x86_64",
-			pkgs: []*extractor.Package{
-				{Name: "alpine-baselayout", Version: "3.4.3-r0", PURLType: "apk"},
-			},
-			want: Packages{Apk: []*PkgInfo{
-				{Name: "alpine-baselayout", Version: "3.4.3-r0", Arch: "x86_64", Type: "apk", Purl: "pkg:apk/alpine-baselayout@3.4.3-r0"},
-			}},
-		},
-		{
 			name: "os/snap extractor maps correctly",
 			arch: "x86_64",
 			pkgs: []*extractor.Package{
@@ -105,46 +95,6 @@ func TestExtractedPackageMappings(t *testing.T) {
 			},
 			want: Packages{Snap: []*PkgInfo{
 				{Name: "core22", Version: "20240111", Arch: "x86_64", Type: "snap", Purl: "pkg:snap/core22@20240111"},
-			}},
-		},
-		{
-			name: "os/pacman extractor maps correctly",
-			arch: "x86_64",
-			pkgs: []*extractor.Package{
-				{Name: "archlinux-keyring", Version: "20240101-1", PURLType: "pacman"},
-			},
-			want: Packages{Pacman: []*PkgInfo{
-				{Name: "archlinux-keyring", Version: "20240101-1", Arch: "x86_64", Type: "pacman", Purl: "pkg:pacman/archlinux-keyring@20240101-1"},
-			}},
-		},
-		{
-			name: "os/nix extractor maps correctly",
-			arch: "x86_64",
-			pkgs: []*extractor.Package{
-				{Name: "nixos-system", Version: "23.11", PURLType: "nix"},
-			},
-			want: Packages{Nix: []*PkgInfo{
-				{Name: "nixos-system", Version: "23.11", Arch: "x86_64", Type: "nix", Purl: "pkg:nix/nixos-system@23.11"},
-			}},
-		},
-		{
-			name: "os/portage extractor maps correctly",
-			arch: "x86_64",
-			pkgs: []*extractor.Package{
-				{Name: "sys-apps/portage", Version: "3.0.56", PURLType: "portage"},
-			},
-			want: Packages{Portage: []*PkgInfo{
-				{Name: "sys-apps/portage", Version: "3.0.56", Arch: "x86_64", Type: "portage", Purl: "pkg:portage/sys-apps%2Fportage@3.0.56"},
-			}},
-		},
-		{
-			name: "os/spack extractor maps correctly",
-			arch: "x86_64",
-			pkgs: []*extractor.Package{
-				{Name: "zlib", Version: "1.2.13", PURLType: "spack"},
-			},
-			want: Packages{Spack: []*PkgInfo{
-				{Name: "zlib", Version: "1.2.13", Arch: "x86_64", Type: "spack", Purl: "pkg:spack/zlib@1.2.13"},
 			}},
 		},
 		{
