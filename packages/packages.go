@@ -104,6 +104,7 @@ type Packages struct {
 	Zypper             []*PkgInfo            `json:"zypper,omitempty"`
 	ZypperPatches      []*ZypperPatch        `json:"zypperPatches,omitempty"`
 	COS                []*PkgInfo            `json:"cos,omitempty"`
+	Snap               []*PkgInfo            `json:"snap,omitempty"`
 	Gem                []*PkgInfo            `json:"gem,omitempty"`
 	Pip                []*PkgInfo            `json:"pip,omitempty"`
 	GooGet             []*PkgInfo            `json:"googet,omitempty"`
@@ -126,6 +127,7 @@ const (
 	typeGooGet = "googet"
 	typeGem    = "gem"
 	typePypi   = "pypi"
+	typeSnap   = "snap"
 )
 
 // Source represents source package from which binary package was built.
