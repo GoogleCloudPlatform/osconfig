@@ -185,6 +185,16 @@ func (p scalibrInstalledPackagesProvider) GetInstalledPackages(ctx context.Conte
 		return Packages{}, fmt.Errorf("scalibr scan.Status is unhealthy, status: %v, plugins: %v", scan.Status, scan.PluginStatus)
 	}
 
+	if scan.Status.Status == plugin.ScanStatusPartiallySucceeded {
+		var failedExtractors []string
+		for _, ps := range scan.PluginStatus {
+			if ps.Status != nil && ps.Status.Status != plugin.ScanStatusSucceeded {
+				failedExtractors = append(failedExtractors, ps.Name)
+			}
+		}
+		clog.Warningf(ctx, "scalibr scan partially succeeded, failed extractors: %v", failedExtractors)
+	}
+
 	osinfo, err := p.osinfoProvider.GetOSInfo(ctx)
 	if err != nil {
 		return Packages{}, err
