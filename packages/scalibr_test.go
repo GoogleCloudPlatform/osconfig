@@ -101,6 +101,7 @@ func TestExtractedPackageMappings(t *testing.T) {
 		},
 		{
 			name: "os/chocolatey extractor maps correctly",
+			arch: "x86_64",
 			pkgs: []*extractor.Package{
 				{
 					Name:     "git",
@@ -110,11 +111,12 @@ func TestExtractedPackageMappings(t *testing.T) {
 				},
 			},
 			want: Packages{Chocolatey: []*PkgInfo{
-				{Name: "git", Version: "2.40.1", Type: "chocolatey", Purl: "pkg:chocolatey/git@2.40.1"},
+				{Name: "git", Version: "2.40.1", Arch: "x86_64", Type: "chocolatey", Purl: "pkg:chocolatey/git@2.40.1"},
 			}},
 		},
 		{
 			name: "os/winget extractor maps correctly",
+			arch: "x86_64",
 			pkgs: []*extractor.Package{
 				{
 					Name:     "Microsoft.PowerToys",
@@ -124,7 +126,7 @@ func TestExtractedPackageMappings(t *testing.T) {
 				},
 			},
 			want: Packages{WinGet: []*PkgInfo{
-				{Name: "Microsoft.PowerToys", Version: "0.70.1", Type: "winget", Purl: "pkg:winget/Microsoft.PowerToys@0.70.1"},
+				{Name: "Microsoft.PowerToys", Version: "0.70.1", Arch: "x86_64", Type: "winget", Purl: "pkg:winget/Microsoft.PowerToys@0.70.1"},
 			}},
 		},
 		{

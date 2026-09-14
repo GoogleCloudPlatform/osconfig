@@ -96,10 +96,11 @@ func pkgInfoFromSnapExtractorPackage(pkg *extractor.Package, defaultArch string)
 	}
 }
 
-func pkgInfoFromGenericExtractorPackage(pkg *extractor.Package, pkgType string) *PkgInfo {
+func pkgInfoFromGenericExtractorPackage(pkg *extractor.Package, pkgType string, arch string) *PkgInfo {
 	return &PkgInfo{
 		Name:    pkg.Name,
 		Version: pkg.Version,
+		Arch:    arch,
 		Type:    pkgType,
 		Purl:    pkg.PURL().String(),
 	}
@@ -115,9 +116,9 @@ func pkgInfosFromExtractorPackages(ctx context.Context, scan *scalibr.ScanResult
 		} else if metadata, ok := pkg.Metadata.(*scalibrcos.Metadata); ok {
 			packages.COS = append(packages.COS, pkgInfoFromCosExtractorPackage(pkg, metadata, osinfo))
 		} else if _, ok := pkg.Metadata.(*scalibrchoco.Metadata); ok {
-			packages.Chocolatey = append(packages.Chocolatey, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeChocolatey))
+			packages.Chocolatey = append(packages.Chocolatey, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeChocolatey, osinfo.Architecture))
 		} else if _, ok := pkg.Metadata.(*scalibrwinget.Metadata); ok {
-			packages.WinGet = append(packages.WinGet, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeWinget))
+			packages.WinGet = append(packages.WinGet, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeWinget, osinfo.Architecture))
 		} else {
 			pkgInfo := pkgInfoFromSnapExtractorPackage(pkg, osinfo.Architecture)
 			if pkgInfo.Type == typeSnap {
