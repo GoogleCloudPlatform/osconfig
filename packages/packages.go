@@ -104,6 +104,7 @@ type Packages struct {
 	Zypper             []*PkgInfo            `json:"zypper,omitempty"`
 	ZypperPatches      []*ZypperPatch        `json:"zypperPatches,omitempty"`
 	COS                []*PkgInfo            `json:"cos,omitempty"`
+	Snap               []*PkgInfo            `json:"snap,omitempty"`
 	Gem                []*PkgInfo            `json:"gem,omitempty"`
 	Pip                []*PkgInfo            `json:"pip,omitempty"`
 	Maven              []*PkgInfo            `json:"maven,omitempty"`
@@ -133,6 +134,7 @@ const (
 	typeGooGet   = "googet"
 	typeGem      = "gem"
 	typePypi     = "pypi"
+	typeSnap   = "snap"
 	typeMaven    = "maven"
 	typeNpm      = "npm"
 	typeGolang   = "golang"

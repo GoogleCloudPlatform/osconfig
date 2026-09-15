@@ -87,6 +87,23 @@ func pkgInfoFromLanguageExtractorPackage(pkg *extractor.Package, pkgType string)
 	}
 }
 
+// pkgInfoFromSnapExtractorPackage creates a PkgInfo from a SCALIBR snap extractor package.
+func pkgInfoFromSnapExtractorPackage(pkg *extractor.Package, defaultArch string) *PkgInfo {
+	purlStr := ""
+	pkgType := ""
+	if p := pkg.PURL(); p != nil {
+		purlStr = p.String()
+		pkgType = p.Type
+	}
+	return &PkgInfo{
+		Name:    pkg.Name,
+		Version: pkg.Version,
+		Arch:    osinfo.NormalizeArchitecture(defaultArch),
+		Type:    pkgType,
+		Purl:    purlStr,
+	}
+}
+
 func pkgInfosFromExtractorPackages(ctx context.Context, scan *scalibr.ScanResult, osinfo *osinfo.OSInfo) Packages {
 	var packages Packages
 	for _, pkg := range scan.Inventory.Packages {
@@ -117,6 +134,10 @@ func pkgInfosFromExtractorPackages(ctx context.Context, scan *scalibr.ScanResult
 			case purl.TypePub:
 				packages.Pub = append(packages.Pub, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypePub))
 			default:
+			pkgInfo := pkgInfoFromSnapExtractorPackage(pkg, osinfo.Architecture)
+			if pkgInfo.Type == typeSnap {
+				packages.Snap = append(packages.Snap, pkgInfo)
+			} else {
 				clog.Errorf(ctx, "Package type not implemented: %v", pkg)
 			}
 		}
