@@ -140,6 +140,7 @@ func generateInventoryState() *inventory.InstanceInventory {
 				Purl:                     "pkg:generic/ShortName/WUAInstalled@UpdateID"}},
 			QFE: []*packages.QFEPackage{{Caption: "QFEInstalled", Description: "Description", HotFixID: "HotFixID", InstalledOn: "9/1/2020", Purl: "pkg:generic/ShortName/QFEInstalled@HotFixID"}},
 			COS: []*packages.PkgInfo{{Name: "CosInstalledPkg", Arch: "Arch", Version: "Version", Type: "cos", Purl: "pkg:cos/ShortName/CosInstalledPkg@Version?arch=Arch"}},
+			Snap: []*packages.PkgInfo{{Name: "SnapInstalledPkg", Arch: "Arch", Version: "Version", Type: "snap", Purl: "pkg:snap/ShortName/SnapInstalledPkg@Version?arch=Arch"}},
 		},
 		PackageUpdates: &packages.Packages{
 			Yum:           []*packages.PkgInfo{{Name: "YumPkgUpdate", Arch: "Arch", Version: "Version", Type: "rpm", Purl: "pkg:rpm/ShortName/YumPkgUpdate@Version?arch=Arch"}},
@@ -148,6 +149,7 @@ func generateInventoryState() *inventory.InstanceInventory {
 			ZypperPatches: []*packages.ZypperPatch{{Name: "ZypperPatchUpdate", Category: "Category", Severity: "Severity", Summary: "Summary", Purl: "pkg:generic/ShortName/ZypperPatchUpdate"}},
 			Gem:           []*packages.PkgInfo{{Name: "GemPkgUpdate", Arch: "Arch", Version: "Version", Purl: "pkg:gem/GemPkgUpdate@Version"}},
 			Pip:           []*packages.PkgInfo{{Name: "PipPkgUpdate", Arch: "Arch", Version: "Version", Purl: "pkg:pypi/PipPkgUpdate@Version"}},
+			Snap:          []*packages.PkgInfo{{Name: "SnapPkgUpdate", Arch: "Arch", Version: "Version", Type: "snap", Purl: "pkg:snap/ShortName/SnapPkgUpdate@Version?arch=Arch"}},
 			GooGet:        []*packages.PkgInfo{{Name: "GooGetPkgUpdate", Arch: "Arch", Version: "Version", Type: "googet", Purl: "pkg:googet/ShortName/GooGetPkgUpdate@Version"}},
 			WUA: []*packages.WUAPackage{{
 				Title:       "WUAUpdate",
@@ -210,6 +212,8 @@ func generateVMInventory() *agentendpointpb.VmInventory {
 				}}},
 			{Name: "CosInstalledPkg", Type: "cos", Version: "Version", Purl: "pkg:cos/ShortName/CosInstalledPkg@Version?arch=Arch",
 				Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{}}},
+			{Name: "SnapInstalledPkg", Type: "snap", Version: "Version", Purl: "pkg:snap/ShortName/SnapInstalledPkg@Version?arch=Arch",
+				Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{}}},
 			{Name: "GooGetInstalledPkg", Type: "googet", Version: "Version", Purl: "pkg:googet/ShortName/GooGetInstalledPkg@Version", Metadata: &structpb.Struct{}},
 			{Name: "WUAInstalled", Type: "wuaPackage", Version: "UpdateID", Purl: "pkg:generic/ShortName/WUAInstalled@UpdateID", Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 				"Description": structpb.NewStringValue("Description"),
@@ -250,6 +254,8 @@ func generateVMInventory() *agentendpointpb.VmInventory {
 					"Severity": structpb.NewStringValue("Severity"),
 					"Summary":  structpb.NewStringValue("Summary"),
 				}}},
+			{Name: "SnapPkgUpdate", Type: "snap", Version: "Version", Purl: "pkg:snap/ShortName/SnapPkgUpdate@Version?arch=Arch",
+				Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{}}},
 			{Name: "GooGetPkgUpdate", Type: "googet", Version: "Version", Purl: "pkg:googet/ShortName/GooGetPkgUpdate@Version",
 				Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{}}},
 			{Name: "WUAUpdate", Type: "wuaPackage", Version: "UpdateID", Purl: "pkg:generic/ShortName/WUAUpdate@UpdateID",
