@@ -138,8 +138,8 @@ func generateInventoryState() *inventory.InstanceInventory {
 				RevisionNumber:           1,
 				LastDeploymentChangeTime: time.Date(2020, time.November, 10, 23, 0, 0, 0, time.UTC),
 				Purl:                     "pkg:generic/ShortName/WUAInstalled@UpdateID"}},
-			QFE: []*packages.QFEPackage{{Caption: "QFEInstalled", Description: "Description", HotFixID: "HotFixID", InstalledOn: "9/1/2020", Purl: "pkg:generic/ShortName/QFEInstalled@HotFixID"}},
-			COS: []*packages.PkgInfo{{Name: "CosInstalledPkg", Arch: "Arch", Version: "Version", Type: "cos", Purl: "pkg:cos/ShortName/CosInstalledPkg@Version?arch=Arch"}},
+			QFE:  []*packages.QFEPackage{{Caption: "QFEInstalled", Description: "Description", HotFixID: "HotFixID", InstalledOn: "9/1/2020", Purl: "pkg:generic/ShortName/QFEInstalled@HotFixID"}},
+			COS:  []*packages.PkgInfo{{Name: "CosInstalledPkg", Arch: "Arch", Version: "Version", Type: "cos", Purl: "pkg:cos/ShortName/CosInstalledPkg@Version?arch=Arch"}},
 			Snap: []*packages.PkgInfo{{Name: "SnapInstalledPkg", Arch: "Arch", Version: "Version", Type: "snap", Purl: "pkg:snap/ShortName/SnapInstalledPkg@Version?arch=Arch"}},
 		},
 		PackageUpdates: &packages.Packages{
