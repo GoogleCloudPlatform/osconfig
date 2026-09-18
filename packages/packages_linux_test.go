@@ -7,7 +7,6 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	utilmocks "github.com/GoogleCloudPlatform/osconfig/util/mocks"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
@@ -242,6 +241,14 @@ func TestGetInstalledPackages(t *testing.T) {
 	}
 }
 
+// overrideScalibrConfig overrides scalibr configuration flags for the duration of a test.
+func overrideScalibrConfig(t *testing.T, scalibrLinux bool, extendedEnabled bool, allowedExtractors []string) {
+	t.Helper()
+	utiltest.OverrideVariable(t, &scalibrLinuxEnabled, func() bool { return scalibrLinux })
+	utiltest.OverrideVariable(t, &extendedInventoryEnabled, func() bool { return extendedEnabled })
+	utiltest.OverrideVariable(t, &extendedInventoryExtractorsAllowed, func() []string { return allowedExtractors })
+}
+
 // TestNewInstalledPackagesProvider tests the creation of InstalledPackagesProvider based on Scalibr configuration flags.
 func TestNewInstalledPackagesProvider(t *testing.T) {
 	oiProvider := &stubOsInfoProvider{}
@@ -254,7 +261,7 @@ func TestNewInstalledPackagesProvider(t *testing.T) {
 		wantExtractors            []string
 	}{
 		{
-			name:                "scalibr disabled, no extractors will be returned",
+			name:                "scalibr disabled, want no extractors",
 			scalibrLinuxEnabled: false,
 			wantExtractors:      nil,
 		},
@@ -275,7 +282,7 @@ func TestNewInstalledPackagesProvider(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			agentconfig.SetTestScalibrConfig(t, tt.scalibrLinuxEnabled, tt.extendedInventoryEnabled, tt.extendedExtractorsAllowed)
+			overrideScalibrConfig(t, tt.scalibrLinuxEnabled, tt.extendedInventoryEnabled, tt.extendedExtractorsAllowed)
 			provider := NewInstalledPackagesProvider(oiProvider)
 			scalibrProvider, ok := provider.(*scalibrInstalledPackagesProvider)
 			if !ok {
