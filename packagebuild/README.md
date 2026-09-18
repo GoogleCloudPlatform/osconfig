@@ -44,12 +44,11 @@ Debian workflows launch an instance of the specified Debian release and produce
 Available workflows:
 
 * build\_deb10.wf.json
-* build\_deb11.wf.json
 * build\_deb12.wf.json
 
 An ARM64 workflow is also included:
 
-* build\_deb11\_arm64.wf.json
+* build\_deb12\_arm64.wf.json
 
 ### Enterprise Linux
 
@@ -71,5 +70,5 @@ ARM64 workflows are also included:
 
 ### GooGet
 
-The `build_goo.wf.json` (GooGet) workflow launches a Debian 10 instance and
+The `build_goo.wf.json` (GooGet) workflow launches a Debian 12 instance and
 produces .goo packages.
