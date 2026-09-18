@@ -77,6 +77,16 @@ func pkgInfoFromCosExtractorPackage(pkg *extractor.Package, metadata *scalibrcos
 	}
 }
 
+// pkgInfoFromLanguageExtractorPackage converts a language package from SCALIBR into a PkgInfo.
+func pkgInfoFromLanguageExtractorPackage(pkg *extractor.Package, pkgType string) *PkgInfo {
+	return &PkgInfo{
+		Name:    pkg.Name,
+		Version: pkg.Version,
+		Type:    pkgType,
+		Purl:    pkg.PURL().String(),
+	}
+}
+
 // pkgInfoFromSnapExtractorPackage creates a PkgInfo from a SCALIBR snap extractor package.
 func pkgInfoFromSnapExtractorPackage(pkg *extractor.Package, defaultArch string) *PkgInfo {
 	purlStr := ""
@@ -104,6 +114,26 @@ func pkgInfosFromExtractorPackages(ctx context.Context, scan *scalibr.ScanResult
 		} else if metadata, ok := pkg.Metadata.(*scalibrcos.Metadata); ok {
 			packages.COS = append(packages.COS, pkgInfoFromCosExtractorPackage(pkg, metadata, osinfo))
 		} else {
+			switch pkg.PURL().Type {
+			case purl.TypePyPi:
+				packages.Pip = append(packages.Pip, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypePyPi))
+			case purl.TypeGem:
+				packages.Gem = append(packages.Gem, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeGem))
+			case purl.TypeNPM:
+				packages.Npm = append(packages.Npm, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeNPM))
+			case purl.TypeMaven:
+				packages.Maven = append(packages.Maven, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeMaven))
+			case purl.TypeGolang:
+				packages.Go = append(packages.Go, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeGolang))
+			case purl.TypeCargo:
+				packages.Cargo = append(packages.Cargo, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeCargo))
+			case purl.TypeComposer:
+				packages.Composer = append(packages.Composer, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeComposer))
+			case purl.TypeSwift:
+				packages.Swift = append(packages.Swift, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeSwift))
+			case purl.TypePub:
+				packages.Pub = append(packages.Pub, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypePub))
+			default:
 			pkgInfo := pkgInfoFromSnapExtractorPackage(pkg, osinfo.Architecture)
 			if pkgInfo.Type == typeSnap {
 				packages.Snap = append(packages.Snap, pkgInfo)

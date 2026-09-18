@@ -107,6 +107,13 @@ type Packages struct {
 	Snap               []*PkgInfo            `json:"snap,omitempty"`
 	Gem                []*PkgInfo            `json:"gem,omitempty"`
 	Pip                []*PkgInfo            `json:"pip,omitempty"`
+	Maven              []*PkgInfo            `json:"maven,omitempty"`
+	Npm                []*PkgInfo            `json:"npm,omitempty"`
+	Go                 []*PkgInfo            `json:"go,omitempty"`
+	Cargo              []*PkgInfo            `json:"cargo,omitempty"`
+	Composer           []*PkgInfo            `json:"composer,omitempty"`
+	Swift              []*PkgInfo            `json:"swift,omitempty"`
+	Pub                []*PkgInfo            `json:"pub,omitempty"`
 	GooGet             []*PkgInfo            `json:"googet,omitempty"`
 	WUA                []*WUAPackage         `json:"wua,omitempty"`
 	QFE                []*QFEPackage         `json:"qfe,omitempty"`
@@ -121,13 +128,20 @@ type PkgInfo struct {
 }
 
 const (
-	typeRPM    = "rpm"
-	typeDebian = "deb"
-	typeCos    = "cos"
-	typeGooGet = "googet"
-	typeGem    = "gem"
-	typePypi   = "pypi"
+	typeRPM      = "rpm"
+	typeDebian   = "deb"
+	typeCos      = "cos"
+	typeGooGet   = "googet"
+	typeGem      = "gem"
+	typePypi     = "pypi"
 	typeSnap   = "snap"
+	typeMaven    = "maven"
+	typeNpm      = "npm"
+	typeGolang   = "golang"
+	typeCargo    = "cargo"
+	typeComposer = "composer"
+	typeSwift    = "swift"
+	typePub      = "pub"
 )
 
 // Source represents source package from which binary package was built.

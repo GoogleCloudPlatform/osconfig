@@ -175,7 +175,49 @@ func formatPkgsToInventoryItems(ctx context.Context, pkgs *packages.Packages) []
 	if pkgs.WindowsApplication != nil {
 		softwarePackages = append(softwarePackages, windowsApplicationToInventoryItem(pkgs.WindowsApplication)...)
 	}
+	if pkgs.Gem != nil {
+		softwarePackages = append(softwarePackages, languageToInventoryItem(pkgs.Gem)...)
+	}
+	if pkgs.Pip != nil {
+		softwarePackages = append(softwarePackages, languageToInventoryItem(pkgs.Pip)...)
+	}
+	if pkgs.Maven != nil {
+		softwarePackages = append(softwarePackages, languageToInventoryItem(pkgs.Maven)...)
+	}
+	if pkgs.Npm != nil {
+		softwarePackages = append(softwarePackages, languageToInventoryItem(pkgs.Npm)...)
+	}
+	if pkgs.Go != nil {
+		softwarePackages = append(softwarePackages, languageToInventoryItem(pkgs.Go)...)
+	}
+	if pkgs.Cargo != nil {
+		softwarePackages = append(softwarePackages, languageToInventoryItem(pkgs.Cargo)...)
+	}
+	if pkgs.Composer != nil {
+		softwarePackages = append(softwarePackages, languageToInventoryItem(pkgs.Composer)...)
+	}
+	if pkgs.Swift != nil {
+		softwarePackages = append(softwarePackages, languageToInventoryItem(pkgs.Swift)...)
+	}
+	if pkgs.Pub != nil {
+		softwarePackages = append(softwarePackages, languageToInventoryItem(pkgs.Pub)...)
+	}
 	return softwarePackages
+}
+
+func languageToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInventory_InventoryItem {
+	formattedItems := make([]*agentendpointpb.VmInventory_InventoryItem, len(packages))
+	for i, pkg := range packages {
+		formattedItems[i] = &agentendpointpb.VmInventory_InventoryItem{
+			Name:     pkg.Name,
+			Type:     pkg.Type,
+			Version:  pkg.Version,
+			Purl:     pkg.Purl,
+			Location: []string{},
+			Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{}},
+		}
+	}
+	return formattedItems
 }
 
 func aptToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInventory_InventoryItem {
