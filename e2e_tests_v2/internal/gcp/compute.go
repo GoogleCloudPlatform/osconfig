@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/config"
@@ -28,6 +29,7 @@ import (
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 	"google.golang.org/api/osconfig/v1"
+	osconfigv1beta "google.golang.org/api/osconfig/v1beta"
 )
 
 // VM represents an active or planned Compute Engine instance.
@@ -54,9 +56,11 @@ type VMRequest struct {
 
 // Client manages GCP API clients for Compute Engine and OS Config.
 type Client struct {
-	compute      *compute.Service
-	osconfig     *osconfig.Service
-	pollInterval time.Duration
+	compute       *compute.Service
+	osconfig      *osconfig.Service
+	osconfigBeta  *osconfigv1beta.Service
+	pollInterval  time.Duration
+	guestPolicyMu sync.Mutex
 }
 
 // NewClient initializes the Compute Engine and OS Config API clients using Application Default Credentials.
@@ -70,10 +74,15 @@ func NewClient(ctx context.Context, cfg config.Config) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create osconfig service: %w", err)
 	}
+	osconfigBetaService, err := osconfigv1beta.NewService(ctx, opts...)
+	if err != nil {
+		return nil, fmt.Errorf("create osconfig v1beta service: %w", err)
+	}
 
 	return &Client{
 		compute:      computeService,
 		osconfig:     osconfigService,
+		osconfigBeta: osconfigBetaService,
 		pollInterval: cfg.PollInterval,
 	}, nil
 }
@@ -179,6 +188,31 @@ func (c *Client) GetInventory(ctx context.Context, project, zone, instance, view
 		call = call.View(view)
 	}
 	return call.Do()
+}
+
+// CreateGuestPolicy creates an OS Config v1beta GuestPolicy in the specified project.
+func (c *Client) CreateGuestPolicy(ctx context.Context, project, policyID string, policy *osconfigv1beta.GuestPolicy) (*osconfigv1beta.GuestPolicy, error) {
+	c.guestPolicyMu.Lock()
+	defer c.guestPolicyMu.Unlock()
+
+	parent := fmt.Sprintf("projects/%s", project)
+	created, err := c.osconfigBeta.Projects.GuestPolicies.Create(parent, policy).GuestPolicyId(policyID).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("create guest policy %s/%s: %w", project, policyID, err)
+	}
+	return created, nil
+}
+
+// DeleteGuestPolicy deletes an OS Config v1beta GuestPolicy by its full resource name.
+func (c *Client) DeleteGuestPolicy(ctx context.Context, name string) error {
+	_, err := c.osconfigBeta.Projects.GuestPolicies.Delete(name).Context(ctx).Do()
+	if IsNotFound(err) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("delete guest policy %s: %w", name, err)
+	}
+	return nil
 }
 
 func (c *Client) waitZoneOperation(ctx context.Context, project, zone, name string) error {
