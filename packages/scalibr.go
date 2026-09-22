@@ -15,6 +15,7 @@ import (
 	dpkgmetadata "github.com/google/osv-scalibr/extractor/filesystem/os/dpkg/metadata"
 	scalibrrpm "github.com/google/osv-scalibr/extractor/filesystem/os/rpm/metadata"
 	scalibrwinget "github.com/google/osv-scalibr/extractor/filesystem/os/winget/metadata"
+	scalibrsnap "github.com/google/osv-scalibr/extractor/filesystem/os/snap/metadata"
 	scalibrfs "github.com/google/osv-scalibr/fs"
 	"github.com/google/osv-scalibr/plugin"
 	pl "github.com/google/osv-scalibr/plugin/list"
@@ -80,19 +81,17 @@ func pkgInfoFromCosExtractorPackage(pkg *extractor.Package, metadata *scalibrcos
 }
 
 // pkgInfoFromSnapExtractorPackage creates a PkgInfo from a SCALIBR snap extractor package.
-func pkgInfoFromSnapExtractorPackage(pkg *extractor.Package, defaultArch string) *PkgInfo {
-	purlStr := ""
-	pkgType := ""
-	if p := pkg.PURL(); p != nil {
-		purlStr = p.String()
-		pkgType = p.Type
+func pkgInfoFromSnapExtractorPackage(pkg *extractor.Package, metadata *scalibrsnap.Metadata, defaultArch string) *PkgInfo {
+	arch := defaultArch
+	if metadata.Architectures[0] != "" {
+		arch = metadata.Architectures[0]
 	}
 	return &PkgInfo{
 		Name:    pkg.Name,
 		Version: pkg.Version,
-		Arch:    osinfo.NormalizeArchitecture(defaultArch),
-		Type:    pkgType,
-		Purl:    purlStr,
+		Arch:    osinfo.NormalizeArchitecture(arch),
+		Type:    purl.TypeSnap,
+		Purl:    pkg.PURL().String(),
 	}
 }
 
@@ -115,17 +114,14 @@ func pkgInfosFromExtractorPackages(ctx context.Context, scan *scalibr.ScanResult
 			packages.Rpm = append(packages.Rpm, pkgInfoFromRpmExtractorPackage(pkg, metadata))
 		} else if metadata, ok := pkg.Metadata.(*scalibrcos.Metadata); ok {
 			packages.COS = append(packages.COS, pkgInfoFromCosExtractorPackage(pkg, metadata, osinfo))
+		} else if metadata, ok := pkg.Metadata.(*scalibrsnap.Metadata); ok {
+			packages.Snap = append(packages.Snap, pkgInfoFromSnapExtractorPackage(pkg, metadata, osinfo.Architecture))
 		} else if _, ok := pkg.Metadata.(*scalibrchoco.Metadata); ok {
 			packages.Chocolatey = append(packages.Chocolatey, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeChocolatey, osinfo.Architecture))
 		} else if _, ok := pkg.Metadata.(*scalibrwinget.Metadata); ok {
 			packages.WinGet = append(packages.WinGet, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeWinget, osinfo.Architecture))
 		} else {
-			pkgInfo := pkgInfoFromSnapExtractorPackage(pkg, osinfo.Architecture)
-			if pkgInfo.Type == typeSnap {
-				packages.Snap = append(packages.Snap, pkgInfo)
-			} else {
-				clog.Errorf(ctx, "Package type not implemented: %v", pkg)
-			}
+			clog.Errorf(ctx, "Package type not implemented: %v", pkg)
 		}
 	}
 	return packages

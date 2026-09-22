@@ -18,6 +18,7 @@ import (
 	scalibrcos "github.com/google/osv-scalibr/extractor/filesystem/os/cos/metadata"
 	dpkgmetadata "github.com/google/osv-scalibr/extractor/filesystem/os/dpkg/metadata"
 	scalibrrpm "github.com/google/osv-scalibr/extractor/filesystem/os/rpm/metadata"
+	scalibrsnap "github.com/google/osv-scalibr/extractor/filesystem/os/snap/metadata"
 	scalibrwinget "github.com/google/osv-scalibr/extractor/filesystem/os/winget/metadata"
 	"github.com/google/osv-scalibr/inventory"
 )
@@ -93,7 +94,16 @@ func TestExtractedPackageMappings(t *testing.T) {
 			name: "os/snap extractor maps correctly",
 			arch: "x86_64",
 			pkgs: []*extractor.Package{
-				{Name: "core22", Version: "20240111", PURLType: "snap"},
+				{
+					Name:     "core22",
+					Version:  "20240111",
+					PURLType: "snap",
+					Metadata: &scalibrsnap.Metadata{
+						Name:          "core22",
+						Version:       "20240111",
+						Architectures: []string{"amd64"},
+					},
+				},
 			},
 			want: Packages{Snap: []*PkgInfo{
 				{Name: "core22", Version: "20240111", Arch: "x86_64", Type: "snap", Purl: "pkg:snap/core22@20240111"},
