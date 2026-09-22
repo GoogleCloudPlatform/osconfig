@@ -111,6 +111,8 @@ type Packages struct {
 	WUA                []*WUAPackage         `json:"wua,omitempty"`
 	QFE                []*QFEPackage         `json:"qfe,omitempty"`
 	WindowsApplication []*WindowsApplication `json:"-"`
+	Chocolatey         []*PkgInfo            `json:"chocolatey,omitempty"`
+	WinGet             []*PkgInfo            `json:"winget,omitempty"`
 }
 
 // PkgInfo describes a package.

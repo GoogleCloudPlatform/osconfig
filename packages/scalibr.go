@@ -10,10 +10,12 @@ import (
 	"github.com/google/osv-scalibr/binary/platform"
 	"github.com/google/osv-scalibr/binary/proto/config_go_proto"
 	"github.com/google/osv-scalibr/extractor"
+	scalibrchoco "github.com/google/osv-scalibr/extractor/filesystem/os/chocolatey/metadata"
 	scalibrcos "github.com/google/osv-scalibr/extractor/filesystem/os/cos/metadata"
 	dpkgmetadata "github.com/google/osv-scalibr/extractor/filesystem/os/dpkg/metadata"
 	scalibrrpm "github.com/google/osv-scalibr/extractor/filesystem/os/rpm/metadata"
 	scalibrsnap "github.com/google/osv-scalibr/extractor/filesystem/os/snap/metadata"
+	scalibrwinget "github.com/google/osv-scalibr/extractor/filesystem/os/winget/metadata"
 	scalibrfs "github.com/google/osv-scalibr/fs"
 	"github.com/google/osv-scalibr/plugin"
 	pl "github.com/google/osv-scalibr/plugin/list"
@@ -93,6 +95,16 @@ func pkgInfoFromSnapExtractorPackage(pkg *extractor.Package, metadata *scalibrsn
 	}
 }
 
+func pkgInfoFromGenericExtractorPackage(pkg *extractor.Package, pkgType string, arch string) *PkgInfo {
+	return &PkgInfo{
+		Name:    pkg.Name,
+		Version: pkg.Version,
+		Arch:    arch,
+		Type:    pkgType,
+		Purl:    pkg.PURL().String(),
+	}
+}
+
 func pkgInfosFromExtractorPackages(ctx context.Context, scan *scalibr.ScanResult, osinfo *osinfo.OSInfo) Packages {
 	var packages Packages
 	for _, pkg := range scan.Inventory.Packages {
@@ -104,6 +116,10 @@ func pkgInfosFromExtractorPackages(ctx context.Context, scan *scalibr.ScanResult
 			packages.COS = append(packages.COS, pkgInfoFromCosExtractorPackage(pkg, metadata, osinfo))
 		} else if metadata, ok := pkg.Metadata.(*scalibrsnap.Metadata); ok {
 			packages.Snap = append(packages.Snap, pkgInfoFromSnapExtractorPackage(pkg, metadata, osinfo.Architecture))
+		} else if _, ok := pkg.Metadata.(*scalibrchoco.Metadata); ok {
+			packages.Chocolatey = append(packages.Chocolatey, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeChocolatey, osinfo.Architecture))
+		} else if _, ok := pkg.Metadata.(*scalibrwinget.Metadata); ok {
+			packages.WinGet = append(packages.WinGet, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeWinget, osinfo.Architecture))
 		} else {
 			clog.Errorf(ctx, "Package type not implemented: %v", pkg)
 		}
@@ -161,8 +177,18 @@ func (p scalibrInstalledPackagesProvider) GetInstalledPackages(ctx context.Conte
 	}
 
 	scan := scalibr.New().Scan(ctx, config)
-	if scan.Status.Status != plugin.ScanStatusSucceeded {
+	if scan.Status.Status != plugin.ScanStatusSucceeded && scan.Status.Status != plugin.ScanStatusPartiallySucceeded {
 		return Packages{}, fmt.Errorf("scalibr scan.Status is unhealthy, status: %v, plugins: %v", scan.Status, scan.PluginStatus)
+	}
+
+	if scan.Status.Status == plugin.ScanStatusPartiallySucceeded {
+		var failedExtractors []string
+		for _, ps := range scan.PluginStatus {
+			if ps.Status != nil && ps.Status.Status != plugin.ScanStatusSucceeded {
+				failedExtractors = append(failedExtractors, ps.Name)
+			}
+		}
+		clog.Warningf(ctx, "scalibr scan partially succeeded, failed extractors: %v", failedExtractors)
 	}
 
 	osinfo, err := p.osinfoProvider.GetOSInfo(ctx)

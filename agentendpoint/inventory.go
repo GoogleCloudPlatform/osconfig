@@ -169,6 +169,12 @@ func formatPkgsToInventoryItems(ctx context.Context, pkgs *packages.Packages) []
 	if pkgs.GooGet != nil {
 		softwarePackages = append(softwarePackages, googetToInventoryItem(pkgs.GooGet)...)
 	}
+	if pkgs.Chocolatey != nil {
+		softwarePackages = append(softwarePackages, pkgInfoToInventoryItem(pkgs.Chocolatey)...)
+	}
+	if pkgs.WinGet != nil {
+		softwarePackages = append(softwarePackages, pkgInfoToInventoryItem(pkgs.WinGet)...)
+	}
 	if pkgs.WUA != nil {
 		softwarePackages = append(softwarePackages, wuaToInventoryItem(pkgs.WUA)...)
 	}
@@ -179,6 +185,20 @@ func formatPkgsToInventoryItems(ctx context.Context, pkgs *packages.Packages) []
 		softwarePackages = append(softwarePackages, windowsApplicationToInventoryItem(pkgs.WindowsApplication)...)
 	}
 	return softwarePackages
+}
+
+func pkgInfoToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInventory_InventoryItem {
+	items := make([]*agentendpointpb.VmInventory_InventoryItem, len(packages))
+	for i, pkg := range packages {
+		items[i] = &agentendpointpb.VmInventory_InventoryItem{
+			Name:     pkg.Name,
+			Type:     pkg.Type,
+			Version:  pkg.Version,
+			Purl:     pkg.Purl,
+			Location: []string{},
+		}
+	}
+	return items
 }
 
 func aptToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInventory_InventoryItem {
