@@ -18,12 +18,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/package-url/packageurl-go"
+)
+
+var (
+	scalibrLinuxEnabled                = agentconfig.ScalibrLinuxEnabled
+	extendedInventoryEnabled           = agentconfig.ExtendedInventoryEnabled
+	extendedInventoryExtractorsAllowed = agentconfig.ExtendedInventoryExtractorsAllowed
 )
 
 // GetPackageUpdates gets all available package updates from any known
@@ -265,13 +272,21 @@ func enrichZypperPatchWithPurl(pkgs []*ZypperPatch, shortname string) []*ZypperP
 
 // NewInstalledPackagesProvider makes provider that uses osv-scalibr as its implementation if enabled by config, otherwise falls back to default legacy implementation.
 func NewInstalledPackagesProvider(osinfoProvider osinfo.Provider) InstalledPackagesProvider {
-	if agentconfig.ScalibrLinuxEnabled() {
-		return scalibrInstalledPackagesProvider{
-			extractors: []string{
-				"os/cos",
-				"os/dpkg",
-				"os/rpm",
-			},
+	if scalibrLinuxEnabled() {
+		extractors := []string{
+			"os/cos",
+			"os/dpkg",
+			"os/rpm",
+		}
+		if extendedInventoryEnabled() {
+			for _, ext := range extendedInventoryExtractorsAllowed() {
+				if !slices.Contains(extractors, ext) {
+					extractors = append(extractors, ext)
+				}
+			}
+		}
+		return &scalibrInstalledPackagesProvider{
+			extractors:     extractors,
 			osinfoProvider: osinfoProvider,
 		}
 	}
