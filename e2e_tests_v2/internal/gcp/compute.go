@@ -181,6 +181,38 @@ func (c *Client) GetInventory(ctx context.Context, project, zone, instance, view
 	return call.Do()
 }
 
+// ExecutePatchJob starts a new OS Config PatchJob in the specified project.
+func (c *Client) ExecutePatchJob(ctx context.Context, project string, req *osconfig.ExecutePatchJobRequest) (*osconfig.PatchJob, error) {
+	parent := fmt.Sprintf("projects/%s", project)
+	job, err := c.osconfig.Projects.PatchJobs.Execute(parent, req).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("execute patch job in %s: %w", project, err)
+	}
+	return job, nil
+}
+
+// GetPatchJob retrieves the current status of an OS Config PatchJob by its resource name.
+func (c *Client) GetPatchJob(ctx context.Context, name string) (*osconfig.PatchJob, error) {
+	job, err := c.osconfig.Projects.PatchJobs.Get(name).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("get patch job %s: %w", name, err)
+	}
+	return job, nil
+}
+
+// ListPatchJobInstanceDetails retrieves the per-instance execution details for an OS Config PatchJob.
+func (c *Client) ListPatchJobInstanceDetails(ctx context.Context, parent string) ([]*osconfig.PatchJobInstanceDetails, error) {
+	var details []*osconfig.PatchJobInstanceDetails
+	err := c.osconfig.Projects.PatchJobs.InstanceDetails.List(parent).Pages(ctx, func(page *osconfig.ListPatchJobInstanceDetailsResponse) error {
+		details = append(details, page.PatchJobInstanceDetails...)
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("list patch job instance details for %s: %w", parent, err)
+	}
+	return details, nil
+}
+
 func (c *Client) waitZoneOperation(ctx context.Context, project, zone, name string) error {
 	var completed *compute.Operation
 	err := PollUntil(ctx, c.pollInterval, fmt.Sprintf("zonal operation %s", name), func(ctx context.Context) (string, bool, error) {
