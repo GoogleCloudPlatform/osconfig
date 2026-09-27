@@ -38,6 +38,8 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/gcp"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/junitxml"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/scheduler"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"google.golang.org/api/osconfig/v1"
 )
@@ -624,6 +626,7 @@ func (test *Test) CreateVM(image, machineType string, customMetadata map[string]
 		ServiceAccount: test.Suite.Config.ServiceAccount,
 		Metadata:       metadata,
 		Labels: map[string]string{
+			"name":        labelValue(planned.Name),
 			"e2e-run":     labelValue(test.Suite.RunID),
 			"e2e-test":    labelValue(test.TestName),
 			"e2e-attempt": labelValue(test.AttemptID),
@@ -666,6 +669,94 @@ func (test *Test) WaitForInventory(vm *gcp.VM) (*osconfig.Inventory, error) {
 		return nil, err
 	}
 
+	return result, nil
+}
+
+// WaitForGuestAttribute polls the instance until the guest attribute at queryPath is present.
+func (test *Test) WaitForGuestAttribute(vm *gcp.VM, queryPath string) error {
+	test.t.Helper()
+
+	test.t.Logf("Waiting for guest attribute %q on %q", queryPath, vm.Name)
+
+	return gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("guest attribute %s on %s", queryPath, vm.Name), func(ctx context.Context) (string, bool, error) {
+		entries, err := test.Suite.Compute.GetGuestAttributes(ctx, vm.Project, vm.Zone, vm.Name, queryPath)
+		if err != nil {
+			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("guest attribute %q not yet present (%v)", queryPath, err), false, nil
+			}
+			return "", false, fmt.Errorf("read guest attribute %q: %w", queryPath, err)
+		}
+		if len(entries) == 0 {
+			return fmt.Sprintf("guest attribute %q empty", queryPath), false, nil
+		}
+		return fmt.Sprintf("found %d entries (first value=%q)", len(entries), entries[0].Value), true, nil
+	})
+}
+
+// AddMetadata updates or adds metadata items on the given VM.
+func (test *Test) AddMetadata(vm *gcp.VM, metadata map[string]string) error {
+	test.t.Helper()
+	test.t.Logf("Updating metadata on VM %q", vm.Name)
+	return test.Suite.Compute.AddInstanceMetadata(test.Context, vm.Project, vm.Zone, vm.Name, metadata)
+}
+
+// CreateOSPolicyAssignment creates an OS Config v1 OSPolicyAssignment targeting the given VM and registers automatic cleanup.
+func (test *Test) CreateOSPolicyAssignment(vm *gcp.VM, assignmentID string, assignment *osconfig.OSPolicyAssignment) (*osconfig.OSPolicyAssignment, error) {
+	test.t.Helper()
+
+	fullName := fmt.Sprintf("projects/%s/locations/%s/osPolicyAssignments/%s", test.Project, test.Zone, assignmentID)
+	test.t.Cleanup(func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), test.Suite.Config.CleanupTimeout)
+		defer cancel()
+		if err := test.Suite.Compute.DeleteOSPolicyAssignment(cleanupCtx, fullName); err != nil {
+			test.t.Errorf("cleanup os policy assignment %s: %v", fullName, err)
+		}
+	})
+
+	test.t.Logf("Creating OSPolicyAssignment %q for VM %q", assignmentID, vm.Name)
+	created, err := test.Suite.Compute.CreateOSPolicyAssignment(test.Context, test.Project, test.Zone, assignmentID, assignment)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create os policy assignment: %w", err)
+	}
+	return created, nil
+}
+
+// WaitForOSPolicyCompliance polls the OS policy assignment report until all expected OS policies are COMPLIANT.
+func (test *Test) WaitForOSPolicyCompliance(vm *gcp.VM, assignmentID string, wantCompliances []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance) (*osconfig.OSPolicyAssignmentReport, error) {
+	test.t.Helper()
+
+	test.t.Logf("Waiting for OSPolicyAssignment %q compliance on %q", assignmentID, vm.Name)
+
+	var result *osconfig.OSPolicyAssignmentReport
+	err := gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("os policy compliance for %s on %s", assignmentID, vm.Name), func(ctx context.Context) (string, bool, error) {
+		rep, err := test.Suite.Compute.GetOSPolicyAssignmentReport(ctx, vm.Project, vm.Zone, vm.Name, assignmentID)
+		if err != nil {
+			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("report not yet available (%v)", err), false, nil
+			}
+			return "", false, fmt.Errorf("failed to read os policy assignment report: %w", err)
+		}
+
+		if rep == nil || len(rep.OsPolicyCompliances) == 0 {
+			return "compliance report not yet populated", false, nil
+		}
+
+		for _, comp := range rep.OsPolicyCompliances {
+			if comp.ComplianceState != "COMPLIANT" {
+				return fmt.Sprintf("os policy %q in state %s (reason: %s)", comp.OsPolicyId, comp.ComplianceState, comp.ComplianceStateReason), false, nil
+			}
+		}
+
+		if diff := cmp.Diff(wantCompliances, rep.OsPolicyCompliances, cmpopts.IgnoreFields(osconfig.OSPolicyAssignmentReportOSPolicyCompliance{}, "ComplianceStateReason")); diff != "" {
+			return fmt.Sprintf("compliances mismatch (-want +got):\n%s", diff), false, nil
+		}
+
+		result = rep
+		return "all os policies COMPLIANT", true, nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to wait for os policy compliance: %w", err)
+	}
 	return result, nil
 }
 

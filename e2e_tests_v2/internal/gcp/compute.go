@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/config"
@@ -57,6 +58,7 @@ type Client struct {
 	compute      *compute.Service
 	osconfig     *osconfig.Service
 	pollInterval time.Duration
+	gpMu         sync.Mutex
 }
 
 // NewClient initializes the Compute Engine and OS Config API clients using Application Default Credentials.
@@ -227,4 +229,136 @@ func IsTransientComputeError(err error) bool {
 func isHTTPStatus(err error, code int) bool {
 	var apiErr *googleapi.Error
 	return errors.As(err, &apiErr) && apiErr.Code == code
+}
+
+// GetGuestAttributes retrieves guest attribute entries for an instance at queryPath.
+func (c *Client) GetGuestAttributes(ctx context.Context, project, zone, instance, queryPath string) ([]*compute.GuestAttributesEntry, error) {
+	resp, err := c.compute.Instances.GetGuestAttributes(project, zone, instance).QueryPath(queryPath).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get guest attributes %q for instance %s: %w", queryPath, instance, err)
+	}
+	if resp.QueryValue != nil && len(resp.QueryValue.Items) > 0 {
+		return resp.QueryValue.Items, nil
+	}
+	if resp.VariableValue != "" {
+		return []*compute.GuestAttributesEntry{{
+			Key:   resp.VariableKey,
+			Value: resp.VariableValue,
+		}}, nil
+	}
+	return nil, nil
+}
+
+// AddInstanceMetadata updates or adds metadata items on a running Compute Engine instance and waits for completion.
+func (c *Client) AddInstanceMetadata(ctx context.Context, project, zone, name string, updates map[string]string) error {
+	inst, err := c.compute.Instances.Get(project, zone, name).Context(ctx).Do()
+	if err != nil {
+		return fmt.Errorf("failed to get instance %s for metadata update: %w", name, err)
+	}
+
+	metadata := inst.Metadata
+	if metadata == nil {
+		metadata = &compute.Metadata{}
+	}
+
+	var items []*compute.MetadataItems
+	for _, item := range metadata.Items {
+		if item == nil {
+			continue
+		}
+		if _, exists := updates[item.Key]; exists {
+			continue
+		}
+		items = append(items, item)
+	}
+	for k, v := range updates {
+		val := v
+		items = append(items, &compute.MetadataItems{
+			Key:   k,
+			Value: &val,
+		})
+	}
+	metadata.Items = items
+
+	op, err := c.compute.Instances.SetMetadata(project, zone, name, metadata).Context(ctx).Do()
+	if err != nil {
+		return fmt.Errorf("failed to set metadata on instance %s: %w", name, err)
+	}
+
+	if err := c.waitZoneOperation(ctx, project, zone, op.Name); err != nil {
+		return fmt.Errorf("failed to wait for metadata update on instance %s: %w", name, err)
+	}
+
+	return nil
+}
+
+// CreateOSPolicyAssignment creates an OS Config v1 OSPolicyAssignment and waits for the rollout operation to complete.
+func (c *Client) CreateOSPolicyAssignment(ctx context.Context, project, zone, assignmentID string, assignment *osconfig.OSPolicyAssignment) (*osconfig.OSPolicyAssignment, error) {
+	c.gpMu.Lock()
+	defer c.gpMu.Unlock()
+
+	parent := fmt.Sprintf("projects/%s/locations/%s", project, zone)
+	op, err := c.osconfig.Projects.Locations.OsPolicyAssignments.Create(parent, assignment).OsPolicyAssignmentId(assignmentID).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create os policy assignment %s in %s: %w", assignmentID, parent, err)
+	}
+
+	if err := c.waitOSPolicyAssignmentOperation(ctx, op.Name); err != nil {
+		return nil, fmt.Errorf("failed to wait for os policy assignment %s creation: %w", assignmentID, err)
+	}
+
+	fullName := fmt.Sprintf("%s/osPolicyAssignments/%s", parent, assignmentID)
+	created, err := c.osconfig.Projects.Locations.OsPolicyAssignments.Get(fullName).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get created os policy assignment %s: %w", fullName, err)
+	}
+	return created, nil
+}
+
+// DeleteOSPolicyAssignment idempotently deletes an OS Config v1 OSPolicyAssignment and waits for completion.
+func (c *Client) DeleteOSPolicyAssignment(ctx context.Context, name string) error {
+	c.gpMu.Lock()
+	defer c.gpMu.Unlock()
+
+	op, err := c.osconfig.Projects.Locations.OsPolicyAssignments.Delete(name).Context(ctx).Do()
+	if IsNotFound(err) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("failed to delete os policy assignment %s: %w", name, err)
+	}
+
+	if err := c.waitOSPolicyAssignmentOperation(ctx, op.Name); err != nil {
+		return fmt.Errorf("failed to wait for os policy assignment %s deletion: %w", name, err)
+	}
+	return nil
+}
+
+func (c *Client) waitOSPolicyAssignmentOperation(ctx context.Context, opName string) error {
+	return PollUntil(ctx, c.pollInterval, fmt.Sprintf("os policy assignment operation %s", opName), func(ctx context.Context) (string, bool, error) {
+		op, err := c.osconfig.Projects.Locations.OsPolicyAssignments.Operations.Get(opName).Context(ctx).Do()
+		if err != nil {
+			if IsTransientComputeError(err) {
+				return fmt.Sprintf("transient operation read: %v", err), false, nil
+			}
+			return "", false, err
+		}
+		if !op.Done {
+			return "status=RUNNING", false, nil
+		}
+		if op.Error != nil {
+			return "", false, fmt.Errorf("operation failed: %s (code %d)", op.Error.Message, op.Error.Code)
+		}
+		return "status=DONE", true, nil
+	})
+}
+
+// GetOSPolicyAssignmentReport retrieves an OS policy assignment report for a given VM instance.
+func (c *Client) GetOSPolicyAssignmentReport(ctx context.Context, project, zone, instance, assignmentID string) (*osconfig.OSPolicyAssignmentReport, error) {
+	name := fmt.Sprintf("projects/%s/locations/%s/instances/%s/osPolicyAssignments/%s/report", project, zone, instance, assignmentID)
+	report, err := c.osconfig.Projects.Locations.Instances.OsPolicyAssignments.Reports.Get(name).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get os policy assignment report %s: %w", name, err)
+	}
+	return report, nil
 }
