@@ -13,6 +13,7 @@ import (
 	scalibrcos "github.com/google/osv-scalibr/extractor/filesystem/os/cos/metadata"
 	dpkgmetadata "github.com/google/osv-scalibr/extractor/filesystem/os/dpkg/metadata"
 	scalibrrpm "github.com/google/osv-scalibr/extractor/filesystem/os/rpm/metadata"
+	scalibrsnap "github.com/google/osv-scalibr/extractor/filesystem/os/snap/metadata"
 	scalibrfs "github.com/google/osv-scalibr/fs"
 	"github.com/google/osv-scalibr/plugin"
 	pl "github.com/google/osv-scalibr/plugin/list"
@@ -88,19 +89,17 @@ func pkgInfoFromLanguageExtractorPackage(pkg *extractor.Package, pkgType string)
 }
 
 // pkgInfoFromSnapExtractorPackage creates a PkgInfo from a SCALIBR snap extractor package.
-func pkgInfoFromSnapExtractorPackage(pkg *extractor.Package, defaultArch string) *PkgInfo {
-	purlStr := ""
-	pkgType := ""
-	if p := pkg.PURL(); p != nil {
-		purlStr = p.String()
-		pkgType = p.Type
+func pkgInfoFromSnapExtractorPackage(pkg *extractor.Package, metadata *scalibrsnap.Metadata, defaultArch string) *PkgInfo {
+	arch := defaultArch
+	if metadata.Architectures[0] != "" {
+		arch = metadata.Architectures[0]
 	}
 	return &PkgInfo{
 		Name:    pkg.Name,
 		Version: pkg.Version,
-		Arch:    osinfo.NormalizeArchitecture(defaultArch),
-		Type:    pkgType,
-		Purl:    purlStr,
+		Arch:    osinfo.NormalizeArchitecture(arch),
+		Type:    purl.TypeSnap,
+		Purl:    pkg.PURL().String(),
 	}
 }
 
@@ -113,6 +112,8 @@ func pkgInfosFromExtractorPackages(ctx context.Context, scan *scalibr.ScanResult
 			packages.Rpm = append(packages.Rpm, pkgInfoFromRpmExtractorPackage(pkg, metadata))
 		} else if metadata, ok := pkg.Metadata.(*scalibrcos.Metadata); ok {
 			packages.COS = append(packages.COS, pkgInfoFromCosExtractorPackage(pkg, metadata, osinfo))
+		} else if metadata, ok := pkg.Metadata.(*scalibrsnap.Metadata); ok {
+			packages.Snap = append(packages.Snap, pkgInfoFromSnapExtractorPackage(pkg, metadata, osinfo.Architecture))
 		} else {
 			switch pkg.PURL().Type {
 			case purl.TypePyPi:

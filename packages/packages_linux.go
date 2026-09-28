@@ -27,6 +27,12 @@ import (
 	"github.com/package-url/packageurl-go"
 )
 
+var (
+	scalibrLinuxEnabled                = agentconfig.ScalibrLinuxEnabled
+	extendedInventoryEnabled           = agentconfig.ExtendedInventoryEnabled
+	extendedInventoryExtractorsAllowed = agentconfig.ExtendedInventoryExtractorsAllowed
+)
+
 // GetPackageUpdates gets all available package updates from any known
 // installed package manager.
 func (p defaultUpdatesProvider) getPackageUpdates(ctx context.Context) (Packages, error) {
@@ -266,14 +272,14 @@ func enrichZypperPatchWithPurl(pkgs []*ZypperPatch, shortname string) []*ZypperP
 
 // NewInstalledPackagesProvider makes provider that uses osv-scalibr as its implementation if enabled by config, otherwise falls back to default legacy implementation.
 func NewInstalledPackagesProvider(osinfoProvider osinfo.Provider) InstalledPackagesProvider {
-	if agentconfig.ScalibrLinuxEnabled() {
+	if scalibrLinuxEnabled() {
 		extractors := []string{
 			"os/cos",
 			"os/dpkg",
 			"os/rpm",
 		}
-		if agentconfig.ExtendedInventoryEnabled() {
-			for _, ext := range agentconfig.ExtendedInventoryExtractorsAllowed() {
+		if extendedInventoryEnabled() {
+			for _, ext := range extendedInventoryExtractorsAllowed() {
 				if !slices.Contains(extractors, ext) {
 					extractors = append(extractors, ext)
 				}
