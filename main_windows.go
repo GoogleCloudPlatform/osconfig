@@ -122,6 +122,7 @@ func (s *service) Execute(_ []string, r <-chan svc.ChangeRequest, status chan<- 
 			case svc.Interrogate:
 				status <- c.CurrentStatus
 			case svc.Stop, svc.Shutdown:
+				status <- svc.Status{State: svc.StopPending, WaitHint: 30000}
 				cncl()
 			default:
 			}
