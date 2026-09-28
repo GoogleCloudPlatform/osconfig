@@ -178,34 +178,30 @@ func formatPkgsToInventoryItems(ctx context.Context, pkgs *packages.Packages) []
 	if pkgs.WindowsApplication != nil {
 		softwarePackages = append(softwarePackages, windowsApplicationToInventoryItem(pkgs.WindowsApplication)...)
 	}
-	if pkgs.Gem != nil {
-		softwarePackages = append(softwarePackages, languageToInventoryItem(pkgs.Gem)...)
-	}
-	if pkgs.Pip != nil {
-		softwarePackages = append(softwarePackages, languageToInventoryItem(pkgs.Pip)...)
-	}
-	if pkgs.Maven != nil {
-		softwarePackages = append(softwarePackages, languageToInventoryItem(pkgs.Maven)...)
-	}
-	if pkgs.Npm != nil {
-		softwarePackages = append(softwarePackages, languageToInventoryItem(pkgs.Npm)...)
-	}
-	if pkgs.Go != nil {
-		softwarePackages = append(softwarePackages, languageToInventoryItem(pkgs.Go)...)
-	}
-	if pkgs.Cargo != nil {
-		softwarePackages = append(softwarePackages, languageToInventoryItem(pkgs.Cargo)...)
-	}
-	if pkgs.Composer != nil {
-		softwarePackages = append(softwarePackages, languageToInventoryItem(pkgs.Composer)...)
-	}
-	if pkgs.Swift != nil {
-		softwarePackages = append(softwarePackages, languageToInventoryItem(pkgs.Swift)...)
-	}
-	if pkgs.Pub != nil {
-		softwarePackages = append(softwarePackages, languageToInventoryItem(pkgs.Pub)...)
-	}
+	softwarePackages = append(softwarePackages, languagePackagesToInventoryItems(pkgs)...)
 	return softwarePackages
+}
+
+// languagePackagesToInventoryItems converts all language packages to inventory items.
+func languagePackagesToInventoryItems(pkgs *packages.Packages) []*agentendpointpb.VmInventory_InventoryItem {
+	var items []*agentendpointpb.VmInventory_InventoryItem
+	langPkgs := [][]*packages.PkgInfo{
+		pkgs.Gem,
+		pkgs.Pip,
+		pkgs.Maven,
+		pkgs.Npm,
+		pkgs.Go,
+		pkgs.Cargo,
+		pkgs.Composer,
+		pkgs.Swift,
+		pkgs.Pub,
+	}
+	for _, p := range langPkgs {
+		if len(p) > 0 {
+			items = append(items, languageToInventoryItem(p)...)
+		}
+	}
+	return items
 }
 
 func languageToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInventory_InventoryItem {

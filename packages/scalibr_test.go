@@ -188,7 +188,7 @@ func TestExtractedPackageMappings(t *testing.T) {
 					{Name: "serde", Version: "1.0.197", Type: "cargo", Purl: "pkg:cargo/serde@1.0.197"},
 				},
 				Composer: []*PkgInfo{
-					{Name: "guzzlehttp/guzzle", Version: "7.8.1", Type: "composer", Purl: "pkg:composer/guzzlehttp/guzzle@7.8.1"},
+					{Name: "guzzlehttp/guzzle", Version: "7.8.1", Type: "composer", Purl: "pkg:composer/guzzlehttp%2Fguzzle@7.8.1"},
 				},
 				Swift: []*PkgInfo{
 					{Name: "Alamofire", Version: "5.8.1", Type: "swift", Purl: "pkg:swift/Alamofire@5.8.1"},
