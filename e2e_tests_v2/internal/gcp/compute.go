@@ -336,6 +336,7 @@ func (c *Client) DeleteOSPolicyAssignment(ctx context.Context, name string) erro
 	return nil
 }
 
+// waitOSPolicyAssignmentOperation polls an OS policy assignment long-running operation until completion.
 func (c *Client) waitOSPolicyAssignmentOperation(ctx context.Context, opName string) error {
 	return PollUntil(ctx, c.pollInterval, fmt.Sprintf("os policy assignment operation %s", opName), func(ctx context.Context) (string, bool, error) {
 		op, err := c.osconfig.Projects.Locations.OsPolicyAssignments.Operations.Get(opName).Context(ctx).Do()
