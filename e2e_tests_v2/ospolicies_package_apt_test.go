@@ -180,13 +180,13 @@ func TestOSPolicyPackageResourceApt(t *testing.T) {
 			policyID := "packageresourceapt"
 			test.Step("create os policy assignment", func(ctx context.Context) error {
 				assignment := buildAptPackageOSPolicyAssignment(policyID, vm.Name)
-				_, err := test.CreateOSPolicyAssignment(vm, policyID, assignment)
+				_, err := test.CreateOSPolicyAssignment(vm, assignment)
 				return err
 			})
 
 			test.Step("wait for os policy compliance report", func(ctx context.Context) error {
 				want := wantAptPackageCompliances(policyID)
-				_, err := test.WaitForOSPolicyCompliance(vm, policyID, want)
+				_, err := test.WaitForOSPolicyCompliance(vm, want)
 				return err
 			})
 

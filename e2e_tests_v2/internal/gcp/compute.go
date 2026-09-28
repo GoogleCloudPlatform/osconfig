@@ -294,16 +294,19 @@ func (c *Client) AddInstanceMetadata(ctx context.Context, project, zone, name st
 
 // CreateOSPolicyAssignment creates an OS Config v1 OSPolicyAssignment and waits for the rollout operation to complete.
 func (c *Client) CreateOSPolicyAssignment(ctx context.Context, project, zone, assignmentID string, assignment *osconfig.OSPolicyAssignment) (*osconfig.OSPolicyAssignment, error) {
-	c.gpMu.Lock()
-	defer c.gpMu.Unlock()
-
 	parent := fmt.Sprintf("projects/%s/locations/%s", project, zone)
+
+	c.gpMu.Lock()
 	op, err := c.osconfig.Projects.Locations.OsPolicyAssignments.Create(parent, assignment).OsPolicyAssignmentId(assignmentID).Context(ctx).Do()
+	c.gpMu.Unlock()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create os policy assignment %s in %s: %w", assignmentID, parent, err)
 	}
 
 	if err := c.waitOSPolicyAssignmentOperation(ctx, op.Name); err != nil {
+		cancelCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_, _ = c.osconfig.Projects.Locations.OsPolicyAssignments.Operations.Cancel(op.Name, &osconfig.CancelOperationRequest{}).Context(cancelCtx).Do()
 		return nil, fmt.Errorf("failed to wait for os policy assignment %s creation: %w", assignmentID, err)
 	}
 
@@ -318,9 +321,8 @@ func (c *Client) CreateOSPolicyAssignment(ctx context.Context, project, zone, as
 // DeleteOSPolicyAssignment idempotently deletes an OS Config v1 OSPolicyAssignment and waits for completion.
 func (c *Client) DeleteOSPolicyAssignment(ctx context.Context, name string) error {
 	c.gpMu.Lock()
-	defer c.gpMu.Unlock()
-
 	op, err := c.osconfig.Projects.Locations.OsPolicyAssignments.Delete(name).Context(ctx).Do()
+	c.gpMu.Unlock()
 	if IsNotFound(err) {
 		return nil
 	}

@@ -128,6 +128,8 @@ func OSPolicyPackageAptStartupScript(image string) (key, content string) {
 	baseKey, baseScript := DefaultStartupScript(image)
 	script := fmt.Sprintf(`
 set -x
+systemctl stop google-osconfig-agent || true
+
 # install the package we want removed
 apt-get update
 apt-get -y install vim
@@ -135,6 +137,7 @@ apt-get -y install vim
 apt-get -y remove ed
 
 %s
+sleep 5
 
 uri_done="http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s"
 curl -X PUT --data "1" "$uri_done" -H "Metadata-Flavor: Google" || true

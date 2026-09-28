@@ -701,9 +701,10 @@ func (test *Test) AddMetadata(vm *gcp.VM, metadata map[string]string) error {
 }
 
 // CreateOSPolicyAssignment creates an OS Config v1 OSPolicyAssignment targeting the given VM and registers automatic cleanup.
-func (test *Test) CreateOSPolicyAssignment(vm *gcp.VM, assignmentID string, assignment *osconfig.OSPolicyAssignment) (*osconfig.OSPolicyAssignment, error) {
+func (test *Test) CreateOSPolicyAssignment(vm *gcp.VM, assignment *osconfig.OSPolicyAssignment) (*osconfig.OSPolicyAssignment, error) {
 	test.t.Helper()
 
+	assignmentID := vm.Name
 	fullName := fmt.Sprintf("projects/%s/locations/%s/osPolicyAssignments/%s", test.Project, test.Zone, assignmentID)
 	test.t.Cleanup(func() {
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), test.Suite.Config.CleanupTimeout)
@@ -722,9 +723,10 @@ func (test *Test) CreateOSPolicyAssignment(vm *gcp.VM, assignmentID string, assi
 }
 
 // WaitForOSPolicyCompliance polls the OS policy assignment report until all expected OS policies are COMPLIANT.
-func (test *Test) WaitForOSPolicyCompliance(vm *gcp.VM, assignmentID string, wantCompliances []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance) (*osconfig.OSPolicyAssignmentReport, error) {
+func (test *Test) WaitForOSPolicyCompliance(vm *gcp.VM, wantCompliances []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance) (*osconfig.OSPolicyAssignmentReport, error) {
 	test.t.Helper()
 
+	assignmentID := vm.Name
 	test.t.Logf("Waiting for OSPolicyAssignment %q compliance on %q", assignmentID, vm.Name)
 
 	var result *osconfig.OSPolicyAssignmentReport
