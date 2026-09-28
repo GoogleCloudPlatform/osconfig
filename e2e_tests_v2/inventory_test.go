@@ -48,8 +48,8 @@ func TestOSInventory(t *testing.T) {
 	testCases := []inventoryTestCase{
 		// Debian
 		{
-			name:             "debian-11",
-			image:            "projects/debian-cloud/global/images/family/debian-11",
+			name:             "debian-12",
+			image:            "projects/debian-cloud/global/images/family/debian-12",
 			wantShortName:    "debian",
 			wantPackageTypes: []string{"deb"},
 			wantPackages:     []string{"bash", "systemd"},
@@ -57,8 +57,8 @@ func TestOSInventory(t *testing.T) {
 			timeout:          10 * time.Minute,
 		},
 		{
-			name:             "debian-12",
-			image:            "projects/debian-cloud/global/images/family/debian-12",
+			name:             "debian-13",
+			image:            "projects/debian-cloud/global/images/family/debian-13",
 			wantShortName:    "debian",
 			wantPackageTypes: []string{"deb"},
 			wantPackages:     []string{"bash", "systemd"},
@@ -131,15 +131,6 @@ func TestOSInventory(t *testing.T) {
 			timeout:          10 * time.Minute,
 		},
 		// SUSE / openSUSE
-		{
-			name:             "sles-12",
-			image:            "projects/suse-cloud/global/images/family/sles-12",
-			wantShortName:    "sles",
-			wantPackageTypes: []string{"zypper"},
-			wantPackages:     []string{"bash", "systemd"},
-			machineType:      "e2-standard-2",
-			timeout:          10 * time.Minute,
-		},
 		{
 			name:             "sles-15",
 			image:            "projects/suse-cloud/global/images/family/sles-15",
