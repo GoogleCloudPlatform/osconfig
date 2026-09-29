@@ -182,7 +182,7 @@ func scanFailed(ctx context.Context, scan *scalibr.ScanResult) bool {
 		return true
 	}
 	if scan.Status == nil || (scan.Status.Status != plugin.ScanStatusSucceeded && scan.Status.Status != plugin.ScanStatusPartiallySucceeded) {
-		clog.Errorf(ctx, "scalibr scan failed, status: %v, plugins: %v", scan.Status, scan.PluginStatus)
+		clog.Errorf(ctx, "scalibr scan failed, status: %v", scan.Status)
 		return true
 	}
 	return false
