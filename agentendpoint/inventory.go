@@ -187,6 +187,13 @@ func formatPkgsToInventoryItems(ctx context.Context, pkgs *packages.Packages) []
 	return softwarePackages
 }
 
+func locationOrDefault(location []string) []string {
+	if location == nil {
+		return []string{}
+	}
+	return location
+}
+
 func pkgInfoToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInventory_InventoryItem {
 	items := make([]*agentendpointpb.VmInventory_InventoryItem, len(packages))
 	for i, pkg := range packages {
@@ -195,7 +202,7 @@ func pkgInfoToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmI
 			Type:     pkg.Type,
 			Version:  pkg.Version,
 			Purl:     pkg.Purl,
-			Location: []string{},
+			Location: locationOrDefault(pkg.Location),
 		}
 	}
 	return items
@@ -209,7 +216,7 @@ func aptToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInven
 			Type:     pkg.Type,
 			Version:  pkg.Version,
 			Purl:     pkg.Purl,
-			Location: []string{},
+			Location: locationOrDefault(pkg.Location),
 			Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 				"SourceName":    structpb.NewStringValue(pkg.Source.Name),
 				"SourceVersion": structpb.NewStringValue(pkg.Source.Version),
@@ -227,7 +234,7 @@ func debToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInven
 			Type:     pkg.Type,
 			Version:  pkg.Version,
 			Purl:     pkg.Purl,
-			Location: []string{},
+			Location: locationOrDefault(pkg.Location),
 			Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 				"SourceName":    structpb.NewStringValue(pkg.Source.Name),
 				"SourceVersion": structpb.NewStringValue(pkg.Source.Version),
@@ -245,7 +252,7 @@ func googetToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmIn
 			Type:     pkg.Type,
 			Version:  pkg.Version,
 			Purl:     pkg.Purl,
-			Location: []string{},
+			Location: locationOrDefault(pkg.Location),
 			Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{}},
 		}
 	}
@@ -260,7 +267,7 @@ func yumToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInven
 			Type:     pkg.Type,
 			Version:  pkg.Version,
 			Purl:     pkg.Purl,
-			Location: []string{},
+			Location: locationOrDefault(pkg.Location),
 			Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 				"SourceRPM": structpb.NewStringValue(pkg.Source.Name),
 			}},
@@ -277,7 +284,7 @@ func zypperToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmIn
 			Type:     pkg.Type,
 			Version:  pkg.Version,
 			Purl:     pkg.Purl,
-			Location: []string{},
+			Location: locationOrDefault(pkg.Location),
 			Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 				"SourceRPM": structpb.NewStringValue(pkg.Source.Name),
 			}},
@@ -294,7 +301,7 @@ func rpmToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInven
 			Type:     pkg.Type,
 			Version:  pkg.Version,
 			Purl:     pkg.Purl,
-			Location: []string{},
+			Location: locationOrDefault(pkg.Location),
 			Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 				"SourceRPM": structpb.NewStringValue(pkg.Source.Name),
 			}},
@@ -311,7 +318,7 @@ func cosToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInven
 			Type:     pkg.Type,
 			Version:  pkg.Version,
 			Purl:     pkg.Purl,
-			Location: []string{},
+			Location: locationOrDefault(pkg.Location),
 			Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{}},
 		}
 	}
@@ -327,7 +334,7 @@ func snapToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInve
 			Type:     pkg.Type,
 			Version:  pkg.Version,
 			Purl:     pkg.Purl,
-			Location: []string{},
+			Location: locationOrDefault(pkg.Location),
 			Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{}},
 		}
 	}

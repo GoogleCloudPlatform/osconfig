@@ -925,3 +925,69 @@ func Test_reportVmInventory_parseQFEDate(t *testing.T) {
 		})
 	}
 }
+
+func Test_pkgInfoToInventoryItem_propagatesLocation(t *testing.T) {
+	tests := []struct {
+		name     string
+		convert  func([]*packages.PkgInfo) []*agentendpointpb.VmInventory_InventoryItem
+		input    []*packages.PkgInfo
+		wantLocs [][]string
+	}{
+		{
+			name:    "pkgInfoToInventoryItem",
+			convert: pkgInfoToInventoryItem,
+			input: []*packages.PkgInfo{
+				{Name: "git", Location: []string{`C:\ProgramData\chocolatey\lib\git\git.nuspec`}},
+				{Name: "default", Location: nil},
+			},
+			wantLocs: [][]string{{`C:\ProgramData\chocolatey\lib\git\git.nuspec`}, {}},
+		},
+		{
+			name:    "debToInventoryItem",
+			convert: debToInventoryItem,
+			input: []*packages.PkgInfo{
+				{Name: "dpkg-pkg", Location: []string{"var/lib/dpkg/status"}},
+				{Name: "default", Location: nil},
+			},
+			wantLocs: [][]string{{"var/lib/dpkg/status"}, {}},
+		},
+		{
+			name:    "rpmToInventoryItem",
+			convert: rpmToInventoryItem,
+			input: []*packages.PkgInfo{
+				{Name: "rpm-pkg", Location: []string{"var/lib/rpm/Packages"}},
+				{Name: "default", Location: nil},
+			},
+			wantLocs: [][]string{{"var/lib/rpm/Packages"}, {}},
+		},
+		{
+			name:    "cosToInventoryItem",
+			convert: cosToInventoryItem,
+			input: []*packages.PkgInfo{
+				{Name: "cos-pkg", Location: []string{"etc/cos-package-info.json"}},
+				{Name: "default", Location: nil},
+			},
+			wantLocs: [][]string{{"etc/cos-package-info.json"}, {}},
+		},
+		{
+			name:    "snapToInventoryItem",
+			convert: snapToInventoryItem,
+			input: []*packages.PkgInfo{
+				{Name: "snap-pkg", Location: []string{"snap/core"}},
+				{Name: "default", Location: nil},
+			},
+			wantLocs: [][]string{{"snap/core"}, {}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.convert(tt.input)
+			var gotLocs [][]string
+			for _, item := range got {
+				gotLocs = append(gotLocs, item.Location)
+			}
+			utiltest.AssertEquals(t, gotLocs, tt.wantLocs)
+		})
+	}
+}

@@ -119,7 +119,8 @@ type Packages struct {
 type PkgInfo struct {
 	Name, Arch, RawArch, Version, Type, Purl string
 
-	Source Source
+	Source   Source
+	Location []string
 }
 
 const (

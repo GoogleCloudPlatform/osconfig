@@ -2,6 +2,7 @@ package packages
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
@@ -31,12 +32,13 @@ func pkgInfoFromDpkgExtractorPackage(pkg *extractor.Package, metadata *dpkgmetad
 		source.Version = pkg.Version
 	}
 	return &PkgInfo{
-		Name:    pkg.Name,
-		Version: pkg.Version,
-		Arch:    osinfo.NormalizeArchitecture(metadata.Architecture),
-		Source:  source,
-		Type:    purl.TypeDebian,
-		Purl:    pkg.PURL().String(),
+		Name:     pkg.Name,
+		Version:  pkg.Version,
+		Arch:     osinfo.NormalizeArchitecture(metadata.Architecture),
+		Source:   source,
+		Type:     purl.TypeDebian,
+		Purl:     pkg.PURL().String(),
+		Location: pkg.Locations,
 	}
 }
 
@@ -61,22 +63,24 @@ func pkgInfoFromRpmExtractorPackage(pkg *extractor.Package, metadata *scalibrrpm
 	}
 
 	return &PkgInfo{
-		Name:    pkg.Name,
-		Version: version,
-		Arch:    osinfo.NormalizeArchitecture(architecture),
-		Source:  source,
-		Type:    purl.TypeRPM,
-		Purl:    pkg.PURL().String(),
+		Name:     pkg.Name,
+		Version:  version,
+		Arch:     osinfo.NormalizeArchitecture(architecture),
+		Source:   source,
+		Type:     purl.TypeRPM,
+		Purl:     pkg.PURL().String(),
+		Location: pkg.Locations,
 	}
 }
 
 func pkgInfoFromCosExtractorPackage(pkg *extractor.Package, metadata *scalibrcos.Metadata, osinfo *osinfo.OSInfo) *PkgInfo {
 	return &PkgInfo{
-		Name:    fmt.Sprintf("%s/%s", metadata.Category, pkg.Name),
-		Version: pkg.Version,
-		Arch:    osinfo.Architecture,
-		Type:    purl.TypeCOS,
-		Purl:    pkg.PURL().String(),
+		Name:     fmt.Sprintf("%s/%s", metadata.Category, pkg.Name),
+		Version:  pkg.Version,
+		Arch:     osinfo.Architecture,
+		Type:     purl.TypeCOS,
+		Purl:     pkg.PURL().String(),
+		Location: pkg.Locations,
 	}
 }
 
@@ -87,21 +91,23 @@ func pkgInfoFromSnapExtractorPackage(pkg *extractor.Package, metadata *scalibrsn
 		arch = metadata.Architectures[0]
 	}
 	return &PkgInfo{
-		Name:    pkg.Name,
-		Version: pkg.Version,
-		Arch:    osinfo.NormalizeArchitecture(arch),
-		Type:    purl.TypeSnap,
-		Purl:    pkg.PURL().String(),
+		Name:     pkg.Name,
+		Version:  pkg.Version,
+		Arch:     osinfo.NormalizeArchitecture(arch),
+		Type:     purl.TypeSnap,
+		Purl:     pkg.PURL().String(),
+		Location: pkg.Locations,
 	}
 }
 
 func pkgInfoFromGenericExtractorPackage(pkg *extractor.Package, pkgType string, arch string) *PkgInfo {
 	return &PkgInfo{
-		Name:    pkg.Name,
-		Version: pkg.Version,
-		Arch:    arch,
-		Type:    pkgType,
-		Purl:    pkg.PURL().String(),
+		Name:     pkg.Name,
+		Version:  pkg.Version,
+		Arch:     arch,
+		Type:     pkgType,
+		Purl:     pkg.PURL().String(),
+		Location: pkg.Locations,
 	}
 }
 
@@ -170,6 +176,36 @@ type scalibrInstalledPackagesProvider struct {
 	dirsToSkip     []string
 }
 
+func scanFailed(scan *plugin.ScanStatus) bool {
+	if scan == nil {
+		return true
+	}
+	return scan.Status != plugin.ScanStatusSucceeded && scan.Status != plugin.ScanStatusPartiallySucceeded
+}
+
+func handleScanStatus(ctx context.Context, scan *scalibr.ScanResult) error {
+	if scanFailed(scan.Status) {
+		if scan != nil {
+			clog.Errorf(ctx, "scalibr scan failed, status: %v", scan.Status)
+		} else {
+			clog.Errorf(ctx, "scalibr scan failed: nil scan result")
+		}
+		return errors.New("failed to extract inventory via scalibr")
+	}
+
+	if scan.Status.Status == plugin.ScanStatusPartiallySucceeded {
+		var failedExtractors []string
+		for _, ps := range scan.PluginStatus {
+			if ps.Status == nil || ps.Status.Status != plugin.ScanStatusSucceeded {
+				failedExtractors = append(failedExtractors, ps.Name)
+			}
+		}
+		clog.Warningf(ctx, "scalibr scan partially succeeded, failed extractors: %v", failedExtractors)
+	}
+
+	return nil
+}
+
 func (p scalibrInstalledPackagesProvider) GetInstalledPackages(ctx context.Context) (Packages, error) {
 	config, err := p.getScanConfig()
 	if err != nil {
@@ -177,18 +213,8 @@ func (p scalibrInstalledPackagesProvider) GetInstalledPackages(ctx context.Conte
 	}
 
 	scan := scalibr.New().Scan(ctx, config)
-	if scan.Status.Status != plugin.ScanStatusSucceeded && scan.Status.Status != plugin.ScanStatusPartiallySucceeded {
-		return Packages{}, fmt.Errorf("scalibr scan.Status is unhealthy, status: %v, plugins: %v", scan.Status, scan.PluginStatus)
-	}
-
-	if scan.Status.Status == plugin.ScanStatusPartiallySucceeded {
-		var failedExtractors []string
-		for _, ps := range scan.PluginStatus {
-			if ps.Status != nil && ps.Status.Status != plugin.ScanStatusSucceeded {
-				failedExtractors = append(failedExtractors, ps.Name)
-			}
-		}
-		clog.Warningf(ctx, "scalibr scan partially succeeded, failed extractors: %v", failedExtractors)
+	if err := handleScanStatus(ctx, scan); err != nil {
+		return Packages{}, err
 	}
 
 	osinfo, err := p.osinfoProvider.GetOSInfo(ctx)
