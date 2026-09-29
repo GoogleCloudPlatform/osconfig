@@ -176,20 +176,20 @@ type scalibrInstalledPackagesProvider struct {
 	dirsToSkip     []string
 }
 
-func scanFailed(scan *plugin.ScanStatus) bool {
+func scanFailed(ctx context.Context, scan *scalibr.ScanResult) bool {
 	if scan == nil {
+		clog.Errorf(ctx, "scalibr scan failed: nil scan result")
 		return true
 	}
-	return scan.Status != plugin.ScanStatusSucceeded && scan.Status != plugin.ScanStatusPartiallySucceeded
+	if scan.Status == nil || (scan.Status.Status != plugin.ScanStatusSucceeded && scan.Status.Status != plugin.ScanStatusPartiallySucceeded) {
+		clog.Errorf(ctx, "scalibr scan failed, status: %v, plugins: %v", scan.Status, scan.PluginStatus)
+		return true
+	}
+	return false
 }
 
 func handleScanStatus(ctx context.Context, scan *scalibr.ScanResult) error {
-	if scanFailed(scan.Status) {
-		if scan != nil {
-			clog.Errorf(ctx, "scalibr scan failed, status: %v", scan.Status)
-		} else {
-			clog.Errorf(ctx, "scalibr scan failed: nil scan result")
-		}
+	if scanFailed(ctx, scan) {
 		return errors.New("failed to extract inventory via scalibr")
 	}
 

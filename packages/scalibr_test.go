@@ -362,47 +362,6 @@ func TestScalibrIntegration(t *testing.T) {
 	}
 }
 
-func TestScanFailed(t *testing.T) {
-	tests := []struct {
-		name   string
-		status *plugin.ScanStatus
-		want   bool
-	}{
-		{
-			name:   "nil status returns true",
-			status: nil,
-			want:   true,
-		},
-		{
-			name:   "succeeded returns false",
-			status: &plugin.ScanStatus{Status: plugin.ScanStatusSucceeded},
-			want:   false,
-		},
-		{
-			name:   "partially succeeded returns false",
-			status: &plugin.ScanStatus{Status: plugin.ScanStatusPartiallySucceeded},
-			want:   false,
-		},
-		{
-			name:   "failed returns true",
-			status: &plugin.ScanStatus{Status: plugin.ScanStatusFailed},
-			want:   true,
-		},
-		{
-			name:   "unspecified returns true",
-			status: &plugin.ScanStatus{Status: plugin.ScanStatusUnspecified},
-			want:   true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := scanFailed(tt.status)
-			utiltest.AssertEquals(t, got, tt.want)
-		})
-	}
-}
-
 func TestHandleScanStatus(t *testing.T) {
 	tests := []struct {
 		name    string
