@@ -196,3 +196,129 @@ func TestOSPatchJobExecution(t *testing.T) {
 		})
 	}
 }
+
+var zypperTestCases = []patchJobTestCase{
+	{
+		name:        "sles-12",
+		image:       "projects/suse-cloud/global/images/family/sles-12",
+		machineType: "e2-standard-2",
+		timeout:     35 * time.Minute,
+	},
+	{
+		name:        "sles-15",
+		image:       "projects/suse-cloud/global/images/family/sles-15",
+		machineType: "e2-standard-2",
+		timeout:     35 * time.Minute,
+	},
+	{
+		name:        "opensuse-leap-15",
+		image:       "projects/opensuse-cloud/global/images/family/opensuse-leap",
+		machineType: "e2-standard-2",
+		timeout:     35 * time.Minute,
+	},
+}
+
+// TestOSPatchZypperExcludes verifies that Zypper patching with excludes, WithOptional,
+// WithUpdate, categories, and severities succeeds.
+// This migrates "[Zypper excludes, WithOptional, WithUpdate, Categories and Severities]" from e2e_tests/test_suites/patch/patch.go.
+func TestOSPatchZypperExcludes(t *testing.T) {
+	for _, tc := range zypperTestCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			test := testenv.New(t, tc.timeout)
+
+			var vm *gcp.VM
+			test.Step("create VM", func(ctx context.Context) error {
+				meta := map[string]string{
+					"osconfig-disabled-features": "guestpolicies",
+				}
+				var err error
+				vm, err = test.CreateVM(tc.image, tc.machineType, meta)
+				return err
+			})
+
+			test.Step("wait for OS Config agent ready", func(ctx context.Context) error {
+				_, err := test.WaitForInventory(vm)
+				return err
+			})
+
+			test.Step("execute and await patch job with Zypper settings", func(ctx context.Context) error {
+				req := &osconfig.ExecutePatchJobRequest{
+					Description: fmt.Sprintf("e2e zypper patch job test for %s", vm.Name),
+					InstanceFilter: &osconfig.PatchInstanceFilter{
+						Instances: []string{fmt.Sprintf("zones/%s/instances/%s", vm.Zone, vm.Name)},
+					},
+					PatchConfig: &osconfig.PatchConfig{
+						RebootConfig: "DEFAULT",
+						Zypper: &osconfig.ZypperSettings{
+							Excludes:     []string{"patch-1", "/patch-2/"},
+							WithOptional: true,
+							WithUpdate:   true,
+							Categories:   []string{"security", "recommended", "feature"},
+							Severities:   []string{"critical", "important", "moderate", "low"},
+						},
+					},
+					Duration: fmt.Sprintf("%ds", int(tc.timeout.Seconds())),
+				}
+				job, err := test.ExecutePatchJob(req)
+				if err != nil {
+					return err
+				}
+				_, err = test.WaitForPatchJob(job.Name)
+				return err
+			})
+		})
+	}
+}
+
+// TestOSPatchZypperExclusivePatches verifies that Zypper patching with ExclusivePatches succeeds
+// without error.
+// This migrates "[Zypper exclusivePatches]" from e2e_tests/test_suites/patch/patch.go.
+func TestOSPatchZypperExclusivePatches(t *testing.T) {
+	for _, tc := range zypperTestCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			test := testenv.New(t, tc.timeout)
+
+			var vm *gcp.VM
+			test.Step("create VM", func(ctx context.Context) error {
+				meta := map[string]string{
+					"osconfig-disabled-features": "guestpolicies",
+				}
+				var err error
+				vm, err = test.CreateVM(tc.image, tc.machineType, meta)
+				return err
+			})
+
+			test.Step("wait for OS Config agent ready", func(ctx context.Context) error {
+				_, err := test.WaitForInventory(vm)
+				return err
+			})
+
+			test.Step("execute and await patch job with Zypper exclusive patches", func(ctx context.Context) error {
+				req := &osconfig.ExecutePatchJobRequest{
+					Description: fmt.Sprintf("e2e zypper exclusive patches test for %s", vm.Name),
+					InstanceFilter: &osconfig.PatchInstanceFilter{
+						Instances: []string{fmt.Sprintf("zones/%s/instances/%s", vm.Zone, vm.Name)},
+					},
+					PatchConfig: &osconfig.PatchConfig{
+						RebootConfig: "DEFAULT",
+						Zypper: &osconfig.ZypperSettings{
+							ExclusivePatches: []string{"patch-1"},
+						},
+					},
+					Duration: fmt.Sprintf("%ds", int(tc.timeout.Seconds())),
+				}
+				job, err := test.ExecutePatchJob(req)
+				if err != nil {
+					return err
+				}
+				_, err = test.WaitForPatchJob(job.Name)
+				return err
+			})
+		})
+	}
+}
+
