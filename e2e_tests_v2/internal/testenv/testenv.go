@@ -669,6 +669,66 @@ func (test *Test) WaitForInventory(vm *gcp.VM) (*osconfig.Inventory, error) {
 	return result, nil
 }
 
+// ExecutePatchJob starts an OS Config PatchJob in the test project.
+func (test *Test) ExecutePatchJob(req *osconfig.ExecutePatchJobRequest) (*osconfig.PatchJob, error) {
+	test.t.Helper()
+
+	test.t.Logf("Executing PatchJob in project %q (filter: %+v)", test.Project, req.InstanceFilter)
+	return test.Suite.Compute.ExecutePatchJob(test.Context, test.Project, req)
+}
+
+// WaitForPatchJob polls the OS Config API until the specified PatchJob finishes and verifies that at least one instance succeeded.
+func (test *Test) WaitForPatchJob(jobName string) (*osconfig.PatchJob, error) {
+	test.t.Helper()
+
+	test.t.Logf("Waiting for PatchJob %q to complete", jobName)
+
+	var result *osconfig.PatchJob
+	err := gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("patch job %s", jobName), func(ctx context.Context) (string, bool, error) {
+		job, err := test.Suite.Compute.GetPatchJob(ctx, jobName)
+		if err != nil {
+			if gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("transient error fetching patch job (%v)", err), false, nil
+			}
+			return "", false, err
+		}
+
+		if isPatchJobFailureState(job.State) {
+			details, detailsErr := test.Suite.Compute.ListPatchJobInstanceDetails(ctx, jobName)
+			var detailStrings []string
+			if detailsErr != nil {
+				detailStrings = append(detailStrings, fmt.Sprintf("failed to list instance details: %v", detailsErr))
+			} else {
+				for _, d := range details {
+					detailStrings = append(detailStrings, fmt.Sprintf("%s: state=%s failure=%q", d.Name, d.State, d.FailureReason))
+				}
+			}
+			return "", false, fmt.Errorf("patch job %s failed with state %s (error: %q, instance details: [%s])",
+				jobName, job.State, job.ErrorMessage, strings.Join(detailStrings, "; "))
+		}
+
+		if job.State == "SUCCEEDED" {
+			summary := job.InstanceDetailsSummary
+			if summary == nil || (summary.SucceededInstanceCount < 1 && summary.SucceededRebootRequiredInstanceCount < 1) {
+				return "", false, fmt.Errorf("patch job %s completed with no instances patched (summary: %+v)", jobName, summary)
+			}
+			result = job
+			return fmt.Sprintf("state=%s succeeded=%d rebootRequired=%d", job.State, summary.SucceededInstanceCount, summary.SucceededRebootRequiredInstanceCount), true, nil
+		}
+
+		return fmt.Sprintf("state=%s percentComplete=%.1f%%", job.State, job.PercentComplete), false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func isPatchJobFailureState(state string) bool {
+	return state == "COMPLETED_WITH_ERRORS" || state == "TIMED_OUT" || state == "CANCELED"
+}
+
 func resourceName(runID, testName, attempt string) string {
 	base := labelValue(fmt.Sprintf("inv-%s-%s", runID, testName))
 	if len(base) > 53 {
