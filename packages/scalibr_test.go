@@ -167,10 +167,21 @@ func TestExtractedPackageMappings(t *testing.T) {
 					Version:  "1.2.0",
 					PURLType: "pub",
 				},
+				{
+					Name:     "Newtonsoft.Json",
+					Version:  "13.0.3",
+					PURLType: "nuget",
+				},
+				{
+					Name:     "scikit-learn",
+					Version:  "1.3.0",
+					PURLType: "conda",
+				},
 			},
 			want: Packages{
 				Pip: []*PkgInfo{
 					{Name: "requests", Version: "2.28.1", Type: "pypi", Purl: "pkg:pypi/requests@2.28.1"},
+					{Name: "scikit-learn", Version: "1.3.0", Type: "conda", Purl: "pkg:conda/scikit-learn@1.3.0"},
 				},
 				Gem: []*PkgInfo{
 					{Name: "rails", Version: "7.0.4", Type: "gem", Purl: "pkg:gem/rails@7.0.4"},
@@ -195,6 +206,9 @@ func TestExtractedPackageMappings(t *testing.T) {
 				},
 				Pub: []*PkgInfo{
 					{Name: "http", Version: "1.2.0", Type: "pub", Purl: "pkg:pub/http@1.2.0"},
+				},
+				Nuget: []*PkgInfo{
+					{Name: "Newtonsoft.Json", Version: "13.0.3", Type: "nuget", Purl: "pkg:nuget/Newtonsoft.Json@13.0.3"},
 				},
 			},
 		},

@@ -131,6 +131,12 @@ var languagePackageMappers = map[string]func(*Packages, *extractor.Package){
 	purl.TypePub: func(pkgs *Packages, pkg *extractor.Package) {
 		pkgs.Pub = append(pkgs.Pub, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypePub))
 	},
+	purl.TypeConda: func(pkgs *Packages, pkg *extractor.Package) {
+		pkgs.Pip = append(pkgs.Pip, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeConda))
+	},
+	purl.TypeNuget: func(pkgs *Packages, pkg *extractor.Package) {
+		pkgs.Nuget = append(pkgs.Nuget, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeNuget))
+	},
 }
 
 // appendOSPackage converts and appends an OS package to pkgs if recognized.

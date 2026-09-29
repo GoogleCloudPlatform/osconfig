@@ -195,6 +195,7 @@ func languagePackagesToInventoryItems(pkgs *packages.Packages) []*agentendpointp
 		pkgs.Composer,
 		pkgs.Swift,
 		pkgs.Pub,
+		pkgs.Nuget,
 	}
 	for _, p := range langPkgs {
 		if len(p) > 0 {

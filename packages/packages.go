@@ -114,6 +114,7 @@ type Packages struct {
 	Composer           []*PkgInfo            `json:"composer,omitempty"`
 	Swift              []*PkgInfo            `json:"swift,omitempty"`
 	Pub                []*PkgInfo            `json:"pub,omitempty"`
+	Nuget              []*PkgInfo            `json:"nuget,omitempty"`
 	GooGet             []*PkgInfo            `json:"googet,omitempty"`
 	WUA                []*WUAPackage         `json:"wua,omitempty"`
 	QFE                []*QFEPackage         `json:"qfe,omitempty"`
