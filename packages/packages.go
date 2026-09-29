@@ -134,7 +134,7 @@ const (
 	typeGooGet   = "googet"
 	typeGem      = "gem"
 	typePypi     = "pypi"
-	typeSnap   = "snap"
+	typeSnap     = "snap"
 	typeMaven    = "maven"
 	typeNpm      = "npm"
 	typeGolang   = "golang"
