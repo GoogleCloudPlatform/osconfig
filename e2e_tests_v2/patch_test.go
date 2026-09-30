@@ -196,3 +196,232 @@ func TestOSPatchJobExecution(t *testing.T) {
 		})
 	}
 }
+
+var aptTestCases = []patchJobTestCase{
+	// Debian
+	{
+		name:        "debian-12",
+		image:       "projects/debian-cloud/global/images/family/debian-12",
+		machineType: "e2-standard-2",
+		timeout:     35 * time.Minute,
+	},
+	// Ubuntu
+	{
+		name:        "ubuntu-2204-lts",
+		image:       "projects/ubuntu-os-cloud/global/images/family/ubuntu-2204-lts",
+		machineType: "e2-standard-2",
+		timeout:     35 * time.Minute,
+	},
+	{
+		name:        "ubuntu-2404-lts",
+		image:       "projects/ubuntu-os-cloud/global/images/family/ubuntu-2404-lts-amd64",
+		machineType: "e2-standard-2",
+		timeout:     35 * time.Minute,
+	},
+}
+
+func debianDowngradeStartupScript() string {
+	return `#!/bin/bash
+if [ -f /var/lib/google/osconfig_e2e_downgrade_bootstrapped ]; then
+  exit 0
+fi
+mkdir -p /var/lib/google
+touch /var/lib/google/osconfig_e2e_downgrade_bootstrapped
+
+systemctl stop google-osconfig-agent 2>/dev/null || true
+
+# Remove backports and security repos which were archived and return 404 on debian-11
+sed -i '/bullseye-backports/d' /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null || true
+sed -i '/debian-security/d' /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null || true
+sed -i '/bullseye-security/d' /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null || true
+
+# Add snapshot repository with older sudo version and pin it
+echo 'deb [trusted=yes check-valid-until=no] http://snapshot.debian.org/archive/debian/20190801T025637Z/ buster main' >> /etc/apt/sources.list
+echo 'Package: sudo' >> /etc/apt/preferences
+echo 'Pin: version 1.8.27-1' >> /etc/apt/preferences
+echo 'Pin-priority: 9999' >> /etc/apt/preferences
+
+echo 'Acquire::Retries "3";' > /etc/apt/apt.conf.d/99retries
+echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99check-valid-until
+
+which google_osconfig_agent >/dev/null 2>&1 || which google-osconfig-agent >/dev/null 2>&1 || {
+  apt-get update
+  apt-get install -y google-osconfig-agent
+}
+
+apt-get update || true
+
+systemctl daemon-reload
+systemctl enable --now google-osconfig-agent || true
+`
+}
+
+var aptDowngradeTestCases = []patchJobTestCase{
+	{
+		name:        "debian-11",
+		image:       "projects/debian-cloud/global/images/debian-11-bullseye-v20231010",
+		machineType: "e2-standard-2",
+		timeout:     35 * time.Minute,
+		extraMeta: map[string]string{
+			gcp.MetadataKeyLinuxStartupScript: debianDowngradeStartupScript(),
+		},
+	},
+}
+
+// TestOSPatchAptExcludes verifies that APT patching with dist-upgrade and package excludes succeeds.
+// This migrates "[APT dist-upgrade, excludes]" from e2e_tests/test_suites/patch/patch.go.
+func TestOSPatchAptExcludes(t *testing.T) {
+	for _, tc := range aptTestCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			test := testenv.New(t, tc.timeout)
+
+			var vm *gcp.VM
+			test.Step("create VM", func(ctx context.Context) error {
+				meta := map[string]string{
+					"osconfig-disabled-features": "guestpolicies",
+				}
+				for k, v := range tc.extraMeta {
+					meta[k] = v
+				}
+				var err error
+				vm, err = test.CreateVM(tc.image, tc.machineType, meta)
+				return err
+			})
+
+			test.Step("wait for OS Config agent ready", func(ctx context.Context) error {
+				_, err := test.WaitForInventory(vm)
+				return err
+			})
+
+			test.Step("execute and await patch job with APT excludes", func(ctx context.Context) error {
+				req := &osconfig.ExecutePatchJobRequest{
+					Description: fmt.Sprintf("e2e apt excludes patch job test for %s", vm.Name),
+					InstanceFilter: &osconfig.PatchInstanceFilter{
+						Instances: []string{fmt.Sprintf("zones/%s/instances/%s", vm.Zone, vm.Name)},
+					},
+					PatchConfig: &osconfig.PatchConfig{
+						RebootConfig: "DEFAULT",
+						Apt: &osconfig.AptSettings{
+							Type:     "DIST",
+							Excludes: []string{"pkg1", "/pkg2/"},
+						},
+					},
+					Duration: fmt.Sprintf("%ds", int(tc.timeout.Seconds())),
+				}
+				job, err := test.ExecutePatchJob(req)
+				if err != nil {
+					return err
+				}
+				_, err = test.WaitForPatchJob(job.Name)
+				return err
+			})
+		})
+	}
+}
+
+// TestOSPatchAptExclusivePackages verifies that APT patching with dist-upgrade and exclusive packages succeeds.
+// This migrates "[APT dist-upgrade, exclusive packages]" from e2e_tests/test_suites/patch/patch.go.
+func TestOSPatchAptExclusivePackages(t *testing.T) {
+	for _, tc := range aptTestCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			test := testenv.New(t, tc.timeout)
+
+			var vm *gcp.VM
+			test.Step("create VM", func(ctx context.Context) error {
+				meta := map[string]string{
+					"osconfig-disabled-features": "guestpolicies",
+				}
+				for k, v := range tc.extraMeta {
+					meta[k] = v
+				}
+				var err error
+				vm, err = test.CreateVM(tc.image, tc.machineType, meta)
+				return err
+			})
+
+			test.Step("wait for OS Config agent ready", func(ctx context.Context) error {
+				_, err := test.WaitForInventory(vm)
+				return err
+			})
+
+			test.Step("execute and await patch job with APT exclusive packages", func(ctx context.Context) error {
+				req := &osconfig.ExecutePatchJobRequest{
+					Description: fmt.Sprintf("e2e apt exclusive packages patch job test for %s", vm.Name),
+					InstanceFilter: &osconfig.PatchInstanceFilter{
+						Instances: []string{fmt.Sprintf("zones/%s/instances/%s", vm.Zone, vm.Name)},
+					},
+					PatchConfig: &osconfig.PatchConfig{
+						RebootConfig: "DEFAULT",
+						Apt: &osconfig.AptSettings{
+							Type:              "DIST",
+							ExclusivePackages: []string{"pkg1"},
+						},
+					},
+					Duration: fmt.Sprintf("%ds", int(tc.timeout.Seconds())),
+				}
+				job, err := test.ExecutePatchJob(req)
+				if err != nil {
+					return err
+				}
+				_, err = test.WaitForPatchJob(job.Name)
+				return err
+			})
+		})
+	}
+}
+
+// TestOSPatchAptDowngrade verifies that APT dist-upgrade patching succeeds even when a package needs to be downgraded.
+// This migrates "[PatchJob apt-get doesn't fail on downgrades]" from e2e_tests/test_suites/patch/patch.go.
+func TestOSPatchAptDowngrade(t *testing.T) {
+	for _, tc := range aptDowngradeTestCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			test := testenv.New(t, tc.timeout)
+
+			var vm *gcp.VM
+			test.Step("create VM", func(ctx context.Context) error {
+				meta := map[string]string{
+					"osconfig-disabled-features": "guestpolicies",
+				}
+				for k, v := range tc.extraMeta {
+					meta[k] = v
+				}
+				var err error
+				vm, err = test.CreateVM(tc.image, tc.machineType, meta)
+				return err
+			})
+
+			test.Step("wait for OS Config agent ready", func(ctx context.Context) error {
+				_, err := test.WaitForInventory(vm)
+				return err
+			})
+
+			test.Step("execute and await patch job with APT downgrade", func(ctx context.Context) error {
+				req := &osconfig.ExecutePatchJobRequest{
+					Description: fmt.Sprintf("e2e apt downgrade patch job test for %s", vm.Name),
+					InstanceFilter: &osconfig.PatchInstanceFilter{
+						Instances: []string{fmt.Sprintf("zones/%s/instances/%s", vm.Zone, vm.Name)},
+					},
+					PatchConfig: &osconfig.PatchConfig{
+						RebootConfig: "DEFAULT",
+						Apt: &osconfig.AptSettings{
+							Type: "DIST",
+						},
+					},
+					Duration: fmt.Sprintf("%ds", int(tc.timeout.Seconds())),
+				}
+				job, err := test.ExecutePatchJob(req)
+				if err != nil {
+					return err
+				}
+				_, err = test.WaitForPatchJob(job.Name)
+				return err
+			})
+		})
+	}
+}
