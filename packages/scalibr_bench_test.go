@@ -20,103 +20,12 @@ import (
 	"context"
 	"fmt"
 	"runtime"
-	"syscall"
 	"testing"
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltrace"
 )
-
-type cpuSample struct {
-	totalCPUTime time.Duration
-	time         time.Time
-}
-
-// getCPUTime returns total (user + system) CPU time consumed by the process.
-func getCPUTime() (time.Duration, error) {
-	var usage syscall.Rusage
-	if err := syscall.Getrusage(syscall.RUSAGE_SELF, &usage); err != nil {
-		return 0, fmt.Errorf("getrusage error: %w", err)
-	}
-	user := time.Duration(usage.Utime.Sec)*time.Second + time.Duration(usage.Utime.Usec)*time.Microsecond
-	sys := time.Duration(usage.Stime.Sec)*time.Second + time.Duration(usage.Stime.Usec)*time.Microsecond
-	return user + sys, nil
-}
-
-type traceMetricsResult struct {
-	utiltrace.TraceMemoryResult
-	CPUPeakPercent float64
-	CPUMeanPercent float64
-	Duration       time.Duration
-	AllocMB        float64
-}
-
-func traceMetrics(ctx context.Context, interval time.Duration, resultChan chan<- traceMetricsResult) {
-	startTime := time.Now()
-	var memBefore runtime.MemStats
-	runtime.ReadMemStats(&memBefore)
-
-	memChan := make(chan utiltrace.TraceMemoryResult, 1)
-	ctxMemory, cancelMem := context.WithCancel(ctx)
-	go utiltrace.TraceMemory(ctxMemory, interval, memChan)
-
-	var lastSample cpuSample
-	startCPUTime, err := getCPUTime()
-	if err == nil {
-		lastSample = cpuSample{totalCPUTime: startCPUTime, time: startTime}
-	}
-
-	var peakCPU, runningAverageCPU float64
-	sampleCount := 0
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			currentCPUTime, err := getCPUTime()
-			now := time.Now()
-			if err == nil && !lastSample.time.IsZero() {
-				timeDelta := now.Sub(lastSample.time).Seconds()
-				cpuDelta := (currentCPUTime - lastSample.totalCPUTime).Seconds()
-				if timeDelta > 0 {
-					cpuPercent := (cpuDelta / timeDelta) * 100.0
-					sampleCount++
-					runningAverageCPU += (cpuPercent - runningAverageCPU) / float64(sampleCount)
-					if cpuPercent > peakCPU {
-						peakCPU = cpuPercent
-					}
-				}
-				lastSample = cpuSample{totalCPUTime: currentCPUTime, time: now}
-			}
-		case <-ctx.Done():
-			cancelMem()
-			var memAfter runtime.MemStats
-			runtime.ReadMemStats(&memAfter)
-			allocMB := float64(memAfter.TotalAlloc-memBefore.TotalAlloc) / 1024 / 1024
-			memResult := <-memChan
-
-			totalDuration := time.Since(startTime)
-			if finalCPUTime, err := getCPUTime(); err == nil && totalDuration > 0 && !lastSample.time.IsZero() {
-				meanCPU := (finalCPUTime - startCPUTime).Seconds() / totalDuration.Seconds() * 100.0
-				runningAverageCPU = meanCPU
-				if meanCPU > peakCPU {
-					peakCPU = meanCPU
-				}
-			}
-
-			resultChan <- traceMetricsResult{
-				TraceMemoryResult: memResult,
-				CPUPeakPercent:    peakCPU,
-				CPUMeanPercent:    runningAverageCPU,
-				Duration:          totalDuration,
-				AllocMB:           allocMB,
-			}
-			return
-		}
-	}
-}
 
 type benchResult struct {
 	duration  time.Duration
@@ -132,8 +41,8 @@ func runBenchmark(ctx context.Context, osinfoProvider osinfo.Provider, extractor
 	runtime.GC()
 
 	traceCtx, cancelTrace := context.WithCancel(ctx)
-	resChan := make(chan traceMetricsResult, 1)
-	go traceMetrics(traceCtx, 20*time.Millisecond, resChan)
+	resChan := make(chan utiltrace.TraceResult, 1)
+	go utiltrace.Trace(traceCtx, 20*time.Millisecond, resChan)
 
 	provider := &scalibrInstalledPackagesProvider{
 		extractors:     extractors,
