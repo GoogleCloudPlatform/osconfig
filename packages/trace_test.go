@@ -152,3 +152,65 @@ func TestTracingInstalledPackagesProvider(t *testing.T) {
 		})
 	}
 }
+
+func runGetInstalledPackagesWithScalibr(t *testing.T, extractors []string, scanRoots, dirsToSkip []string, op osinfo.Provider) (Packages, error) {
+	t.Helper()
+	provider := &scalibrInstalledPackagesProvider{
+		extractors:     extractors,
+		osinfoProvider: op,
+		scanRootPaths:  scanRoots,
+		dirsToSkip:     dirsToSkip,
+	}
+	traced := TracingInstalledPackagesProvider(provider, op)
+	return traced.GetInstalledPackages(context.Background())
+}
+
+// TestTracingInstalledPackagesProvider_Scalibr verifies that TracingInstalledPackagesProvider
+// works correctly when decorating a scalibrInstalledPackagesProvider.
+func TestTracingInstalledPackagesProvider_Scalibr(t *testing.T) {
+	utiltest.OverrideVariable(t, &ZypperExists, false)
+	virtualRoot := arrangeVirtualRoot(t, "./testdata/debian.dpkg-status", "/var/lib/dpkg/status")
+
+	wantPkgs := Packages{Deb: []*PkgInfo{
+		{Name: "7zip", Version: "24.09+dfsg-4", Arch: "x86_64", Source: Source{Name: "7zip", Version: "24.09+dfsg-4"}, Type: "deb", Purl: "pkg:deb/linux/7zip@24.09%2Bdfsg-4?arch=amd64"},
+		{Name: "llvm-16", Version: "1:16.0.6-27+build3", Arch: "x86_64", Source: Source{Name: "llvm-toolchain-16", Version: "1:16.0.6-27+build3"}, Type: "deb", Purl: "pkg:deb/linux/llvm-16@1%3A16.0.6-27%2Bbuild3?arch=amd64&source=llvm-toolchain-16"},
+	}}
+
+	tests := []struct {
+		name       string
+		extractors []string
+		scanRoots  []string
+		dirsToSkip []string
+		op         osinfo.Provider
+		wantPkgs   Packages
+		wantErr    error
+	}{
+		{
+			name:       "valid dpkg scan with scalibr, want packages and nil error",
+			extractors: []string{"os/dpkg"},
+			scanRoots:  []string{virtualRoot},
+			dirsToSkip: []string{},
+			op:         stubProvider{},
+			wantPkgs:   wantPkgs,
+			wantErr:    nil,
+		},
+		{
+			name:       "invalid extractor with scalibr, want unknown plugin error",
+			extractors: []string{"invalid/extractor"},
+			scanRoots:  []string{virtualRoot},
+			dirsToSkip: []string{},
+			op:         stubProvider{},
+			wantPkgs:   Packages{},
+			wantErr:    errors.New("unknown plugin \"invalid/extractor\""),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotPkgs, gotErr := runGetInstalledPackagesWithScalibr(t, tt.extractors, tt.scanRoots, tt.dirsToSkip, tt.op)
+
+			utiltest.AssertErrorMatch(t, gotErr, tt.wantErr)
+			utiltest.AssertEquals(t, gotPkgs, tt.wantPkgs)
+		})
+	}
+}
