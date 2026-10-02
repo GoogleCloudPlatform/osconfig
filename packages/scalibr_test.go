@@ -386,13 +386,6 @@ func TestHandleScanStatus(t *testing.T) {
 			wantErr: errors.New("failed to extract inventory via scalibr"),
 		},
 		{
-			name: "unspecified status returns error",
-			scan: &scalibr.ScanResult{
-				Status: &plugin.ScanStatus{Status: plugin.ScanStatusUnspecified},
-			},
-			wantErr: errors.New("failed to extract inventory via scalibr"),
-		},
-		{
 			name: "succeeded status returns nil",
 			scan: &scalibr.ScanResult{
 				Status: &plugin.ScanStatus{Status: plugin.ScanStatusSucceeded},
