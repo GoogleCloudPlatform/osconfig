@@ -196,3 +196,142 @@ func TestOSPatchJobExecution(t *testing.T) {
 		})
 	}
 }
+
+var yumTestCases = []patchJobTestCase{
+	{
+		name:        "rhel-8",
+		image:       "projects/rhel-cloud/global/images/family/rhel-8",
+		machineType: "e2-standard-4",
+		timeout:     40 * time.Minute,
+	},
+	{
+		name:        "rhel-9",
+		image:       "projects/rhel-cloud/global/images/family/rhel-9",
+		machineType: "e2-standard-4",
+		timeout:     40 * time.Minute,
+	},
+	{
+		name:        "centos-stream-9",
+		image:       "projects/centos-cloud/global/images/family/centos-stream-9",
+		machineType: "e2-standard-4",
+		timeout:     40 * time.Minute,
+	},
+	{
+		name:        "rocky-linux-8",
+		image:       "projects/rocky-linux-cloud/global/images/family/rocky-linux-8-optimized-gcp",
+		machineType: "e2-standard-4",
+		timeout:     40 * time.Minute,
+	},
+	{
+		name:        "rocky-linux-9",
+		image:       "projects/rocky-linux-cloud/global/images/family/rocky-linux-9-optimized-gcp",
+		machineType: "e2-standard-4",
+		timeout:     40 * time.Minute,
+	},
+}
+
+// TestOSPatchYumExcludes verifies that YUM patching with security, minimal, and package excludes succeeds.
+// This migrates "[YUM security, minimal and excludes]" from e2e_tests/test_suites/patch/patch.go.
+func TestOSPatchYumExcludes(t *testing.T) {
+	for _, tc := range yumTestCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			test := testenv.New(t, tc.timeout)
+
+			var vm *gcp.VM
+			test.Step("create VM", func(ctx context.Context) error {
+				meta := map[string]string{
+					"osconfig-disabled-features": "guestpolicies",
+				}
+				for k, v := range tc.extraMeta {
+					meta[k] = v
+				}
+				var err error
+				vm, err = test.CreateVM(tc.image, tc.machineType, meta)
+				return err
+			})
+
+			test.Step("wait for OS Config agent ready", func(ctx context.Context) error {
+				_, err := test.WaitForInventory(vm)
+				return err
+			})
+
+			test.Step("execute and await patch job with YUM security, minimal, and excludes", func(ctx context.Context) error {
+				req := &osconfig.ExecutePatchJobRequest{
+					Description: fmt.Sprintf("e2e yum patch job test for %s", vm.Name),
+					InstanceFilter: &osconfig.PatchInstanceFilter{
+						Instances: []string{fmt.Sprintf("zones/%s/instances/%s", vm.Zone, vm.Name)},
+					},
+					PatchConfig: &osconfig.PatchConfig{
+						RebootConfig: "DEFAULT",
+						Yum: &osconfig.YumSettings{
+							Security: true,
+							Minimal:  true,
+							Excludes: []string{"pkg1", "pkg2", "/pkg3/"},
+						},
+					},
+					Duration: fmt.Sprintf("%ds", int(tc.timeout.Seconds())),
+				}
+				job, err := test.ExecutePatchJob(req)
+				if err != nil {
+					return err
+				}
+				_, err = test.WaitForPatchJob(job.Name)
+				return err
+			})
+		})
+	}
+}
+
+// TestOSPatchYumExclusivePackages verifies that YUM patching with ExclusivePackages succeeds.
+// This migrates "[YUM exclusive patches]" from e2e_tests/test_suites/patch/patch.go.
+func TestOSPatchYumExclusivePackages(t *testing.T) {
+	for _, tc := range yumTestCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			test := testenv.New(t, tc.timeout)
+
+			var vm *gcp.VM
+			test.Step("create VM", func(ctx context.Context) error {
+				meta := map[string]string{
+					"osconfig-disabled-features": "guestpolicies",
+				}
+				for k, v := range tc.extraMeta {
+					meta[k] = v
+				}
+				var err error
+				vm, err = test.CreateVM(tc.image, tc.machineType, meta)
+				return err
+			})
+
+			test.Step("wait for OS Config agent ready", func(ctx context.Context) error {
+				_, err := test.WaitForInventory(vm)
+				return err
+			})
+
+			test.Step("execute and await patch job with YUM exclusive packages", func(ctx context.Context) error {
+				req := &osconfig.ExecutePatchJobRequest{
+					Description: fmt.Sprintf("e2e yum exclusive packages test for %s", vm.Name),
+					InstanceFilter: &osconfig.PatchInstanceFilter{
+						Instances: []string{fmt.Sprintf("zones/%s/instances/%s", vm.Zone, vm.Name)},
+					},
+					PatchConfig: &osconfig.PatchConfig{
+						RebootConfig: "DEFAULT",
+						Yum: &osconfig.YumSettings{
+							ExclusivePackages: []string{"pkg1", "pk3"},
+						},
+					},
+					Duration: fmt.Sprintf("%ds", int(tc.timeout.Seconds())),
+				}
+				job, err := test.ExecutePatchJob(req)
+				if err != nil {
+					return err
+				}
+				_, err = test.WaitForPatchJob(job.Name)
+				return err
+			})
+		})
+	}
+}
