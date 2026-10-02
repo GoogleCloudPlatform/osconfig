@@ -126,6 +126,8 @@ func generateInventoryState() *inventory.InstanceInventory {
 			Gem:           []*packages.PkgInfo{{Name: "GemInstalledPkg", Arch: "Arch", Version: "Version", Purl: "pkg:gem/GemInstalledPkg@Version"}},
 			Pip:           []*packages.PkgInfo{{Name: "PipInstalledPkg", Arch: "Arch", Version: "Version", Purl: "pkg:pypi/PipInstalledPkg@Version"}},
 			GooGet:        []*packages.PkgInfo{{Name: "GooGetInstalledPkg", Arch: "Arch", Version: "Version", Type: "googet", Purl: "pkg:googet/ShortName/GooGetInstalledPkg@Version"}},
+			Chocolatey:    []*packages.PkgInfo{{Name: "ChocoInstalledPkg", Arch: "Arch", Version: "Version", Type: "chocolatey", Purl: "pkg:chocolatey/ChocoInstalledPkg@Version"}},
+			WinGet:        []*packages.PkgInfo{{Name: "WingetInstalledPkg", Arch: "Arch", Version: "Version", Type: "winget", Purl: "pkg:winget/WingetInstalledPkg@Version"}},
 			WUA: []*packages.WUAPackage{{
 				Title:                    "WUAInstalled",
 				Description:              "Description",
@@ -151,6 +153,8 @@ func generateInventoryState() *inventory.InstanceInventory {
 			Pip:           []*packages.PkgInfo{{Name: "PipPkgUpdate", Arch: "Arch", Version: "Version", Purl: "pkg:pypi/PipPkgUpdate@Version"}},
 			Snap:          []*packages.PkgInfo{{Name: "SnapPkgUpdate", Arch: "Arch", Version: "Version", Type: "snap", Purl: "pkg:snap/ShortName/SnapPkgUpdate@Version?arch=Arch"}},
 			GooGet:        []*packages.PkgInfo{{Name: "GooGetPkgUpdate", Arch: "Arch", Version: "Version", Type: "googet", Purl: "pkg:googet/ShortName/GooGetPkgUpdate@Version"}},
+			Chocolatey:    []*packages.PkgInfo{{Name: "ChocoPkgUpdate", Arch: "Arch", Version: "Version", Type: "chocolatey", Purl: "pkg:chocolatey/ChocoPkgUpdate@Version"}},
+			WinGet:        []*packages.PkgInfo{{Name: "WingetPkgUpdate", Arch: "Arch", Version: "Version", Type: "winget", Purl: "pkg:winget/WingetPkgUpdate@Version"}},
 			WUA: []*packages.WUAPackage{{
 				Title:       "WUAUpdate",
 				Description: "Description",
@@ -215,6 +219,8 @@ func generateVMInventory() *agentendpointpb.VmInventory {
 			{Name: "SnapInstalledPkg", Type: "snap", Version: "Version", Purl: "pkg:snap/ShortName/SnapInstalledPkg@Version?arch=Arch",
 				Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{}}},
 			{Name: "GooGetInstalledPkg", Type: "googet", Version: "Version", Purl: "pkg:googet/ShortName/GooGetInstalledPkg@Version", Metadata: &structpb.Struct{}},
+			{Name: "ChocoInstalledPkg", Type: "chocolatey", Version: "Version", Purl: "pkg:chocolatey/ChocoInstalledPkg@Version"},
+			{Name: "WingetInstalledPkg", Type: "winget", Version: "Version", Purl: "pkg:winget/WingetInstalledPkg@Version"},
 			{Name: "WUAInstalled", Type: "wuaPackage", Version: "UpdateID", Purl: "pkg:generic/ShortName/WUAInstalled@UpdateID", Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 				"Description": structpb.NewStringValue("Description"),
 				"Categories": structpb.NewListValue(&structpb.ListValue{Values: []*structpb.Value{structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"Id": structpb.NewStringValue("CategoryID1"), "Name": structpb.NewStringValue("Category1")}}),
@@ -258,6 +264,8 @@ func generateVMInventory() *agentendpointpb.VmInventory {
 				Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{}}},
 			{Name: "GooGetPkgUpdate", Type: "googet", Version: "Version", Purl: "pkg:googet/ShortName/GooGetPkgUpdate@Version",
 				Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{}}},
+			{Name: "ChocoPkgUpdate", Type: "chocolatey", Version: "Version", Purl: "pkg:chocolatey/ChocoPkgUpdate@Version"},
+			{Name: "WingetPkgUpdate", Type: "winget", Version: "Version", Purl: "pkg:winget/WingetPkgUpdate@Version"},
 			{Name: "WUAUpdate", Type: "wuaPackage", Version: "UpdateID", Purl: "pkg:generic/ShortName/WUAUpdate@UpdateID",
 				Location: []string{}, Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{
 					"Description": structpb.NewStringValue("Description"),
@@ -914,6 +922,72 @@ func Test_reportVmInventory_parseQFEDate(t *testing.T) {
 			got, err := parseQFEDate(ctx, tt.input)
 			utiltest.AssertErrorMatch(t, err, tt.wantErr)
 			utiltest.AssertEquals(t, got, tt.want)
+		})
+	}
+}
+
+func Test_pkgInfoToInventoryItem_propagatesLocation(t *testing.T) {
+	tests := []struct {
+		name     string
+		convert  func([]*packages.PkgInfo) []*agentendpointpb.VmInventory_InventoryItem
+		input    []*packages.PkgInfo
+		wantLocs [][]string
+	}{
+		{
+			name:    "pkgInfoToInventoryItem",
+			convert: pkgInfoToInventoryItem,
+			input: []*packages.PkgInfo{
+				{Name: "git", Location: []string{`C:\ProgramData\chocolatey\lib\git\git.nuspec`}},
+				{Name: "default", Location: nil},
+			},
+			wantLocs: [][]string{{`C:\ProgramData\chocolatey\lib\git\git.nuspec`}, {}},
+		},
+		{
+			name:    "debToInventoryItem",
+			convert: debToInventoryItem,
+			input: []*packages.PkgInfo{
+				{Name: "dpkg-pkg", Location: []string{"var/lib/dpkg/status"}},
+				{Name: "default", Location: nil},
+			},
+			wantLocs: [][]string{{"var/lib/dpkg/status"}, {}},
+		},
+		{
+			name:    "rpmToInventoryItem",
+			convert: rpmToInventoryItem,
+			input: []*packages.PkgInfo{
+				{Name: "rpm-pkg", Location: []string{"var/lib/rpm/Packages"}},
+				{Name: "default", Location: nil},
+			},
+			wantLocs: [][]string{{"var/lib/rpm/Packages"}, {}},
+		},
+		{
+			name:    "cosToInventoryItem",
+			convert: cosToInventoryItem,
+			input: []*packages.PkgInfo{
+				{Name: "cos-pkg", Location: []string{"etc/cos-package-info.json"}},
+				{Name: "default", Location: nil},
+			},
+			wantLocs: [][]string{{"etc/cos-package-info.json"}, {}},
+		},
+		{
+			name:    "snapToInventoryItem",
+			convert: snapToInventoryItem,
+			input: []*packages.PkgInfo{
+				{Name: "snap-pkg", Location: []string{"snap/core"}},
+				{Name: "default", Location: nil},
+			},
+			wantLocs: [][]string{{"snap/core"}, {}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.convert(tt.input)
+			var gotLocs [][]string
+			for _, item := range got {
+				gotLocs = append(gotLocs, item.Location)
+			}
+			utiltest.AssertEquals(t, gotLocs, tt.wantLocs)
 		})
 	}
 }
