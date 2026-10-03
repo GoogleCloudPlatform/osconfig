@@ -14,13 +14,28 @@
 
 package gcp
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 const (
 	// MetadataKeyLinuxStartupScript is the metadata key for Linux startup scripts.
 	MetadataKeyLinuxStartupScript = "startup-script"
 	// MetadataKeyWindowsStartupScript is the metadata key for Windows PowerShell startup scripts.
 	MetadataKeyWindowsStartupScript = "windows-startup-script-ps1"
+	// MetadataKeyRestartAgent is the instance metadata key used to signal the startup script to restart the agent.
+	MetadataKeyRestartAgent = "restart-agent"
+	// GuestAttributeInstallDone is written when VM prerequisites and agent setup are complete.
+	GuestAttributeInstallDone = "osconfig_tests/install_done"
+	// GuestAttributeRecipeInstalled is written when recipe verification succeeds.
+	GuestAttributeRecipeInstalled = "osconfig_tests/pkg_installed"
+	// GuestAttributeRecipeNotInstalled is written when recipe verification has not yet succeeded.
+	GuestAttributeRecipeNotInstalled = "osconfig_tests/pkg_not_installed"
+	// GuestAttributePkgInstalled is written when package verification succeeds.
+	GuestAttributePkgInstalled = "osconfig_tests/pkg_installed"
+	// GuestAttributePkgNotInstalled is written when package is confirmed absent.
+	GuestAttributePkgNotInstalled = "osconfig_tests/pkg_not_installed"
 )
 
 // DebianStartupScript returns the agent bootstrap script for Debian and Ubuntu systems.
@@ -105,3 +120,48 @@ func DefaultStartupScript(image string) (key, content string) {
 		return MetadataKeyLinuxStartupScript, DebianStartupScript()
 	}
 }
+
+// OSPolicyPackageYumStartupScript returns the metadata key and startup script for testing Yum package policy.
+// It installs the package to be removed (nano), removes the package to be installed (ed),
+// bootstraps the agent, signals install_done, and monitors package installation states.
+func OSPolicyPackageYumStartupScript(image string) (key, content string) {
+	baseKey, baseScript := DefaultStartupScript(image)
+	script := fmt.Sprintf(`
+set -x
+systemctl stop google-osconfig-agent || true
+
+# install the package we want removed
+yum -y install nano
+# remove the package we want installed
+yum -y remove ed
+
+%s
+sleep 5
+
+uri_done="http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s"
+curl -X PUT --data "1" "$uri_done" -H "Metadata-Flavor: Google" || true
+
+while true; do
+  # make sure the package we want installed is installed
+  if [[ -n $(/usr/bin/rpmquery -a ed 2>/dev/null) ]]; then
+    uri="http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s"
+    curl -X PUT --data "1" "$uri" -H "Metadata-Flavor: Google" || true
+    break
+  fi
+  sleep 10
+done
+
+while true; do
+  # make sure the package we want removed is removed
+  if [[ -z $(/usr/bin/rpmquery -a nano 2>/dev/null) ]]; then
+    uri="http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s"
+    curl -X PUT --data "1" "$uri" -H "Metadata-Flavor: Google" || true
+    break
+  fi
+  sleep 10
+done
+`, baseScript, GuestAttributeInstallDone, GuestAttributePkgInstalled, GuestAttributePkgNotInstalled)
+
+	return baseKey, script
+}
+
