@@ -1,0 +1,26 @@
+Source: google-osconfig-agent
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Uploaders: Balint Reczey <rbalint@ubuntu.com>
+Section: devel
+Testsuite: autopkgtest-pkg-go
+Priority: optional
+Build-Depends: debhelper-compat (= 12),
+               dh-golang,
+               golang-any
+Standards-Version: 4.5.0
+Vcs-Browser: https://code.launchpad.net/~ubuntu-core-dev/+git/google-osconfig-agent
+Vcs-Git: https://git.launchpad.net/~ubuntu-core-dev/+git/google-osconfig-agent -b ubuntu/master
+Homepage: https://github.com/GoogleCloudPlatform/osconfig
+Rules-Requires-Root: no
+XS-Go-Import-Path: github.com/GoogleCloudPlatform/osconfig
+
+Package: google-osconfig-agent
+Architecture: any
+Depends: ${misc:Depends},
+         ${shlibs:Depends}
+Built-Using: ${misc:Built-Using}
+Description: Google OS Config Agent
+ The OS Config agent currently supports the following main features:
+  * OS inventory management
+  * OS patch management
+  * OS configuration management
