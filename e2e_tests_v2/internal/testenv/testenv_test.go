@@ -307,6 +307,12 @@ func TestExtractInstalledPackages(t *testing.T) {
 	if !pkgs.HasPackages("bash", "kernel", "systemd", "app-shells/bash", "googet-pkg") {
 		t.Error("expected HasPackages to find all installed packages")
 	}
+	if gotVer, ok := pkgs.PackageVersionIn("deb", "bash"); !ok || gotVer != "5.2.15" {
+		t.Errorf("PackageVersionIn(\"deb\", \"bash\") = (%q, %v), want (\"5.2.15\", true)", gotVer, ok)
+	}
+	if _, ok := pkgs.PackageVersionIn("deb", "nonexistent"); ok {
+		t.Error("expected PackageVersionIn(\"deb\", \"nonexistent\") to return false")
+	}
 	if !pkgs.HasQFE() {
 		t.Error("expected HasQFE() to be true")
 	}
