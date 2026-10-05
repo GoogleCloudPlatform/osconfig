@@ -40,6 +40,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/scheduler"
 	"github.com/google/uuid"
 	"google.golang.org/api/osconfig/v1"
+	osconfigv1beta "google.golang.org/api/osconfig/v1beta"
 )
 
 var (
@@ -661,6 +662,56 @@ func (test *Test) WaitForInventory(vm *gcp.VM) (*osconfig.Inventory, error) {
 
 		result = inv
 		return fmt.Sprintf("Hostname=%s ShortName=%s Items=%d", inv.OsInfo.Hostname, inv.OsInfo.ShortName, len(inv.Items)), true, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// CreateGuestPolicy creates an OS Config v1beta GuestPolicy and registers automatic cleanup on test completion.
+func (test *Test) CreateGuestPolicy(policy *osconfigv1beta.GuestPolicy) (*osconfigv1beta.GuestPolicy, error) {
+	test.t.Helper()
+
+	policyID := resourceName(test.Suite.RunID, test.TestName, test.AttemptID)
+	policyName := fmt.Sprintf("projects/%s/guestPolicies/%s", test.Project, policyID)
+
+	test.t.Cleanup(func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), test.Suite.Config.CleanupTimeout)
+		defer cancel()
+		if err := test.Suite.Compute.DeleteGuestPolicy(cleanupCtx, policyName); err != nil {
+			test.t.Errorf("cleanup guest policy %s: %v", policyName, err)
+		}
+	})
+
+	test.t.Logf("Creating GuestPolicy %q in project %q", policyID, test.Project)
+	return test.Suite.Compute.CreateGuestPolicy(test.Context, test.Project, policyID, policy)
+}
+
+// WaitForPackageInstalled polls the OS Config Inventory API until pkgName is reported as installed under the specified package manager.
+func (test *Test) WaitForPackageInstalled(vm *gcp.VM, manager, pkgName string) (*osconfig.Inventory, error) {
+	test.t.Helper()
+
+	test.t.Logf("Waiting for package %q (%s) to be installed and reported in inventory on %q", pkgName, manager, vm.Name)
+
+	var result *osconfig.Inventory
+	err := gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("package %q installed on %s", pkgName, vm.Name), func(ctx context.Context) (string, bool, error) {
+		inv, err := test.Suite.Compute.GetInventory(ctx, vm.Project, vm.Zone, vm.Name, "FULL")
+		if err != nil {
+			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("inventory not yet published (%v)", err), false, nil
+			}
+			return "", false, fmt.Errorf("read inventory: %w", err)
+		}
+
+		pkgs := ExtractInstalledPackages(inv)
+		if pkgs == nil || !pkgs.HasPackageIn(manager, pkgName) {
+			return fmt.Sprintf("package %q not yet in %s inventory (total items: %d)", pkgName, manager, len(inv.Items)), false, nil
+		}
+
+		result = inv
+		return fmt.Sprintf("package %q installed under %s", pkgName, manager), true, nil
 	})
 	if err != nil {
 		return nil, err
