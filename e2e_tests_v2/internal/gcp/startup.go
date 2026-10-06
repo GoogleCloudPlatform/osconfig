@@ -14,13 +14,28 @@
 
 package gcp
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 const (
 	// MetadataKeyLinuxStartupScript is the metadata key for Linux startup scripts.
 	MetadataKeyLinuxStartupScript = "startup-script"
 	// MetadataKeyWindowsStartupScript is the metadata key for Windows PowerShell startup scripts.
 	MetadataKeyWindowsStartupScript = "windows-startup-script-ps1"
+	// MetadataKeyRestartAgent is the instance metadata key used to signal the startup script to restart the agent.
+	MetadataKeyRestartAgent = "restart-agent"
+	// GuestAttributeInstallDone is written when VM prerequisites and agent setup are complete.
+	GuestAttributeInstallDone = "osconfig_tests/install_done"
+	// GuestAttributeRecipeInstalled is written when recipe verification succeeds.
+	GuestAttributeRecipeInstalled = "osconfig_tests/pkg_installed"
+	// GuestAttributeRecipeNotInstalled is written when recipe verification has not yet succeeded.
+	GuestAttributeRecipeNotInstalled = "osconfig_tests/pkg_not_installed"
+	// GuestAttributePkgInstalled is written when package verification succeeds.
+	GuestAttributePkgInstalled = "osconfig_tests/pkg_installed"
+	// GuestAttributePkgNotInstalled is written when package is confirmed absent.
+	GuestAttributePkgNotInstalled = "osconfig_tests/pkg_not_installed"
 )
 
 // DebianStartupScript returns the agent bootstrap script for Debian and Ubuntu systems.
@@ -105,3 +120,50 @@ func DefaultStartupScript(image string) (key, content string) {
 		return MetadataKeyLinuxStartupScript, DebianStartupScript()
 	}
 }
+
+// OSPolicyPackageGooGetStartupScript returns the metadata key and startup script for testing GooGet package policy.
+// It stops the agent, configures the test repository, installs certgen (to be removed),
+// removes google-compute-engine-ssh (to be installed), starts the agent, signals install_done,
+// and monitors package installation states.
+func OSPolicyPackageGooGetStartupScript(image string) (key, content string) {
+	baseKey, baseScript := DefaultStartupScript(image)
+	script := fmt.Sprintf(`
+$svc = Get-Service google_osconfig_agent -ErrorAction SilentlyContinue
+if ($svc -and $svc.Status -eq 'Running') {
+    Stop-Service google_osconfig_agent -Force -ErrorAction SilentlyContinue
+}
+
+googet addrepo test https://packages.cloud.google.com/yuck/repos/osconfig-agent-test-repository
+googet -noconfirm install certgen
+googet -noconfirm remove google-compute-engine-ssh
+
+%s
+Start-Sleep 5
+
+$uri_done = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s'
+Invoke-RestMethod -Method PUT -Uri $uri_done -Headers @{"Metadata-Flavor" = "Google"} -Body 1 -ErrorAction SilentlyContinue
+
+while ($true) {
+  $installed = googet installed
+  if ($installed -like "*google-compute-engine-ssh*") {
+    $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s'
+    Invoke-RestMethod -Method PUT -Uri $uri -Headers @{"Metadata-Flavor" = "Google"} -Body 1 -ErrorAction SilentlyContinue
+    break
+  }
+  Start-Sleep 10
+}
+
+while ($true) {
+  $installed = googet installed
+  if ($installed -notlike "*certgen*") {
+    $uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s'
+    Invoke-RestMethod -Method PUT -Uri $uri -Headers @{"Metadata-Flavor" = "Google"} -Body 1 -ErrorAction SilentlyContinue
+    break
+  }
+  Start-Sleep 10
+}
+`, baseScript, GuestAttributeInstallDone, GuestAttributePkgInstalled, GuestAttributePkgNotInstalled)
+
+	return baseKey, script
+}
+
