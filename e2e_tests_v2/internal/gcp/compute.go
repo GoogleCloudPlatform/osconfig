@@ -181,6 +181,15 @@ func (c *Client) GetInventory(ctx context.Context, project, zone, instance, view
 	return call.Do()
 }
 
+// GetGuestAttributes retrieves guest attributes for a Compute Engine instance.
+func (c *Client) GetGuestAttributes(ctx context.Context, project, zone, instance, queryPath string) (*compute.GuestAttributes, error) {
+	call := c.compute.Instances.GetGuestAttributes(project, zone, instance).Context(ctx)
+	if queryPath != "" {
+		call = call.QueryPath(queryPath)
+	}
+	return call.Do()
+}
+
 // ExecutePatchJob starts a new OS Config PatchJob in the specified project.
 func (c *Client) ExecutePatchJob(ctx context.Context, project string, req *osconfig.ExecutePatchJobRequest) (*osconfig.PatchJob, error) {
 	parent := fmt.Sprintf("projects/%s", project)

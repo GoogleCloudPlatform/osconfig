@@ -39,6 +39,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/junitxml"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/scheduler"
 	"github.com/google/uuid"
+	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/osconfig/v1"
 )
 
@@ -722,6 +723,42 @@ func (test *Test) WaitForPatchJob(jobName string) (*osconfig.PatchJob, error) {
 		return nil, err
 	}
 
+	return result, nil
+}
+
+// GetGuestAttribute retrieves guest attributes for an instance.
+func (test *Test) GetGuestAttribute(vm *gcp.VM, queryPath string) (*compute.GuestAttributes, error) {
+	test.t.Helper()
+	return test.Suite.Compute.GetGuestAttributes(test.Context, vm.Project, vm.Zone, vm.Name, queryPath)
+}
+
+// WaitForGuestAttribute polls Compute Engine until the specified guest attribute query path exists and returns the value.
+func (test *Test) WaitForGuestAttribute(vm *gcp.VM, queryPath string) (*compute.GuestAttributes, error) {
+	test.t.Helper()
+
+	test.t.Logf("Waiting for guest attribute %q on %q", queryPath, vm.Name)
+
+	var result *compute.GuestAttributes
+	err := gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("guest attribute %q on %s", queryPath, vm.Name), func(ctx context.Context) (string, bool, error) {
+		attr, err := test.Suite.Compute.GetGuestAttributes(ctx, vm.Project, vm.Zone, vm.Name, queryPath)
+		if err != nil {
+			if gcp.IsNotFound(err) {
+				return "attribute not found yet", false, nil
+			}
+			if gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("transient error reading guest attributes (%v)", err), false, nil
+			}
+			return "", false, err
+		}
+		if (attr.QueryValue == nil || len(attr.QueryValue.Items) == 0) && attr.VariableValue == "" {
+			return "attribute value empty", false, nil
+		}
+		result = attr
+		return "attribute found", true, nil
+	})
+	if err != nil {
+		return nil, err
+	}
 	return result, nil
 }
 
