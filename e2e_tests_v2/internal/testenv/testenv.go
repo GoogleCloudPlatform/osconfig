@@ -39,6 +39,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/junitxml"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/scheduler"
 	"github.com/google/uuid"
+	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/osconfig/v1"
 )
 
@@ -667,6 +668,102 @@ func (test *Test) WaitForInventory(vm *gcp.VM) (*osconfig.Inventory, error) {
 	}
 
 	return result, nil
+}
+
+// ExecutePatchJob starts an OS Config PatchJob in the test project.
+func (test *Test) ExecutePatchJob(req *osconfig.ExecutePatchJobRequest) (*osconfig.PatchJob, error) {
+	test.t.Helper()
+
+	test.t.Logf("Executing PatchJob in project %q (filter: %+v)", test.Project, req.InstanceFilter)
+	return test.Suite.Compute.ExecutePatchJob(test.Context, test.Project, req)
+}
+
+// WaitForPatchJob polls the OS Config API until the specified PatchJob finishes and verifies that at least one instance succeeded.
+func (test *Test) WaitForPatchJob(jobName string) (*osconfig.PatchJob, error) {
+	test.t.Helper()
+
+	test.t.Logf("Waiting for PatchJob %q to complete", jobName)
+
+	var result *osconfig.PatchJob
+	err := gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("patch job %s", jobName), func(ctx context.Context) (string, bool, error) {
+		job, err := test.Suite.Compute.GetPatchJob(ctx, jobName)
+		if err != nil {
+			if gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("transient error fetching patch job (%v)", err), false, nil
+			}
+			return "", false, err
+		}
+
+		if isPatchJobFailureState(job.State) {
+			details, detailsErr := test.Suite.Compute.ListPatchJobInstanceDetails(ctx, jobName)
+			var detailStrings []string
+			if detailsErr != nil {
+				detailStrings = append(detailStrings, fmt.Sprintf("failed to list instance details: %v", detailsErr))
+			} else {
+				for _, d := range details {
+					detailStrings = append(detailStrings, fmt.Sprintf("%s: state=%s failure=%q", d.Name, d.State, d.FailureReason))
+				}
+			}
+			return "", false, fmt.Errorf("patch job %s failed with state %s (error: %q, instance details: [%s])",
+				jobName, job.State, job.ErrorMessage, strings.Join(detailStrings, "; "))
+		}
+
+		if job.State == "SUCCEEDED" {
+			summary := job.InstanceDetailsSummary
+			if summary == nil || (summary.SucceededInstanceCount < 1 && summary.SucceededRebootRequiredInstanceCount < 1) {
+				return "", false, fmt.Errorf("patch job %s completed with no instances patched (summary: %+v)", jobName, summary)
+			}
+			result = job
+			return fmt.Sprintf("state=%s succeeded=%d rebootRequired=%d", job.State, summary.SucceededInstanceCount, summary.SucceededRebootRequiredInstanceCount), true, nil
+		}
+
+		return fmt.Sprintf("state=%s percentComplete=%.1f%%", job.State, job.PercentComplete), false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// GetGuestAttribute retrieves guest attributes for an instance.
+func (test *Test) GetGuestAttribute(vm *gcp.VM, queryPath string) (*compute.GuestAttributes, error) {
+	test.t.Helper()
+	return test.Suite.Compute.GetGuestAttributes(test.Context, vm.Project, vm.Zone, vm.Name, queryPath)
+}
+
+// WaitForGuestAttribute polls Compute Engine until the specified guest attribute query path exists and returns the value.
+func (test *Test) WaitForGuestAttribute(vm *gcp.VM, queryPath string) (*compute.GuestAttributes, error) {
+	test.t.Helper()
+
+	test.t.Logf("Waiting for guest attribute %q on %q", queryPath, vm.Name)
+
+	var result *compute.GuestAttributes
+	err := gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("guest attribute %q on %s", queryPath, vm.Name), func(ctx context.Context) (string, bool, error) {
+		attr, err := test.Suite.Compute.GetGuestAttributes(ctx, vm.Project, vm.Zone, vm.Name, queryPath)
+		if err != nil {
+			if gcp.IsNotFound(err) {
+				return "attribute not found yet", false, nil
+			}
+			if gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("transient error reading guest attributes (%v)", err), false, nil
+			}
+			return "", false, err
+		}
+		if (attr.QueryValue == nil || len(attr.QueryValue.Items) == 0) && attr.VariableValue == "" {
+			return "attribute value empty", false, nil
+		}
+		result = attr
+		return "attribute found", true, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func isPatchJobFailureState(state string) bool {
+	return state == "COMPLETED_WITH_ERRORS" || state == "TIMED_OUT" || state == "CANCELED"
 }
 
 func resourceName(runID, testName, attempt string) string {
