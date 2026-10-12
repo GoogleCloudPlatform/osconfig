@@ -163,6 +163,9 @@ func formatPkgsToInventoryItems(ctx context.Context, pkgs *packages.Packages) []
 	if pkgs.COS != nil {
 		softwarePackages = append(softwarePackages, cosToInventoryItem(pkgs.COS)...)
 	}
+	if pkgs.Snap != nil {
+		softwarePackages = append(softwarePackages, snapToInventoryItem(pkgs.Snap)...)
+	}
 	if pkgs.GooGet != nil {
 		softwarePackages = append(softwarePackages, googetToInventoryItem(pkgs.GooGet)...)
 	}
@@ -293,6 +296,22 @@ func cosToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInven
 		}
 	}
 	return formattedCos
+}
+
+// snapToInventoryItem converts Snap PkgInfo slice to VmInventory_InventoryItem slice.
+func snapToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInventory_InventoryItem {
+	formattedSnap := make([]*agentendpointpb.VmInventory_InventoryItem, len(packages))
+	for i, pkg := range packages {
+		formattedSnap[i] = &agentendpointpb.VmInventory_InventoryItem{
+			Name:     pkg.Name,
+			Type:     pkg.Type,
+			Version:  pkg.Version,
+			Purl:     pkg.Purl,
+			Location: []string{},
+			Metadata: &structpb.Struct{Fields: map[string]*structpb.Value{}},
+		}
+	}
+	return formattedSnap
 }
 
 func zypperPatchToInventoryItem(packages []*packages.ZypperPatch) []*agentendpointpb.VmInventory_InventoryItem {
