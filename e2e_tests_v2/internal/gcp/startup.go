@@ -14,13 +14,20 @@
 
 package gcp
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 const (
 	// MetadataKeyLinuxStartupScript is the metadata key for Linux startup scripts.
 	MetadataKeyLinuxStartupScript = "startup-script"
 	// MetadataKeyWindowsStartupScript is the metadata key for Windows PowerShell startup scripts.
 	MetadataKeyWindowsStartupScript = "windows-startup-script-ps1"
+	// GuestAttributeFileExists is written when all expected files exist.
+	GuestAttributeFileExists = "osconfig_tests/file_exists"
+	// GuestAttributeFileDNE is written when the file to be removed is confirmed absent.
+	GuestAttributeFileDNE = "osconfig_tests/file_does_not_exist"
 )
 
 // DebianStartupScript returns the agent bootstrap script for Debian and Ubuntu systems.
@@ -105,3 +112,44 @@ func DefaultStartupScript(image string) (key, content string) {
 		return MetadataKeyLinuxStartupScript, DebianStartupScript()
 	}
 }
+
+// OSPolicyFileLinuxStartupScript returns the metadata key and startup script for testing File policy on Linux.
+// It creates the file to be removed (/enforce_absent), stops the agent, bootstraps it,
+// signals install_done, monitors the removal of /enforce_absent, and monitors the creation of present files.
+func OSPolicyFileLinuxStartupScript(image string) (key, content string) {
+	baseKey, baseScript := DefaultStartupScript(image)
+	script := fmt.Sprintf(`
+set -x
+touch /enforce_absent
+systemctl stop google-osconfig-agent || true
+
+%s
+sleep 5
+
+uri_done="http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s"
+curl -X PUT --data "1" "$uri_done" -H "Metadata-Flavor: Google" || true
+
+echo "Checking for /enforce_absent"
+while [[ -f /enforce_absent ]]; do
+  echo "/enforce_absent exists"
+  sleep 5
+done
+echo "/enforce_absent DNE"
+uri_dne="http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s"
+curl -X PUT --data "1" "$uri_dne" -H "Metadata-Flavor: Google" || true
+
+for p in "/from_content" "/from_gcs" "/from_uri" "/from_local"; do
+  while [[ ! -f "$p" ]]; do
+    echo "$p DNE"
+    sleep 5
+  done
+  echo "$p exists"
+done
+
+uri_exists="http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s"
+curl -X PUT --data "1" "$uri_exists" -H "Metadata-Flavor: Google" || true
+`, baseScript, GuestAttributeInstallDone, GuestAttributeFileDNE, GuestAttributeFileExists)
+
+	return baseKey, script
+}
+
