@@ -128,6 +128,9 @@ var languagePackageMappers = map[string]func(*Packages, *extractor.Package){
 	purl.TypeSwift: func(pkgs *Packages, pkg *extractor.Package) {
 		pkgs.Swift = append(pkgs.Swift, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeSwift))
 	},
+	purl.TypeCocoapods: func(pkgs *Packages, pkg *extractor.Package) {
+		pkgs.Swift = append(pkgs.Swift, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeSwift))
+	},
 	purl.TypePub: func(pkgs *Packages, pkg *extractor.Package) {
 		pkgs.Pub = append(pkgs.Pub, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypePub))
 	},

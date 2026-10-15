@@ -163,6 +163,11 @@ func TestExtractedPackageMappings(t *testing.T) {
 					PURLType: "swift",
 				},
 				{
+					Name:     "swift-algorithms",
+					Version:  "1.2.0",
+					PURLType: "cocoapods",
+				},
+				{
 					Name:     "http",
 					Version:  "1.2.0",
 					PURLType: "pub",
@@ -203,6 +208,7 @@ func TestExtractedPackageMappings(t *testing.T) {
 				},
 				Swift: []*PkgInfo{
 					{Name: "Alamofire", Version: "5.8.1", Type: "swift", Purl: "pkg:swift/Alamofire@5.8.1"},
+					{Name: "swift-algorithms", Version: "1.2.0", Type: "swift", Purl: "pkg:cocoapods/swift-algorithms@1.2.0"},
 				},
 				Pub: []*PkgInfo{
 					{Name: "http", Version: "1.2.0", Type: "pub", Purl: "pkg:pub/http@1.2.0"},

@@ -104,16 +104,19 @@ if ! command -v swift &>/dev/null; then
       libsqlite3-0 \
       libstdc++6 \
       libxml2 \
-      zlib1g || true
+      zlib1g \
+      libpython3-dev || true
 
-    curl -L https://swift-server.github.io/swiftly/swiftly-install.sh -o /tmp/swiftly-install.sh
-    chmod +x /tmp/swiftly-install.sh
-    SWIFTLY_HOME_DIR=/usr/local/swiftly /tmp/swiftly-install.sh -y --platform linux || true
-    rm -f /tmp/swiftly-install.sh
+    echo "Downloading official Swift 6.0 release..."
+    curl -fsSL https://download.swift.org/swift-6.0-release/ubuntu2404/swift-6.0-RELEASE/swift-6.0-RELEASE-ubuntu24.04.tar.gz -o /tmp/swift.tar.gz
+    rm -rf /usr/local/swift
+    mkdir -p /usr/local/swift
+    tar -xzf /tmp/swift.tar.gz -C /usr/local/swift --strip-components=1
+    rm -f /tmp/swift.tar.gz
 
-    if [ -f /usr/local/swiftly/bin/swift ]; then
-      ln -sf /usr/local/swiftly/bin/swift /usr/local/bin/swift
-    fi
+    ln -sf /usr/local/swift/usr/bin/swift /usr/local/bin/swift
+    ln -sf /usr/local/swift/usr/bin/swiftc /usr/local/bin/swiftc
+    ln -sf /usr/local/swift/usr/bin/swift-package /usr/local/bin/swift-package
   ) || echo "Warning: failed to install Swift toolchain" >&2
 fi
 
@@ -153,11 +156,13 @@ cat << 'EOF' > /opt/samples/java-maven/pom.xml || true
 </project>
 EOF
 
-# 6. java/gradlelockfile
-mkdir -p /opt/samples/java-gradle/gradle/dependency-locks || true
-cat << 'EOF' > /opt/samples/java-gradle/gradle/dependency-locks/compileClasspath.lockfile || true
+# 6. java/gradlelockfile (must be named gradle.lockfile)
+mkdir -p /opt/samples/java-gradle || true
+cat << 'EOF' > /opt/samples/java-gradle/gradle.lockfile || true
 # Gradle dependency lockfile
-org.slf4j:slf4j-api:2.0.9=compileClasspath
+org.slf4j:slf4j-api:2.0.9=compileClasspath,runtimeClasspath
+org.apache.commons:commons-lang3:3.12.0=compileClasspath,runtimeClasspath
+com.google.guava:guava:32.1.3-jre=compileClasspath,runtimeClasspath
 empty=
 EOF
 
@@ -189,11 +194,16 @@ cat << 'EOF' > /opt/samples/swift/Package.resolved || true
 {
   "pins": [
     {
+      "identity": "swift-algorithms",
+      "location": "https://github.com/apple/swift-algorithms.git",
+      "state": {
+        "version": "1.2.0"
+      }
+    },
+    {
       "identity": "alamofire",
-      "kind": "remoteSourceControl",
       "location": "https://github.com/Alamofire/Alamofire.git",
       "state": {
-        "revision": "f455c297587245a0c55a48e65c8ff03401fa25a4",
         "version": "5.8.1"
       }
     }
@@ -202,7 +212,29 @@ cat << 'EOF' > /opt/samples/swift/Package.resolved || true
 }
 EOF
 
-# 12. dotnet/nugetcpm
+if command -v swift &>/dev/null; then
+  mkdir -p /opt/samples/swift-project/Sources/SampleApp || true
+  cat << 'EOF' > /opt/samples/swift-project/Package.swift || true
+// swift-tools-version: 5.9
+import PackageDescription
+
+let package = Package(
+    name: "SampleApp",
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-algorithms.git", from: "1.2.0"),
+    ],
+    targets: [
+        .executableTarget(name: "SampleApp", dependencies: [
+            .product(name: "Algorithms", package: "swift-algorithms")
+        ]),
+    ]
+)
+EOF
+  echo '@main struct App { static func main() { print("Hello") } }' > /opt/samples/swift-project/Sources/SampleApp/main.swift || true
+  (cd /opt/samples/swift-project && swift package resolve) || true
+fi
+
+# 12. dotnet/nugetcpm (scalibr v0.4.5 parses PackageReference inside MSBuild XML)
 mkdir -p /opt/samples/dotnet || true
 cat << 'EOF' > /opt/samples/dotnet/Directory.Packages.props || true
 <Project>
@@ -210,7 +242,10 @@ cat << 'EOF' > /opt/samples/dotnet/Directory.Packages.props || true
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="8.0.0" />
   </ItemGroup>
 </Project>
 EOF
