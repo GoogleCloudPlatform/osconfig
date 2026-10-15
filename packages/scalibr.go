@@ -188,19 +188,23 @@ func scanFailed(ctx context.Context, scan *scalibr.ScanResult) bool {
 	return false
 }
 
+func failedExtractors(pluginStatuses []*plugin.Status) []string {
+	var failed []string
+	for _, ps := range pluginStatuses {
+		if ps.Status == nil || ps.Status.Status != plugin.ScanStatusSucceeded {
+			failed = append(failed, ps.Name)
+		}
+	}
+	return failed
+}
+
 func handleScanStatus(ctx context.Context, scan *scalibr.ScanResult) error {
 	if scanFailed(ctx, scan) {
 		return errors.New("failed to extract inventory via scalibr")
 	}
 
 	if scan.Status.Status == plugin.ScanStatusPartiallySucceeded {
-		var failedExtractors []string
-		for _, ps := range scan.PluginStatus {
-			if ps.Status == nil || ps.Status.Status != plugin.ScanStatusSucceeded {
-				failedExtractors = append(failedExtractors, ps.Name)
-			}
-		}
-		clog.Warningf(ctx, "scalibr scan partially succeeded, failed extractors: %v", failedExtractors)
+		clog.Warningf(ctx, "scalibr scan partially succeeded, failed extractors: %v", failedExtractors(scan.PluginStatus))
 	}
 
 	return nil
