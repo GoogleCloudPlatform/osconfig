@@ -18,7 +18,6 @@ package e2etests_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -68,7 +67,7 @@ func osPolicyPackageAptTestCases() []ospoliciesTestCase {
 
 // buildAptPackageOSPolicyAssignment constructs the OSPolicyAssignment for testing Apt packages.
 // It enforces that "ed" is INSTALLED and "vim" is REMOVED on the target VM.
-func buildAptPackageOSPolicyAssignment(policyID, vmName string) *osconfig.OSPolicyAssignment {
+func buildAptPackageOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignment {
 	return &osconfig.OSPolicyAssignment{
 		InstanceFilter: &osconfig.OSPolicyAssignmentInstanceFilter{
 			InclusionLabels: []*osconfig.OSPolicyAssignmentLabelSet{
@@ -83,7 +82,7 @@ func buildAptPackageOSPolicyAssignment(policyID, vmName string) *osconfig.OSPoli
 		},
 		OsPolicies: []*osconfig.OSPolicy{
 			{
-				Id:   policyID,
+				Id:   "packageresourceapt",
 				Mode: "ENFORCEMENT",
 				ResourceGroups: []*osconfig.OSPolicyResourceGroup{
 					{
@@ -114,38 +113,6 @@ func buildAptPackageOSPolicyAssignment(policyID, vmName string) *osconfig.OSPoli
 	}
 }
 
-// wantAptPackageCompliances returns the expected compliance structure for Apt package policy test.
-func wantAptPackageCompliances(policyID string) []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance {
-	return []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance{
-		{
-			OsPolicyId:      policyID,
-			ComplianceState: "COMPLIANT",
-			OsPolicyResourceCompliances: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceCompliance{
-				{
-					OsPolicyResourceId: "install-package",
-					ComplianceState:    "COMPLIANT",
-					ConfigSteps: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceComplianceOSPolicyResourceConfigStep{
-						{Type: "VALIDATION"},
-						{Type: "DESIRED_STATE_CHECK"},
-						{Type: "DESIRED_STATE_ENFORCEMENT"},
-						{Type: "DESIRED_STATE_CHECK_POST_ENFORCEMENT"},
-					},
-				},
-				{
-					OsPolicyResourceId: "remove-package",
-					ComplianceState:    "COMPLIANT",
-					ConfigSteps: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceComplianceOSPolicyResourceConfigStep{
-						{Type: "VALIDATION"},
-						{Type: "DESIRED_STATE_CHECK"},
-						{Type: "DESIRED_STATE_ENFORCEMENT"},
-						{Type: "DESIRED_STATE_CHECK_POST_ENFORCEMENT"},
-					},
-				},
-			},
-		},
-	}
-}
-
 // TestOSPolicyPackageResourceApt verifies that the OS Config agent enforces APT package policies:
 // installing a missing package ("ed") and removing an installed package ("vim").
 func TestOSPolicyPackageResourceApt(t *testing.T) {
@@ -161,41 +128,28 @@ func TestOSPolicyPackageResourceApt(t *testing.T) {
 			test.Step("create VM", func(ctx context.Context) error {
 				scriptKey, scriptContent := gcp.OSPolicyPackageAptStartupScript(tt.image)
 				customMetadata := map[string]string{
-					"osconfig-disabled-features": "guestpolicies,osinventory",
-					"osconfig-poll-interval":     "1",
+					"osconfig-disabled-features": "guestpolicies",
 					scriptKey:                    scriptContent,
 				}
 				var err error
 				vm, err = test.CreateVM(tt.image, tt.machineType, customMetadata)
-				if err != nil {
-					return fmt.Errorf("failed to create VM: %w", err)
-				}
-				return nil
-			})
-
-			test.Step("wait for agent install and prerequisites", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributeInstallDone)
-			})
-
-			policyID := "packageresourceapt"
-			test.Step("create os policy assignment", func(ctx context.Context) error {
-				assignment := buildAptPackageOSPolicyAssignment(policyID, vm.Name)
-				_, err := test.CreateOSPolicyAssignment(vm, assignment)
 				return err
+			})
+
+			test.Step("wait for initial package state in inventory", func(ctx context.Context) error {
+				return test.WaitForPackages(vm, []string{"vim"}, []string{"ed"})
+			})
+
+			test.Step("create os policy assignment", func(ctx context.Context) error {
+				return test.CreateOSPolicyAssignment(vm, buildAptPackageOSPolicyAssignment(vm.Name))
 			})
 
 			test.Step("wait for os policy compliance report", func(ctx context.Context) error {
-				want := wantAptPackageCompliances(policyID)
-				_, err := test.WaitForOSPolicyCompliance(vm, want)
-				return err
+				return test.WaitForOSPolicyCompliance(vm)
 			})
 
-			test.Step("verify package installed via guest attribute", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributePkgInstalled)
-			})
-
-			test.Step("verify package removed via guest attribute", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributePkgNotInstalled)
+			test.Step("verify packages via inventory", func(ctx context.Context) error {
+				return test.WaitForPackages(vm, []string{"ed"}, []string{"vim"})
 			})
 		})
 	}

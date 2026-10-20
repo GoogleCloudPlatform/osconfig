@@ -231,91 +231,25 @@ func isHTTPStatus(err error, code int) bool {
 	return errors.As(err, &apiErr) && apiErr.Code == code
 }
 
-// GetGuestAttributes retrieves guest attribute entries for an instance at queryPath.
-func (c *Client) GetGuestAttributes(ctx context.Context, project, zone, instance, queryPath string) ([]*compute.GuestAttributesEntry, error) {
-	resp, err := c.compute.Instances.GetGuestAttributes(project, zone, instance).QueryPath(queryPath).Context(ctx).Do()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get guest attributes %q for instance %s: %w", queryPath, instance, err)
-	}
-	if resp.QueryValue != nil && len(resp.QueryValue.Items) > 0 {
-		return resp.QueryValue.Items, nil
-	}
-	if resp.VariableValue != "" {
-		return []*compute.GuestAttributesEntry{{
-			Key:   resp.VariableKey,
-			Value: resp.VariableValue,
-		}}, nil
-	}
-	return nil, nil
-}
-
-// AddInstanceMetadata updates or adds metadata items on a running Compute Engine instance and waits for completion.
-func (c *Client) AddInstanceMetadata(ctx context.Context, project, zone, name string, updates map[string]string) error {
-	inst, err := c.compute.Instances.Get(project, zone, name).Context(ctx).Do()
-	if err != nil {
-		return fmt.Errorf("failed to get instance %s for metadata update: %w", name, err)
-	}
-
-	metadata := inst.Metadata
-	if metadata == nil {
-		metadata = &compute.Metadata{}
-	}
-
-	var items []*compute.MetadataItems
-	for _, item := range metadata.Items {
-		if item == nil {
-			continue
-		}
-		if _, exists := updates[item.Key]; exists {
-			continue
-		}
-		items = append(items, item)
-	}
-	for k, v := range updates {
-		val := v
-		items = append(items, &compute.MetadataItems{
-			Key:   k,
-			Value: &val,
-		})
-	}
-	metadata.Items = items
-
-	op, err := c.compute.Instances.SetMetadata(project, zone, name, metadata).Context(ctx).Do()
-	if err != nil {
-		return fmt.Errorf("failed to set metadata on instance %s: %w", name, err)
-	}
-
-	if err := c.waitZoneOperation(ctx, project, zone, op.Name); err != nil {
-		return fmt.Errorf("failed to wait for metadata update on instance %s: %w", name, err)
-	}
-
-	return nil
-}
-
 // CreateOSPolicyAssignment creates an OS Config v1 OSPolicyAssignment and waits for the rollout operation to complete.
-func (c *Client) CreateOSPolicyAssignment(ctx context.Context, project, zone, assignmentID string, assignment *osconfig.OSPolicyAssignment) (*osconfig.OSPolicyAssignment, error) {
+func (c *Client) CreateOSPolicyAssignment(ctx context.Context, project, zone, assignmentID string, assignment *osconfig.OSPolicyAssignment) error {
 	parent := fmt.Sprintf("projects/%s/locations/%s", project, zone)
 
 	c.gpMu.Lock()
 	op, err := c.osconfig.Projects.Locations.OsPolicyAssignments.Create(parent, assignment).OsPolicyAssignmentId(assignmentID).Context(ctx).Do()
 	c.gpMu.Unlock()
 	if err != nil {
-		return nil, fmt.Errorf("failed to create os policy assignment %s in %s: %w", assignmentID, parent, err)
+		return fmt.Errorf("failed to create os policy assignment %s in %s: %w", assignmentID, parent, err)
 	}
 
 	if err := c.waitOSPolicyAssignmentOperation(ctx, op.Name); err != nil {
 		cancelCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		_, _ = c.osconfig.Projects.Locations.OsPolicyAssignments.Operations.Cancel(op.Name, &osconfig.CancelOperationRequest{}).Context(cancelCtx).Do()
-		return nil, fmt.Errorf("failed to wait for os policy assignment %s creation: %w", assignmentID, err)
+		return fmt.Errorf("failed to wait for os policy assignment %s creation: %w", assignmentID, err)
 	}
 
-	fullName := fmt.Sprintf("%s/osPolicyAssignments/%s", parent, assignmentID)
-	created, err := c.osconfig.Projects.Locations.OsPolicyAssignments.Get(fullName).Context(ctx).Do()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get created os policy assignment %s: %w", fullName, err)
-	}
-	return created, nil
+	return nil
 }
 
 // DeleteOSPolicyAssignment idempotently deletes an OS Config v1 OSPolicyAssignment and waits for completion.

@@ -38,8 +38,6 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/gcp"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/junitxml"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/scheduler"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"google.golang.org/api/osconfig/v1"
 )
@@ -672,36 +670,8 @@ func (test *Test) WaitForInventory(vm *gcp.VM) (*osconfig.Inventory, error) {
 	return result, nil
 }
 
-// WaitForGuestAttribute polls the instance until the guest attribute at queryPath is present.
-func (test *Test) WaitForGuestAttribute(vm *gcp.VM, queryPath string) error {
-	test.t.Helper()
-
-	test.t.Logf("Waiting for guest attribute %q on %q", queryPath, vm.Name)
-
-	return gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("guest attribute %s on %s", queryPath, vm.Name), func(ctx context.Context) (string, bool, error) {
-		entries, err := test.Suite.Compute.GetGuestAttributes(ctx, vm.Project, vm.Zone, vm.Name, queryPath)
-		if err != nil {
-			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
-				return fmt.Sprintf("guest attribute %q not yet present (%v)", queryPath, err), false, nil
-			}
-			return "", false, fmt.Errorf("read guest attribute %q: %w", queryPath, err)
-		}
-		if len(entries) == 0 {
-			return fmt.Sprintf("guest attribute %q empty", queryPath), false, nil
-		}
-		return fmt.Sprintf("found %d entries (first value=%q)", len(entries), entries[0].Value), true, nil
-	})
-}
-
-// AddMetadata updates or adds metadata items on the given VM.
-func (test *Test) AddMetadata(vm *gcp.VM, metadata map[string]string) error {
-	test.t.Helper()
-	test.t.Logf("Updating metadata on VM %q", vm.Name)
-	return test.Suite.Compute.AddInstanceMetadata(test.Context, vm.Project, vm.Zone, vm.Name, metadata)
-}
-
 // CreateOSPolicyAssignment creates an OS Config v1 OSPolicyAssignment targeting the given VM and registers automatic cleanup.
-func (test *Test) CreateOSPolicyAssignment(vm *gcp.VM, assignment *osconfig.OSPolicyAssignment) (*osconfig.OSPolicyAssignment, error) {
+func (test *Test) CreateOSPolicyAssignment(vm *gcp.VM, assignment *osconfig.OSPolicyAssignment) error {
 	test.t.Helper()
 
 	assignmentID := vm.Name
@@ -715,22 +685,40 @@ func (test *Test) CreateOSPolicyAssignment(vm *gcp.VM, assignment *osconfig.OSPo
 	})
 
 	test.t.Logf("Creating OSPolicyAssignment %q for VM %q", assignmentID, vm.Name)
-	created, err := test.Suite.Compute.CreateOSPolicyAssignment(test.Context, test.Project, test.Zone, assignmentID, assignment)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create os policy assignment: %w", err)
-	}
-	return created, nil
+	return test.Suite.Compute.CreateOSPolicyAssignment(test.Context, test.Project, test.Zone, assignmentID, assignment)
 }
 
-// WaitForOSPolicyCompliance polls the OS policy assignment report until all expected OS policies are COMPLIANT.
-func (test *Test) WaitForOSPolicyCompliance(vm *gcp.VM, wantCompliances []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance) (*osconfig.OSPolicyAssignmentReport, error) {
+// ensureOSPolicyCompliant checks that the report is populated and all OS policies and their resources are COMPLIANT.
+func ensureOSPolicyCompliant(rep *osconfig.OSPolicyAssignmentReport) (string, bool) {
+	if rep == nil || len(rep.OsPolicyCompliances) == 0 {
+		return "compliance report not yet populated", false
+	}
+
+	for _, comp := range rep.OsPolicyCompliances {
+		if comp.ComplianceState != "COMPLIANT" {
+			return fmt.Sprintf("os policy %q in state %s (reason: %s)", comp.OsPolicyId, comp.ComplianceState, comp.ComplianceStateReason), false
+		}
+		if len(comp.OsPolicyResourceCompliances) == 0 {
+			return fmt.Sprintf("os policy %q resource compliances not yet populated", comp.OsPolicyId), false
+		}
+		for _, res := range comp.OsPolicyResourceCompliances {
+			if res.ComplianceState != "COMPLIANT" {
+				return fmt.Sprintf("os policy %q resource %q in state %s", comp.OsPolicyId, res.OsPolicyResourceId, res.ComplianceState), false
+			}
+		}
+	}
+
+	return "all os policies COMPLIANT", true
+}
+
+// WaitForOSPolicyCompliance polls the OS policy assignment report until all OS policies and resources are COMPLIANT.
+func (test *Test) WaitForOSPolicyCompliance(vm *gcp.VM) error {
 	test.t.Helper()
 
 	assignmentID := vm.Name
 	test.t.Logf("Waiting for OSPolicyAssignment %q compliance on %q", assignmentID, vm.Name)
 
-	var result *osconfig.OSPolicyAssignmentReport
-	err := gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("os policy compliance for %s on %s", assignmentID, vm.Name), func(ctx context.Context) (string, bool, error) {
+	return gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("os policy compliance for %s on %s", assignmentID, vm.Name), func(ctx context.Context) (string, bool, error) {
 		rep, err := test.Suite.Compute.GetOSPolicyAssignmentReport(ctx, vm.Project, vm.Zone, vm.Name, assignmentID)
 		if err != nil {
 			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
@@ -739,27 +727,45 @@ func (test *Test) WaitForOSPolicyCompliance(vm *gcp.VM, wantCompliances []*oscon
 			return "", false, fmt.Errorf("failed to read os policy assignment report: %w", err)
 		}
 
-		if rep == nil || len(rep.OsPolicyCompliances) == 0 {
-			return "compliance report not yet populated", false, nil
+		msg, ok := ensureOSPolicyCompliant(rep)
+		return msg, ok, nil
+	})
+}
+
+// WaitForPackages polls the OS Config Inventory API until all wantInstalled packages are present
+// and all wantRemoved packages are absent.
+func (test *Test) WaitForPackages(vm *gcp.VM, wantInstalled, wantRemoved []string) error {
+	test.t.Helper()
+
+	test.t.Logf("Waiting for inventory packages on %q (wantInstalled=%v, wantRemoved=%v)", vm.Name, wantInstalled, wantRemoved)
+
+	return gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("inventory packages on %s", vm.Name), func(ctx context.Context) (string, bool, error) {
+		inv, err := test.Suite.Compute.GetInventory(ctx, vm.Project, vm.Zone, vm.Name, "FULL")
+		if err != nil {
+			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("inventory not yet published (%v)", err), false, nil
+			}
+			return "", false, fmt.Errorf("failed to read inventory: %w", err)
 		}
 
-		for _, comp := range rep.OsPolicyCompliances {
-			if comp.ComplianceState != "COMPLIANT" {
-				return fmt.Sprintf("os policy %q in state %s (reason: %s)", comp.OsPolicyId, comp.ComplianceState, comp.ComplianceStateReason), false, nil
+		pkgs := ExtractInstalledPackages(inv)
+		if pkgs == nil || len(pkgs.AllPackageNames()) == 0 {
+			return "installed packages not yet populated in inventory", false, nil
+		}
+
+		for _, pkg := range wantInstalled {
+			if !pkgs.HasPackage(pkg) {
+				return fmt.Sprintf("package %q not yet installed in inventory", pkg), false, nil
+			}
+		}
+		for _, pkg := range wantRemoved {
+			if pkgs.HasPackage(pkg) {
+				return fmt.Sprintf("package %q still present in inventory", pkg), false, nil
 			}
 		}
 
-		if diff := cmp.Diff(wantCompliances, rep.OsPolicyCompliances, cmpopts.IgnoreFields(osconfig.OSPolicyAssignmentReportOSPolicyCompliance{}, "ComplianceStateReason")); diff != "" {
-			return fmt.Sprintf("compliances mismatch (-want +got):\n%s", diff), false, nil
-		}
-
-		result = rep
-		return "all os policies COMPLIANT", true, nil
+		return fmt.Sprintf("verified packages (installed=%v, removed=%v)", wantInstalled, wantRemoved), true, nil
 	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to wait for os policy compliance: %w", err)
-	}
-	return result, nil
 }
 
 func resourceName(runID, testName, attempt string) string {
