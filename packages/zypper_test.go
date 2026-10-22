@@ -360,7 +360,7 @@ func TestZypperInstalledPatches(t *testing.T) {
 }
 
 func TestParseZypperPatchInfo(t *testing.T) {
-	patchInfo1 := `
+	patchInfoWithMultiplePatchBlobs := `
 Loading repository data...
 Reading installed packages...
 Information for patch SUSE-SLE-SERVER-12-SP4-2019-2974:
@@ -407,7 +407,7 @@ Conflicts   : [3]
     common-package.x86_64 < 1.1.0-9.3.1
 `
 
-	patchInfo2 := `
+	patchInfoWithVariousPackageFormats := `
 Information for patch SUSE-SLE-Module-Basesystem-15-SP5-2023-4176:
 ------------------------------------------------------------------
 Repository  : SLE-Module-Basesystem15-SP5-Updates
@@ -459,7 +459,7 @@ Conflicts   : [4]
 	}{
 		{
 			name:  "multiple patch blobs, want parsed mapping",
-			input: patchInfo1,
+			input: patchInfoWithMultiplePatchBlobs,
 			wantMap: map[string][]string{
 				"irqbalance":       {"SUSE-SLE-SERVER-12-SP4-2019-2974", "SUSE-SLE-SERVER-12-SP4-2019-2974"},
 				"common-package":   {"SUSE-SLE-SERVER-12-SP4-2019-2974", "SUSE-SLE-SERVER-12-SP4-2019-2974", "SUSE-SLE-Module-Public-Cloud-12-2019-2026", "SUSE-SLE-Module-Public-Cloud-12-2019-2026"},
@@ -469,7 +469,7 @@ Conflicts   : [4]
 		},
 		{
 			name:  "various package name and version formats, want parsed mapping",
-			input: patchInfo2,
+			input: patchInfoWithVariousPackageFormats,
 			wantMap: map[string][]string{
 				"libruby2_5-2_5":       {"SUSE-SLE-Module-Basesystem-15-SP5-2023-4176"},
 				"ruby2.5":              {"SUSE-SLE-Module-Basesystem-15-SP5-2023-4176", "SUSE-SLE-Module-Basesystem-15-SP5-2023-4176"},
@@ -567,8 +567,6 @@ func TestZypperPackagesInPatch(t *testing.T) {
 	mockCommandRunner := utilmocks.NewMockCommandRunner(mockCtrl)
 	runner = mockCommandRunner
 
-	wantZypperPackagesInPatchErr := errors.New(`error running /usr/bin/zypper with args ["info" "-t" "patch" "patch1"]: generic error, stdout: "", stderr: "stderr"`)
-
 	tests := []struct {
 		name             string
 		patches          []*ZypperPatch
@@ -603,7 +601,7 @@ func TestZypperPackagesInPatch(t *testing.T) {
 					Err:    errors.New("generic error"),
 				},
 			},
-			wantErr: wantZypperPackagesInPatchErr,
+			wantErr: errors.New(`error running /usr/bin/zypper with args ["info" "-t" "patch" "patch1"]: generic error, stdout: "", stderr: "stderr"`),
 		},
 	}
 
@@ -628,7 +626,7 @@ func TestZypperInstall(t *testing.T) {
 
 	exitErr := exec.Command("false").Run()
 	exitErr102 := exec.Command("bash", "-c", "exit 102").Run()
-	wantZypperInstallErr := errors.New(`error running /usr/bin/zypper with args ["--gpg-auto-import-keys" "--non-interactive" "install" "--auto-agree-with-licenses" "patch:patch1" "package:pkg1"]: generic error, stdout: "stdout", stderr: "stderr"`)
+	zypperInstallErr := errors.New(`error running /usr/bin/zypper with args ["--gpg-auto-import-keys" "--non-interactive" "install" "--auto-agree-with-licenses" "patch:patch1" "package:pkg1"]: generic error, stdout: "stdout", stderr: "stderr"`)
 	patches := []*ZypperPatch{{Name: "patch1"}}
 	pkgs := []*PkgInfo{{Name: "pkg1"}}
 	expectedCmd := exec.Command(zypper, append(zypperInstallArgs, "patch:patch1", "package:pkg1")...)
@@ -680,7 +678,7 @@ func TestZypperInstall(t *testing.T) {
 					Err:    errors.New("generic error"),
 				},
 			},
-			wantErr: wantZypperInstallErr,
+			wantErr: zypperInstallErr,
 		},
 	}
 
