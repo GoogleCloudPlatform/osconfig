@@ -2,6 +2,7 @@ package packages
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/GoogleCloudPlatform/osconfig/clog"
@@ -10,10 +11,12 @@ import (
 	"github.com/google/osv-scalibr/binary/platform"
 	"github.com/google/osv-scalibr/binary/proto/config_go_proto"
 	"github.com/google/osv-scalibr/extractor"
+	scalibrchoco "github.com/google/osv-scalibr/extractor/filesystem/os/chocolatey/metadata"
 	scalibrcos "github.com/google/osv-scalibr/extractor/filesystem/os/cos/metadata"
 	dpkgmetadata "github.com/google/osv-scalibr/extractor/filesystem/os/dpkg/metadata"
 	scalibrrpm "github.com/google/osv-scalibr/extractor/filesystem/os/rpm/metadata"
 	scalibrsnap "github.com/google/osv-scalibr/extractor/filesystem/os/snap/metadata"
+	scalibrwinget "github.com/google/osv-scalibr/extractor/filesystem/os/winget/metadata"
 	scalibrfs "github.com/google/osv-scalibr/fs"
 	"github.com/google/osv-scalibr/plugin"
 	pl "github.com/google/osv-scalibr/plugin/list"
@@ -29,12 +32,13 @@ func pkgInfoFromDpkgExtractorPackage(pkg *extractor.Package, metadata *dpkgmetad
 		source.Version = pkg.Version
 	}
 	return &PkgInfo{
-		Name:    pkg.Name,
-		Version: pkg.Version,
-		Arch:    osinfo.NormalizeArchitecture(metadata.Architecture),
-		Source:  source,
-		Type:    purl.TypeDebian,
-		Purl:    pkg.PURL().String(),
+		Name:     pkg.Name,
+		Version:  pkg.Version,
+		Arch:     osinfo.NormalizeArchitecture(metadata.Architecture),
+		Source:   source,
+		Type:     purl.TypeDebian,
+		Purl:     pkg.PURL().String(),
+		Location: pkg.Locations,
 	}
 }
 
@@ -59,32 +63,24 @@ func pkgInfoFromRpmExtractorPackage(pkg *extractor.Package, metadata *scalibrrpm
 	}
 
 	return &PkgInfo{
-		Name:    pkg.Name,
-		Version: version,
-		Arch:    osinfo.NormalizeArchitecture(architecture),
-		Source:  source,
-		Type:    purl.TypeRPM,
-		Purl:    pkg.PURL().String(),
+		Name:     pkg.Name,
+		Version:  version,
+		Arch:     osinfo.NormalizeArchitecture(architecture),
+		Source:   source,
+		Type:     purl.TypeRPM,
+		Purl:     pkg.PURL().String(),
+		Location: pkg.Locations,
 	}
 }
 
 func pkgInfoFromCosExtractorPackage(pkg *extractor.Package, metadata *scalibrcos.Metadata, osinfo *osinfo.OSInfo) *PkgInfo {
 	return &PkgInfo{
-		Name:    fmt.Sprintf("%s/%s", metadata.Category, pkg.Name),
-		Version: pkg.Version,
-		Arch:    osinfo.Architecture,
-		Type:    purl.TypeCOS,
-		Purl:    pkg.PURL().String(),
-	}
-}
-
-// pkgInfoFromLanguageExtractorPackage converts a language package from SCALIBR into a PkgInfo.
-func pkgInfoFromLanguageExtractorPackage(pkg *extractor.Package, pkgType string) *PkgInfo {
-	return &PkgInfo{
-		Name:    pkg.Name,
-		Version: pkg.Version,
-		Type:    pkgType,
-		Purl:    pkg.PURL().String(),
+		Name:     fmt.Sprintf("%s/%s", metadata.Category, pkg.Name),
+		Version:  pkg.Version,
+		Arch:     osinfo.Architecture,
+		Type:     purl.TypeCOS,
+		Purl:     pkg.PURL().String(),
+		Location: pkg.Locations,
 	}
 }
 
@@ -95,50 +91,62 @@ func pkgInfoFromSnapExtractorPackage(pkg *extractor.Package, metadata *scalibrsn
 		arch = metadata.Architectures[0]
 	}
 	return &PkgInfo{
-		Name:    pkg.Name,
-		Version: pkg.Version,
-		Arch:    osinfo.NormalizeArchitecture(arch),
-		Type:    purl.TypeSnap,
-		Purl:    pkg.PURL().String(),
+		Name:     pkg.Name,
+		Version:  pkg.Version,
+		Arch:     osinfo.NormalizeArchitecture(arch),
+		Type:     purl.TypeSnap,
+		Purl:     pkg.PURL().String(),
+		Location: pkg.Locations,
+	}
+}
+
+func pkgInfoFromGenericExtractorPackage(pkg *extractor.Package, pkgType string, arch string) *PkgInfo {
+	return &PkgInfo{
+		Name:     pkg.Name,
+		Version:  pkg.Version,
+		Arch:     arch,
+		Type:     pkgType,
+		Purl:     pkg.PURL().String(),
+		Location: pkg.Locations,
 	}
 }
 
 var languagePackageMappers = map[string]func(*Packages, *extractor.Package){
 	purl.TypePyPi: func(pkgs *Packages, pkg *extractor.Package) {
-		pkgs.Pip = append(pkgs.Pip, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypePyPi))
+		pkgs.Pip = append(pkgs.Pip, pkgInfoFromGenericExtractorPackage(pkg, purl.TypePyPi, ""))
 	},
 	purl.TypeGem: func(pkgs *Packages, pkg *extractor.Package) {
-		pkgs.Gem = append(pkgs.Gem, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeGem))
+		pkgs.Gem = append(pkgs.Gem, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeGem, ""))
 	},
 	purl.TypeNPM: func(pkgs *Packages, pkg *extractor.Package) {
-		pkgs.Npm = append(pkgs.Npm, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeNPM))
+		pkgs.Npm = append(pkgs.Npm, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeNPM, ""))
 	},
 	purl.TypeMaven: func(pkgs *Packages, pkg *extractor.Package) {
-		pkgs.Maven = append(pkgs.Maven, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeMaven))
+		pkgs.Maven = append(pkgs.Maven, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeMaven, ""))
 	},
 	purl.TypeGolang: func(pkgs *Packages, pkg *extractor.Package) {
-		pkgs.Go = append(pkgs.Go, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeGolang))
+		pkgs.Go = append(pkgs.Go, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeGolang, ""))
 	},
 	purl.TypeCargo: func(pkgs *Packages, pkg *extractor.Package) {
-		pkgs.Cargo = append(pkgs.Cargo, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeCargo))
+		pkgs.Cargo = append(pkgs.Cargo, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeCargo, ""))
 	},
 	purl.TypeComposer: func(pkgs *Packages, pkg *extractor.Package) {
-		pkgs.Composer = append(pkgs.Composer, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeComposer))
+		pkgs.Composer = append(pkgs.Composer, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeComposer, ""))
 	},
 	purl.TypeSwift: func(pkgs *Packages, pkg *extractor.Package) {
-		pkgs.Swift = append(pkgs.Swift, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeSwift))
+		pkgs.Swift = append(pkgs.Swift, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeSwift, ""))
 	},
 	purl.TypeCocoapods: func(pkgs *Packages, pkg *extractor.Package) {
-		pkgs.Swift = append(pkgs.Swift, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeSwift))
+		pkgs.Swift = append(pkgs.Swift, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeSwift, ""))
 	},
 	purl.TypePub: func(pkgs *Packages, pkg *extractor.Package) {
-		pkgs.Pub = append(pkgs.Pub, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypePub))
+		pkgs.Pub = append(pkgs.Pub, pkgInfoFromGenericExtractorPackage(pkg, purl.TypePub, ""))
 	},
 	purl.TypeConda: func(pkgs *Packages, pkg *extractor.Package) {
-		pkgs.Pip = append(pkgs.Pip, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeConda))
+		pkgs.Pip = append(pkgs.Pip, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeConda, ""))
 	},
 	purl.TypeNuget: func(pkgs *Packages, pkg *extractor.Package) {
-		pkgs.Nuget = append(pkgs.Nuget, pkgInfoFromLanguageExtractorPackage(pkg, purl.TypeNuget))
+		pkgs.Nuget = append(pkgs.Nuget, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeNuget, ""))
 	},
 }
 
@@ -156,6 +164,12 @@ func appendOSPackage(pkgs *Packages, pkg *extractor.Package, osinfo *osinfo.OSIn
 		return true
 	case *scalibrsnap.Metadata:
 		pkgs.Snap = append(pkgs.Snap, pkgInfoFromSnapExtractorPackage(pkg, metadata, osinfo.Architecture))
+		return true
+	case *scalibrchoco.Metadata:
+		pkgs.Chocolatey = append(pkgs.Chocolatey, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeChocolatey, osinfo.Architecture))
+		return true
+	case *scalibrwinget.Metadata:
+		pkgs.WinGet = append(pkgs.WinGet, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeWinget, osinfo.Architecture))
 		return true
 	default:
 		return false
@@ -234,6 +248,40 @@ type scalibrInstalledPackagesProvider struct {
 	dirsToSkip     []string
 }
 
+func scanFailed(ctx context.Context, scan *scalibr.ScanResult) bool {
+	if scan == nil {
+		clog.Errorf(ctx, "scalibr scan failed: nil scan result")
+		return true
+	}
+	if scan.Status == nil || scan.Status.Status == plugin.ScanStatusFailed {
+		clog.Errorf(ctx, "scalibr scan failed")
+		return true
+	}
+	return false
+}
+
+func failedExtractors(pluginStatuses []*plugin.Status) []string {
+	var failed []string
+	for _, ps := range pluginStatuses {
+		if ps.Status == nil || ps.Status.Status != plugin.ScanStatusSucceeded {
+			failed = append(failed, ps.Name)
+		}
+	}
+	return failed
+}
+
+func handleScanStatus(ctx context.Context, scan *scalibr.ScanResult) error {
+	if scanFailed(ctx, scan) {
+		return errors.New("failed to extract inventory via scalibr")
+	}
+
+	if scan.Status.Status == plugin.ScanStatusPartiallySucceeded {
+		clog.Warningf(ctx, "scalibr scan partially succeeded, failed extractors: %v", failedExtractors(scan.PluginStatus))
+	}
+
+	return nil
+}
+
 func (p scalibrInstalledPackagesProvider) GetInstalledPackages(ctx context.Context) (Packages, error) {
 	config, err := p.getScanConfig()
 	if err != nil {
@@ -241,8 +289,8 @@ func (p scalibrInstalledPackagesProvider) GetInstalledPackages(ctx context.Conte
 	}
 
 	scan := scalibr.New().Scan(ctx, config)
-	if scan.Status.Status != plugin.ScanStatusSucceeded {
-		return Packages{}, fmt.Errorf("scalibr scan.Status is unhealthy, status: %v, plugins: %v", scan.Status, scan.PluginStatus)
+	if err := handleScanStatus(ctx, scan); err != nil {
+		return Packages{}, err
 	}
 
 	osinfo, err := p.osinfoProvider.GetOSInfo(ctx)
