@@ -239,6 +239,8 @@ func generateVMInventory() *agentendpointpb.VmInventory {
 					"Description": structpb.NewStringValue("Description"),
 					"InstalledOn": structpb.NewStringValue("2020-09-01 00:00:00 +0000 GMT"),
 				}}},
+			{Name: "GemInstalledPkg", Version: "Version", Purl: "pkg:gem/GemInstalledPkg@Version"},
+			{Name: "PipInstalledPkg", Version: "Version", Purl: "pkg:pypi/PipInstalledPkg@Version"},
 		},
 		AvailablePackages: []*agentendpointpb.VmInventory_InventoryItem{
 			{Name: "YumPkgUpdate", Type: "rpm", Version: "Version", Purl: "pkg:rpm/ShortName/YumPkgUpdate@Version?arch=Arch",
@@ -280,6 +282,8 @@ func generateVMInventory() *agentendpointpb.VmInventory {
 					"LastDeploymentChangeTime": structpb.NewStringValue("0001-01-01 00:00:00 +0000 GMT"),
 					"SupportUrl":               structpb.NewStringValue("SupportURL"),
 				}}},
+			{Name: "GemPkgUpdate", Version: "Version", Purl: "pkg:gem/GemPkgUpdate@Version"},
+			{Name: "PipPkgUpdate", Version: "Version", Purl: "pkg:pypi/PipPkgUpdate@Version"},
 		},
 	}
 }

@@ -184,7 +184,31 @@ func formatPkgsToInventoryItems(ctx context.Context, pkgs *packages.Packages) []
 	if pkgs.WindowsApplication != nil {
 		softwarePackages = append(softwarePackages, windowsApplicationToInventoryItem(pkgs.WindowsApplication)...)
 	}
+	softwarePackages = append(softwarePackages, languagePackagesToInventoryItems(pkgs)...)
 	return softwarePackages
+}
+
+// languagePackagesToInventoryItems converts all language packages to inventory items.
+func languagePackagesToInventoryItems(pkgs *packages.Packages) []*agentendpointpb.VmInventory_InventoryItem {
+	var items []*agentendpointpb.VmInventory_InventoryItem
+	langPkgs := [][]*packages.PkgInfo{
+		pkgs.Gem,
+		pkgs.Pip,
+		pkgs.Maven,
+		pkgs.Npm,
+		pkgs.Go,
+		pkgs.Cargo,
+		pkgs.Composer,
+		pkgs.Swift,
+		pkgs.Pub,
+		pkgs.Nuget,
+	}
+	for _, p := range langPkgs {
+		if len(p) > 0 {
+			items = append(items, pkgInfoToInventoryItem(p)...)
+		}
+	}
+	return items
 }
 
 func locationOrDefault(location []string) []string {
@@ -207,7 +231,6 @@ func pkgInfoToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmI
 	}
 	return items
 }
-
 func aptToInventoryItem(packages []*packages.PkgInfo) []*agentendpointpb.VmInventory_InventoryItem {
 	formattedApt := make([]*agentendpointpb.VmInventory_InventoryItem, len(packages))
 	for i, pkg := range packages {
