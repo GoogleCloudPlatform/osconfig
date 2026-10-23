@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/config"
@@ -58,7 +57,6 @@ type Client struct {
 	compute      *compute.Service
 	osconfig     *osconfig.Service
 	pollInterval time.Duration
-	gpMu         sync.Mutex
 }
 
 // NewClient initializes the Compute Engine and OS Config API clients using Application Default Credentials.
@@ -235,9 +233,7 @@ func isHTTPStatus(err error, code int) bool {
 func (c *Client) CreateOSPolicyAssignment(ctx context.Context, project, zone, assignmentID string, assignment *osconfig.OSPolicyAssignment) error {
 	parent := fmt.Sprintf("projects/%s/locations/%s", project, zone)
 
-	c.gpMu.Lock()
 	op, err := c.osconfig.Projects.Locations.OsPolicyAssignments.Create(parent, assignment).OsPolicyAssignmentId(assignmentID).Context(ctx).Do()
-	c.gpMu.Unlock()
 	if err != nil {
 		return fmt.Errorf("failed to create os policy assignment %s in %s: %w", assignmentID, parent, err)
 	}
@@ -254,9 +250,7 @@ func (c *Client) CreateOSPolicyAssignment(ctx context.Context, project, zone, as
 
 // DeleteOSPolicyAssignment idempotently deletes an OS Config v1 OSPolicyAssignment and waits for completion.
 func (c *Client) DeleteOSPolicyAssignment(ctx context.Context, name string) error {
-	c.gpMu.Lock()
 	op, err := c.osconfig.Projects.Locations.OsPolicyAssignments.Delete(name).Context(ctx).Do()
-	c.gpMu.Unlock()
 	if IsNotFound(err) {
 		return nil
 	}

@@ -454,14 +454,15 @@ func Close() error {
 
 // Test manages resources and assertions for an individual test case.
 type Test struct {
-	t         *testing.T
-	Suite     *Suite
-	Context   context.Context
-	AttemptID string
-	TestName  string
-	Project   string
-	Zone      string
-	failures  []string
+	t               *testing.T
+	Suite           *Suite
+	Context         context.Context
+	AttemptID       string
+	TestName        string
+	Project         string
+	Zone            string
+	failures        []string
+	wantCompliances int
 }
 
 // New creates and initializes a Test environment for the calling test.
@@ -674,6 +675,7 @@ func (test *Test) WaitForInventory(vm *gcp.VM) (*osconfig.Inventory, error) {
 func (test *Test) CreateOSPolicyAssignment(vm *gcp.VM, assignment *osconfig.OSPolicyAssignment) error {
 	test.t.Helper()
 
+	test.wantCompliances = len(assignment.OsPolicies)
 	assignmentID := vm.Name
 	fullName := fmt.Sprintf("projects/%s/locations/%s/osPolicyAssignments/%s", test.Project, test.Zone, assignmentID)
 	test.t.Cleanup(func() {
@@ -688,21 +690,27 @@ func (test *Test) CreateOSPolicyAssignment(vm *gcp.VM, assignment *osconfig.OSPo
 	return test.Suite.Compute.CreateOSPolicyAssignment(test.Context, test.Project, test.Zone, assignmentID, assignment)
 }
 
-// ensureOSPolicyCompliant checks that the report is populated and all OS policies and their resources are COMPLIANT.
-func ensureOSPolicyCompliant(rep *osconfig.OSPolicyAssignmentReport) (string, bool) {
-	if rep == nil || len(rep.OsPolicyCompliances) == 0 {
-		return "compliance report not yet populated", false
+const osPolicyStateCompliant = "COMPLIANT"
+
+// isOSPolicyAssignmentReportCompliant checks that the report contains wantCompliances policies and all OS policies and their resources are COMPLIANT.
+func isOSPolicyAssignmentReportCompliant(rep *osconfig.OSPolicyAssignmentReport, wantCompliances int) (string, bool) {
+	if rep == nil || len(rep.OsPolicyCompliances) != wantCompliances {
+		got := 0
+		if rep != nil {
+			got = len(rep.OsPolicyCompliances)
+		}
+		return fmt.Sprintf("waiting for %d os policy compliances, got %d", wantCompliances, got), false
 	}
 
 	for _, comp := range rep.OsPolicyCompliances {
-		if comp.ComplianceState != "COMPLIANT" {
+		if comp.ComplianceState != osPolicyStateCompliant {
 			return fmt.Sprintf("os policy %q in state %s (reason: %s)", comp.OsPolicyId, comp.ComplianceState, comp.ComplianceStateReason), false
 		}
 		if len(comp.OsPolicyResourceCompliances) == 0 {
 			return fmt.Sprintf("os policy %q resource compliances not yet populated", comp.OsPolicyId), false
 		}
 		for _, res := range comp.OsPolicyResourceCompliances {
-			if res.ComplianceState != "COMPLIANT" {
+			if res.ComplianceState != osPolicyStateCompliant {
 				return fmt.Sprintf("os policy %q resource %q in state %s", comp.OsPolicyId, res.OsPolicyResourceId, res.ComplianceState), false
 			}
 		}
@@ -716,7 +724,8 @@ func (test *Test) WaitForOSPolicyCompliance(vm *gcp.VM) error {
 	test.t.Helper()
 
 	assignmentID := vm.Name
-	test.t.Logf("Waiting for OSPolicyAssignment %q compliance on %q", assignmentID, vm.Name)
+	wantCompliances := max(1, test.wantCompliances)
+	test.t.Logf("Waiting for OSPolicyAssignment %q compliance on %q (wantCompliances=%d)", assignmentID, vm.Name, wantCompliances)
 
 	return gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("os policy compliance for %s on %s", assignmentID, vm.Name), func(ctx context.Context) (string, bool, error) {
 		rep, err := test.Suite.Compute.GetOSPolicyAssignmentReport(ctx, vm.Project, vm.Zone, vm.Name, assignmentID)
@@ -727,7 +736,7 @@ func (test *Test) WaitForOSPolicyCompliance(vm *gcp.VM) error {
 			return "", false, fmt.Errorf("failed to read os policy assignment report: %w", err)
 		}
 
-		msg, ok := ensureOSPolicyCompliant(rep)
+		msg, ok := isOSPolicyAssignmentReportCompliant(rep, wantCompliances)
 		return msg, ok, nil
 	})
 }
