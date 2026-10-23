@@ -186,7 +186,7 @@ func (c *Client) ExecutePatchJob(ctx context.Context, project string, req *oscon
 	parent := fmt.Sprintf("projects/%s", project)
 	job, err := c.osconfig.Projects.PatchJobs.Execute(parent, req).Context(ctx).Do()
 	if err != nil {
-		return nil, fmt.Errorf("execute patch job in %s: %w", project, err)
+		return nil, fmt.Errorf("failed to execute patch job in %s: %w", project, err)
 	}
 	return job, nil
 }
@@ -195,7 +195,7 @@ func (c *Client) ExecutePatchJob(ctx context.Context, project string, req *oscon
 func (c *Client) GetPatchJob(ctx context.Context, name string) (*osconfig.PatchJob, error) {
 	job, err := c.osconfig.Projects.PatchJobs.Get(name).Context(ctx).Do()
 	if err != nil {
-		return nil, fmt.Errorf("get patch job %s: %w", name, err)
+		return nil, fmt.Errorf("failed to get patch job %s: %w", name, err)
 	}
 	return job, nil
 }
@@ -208,7 +208,7 @@ func (c *Client) ListPatchJobInstanceDetails(ctx context.Context, parent string)
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("list patch job instance details for %s: %w", parent, err)
+		return nil, fmt.Errorf("failed to list patch job instance details for %s: %w", parent, err)
 	}
 	return details, nil
 }

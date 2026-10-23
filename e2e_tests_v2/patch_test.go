@@ -159,7 +159,6 @@ func TestOSPatchJobExecution(t *testing.T) {
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
 				meta := map[string]string{
-					// Enable both tasks (required for PatchJob execution) and osinventory (required for WaitForInventory readiness check).
 					"osconfig-disabled-features": "guestpolicies",
 				}
 				for k, v := range tc.extraMeta {
