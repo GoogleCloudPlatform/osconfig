@@ -42,6 +42,14 @@ import (
 	"google.golang.org/api/osconfig/v1"
 )
 
+// Patch job completion states.
+const (
+	PatchJobStateSucceeded           = "SUCCEEDED"
+	PatchJobStateCompletedWithErrors = "COMPLETED_WITH_ERRORS"
+	PatchJobStateTimedOut            = "TIMED_OUT"
+	PatchJobStateCanceled            = "CANCELED"
+)
+
 var (
 	unsafeResourceName = regexp.MustCompile(`[^a-z0-9-]+`)
 
@@ -707,7 +715,7 @@ func (test *Test) WaitForPatchJob(jobName string) (*osconfig.PatchJob, error) {
 				jobName, job.State, job.ErrorMessage, strings.Join(detailStrings, "; "))
 		}
 
-		if job.State == "SUCCEEDED" {
+		if job.State == PatchJobStateSucceeded {
 			summary := job.InstanceDetailsSummary
 			if summary == nil || (summary.SucceededInstanceCount < 1 && summary.SucceededRebootRequiredInstanceCount < 1) {
 				return "", false, fmt.Errorf("patch job %s completed with no instances patched (summary: %+v)", jobName, summary)
@@ -726,7 +734,7 @@ func (test *Test) WaitForPatchJob(jobName string) (*osconfig.PatchJob, error) {
 }
 
 func isPatchJobFailureState(state string) bool {
-	return state == "COMPLETED_WITH_ERRORS" || state == "TIMED_OUT" || state == "CANCELED"
+	return state == PatchJobStateCompletedWithErrors || state == PatchJobStateTimedOut || state == PatchJobStateCanceled
 }
 
 func resourceName(runID, testName, attempt string) string {
