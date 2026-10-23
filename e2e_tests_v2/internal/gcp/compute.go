@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/config"
@@ -28,6 +29,7 @@ import (
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 	"google.golang.org/api/osconfig/v1"
+	osconfigv1beta "google.golang.org/api/osconfig/v1beta"
 )
 
 // VM represents an active or planned Compute Engine instance.
@@ -56,7 +58,9 @@ type VMRequest struct {
 type Client struct {
 	compute      *compute.Service
 	osconfig     *osconfig.Service
+	osconfigBeta *osconfigv1beta.Service
 	pollInterval time.Duration
+	gpMu         sync.Mutex
 }
 
 // NewClient initializes the Compute Engine and OS Config API clients using Application Default Credentials.
@@ -70,10 +74,15 @@ func NewClient(ctx context.Context, cfg config.Config) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create osconfig service: %w", err)
 	}
+	osconfigBetaService, err := osconfigv1beta.NewService(ctx, opts...)
+	if err != nil {
+		return nil, fmt.Errorf("create osconfig v1beta service: %w", err)
+	}
 
 	return &Client{
 		compute:      computeService,
 		osconfig:     osconfigService,
+		osconfigBeta: osconfigBetaService,
 		pollInterval: cfg.PollInterval,
 	}, nil
 }
@@ -179,6 +188,94 @@ func (c *Client) GetInventory(ctx context.Context, project, zone, instance, view
 		call = call.View(view)
 	}
 	return call.Do()
+}
+
+// CreateGuestPolicy creates an OS Config v1beta GuestPolicy.
+// Requests are serialized with gpMu because concurrent GuestPolicy creations by parallel subtests can hit API QPS limits
+// (carried over from e2e_tests/test_suites/guestpolicies/guest_policies.go).
+func (c *Client) CreateGuestPolicy(ctx context.Context, project, policyID string, policy *osconfigv1beta.GuestPolicy) (*osconfigv1beta.GuestPolicy, error) {
+	c.gpMu.Lock()
+	defer c.gpMu.Unlock()
+
+	parent := fmt.Sprintf("projects/%s", project)
+	created, err := c.osconfigBeta.Projects.GuestPolicies.Create(parent, policy).GuestPolicyId(policyID).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("create guest policy %s in %s: %w", policyID, parent, err)
+	}
+	return created, nil
+}
+
+// DeleteGuestPolicy idempotently deletes an OS Config v1beta GuestPolicy by its full resource name.
+func (c *Client) DeleteGuestPolicy(ctx context.Context, name string) error {
+	_, err := c.osconfigBeta.Projects.GuestPolicies.Delete(name).Context(ctx).Do()
+	if IsNotFound(err) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("failed to delete guest policy %s: %w", name, err)
+	}
+	return nil
+}
+
+// GetGuestAttributes retrieves guest attribute entries for an instance at queryPath.
+func (c *Client) GetGuestAttributes(ctx context.Context, project, zone, instance, queryPath string) ([]*compute.GuestAttributesEntry, error) {
+	resp, err := c.compute.Instances.GetGuestAttributes(project, zone, instance).QueryPath(queryPath).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get guest attributes %q for instance %s: %w", queryPath, instance, err)
+	}
+	if resp.QueryValue != nil && len(resp.QueryValue.Items) > 0 {
+		return resp.QueryValue.Items, nil
+	}
+	if resp.VariableValue != "" {
+		return []*compute.GuestAttributesEntry{{
+			Key:   resp.VariableKey,
+			Value: resp.VariableValue,
+		}}, nil
+	}
+	return nil, nil
+}
+
+// AddInstanceMetadata updates or adds metadata items on a running Compute Engine instance and waits for completion.
+func (c *Client) AddInstanceMetadata(ctx context.Context, project, zone, name string, updates map[string]string) error {
+	inst, err := c.compute.Instances.Get(project, zone, name).Context(ctx).Do()
+	if err != nil {
+		return fmt.Errorf("get instance %s for metadata update: %w", name, err)
+	}
+
+	metadata := inst.Metadata
+	if metadata == nil {
+		metadata = &compute.Metadata{}
+	}
+
+	var items []*compute.MetadataItems
+	for _, item := range metadata.Items {
+		if item == nil {
+			continue
+		}
+		if _, exists := updates[item.Key]; exists {
+			continue
+		}
+		items = append(items, item)
+	}
+	for k, v := range updates {
+		val := v
+		items = append(items, &compute.MetadataItems{
+			Key:   k,
+			Value: &val,
+		})
+	}
+	metadata.Items = items
+
+	op, err := c.compute.Instances.SetMetadata(project, zone, name, metadata).Context(ctx).Do()
+	if err != nil {
+		return fmt.Errorf("set metadata on instance %s: %w", name, err)
+	}
+
+	if err := c.waitZoneOperation(ctx, project, zone, op.Name); err != nil {
+		return fmt.Errorf("wait for metadata update on instance %s: %w", name, err)
+	}
+
+	return nil
 }
 
 func (c *Client) waitZoneOperation(ctx context.Context, project, zone, name string) error {
