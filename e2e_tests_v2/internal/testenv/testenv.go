@@ -454,15 +454,14 @@ func Close() error {
 
 // Test manages resources and assertions for an individual test case.
 type Test struct {
-	t               *testing.T
-	Suite           *Suite
-	Context         context.Context
-	AttemptID       string
-	TestName        string
-	Project         string
-	Zone            string
-	failures        []string
-	wantCompliances int
+	t         *testing.T
+	Suite     *Suite
+	Context   context.Context
+	AttemptID string
+	TestName  string
+	Project   string
+	Zone      string
+	failures  []string
 }
 
 // New creates and initializes a Test environment for the calling test.
@@ -675,7 +674,6 @@ func (test *Test) WaitForInventory(vm *gcp.VM) (*osconfig.Inventory, error) {
 func (test *Test) CreateOSPolicyAssignment(vm *gcp.VM, assignment *osconfig.OSPolicyAssignment) error {
 	test.t.Helper()
 
-	test.wantCompliances = len(assignment.OsPolicies)
 	assignmentID := vm.Name
 	fullName := fmt.Sprintf("projects/%s/locations/%s/osPolicyAssignments/%s", test.Project, test.Zone, assignmentID)
 	test.t.Cleanup(func() {
@@ -720,11 +718,10 @@ func isOSPolicyAssignmentReportCompliant(rep *osconfig.OSPolicyAssignmentReport,
 }
 
 // WaitForOSPolicyCompliance polls the OS policy assignment report until all OS policies and resources are COMPLIANT.
-func (test *Test) WaitForOSPolicyCompliance(vm *gcp.VM) error {
+func (test *Test) WaitForOSPolicyCompliance(vm *gcp.VM, wantCompliances int) error {
 	test.t.Helper()
 
 	assignmentID := vm.Name
-	wantCompliances := max(1, test.wantCompliances)
 	test.t.Logf("Waiting for OSPolicyAssignment %q compliance on %q (wantCompliances=%d)", assignmentID, vm.Name, wantCompliances)
 
 	return gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("os policy compliance for %s on %s", assignmentID, vm.Name), func(ctx context.Context) (string, bool, error) {

@@ -124,6 +124,7 @@ func buildAptRepositoryOSPolicyAssignment(vmName, distro string) *osconfig.OSPol
 // TestOSPolicyRepositoryResourceApt verifies that the OS Config agent configures an APT repository
 // and installs a package ("gcsfuse") from it.
 func TestOSPolicyRepositoryResourceApt(t *testing.T) {
+	const wantCompliances = 1
 	tests := osPolicyRepositoryAptTestCases()
 
 	for _, tt := range tests {
@@ -147,7 +148,7 @@ func TestOSPolicyRepositoryResourceApt(t *testing.T) {
 			})
 
 			test.Step("wait for os policy compliance report", func(ctx context.Context) error {
-				return test.WaitForOSPolicyCompliance(vm)
+				return test.WaitForOSPolicyCompliance(vm, wantCompliances)
 			})
 
 			test.Step("verify package installed via inventory", func(ctx context.Context) error {
