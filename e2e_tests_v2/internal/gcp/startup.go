@@ -14,7 +14,10 @@
 
 package gcp
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 const (
 	// MetadataKeyLinuxStartupScript is the metadata key for Linux startup scripts.
@@ -104,4 +107,25 @@ func DefaultStartupScript(image string) (key, content string) {
 	default:
 		return MetadataKeyLinuxStartupScript, DebianStartupScript()
 	}
+}
+
+// OSPolicyPackageAptStartupScript returns the metadata key and startup script for testing Apt package policy.
+// It installs the package to be removed (vim), removes the package to be installed (ed),
+// and bootstraps the agent.
+func OSPolicyPackageAptStartupScript(image string) (key, content string) {
+	baseKey, baseScript := DefaultStartupScript(image)
+	script := fmt.Sprintf(`#!/bin/bash
+set -x
+systemctl stop google-osconfig-agent || true
+
+# install the package we want removed
+apt-get update
+apt-get -y install vim
+# remove the package we want installed
+apt-get -y remove ed
+
+%s
+`, baseScript)
+
+	return baseKey, script
 }
