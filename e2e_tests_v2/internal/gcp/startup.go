@@ -29,8 +29,6 @@ func DebianStartupScript() string {
 if [ -f /var/lib/google/osconfig_e2e_bootstrapped ]; then
   exit 0
 fi
-mkdir -p /var/lib/google
-touch /var/lib/google/osconfig_e2e_bootstrapped
 
 which google_osconfig_agent >/dev/null 2>&1 || which google-osconfig-agent >/dev/null 2>&1 || {
   apt-get update
@@ -40,6 +38,9 @@ systemctl daemon-reload
 if ! systemctl is-active --quiet google-osconfig-agent; then
   systemctl enable --now google-osconfig-agent || true
 fi
+
+mkdir -p /var/lib/google
+touch /var/lib/google/osconfig_e2e_bootstrapped
 `
 }
 
@@ -49,8 +50,6 @@ func RHELStartupScript() string {
 if [ -f /var/lib/google/osconfig_e2e_bootstrapped ]; then
   exit 0
 fi
-mkdir -p /var/lib/google
-touch /var/lib/google/osconfig_e2e_bootstrapped
 
 which google_osconfig_agent >/dev/null 2>&1 || which google-osconfig-agent >/dev/null 2>&1 || {
   sed -i 's/repo_gpgcheck=1/repo_gpgcheck=0/g' /etc/yum.repos.d/google-cloud.repo 2>/dev/null || true
@@ -60,6 +59,9 @@ systemctl daemon-reload
 if ! systemctl is-active --quiet google-osconfig-agent; then
   systemctl enable --now google-osconfig-agent || true
 fi
+
+mkdir -p /var/lib/google
+touch /var/lib/google/osconfig_e2e_bootstrapped
 `
 }
 
@@ -69,8 +71,6 @@ func SUSEStartupScript() string {
 if [ -f /var/lib/google/osconfig_e2e_bootstrapped ]; then
   exit 0
 fi
-mkdir -p /var/lib/google
-touch /var/lib/google/osconfig_e2e_bootstrapped
 
 which google_osconfig_agent >/dev/null 2>&1 || which google-osconfig-agent >/dev/null 2>&1 || {
   zypper --no-refresh -n -i --no-gpg-checks install google-osconfig-agent || zypper -n -i --no-gpg-checks install google-osconfig-agent
@@ -79,6 +79,9 @@ systemctl daemon-reload
 if ! systemctl is-active --quiet google-osconfig-agent; then
   systemctl enable --now google-osconfig-agent || true
 fi
+
+mkdir -p /var/lib/google
+touch /var/lib/google/osconfig_e2e_bootstrapped
 `
 }
 
@@ -88,12 +91,13 @@ func COSStartupScript() string {
 if [ -f /var/lib/google/osconfig_e2e_bootstrapped ]; then
   exit 0
 fi
-mkdir -p /var/lib/google
-touch /var/lib/google/osconfig_e2e_bootstrapped
 
 if ! systemctl is-active --quiet google-osconfig-agent; then
   systemctl start google-osconfig-agent || true
 fi
+
+mkdir -p /var/lib/google
+touch /var/lib/google/osconfig_e2e_bootstrapped
 `
 }
 
@@ -103,13 +107,14 @@ func WindowsStartupScript() string {
 if (Test-Path $marker) {
     exit 0
 }
-New-Item -ItemType Directory -Force -Path 'C:\ProgramData\Google' | Out-Null
-New-Item -ItemType File -Force -Path $marker | Out-Null
 
 $svc = Get-Service google_osconfig_agent -ErrorAction SilentlyContinue
 if ($svc -and $svc.Status -ne 'Running') {
     Start-Service google_osconfig_agent -ErrorAction SilentlyContinue
 }
+
+New-Item -ItemType Directory -Force -Path 'C:\ProgramData\Google' | Out-Null
+New-Item -ItemType File -Force -Path $marker | Out-Null
 `
 }
 
