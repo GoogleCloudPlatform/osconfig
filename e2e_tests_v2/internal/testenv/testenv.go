@@ -807,17 +807,9 @@ func (test *Test) WaitForPatchJob(jobName string) (*osconfig.PatchJob, error) {
 		}
 
 		if isPatchJobFailureState(job.State) {
-			details, detailsErr := test.Suite.Compute.ListPatchJobInstanceDetails(ctx, jobName)
-			var detailStrings []string
-			if detailsErr != nil {
-				detailStrings = append(detailStrings, fmt.Sprintf("failed to list instance details: %v", detailsErr))
-			} else {
-				for _, d := range details {
-					detailStrings = append(detailStrings, fmt.Sprintf("%s: state=%s failure=%q", d.Name, d.State, d.FailureReason))
-				}
-			}
+			details := test.extractPatchJobFailureDetails(ctx, jobName)
 			return "", false, fmt.Errorf("patch job %s failed with state %s (error: %q, instance details: [%s])",
-				jobName, job.State, job.ErrorMessage, strings.Join(detailStrings, "; "))
+				jobName, job.State, job.ErrorMessage, strings.Join(details, "; "))
 		}
 
 		if job.State == PatchJobStateSucceeded {
@@ -836,6 +828,18 @@ func (test *Test) WaitForPatchJob(jobName string) (*osconfig.PatchJob, error) {
 	}
 
 	return result, nil
+}
+
+func (test *Test) extractPatchJobFailureDetails(ctx context.Context, jobName string) []string {
+	details, err := test.Suite.Compute.ListPatchJobInstanceDetails(ctx, jobName)
+	if err != nil {
+		return []string{fmt.Sprintf("failed to list instance details: %v", err)}
+	}
+	var detailStrings []string
+	for _, d := range details {
+		detailStrings = append(detailStrings, fmt.Sprintf("%s: state=%s failure=%q", d.Name, d.State, d.FailureReason))
+	}
+	return detailStrings
 }
 
 func isPatchJobFailureState(state string) bool {
