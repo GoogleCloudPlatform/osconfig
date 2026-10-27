@@ -209,9 +209,6 @@ func (c *Client) CreateGuestPolicy(ctx context.Context, project, policyID string
 // DeleteGuestPolicy deletes an OS Config v1beta GuestPolicy by its full resource name.
 func (c *Client) DeleteGuestPolicy(ctx context.Context, name string) error {
 	_, err := c.osconfigBeta.Projects.GuestPolicies.Delete(name).Context(ctx).Do()
-	if IsNotFound(err) {
-		return nil
-	}
 	if err != nil {
 		return fmt.Errorf("failed to delete guest policy %s: %w", name, err)
 	}
