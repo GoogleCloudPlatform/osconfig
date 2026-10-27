@@ -60,6 +60,8 @@ type Client struct {
 	osconfig      *osconfig.Service
 	osconfigBeta  *osconfigv1beta.Service
 	pollInterval  time.Duration
+	// guestPolicyMu serializes OS Config v1beta GuestPolicy creations across concurrent tests
+	// to avoid exceeding the project-level API mutation rate limits (QPS) and backend transaction conflicts.
 	guestPolicyMu sync.Mutex
 }
 
@@ -68,15 +70,15 @@ func NewClient(ctx context.Context, cfg config.Config) (*Client, error) {
 	var opts []option.ClientOption
 	computeService, err := compute.NewService(ctx, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("create compute service: %w", err)
+		return nil, fmt.Errorf("failed to create compute service: %w", err)
 	}
 	osconfigService, err := osconfig.NewService(ctx, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("create osconfig service: %w", err)
+		return nil, fmt.Errorf("failed to create osconfig service: %w", err)
 	}
 	osconfigBetaService, err := osconfigv1beta.NewService(ctx, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("create osconfig v1beta service: %w", err)
+		return nil, fmt.Errorf("failed to create osconfig v1beta service: %w", err)
 	}
 
 	return &Client{
@@ -191,6 +193,7 @@ func (c *Client) GetInventory(ctx context.Context, project, zone, instance, view
 }
 
 // CreateGuestPolicy creates an OS Config v1beta GuestPolicy in the specified project.
+// It acquires guestPolicyMu to serialize creation across parallel tests and avoid project-level QPS rate limits.
 func (c *Client) CreateGuestPolicy(ctx context.Context, project, policyID string, policy *osconfigv1beta.GuestPolicy) (*osconfigv1beta.GuestPolicy, error) {
 	c.guestPolicyMu.Lock()
 	defer c.guestPolicyMu.Unlock()
@@ -198,7 +201,7 @@ func (c *Client) CreateGuestPolicy(ctx context.Context, project, policyID string
 	parent := fmt.Sprintf("projects/%s", project)
 	created, err := c.osconfigBeta.Projects.GuestPolicies.Create(parent, policy).GuestPolicyId(policyID).Context(ctx).Do()
 	if err != nil {
-		return nil, fmt.Errorf("create guest policy %s/%s: %w", project, policyID, err)
+		return nil, fmt.Errorf("failed to create guest policy %s in %s: %w", policyID, parent, err)
 	}
 	return created, nil
 }
@@ -210,7 +213,7 @@ func (c *Client) DeleteGuestPolicy(ctx context.Context, name string) error {
 		return nil
 	}
 	if err != nil {
-		return fmt.Errorf("delete guest policy %s: %w", name, err)
+		return fmt.Errorf("failed to delete guest policy %s: %w", name, err)
 	}
 	return nil
 }

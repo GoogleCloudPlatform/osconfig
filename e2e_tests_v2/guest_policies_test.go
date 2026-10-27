@@ -18,6 +18,7 @@ package e2etests_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -246,10 +247,15 @@ func TestGuestPoliciesPackageRepositories(t *testing.T) {
 				return err
 			})
 
+			test.Step("wait for OS Config agent ready", func(ctx context.Context) error {
+				_, err := test.WaitForInventory(vm)
+				return err
+			})
+
 			test.Step("create guest policy with package repository", func(ctx context.Context) error {
 				policy := &osconfigv1beta.GuestPolicy{
 					Assignment: &osconfigv1beta.Assignment{
-						InstanceNamePrefixes: []string{vm.Name},
+						Instances: []string{fmt.Sprintf("zones/%s/instances/%s", vm.Zone, vm.Name)},
 					},
 					Packages: []*osconfigv1beta.Package{
 						{
@@ -261,13 +267,11 @@ func TestGuestPoliciesPackageRepositories(t *testing.T) {
 						tc.repository,
 					},
 				}
-				_, err := test.CreateGuestPolicy(policy)
-				return err
+				return test.CreateGuestPolicy(vm, policy)
 			})
 
 			test.Step("verify package installed from new repository", func(ctx context.Context) error {
-				_, err := test.WaitForPackageInstalled(vm, tc.wantPackageManager, tc.packageName)
-				return err
+				return test.WaitForPackageInManager(vm, tc.wantPackageManager, tc.packageName)
 			})
 		})
 	}
