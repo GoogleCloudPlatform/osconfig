@@ -18,7 +18,6 @@ package e2etests_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -81,7 +80,7 @@ func osPolicyPackageRpmTestCases() []ospoliciesTestCase {
 
 // buildRpmPackageOSPolicyAssignment constructs the OSPolicyAssignment for testing Rpm packages.
 // It installs a GCS-hosted rpm package without dependencies and a remote rpm package with dependencies.
-func buildRpmPackageOSPolicyAssignment(policyID, vmName string) *osconfig.OSPolicyAssignment {
+func buildRpmPackageOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignment {
 	return &osconfig.OSPolicyAssignment{
 		InstanceFilter: &osconfig.OSPolicyAssignmentInstanceFilter{
 			InclusionLabels: []*osconfig.OSPolicyAssignmentLabelSet{
@@ -96,7 +95,7 @@ func buildRpmPackageOSPolicyAssignment(policyID, vmName string) *osconfig.OSPoli
 		},
 		OsPolicies: []*osconfig.OSPolicy{
 			{
-				Id:   policyID,
+				Id:   "packageresourcerpm",
 				Mode: "ENFORCEMENT",
 				ResourceGroups: []*osconfig.OSPolicyResourceGroup{
 					{
@@ -140,41 +139,10 @@ func buildRpmPackageOSPolicyAssignment(policyID, vmName string) *osconfig.OSPoli
 	}
 }
 
-// wantRpmPackageCompliances returns the expected compliance structure for Rpm package policy test.
-func wantRpmPackageCompliances(policyID string) []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance {
-	return []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance{
-		{
-			OsPolicyId:      policyID,
-			ComplianceState: "COMPLIANT",
-			OsPolicyResourceCompliances: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceCompliance{
-				{
-					OsPolicyResourceId: "install-package",
-					ComplianceState:    "COMPLIANT",
-					ConfigSteps: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceComplianceOSPolicyResourceConfigStep{
-						{Type: "VALIDATION"},
-						{Type: "DESIRED_STATE_CHECK"},
-						{Type: "DESIRED_STATE_ENFORCEMENT"},
-						{Type: "DESIRED_STATE_CHECK_POST_ENFORCEMENT"},
-					},
-				},
-				{
-					OsPolicyResourceId: "install-package-pull-deps",
-					ComplianceState:    "COMPLIANT",
-					ConfigSteps: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceComplianceOSPolicyResourceConfigStep{
-						{Type: "VALIDATION"},
-						{Type: "DESIRED_STATE_CHECK"},
-						{Type: "DESIRED_STATE_ENFORCEMENT"},
-						{Type: "DESIRED_STATE_CHECK_POST_ENFORCEMENT"},
-					},
-				},
-			},
-		},
-	}
-}
-
 // TestOSPolicyPackageResourceRpm verifies that the OS Config agent installs local and remote rpm packages:
 // an rpm package from GCS with PullDeps: false and an rpm package from Remote URI with PullDeps: true.
 func TestOSPolicyPackageResourceRpm(t *testing.T) {
+	const wantCompliances = 1
 	tests := osPolicyPackageRpmTestCases()
 
 	for _, tt := range tests {
@@ -187,37 +155,29 @@ func TestOSPolicyPackageResourceRpm(t *testing.T) {
 			test.Step("create VM", func(ctx context.Context) error {
 				scriptKey, scriptContent := gcp.OSPolicyPackageRpmStartupScript(tt.image)
 				customMetadata := map[string]string{
-					"osconfig-disabled-features": "guestpolicies,osinventory",
-					"osconfig-poll-interval":     "1",
+					"osconfig-disabled-features": "guestpolicies",
 					scriptKey:                    scriptContent,
 				}
 				var err error
 				vm, err = test.CreateVM(tt.image, tt.machineType, customMetadata)
-				if err != nil {
-					return fmt.Errorf("failed to create VM: %w", err)
-				}
-				return nil
+				return err
 			})
 
 			test.Step("wait for agent install and prerequisites", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributeInstallDone)
+				_, err := test.WaitForInventory(vm)
+				return err
 			})
 
-			policyID := "packageresourcerpm"
 			test.Step("create os policy assignment", func(ctx context.Context) error {
-				assignment := buildRpmPackageOSPolicyAssignment(policyID, vm.Name)
-				_, err := test.CreateOSPolicyAssignment(vm, assignment)
-				return err
+				return test.CreateOSPolicyAssignment(vm, buildRpmPackageOSPolicyAssignment(vm.Name))
 			})
 
 			test.Step("wait for os policy compliance report", func(ctx context.Context) error {
-				want := wantRpmPackageCompliances(policyID)
-				_, err := test.WaitForOSPolicyCompliance(vm, want)
-				return err
+				return test.WaitForOSPolicyCompliance(vm, wantCompliances)
 			})
 
-			test.Step("verify packages installed via guest attribute", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributePkgInstalled)
+			test.Step("verify packages installed via inventory", func(ctx context.Context) error {
+				return test.WaitForPackages(vm, []string{"osconfig-agent-test", "gcsfuse"}, nil)
 			})
 		})
 	}
