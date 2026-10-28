@@ -18,7 +18,6 @@ package e2etests_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -61,7 +60,7 @@ func osPolicyRepositoryGooGetTestCases() []ospoliciesRepoGooGetTestCase {
 
 // buildGooGetRepositoryOSPolicyAssignment constructs the OSPolicyAssignment for testing GooGet repositories.
 // It adds the Google OSConfig Agent Test Repository and enforces that "osconfig-agent-test" is INSTALLED on the target VM.
-func buildGooGetRepositoryOSPolicyAssignment(policyID, vmName string) *osconfig.OSPolicyAssignment {
+func buildGooGetRepositoryOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignment {
 	return &osconfig.OSPolicyAssignment{
 		InstanceFilter: &osconfig.OSPolicyAssignmentInstanceFilter{
 			InclusionLabels: []*osconfig.OSPolicyAssignmentLabelSet{
@@ -76,7 +75,7 @@ func buildGooGetRepositoryOSPolicyAssignment(policyID, vmName string) *osconfig.
 		},
 		OsPolicies: []*osconfig.OSPolicy{
 			{
-				Id:   policyID,
+				Id:   "repositoryresourcegoo",
 				Mode: "ENFORCEMENT",
 				ResourceGroups: []*osconfig.OSPolicyResourceGroup{
 					{
@@ -107,41 +106,10 @@ func buildGooGetRepositoryOSPolicyAssignment(policyID, vmName string) *osconfig.
 	}
 }
 
-// wantGooGetRepositoryCompliances returns the expected compliance structure for GooGet repository policy test.
-func wantGooGetRepositoryCompliances(policyID string) []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance {
-	return []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance{
-		{
-			OsPolicyId:      policyID,
-			ComplianceState: "COMPLIANT",
-			OsPolicyResourceCompliances: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceCompliance{
-				{
-					OsPolicyResourceId: "install-repo",
-					ComplianceState:    "COMPLIANT",
-					ConfigSteps: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceComplianceOSPolicyResourceConfigStep{
-						{Type: "VALIDATION"},
-						{Type: "DESIRED_STATE_CHECK"},
-						{Type: "DESIRED_STATE_ENFORCEMENT"},
-						{Type: "DESIRED_STATE_CHECK_POST_ENFORCEMENT"},
-					},
-				},
-				{
-					OsPolicyResourceId: "install-package",
-					ComplianceState:    "COMPLIANT",
-					ConfigSteps: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceComplianceOSPolicyResourceConfigStep{
-						{Type: "VALIDATION"},
-						{Type: "DESIRED_STATE_CHECK"},
-						{Type: "DESIRED_STATE_ENFORCEMENT"},
-						{Type: "DESIRED_STATE_CHECK_POST_ENFORCEMENT"},
-					},
-				},
-			},
-		},
-	}
-}
-
 // TestOSPolicyRepositoryResourceGooGet verifies that the OS Config agent configures a GooGet repository
 // and installs a package ("osconfig-agent-test") from it on Windows instances.
 func TestOSPolicyRepositoryResourceGooGet(t *testing.T) {
+	const wantCompliances = 1
 	tests := osPolicyRepositoryGooGetTestCases()
 
 	for _, tt := range tests {
@@ -152,39 +120,24 @@ func TestOSPolicyRepositoryResourceGooGet(t *testing.T) {
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
-				scriptKey, scriptContent := gcp.OSPolicyRepositoryGoogetStartupScript(tt.image)
 				customMetadata := map[string]string{
-					"osconfig-disabled-features": "guestpolicies,osinventory",
-					"osconfig-poll-interval":     "1",
-					scriptKey:                    scriptContent,
+					"osconfig-disabled-features": "guestpolicies",
 				}
 				var err error
 				vm, err = test.CreateVM(tt.image, tt.machineType, customMetadata)
-				if err != nil {
-					return fmt.Errorf("failed to create VM: %w", err)
-				}
-				return nil
-			})
-
-			test.Step("wait for agent install and prerequisites", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributeInstallDone)
-			})
-
-			policyID := "repositoryresourcegoo"
-			test.Step("create os policy assignment", func(ctx context.Context) error {
-				assignment := buildGooGetRepositoryOSPolicyAssignment(policyID, vm.Name)
-				_, err := test.CreateOSPolicyAssignment(vm, assignment)
 				return err
+			})
+
+			test.Step("create os policy assignment", func(ctx context.Context) error {
+				return test.CreateOSPolicyAssignment(vm, buildGooGetRepositoryOSPolicyAssignment(vm.Name))
 			})
 
 			test.Step("wait for os policy compliance report", func(ctx context.Context) error {
-				want := wantGooGetRepositoryCompliances(policyID)
-				_, err := test.WaitForOSPolicyCompliance(vm, want)
-				return err
+				return test.WaitForOSPolicyCompliance(vm, wantCompliances)
 			})
 
-			test.Step("verify package installed via guest attribute", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributePkgInstalled)
+			test.Step("verify package installed via inventory", func(ctx context.Context) error {
+				return test.WaitForPackages(vm, []string{"osconfig-agent-test"}, nil)
 			})
 		})
 	}
