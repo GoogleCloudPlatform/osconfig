@@ -204,8 +204,7 @@ func TestSoftwareRecipeInstall(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				_, err = test.CreateGuestPolicy(vm, policy)
-				return err
+				return test.CreateGuestPolicy(vm, policy)
 			})
 
 			test.Step("restart agent", func(ctx context.Context) error {
@@ -248,8 +247,7 @@ func TestSoftwareRecipeSteps(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				_, err = test.CreateGuestPolicy(vm, policy)
-				return err
+				return test.CreateGuestPolicy(vm, policy)
 			})
 
 			test.Step("restart agent", func(ctx context.Context) error {
