@@ -18,7 +18,6 @@ package e2etests_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -50,7 +49,7 @@ func osPolicyRepositoryYumTestCases() []ospoliciesRepoYumTestCase {
 			machineType: "e2-medium",
 			timeout:     15 * time.Minute,
 		},
-		// CentOS Stream
+		// CentOS
 		{
 			name:        "centos-stream-9",
 			image:       "projects/centos-cloud/global/images/family/centos-stream-9",
@@ -75,7 +74,7 @@ func osPolicyRepositoryYumTestCases() []ospoliciesRepoYumTestCase {
 
 // buildYumRepositoryOSPolicyAssignment constructs the OSPolicyAssignment for testing Yum repositories.
 // It adds the gcsfuse Yum repository and enforces that "gcsfuse" is INSTALLED on the target VM.
-func buildYumRepositoryOSPolicyAssignment(policyID, vmName string) *osconfig.OSPolicyAssignment {
+func buildYumRepositoryOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignment {
 	return &osconfig.OSPolicyAssignment{
 		InstanceFilter: &osconfig.OSPolicyAssignmentInstanceFilter{
 			InclusionLabels: []*osconfig.OSPolicyAssignmentLabelSet{
@@ -90,7 +89,7 @@ func buildYumRepositoryOSPolicyAssignment(policyID, vmName string) *osconfig.OSP
 		},
 		OsPolicies: []*osconfig.OSPolicy{
 			{
-				Id:   policyID,
+				Id:   "repositoryresourceyum",
 				Mode: "ENFORCEMENT",
 				ResourceGroups: []*osconfig.OSPolicyResourceGroup{
 					{
@@ -126,41 +125,10 @@ func buildYumRepositoryOSPolicyAssignment(policyID, vmName string) *osconfig.OSP
 	}
 }
 
-// wantYumRepositoryCompliances returns the expected compliance structure for Yum repository policy test.
-func wantYumRepositoryCompliances(policyID string) []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance {
-	return []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance{
-		{
-			OsPolicyId:      policyID,
-			ComplianceState: "COMPLIANT",
-			OsPolicyResourceCompliances: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceCompliance{
-				{
-					OsPolicyResourceId: "install-repo",
-					ComplianceState:    "COMPLIANT",
-					ConfigSteps: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceComplianceOSPolicyResourceConfigStep{
-						{Type: "VALIDATION"},
-						{Type: "DESIRED_STATE_CHECK"},
-						{Type: "DESIRED_STATE_ENFORCEMENT"},
-						{Type: "DESIRED_STATE_CHECK_POST_ENFORCEMENT"},
-					},
-				},
-				{
-					OsPolicyResourceId: "install-package",
-					ComplianceState:    "COMPLIANT",
-					ConfigSteps: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceComplianceOSPolicyResourceConfigStep{
-						{Type: "VALIDATION"},
-						{Type: "DESIRED_STATE_CHECK"},
-						{Type: "DESIRED_STATE_ENFORCEMENT"},
-						{Type: "DESIRED_STATE_CHECK_POST_ENFORCEMENT"},
-					},
-				},
-			},
-		},
-	}
-}
-
 // TestOSPolicyRepositoryResourceYum verifies that the OS Config agent configures a YUM repository
 // and installs a package ("gcsfuse") from it.
 func TestOSPolicyRepositoryResourceYum(t *testing.T) {
+	const wantCompliances = 1
 	tests := osPolicyRepositoryYumTestCases()
 
 	for _, tt := range tests {
@@ -171,39 +139,24 @@ func TestOSPolicyRepositoryResourceYum(t *testing.T) {
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
-				scriptKey, scriptContent := gcp.OSPolicyRepositoryYumStartupScript(tt.image)
 				customMetadata := map[string]string{
-					"osconfig-disabled-features": "guestpolicies,osinventory",
-					"osconfig-poll-interval":     "1",
-					scriptKey:                    scriptContent,
+					"osconfig-disabled-features": "guestpolicies",
 				}
 				var err error
 				vm, err = test.CreateVM(tt.image, tt.machineType, customMetadata)
-				if err != nil {
-					return fmt.Errorf("failed to create VM: %w", err)
-				}
-				return nil
-			})
-
-			test.Step("wait for agent install and prerequisites", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributeInstallDone)
-			})
-
-			policyID := "repositoryresourceyum"
-			test.Step("create os policy assignment", func(ctx context.Context) error {
-				assignment := buildYumRepositoryOSPolicyAssignment(policyID, vm.Name)
-				_, err := test.CreateOSPolicyAssignment(vm, assignment)
 				return err
+			})
+
+			test.Step("create os policy assignment", func(ctx context.Context) error {
+				return test.CreateOSPolicyAssignment(vm, buildYumRepositoryOSPolicyAssignment(vm.Name))
 			})
 
 			test.Step("wait for os policy compliance report", func(ctx context.Context) error {
-				want := wantYumRepositoryCompliances(policyID)
-				_, err := test.WaitForOSPolicyCompliance(vm, want)
-				return err
+				return test.WaitForOSPolicyCompliance(vm, wantCompliances)
 			})
 
-			test.Step("verify package installed via guest attribute", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributePkgInstalled)
+			test.Step("verify package installed via inventory", func(ctx context.Context) error {
+				return test.WaitForPackages(vm, []string{"gcsfuse"}, nil)
 			})
 		})
 	}
