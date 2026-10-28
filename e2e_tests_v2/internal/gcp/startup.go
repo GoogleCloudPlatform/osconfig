@@ -14,7 +14,10 @@
 
 package gcp
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 const (
 	// MetadataKeyLinuxStartupScript is the metadata key for Linux startup scripts.
@@ -104,4 +107,22 @@ func DefaultStartupScript(image string) (key, content string) {
 	default:
 		return MetadataKeyLinuxStartupScript, DebianStartupScript()
 	}
+}
+
+// OSPolicyFileWindowsStartupScript returns the metadata key and startup script for testing File policy on Windows.
+// It creates the file to be removed (/enforce_absent), stops the agent, and bootstraps it.
+func OSPolicyFileWindowsStartupScript(image string) (key, content string) {
+	baseKey, baseScript := DefaultStartupScript(image)
+	script := fmt.Sprintf(`
+$svc = Get-Service google_osconfig_agent -ErrorAction SilentlyContinue
+if ($svc -and $svc.Status -eq 'Running') {
+    Stop-Service google_osconfig_agent -Force -ErrorAction SilentlyContinue
+}
+
+New-Item -ItemType File -Path /enforce_absent -Force -ErrorAction SilentlyContinue
+
+%s
+`, baseScript)
+
+	return baseKey, script
 }
