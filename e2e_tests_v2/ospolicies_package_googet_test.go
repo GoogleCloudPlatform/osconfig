@@ -18,7 +18,6 @@ package e2etests_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -54,7 +53,7 @@ func osPolicyPackageGooGetTestCases() []ospoliciesTestCase {
 
 // buildGooGetPackageOSPolicyAssignment constructs the OSPolicyAssignment for testing GooGet packages.
 // It enforces that "google-compute-engine-ssh" is INSTALLED and "certgen" is REMOVED on the target VM.
-func buildGooGetPackageOSPolicyAssignment(policyID, vmName string) *osconfig.OSPolicyAssignment {
+func buildGooGetPackageOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignment {
 	return &osconfig.OSPolicyAssignment{
 		InstanceFilter: &osconfig.OSPolicyAssignmentInstanceFilter{
 			InclusionLabels: []*osconfig.OSPolicyAssignmentLabelSet{
@@ -69,7 +68,7 @@ func buildGooGetPackageOSPolicyAssignment(policyID, vmName string) *osconfig.OSP
 		},
 		OsPolicies: []*osconfig.OSPolicy{
 			{
-				Id:   policyID,
+				Id:   "packageresourcegooget",
 				Mode: "ENFORCEMENT",
 				ResourceGroups: []*osconfig.OSPolicyResourceGroup{
 					{
@@ -100,41 +99,10 @@ func buildGooGetPackageOSPolicyAssignment(policyID, vmName string) *osconfig.OSP
 	}
 }
 
-// wantGooGetPackageCompliances returns the expected compliance structure for GooGet package policy test.
-func wantGooGetPackageCompliances(policyID string) []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance {
-	return []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance{
-		{
-			OsPolicyId:      policyID,
-			ComplianceState: "COMPLIANT",
-			OsPolicyResourceCompliances: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceCompliance{
-				{
-					OsPolicyResourceId: "install-package",
-					ComplianceState:    "COMPLIANT",
-					ConfigSteps: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceComplianceOSPolicyResourceConfigStep{
-						{Type: "VALIDATION"},
-						{Type: "DESIRED_STATE_CHECK"},
-						{Type: "DESIRED_STATE_ENFORCEMENT"},
-						{Type: "DESIRED_STATE_CHECK_POST_ENFORCEMENT"},
-					},
-				},
-				{
-					OsPolicyResourceId: "remove-package",
-					ComplianceState:    "COMPLIANT",
-					ConfigSteps: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceComplianceOSPolicyResourceConfigStep{
-						{Type: "VALIDATION"},
-						{Type: "DESIRED_STATE_CHECK"},
-						{Type: "DESIRED_STATE_ENFORCEMENT"},
-						{Type: "DESIRED_STATE_CHECK_POST_ENFORCEMENT"},
-					},
-				},
-			},
-		},
-	}
-}
-
 // TestOSPolicyPackageResourceGooGet verifies that the OS Config agent enforces GooGet package policies:
 // installing a missing package ("google-compute-engine-ssh") and removing an installed package ("certgen").
 func TestOSPolicyPackageResourceGooGet(t *testing.T) {
+	const wantCompliances = 1
 	tests := osPolicyPackageGooGetTestCases()
 
 	for _, tt := range tests {
@@ -147,41 +115,28 @@ func TestOSPolicyPackageResourceGooGet(t *testing.T) {
 			test.Step("create VM", func(ctx context.Context) error {
 				scriptKey, scriptContent := gcp.OSPolicyPackageGooGetStartupScript(tt.image)
 				customMetadata := map[string]string{
-					"osconfig-disabled-features": "guestpolicies,osinventory",
-					"osconfig-poll-interval":     "1",
+					"osconfig-disabled-features": "guestpolicies",
 					scriptKey:                    scriptContent,
 				}
 				var err error
 				vm, err = test.CreateVM(tt.image, tt.machineType, customMetadata)
-				if err != nil {
-					return fmt.Errorf("failed to create VM: %w", err)
-				}
-				return nil
-			})
-
-			test.Step("wait for agent install and prerequisites", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributeInstallDone)
-			})
-
-			policyID := "packageresourcegoo"
-			test.Step("create os policy assignment", func(ctx context.Context) error {
-				assignment := buildGooGetPackageOSPolicyAssignment(policyID, vm.Name)
-				_, err := test.CreateOSPolicyAssignment(vm, assignment)
 				return err
+			})
+
+			test.Step("wait for initial package state in inventory", func(ctx context.Context) error {
+				return test.WaitForPackages(vm, []string{"certgen"}, []string{"google-compute-engine-ssh"})
+			})
+
+			test.Step("create os policy assignment", func(ctx context.Context) error {
+				return test.CreateOSPolicyAssignment(vm, buildGooGetPackageOSPolicyAssignment(vm.Name))
 			})
 
 			test.Step("wait for os policy compliance report", func(ctx context.Context) error {
-				want := wantGooGetPackageCompliances(policyID)
-				_, err := test.WaitForOSPolicyCompliance(vm, want)
-				return err
+				return test.WaitForOSPolicyCompliance(vm, wantCompliances)
 			})
 
-			test.Step("verify package installed via guest attribute", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributePkgInstalled)
-			})
-
-			test.Step("verify package removed via guest attribute", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributePkgNotInstalled)
+			test.Step("verify packages via inventory", func(ctx context.Context) error {
+				return test.WaitForPackages(vm, []string{"google-compute-engine-ssh"}, []string{"certgen"})
 			})
 		})
 	}
