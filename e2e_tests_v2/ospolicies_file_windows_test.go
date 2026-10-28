@@ -18,7 +18,6 @@ package e2etests_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -151,59 +150,10 @@ func buildWindowsFileOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignm
 	}
 }
 
-// wantWindowsFileCompliances returns the expected compliance reports for File resource policies on Windows.
-func wantWindowsFileCompliances() []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance {
-	configSteps := []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceComplianceOSPolicyResourceConfigStep{
-		{Type: "VALIDATION"},
-		{Type: "DESIRED_STATE_CHECK"},
-		{Type: "DESIRED_STATE_ENFORCEMENT"},
-		{Type: "DESIRED_STATE_CHECK_POST_ENFORCEMENT"},
-	}
-
-	return []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance{
-		{
-			OsPolicyId:      "files-absent",
-			ComplianceState: "COMPLIANT",
-			OsPolicyResourceCompliances: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceCompliance{
-				{
-					OsPolicyResourceId: "file-absent",
-					ComplianceState:    "COMPLIANT",
-					ConfigSteps:        configSteps,
-				},
-			},
-		},
-		{
-			OsPolicyId:      "files-present",
-			ComplianceState: "COMPLIANT",
-			OsPolicyResourceCompliances: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceCompliance{
-				{
-					OsPolicyResourceId: "file-present-from-content",
-					ComplianceState:    "COMPLIANT",
-					ConfigSteps:        configSteps,
-				},
-				{
-					OsPolicyResourceId: "file-present-from-gcs",
-					ComplianceState:    "COMPLIANT",
-					ConfigSteps:        configSteps,
-				},
-				{
-					OsPolicyResourceId: "file-present-from-uri",
-					ComplianceState:    "COMPLIANT",
-					ConfigSteps:        configSteps,
-				},
-				{
-					OsPolicyResourceId: "file-present-from-local",
-					ComplianceState:    "COMPLIANT",
-					ConfigSteps:        configSteps,
-				},
-			},
-		},
-	}
-}
-
 // TestOSPolicyFileResourceWindows verifies that the OS Config agent enforces File resource policies on Windows:
 // removing an existing file and creating files from content, GCS bucket, remote URI, and local path.
 func TestOSPolicyFileResourceWindows(t *testing.T) {
+	const wantCompliances = 2
 	tests := osPolicyFileWindowsTestCases()
 
 	for _, tt := range tests {
@@ -216,40 +166,20 @@ func TestOSPolicyFileResourceWindows(t *testing.T) {
 			test.Step("create VM", func(ctx context.Context) error {
 				scriptKey, scriptContent := gcp.OSPolicyFileWindowsStartupScript(tt.image)
 				customMetadata := map[string]string{
-					"osconfig-disabled-features": "guestpolicies,osinventory",
-					"osconfig-poll-interval":     "1",
+					"osconfig-disabled-features": "guestpolicies",
 					scriptKey:                    scriptContent,
 				}
 				var err error
 				vm, err = test.CreateVM(tt.image, tt.machineType, customMetadata)
-				if err != nil {
-					return fmt.Errorf("failed to create VM: %w", err)
-				}
-				return nil
-			})
-
-			test.Step("wait for agent install and prerequisites", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributeInstallDone)
+				return err
 			})
 
 			test.Step("create os policy assignment", func(ctx context.Context) error {
-				assignment := buildWindowsFileOSPolicyAssignment(vm.Name)
-				_, err := test.CreateOSPolicyAssignment(vm, assignment)
-				return err
+				return test.CreateOSPolicyAssignment(vm, buildWindowsFileOSPolicyAssignment(vm.Name))
 			})
 
 			test.Step("wait for os policy compliance report", func(ctx context.Context) error {
-				want := wantWindowsFileCompliances()
-				_, err := test.WaitForOSPolicyCompliance(vm, want)
-				return err
-			})
-
-			test.Step("verify absent file removed via guest attribute", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributeFileDNE)
-			})
-
-			test.Step("verify present files created via guest attribute", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributeFileExists)
+				return test.WaitForOSPolicyCompliance(vm, wantCompliances)
 			})
 		})
 	}

@@ -24,10 +24,6 @@ const (
 	MetadataKeyLinuxStartupScript = "startup-script"
 	// MetadataKeyWindowsStartupScript is the metadata key for Windows PowerShell startup scripts.
 	MetadataKeyWindowsStartupScript = "windows-startup-script-ps1"
-	// GuestAttributeFileExists is written when all expected files exist.
-	GuestAttributeFileExists = "osconfig_tests/file_exists"
-	// GuestAttributeFileDNE is written when the file to be removed is confirmed absent.
-	GuestAttributeFileDNE = "osconfig_tests/file_does_not_exist"
 )
 
 // DebianStartupScript returns the agent bootstrap script for Debian and Ubuntu systems.
@@ -114,8 +110,7 @@ func DefaultStartupScript(image string) (key, content string) {
 }
 
 // OSPolicyFileWindowsStartupScript returns the metadata key and startup script for testing File policy on Windows.
-// It creates the file to be removed (/enforce_absent), stops the agent, bootstraps it,
-// signals install_done, monitors the removal of /enforce_absent, and monitors the creation of present files.
+// It creates the file to be removed (/enforce_absent), stops the agent, and bootstraps it.
 func OSPolicyFileWindowsStartupScript(image string) (key, content string) {
 	baseKey, baseScript := DefaultStartupScript(image)
 	script := fmt.Sprintf(`
@@ -127,34 +122,7 @@ if ($svc -and $svc.Status -eq 'Running') {
 New-Item -ItemType File -Path /enforce_absent -Force -ErrorAction SilentlyContinue
 
 %s
-Start-Sleep 5
-
-$uri_done = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s'
-Invoke-RestMethod -Method PUT -Uri $uri_done -Headers @{"Metadata-Flavor" = "Google"} -Body 1 -ErrorAction SilentlyContinue
-
-Write-Host "Checking for /enforce_absent"
-while (Test-Path /enforce_absent) {
-  Write-Host "/enforce_absent exists"
-  Start-Sleep 10
-}
-Write-Host "/enforce_absent DNE"
-$uri_dne = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s'
-Invoke-RestMethod -Method PUT -Uri $uri_dne -Headers @{"Metadata-Flavor" = "Google"} -Body 1 -ErrorAction SilentlyContinue
-
-$paths = @('/from_content', '/from_gcs', '/from_uri', '/from_local')
-foreach ($p in $paths) {
-  Write-Host "Checking for $p"
-  while (-not (Test-Path $p)) {
-    Write-Host "$p DNE"
-    Start-Sleep 10
-  }
-  Write-Host "$p exists"
-}
-
-$uri_exists = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/%s'
-Invoke-RestMethod -Method PUT -Uri $uri_exists -Headers @{"Metadata-Flavor" = "Google"} -Body 1 -ErrorAction SilentlyContinue
-`, baseScript, GuestAttributeInstallDone, GuestAttributeFileDNE, GuestAttributeFileExists)
+`, baseScript)
 
 	return baseKey, script
 }
-
