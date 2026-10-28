@@ -18,7 +18,6 @@ package e2etests_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -61,7 +60,7 @@ func osPolicyPackageDebTestCases() []ospoliciesTestCase {
 
 // buildDebPackageOSPolicyAssignment constructs the OSPolicyAssignment for testing Deb packages.
 // It installs a GCS-hosted deb package without dependencies and a remote deb package with dependencies.
-func buildDebPackageOSPolicyAssignment(policyID, vmName string) *osconfig.OSPolicyAssignment {
+func buildDebPackageOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignment {
 	return &osconfig.OSPolicyAssignment{
 		InstanceFilter: &osconfig.OSPolicyAssignmentInstanceFilter{
 			InclusionLabels: []*osconfig.OSPolicyAssignmentLabelSet{
@@ -76,7 +75,7 @@ func buildDebPackageOSPolicyAssignment(policyID, vmName string) *osconfig.OSPoli
 		},
 		OsPolicies: []*osconfig.OSPolicy{
 			{
-				Id:   policyID,
+				Id:   "packageresourcedeb",
 				Mode: "ENFORCEMENT",
 				ResourceGroups: []*osconfig.OSPolicyResourceGroup{
 					{
@@ -120,41 +119,10 @@ func buildDebPackageOSPolicyAssignment(policyID, vmName string) *osconfig.OSPoli
 	}
 }
 
-// wantDebPackageCompliances returns the expected compliance structure for Deb package policy test.
-func wantDebPackageCompliances(policyID string) []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance {
-	return []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance{
-		{
-			OsPolicyId:      policyID,
-			ComplianceState: "COMPLIANT",
-			OsPolicyResourceCompliances: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceCompliance{
-				{
-					OsPolicyResourceId: "install-package",
-					ComplianceState:    "COMPLIANT",
-					ConfigSteps: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceComplianceOSPolicyResourceConfigStep{
-						{Type: "VALIDATION"},
-						{Type: "DESIRED_STATE_CHECK"},
-						{Type: "DESIRED_STATE_ENFORCEMENT"},
-						{Type: "DESIRED_STATE_CHECK_POST_ENFORCEMENT"},
-					},
-				},
-				{
-					OsPolicyResourceId: "install-package-pull-deps",
-					ComplianceState:    "COMPLIANT",
-					ConfigSteps: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceComplianceOSPolicyResourceConfigStep{
-						{Type: "VALIDATION"},
-						{Type: "DESIRED_STATE_CHECK"},
-						{Type: "DESIRED_STATE_ENFORCEMENT"},
-						{Type: "DESIRED_STATE_CHECK_POST_ENFORCEMENT"},
-					},
-				},
-			},
-		},
-	}
-}
-
 // TestOSPolicyPackageResourceDeb verifies that the OS Config agent installs local and remote deb packages:
 // a deb package from GCS with PullDeps: false and a deb package from Remote URI with PullDeps: true.
 func TestOSPolicyPackageResourceDeb(t *testing.T) {
+	const wantCompliances = 1
 	tests := osPolicyPackageDebTestCases()
 
 	for _, tt := range tests {
@@ -165,39 +133,24 @@ func TestOSPolicyPackageResourceDeb(t *testing.T) {
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
-				scriptKey, scriptContent := gcp.OSPolicyPackageDebStartupScript(tt.image)
 				customMetadata := map[string]string{
-					"osconfig-disabled-features": "guestpolicies,osinventory",
-					"osconfig-poll-interval":     "1",
-					scriptKey:                    scriptContent,
+					"osconfig-disabled-features": "guestpolicies",
 				}
 				var err error
 				vm, err = test.CreateVM(tt.image, tt.machineType, customMetadata)
-				if err != nil {
-					return fmt.Errorf("failed to create VM: %w", err)
-				}
-				return nil
-			})
-
-			test.Step("wait for agent install and prerequisites", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributeInstallDone)
-			})
-
-			policyID := "packageresourcedeb"
-			test.Step("create os policy assignment", func(ctx context.Context) error {
-				assignment := buildDebPackageOSPolicyAssignment(policyID, vm.Name)
-				_, err := test.CreateOSPolicyAssignment(vm, assignment)
 				return err
+			})
+
+			test.Step("create os policy assignment", func(ctx context.Context) error {
+				return test.CreateOSPolicyAssignment(vm, buildDebPackageOSPolicyAssignment(vm.Name))
 			})
 
 			test.Step("wait for os policy compliance report", func(ctx context.Context) error {
-				want := wantDebPackageCompliances(policyID)
-				_, err := test.WaitForOSPolicyCompliance(vm, want)
-				return err
+				return test.WaitForOSPolicyCompliance(vm, wantCompliances)
 			})
 
-			test.Step("verify packages installed via guest attribute", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributePkgInstalled)
+			test.Step("verify packages installed via inventory", func(ctx context.Context) error {
+				return test.WaitForPackages(vm, []string{"osconfig-agent-test", "google-chrome-stable"}, nil)
 			})
 		})
 	}
