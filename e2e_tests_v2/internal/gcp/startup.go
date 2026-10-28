@@ -14,7 +14,10 @@
 
 package gcp
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 const (
 	// MetadataKeyLinuxStartupScript is the metadata key for Linux startup scripts.
@@ -104,4 +107,19 @@ func DefaultStartupScript(image string) (key, content string) {
 	default:
 		return MetadataKeyLinuxStartupScript, DebianStartupScript()
 	}
+}
+
+// OSPolicyFileLinuxStartupScript returns the metadata key and startup script for testing File policy on Linux.
+// It creates the file to be removed (/enforce_absent), stops the agent, and bootstraps it.
+func OSPolicyFileLinuxStartupScript(image string) (key, content string) {
+	baseKey, baseScript := DefaultStartupScript(image)
+	script := fmt.Sprintf(`#!/bin/bash
+set -x
+touch /enforce_absent
+systemctl stop google-osconfig-agent || true
+
+%s
+`, baseScript)
+
+	return baseKey, script
 }
