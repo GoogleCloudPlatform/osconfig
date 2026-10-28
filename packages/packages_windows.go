@@ -22,6 +22,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	"github.com/GoogleCloudPlatform/osconfig/util"
@@ -182,7 +183,16 @@ func enrichWindowsApplicationWithPurl(pkgs []*WindowsApplication) []*WindowsAppl
 	return pkgs
 }
 
-// NewInstalledPackagesProvider returns fully initialized provider.
-func NewInstalledPackagesProvider(_ osinfo.Provider) InstalledPackagesProvider {
-	return defaultInstalledPackagesProvider{}
+// NewInstalledPackagesProvider makes provider that uses osv-scalibr as its implementation if enabled by config, otherwise falls back to default legacy implementation.
+func NewInstalledPackagesProvider(osinfoProvider osinfo.Provider) InstalledPackagesProvider {
+	if agentconfig.ExtendedInventoryEnabled() {
+		return scalibrInstalledPackagesProvider{
+			extractors:     agentconfig.ExtendedInventoryExtractorsAllowed(),
+			osinfoProvider: osinfoProvider,
+		}
+	}
+
+	return defaultInstalledPackagesProvider{
+		osinfoProvider: osinfoProvider,
+	}
 }
