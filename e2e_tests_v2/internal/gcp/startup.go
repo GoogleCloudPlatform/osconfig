@@ -14,7 +14,10 @@
 
 package gcp
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 const (
 	// MetadataKeyLinuxStartupScript is the metadata key for Linux startup scripts.
@@ -104,4 +107,25 @@ func DefaultStartupScript(image string) (key, content string) {
 	default:
 		return MetadataKeyLinuxStartupScript, DebianStartupScript()
 	}
+}
+
+// OSPolicyPackageGooGetStartupScript returns the metadata key and startup script for testing GooGet package policy.
+// It stops the agent, configures the test repository, installs certgen (to be removed),
+// removes google-compute-engine-ssh (to be installed), and bootstraps the agent.
+func OSPolicyPackageGooGetStartupScript(image string) (key, content string) {
+	baseKey, baseScript := DefaultStartupScript(image)
+	script := fmt.Sprintf(`
+$svc = Get-Service google_osconfig_agent -ErrorAction SilentlyContinue
+if ($svc -and $svc.Status -eq 'Running') {
+    Stop-Service google_osconfig_agent -Force -ErrorAction SilentlyContinue
+}
+
+googet addrepo test https://packages.cloud.google.com/yuck/repos/osconfig-agent-test-repository
+googet -noconfirm install certgen
+googet -noconfirm remove google-compute-engine-ssh
+
+%s
+`, baseScript)
+
+	return baseKey, script
 }
