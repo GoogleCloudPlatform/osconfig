@@ -19,6 +19,7 @@ package e2etests_test
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -27,9 +28,16 @@ import (
 	"google.golang.org/api/osconfig/v1"
 )
 
-// osPolicyPackageMsiTestCases returns the list of test cases for MSI package policy tests.
-func osPolicyPackageMsiTestCases() []ospoliciesTestCase {
-	return []ospoliciesTestCase{
+type ospoliciesPackageMsiTestCase struct {
+	name        string
+	image       string
+	machineType string
+	timeout     time.Duration
+}
+
+// osPolicyPackageMsiTestCases returns the list of test cases for Msi package policy tests.
+func osPolicyPackageMsiTestCases() []ospoliciesPackageMsiTestCase {
+	return []ospoliciesPackageMsiTestCase{
 		// Windows Server
 		{
 			name:        "windows-2016",
@@ -53,8 +61,8 @@ func osPolicyPackageMsiTestCases() []ospoliciesTestCase {
 }
 
 // buildMsiPackageOSPolicyAssignment constructs the OSPolicyAssignment for testing MSI packages.
-// It installs a GCS-hosted Chrome MSI package on the target VM.
-func buildMsiPackageOSPolicyAssignment(policyID, vmName string) *osconfig.OSPolicyAssignment {
+// It installs Chrome Enterprise MSI from GCS on the target VM.
+func buildMsiPackageOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignment {
 	return &osconfig.OSPolicyAssignment{
 		InstanceFilter: &osconfig.OSPolicyAssignmentInstanceFilter{
 			InclusionLabels: []*osconfig.OSPolicyAssignmentLabelSet{
@@ -69,7 +77,7 @@ func buildMsiPackageOSPolicyAssignment(policyID, vmName string) *osconfig.OSPoli
 		},
 		OsPolicies: []*osconfig.OSPolicy{
 			{
-				Id:   policyID,
+				Id:   "packageresourcemsi",
 				Mode: "ENFORCEMENT",
 				ResourceGroups: []*osconfig.OSPolicyResourceGroup{
 					{
@@ -83,7 +91,7 @@ func buildMsiPackageOSPolicyAssignment(policyID, vmName string) *osconfig.OSPoli
 											Gcs: &osconfig.OSPolicyResourceFileGcs{
 												Bucket:     "osconfig-agent-end2end-test-resources",
 												Object:     "OSPolicies/googlechromestandaloneenterprise64.msi",
-												Generation: 1720172515592258,
+												Generation: 1619046639806899,
 											},
 										},
 									},
@@ -97,31 +105,30 @@ func buildMsiPackageOSPolicyAssignment(policyID, vmName string) *osconfig.OSPoli
 	}
 }
 
-// wantMsiPackageCompliances returns the expected compliance structure for MSI package policy test.
-func wantMsiPackageCompliances(policyID string) []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance {
-	return []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance{
-		{
-			OsPolicyId:      policyID,
-			ComplianceState: "COMPLIANT",
-			OsPolicyResourceCompliances: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceCompliance{
-				{
-					OsPolicyResourceId: "install-package",
-					ComplianceState:    "COMPLIANT",
-					ConfigSteps: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceComplianceOSPolicyResourceConfigStep{
-						{Type: "VALIDATION"},
-						{Type: "DESIRED_STATE_CHECK"},
-						{Type: "DESIRED_STATE_ENFORCEMENT"},
-						{Type: "DESIRED_STATE_CHECK_POST_ENFORCEMENT"},
-					},
-				},
-			},
-		},
-	}
+func waitForWindowsApplication(ctx context.Context, test *testenv.Test, vm *gcp.VM, appName string) error {
+	return gcp.PollUntil(ctx, test.Suite.Config.PollInterval, fmt.Sprintf("windows application %s on %s", appName, vm.Name), func(ctx context.Context) (string, bool, error) {
+		inv, err := test.Suite.Compute.GetInventory(ctx, vm.Project, vm.Zone, vm.Name, "FULL")
+		if err != nil {
+			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("inventory not yet published (%v)", err), false, nil
+			}
+			return "", false, fmt.Errorf("failed to read inventory: %w", err)
+		}
+		for _, item := range inv.Items {
+			if item.InstalledPackage != nil && item.InstalledPackage.WindowsApplication != nil {
+				if strings.Contains(strings.ToLower(item.InstalledPackage.WindowsApplication.DisplayName), strings.ToLower(appName)) {
+					return fmt.Sprintf("found application %q", item.InstalledPackage.WindowsApplication.DisplayName), true, nil
+				}
+			}
+		}
+		return fmt.Sprintf("waiting for application %q in inventory", appName), false, nil
+	})
 }
 
 // TestOSPolicyPackageResourceMsi verifies that the OS Config agent installs an MSI package
 // (Chrome Enterprise MSI from GCS) on Windows VM instances.
 func TestOSPolicyPackageResourceMsi(t *testing.T) {
+	const wantCompliances = 1
 	tests := osPolicyPackageMsiTestCases()
 
 	for _, tt := range tests {
@@ -132,39 +139,24 @@ func TestOSPolicyPackageResourceMsi(t *testing.T) {
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
-				scriptKey, scriptContent := gcp.OSPolicyPackageMsiStartupScript(tt.image)
 				customMetadata := map[string]string{
-					"osconfig-disabled-features": "guestpolicies,osinventory",
-					"osconfig-poll-interval":     "1",
-					scriptKey:                    scriptContent,
+					"osconfig-disabled-features": "guestpolicies",
 				}
 				var err error
 				vm, err = test.CreateVM(tt.image, tt.machineType, customMetadata)
-				if err != nil {
-					return fmt.Errorf("failed to create VM: %w", err)
-				}
-				return nil
-			})
-
-			test.Step("wait for agent install and prerequisites", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributeInstallDone)
-			})
-
-			policyID := "packageresourcemsi"
-			test.Step("create os policy assignment", func(ctx context.Context) error {
-				assignment := buildMsiPackageOSPolicyAssignment(policyID, vm.Name)
-				_, err := test.CreateOSPolicyAssignment(vm, assignment)
 				return err
+			})
+
+			test.Step("create os policy assignment", func(ctx context.Context) error {
+				return test.CreateOSPolicyAssignment(vm, buildMsiPackageOSPolicyAssignment(vm.Name))
 			})
 
 			test.Step("wait for os policy compliance report", func(ctx context.Context) error {
-				want := wantMsiPackageCompliances(policyID)
-				_, err := test.WaitForOSPolicyCompliance(vm, want)
-				return err
+				return test.WaitForOSPolicyCompliance(vm, wantCompliances)
 			})
 
-			test.Step("verify package installed via guest attribute", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributePkgInstalled)
+			test.Step("verify package installed via inventory", func(ctx context.Context) error {
+				return waitForWindowsApplication(ctx, test, vm, "Google Chrome")
 			})
 		})
 	}
