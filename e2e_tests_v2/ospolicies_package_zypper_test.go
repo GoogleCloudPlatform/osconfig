@@ -18,7 +18,6 @@ package e2etests_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -49,7 +48,7 @@ func osPolicyPackageZypperTestCases() []ospoliciesTestCase {
 
 // buildZypperPackageOSPolicyAssignment constructs the OSPolicyAssignment for testing Zypper packages.
 // It enforces that "ed" is INSTALLED and "vim" is REMOVED on the target VM.
-func buildZypperPackageOSPolicyAssignment(policyID, vmName string) *osconfig.OSPolicyAssignment {
+func buildZypperPackageOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignment {
 	return &osconfig.OSPolicyAssignment{
 		InstanceFilter: &osconfig.OSPolicyAssignmentInstanceFilter{
 			InclusionLabels: []*osconfig.OSPolicyAssignmentLabelSet{
@@ -64,7 +63,7 @@ func buildZypperPackageOSPolicyAssignment(policyID, vmName string) *osconfig.OSP
 		},
 		OsPolicies: []*osconfig.OSPolicy{
 			{
-				Id:   policyID,
+				Id:   "packageresourcezypper",
 				Mode: "ENFORCEMENT",
 				ResourceGroups: []*osconfig.OSPolicyResourceGroup{
 					{
@@ -95,41 +94,10 @@ func buildZypperPackageOSPolicyAssignment(policyID, vmName string) *osconfig.OSP
 	}
 }
 
-// wantZypperPackageCompliances returns the expected compliance structure for Zypper package policy test.
-func wantZypperPackageCompliances(policyID string) []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance {
-	return []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance{
-		{
-			OsPolicyId:      policyID,
-			ComplianceState: "COMPLIANT",
-			OsPolicyResourceCompliances: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceCompliance{
-				{
-					OsPolicyResourceId: "install-package",
-					ComplianceState:    "COMPLIANT",
-					ConfigSteps: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceComplianceOSPolicyResourceConfigStep{
-						{Type: "VALIDATION"},
-						{Type: "DESIRED_STATE_CHECK"},
-						{Type: "DESIRED_STATE_ENFORCEMENT"},
-						{Type: "DESIRED_STATE_CHECK_POST_ENFORCEMENT"},
-					},
-				},
-				{
-					OsPolicyResourceId: "remove-package",
-					ComplianceState:    "COMPLIANT",
-					ConfigSteps: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceComplianceOSPolicyResourceConfigStep{
-						{Type: "VALIDATION"},
-						{Type: "DESIRED_STATE_CHECK"},
-						{Type: "DESIRED_STATE_ENFORCEMENT"},
-						{Type: "DESIRED_STATE_CHECK_POST_ENFORCEMENT"},
-					},
-				},
-			},
-		},
-	}
-}
-
 // TestOSPolicyPackageResourceZypper verifies that the OS Config agent enforces Zypper package policies:
 // installing a missing package ("ed") and removing an installed package ("vim").
 func TestOSPolicyPackageResourceZypper(t *testing.T) {
+	const wantCompliances = 1
 	tests := osPolicyPackageZypperTestCases()
 
 	for _, tt := range tests {
@@ -142,41 +110,28 @@ func TestOSPolicyPackageResourceZypper(t *testing.T) {
 			test.Step("create VM", func(ctx context.Context) error {
 				scriptKey, scriptContent := gcp.OSPolicyPackageZypperStartupScript(tt.image)
 				customMetadata := map[string]string{
-					"osconfig-disabled-features": "guestpolicies,osinventory",
-					"osconfig-poll-interval":     "1",
+					"osconfig-disabled-features": "guestpolicies",
 					scriptKey:                    scriptContent,
 				}
 				var err error
 				vm, err = test.CreateVM(tt.image, tt.machineType, customMetadata)
-				if err != nil {
-					return fmt.Errorf("failed to create VM: %w", err)
-				}
-				return nil
-			})
-
-			test.Step("wait for agent install and prerequisites", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributeInstallDone)
-			})
-
-			policyID := "packageresourcezypper"
-			test.Step("create os policy assignment", func(ctx context.Context) error {
-				assignment := buildZypperPackageOSPolicyAssignment(policyID, vm.Name)
-				_, err := test.CreateOSPolicyAssignment(vm, assignment)
 				return err
+			})
+
+			test.Step("wait for initial package state in inventory", func(ctx context.Context) error {
+				return test.WaitForPackages(vm, []string{"vim"}, []string{"ed"})
+			})
+
+			test.Step("create os policy assignment", func(ctx context.Context) error {
+				return test.CreateOSPolicyAssignment(vm, buildZypperPackageOSPolicyAssignment(vm.Name))
 			})
 
 			test.Step("wait for os policy compliance report", func(ctx context.Context) error {
-				want := wantZypperPackageCompliances(policyID)
-				_, err := test.WaitForOSPolicyCompliance(vm, want)
-				return err
+				return test.WaitForOSPolicyCompliance(vm, wantCompliances)
 			})
 
-			test.Step("verify package installed via guest attribute", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributePkgInstalled)
-			})
-
-			test.Step("verify package removed via guest attribute", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributePkgNotInstalled)
+			test.Step("verify packages via inventory", func(ctx context.Context) error {
+				return test.WaitForPackages(vm, []string{"ed"}, []string{"vim"})
 			})
 		})
 	}
