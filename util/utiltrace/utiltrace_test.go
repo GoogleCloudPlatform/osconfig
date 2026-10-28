@@ -84,3 +84,62 @@ func mockMemoryAPI(t *testing.T, levels []float64, cancel context.CancelFunc) {
 		}
 	})
 }
+
+func mockCPUAPI(t *testing.T, cpuTimes []time.Duration) {
+	prevGetCPUTime := getCPUTime
+	t.Cleanup(func() { getCPUTime = prevGetCPUTime })
+
+	idx := 0
+	getCPUTime = func() (time.Duration, error) {
+		if len(cpuTimes) == 0 {
+			return 0, nil
+		}
+		if idx < len(cpuTimes) {
+			val := cpuTimes[idx]
+			idx++
+			return val, nil
+		}
+		return cpuTimes[len(cpuTimes)-1], nil
+	}
+}
+
+// TestTrace verifies that Trace collects both memory and CPU metrics correctly.
+func TestTrace(t *testing.T) {
+	tests := []struct {
+		name        string
+		memLevels   []float64
+		cpuTimes    []time.Duration
+		wantMemPeak float64
+		wantMemMean float64
+	}{
+		{
+			name:        "valid levels, want peak and mean tracked",
+			memLevels:   []float64{10, 20, 10},
+			cpuTimes:    []time.Duration{0, 10 * time.Millisecond, 20 * time.Millisecond},
+			wantMemPeak: 20,
+			wantMemMean: 15,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			mockMemoryAPI(t, tt.memLevels, cancel)
+			mockCPUAPI(t, tt.cpuTimes)
+
+			gotChannel := make(chan TraceResult)
+			go Trace(ctx, time.Millisecond, gotChannel)
+			got := <-gotChannel
+
+			if got.MemPeakMB != tt.wantMemPeak {
+				t.Errorf("MemPeakMB = %v, want %v", got.MemPeakMB, tt.wantMemPeak)
+			}
+			if got.MemMeanMB != tt.wantMemMean {
+				t.Errorf("MemMeanMB = %v, want %v", got.MemMeanMB, tt.wantMemMean)
+			}
+			if got.AllocMB < 0 {
+				t.Errorf("AllocMB = %v, want >= 0", got.AllocMB)
+			}
+		})
+	}
+}

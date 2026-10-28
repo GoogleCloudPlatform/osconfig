@@ -228,3 +228,68 @@ func isHTTPStatus(err error, code int) bool {
 	var apiErr *googleapi.Error
 	return errors.As(err, &apiErr) && apiErr.Code == code
 }
+
+// CreateOSPolicyAssignment creates an OS Config v1 OSPolicyAssignment and waits for the rollout operation to complete.
+func (c *Client) CreateOSPolicyAssignment(ctx context.Context, project, zone, assignmentID string, assignment *osconfig.OSPolicyAssignment) error {
+	parent := fmt.Sprintf("projects/%s/locations/%s", project, zone)
+
+	op, err := c.osconfig.Projects.Locations.OsPolicyAssignments.Create(parent, assignment).OsPolicyAssignmentId(assignmentID).Context(ctx).Do()
+	if err != nil {
+		return fmt.Errorf("failed to create os policy assignment %s in %s: %w", assignmentID, parent, err)
+	}
+
+	if err := c.waitOSPolicyAssignmentOperation(ctx, op.Name); err != nil {
+		cancelCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_, _ = c.osconfig.Projects.Locations.OsPolicyAssignments.Operations.Cancel(op.Name, &osconfig.CancelOperationRequest{}).Context(cancelCtx).Do()
+		return fmt.Errorf("failed to wait for os policy assignment %s creation: %w", assignmentID, err)
+	}
+
+	return nil
+}
+
+// DeleteOSPolicyAssignment idempotently deletes an OS Config v1 OSPolicyAssignment and waits for completion.
+func (c *Client) DeleteOSPolicyAssignment(ctx context.Context, name string) error {
+	op, err := c.osconfig.Projects.Locations.OsPolicyAssignments.Delete(name).Context(ctx).Do()
+	if IsNotFound(err) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("failed to delete os policy assignment %s: %w", name, err)
+	}
+
+	if err := c.waitOSPolicyAssignmentOperation(ctx, op.Name); err != nil {
+		return fmt.Errorf("failed to wait for os policy assignment %s deletion: %w", name, err)
+	}
+	return nil
+}
+
+// waitOSPolicyAssignmentOperation polls an OS policy assignment long-running operation until completion.
+func (c *Client) waitOSPolicyAssignmentOperation(ctx context.Context, opName string) error {
+	return PollUntil(ctx, c.pollInterval, fmt.Sprintf("os policy assignment operation %s", opName), func(ctx context.Context) (string, bool, error) {
+		op, err := c.osconfig.Projects.Locations.OsPolicyAssignments.Operations.Get(opName).Context(ctx).Do()
+		if err != nil {
+			if IsTransientComputeError(err) {
+				return fmt.Sprintf("transient operation read: %v", err), false, nil
+			}
+			return "", false, err
+		}
+		if !op.Done {
+			return "status=RUNNING", false, nil
+		}
+		if op.Error != nil {
+			return "", false, fmt.Errorf("operation failed: %s (code %d)", op.Error.Message, op.Error.Code)
+		}
+		return "status=DONE", true, nil
+	})
+}
+
+// GetOSPolicyAssignmentReport retrieves an OS policy assignment report for a given VM instance.
+func (c *Client) GetOSPolicyAssignmentReport(ctx context.Context, project, zone, instance, assignmentID string) (*osconfig.OSPolicyAssignmentReport, error) {
+	name := fmt.Sprintf("projects/%s/locations/%s/instances/%s/osPolicyAssignments/%s/report", project, zone, instance, assignmentID)
+	report, err := c.osconfig.Projects.Locations.Instances.OsPolicyAssignments.Reports.Get(name).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get os policy assignment report %s: %w", name, err)
+	}
+	return report, nil
+}
