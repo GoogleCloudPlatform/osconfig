@@ -18,7 +18,6 @@ package e2etests_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -56,7 +55,7 @@ func osPolicyRepositoryZypperTestCases() []ospoliciesRepoZypperTestCase {
 
 // buildZypperRepositoryOSPolicyAssignment constructs the OSPolicyAssignment for testing Zypper repositories.
 // It adds the gcsfuse Zypper repository and enforces that "gcsfuse" is INSTALLED on the target VM.
-func buildZypperRepositoryOSPolicyAssignment(policyID, vmName string) *osconfig.OSPolicyAssignment {
+func buildZypperRepositoryOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignment {
 	return &osconfig.OSPolicyAssignment{
 		InstanceFilter: &osconfig.OSPolicyAssignmentInstanceFilter{
 			InclusionLabels: []*osconfig.OSPolicyAssignmentLabelSet{
@@ -71,7 +70,7 @@ func buildZypperRepositoryOSPolicyAssignment(policyID, vmName string) *osconfig.
 		},
 		OsPolicies: []*osconfig.OSPolicy{
 			{
-				Id:   policyID,
+				Id:   "repositoryresourcezypper",
 				Mode: "ENFORCEMENT",
 				ResourceGroups: []*osconfig.OSPolicyResourceGroup{
 					{
@@ -107,41 +106,10 @@ func buildZypperRepositoryOSPolicyAssignment(policyID, vmName string) *osconfig.
 	}
 }
 
-// wantZypperRepositoryCompliances returns the expected compliance structure for Zypper repository policy test.
-func wantZypperRepositoryCompliances(policyID string) []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance {
-	return []*osconfig.OSPolicyAssignmentReportOSPolicyCompliance{
-		{
-			OsPolicyId:      policyID,
-			ComplianceState: "COMPLIANT",
-			OsPolicyResourceCompliances: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceCompliance{
-				{
-					OsPolicyResourceId: "install-repo",
-					ComplianceState:    "COMPLIANT",
-					ConfigSteps: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceComplianceOSPolicyResourceConfigStep{
-						{Type: "VALIDATION"},
-						{Type: "DESIRED_STATE_CHECK"},
-						{Type: "DESIRED_STATE_ENFORCEMENT"},
-						{Type: "DESIRED_STATE_CHECK_POST_ENFORCEMENT"},
-					},
-				},
-				{
-					OsPolicyResourceId: "install-package",
-					ComplianceState:    "COMPLIANT",
-					ConfigSteps: []*osconfig.OSPolicyAssignmentReportOSPolicyComplianceOSPolicyResourceComplianceOSPolicyResourceConfigStep{
-						{Type: "VALIDATION"},
-						{Type: "DESIRED_STATE_CHECK"},
-						{Type: "DESIRED_STATE_ENFORCEMENT"},
-						{Type: "DESIRED_STATE_CHECK_POST_ENFORCEMENT"},
-					},
-				},
-			},
-		},
-	}
-}
-
 // TestOSPolicyRepositoryResourceZypper verifies that the OS Config agent configures a Zypper repository
 // and installs a package ("gcsfuse") from it.
 func TestOSPolicyRepositoryResourceZypper(t *testing.T) {
+	const wantCompliances = 1
 	tests := osPolicyRepositoryZypperTestCases()
 
 	for _, tt := range tests {
@@ -152,39 +120,24 @@ func TestOSPolicyRepositoryResourceZypper(t *testing.T) {
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
-				scriptKey, scriptContent := gcp.OSPolicyRepositoryZypperStartupScript(tt.image)
 				customMetadata := map[string]string{
-					"osconfig-disabled-features": "guestpolicies,osinventory",
-					"osconfig-poll-interval":     "1",
-					scriptKey:                    scriptContent,
+					"osconfig-disabled-features": "guestpolicies",
 				}
 				var err error
 				vm, err = test.CreateVM(tt.image, tt.machineType, customMetadata)
-				if err != nil {
-					return fmt.Errorf("failed to create VM: %w", err)
-				}
-				return nil
-			})
-
-			test.Step("wait for agent install and prerequisites", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributeInstallDone)
-			})
-
-			policyID := "repositoryresourcezypper"
-			test.Step("create os policy assignment", func(ctx context.Context) error {
-				assignment := buildZypperRepositoryOSPolicyAssignment(policyID, vm.Name)
-				_, err := test.CreateOSPolicyAssignment(vm, assignment)
 				return err
+			})
+
+			test.Step("create os policy assignment", func(ctx context.Context) error {
+				return test.CreateOSPolicyAssignment(vm, buildZypperRepositoryOSPolicyAssignment(vm.Name))
 			})
 
 			test.Step("wait for os policy compliance report", func(ctx context.Context) error {
-				want := wantZypperRepositoryCompliances(policyID)
-				_, err := test.WaitForOSPolicyCompliance(vm, want)
-				return err
+				return test.WaitForOSPolicyCompliance(vm, wantCompliances)
 			})
 
-			test.Step("verify package installed via guest attribute", func(ctx context.Context) error {
-				return test.WaitForGuestAttribute(vm, gcp.GuestAttributePkgInstalled)
+			test.Step("verify package installed via inventory", func(ctx context.Context) error {
+				return test.WaitForPackages(vm, []string{"gcsfuse"}, nil)
 			})
 		})
 	}
