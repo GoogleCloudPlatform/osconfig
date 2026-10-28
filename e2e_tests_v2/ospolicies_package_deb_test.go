@@ -26,9 +26,16 @@ import (
 	"google.golang.org/api/osconfig/v1"
 )
 
+type ospoliciesPackageDebTestCase struct {
+	name        string
+	image       string
+	machineType string
+	timeout     time.Duration
+}
+
 // osPolicyPackageDebTestCases returns the list of test cases for Deb package policy tests.
-func osPolicyPackageDebTestCases() []ospoliciesTestCase {
-	return []ospoliciesTestCase{
+func osPolicyPackageDebTestCases() []ospoliciesPackageDebTestCase {
+	return []ospoliciesPackageDebTestCase{
 		// Debian
 		{
 			name:        "debian-12",
@@ -138,6 +145,11 @@ func TestOSPolicyPackageResourceDeb(t *testing.T) {
 				}
 				var err error
 				vm, err = test.CreateVM(tt.image, tt.machineType, customMetadata)
+				return err
+			})
+
+			test.Step("wait for agent inventory", func(ctx context.Context) error {
+				_, err := test.WaitForInventory(vm)
 				return err
 			})
 
