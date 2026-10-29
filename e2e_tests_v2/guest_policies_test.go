@@ -109,6 +109,15 @@ func TestGuestPoliciesPackageRepositories(t *testing.T) {
 			machineType:        "e2-standard-2",
 			timeout:            15 * time.Minute,
 		},
+		{
+			name:               "debian-13",
+			image:              "projects/debian-cloud/global/images/family/debian-13",
+			packageName:        "gcsfuse",
+			wantPackageManager: "deb",
+			repository:         aptPackageRepo("gcsfuse-trixie"),
+			machineType:        "e2-standard-2",
+			timeout:            15 * time.Minute,
+		},
 		// Ubuntu
 		{
 			name:               "ubuntu-2204-lts",
