@@ -192,6 +192,38 @@ func (c *Client) GetInventory(ctx context.Context, project, zone, instance, view
 	return call.Do()
 }
 
+// ExecutePatchJob starts a new OS Config PatchJob in the specified project.
+func (c *Client) ExecutePatchJob(ctx context.Context, project string, req *osconfig.ExecutePatchJobRequest) (*osconfig.PatchJob, error) {
+	parent := fmt.Sprintf("projects/%s", project)
+	job, err := c.osconfig.Projects.PatchJobs.Execute(parent, req).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute patch job in %s: %w", project, err)
+	}
+	return job, nil
+}
+
+// GetPatchJob retrieves the current status of an OS Config PatchJob by its resource name.
+func (c *Client) GetPatchJob(ctx context.Context, name string) (*osconfig.PatchJob, error) {
+	job, err := c.osconfig.Projects.PatchJobs.Get(name).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get patch job %s: %w", name, err)
+	}
+	return job, nil
+}
+
+// ListPatchJobInstanceDetails retrieves the per-instance execution details for an OS Config PatchJob.
+func (c *Client) ListPatchJobInstanceDetails(ctx context.Context, parent string) ([]*osconfig.PatchJobInstanceDetails, error) {
+	var details []*osconfig.PatchJobInstanceDetails
+	err := c.osconfig.Projects.PatchJobs.InstanceDetails.List(parent).Pages(ctx, func(page *osconfig.ListPatchJobInstanceDetailsResponse) error {
+		details = append(details, page.PatchJobInstanceDetails...)
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list patch job instance details for %s: %w", parent, err)
+	}
+	return details, nil
+}
+
 // CreateGuestPolicy creates an OS Config v1beta GuestPolicy in the specified project.
 // It acquires guestPolicyMu to serialize creation across parallel tests and avoid project-level QPS rate limits.
 func (c *Client) CreateGuestPolicy(ctx context.Context, project, policyID string, policy *osconfigv1beta.GuestPolicy) (*osconfigv1beta.GuestPolicy, error) {
