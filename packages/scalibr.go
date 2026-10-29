@@ -111,24 +111,96 @@ func pkgInfoFromGenericExtractorPackage(pkg *extractor.Package, pkgType string, 
 	}
 }
 
+var languagePackageMappers = map[string]func(*Packages, *extractor.Package){
+	purl.TypePyPi: func(pkgs *Packages, pkg *extractor.Package) {
+		pkgs.Pip = append(pkgs.Pip, pkgInfoFromGenericExtractorPackage(pkg, purl.TypePyPi, ""))
+	},
+	purl.TypeGem: func(pkgs *Packages, pkg *extractor.Package) {
+		pkgs.Gem = append(pkgs.Gem, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeGem, ""))
+	},
+	purl.TypeNPM: func(pkgs *Packages, pkg *extractor.Package) {
+		pkgs.Npm = append(pkgs.Npm, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeNPM, ""))
+	},
+	purl.TypeMaven: func(pkgs *Packages, pkg *extractor.Package) {
+		pkgs.Maven = append(pkgs.Maven, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeMaven, ""))
+	},
+	purl.TypeGolang: func(pkgs *Packages, pkg *extractor.Package) {
+		pkgs.Go = append(pkgs.Go, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeGolang, ""))
+	},
+	purl.TypeCargo: func(pkgs *Packages, pkg *extractor.Package) {
+		pkgs.Cargo = append(pkgs.Cargo, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeCargo, ""))
+	},
+	purl.TypeComposer: func(pkgs *Packages, pkg *extractor.Package) {
+		pkgs.Composer = append(pkgs.Composer, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeComposer, ""))
+	},
+	purl.TypeSwift: func(pkgs *Packages, pkg *extractor.Package) {
+		pkgs.Swift = append(pkgs.Swift, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeSwift, ""))
+	},
+	purl.TypeCocoapods: func(pkgs *Packages, pkg *extractor.Package) {
+		pkgs.Swift = append(pkgs.Swift, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeSwift, ""))
+	},
+	purl.TypePub: func(pkgs *Packages, pkg *extractor.Package) {
+		pkgs.Pub = append(pkgs.Pub, pkgInfoFromGenericExtractorPackage(pkg, purl.TypePub, ""))
+	},
+	purl.TypeConda: func(pkgs *Packages, pkg *extractor.Package) {
+		pkgs.Pip = append(pkgs.Pip, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeConda, ""))
+	},
+	purl.TypeNuget: func(pkgs *Packages, pkg *extractor.Package) {
+		pkgs.Nuget = append(pkgs.Nuget, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeNuget, ""))
+	},
+}
+
+// appendOSPackage converts and appends an OS package to pkgs if recognized.
+func appendOSPackage(pkgs *Packages, pkg *extractor.Package, osinfo *osinfo.OSInfo) bool {
+	switch metadata := pkg.Metadata.(type) {
+	case *dpkgmetadata.Metadata:
+		pkgs.Deb = append(pkgs.Deb, pkgInfoFromDpkgExtractorPackage(pkg, metadata))
+		return true
+	case *scalibrrpm.Metadata:
+		pkgs.Rpm = append(pkgs.Rpm, pkgInfoFromRpmExtractorPackage(pkg, metadata))
+		return true
+	case *scalibrcos.Metadata:
+		pkgs.COS = append(pkgs.COS, pkgInfoFromCosExtractorPackage(pkg, metadata, osinfo))
+		return true
+	case *scalibrsnap.Metadata:
+		pkgs.Snap = append(pkgs.Snap, pkgInfoFromSnapExtractorPackage(pkg, metadata, osinfo.Architecture))
+		return true
+	case *scalibrchoco.Metadata:
+		pkgs.Chocolatey = append(pkgs.Chocolatey, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeChocolatey, osinfo.Architecture))
+		return true
+	case *scalibrwinget.Metadata:
+		pkgs.WinGet = append(pkgs.WinGet, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeWinget, osinfo.Architecture))
+		return true
+	default:
+		return false
+	}
+}
+
+// appendLanguagePackage converts and appends a language package to pkgs if recognized.
+func appendLanguagePackage(pkgs *Packages, pkg *extractor.Package) bool {
+	p := pkg.PURL()
+	if p == nil {
+		return false
+	}
+	mapper, ok := languagePackageMappers[p.Type]
+	if !ok {
+		return false
+	}
+	mapper(pkgs, pkg)
+	return true
+}
+
+// pkgInfosFromExtractorPackages converts SCALIBR inventory packages into Packages.
 func pkgInfosFromExtractorPackages(ctx context.Context, scan *scalibr.ScanResult, osinfo *osinfo.OSInfo) Packages {
 	var packages Packages
 	for _, pkg := range scan.Inventory.Packages {
-		if metadata, ok := pkg.Metadata.(*dpkgmetadata.Metadata); ok {
-			packages.Deb = append(packages.Deb, pkgInfoFromDpkgExtractorPackage(pkg, metadata))
-		} else if metadata, ok := pkg.Metadata.(*scalibrrpm.Metadata); ok {
-			packages.Rpm = append(packages.Rpm, pkgInfoFromRpmExtractorPackage(pkg, metadata))
-		} else if metadata, ok := pkg.Metadata.(*scalibrcos.Metadata); ok {
-			packages.COS = append(packages.COS, pkgInfoFromCosExtractorPackage(pkg, metadata, osinfo))
-		} else if metadata, ok := pkg.Metadata.(*scalibrsnap.Metadata); ok {
-			packages.Snap = append(packages.Snap, pkgInfoFromSnapExtractorPackage(pkg, metadata, osinfo.Architecture))
-		} else if _, ok := pkg.Metadata.(*scalibrchoco.Metadata); ok {
-			packages.Chocolatey = append(packages.Chocolatey, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeChocolatey, osinfo.Architecture))
-		} else if _, ok := pkg.Metadata.(*scalibrwinget.Metadata); ok {
-			packages.WinGet = append(packages.WinGet, pkgInfoFromGenericExtractorPackage(pkg, purl.TypeWinget, osinfo.Architecture))
-		} else {
-			clog.Errorf(ctx, "Package type not implemented: %v", pkg)
+		if appendOSPackage(&packages, pkg, osinfo) {
+			continue
 		}
+		if appendLanguagePackage(&packages, pkg) {
+			continue
+		}
+		clog.Errorf(ctx, "Package type not implemented: %v", pkg)
 	}
 	return packages
 }
