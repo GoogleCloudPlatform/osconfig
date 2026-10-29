@@ -26,9 +26,16 @@ import (
 	"google.golang.org/api/osconfig/v1"
 )
 
+type ospoliciesPackageZypperTestCase struct {
+	name        string
+	image       string
+	machineType string
+	timeout     time.Duration
+}
+
 // osPolicyPackageZypperTestCases returns the list of test cases for Zypper package policy tests.
-func osPolicyPackageZypperTestCases() []ospoliciesTestCase {
-	return []ospoliciesTestCase{
+func osPolicyPackageZypperTestCases() []ospoliciesPackageZypperTestCase {
+	return []ospoliciesPackageZypperTestCase{
 		// SLES
 		{
 			name:        "sles-15",
