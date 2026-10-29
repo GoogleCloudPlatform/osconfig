@@ -40,17 +40,30 @@ if ($testConnection.TcpTestSucceeded) {
 `
 
 const (
+	bootRecord1Marker     = "OSCONFIG_E2E_BOOT_COUNT_1"
+	bootRecord2Marker     = "OSCONFIG_E2E_BOOT_COUNT_2"
 	rebootSetupDoneMarker = "OSCONFIG_E2E_REBOOT_SETUP_DONE"
 
 	aptRebootStartupScript = `#!/bin/bash
 mkdir -p /var/lib/google
+boot_count=0
+if [ -f /var/lib/google/osconfig_e2e_boot_count ]; then
+  boot_count=$(cat /var/lib/google/osconfig_e2e_boot_count)
+fi
+boot_count=$((boot_count + 1))
+echo "$boot_count" > /var/lib/google/osconfig_e2e_boot_count
+echo "OSCONFIG_E2E_BOOT_COUNT_""$boot_count"
+
 if [ -f /var/lib/google/osconfig_e2e_reboot_setup_done ]; then
+  rm -f /var/run/reboot-required
   exit 0
 fi
 
 which google_osconfig_agent >/dev/null 2>&1 || which google-osconfig-agent >/dev/null 2>&1 || {
-  apt-get update
-  apt-get install -y google-osconfig-agent
+  for i in $(seq 1 30); do
+    (apt-get update && apt-get install -y google-osconfig-agent) && break
+    sleep 5
+  done
 }
 touch /var/run/reboot-required
 systemctl daemon-reload
@@ -63,16 +76,30 @@ echo "OSCONFIG_E2E_""REBOOT_SETUP_DONE"
 
 	elRebootStartupScript = `#!/bin/bash
 mkdir -p /var/lib/google
+boot_count=0
+if [ -f /var/lib/google/osconfig_e2e_boot_count ]; then
+  boot_count=$(cat /var/lib/google/osconfig_e2e_boot_count)
+fi
+boot_count=$((boot_count + 1))
+echo "$boot_count" > /var/lib/google/osconfig_e2e_boot_count
+echo "OSCONFIG_E2E_BOOT_COUNT_""$boot_count"
+
 if [ -f /var/lib/google/osconfig_e2e_reboot_setup_done ]; then
   exit 0
 fi
 
 which google_osconfig_agent >/dev/null 2>&1 || which google-osconfig-agent >/dev/null 2>&1 || {
   sed -i 's/repo_gpgcheck=1/repo_gpgcheck=0/g' /etc/yum.repos.d/google-cloud.repo 2>/dev/null || true
-  dnf install -y --nogpgcheck google-osconfig-agent || yum install -y --nogpgcheck google-osconfig-agent
+  for i in $(seq 1 30); do
+    (dnf install -y --nogpgcheck google-osconfig-agent || yum install -y --nogpgcheck google-osconfig-agent) && break
+    sleep 5
+  done
 }
 sleep 2
-dnf reinstall -y --nogpgcheck gnutls || yum reinstall -y --nogpgcheck gnutls
+for i in $(seq 1 30); do
+  (dnf reinstall -y --nogpgcheck gnutls || yum reinstall -y --nogpgcheck gnutls) && break
+  sleep 5
+done
 systemctl daemon-reload
 if ! systemctl is-active --quiet google-osconfig-agent; then
   systemctl enable --now google-osconfig-agent || true
@@ -83,15 +110,29 @@ echo "OSCONFIG_E2E_""REBOOT_SETUP_DONE"
 
 	suseRebootStartupScript = `#!/bin/bash
 mkdir -p /var/lib/google
+boot_count=0
+if [ -f /var/lib/google/osconfig_e2e_boot_count ]; then
+  boot_count=$(cat /var/lib/google/osconfig_e2e_boot_count)
+fi
+boot_count=$((boot_count + 1))
+echo "$boot_count" > /var/lib/google/osconfig_e2e_boot_count
+echo "OSCONFIG_E2E_BOOT_COUNT_""$boot_count"
+
 if [ -f /var/lib/google/osconfig_e2e_reboot_setup_done ]; then
   exit 0
 fi
 
 which google_osconfig_agent >/dev/null 2>&1 || which google-osconfig-agent >/dev/null 2>&1 || {
-  zypper --no-refresh -n -i --no-gpg-checks install google-osconfig-agent || zypper -n -i --no-gpg-checks install google-osconfig-agent
+  for i in $(seq 1 30); do
+    (zypper --no-refresh -n -i --no-gpg-checks install google-osconfig-agent || zypper -n -i --no-gpg-checks install google-osconfig-agent) && break
+    sleep 5
+  done
 }
 sleep 2
-zypper -n --no-gpg-checks in -f dbus-1
+for i in $(seq 1 30); do
+  zypper -n --no-gpg-checks in -f dbus-1 && break
+  sleep 5
+done
 systemctl daemon-reload
 if ! systemctl is-active --quiet google-osconfig-agent; then
   systemctl enable --now google-osconfig-agent || true
@@ -102,6 +143,15 @@ echo "OSCONFIG_E2E_""REBOOT_SETUP_DONE"
 
 	windowsRebootStartupScript = `
 New-Item -ItemType Directory -Force -Path 'C:\ProgramData\Google' | Out-Null
+$bootFile = 'C:\ProgramData\Google\osconfig_e2e_boot_count'
+$bootCount = 0
+if (Test-Path $bootFile) {
+    $bootCount = [int](Get-Content $bootFile -Raw)
+}
+$bootCount++
+Set-Content -Path $bootFile -Value "$bootCount" -Force
+Write-Output ("OSCONFIG_E2E_BOOT_COUNT_" + "$bootCount")
+
 $setupDone = 'C:\ProgramData\Google\osconfig_e2e_reboot_setup_done'
 if (Test-Path $setupDone) {
     Remove-Item -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired' -Force -ErrorAction SilentlyContinue
@@ -401,7 +451,7 @@ func TestOSPatchJobExecution(t *testing.T) {
 }
 
 // TestOSPatchJobDoesNotReboot verifies that RebootConfig=NEVER prevents rebooting
-// even when a reboot is required, reporting SucceededRebootRequiredInstanceCount > 0.
+// even when a reboot is required, reporting SucceededRebootRequiredInstanceCount == 1.
 // This migrates "[PatchJob does not reboot]" from e2e_tests/test_suites/patch/patch.go.
 func TestOSPatchJobDoesNotReboot(t *testing.T) {
 	for _, tc := range rebootTestCases {
@@ -451,16 +501,23 @@ func TestOSPatchJobDoesNotReboot(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				if pj.InstanceDetailsSummary.SucceededRebootRequiredInstanceCount == 0 {
-					return fmt.Errorf("expected SucceededRebootRequiredInstanceCount > 0 for RebootConfig=NEVER, got summary: %+v", pj.InstanceDetailsSummary)
+				if pj.InstanceDetailsSummary.SucceededRebootRequiredInstanceCount != 1 || pj.InstanceDetailsSummary.SucceededInstanceCount != 0 {
+					return fmt.Errorf("expected SucceededRebootRequiredInstanceCount == 1 and SucceededInstanceCount == 0 for RebootConfig=NEVER, got summary: %+v", pj.InstanceDetailsSummary)
 				}
 
-				agentStarts, err := test.SerialOutputRegexCount(vm, testenv.AgentStartedRegex)
+				boot2Count, err := test.SerialOutputCount(vm, bootRecord2Marker)
 				if err != nil {
-					return fmt.Errorf("read agent start count from serial output after RebootConfig=NEVER: %w", err)
+					return fmt.Errorf("read boot 2 count from serial output after RebootConfig=NEVER: %w", err)
 				}
-				if agentStarts > 1 {
-					return fmt.Errorf("instance should not have rebooted with RebootConfig=NEVER, found %d agent starts in serial output", agentStarts)
+				if boot2Count > 0 {
+					return fmt.Errorf("instance should not have rebooted with RebootConfig=NEVER, found %d boot 2 records in serial output", boot2Count)
+				}
+				boot1Count, err := test.SerialOutputCount(vm, bootRecord1Marker)
+				if err != nil {
+					return fmt.Errorf("read boot 1 count from serial output after RebootConfig=NEVER: %w", err)
+				}
+				if boot1Count == 0 {
+					return fmt.Errorf("expected at least 1 boot 1 record in serial output, found 0")
 				}
 				return nil
 			})
@@ -469,7 +526,7 @@ func TestOSPatchJobDoesNotReboot(t *testing.T) {
 }
 
 // TestOSPatchJobTriggersReboot verifies that RebootConfig=DEFAULT triggers a VM reboot
-// when a reboot is required, reporting SucceededInstanceCount > 0 and SucceededRebootRequiredInstanceCount == 0.
+// when a reboot is required, reporting SucceededInstanceCount == 1 and SucceededRebootRequiredInstanceCount == 0.
 // This migrates "[PatchJob triggers reboot]" from e2e_tests/test_suites/patch/patch.go.
 func TestOSPatchJobTriggersReboot(t *testing.T) {
 	for _, tc := range rebootTestCases {
@@ -519,12 +576,12 @@ func TestOSPatchJobTriggersReboot(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				if pj.InstanceDetailsSummary.SucceededRebootRequiredInstanceCount > 0 {
-					return fmt.Errorf("expected SucceededRebootRequiredInstanceCount == 0 after RebootConfig=DEFAULT reboot, got summary: %+v", pj.InstanceDetailsSummary)
+				if pj.InstanceDetailsSummary.SucceededInstanceCount != 1 || pj.InstanceDetailsSummary.SucceededRebootRequiredInstanceCount != 0 {
+					return fmt.Errorf("expected SucceededInstanceCount == 1 and SucceededRebootRequiredInstanceCount == 0 after RebootConfig=DEFAULT reboot, got summary: %+v", pj.InstanceDetailsSummary)
 				}
 
-				if _, err := test.WaitForSerialOutputRegexCount(vm, testenv.AgentStartedRegex, 2); err != nil {
-					return fmt.Errorf("wait for agent restart in serial output after RebootConfig=DEFAULT: %w", err)
+				if _, err := test.WaitForSerialOutputCount(vm, bootRecord2Marker, 1); err != nil {
+					return fmt.Errorf("wait for reboot in serial output after RebootConfig=DEFAULT: %w", err)
 				}
 				return nil
 			})

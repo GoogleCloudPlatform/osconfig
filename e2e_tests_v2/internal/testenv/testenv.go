@@ -53,9 +53,6 @@ const (
 var (
 	unsafeResourceName = regexp.MustCompile(`[^a-z0-9-]+`)
 
-	// AgentStartedRegex matches the OS Config agent startup log line in serial console output.
-	AgentStartedRegex = regexp.MustCompile(`OSConfig Agent \(version [^)]+\) started\.`) 
-
 	globalMu      sync.Mutex
 	globalSuite   *Suite
 	globalInitErr error
