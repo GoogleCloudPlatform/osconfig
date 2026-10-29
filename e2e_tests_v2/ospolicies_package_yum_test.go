@@ -26,9 +26,16 @@ import (
 	"google.golang.org/api/osconfig/v1"
 )
 
+type ospoliciesPackageYumTestCase struct {
+	name        string
+	image       string
+	machineType string
+	timeout     time.Duration
+}
+
 // osPolicyPackageYumTestCases returns the list of test cases for Yum package policy tests.
-func osPolicyPackageYumTestCases() []ospoliciesTestCase {
-	return []ospoliciesTestCase{
+func osPolicyPackageYumTestCases() []ospoliciesPackageYumTestCase {
+	return []ospoliciesPackageYumTestCase{
 		// RHEL
 		{
 			name:        "rhel-8",
