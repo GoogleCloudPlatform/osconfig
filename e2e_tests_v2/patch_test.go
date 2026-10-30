@@ -195,4 +195,3 @@ func TestOSPatchJobExecution(t *testing.T) {
 		})
 	}
 }
-

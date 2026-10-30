@@ -141,4 +141,3 @@ func TestOSPatchYumExclusivePackages(t *testing.T) {
 		})
 	}
 }
-
