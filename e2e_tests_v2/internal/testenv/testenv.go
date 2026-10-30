@@ -922,7 +922,6 @@ func (test *Test) WaitForSerialOutputRegexCount(vm *gcp.VM, re *regexp.Regexp, m
 	return result, nil
 }
 
-
 func resourceName(runID, testName, attempt string) string {
 	base := labelValue(fmt.Sprintf("inv-%s-%s", runID, testName))
 	if len(base) > 53 {

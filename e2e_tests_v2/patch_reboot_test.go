@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/gcp"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/testenv"
@@ -174,111 +173,12 @@ var (
 		gcp.MetadataKeyWindowsStartupScript: windowsRebootStartupScript,
 	}
 
-	rebootTestCases = []patchJobTestCase{
-		// Debian
-		{
-			name:        "debian-12",
-			image:       "projects/debian-cloud/global/images/family/debian-12",
-			machineType: "e2-standard-2",
-			timeout:     40 * time.Minute,
-			extraMeta:   aptRebootMeta,
-		},
-		// Ubuntu
-		{
-			name:        "ubuntu-2204-lts",
-			image:       "projects/ubuntu-os-cloud/global/images/family/ubuntu-2204-lts",
-			machineType: "e2-standard-2",
-			timeout:     40 * time.Minute,
-			extraMeta:   aptRebootMeta,
-		},
-		{
-			name:        "ubuntu-2404-lts",
-			image:       "projects/ubuntu-os-cloud/global/images/family/ubuntu-2404-lts-amd64",
-			machineType: "e2-standard-2",
-			timeout:     40 * time.Minute,
-			extraMeta:   aptRebootMeta,
-		},
-		// EL (RHEL, CentOS, Rocky)
-		{
-			name:        "rhel-8",
-			image:       "projects/rhel-cloud/global/images/family/rhel-8",
-			machineType: "e2-standard-4",
-			timeout:     45 * time.Minute,
-			extraMeta:   elRebootMeta,
-		},
-		{
-			name:        "rhel-9",
-			image:       "projects/rhel-cloud/global/images/family/rhel-9",
-			machineType: "e2-standard-4",
-			timeout:     45 * time.Minute,
-			extraMeta:   elRebootMeta,
-		},
-		{
-			name:        "centos-stream-9",
-			image:       "projects/centos-cloud/global/images/family/centos-stream-9",
-			machineType: "e2-standard-4",
-			timeout:     45 * time.Minute,
-			extraMeta:   elRebootMeta,
-		},
-		{
-			name:        "rocky-linux-8",
-			image:       "projects/rocky-linux-cloud/global/images/family/rocky-linux-8-optimized-gcp",
-			machineType: "e2-standard-4",
-			timeout:     45 * time.Minute,
-			extraMeta:   elRebootMeta,
-		},
-		{
-			name:        "rocky-linux-9",
-			image:       "projects/rocky-linux-cloud/global/images/family/rocky-linux-9-optimized-gcp",
-			machineType: "e2-standard-4",
-			timeout:     45 * time.Minute,
-			extraMeta:   elRebootMeta,
-		},
-		// SUSE
-		{
-			name:        "sles-12",
-			image:       "projects/suse-cloud/global/images/family/sles-12",
-			machineType: "e2-standard-2",
-			timeout:     40 * time.Minute,
-			extraMeta:   suseRebootMeta,
-		},
-		{
-			name:        "sles-15",
-			image:       "projects/suse-cloud/global/images/family/sles-15",
-			machineType: "e2-standard-2",
-			timeout:     40 * time.Minute,
-			extraMeta:   suseRebootMeta,
-		},
-		{
-			name:        "opensuse-leap-15",
-			image:       "projects/opensuse-cloud/global/images/family/opensuse-leap",
-			machineType: "e2-standard-2",
-			timeout:     40 * time.Minute,
-			extraMeta:   suseRebootMeta,
-		},
-		// Windows
-		{
-			name:        "windows-2016",
-			image:       "projects/windows-cloud/global/images/family/windows-2016",
-			machineType: "e2-standard-4",
-			timeout:     60 * time.Minute,
-			extraMeta:   windowsRebootMeta,
-		},
-		{
-			name:        "windows-2019",
-			image:       "projects/windows-cloud/global/images/family/windows-2019",
-			machineType: "e2-standard-4",
-			timeout:     50 * time.Minute,
-			extraMeta:   windowsRebootMeta,
-		},
-		{
-			name:        "windows-2022",
-			image:       "projects/windows-cloud/global/images/family/windows-2022",
-			machineType: "e2-standard-4",
-			timeout:     50 * time.Minute,
-			extraMeta:   windowsRebootMeta,
-		},
-	}
+	rebootTestCases = gcp.WithFamilyMeta(gcp.FamilyMeta{
+		Apt:     aptRebootMeta,
+		Yum:     elRebootMeta,
+		Zypper:  suseRebootMeta,
+		Windows: windowsRebootMeta,
+	})
 )
 
 // TestOSPatchJobDoesNotReboot verifies that RebootConfig=NEVER prevents rebooting
@@ -286,21 +186,21 @@ var (
 // This migrates "[PatchJob does not reboot]" from e2e_tests/test_suites/patch/patch.go.
 func TestOSPatchJobDoesNotReboot(t *testing.T) {
 	for _, tc := range rebootTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
-			test := testenv.New(t, tc.timeout)
+			test := testenv.New(t, tc.Timeout)
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
 				meta := map[string]string{
 					"osconfig-disabled-features": "guestpolicies",
 				}
-				for k, v := range tc.extraMeta {
+				for k, v := range tc.ExtraMeta {
 					meta[k] = v
 				}
 				var err error
-				vm, err = test.CreateVM(tc.image, tc.machineType, meta)
+				vm, err = test.CreateVM(tc.Image, tc.MachineType, meta)
 				return err
 			})
 
@@ -322,7 +222,7 @@ func TestOSPatchJobDoesNotReboot(t *testing.T) {
 						RebootConfig: "NEVER",
 						Apt:          &osconfig.AptSettings{Type: "DIST"},
 					},
-					Duration: fmt.Sprintf("%ds", int(tc.timeout.Seconds())),
+					Duration: fmt.Sprintf("%ds", int(tc.Timeout.Seconds())),
 				}
 				job, err := test.ExecutePatchJob(req)
 				if err != nil {
@@ -361,21 +261,21 @@ func TestOSPatchJobDoesNotReboot(t *testing.T) {
 // This migrates "[PatchJob triggers reboot]" from e2e_tests/test_suites/patch/patch.go.
 func TestOSPatchJobTriggersReboot(t *testing.T) {
 	for _, tc := range rebootTestCases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
-			test := testenv.New(t, tc.timeout)
+			test := testenv.New(t, tc.Timeout)
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
 				meta := map[string]string{
 					"osconfig-disabled-features": "guestpolicies",
 				}
-				for k, v := range tc.extraMeta {
+				for k, v := range tc.ExtraMeta {
 					meta[k] = v
 				}
 				var err error
-				vm, err = test.CreateVM(tc.image, tc.machineType, meta)
+				vm, err = test.CreateVM(tc.Image, tc.MachineType, meta)
 				return err
 			})
 
@@ -397,7 +297,7 @@ func TestOSPatchJobTriggersReboot(t *testing.T) {
 						RebootConfig: "DEFAULT",
 						Apt:          &osconfig.AptSettings{Type: "DIST"},
 					},
-					Duration: fmt.Sprintf("%ds", int(tc.timeout.Seconds())),
+					Duration: fmt.Sprintf("%ds", int(tc.Timeout.Seconds())),
 				}
 				job, err := test.ExecutePatchJob(req)
 				if err != nil {
@@ -419,4 +319,3 @@ func TestOSPatchJobTriggersReboot(t *testing.T) {
 		})
 	}
 }
-
