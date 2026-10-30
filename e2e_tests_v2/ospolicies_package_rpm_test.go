@@ -26,9 +26,16 @@ import (
 	"google.golang.org/api/osconfig/v1"
 )
 
+type ospoliciesPackageRpmTestCase struct {
+	name        string
+	image       string
+	machineType string
+	timeout     time.Duration
+}
+
 // osPolicyPackageRpmTestCases returns the list of test cases for Rpm package policy tests.
-func osPolicyPackageRpmTestCases() []ospoliciesTestCase {
-	return []ospoliciesTestCase{
+func osPolicyPackageRpmTestCases() []ospoliciesPackageRpmTestCase {
+	return []ospoliciesPackageRpmTestCase{
 		// RHEL
 		{
 			name:        "rhel-8",

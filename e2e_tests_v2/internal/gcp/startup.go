@@ -110,17 +110,17 @@ func DefaultStartupScript(image string) (key, content string) {
 }
 
 // OSPolicyPackageRpmStartupScript returns the metadata key and startup script for testing Rpm package policy.
-// It stops the agent, bootstraps it, and imports Google RPM signing keys.
+// It stops the agent, imports Google RPM signing keys, and bootstraps the agent.
 func OSPolicyPackageRpmStartupScript(image string) (key, content string) {
 	baseKey, baseScript := DefaultStartupScript(image)
 	script := fmt.Sprintf(`#!/bin/bash
 set -x
 systemctl stop google-osconfig-agent || true
 
-%s
-
 rpm --import https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg || true
 rpm --import https://dl.google.com/linux/linux_signing_key.pub || true
+
+%s
 `, baseScript)
 
 	return baseKey, script
