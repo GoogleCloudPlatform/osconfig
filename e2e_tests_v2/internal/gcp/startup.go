@@ -14,7 +14,10 @@
 
 package gcp
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 const (
 	// MetadataKeyLinuxStartupScript is the metadata key for Linux startup scripts.
@@ -133,4 +136,24 @@ func DefaultStartupScript(image string) (key, content string) {
 	default:
 		return MetadataKeyLinuxStartupScript, DebianStartupScript()
 	}
+}
+
+// OSPolicyPackageZypperStartupScript returns the metadata key and startup script for testing Zypper package policy.
+// It installs the package to be removed (vim), removes the package to be installed (ed),
+// and bootstraps the agent.
+func OSPolicyPackageZypperStartupScript(image string) (key, content string) {
+	baseKey, baseScript := DefaultStartupScript(image)
+	script := fmt.Sprintf(`#!/bin/bash
+set -x
+systemctl stop google-osconfig-agent || true
+
+# install the package we want removed
+zypper -n install vim
+# remove the package we want installed
+zypper -n remove ed
+
+%s
+`, baseScript)
+
+	return baseKey, script
 }
