@@ -56,10 +56,10 @@ type VMRequest struct {
 
 // Client manages GCP API clients for Compute Engine and OS Config.
 type Client struct {
-	compute       *compute.Service
-	osconfig      *osconfig.Service
-	osconfigBeta  *osconfigv1beta.Service
-	pollInterval  time.Duration
+	compute      *compute.Service
+	osconfig     *osconfig.Service
+	osconfigBeta *osconfigv1beta.Service
+	pollInterval time.Duration
 	// guestPolicyMu serializes OS Config v1beta GuestPolicy creations across concurrent tests
 	// to avoid exceeding the project-level API mutation rate limits (QPS) and backend transaction conflicts.
 	guestPolicyMu sync.Mutex
