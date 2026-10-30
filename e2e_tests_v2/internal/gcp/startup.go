@@ -14,7 +14,10 @@
 
 package gcp
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 const (
 	// MetadataKeyLinuxStartupScript is the metadata key for Linux startup scripts.
@@ -133,4 +136,21 @@ func DefaultStartupScript(image string) (key, content string) {
 	default:
 		return MetadataKeyLinuxStartupScript, DebianStartupScript()
 	}
+}
+
+// OSPolicyPackageRpmStartupScript returns the metadata key and startup script for testing Rpm package policy.
+// It stops the agent, imports Google RPM signing keys, and bootstraps the agent.
+func OSPolicyPackageRpmStartupScript(image string) (key, content string) {
+	baseKey, baseScript := DefaultStartupScript(image)
+	script := fmt.Sprintf(`#!/bin/bash
+set -x
+systemctl stop google-osconfig-agent || true
+
+rpm --import https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg || true
+rpm --import https://dl.google.com/linux/linux_signing_key.pub || true
+
+%s
+`, baseScript)
+
+	return baseKey, script
 }
