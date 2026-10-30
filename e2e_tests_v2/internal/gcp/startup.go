@@ -14,7 +14,10 @@
 
 package gcp
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 const (
 	// MetadataKeyLinuxStartupScript is the metadata key for Linux startup scripts.
@@ -133,4 +136,24 @@ func DefaultStartupScript(image string) (key, content string) {
 	default:
 		return MetadataKeyLinuxStartupScript, DebianStartupScript()
 	}
+}
+
+// OSPolicyPackageYumStartupScript returns the metadata key and startup script for testing Yum package policy.
+// It installs the package to be removed (nano), removes the package to be installed (ed),
+// and bootstraps the agent.
+func OSPolicyPackageYumStartupScript(image string) (key, content string) {
+	baseKey, baseScript := DefaultStartupScript(image)
+	script := fmt.Sprintf(`#!/bin/bash
+set -x
+systemctl stop google-osconfig-agent || true
+
+# install the package we want removed
+yum -y install nano
+# remove the package we want installed
+yum -y remove ed
+
+%s
+`, baseScript)
+
+	return baseKey, script
 }
