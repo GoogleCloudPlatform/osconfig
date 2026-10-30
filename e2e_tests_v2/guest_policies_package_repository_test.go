@@ -24,6 +24,7 @@ import (
 
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/gcp"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/testenv"
+	osconfigv1 "google.golang.org/api/osconfig/v1"
 	osconfigv1beta "google.golang.org/api/osconfig/v1beta"
 )
 
@@ -256,9 +257,19 @@ func TestGuestPoliciesPackageRepositories(t *testing.T) {
 				return err
 			})
 
+			var inv *osconfigv1.Inventory
 			test.Step("wait for OS Config agent ready", func(ctx context.Context) error {
-				_, err := test.WaitForInventory(vm)
+				var err error
+				inv, err = test.WaitForInventory(vm)
 				return err
+			})
+
+			test.Step("verify package is not installed initially", func(ctx context.Context) error {
+				pkgs := testenv.ExtractInstalledPackages(inv)
+				if pkgs != nil && pkgs.HasPackageIn(tc.wantPackageManager, tc.packageName) {
+					return fmt.Errorf("package %q is already installed under %s before creating guest policy", tc.packageName, tc.wantPackageManager)
+				}
+				return nil
 			})
 
 			test.Step("create guest policy with package repository", func(ctx context.Context) error {
