@@ -91,7 +91,7 @@ func buildMsiPackageOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignme
 											Gcs: &osconfig.OSPolicyResourceFileGcs{
 												Bucket:     "osconfig-agent-end2end-test-resources",
 												Object:     "OSPolicies/googlechromestandaloneenterprise64.msi",
-												Generation: 1619046639806899,
+												Generation: 1720172515592258,
 											},
 										},
 									},
