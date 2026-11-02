@@ -21,15 +21,19 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/config"
+	"golang.org/x/sync/semaphore"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 	"google.golang.org/api/osconfig/v1"
 	osconfigv1beta "google.golang.org/api/osconfig/v1beta"
+)
+
+const (
+	guestPolicyConcurrencyLimit = 5
 )
 
 // VM represents an active or planned Compute Engine instance.
@@ -60,9 +64,9 @@ type Client struct {
 	osconfig     *osconfig.Service
 	osconfigBeta *osconfigv1beta.Service
 	pollInterval time.Duration
-	// guestPolicyMu serializes OS Config v1beta GuestPolicy creations across concurrent tests
+	// guestPolicySem limits concurrent OS Config v1beta GuestPolicy creations across concurrent tests
 	// to avoid exceeding the project-level API mutation rate limits (QPS) and backend transaction conflicts.
-	guestPolicyMu sync.Mutex
+	guestPolicySem *semaphore.Weighted
 }
 
 // NewClient initializes the Compute Engine and OS Config API clients using Application Default Credentials.
@@ -82,10 +86,11 @@ func NewClient(ctx context.Context, cfg config.Config) (*Client, error) {
 	}
 
 	return &Client{
-		compute:      computeService,
-		osconfig:     osconfigService,
-		osconfigBeta: osconfigBetaService,
-		pollInterval: cfg.PollInterval,
+		compute:        computeService,
+		osconfig:       osconfigService,
+		osconfigBeta:   osconfigBetaService,
+		pollInterval:   cfg.PollInterval,
+		guestPolicySem: semaphore.NewWeighted(guestPolicyConcurrencyLimit),
 	}, nil
 }
 
@@ -225,10 +230,14 @@ func (c *Client) ListPatchJobInstanceDetails(ctx context.Context, parent string)
 }
 
 // CreateGuestPolicy creates an OS Config v1beta GuestPolicy in the specified project.
-// It acquires guestPolicyMu to serialize creation across parallel tests and avoid project-level QPS rate limits.
+// It acquires guestPolicySem to limit concurrent creations across parallel tests and avoid project-level QPS rate limits.
 func (c *Client) CreateGuestPolicy(ctx context.Context, project, policyID string, policy *osconfigv1beta.GuestPolicy) (*osconfigv1beta.GuestPolicy, error) {
-	c.guestPolicyMu.Lock()
-	defer c.guestPolicyMu.Unlock()
+	if c.guestPolicySem != nil {
+		if err := c.guestPolicySem.Acquire(ctx, 1); err != nil {
+			return nil, fmt.Errorf("failed to acquire guest policy semaphore: %w", err)
+		}
+		defer c.guestPolicySem.Release(1)
+	}
 
 	parent := fmt.Sprintf("projects/%s", project)
 	created, err := c.osconfigBeta.Projects.GuestPolicies.Create(parent, policy).GuestPolicyId(policyID).Context(ctx).Do()
