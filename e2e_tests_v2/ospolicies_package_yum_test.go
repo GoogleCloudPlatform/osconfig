@@ -26,6 +26,11 @@ import (
 	"google.golang.org/api/osconfig/v1"
 )
 
+const ensureYumTestStateScript = `set -x
+systemctl stop google-osconfig-agent || true
+yum -y install nano
+yum -y remove ed`
+
 type ospoliciesPackageYumTestCase struct {
 	name        string
 	image       string
@@ -134,11 +139,7 @@ func TestOSPolicyPackageResourceYum(t *testing.T) {
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
-				preAgentBootstrap := `set -x
-systemctl stop google-osconfig-agent || true
-yum -y install nano
-yum -y remove ed`
-				scriptKey, scriptContent := gcp.StartupScript(tt.image, preAgentBootstrap, "")
+				scriptKey, scriptContent := gcp.StartupScript(tt.image, ensureYumTestStateScript, "")
 				customMetadata := map[string]string{
 					"osconfig-disabled-features": "guestpolicies",
 					scriptKey:                    scriptContent,
