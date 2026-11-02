@@ -26,6 +26,11 @@ import (
 	"google.golang.org/api/osconfig/v1"
 )
 
+const ensureZypperTestStateScript = `set -x
+systemctl stop google-osconfig-agent || true
+zypper -n install vim
+zypper -n remove ed`
+
 type ospoliciesPackageZypperTestCase struct {
 	name        string
 	image       string
@@ -115,11 +120,7 @@ func TestOSPolicyPackageResourceZypper(t *testing.T) {
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
-				preAgentBootstrap := `set -x
-systemctl stop google-osconfig-agent || true
-zypper -n install vim
-zypper -n remove ed`
-				scriptKey, scriptContent := gcp.StartupScript(tt.image, preAgentBootstrap, "")
+				scriptKey, scriptContent := gcp.StartupScript(tt.image, ensureZypperTestStateScript, "")
 				customMetadata := map[string]string{
 					"osconfig-disabled-features": "guestpolicies",
 					scriptKey:                    scriptContent,
