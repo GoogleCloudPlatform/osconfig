@@ -59,7 +59,7 @@ func osPolicyRepositoryGooGetTestCases() []ospoliciesRepoGooGetTestCase {
 }
 
 // buildGooGetRepositoryOSPolicyAssignment constructs the OSPolicyAssignment for testing GooGet repositories.
-// It adds the Google OSConfig Agent Test Repository and enforces that "osconfig-agent-test" is INSTALLED on the target VM.
+// It adds the Google Cloud Agent for SAP repository and enforces that "google-cloud-sap-agent" is INSTALLED on the target VM.
 func buildGooGetRepositoryOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignment {
 	return &osconfig.OSPolicyAssignment{
 		InstanceFilter: &osconfig.OSPolicyAssignmentInstanceFilter{
@@ -84,8 +84,8 @@ func buildGooGetRepositoryOSPolicyAssignment(vmName string) *osconfig.OSPolicyAs
 								Id: "install-repo",
 								Repository: &osconfig.OSPolicyResourceRepositoryResource{
 									Goo: &osconfig.OSPolicyResourceRepositoryResourceGooRepository{
-										Name: "Google OSConfig Agent Test Repository",
-										Url:  "https://packages.cloud.google.com/yuck/repos/osconfig-agent-test-repository",
+										Name: "Google Cloud Agent for SAP",
+										Url:  "https://packages.cloud.google.com/yuck/repos/google-cloud-sap-agent-windows",
 									},
 								},
 							},
@@ -94,7 +94,7 @@ func buildGooGetRepositoryOSPolicyAssignment(vmName string) *osconfig.OSPolicyAs
 								Pkg: &osconfig.OSPolicyResourcePackageResource{
 									DesiredState: "INSTALLED",
 									Googet: &osconfig.OSPolicyResourcePackageResourceGooGet{
-										Name: "osconfig-agent-test",
+										Name: "google-cloud-sap-agent",
 									},
 								},
 							},
@@ -107,7 +107,7 @@ func buildGooGetRepositoryOSPolicyAssignment(vmName string) *osconfig.OSPolicyAs
 }
 
 // TestOSPolicyRepositoryResourceGooGet verifies that the OS Config agent configures a GooGet repository
-// and installs a package ("osconfig-agent-test") from it on Windows instances.
+// and installs a package ("google-cloud-sap-agent") from it on Windows instances.
 func TestOSPolicyRepositoryResourceGooGet(t *testing.T) {
 	const wantCompliances = 1
 	tests := osPolicyRepositoryGooGetTestCases()
@@ -142,7 +142,7 @@ func TestOSPolicyRepositoryResourceGooGet(t *testing.T) {
 			})
 
 			test.Step("verify package installed via inventory", func(ctx context.Context) error {
-				return test.WaitForPackages(vm, []string{"osconfig-agent-test"}, nil)
+				return test.WaitForPackages(vm, []string{"google-cloud-sap-agent"}, nil)
 			})
 		})
 	}
