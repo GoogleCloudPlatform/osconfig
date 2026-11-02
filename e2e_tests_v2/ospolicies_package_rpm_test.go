@@ -26,6 +26,11 @@ import (
 	"google.golang.org/api/osconfig/v1"
 )
 
+const ensureRpmTestStateScript = `set -x
+systemctl stop google-osconfig-agent || true
+rpm --import https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg || true
+rpm --import https://dl.google.com/linux/linux_signing_key.pub || true`
+
 type ospoliciesPackageRpmTestCase struct {
 	name        string
 	image       string
@@ -160,11 +165,7 @@ func TestOSPolicyPackageResourceRpm(t *testing.T) {
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
-				preAgentBootstrap := `set -x
-systemctl stop google-osconfig-agent || true
-rpm --import https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg || true
-rpm --import https://dl.google.com/linux/linux_signing_key.pub || true`
-				scriptKey, scriptContent := gcp.StartupScript(tt.image, preAgentBootstrap, "")
+				scriptKey, scriptContent := gcp.StartupScript(tt.image, ensureRpmTestStateScript, "")
 				customMetadata := map[string]string{
 					"osconfig-disabled-features": "guestpolicies",
 					scriptKey:                    scriptContent,
