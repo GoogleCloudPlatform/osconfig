@@ -26,9 +26,25 @@ import (
 	"google.golang.org/api/osconfig/v1"
 )
 
+const ensureGooGetTestStateScript = `$svc = Get-Service google_osconfig_agent -ErrorAction SilentlyContinue
+if ($svc -and $svc.Status -eq 'Running') {
+    Stop-Service google_osconfig_agent -Force -ErrorAction SilentlyContinue
+}
+
+googet addrepo test https://packages.cloud.google.com/yuck/repos/osconfig-agent-test-repository
+googet -noconfirm install certgen
+googet -noconfirm remove google-compute-engine-ssh`
+
+type ospoliciesPackageGooGetTestCase struct {
+	name        string
+	image       string
+	machineType string
+	timeout     time.Duration
+}
+
 // osPolicyPackageGooGetTestCases returns the list of test cases for GooGet package policy tests.
-func osPolicyPackageGooGetTestCases() []ospoliciesTestCase {
-	return []ospoliciesTestCase{
+func osPolicyPackageGooGetTestCases() []ospoliciesPackageGooGetTestCase {
+	return []ospoliciesPackageGooGetTestCase{
 		// Windows Server
 		{
 			name:        "windows-2016",
@@ -113,7 +129,7 @@ func TestOSPolicyPackageResourceGooGet(t *testing.T) {
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
-				scriptKey, scriptContent := gcp.OSPolicyPackageGooGetStartupScript(tt.image)
+				scriptKey, scriptContent := gcp.StartupScript(tt.image, ensureGooGetTestStateScript, "")
 				customMetadata := map[string]string{
 					"osconfig-disabled-features": "guestpolicies",
 					scriptKey:                    scriptContent,
