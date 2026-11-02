@@ -134,7 +134,11 @@ func TestOSPolicyPackageResourceYum(t *testing.T) {
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
-				scriptKey, scriptContent := gcp.OSPolicyPackageYumStartupScript(tt.image)
+				preAgentBootstrap := `set -x
+systemctl stop google-osconfig-agent || true
+yum -y install nano
+yum -y remove ed`
+				scriptKey, scriptContent := gcp.StartupScript(tt.image, preAgentBootstrap, "")
 				customMetadata := map[string]string{
 					"osconfig-disabled-features": "guestpolicies",
 					scriptKey:                    scriptContent,
