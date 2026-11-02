@@ -31,7 +31,6 @@ if ($svc -and $svc.Status -eq 'Running') {
     Stop-Service google_osconfig_agent -Force -ErrorAction SilentlyContinue
 }
 
-googet addrepo test https://packages.cloud.google.com/yuck/repos/osconfig-agent-test-repository
 googet -noconfirm install certgen
 googet -noconfirm remove google-compute-engine-ssh`
 
