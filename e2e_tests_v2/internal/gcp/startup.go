@@ -26,87 +26,122 @@ const (
 	MetadataKeyWindowsStartupScript = "windows-startup-script-ps1"
 )
 
-// DebianStartupScript returns the agent bootstrap script for Debian and Ubuntu systems.
+// DebianStartupScript returns the agent bootstrap script template for Debian and Ubuntu systems.
 func DebianStartupScript() string {
 	return `#!/bin/bash
+if [ -f /var/lib/google/osconfig_e2e_bootstrapped ]; then
+  exit 0
+fi
+%s
 which google_osconfig_agent >/dev/null 2>&1 || which google-osconfig-agent >/dev/null 2>&1 || {
   apt-get update
   apt-get install -y google-osconfig-agent
 }
-uri="http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/guestInventory/LastUpdated"
-curl -X DELETE "$uri" -H "Metadata-Flavor: Google" || true
 systemctl daemon-reload
-systemctl enable --now google-osconfig-agent || true
-systemctl restart google-osconfig-agent || true
+if ! systemctl is-active --quiet google-osconfig-agent; then
+  systemctl enable --now google-osconfig-agent || true
+fi
+%s
+mkdir -p /var/lib/google
+touch /var/lib/google/osconfig_e2e_bootstrapped
 `
 }
 
-// RHELStartupScript returns the agent bootstrap script for RHEL, CentOS, Rocky, and Fedora systems.
+// RHELStartupScript returns the agent bootstrap script template for RHEL, CentOS, Rocky, and Fedora systems.
 func RHELStartupScript() string {
 	return `#!/bin/bash
+if [ -f /var/lib/google/osconfig_e2e_bootstrapped ]; then
+  exit 0
+fi
+%s
 which google_osconfig_agent >/dev/null 2>&1 || which google-osconfig-agent >/dev/null 2>&1 || {
   sed -i 's/repo_gpgcheck=1/repo_gpgcheck=0/g' /etc/yum.repos.d/google-cloud.repo 2>/dev/null || true
   dnf install -y --nogpgcheck google-osconfig-agent || yum install -y --nogpgcheck google-osconfig-agent
 }
-uri="http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/guestInventory/LastUpdated"
-curl -X DELETE "$uri" -H "Metadata-Flavor: Google" || true
 systemctl daemon-reload
-systemctl enable --now google-osconfig-agent || true
-systemctl restart google-osconfig-agent || true
+if ! systemctl is-active --quiet google-osconfig-agent; then
+  systemctl enable --now google-osconfig-agent || true
+fi
+%s
+mkdir -p /var/lib/google
+touch /var/lib/google/osconfig_e2e_bootstrapped
 `
 }
 
-// SUSEStartupScript returns the agent bootstrap script for SLES and openSUSE systems.
+// SUSEStartupScript returns the agent bootstrap script template for SLES and openSUSE systems.
 func SUSEStartupScript() string {
 	return `#!/bin/bash
+if [ -f /var/lib/google/osconfig_e2e_bootstrapped ]; then
+  exit 0
+fi
+%s
 which google_osconfig_agent >/dev/null 2>&1 || which google-osconfig-agent >/dev/null 2>&1 || {
   zypper --no-refresh -n -i --no-gpg-checks install google-osconfig-agent || zypper -n -i --no-gpg-checks install google-osconfig-agent
 }
-uri="http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/guestInventory/LastUpdated"
-curl -X DELETE "$uri" -H "Metadata-Flavor: Google" || true
 systemctl daemon-reload
-systemctl enable --now google-osconfig-agent || true
-systemctl restart google-osconfig-agent || true
+if ! systemctl is-active --quiet google-osconfig-agent; then
+  systemctl enable --now google-osconfig-agent || true
+fi
+%s
+mkdir -p /var/lib/google
+touch /var/lib/google/osconfig_e2e_bootstrapped
 `
 }
 
-// COSStartupScript returns the agent bootstrap script for Container-Optimized OS.
+// COSStartupScript returns the agent bootstrap script template for Container-Optimized OS.
 func COSStartupScript() string {
 	return `#!/bin/bash
-uri="http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/guestInventory/LastUpdated"
-curl -X DELETE "$uri" -H "Metadata-Flavor: Google" || true
-systemctl restart google-osconfig-agent || true
+if [ -f /var/lib/google/osconfig_e2e_bootstrapped ]; then
+  exit 0
+fi
+%s
+if ! systemctl is-active --quiet google-osconfig-agent; then
+  systemctl start google-osconfig-agent || true
+fi
+%s
+mkdir -p /var/lib/google
+touch /var/lib/google/osconfig_e2e_bootstrapped
 `
 }
 
-// WindowsStartupScript returns the PowerShell agent bootstrap script for Windows systems.
+// WindowsStartupScript returns the PowerShell agent bootstrap script template for Windows systems.
 func WindowsStartupScript() string {
-	return `$uri = 'http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/guestInventory/LastUpdated'
-Invoke-RestMethod -Method DELETE -Uri $uri -Headers @{"Metadata-Flavor" = "Google"} -ErrorAction SilentlyContinue
+	return `$marker = 'C:\ProgramData\Google\osconfig_e2e_bootstrapped'
+if (Test-Path $marker) {
+    exit 0
+}
+%s
 $svc = Get-Service google_osconfig_agent -ErrorAction SilentlyContinue
-if ($svc -and $svc.Status -eq 'Running') {
-    Restart-Service google_osconfig_agent -ErrorAction SilentlyContinue
-} else {
+if ($svc -and $svc.Status -ne 'Running') {
     Start-Service google_osconfig_agent -ErrorAction SilentlyContinue
 }
+%s
+New-Item -ItemType Directory -Force -Path 'C:\ProgramData\Google' | Out-Null
+New-Item -ItemType File -Force -Path $marker | Out-Null
 `
+}
+
+// StartupScript determines the metadata key and formats the startup script template
+// with pre- and post-agent bootstrap scripts based on the VM image path.
+func StartupScript(image, preAgentBootstrapScript, postAgentBootstrapScript string) (key, content string) {
+	img := strings.ToLower(image)
+	switch {
+	case strings.Contains(img, "windows"):
+		return MetadataKeyWindowsStartupScript, fmt.Sprintf(WindowsStartupScript(), preAgentBootstrapScript, postAgentBootstrapScript)
+	case strings.Contains(img, "cos"):
+		return MetadataKeyLinuxStartupScript, fmt.Sprintf(COSStartupScript(), preAgentBootstrapScript, postAgentBootstrapScript)
+	case strings.Contains(img, "suse") || strings.Contains(img, "sles") || strings.Contains(img, "opensuse"):
+		return MetadataKeyLinuxStartupScript, fmt.Sprintf(SUSEStartupScript(), preAgentBootstrapScript, postAgentBootstrapScript)
+	case strings.Contains(img, "rhel") || strings.Contains(img, "centos") || strings.Contains(img, "rocky") || strings.Contains(img, "fedora"):
+		return MetadataKeyLinuxStartupScript, fmt.Sprintf(RHELStartupScript(), preAgentBootstrapScript, postAgentBootstrapScript)
+	default:
+		return MetadataKeyLinuxStartupScript, fmt.Sprintf(DebianStartupScript(), preAgentBootstrapScript, postAgentBootstrapScript)
+	}
 }
 
 // DefaultStartupScript determines the metadata key and startup script content based on the VM image path.
 func DefaultStartupScript(image string) (key, content string) {
-	img := strings.ToLower(image)
-	switch {
-	case strings.Contains(img, "windows"):
-		return MetadataKeyWindowsStartupScript, WindowsStartupScript()
-	case strings.Contains(img, "cos"):
-		return MetadataKeyLinuxStartupScript, COSStartupScript()
-	case strings.Contains(img, "suse") || strings.Contains(img, "sles") || strings.Contains(img, "opensuse"):
-		return MetadataKeyLinuxStartupScript, SUSEStartupScript()
-	case strings.Contains(img, "rhel") || strings.Contains(img, "centos") || strings.Contains(img, "rocky") || strings.Contains(img, "fedora"):
-		return MetadataKeyLinuxStartupScript, RHELStartupScript()
-	default:
-		return MetadataKeyLinuxStartupScript, DebianStartupScript()
-	}
+	return StartupScript(image, "", "")
 }
 
 // OSPolicyPackageGooGetStartupScript returns the metadata key and startup script for testing GooGet package policy.
