@@ -64,8 +64,8 @@ if ($testConnection.TcpTestSucceeded) {
 )
 
 var (
-	// WindowsPatchMeta contains default Windows metadata required for patch tests.
-	WindowsPatchMeta = map[string]string{
+	// WindowsPatchMetadata contains default Windows metadata required for patch tests.
+	WindowsPatchMetadata = map[string]string{
 		"sysprep-specialize-script-ps1": WindowsWSUSSetupScript,
 	}
 
@@ -95,56 +95,56 @@ var (
 
 	// WindowsTargets contains all Windows Server test targets.
 	WindowsTargets = []OSTarget{
-		{Name: "windows-2016", Image: ImageWindows2016, MachineType: "e2-standard-4", Timeout: DefaultWindowsTimeout, ExtraMeta: WindowsPatchMeta},
-		{Name: "windows-2019", Image: ImageWindows2019, MachineType: "e2-standard-4", Timeout: DefaultWindowsTimeout, ExtraMeta: WindowsPatchMeta},
-		{Name: "windows-2022", Image: ImageWindows2022, MachineType: "e2-standard-4", Timeout: DefaultWindowsTimeout, ExtraMeta: WindowsPatchMeta},
+		{Name: "windows-2016", Image: ImageWindows2016, MachineType: "e2-standard-4", Timeout: DefaultWindowsTimeout, ExtraMetadata: WindowsPatchMetadata},
+		{Name: "windows-2019", Image: ImageWindows2019, MachineType: "e2-standard-4", Timeout: DefaultWindowsTimeout, ExtraMetadata: WindowsPatchMetadata},
+		{Name: "windows-2022", Image: ImageWindows2022, MachineType: "e2-standard-4", Timeout: DefaultWindowsTimeout, ExtraMetadata: WindowsPatchMetadata},
 	}
 
 	// AllTargets contains all supported OS targets across all families.
-	AllTargets = ConcatOSTargets(AptTargets, YumTargets, ZypperTargets, WindowsTargets)
+	AllTargets = concatOSTargets(AptTargets, YumTargets, ZypperTargets, WindowsTargets)
 )
 
 // OSTarget represents a standard VM image target for E2E tests.
 type OSTarget struct {
-	Name        string
-	Image       string
-	MachineType string
-	Timeout     time.Duration
-	ExtraMeta   map[string]string
+	Name          string
+	Image         string
+	MachineType   string
+	Timeout       time.Duration
+	ExtraMetadata map[string]string
 }
 
-// WithMeta returns a copy of a single OSTarget with additional metadata merged in.
-func (t OSTarget) WithMeta(meta map[string]string) OSTarget {
-	merged := make(map[string]string, len(t.ExtraMeta)+len(meta))
-	for k, v := range t.ExtraMeta {
+// withMetadata returns a copy of a single OSTarget with additional metadata merged in.
+func (t OSTarget) withMetadata(metadata map[string]string) OSTarget {
+	merged := make(map[string]string, len(t.ExtraMetadata)+len(metadata))
+	for k, v := range t.ExtraMetadata {
 		merged[k] = v
 	}
-	for k, v := range meta {
+	for k, v := range metadata {
 		merged[k] = v
 	}
-	t.ExtraMeta = merged
+	t.ExtraMetadata = merged
 	return t
 }
 
-// WithTargetsMeta accepts a slice of OSTarget and returns a new slice with additional metadata merged into each target.
-func WithTargetsMeta(targets []OSTarget, meta map[string]string) []OSTarget {
+// withTargetsMetadata accepts a slice of OSTarget and returns a new slice with additional metadata merged into each target.
+func withTargetsMetadata(targets []OSTarget, metadata map[string]string) []OSTarget {
 	res := make([]OSTarget, len(targets))
 	for i, t := range targets {
-		res[i] = t.WithMeta(meta)
+		res[i] = t.withMetadata(metadata)
 	}
 	return res
 }
 
-// FamilyMeta defines metadata to be applied to each OS family.
-type FamilyMeta struct {
+// FamilyMetadata defines metadata to be applied to each OS family.
+type FamilyMetadata struct {
 	Apt     map[string]string
 	Yum     map[string]string
 	Zypper  map[string]string
 	Windows map[string]string
 }
 
-// ConcatOSTargets concatenates multiple slices of OSTarget into a single slice.
-func ConcatOSTargets(groups ...[]OSTarget) []OSTarget {
+// concatOSTargets concatenates multiple slices of OSTarget into a single slice.
+func concatOSTargets(groups ...[]OSTarget) []OSTarget {
 	var total []OSTarget
 	for _, g := range groups {
 		total = append(total, g...)
@@ -152,12 +152,12 @@ func ConcatOSTargets(groups ...[]OSTarget) []OSTarget {
 	return total
 }
 
-// WithFamilyMeta applies family-specific metadata to all OS target groups.
-func WithFamilyMeta(meta FamilyMeta) []OSTarget {
-	return ConcatOSTargets(
-		WithTargetsMeta(AptTargets, meta.Apt),
-		WithTargetsMeta(YumTargets, meta.Yum),
-		WithTargetsMeta(ZypperTargets, meta.Zypper),
-		WithTargetsMeta(WindowsTargets, meta.Windows),
+// TargetsWithFamilyMetadata applies family-specific metadata to all OS target groups.
+func TargetsWithFamilyMetadata(metadata FamilyMetadata) []OSTarget {
+	return concatOSTargets(
+		withTargetsMetadata(AptTargets, metadata.Apt),
+		withTargetsMetadata(YumTargets, metadata.Yum),
+		withTargetsMetadata(ZypperTargets, metadata.Zypper),
+		withTargetsMetadata(WindowsTargets, metadata.Windows),
 	)
 }

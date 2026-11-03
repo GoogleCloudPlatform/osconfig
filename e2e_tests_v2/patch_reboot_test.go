@@ -159,25 +159,25 @@ Write-Output ("OSCONFIG_E2E_" + "REBOOT_SETUP_DONE")
 )
 
 var (
-	aptRebootMeta = map[string]string{
+	aptRebootMetadata = map[string]string{
 		gcp.MetadataKeyLinuxStartupScript: aptRebootStartupScript,
 	}
-	elRebootMeta = map[string]string{
+	elRebootMetadata = map[string]string{
 		gcp.MetadataKeyLinuxStartupScript: elRebootStartupScript,
 	}
-	suseRebootMeta = map[string]string{
+	suseRebootMetadata = map[string]string{
 		gcp.MetadataKeyLinuxStartupScript: suseRebootStartupScript,
 	}
-	windowsRebootMeta = map[string]string{
+	windowsRebootMetadata = map[string]string{
 		"sysprep-specialize-script-ps1":     windowsSetWsus,
 		gcp.MetadataKeyWindowsStartupScript: windowsRebootStartupScript,
 	}
 
-	rebootTestCases = gcp.WithFamilyMeta(gcp.FamilyMeta{
-		Apt:     aptRebootMeta,
-		Yum:     elRebootMeta,
-		Zypper:  suseRebootMeta,
-		Windows: windowsRebootMeta,
+	rebootTargets = gcp.TargetsWithFamilyMetadata(gcp.FamilyMetadata{
+		Apt:     aptRebootMetadata,
+		Yum:     elRebootMetadata,
+		Zypper:  suseRebootMetadata,
+		Windows: windowsRebootMetadata,
 	})
 )
 
@@ -185,7 +185,7 @@ var (
 // even when a reboot is required, reporting SucceededRebootRequiredInstanceCount == 1.
 // This migrates "[PatchJob does not reboot]" from e2e_tests/test_suites/patch/patch.go.
 func TestOSPatchJobDoesNotReboot(t *testing.T) {
-	for _, tc := range rebootTestCases {
+	for _, tc := range rebootTargets {
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
@@ -196,7 +196,7 @@ func TestOSPatchJobDoesNotReboot(t *testing.T) {
 				meta := map[string]string{
 					"osconfig-disabled-features": "guestpolicies",
 				}
-				for k, v := range tc.ExtraMeta {
+				for k, v := range tc.ExtraMetadata {
 					meta[k] = v
 				}
 				var err error
@@ -260,7 +260,7 @@ func TestOSPatchJobDoesNotReboot(t *testing.T) {
 // when a reboot is required, reporting SucceededInstanceCount == 1 and SucceededRebootRequiredInstanceCount == 0.
 // This migrates "[PatchJob triggers reboot]" from e2e_tests/test_suites/patch/patch.go.
 func TestOSPatchJobTriggersReboot(t *testing.T) {
-	for _, tc := range rebootTestCases {
+	for _, tc := range rebootTargets {
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
@@ -271,7 +271,7 @@ func TestOSPatchJobTriggersReboot(t *testing.T) {
 				meta := map[string]string{
 					"osconfig-disabled-features": "guestpolicies",
 				}
-				for k, v := range tc.ExtraMeta {
+				for k, v := range tc.ExtraMetadata {
 					meta[k] = v
 				}
 				var err error
