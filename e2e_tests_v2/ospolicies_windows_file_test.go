@@ -26,6 +26,13 @@ import (
 	"google.golang.org/api/osconfig/v1"
 )
 
+const ensureWindowsFileTestStateScript = `$svc = Get-Service google_osconfig_agent -ErrorAction SilentlyContinue
+if ($svc -and $svc.Status -eq 'Running') {
+    Stop-Service google_osconfig_agent -Force -ErrorAction SilentlyContinue
+}
+
+New-Item -ItemType File -Path /enforce_absent -Force -ErrorAction SilentlyContinue`
+
 type ospoliciesFileWindowsTestCase struct {
 	name        string
 	image       string
@@ -164,13 +171,18 @@ func TestOSPolicyFileResourceWindows(t *testing.T) {
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
-				scriptKey, scriptContent := gcp.OSPolicyFileWindowsStartupScript(tt.image)
+				scriptKey, scriptContent := gcp.StartupScript(tt.image, ensureWindowsFileTestStateScript, "")
 				customMetadata := map[string]string{
 					"osconfig-disabled-features": "guestpolicies",
 					scriptKey:                    scriptContent,
 				}
 				var err error
 				vm, err = test.CreateVM(tt.image, tt.machineType, customMetadata)
+				return err
+			})
+
+			test.Step("wait for agent inventory", func(ctx context.Context) error {
+				_, err := test.WaitForInventory(vm)
 				return err
 			})
 
