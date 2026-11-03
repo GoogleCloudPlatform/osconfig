@@ -130,4 +130,3 @@ func TestOSPatchZypperExclusivePatches(t *testing.T) {
 		})
 	}
 }
-
