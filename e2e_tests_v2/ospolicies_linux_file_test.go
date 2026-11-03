@@ -26,6 +26,9 @@ import (
 	"google.golang.org/api/osconfig/v1"
 )
 
+const ensureLinuxFileTestStateScript = `systemctl stop google-osconfig-agent || true
+touch /enforce_absent`
+
 type ospoliciesFileLinuxTestCase struct {
 	name        string
 	image       string
@@ -41,72 +44,72 @@ func osPolicyFileLinuxTestCases() []ospoliciesFileLinuxTestCase {
 			name:        "debian-12",
 			image:       "projects/debian-cloud/global/images/family/debian-12",
 			machineType: "e2-medium",
-			timeout:     15 * time.Minute,
+			timeout:     25 * time.Minute,
 		},
 		{
 			name:        "debian-13",
 			image:       "projects/debian-cloud/global/images/family/debian-13",
 			machineType: "e2-medium",
-			timeout:     15 * time.Minute,
+			timeout:     25 * time.Minute,
 		},
 		// Ubuntu
 		{
 			name:        "ubuntu-2204-lts",
 			image:       "projects/ubuntu-os-cloud/global/images/family/ubuntu-2204-lts",
 			machineType: "e2-medium",
-			timeout:     15 * time.Minute,
+			timeout:     25 * time.Minute,
 		},
 		{
 			name:        "ubuntu-2404-lts",
 			image:       "projects/ubuntu-os-cloud/global/images/family/ubuntu-2404-lts-amd64",
 			machineType: "e2-medium",
-			timeout:     15 * time.Minute,
+			timeout:     25 * time.Minute,
 		},
 		// RHEL
 		{
 			name:        "rhel-8",
 			image:       "projects/rhel-cloud/global/images/family/rhel-8",
 			machineType: "e2-medium",
-			timeout:     15 * time.Minute,
+			timeout:     25 * time.Minute,
 		},
 		{
 			name:        "rhel-9",
 			image:       "projects/rhel-cloud/global/images/family/rhel-9",
 			machineType: "e2-medium",
-			timeout:     15 * time.Minute,
+			timeout:     25 * time.Minute,
 		},
 		// CentOS Stream
 		{
 			name:        "centos-stream-9",
 			image:       "projects/centos-cloud/global/images/family/centos-stream-9",
 			machineType: "e2-medium",
-			timeout:     15 * time.Minute,
+			timeout:     25 * time.Minute,
 		},
 		// Rocky Linux
 		{
 			name:        "rocky-linux-8",
 			image:       "projects/rocky-linux-cloud/global/images/family/rocky-linux-8",
 			machineType: "e2-medium",
-			timeout:     15 * time.Minute,
+			timeout:     25 * time.Minute,
 		},
 		{
 			name:        "rocky-linux-9",
 			image:       "projects/rocky-linux-cloud/global/images/family/rocky-linux-9",
 			machineType: "e2-medium",
-			timeout:     15 * time.Minute,
+			timeout:     25 * time.Minute,
 		},
 		// SUSE
 		{
 			name:        "sles-15",
 			image:       "projects/suse-cloud/global/images/family/sles-15",
 			machineType: "e2-medium",
-			timeout:     15 * time.Minute,
+			timeout:     25 * time.Minute,
 		},
 		{
 			name:        "opensuse-leap-15",
 			image:       "projects/opensuse-cloud/global/images/family/opensuse-leap",
 			machineType: "e2-medium",
-			timeout:     15 * time.Minute,
+			timeout:     25 * time.Minute,
 		},
 	}
 }
@@ -219,13 +222,18 @@ func TestOSPolicyFileResourceLinux(t *testing.T) {
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
-				scriptKey, scriptContent := gcp.OSPolicyFileLinuxStartupScript(tt.image)
+				scriptKey, scriptContent := gcp.StartupScript(tt.image, ensureLinuxFileTestStateScript, "")
 				customMetadata := map[string]string{
 					"osconfig-disabled-features": "guestpolicies",
 					scriptKey:                    scriptContent,
 				}
 				var err error
 				vm, err = test.CreateVM(tt.image, tt.machineType, customMetadata)
+				return err
+			})
+
+			test.Step("wait for agent inventory", func(ctx context.Context) error {
+				_, err := test.WaitForInventory(vm)
 				return err
 			})
 
