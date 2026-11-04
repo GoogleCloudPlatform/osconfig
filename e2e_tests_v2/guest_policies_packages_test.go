@@ -19,7 +19,6 @@ package e2etests_test
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 	"time"
 
@@ -216,13 +215,8 @@ func guestPolicyMetadataWithPreScript(image, preScript string) map[string]string
 	if preScript == "" {
 		return metadata
 	}
-	key, defaultScript := gcp.DefaultStartupScript(image)
-	if key == gcp.MetadataKeyLinuxStartupScript {
-		defaultBody := strings.TrimPrefix(defaultScript, "#!/bin/bash\n")
-		metadata[key] = "#!/bin/bash\n" + preScript + "\n" + defaultBody
-	} else {
-		metadata[key] = preScript + "\n" + defaultScript
-	}
+	key, script := gcp.StartupScript(image, preScript, "")
+	metadata[key] = script
 	return metadata
 }
 
@@ -355,8 +349,7 @@ func TestGuestPoliciesPackages(t *testing.T) {
 				if err := replacePolicy("REMOVED"); err != nil {
 					return err
 				}
-				_, err := test.WaitForPackageNotInstalled(vm, tc.wantPackageManager, tc.packageName)
-				return err
+				return test.WaitForPackages(vm, nil, []string{tc.packageName})
 			})
 
 			test.Step("package installation: apply INSTALLED policy and verify package installed", func(ctx context.Context) error {

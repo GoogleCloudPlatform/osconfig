@@ -185,9 +185,9 @@ func (pkgs *InstalledPackages) HasPackage(name string) bool {
 	return pkgs.HasPackages(name)
 }
 
-// PackageVersionIn returns the version of a package with the given name under a specific package manager,
+// PackageVersionInManager returns the version of a package with the given name under a specific package manager,
 // and a boolean indicating whether the package was found.
-func (pkgs *InstalledPackages) PackageVersionIn(manager, name string) (string, bool) {
+func (pkgs *InstalledPackages) PackageVersionInManager(manager, name string) (string, bool) {
 	if pkgs == nil {
 		return "", false
 	}
@@ -220,9 +220,9 @@ func (pkgs *InstalledPackages) PackageVersionIn(manager, name string) (string, b
 	return "", false
 }
 
-// HasPackageIn checks if a package with the given name exists under a specific package manager.
-func (pkgs *InstalledPackages) HasPackageIn(manager, name string) bool {
-	_, ok := pkgs.PackageVersionIn(manager, name)
+// HasPackageInManager checks if a package with the given name exists under a specific package manager.
+func (pkgs *InstalledPackages) HasPackageInManager(manager, name string) bool {
+	_, ok := pkgs.PackageVersionInManager(manager, name)
 	return ok
 }
 
@@ -898,47 +898,12 @@ func (test *Test) WaitForPackageInManager(vm *gcp.VM, manager, pkgName string) e
 		}
 
 		pkgs := ExtractInstalledPackages(inv)
-		if pkgs == nil || !pkgs.HasPackageIn(manager, pkgName) {
+		if pkgs == nil || !pkgs.HasPackageInManager(manager, pkgName) {
 			return fmt.Sprintf("package %q not yet in %s inventory (total items: %d)", pkgName, manager, len(inv.Items)), false, nil
 		}
 
 		return fmt.Sprintf("package %q installed under %s", pkgName, manager), true, nil
 	})
-}
-
-// WaitForPackageNotInstalled polls the OS Config Inventory API until pkgName is reported as absent under the specified package manager.
-func (test *Test) WaitForPackageNotInstalled(vm *gcp.VM, manager, pkgName string) (*osconfig.Inventory, error) {
-	test.t.Helper()
-
-	test.t.Logf("Waiting for package %q (%s) to be removed from inventory on %q", pkgName, manager, vm.Name)
-
-	var result *osconfig.Inventory
-	err := gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("package %q removed on %s", pkgName, vm.Name), func(ctx context.Context) (string, bool, error) {
-		inv, err := test.Suite.Compute.GetInventory(ctx, vm.Project, vm.Zone, vm.Name, "FULL")
-		if err != nil {
-			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
-				return fmt.Sprintf("inventory not yet published (%v)", err), false, nil
-			}
-			return "", false, fmt.Errorf("read inventory: %w", err)
-		}
-
-		if inv == nil || inv.OsInfo == nil || len(inv.Items) == 0 {
-			return "inventory not yet populated", false, nil
-		}
-
-		pkgs := ExtractInstalledPackages(inv)
-		if pkgs.HasPackageIn(manager, pkgName) {
-			return fmt.Sprintf("package %q still present in %s inventory (total items: %d)", pkgName, manager, len(inv.Items)), false, nil
-		}
-
-		result = inv
-		return fmt.Sprintf("package %q absent from %s inventory", pkgName, manager), true, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
 }
 
 // WaitForPackageVersion polls the OS Config Inventory API until pkgName is installed under manager with a version starting with wantVersionPrefix.
@@ -958,7 +923,7 @@ func (test *Test) WaitForPackageVersion(vm *gcp.VM, manager, pkgName, wantVersio
 		}
 
 		pkgs := ExtractInstalledPackages(inv)
-		version, ok := pkgs.PackageVersionIn(manager, pkgName)
+		version, ok := pkgs.PackageVersionInManager(manager, pkgName)
 		if !ok {
 			return fmt.Sprintf("package %q not yet in %s inventory (total items: %d)", pkgName, manager, len(inv.Items)), false, nil
 		}
@@ -993,7 +958,7 @@ func (test *Test) WaitForPackageVersionChanged(vm *gcp.VM, manager, pkgName, old
 		}
 
 		pkgs := ExtractInstalledPackages(inv)
-		version, ok := pkgs.PackageVersionIn(manager, pkgName)
+		version, ok := pkgs.PackageVersionInManager(manager, pkgName)
 		if !ok {
 			return fmt.Sprintf("package %q not yet in %s inventory (total items: %d)", pkgName, manager, len(inv.Items)), false, nil
 		}
