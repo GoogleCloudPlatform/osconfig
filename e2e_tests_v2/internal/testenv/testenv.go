@@ -185,9 +185,9 @@ func (pkgs *InstalledPackages) HasPackage(name string) bool {
 	return pkgs.HasPackages(name)
 }
 
-// PackageVersionInManager returns the version of a package with the given name under a specific package manager,
+// PackageVersionIn returns the version of a package with the given name under a specific package manager,
 // and a boolean indicating whether the package was found.
-func (pkgs *InstalledPackages) PackageVersionInManager(manager, name string) (string, bool) {
+func (pkgs *InstalledPackages) PackageVersionIn(manager, name string) (string, bool) {
 	if pkgs == nil {
 		return "", false
 	}
@@ -220,9 +220,9 @@ func (pkgs *InstalledPackages) PackageVersionInManager(manager, name string) (st
 	return "", false
 }
 
-// HasPackageInManager checks if a package with the given name exists under a specific package manager.
-func (pkgs *InstalledPackages) HasPackageInManager(manager, name string) bool {
-	_, ok := pkgs.PackageVersionInManager(manager, name)
+// HasPackageIn checks if a package with the given name exists under a specific package manager.
+func (pkgs *InstalledPackages) HasPackageIn(manager, name string) bool {
+	_, ok := pkgs.PackageVersionIn(manager, name)
 	return ok
 }
 
@@ -864,7 +864,7 @@ func (test *Test) CreateGuestPolicy(vm *gcp.VM, policy *osconfigv1beta.GuestPoli
 	test.t.Cleanup(func() {
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), test.Suite.Config.CleanupTimeout)
 		defer cancel()
-		if err := test.Suite.Compute.DeleteGuestPolicy(cleanupCtx, policyName); err != nil && !gcp.IsNotFound(err) {
+		if err := test.Suite.Compute.DeleteGuestPolicy(cleanupCtx, policyName); err != nil {
 			test.t.Errorf("failed to cleanup guest policy %s: %v", policyName, err)
 		}
 	})
@@ -898,7 +898,7 @@ func (test *Test) WaitForPackageInManager(vm *gcp.VM, manager, pkgName string) e
 		}
 
 		pkgs := ExtractInstalledPackages(inv)
-		if pkgs == nil || !pkgs.HasPackageInManager(manager, pkgName) {
+		if pkgs == nil || !pkgs.HasPackageIn(manager, pkgName) {
 			return fmt.Sprintf("package %q not yet in %s inventory (total items: %d)", pkgName, manager, len(inv.Items)), false, nil
 		}
 
@@ -923,7 +923,7 @@ func (test *Test) WaitForPackageVersion(vm *gcp.VM, manager, pkgName, wantVersio
 		}
 
 		pkgs := ExtractInstalledPackages(inv)
-		version, ok := pkgs.PackageVersionInManager(manager, pkgName)
+		version, ok := pkgs.PackageVersionIn(manager, pkgName)
 		if !ok {
 			return fmt.Sprintf("package %q not yet in %s inventory (total items: %d)", pkgName, manager, len(inv.Items)), false, nil
 		}
@@ -958,7 +958,7 @@ func (test *Test) WaitForPackageVersionChanged(vm *gcp.VM, manager, pkgName, old
 		}
 
 		pkgs := ExtractInstalledPackages(inv)
-		version, ok := pkgs.PackageVersionInManager(manager, pkgName)
+		version, ok := pkgs.PackageVersionIn(manager, pkgName)
 		if !ok {
 			return fmt.Sprintf("package %q not yet in %s inventory (total items: %d)", pkgName, manager, len(inv.Items)), false, nil
 		}

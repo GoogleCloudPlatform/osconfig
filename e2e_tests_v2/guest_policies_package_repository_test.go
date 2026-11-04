@@ -112,7 +112,7 @@ func TestGuestPoliciesPackageRepositories(t *testing.T) {
 
 			test.Step("verify package is not installed initially", func(ctx context.Context) error {
 				pkgs := testenv.ExtractInstalledPackages(inv)
-				if pkgs != nil && pkgs.HasPackageInManager(tc.wantPackageManager, tc.packageName) {
+				if pkgs != nil && pkgs.HasPackageIn(tc.wantPackageManager, tc.packageName) {
 					return fmt.Errorf("package %q is already installed under %s before creating guest policy", tc.packageName, tc.wantPackageManager)
 				}
 				return nil

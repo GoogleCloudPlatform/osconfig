@@ -296,12 +296,6 @@ func TestGuestPoliciesPackages(t *testing.T) {
 
 			hasActivePolicy := false
 			replacePolicy := func(desiredState string) error {
-				if hasActivePolicy {
-					policyName := fmt.Sprintf("projects/%s/guestPolicies/%s", test.Project, vm.Name)
-					if err := test.DeleteGuestPolicy(policyName); err != nil {
-						return err
-					}
-				}
 				policy := &osconfigv1beta.GuestPolicy{
 					Assignment: &osconfigv1beta.Assignment{
 						Instances: []string{fmt.Sprintf("zones/%s/instances/%s", vm.Zone, vm.Name)},
@@ -315,6 +309,14 @@ func TestGuestPoliciesPackages(t *testing.T) {
 					PackageRepositories: []*osconfigv1beta.PackageRepository{
 						tc.repository,
 					},
+				}
+				if hasActivePolicy {
+					policyName := fmt.Sprintf("projects/%s/guestPolicies/%s", test.Project, vm.Name)
+					if err := test.DeleteGuestPolicy(policyName); err != nil {
+						return err
+					}
+					_, err := test.Suite.Compute.CreateGuestPolicy(test.Context, test.Project, vm.Name, policy)
+					return err
 				}
 				if err := test.CreateGuestPolicy(vm, policy); err != nil {
 					return err

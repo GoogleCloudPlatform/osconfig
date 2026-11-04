@@ -202,8 +202,8 @@ func TestDecodeInstalledPackages(t *testing.T) {
 
 			for manager, pkgs := range tc.wantPackagesIn {
 				for _, pkg := range pkgs {
-					if !gotPkgs.HasPackageInManager(manager, pkg) {
-						t.Errorf("expected HasPackageInManager(%q, %q) to be true", manager, pkg)
+					if !gotPkgs.HasPackageIn(manager, pkg) {
+						t.Errorf("expected HasPackageIn(%q, %q) to be true", manager, pkg)
 					}
 				}
 			}
@@ -307,11 +307,11 @@ func TestExtractInstalledPackages(t *testing.T) {
 	if !pkgs.HasPackages("bash", "kernel", "systemd", "app-shells/bash", "googet-pkg") {
 		t.Error("expected HasPackages to find all installed packages")
 	}
-	if gotVer, ok := pkgs.PackageVersionInManager("deb", "bash"); !ok || gotVer != "5.2.15" {
-		t.Errorf("PackageVersionInManager(\"deb\", \"bash\") = (%q, %v), want (\"5.2.15\", true)", gotVer, ok)
+	if gotVer, ok := pkgs.PackageVersionIn("deb", "bash"); !ok || gotVer != "5.2.15" {
+		t.Errorf("PackageVersionIn(\"deb\", \"bash\") = (%q, %v), want (\"5.2.15\", true)", gotVer, ok)
 	}
-	if _, ok := pkgs.PackageVersionInManager("deb", "nonexistent"); ok {
-		t.Error("expected PackageVersionInManager(\"deb\", \"nonexistent\") to return false")
+	if _, ok := pkgs.PackageVersionIn("deb", "nonexistent"); ok {
+		t.Error("expected PackageVersionIn(\"deb\", \"nonexistent\") to return false")
 	}
 	if !pkgs.HasQFE() {
 		t.Error("expected HasQFE() to be true")
