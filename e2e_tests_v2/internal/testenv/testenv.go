@@ -874,14 +874,6 @@ func (test *Test) CreateGuestPolicy(vm *gcp.VM, policy *osconfigv1beta.GuestPoli
 	return err
 }
 
-// DeleteGuestPolicy deletes an OS Config v1beta GuestPolicy by its full resource name.
-func (test *Test) DeleteGuestPolicy(policyName string) error {
-	test.t.Helper()
-
-	test.t.Logf("Deleting GuestPolicy %q", policyName)
-	return test.Suite.Compute.DeleteGuestPolicy(test.Context, policyName)
-}
-
 // WaitForPackageInManager polls the OS Config Inventory API until pkgName is reported as installed under the specified package manager.
 func (test *Test) WaitForPackageInManager(vm *gcp.VM, manager, pkgName string) error {
 	test.t.Helper()

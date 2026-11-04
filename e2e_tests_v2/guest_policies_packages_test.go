@@ -312,7 +312,7 @@ func TestGuestPoliciesPackages(t *testing.T) {
 				}
 				if hasActivePolicy {
 					policyName := fmt.Sprintf("projects/%s/guestPolicies/%s", test.Project, vm.Name)
-					if err := test.DeleteGuestPolicy(policyName); err != nil {
+					if err := test.Suite.Compute.DeleteGuestPolicy(test.Context, policyName); err != nil {
 						return err
 					}
 					_, err := test.Suite.Compute.CreateGuestPolicy(test.Context, test.Project, vm.Name, policy)
