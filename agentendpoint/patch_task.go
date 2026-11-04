@@ -196,10 +196,6 @@ func (r *patchTask) rebootIfNeeded(ctx context.Context, prePatch bool) error {
 		return nil
 	}
 
-	if err := r.reportContinuingState(ctx, agentendpointpb.ApplyPatchesTaskProgress_REBOOTING); err != nil {
-		return err
-	}
-
 	if r.Task.GetDryRun() {
 		clog.Infof(ctx, "Dry run - not rebooting for ApplyPatchesTask")
 		return nil
@@ -214,6 +210,13 @@ func (r *patchTask) rebootIfNeeded(ctx context.Context, prePatch bool) error {
 	if err := r.saveState(); err != nil {
 		return fmt.Errorf("error saving state: %v", err)
 	}
+
+	reportCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
+	defer cancel()
+	if err := r.reportContinuingState(reportCtx, agentendpointpb.ApplyPatchesTaskProgress_REBOOTING); err != nil {
+		clog.Warningf(ctx, "Failed to report REBOOTING state: %v", err)
+	}
+
 	if err := rebootSystem(); err != nil {
 		return fmt.Errorf("failed to reboot system: %v", err)
 	}

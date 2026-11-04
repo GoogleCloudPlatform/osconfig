@@ -21,15 +21,19 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/config"
+	"golang.org/x/sync/semaphore"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 	"google.golang.org/api/osconfig/v1"
 	osconfigv1beta "google.golang.org/api/osconfig/v1beta"
+)
+
+const (
+	guestPolicyConcurrencyLimit = 5
 )
 
 // VM represents an active or planned Compute Engine instance.
@@ -56,11 +60,13 @@ type VMRequest struct {
 
 // Client manages GCP API clients for Compute Engine and OS Config.
 type Client struct {
-	compute       *compute.Service
-	osconfig      *osconfig.Service
-	osconfigBeta  *osconfigv1beta.Service
-	pollInterval  time.Duration
-	guestPolicyMu sync.Mutex
+	compute      *compute.Service
+	osconfig     *osconfig.Service
+	osconfigBeta *osconfigv1beta.Service
+	pollInterval time.Duration
+	// guestPolicySem limits concurrent OS Config v1beta GuestPolicy creations across concurrent tests
+	// to avoid exceeding the project-level API mutation rate limits (QPS) and backend transaction conflicts.
+	guestPolicySem *semaphore.Weighted
 }
 
 // NewClient initializes the Compute Engine and OS Config API clients using Application Default Credentials.
@@ -68,22 +74,23 @@ func NewClient(ctx context.Context, cfg config.Config) (*Client, error) {
 	var opts []option.ClientOption
 	computeService, err := compute.NewService(ctx, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("create compute service: %w", err)
+		return nil, fmt.Errorf("failed to create compute service: %w", err)
 	}
 	osconfigService, err := osconfig.NewService(ctx, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("create osconfig service: %w", err)
+		return nil, fmt.Errorf("failed to create osconfig service: %w", err)
 	}
 	osconfigBetaService, err := osconfigv1beta.NewService(ctx, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("create osconfig v1beta service: %w", err)
+		return nil, fmt.Errorf("failed to create osconfig v1beta service: %w", err)
 	}
 
 	return &Client{
-		compute:      computeService,
-		osconfig:     osconfigService,
-		osconfigBeta: osconfigBetaService,
-		pollInterval: cfg.PollInterval,
+		compute:        computeService,
+		osconfig:       osconfigService,
+		osconfigBeta:   osconfigBetaService,
+		pollInterval:   cfg.PollInterval,
+		guestPolicySem: semaphore.NewWeighted(guestPolicyConcurrencyLimit),
 	}, nil
 }
 
@@ -190,15 +197,52 @@ func (c *Client) GetInventory(ctx context.Context, project, zone, instance, view
 	return call.Do()
 }
 
+// ExecutePatchJob starts a new OS Config PatchJob in the specified project.
+func (c *Client) ExecutePatchJob(ctx context.Context, project string, req *osconfig.ExecutePatchJobRequest) (*osconfig.PatchJob, error) {
+	parent := fmt.Sprintf("projects/%s", project)
+	job, err := c.osconfig.Projects.PatchJobs.Execute(parent, req).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute patch job in %s: %w", project, err)
+	}
+	return job, nil
+}
+
+// GetPatchJob retrieves the current status of an OS Config PatchJob by its resource name.
+func (c *Client) GetPatchJob(ctx context.Context, name string) (*osconfig.PatchJob, error) {
+	job, err := c.osconfig.Projects.PatchJobs.Get(name).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get patch job %s: %w", name, err)
+	}
+	return job, nil
+}
+
+// ListPatchJobInstanceDetails retrieves the per-instance execution details for an OS Config PatchJob.
+func (c *Client) ListPatchJobInstanceDetails(ctx context.Context, parent string) ([]*osconfig.PatchJobInstanceDetails, error) {
+	var details []*osconfig.PatchJobInstanceDetails
+	err := c.osconfig.Projects.PatchJobs.InstanceDetails.List(parent).Pages(ctx, func(page *osconfig.ListPatchJobInstanceDetailsResponse) error {
+		details = append(details, page.PatchJobInstanceDetails...)
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list patch job instance details for %s: %w", parent, err)
+	}
+	return details, nil
+}
+
 // CreateGuestPolicy creates an OS Config v1beta GuestPolicy in the specified project.
+// It acquires guestPolicySem to limit concurrent creations across parallel tests and avoid project-level QPS rate limits.
 func (c *Client) CreateGuestPolicy(ctx context.Context, project, policyID string, policy *osconfigv1beta.GuestPolicy) (*osconfigv1beta.GuestPolicy, error) {
-	c.guestPolicyMu.Lock()
-	defer c.guestPolicyMu.Unlock()
+	if c.guestPolicySem != nil {
+		if err := c.guestPolicySem.Acquire(ctx, 1); err != nil {
+			return nil, fmt.Errorf("failed to acquire guest policy semaphore: %w", err)
+		}
+		defer c.guestPolicySem.Release(1)
+	}
 
 	parent := fmt.Sprintf("projects/%s", project)
 	created, err := c.osconfigBeta.Projects.GuestPolicies.Create(parent, policy).GuestPolicyId(policyID).Context(ctx).Do()
 	if err != nil {
-		return nil, fmt.Errorf("create guest policy %s/%s: %w", project, policyID, err)
+		return nil, fmt.Errorf("failed to create guest policy %s in %s: %w", policyID, parent, err)
 	}
 	return created, nil
 }
@@ -206,11 +250,8 @@ func (c *Client) CreateGuestPolicy(ctx context.Context, project, policyID string
 // DeleteGuestPolicy deletes an OS Config v1beta GuestPolicy by its full resource name.
 func (c *Client) DeleteGuestPolicy(ctx context.Context, name string) error {
 	_, err := c.osconfigBeta.Projects.GuestPolicies.Delete(name).Context(ctx).Do()
-	if IsNotFound(err) {
-		return nil
-	}
 	if err != nil {
-		return fmt.Errorf("delete guest policy %s: %w", name, err)
+		return fmt.Errorf("failed to delete guest policy %s: %w", name, err)
 	}
 	return nil
 }
@@ -261,4 +302,69 @@ func IsTransientComputeError(err error) bool {
 func isHTTPStatus(err error, code int) bool {
 	var apiErr *googleapi.Error
 	return errors.As(err, &apiErr) && apiErr.Code == code
+}
+
+// CreateOSPolicyAssignment creates an OS Config v1 OSPolicyAssignment and waits for the rollout operation to complete.
+func (c *Client) CreateOSPolicyAssignment(ctx context.Context, project, zone, assignmentID string, assignment *osconfig.OSPolicyAssignment) error {
+	parent := fmt.Sprintf("projects/%s/locations/%s", project, zone)
+
+	op, err := c.osconfig.Projects.Locations.OsPolicyAssignments.Create(parent, assignment).OsPolicyAssignmentId(assignmentID).Context(ctx).Do()
+	if err != nil {
+		return fmt.Errorf("failed to create os policy assignment %s in %s: %w", assignmentID, parent, err)
+	}
+
+	if err := c.waitOSPolicyAssignmentOperation(ctx, op.Name); err != nil {
+		cancelCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_, _ = c.osconfig.Projects.Locations.OsPolicyAssignments.Operations.Cancel(op.Name, &osconfig.CancelOperationRequest{}).Context(cancelCtx).Do()
+		return fmt.Errorf("failed to wait for os policy assignment %s creation: %w", assignmentID, err)
+	}
+
+	return nil
+}
+
+// DeleteOSPolicyAssignment idempotently deletes an OS Config v1 OSPolicyAssignment and waits for completion.
+func (c *Client) DeleteOSPolicyAssignment(ctx context.Context, name string) error {
+	op, err := c.osconfig.Projects.Locations.OsPolicyAssignments.Delete(name).Context(ctx).Do()
+	if IsNotFound(err) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("failed to delete os policy assignment %s: %w", name, err)
+	}
+
+	if err := c.waitOSPolicyAssignmentOperation(ctx, op.Name); err != nil {
+		return fmt.Errorf("failed to wait for os policy assignment %s deletion: %w", name, err)
+	}
+	return nil
+}
+
+// waitOSPolicyAssignmentOperation polls an OS policy assignment long-running operation until completion.
+func (c *Client) waitOSPolicyAssignmentOperation(ctx context.Context, opName string) error {
+	return PollUntil(ctx, c.pollInterval, fmt.Sprintf("os policy assignment operation %s", opName), func(ctx context.Context) (string, bool, error) {
+		op, err := c.osconfig.Projects.Locations.OsPolicyAssignments.Operations.Get(opName).Context(ctx).Do()
+		if err != nil {
+			if IsTransientComputeError(err) {
+				return fmt.Sprintf("transient operation read: %v", err), false, nil
+			}
+			return "", false, err
+		}
+		if !op.Done {
+			return "status=RUNNING", false, nil
+		}
+		if op.Error != nil {
+			return "", false, fmt.Errorf("operation failed: %s (code %d)", op.Error.Message, op.Error.Code)
+		}
+		return "status=DONE", true, nil
+	})
+}
+
+// GetOSPolicyAssignmentReport retrieves an OS policy assignment report for a given VM instance.
+func (c *Client) GetOSPolicyAssignmentReport(ctx context.Context, project, zone, instance, assignmentID string) (*osconfig.OSPolicyAssignmentReport, error) {
+	name := fmt.Sprintf("projects/%s/locations/%s/instances/%s/osPolicyAssignments/%s/report", project, zone, instance, assignmentID)
+	report, err := c.osconfig.Projects.Locations.Instances.OsPolicyAssignments.Reports.Get(name).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get os policy assignment report %s: %w", name, err)
+	}
+	return report, nil
 }

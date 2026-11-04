@@ -14,7 +14,7 @@ type tracingInstalledPackagesProvider struct {
 	osInfoProvider osinfo.Provider
 }
 
-// TracingInstalledPackagesProvider creates an InstalledPackagesProvider decorator that traces the execution time, memory usage, and OS information for each call.
+// TracingInstalledPackagesProvider creates an InstalledPackagesProvider decorator that traces the execution time, memory usage, CPU usage, and OS information for each call.
 func TracingInstalledPackagesProvider(tracedProvider InstalledPackagesProvider, osInfoProvider osinfo.Provider) InstalledPackagesProvider {
 	return tracingInstalledPackagesProvider{tracedProvider: tracedProvider, osInfoProvider: osInfoProvider}
 }
@@ -26,8 +26,8 @@ func (p tracingInstalledPackagesProvider) GetInstalledPackages(ctx context.Conte
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
-	resultChannel := make(chan utiltrace.TraceMemoryResult)
-	go utiltrace.TraceMemory(ctx, 100*time.Millisecond, resultChannel)
+	resultChannel := make(chan utiltrace.TraceResult)
+	go utiltrace.Trace(ctx, 100*time.Millisecond, resultChannel)
 
 	startTime := time.Now()
 	pkgs, err := p.tracedProvider.GetInstalledPackages(ctx)
@@ -41,16 +41,19 @@ func (p tracingInstalledPackagesProvider) GetInstalledPackages(ctx context.Conte
 	return pkgs, err
 }
 
-func logTraceResult(ctx context.Context, result utiltrace.TraceMemoryResult, duration time.Duration, osinfo osinfo.OSInfo) {
+func logTraceResult(ctx context.Context, result utiltrace.TraceResult, duration time.Duration, osinfo osinfo.OSInfo) {
 	clog.Debugf(
 		ctx,
-		"GetInstalledPackages: %.3fs, memory %+.2f MB (=%.2f-%.2f), peak %.2f MB, mean %.2f MB (%d samples), OS: %s@%s, hostname: %s",
+		"GetInstalledPackages: %.3fs, memory %+.2f MB (=%.2f-%.2f), peak %.2f MB, mean %.2f MB, CPU peak %.1f%%, mean %.1f%%, alloc %.2f MB (%d samples), OS: %s@%s, hostname: %s",
 		duration.Seconds(),
 		result.MemAfterMB-result.MemBeforeMB,
 		result.MemAfterMB,
 		result.MemBeforeMB,
 		result.MemPeakMB,
 		result.MemMeanMB,
+		result.CPUPeakPercent,
+		result.CPUMeanPercent,
+		result.AllocMB,
 		result.SampleCount,
 		osinfo.ShortName,
 		osinfo.KernelRelease,

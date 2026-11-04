@@ -29,62 +29,9 @@ import (
 )
 
 const (
-	aptTestRepoBaseURL    = "http://packages.cloud.google.com/apt"
-	aptRaptureGpgKey      = "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
-	gcsfuseYumRepoBaseURL = "https://packages.cloud.google.com/yum/repos/gcsfuse-el7-x86_64"
-	gooTestRepoURL        = "https://packages.cloud.google.com/yuck/repos/google-cloud-sap-agent-windows"
-
 	linuxOldGcsfuseVersionPrefix = "2.3.2"
 	windowsOldSapAgentVersion    = "3.15@952132455"
 )
-
-var yumRaptureGpgKeys = []string{
-	"https://packages.cloud.google.com/yum/doc/yum-key.gpg",
-	"https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg",
-}
-
-func aptPackageRepo(distribution string) *osconfigv1beta.PackageRepository {
-	return &osconfigv1beta.PackageRepository{
-		Apt: &osconfigv1beta.AptRepository{
-			ArchiveType:  "DEB",
-			Uri:          aptTestRepoBaseURL,
-			Distribution: distribution,
-			Components:   []string{"main"},
-			GpgKey:       aptRaptureGpgKey,
-		},
-	}
-}
-
-func yumPackageRepo() *osconfigv1beta.PackageRepository {
-	return &osconfigv1beta.PackageRepository{
-		Yum: &osconfigv1beta.YumRepository{
-			Id:          "gcsfuse",
-			DisplayName: "gcsfuse",
-			BaseUrl:     gcsfuseYumRepoBaseURL,
-			GpgKeys:     yumRaptureGpgKeys,
-		},
-	}
-}
-
-func zypperPackageRepo() *osconfigv1beta.PackageRepository {
-	return &osconfigv1beta.PackageRepository{
-		Zypper: &osconfigv1beta.ZypperRepository{
-			Id:          "gcsfuse",
-			DisplayName: "gcsfuse",
-			BaseUrl:     gcsfuseYumRepoBaseURL,
-			GpgKeys:     yumRaptureGpgKeys,
-		},
-	}
-}
-
-func gooPackageRepo() *osconfigv1beta.PackageRepository {
-	return &osconfigv1beta.PackageRepository{
-		Goo: &osconfigv1beta.GooRepository{
-			Name: "google-cloud-sap-agent",
-			Url:  gooTestRepoURL,
-		},
-	}
-}
 
 type guestPolicyOSTarget struct {
 	name                 string
@@ -109,6 +56,17 @@ func guestPolicyOSTargets() []guestPolicyOSTarget {
 			wantPackageManager:   "deb",
 			aptDistribution:      "gcsfuse-bookworm",
 			repository:           aptPackageRepo("gcsfuse-bookworm"),
+			machineType:          "e2-standard-2",
+			timeout:              15 * time.Minute,
+		},
+		{
+			name:                 "debian-13",
+			image:                "projects/debian-cloud/global/images/family/debian-13",
+			packageName:          "gcsfuse",
+			initialVersionPrefix: linuxOldGcsfuseVersionPrefix,
+			wantPackageManager:   "deb",
+			aptDistribution:      "gcsfuse-trixie",
+			repository:           aptPackageRepo("gcsfuse-trixie"),
 			machineType:          "e2-standard-2",
 			timeout:              15 * time.Minute,
 		},
@@ -316,54 +274,6 @@ c:\programdata\googet\googet.exe rmrepo sap-preinstall`,
 	}
 }
 
-// TestGuestPoliciesPackageRepositories verifies that the OS Config agent configures
-// a new PackageRepository (Apt, Yum, Zypper, GooGet) defined in an OS Config GuestPolicy
-// and installs a package from that new repository.
-// This test migrates the "Add a new package from new repository" scenario from
-// test_suites/guestpolicies/guest_policies.go.
-func TestGuestPoliciesPackageRepositories(t *testing.T) {
-	for _, tc := range guestPolicyOSTargets() {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			test := testenv.New(t, tc.timeout)
-
-			var vm *gcp.VM
-			test.Step("create VM", func(ctx context.Context) error {
-				var err error
-				vm, err = test.CreateVM(tc.image, tc.machineType, map[string]string{
-					"osconfig-disabled-features": "tasks",
-				})
-				return err
-			})
-
-			test.Step("create guest policy with package repository", func(ctx context.Context) error {
-				policy := &osconfigv1beta.GuestPolicy{
-					Assignment: &osconfigv1beta.Assignment{
-						InstanceNamePrefixes: []string{vm.Name},
-					},
-					Packages: []*osconfigv1beta.Package{
-						{
-							Name:         tc.packageName,
-							DesiredState: "UPDATED",
-						},
-					},
-					PackageRepositories: []*osconfigv1beta.PackageRepository{
-						tc.repository,
-					},
-				}
-				_, err := test.CreateGuestPolicy(policy)
-				return err
-			})
-
-			test.Step("verify package installed from new repository", func(ctx context.Context) error {
-				_, err := test.WaitForPackageInstalled(vm, tc.wantPackageManager, tc.packageName)
-				return err
-			})
-		})
-	}
-}
-
 // TestGuestPoliciesPackages verifies all four package lifecycle scenarios on the same package
 // on a single VM per OS:
 // 1. Package install doesn't update (DesiredState: INSTALLED keeps the pre-installed older version)
@@ -390,16 +300,17 @@ func TestGuestPoliciesPackages(t *testing.T) {
 				return err
 			})
 
-			var activePolicy *osconfigv1beta.GuestPolicy
+			hasActivePolicy := false
 			replacePolicy := func(desiredState string) error {
-				if activePolicy != nil {
-					if err := test.DeleteGuestPolicy(activePolicy.Name); err != nil {
+				if hasActivePolicy {
+					policyName := fmt.Sprintf("projects/%s/guestPolicies/%s", test.Project, vm.Name)
+					if err := test.DeleteGuestPolicy(policyName); err != nil {
 						return err
 					}
 				}
 				policy := &osconfigv1beta.GuestPolicy{
 					Assignment: &osconfigv1beta.Assignment{
-						InstanceNamePrefixes: []string{vm.Name},
+						Instances: []string{fmt.Sprintf("zones/%s/instances/%s", vm.Zone, vm.Name)},
 					},
 					Packages: []*osconfigv1beta.Package{
 						{
@@ -411,9 +322,11 @@ func TestGuestPoliciesPackages(t *testing.T) {
 						tc.repository,
 					},
 				}
-				var err error
-				activePolicy, err = test.CreateGuestPolicy(policy)
-				return err
+				if err := test.CreateGuestPolicy(vm, policy); err != nil {
+					return err
+				}
+				hasActivePolicy = true
+				return nil
 			}
 
 			test.Step("package install does not update: apply INSTALLED policy and verify old version kept", func(ctx context.Context) error {
