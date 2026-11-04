@@ -363,8 +363,7 @@ func TestGuestPoliciesPackages(t *testing.T) {
 				if err := replacePolicy("INSTALLED"); err != nil {
 					return err
 				}
-				_, err := test.WaitForPackageInstalled(vm, tc.wantPackageManager, tc.packageName)
-				return err
+				return test.WaitForPackageInManager(vm, tc.wantPackageManager, tc.packageName)
 			})
 		})
 	}

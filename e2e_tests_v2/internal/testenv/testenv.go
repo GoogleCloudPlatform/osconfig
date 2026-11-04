@@ -906,37 +906,6 @@ func (test *Test) WaitForPackageInManager(vm *gcp.VM, manager, pkgName string) e
 	})
 }
 
-// WaitForPackageInstalled polls the OS Config Inventory API until pkgName is reported as installed under the specified package manager.
-func (test *Test) WaitForPackageInstalled(vm *gcp.VM, manager, pkgName string) (*osconfig.Inventory, error) {
-	test.t.Helper()
-
-	test.t.Logf("Waiting for package %q (%s) to be installed and reported in inventory on %q", pkgName, manager, vm.Name)
-
-	var result *osconfig.Inventory
-	err := gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("package %q installed on %s", pkgName, vm.Name), func(ctx context.Context) (string, bool, error) {
-		inv, err := test.Suite.Compute.GetInventory(ctx, vm.Project, vm.Zone, vm.Name, "FULL")
-		if err != nil {
-			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
-				return fmt.Sprintf("inventory not yet published (%v)", err), false, nil
-			}
-			return "", false, fmt.Errorf("failed to read inventory: %w", err)
-		}
-
-		pkgs := ExtractInstalledPackages(inv)
-		if pkgs == nil || !pkgs.HasPackageIn(manager, pkgName) {
-			return fmt.Sprintf("package %q not yet in %s inventory (total items: %d)", pkgName, manager, len(inv.Items)), false, nil
-		}
-
-		result = inv
-		return fmt.Sprintf("package %q installed under %s", pkgName, manager), true, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
 // WaitForPackageNotInstalled polls the OS Config Inventory API until pkgName is reported as absent under the specified package manager.
 func (test *Test) WaitForPackageNotInstalled(vm *gcp.VM, manager, pkgName string) (*osconfig.Inventory, error) {
 	test.t.Helper()

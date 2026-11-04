@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/gcp"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/testenv"
@@ -83,166 +82,13 @@ func gooPackageRepo() *osconfigv1beta.PackageRepository {
 	}
 }
 
-type guestPolicyNewRepoTestCase struct {
-	name               string
-	image              string
-	packageName        string
-	wantPackageManager string
-	repository         *osconfigv1beta.PackageRepository
-	machineType        string
-	timeout            time.Duration
-}
-
 // TestGuestPoliciesPackageRepositories verifies that the OS Config agent configures
 // a new PackageRepository (Apt, Yum, Zypper, GooGet) defined in an OS Config GuestPolicy
 // and installs a package from that new repository.
 // This test migrates the "Add a new package from new repository" scenario from
 // test_suites/guestpolicies/guest_policies.go.
 func TestGuestPoliciesPackageRepositories(t *testing.T) {
-	testCases := []guestPolicyNewRepoTestCase{
-		// Debian
-		{
-			name:               "debian-12",
-			image:              "projects/debian-cloud/global/images/family/debian-12",
-			packageName:        "gcsfuse",
-			wantPackageManager: "deb",
-			repository:         aptPackageRepo("gcsfuse-bookworm"),
-			machineType:        "e2-standard-2",
-			timeout:            15 * time.Minute,
-		},
-		{
-			name:               "debian-13",
-			image:              "projects/debian-cloud/global/images/family/debian-13",
-			packageName:        "gcsfuse",
-			wantPackageManager: "deb",
-			repository:         aptPackageRepo("gcsfuse-trixie"),
-			machineType:        "e2-standard-2",
-			timeout:            15 * time.Minute,
-		},
-		// Ubuntu
-		{
-			name:               "ubuntu-2204-lts",
-			image:              "projects/ubuntu-os-cloud/global/images/family/ubuntu-2204-lts",
-			packageName:        "gcsfuse",
-			wantPackageManager: "deb",
-			repository:         aptPackageRepo("gcsfuse-jammy"),
-			machineType:        "e2-standard-2",
-			timeout:            15 * time.Minute,
-		},
-		{
-			name:               "ubuntu-2404-lts",
-			image:              "projects/ubuntu-os-cloud/global/images/family/ubuntu-2404-lts-amd64",
-			packageName:        "gcsfuse",
-			wantPackageManager: "deb",
-			repository:         aptPackageRepo("gcsfuse-noble"),
-			machineType:        "e2-standard-2",
-			timeout:            15 * time.Minute,
-		},
-		// Enterprise Linux (RHEL, CentOS Stream, Rocky Linux)
-		{
-			name:               "rhel-8",
-			image:              "projects/rhel-cloud/global/images/family/rhel-8",
-			packageName:        "gcsfuse",
-			wantPackageManager: "rpm",
-			repository:         yumPackageRepo(),
-			machineType:        "e2-standard-2",
-			timeout:            15 * time.Minute,
-		},
-		{
-			name:               "rhel-9",
-			image:              "projects/rhel-cloud/global/images/family/rhel-9",
-			packageName:        "gcsfuse",
-			wantPackageManager: "rpm",
-			repository:         yumPackageRepo(),
-			machineType:        "e2-standard-2",
-			timeout:            15 * time.Minute,
-		},
-		{
-			name:               "centos-stream-9",
-			image:              "projects/centos-cloud/global/images/family/centos-stream-9",
-			packageName:        "gcsfuse",
-			wantPackageManager: "rpm",
-			repository:         yumPackageRepo(),
-			machineType:        "e2-standard-2",
-			timeout:            15 * time.Minute,
-		},
-		{
-			name:               "rocky-linux-8",
-			image:              "projects/rocky-linux-cloud/global/images/family/rocky-linux-8",
-			packageName:        "gcsfuse",
-			wantPackageManager: "rpm",
-			repository:         yumPackageRepo(),
-			machineType:        "e2-standard-2",
-			timeout:            15 * time.Minute,
-		},
-		{
-			name:               "rocky-linux-9",
-			image:              "projects/rocky-linux-cloud/global/images/family/rocky-linux-9",
-			packageName:        "gcsfuse",
-			wantPackageManager: "rpm",
-			repository:         yumPackageRepo(),
-			machineType:        "e2-standard-2",
-			timeout:            15 * time.Minute,
-		},
-		// SUSE / openSUSE
-		{
-			name:               "sles-12",
-			image:              "projects/suse-cloud/global/images/family/sles-12",
-			packageName:        "gcsfuse",
-			wantPackageManager: "zypper",
-			repository:         zypperPackageRepo(),
-			machineType:        "e2-standard-2",
-			timeout:            15 * time.Minute,
-		},
-		{
-			name:               "sles-15",
-			image:              "projects/suse-cloud/global/images/family/sles-15",
-			packageName:        "gcsfuse",
-			wantPackageManager: "zypper",
-			repository:         zypperPackageRepo(),
-			machineType:        "e2-standard-2",
-			timeout:            15 * time.Minute,
-		},
-		{
-			name:               "opensuse-leap-15",
-			image:              "projects/opensuse-cloud/global/images/family/opensuse-leap",
-			packageName:        "gcsfuse",
-			wantPackageManager: "zypper",
-			repository:         zypperPackageRepo(),
-			machineType:        "e2-standard-2",
-			timeout:            15 * time.Minute,
-		},
-		// Windows Server
-		{
-			name:               "windows-2016",
-			image:              "projects/windows-cloud/global/images/family/windows-2016",
-			packageName:        "google-cloud-sap-agent",
-			wantPackageManager: "googet",
-			repository:         gooPackageRepo(),
-			machineType:        "e2-standard-4",
-			timeout:            25 * time.Minute,
-		},
-		{
-			name:               "windows-2019",
-			image:              "projects/windows-cloud/global/images/family/windows-2019",
-			packageName:        "google-cloud-sap-agent",
-			wantPackageManager: "googet",
-			repository:         gooPackageRepo(),
-			machineType:        "e2-standard-4",
-			timeout:            25 * time.Minute,
-		},
-		{
-			name:               "windows-2022",
-			image:              "projects/windows-cloud/global/images/family/windows-2022",
-			packageName:        "google-cloud-sap-agent",
-			wantPackageManager: "googet",
-			repository:         gooPackageRepo(),
-			machineType:        "e2-standard-4",
-			timeout:            25 * time.Minute,
-		},
-	}
-
-	for _, tc := range testCases {
+	for _, tc := range guestPolicyOSTargets() {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
