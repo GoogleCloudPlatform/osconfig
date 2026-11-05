@@ -25,7 +25,7 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/testenv"
 )
 
-const defaultRecipeName = "testrecipe"
+const defaultMetadataRecipeName = "testrecipe"
 
 type metadataPolicyTestCase struct {
 	name        string
@@ -166,8 +166,8 @@ func metadataPolicyTestCases() []metadataPolicyTestCase {
 	}
 }
 
-// createRecipeTestVM creates a VM instance configured for recipe testing.
-func createRecipeTestVM(test *testenv.Test, tc metadataPolicyTestCase, scriptKey, scriptContent string) (*gcp.VM, error) {
+// createMetadataPolicyTestVM creates a VM instance configured for metadata policy testing.
+func createMetadataPolicyTestVM(test *testenv.Test, tc metadataPolicyTestCase, scriptKey, scriptContent string) (*gcp.VM, error) {
 	metadata := map[string]string{
 		// Disable unused subsystems so only guestpolicies (SoftwareRecipes) runs.
 		"osconfig-disabled-features": "tasks,osinventory",
@@ -191,9 +191,9 @@ func TestMetadataPolicy(t *testing.T) {
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
-				scriptKey, scriptContent := gcp.RecipeInstallStartupScript(tt.image, defaultRecipeName)
+				scriptKey, scriptContent := gcp.RecipeInstallStartupScript(tt.image, defaultMetadataRecipeName)
 				var err error
-				vm, err = createRecipeTestVM(test, tt, scriptKey, scriptContent)
+				vm, err = createMetadataPolicyTestVM(test, tt, scriptKey, scriptContent)
 				return err
 			})
 
@@ -202,7 +202,7 @@ func TestMetadataPolicy(t *testing.T) {
 			})
 
 			test.Step("apply metadata policy and restart agent", func(ctx context.Context) error {
-				mdJSON, err := testenv.BuildMetadataPolicyJSON(defaultRecipeName)
+				mdJSON, err := testenv.BuildMetadataPolicyJSON(defaultMetadataRecipeName)
 				if err != nil {
 					return err
 				}
