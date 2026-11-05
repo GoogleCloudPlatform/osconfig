@@ -217,7 +217,7 @@ func (r *patchTask) rebootIfNeeded(ctx context.Context, prePatch bool) error {
 		clog.Warningf(ctx, "Failed to report REBOOTING state: %v", err)
 	}
 
-	if err := rebootSystem(); err != nil {
+	if err := rebootSystem(ctx); err != nil {
 		return fmt.Errorf("failed to reboot system: %v", err)
 	}
 
