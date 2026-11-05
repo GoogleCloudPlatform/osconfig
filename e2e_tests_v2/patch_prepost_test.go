@@ -242,4 +242,3 @@ func TestOSPatchPrePostSteps(t *testing.T) {
 		})
 	}
 }
-
