@@ -188,86 +188,36 @@ func (c *Client) GetInventory(ctx context.Context, project, zone, instance, view
 	return call.Do()
 }
 
-// CreateGuestPolicy creates an OS Config v1beta GuestPolicy.
-func (c *Client) CreateGuestPolicy(ctx context.Context, project, policyID string, policy *osconfigv1beta.GuestPolicy) error {
+// ExecutePatchJob starts a new OS Config PatchJob in the specified project.
+func (c *Client) ExecutePatchJob(ctx context.Context, project string, req *osconfig.ExecutePatchJobRequest) (*osconfig.PatchJob, error) {
 	parent := fmt.Sprintf("projects/%s", project)
-	if _, err := c.osconfigBeta.Projects.GuestPolicies.Create(parent, policy).GuestPolicyId(policyID).Context(ctx).Do(); err != nil {
-		return fmt.Errorf("create guest policy %s in %s: %w", policyID, parent, err)
+	job, err := c.osconfig.Projects.PatchJobs.Execute(parent, req).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute patch job in %s: %w", project, err)
 	}
-	return nil
+	return job, nil
 }
 
-// DeleteGuestPolicy idempotently deletes an OS Config v1beta GuestPolicy by its full resource name.
-func (c *Client) DeleteGuestPolicy(ctx context.Context, name string) error {
-	_, err := c.osconfigBeta.Projects.GuestPolicies.Delete(name).Context(ctx).Do()
-	if IsNotFound(err) {
+// GetPatchJob retrieves the current status of an OS Config PatchJob by its resource name.
+func (c *Client) GetPatchJob(ctx context.Context, name string) (*osconfig.PatchJob, error) {
+	job, err := c.osconfig.Projects.PatchJobs.Get(name).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get patch job %s: %w", name, err)
+	}
+	return job, nil
+}
+
+// ListPatchJobInstanceDetails retrieves the per-instance execution details for an OS Config PatchJob.
+func (c *Client) ListPatchJobInstanceDetails(ctx context.Context, parent string) ([]*osconfig.PatchJobInstanceDetails, error) {
+	var details []*osconfig.PatchJobInstanceDetails
+	err := c.osconfig.Projects.PatchJobs.InstanceDetails.List(parent).Pages(ctx, func(page *osconfig.ListPatchJobInstanceDetailsResponse) error {
+		details = append(details, page.PatchJobInstanceDetails...)
 		return nil
-	}
+	})
 	if err != nil {
-		return fmt.Errorf("failed to delete guest policy %s: %w", name, err)
+		return nil, fmt.Errorf("failed to list patch job instance details for %s: %w", parent, err)
 	}
-	return nil
-}
-
-// GetGuestAttributes retrieves guest attribute entries for an instance at queryPath.
-func (c *Client) GetGuestAttributes(ctx context.Context, project, zone, instance, queryPath string) ([]*compute.GuestAttributesEntry, error) {
-	resp, err := c.compute.Instances.GetGuestAttributes(project, zone, instance).QueryPath(queryPath).Context(ctx).Do()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get guest attributes %q for instance %s: %w", queryPath, instance, err)
-	}
-	if resp.QueryValue != nil && len(resp.QueryValue.Items) > 0 {
-		return resp.QueryValue.Items, nil
-	}
-	if resp.VariableValue != "" {
-		return []*compute.GuestAttributesEntry{{
-			Key:   resp.VariableKey,
-			Value: resp.VariableValue,
-		}}, nil
-	}
-	return nil, nil
-}
-
-// AddInstanceMetadata updates or adds metadata items on a running Compute Engine instance and waits for completion.
-func (c *Client) AddInstanceMetadata(ctx context.Context, project, zone, name string, updates map[string]string) error {
-	inst, err := c.compute.Instances.Get(project, zone, name).Context(ctx).Do()
-	if err != nil {
-		return fmt.Errorf("get instance %s for metadata update: %w", name, err)
-	}
-
-	metadata := inst.Metadata
-	if metadata == nil {
-		metadata = &compute.Metadata{}
-	}
-
-	var items []*compute.MetadataItems
-	for _, item := range metadata.Items {
-		if item == nil {
-			continue
-		}
-		if _, exists := updates[item.Key]; exists {
-			continue
-		}
-		items = append(items, item)
-	}
-	for k, v := range updates {
-		val := v
-		items = append(items, &compute.MetadataItems{
-			Key:   k,
-			Value: &val,
-		})
-	}
-	metadata.Items = items
-
-	op, err := c.compute.Instances.SetMetadata(project, zone, name, metadata).Context(ctx).Do()
-	if err != nil {
-		return fmt.Errorf("set metadata on instance %s: %w", name, err)
-	}
-
-	if err := c.waitZoneOperation(ctx, project, zone, op.Name); err != nil {
-		return fmt.Errorf("wait for metadata update on instance %s: %w", name, err)
-	}
-
-	return nil
+	return details, nil
 }
 
 func (c *Client) waitZoneOperation(ctx context.Context, project, zone, name string) error {
@@ -381,4 +331,86 @@ func (c *Client) GetOSPolicyAssignmentReport(ctx context.Context, project, zone,
 		return nil, fmt.Errorf("failed to get os policy assignment report %s: %w", name, err)
 	}
 	return report, nil
+}
+
+// CreateGuestPolicy creates an OS Config v1beta GuestPolicy.
+func (c *Client) CreateGuestPolicy(ctx context.Context, project, policyID string, policy *osconfigv1beta.GuestPolicy) error {
+	parent := fmt.Sprintf("projects/%s", project)
+	if _, err := c.osconfigBeta.Projects.GuestPolicies.Create(parent, policy).GuestPolicyId(policyID).Context(ctx).Do(); err != nil {
+		return fmt.Errorf("create guest policy %s in %s: %w", policyID, parent, err)
+	}
+	return nil
+}
+
+// DeleteGuestPolicy idempotently deletes an OS Config v1beta GuestPolicy by its full resource name.
+func (c *Client) DeleteGuestPolicy(ctx context.Context, name string) error {
+	_, err := c.osconfigBeta.Projects.GuestPolicies.Delete(name).Context(ctx).Do()
+	if IsNotFound(err) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("failed to delete guest policy %s: %w", name, err)
+	}
+	return nil
+}
+
+// GetGuestAttributes retrieves guest attribute entries for an instance at queryPath.
+func (c *Client) GetGuestAttributes(ctx context.Context, project, zone, instance, queryPath string) ([]*compute.GuestAttributesEntry, error) {
+	resp, err := c.compute.Instances.GetGuestAttributes(project, zone, instance).QueryPath(queryPath).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get guest attributes %q for instance %s: %w", queryPath, instance, err)
+	}
+	if resp.QueryValue != nil && len(resp.QueryValue.Items) > 0 {
+		return resp.QueryValue.Items, nil
+	}
+	if resp.VariableValue != "" {
+		return []*compute.GuestAttributesEntry{{
+			Key:   resp.VariableKey,
+			Value: resp.VariableValue,
+		}}, nil
+	}
+	return nil, nil
+}
+
+// AddInstanceMetadata updates or adds metadata items on a running Compute Engine instance and waits for completion.
+func (c *Client) AddInstanceMetadata(ctx context.Context, project, zone, name string, updates map[string]string) error {
+	inst, err := c.compute.Instances.Get(project, zone, name).Context(ctx).Do()
+	if err != nil {
+		return fmt.Errorf("get instance %s for metadata update: %w", name, err)
+	}
+
+	metadata := inst.Metadata
+	if metadata == nil {
+		metadata = &compute.Metadata{}
+	}
+
+	var items []*compute.MetadataItems
+	for _, item := range metadata.Items {
+		if item == nil {
+			continue
+		}
+		if _, exists := updates[item.Key]; exists {
+			continue
+		}
+		items = append(items, item)
+	}
+	for k, v := range updates {
+		val := v
+		items = append(items, &compute.MetadataItems{
+			Key:   k,
+			Value: &val,
+		})
+	}
+	metadata.Items = items
+
+	op, err := c.compute.Instances.SetMetadata(project, zone, name, metadata).Context(ctx).Do()
+	if err != nil {
+		return fmt.Errorf("set metadata on instance %s: %w", name, err)
+	}
+
+	if err := c.waitZoneOperation(ctx, project, zone, op.Name); err != nil {
+		return fmt.Errorf("wait for metadata update on instance %s: %w", name, err)
+	}
+
+	return nil
 }

@@ -43,6 +43,14 @@ import (
 	osconfigv1beta "google.golang.org/api/osconfig/v1beta"
 )
 
+// Patch job completion states.
+const (
+	PatchJobStateSucceeded           = "SUCCEEDED"
+	PatchJobStateCompletedWithErrors = "COMPLETED_WITH_ERRORS"
+	PatchJobStateTimedOut            = "TIMED_OUT"
+	PatchJobStateCanceled            = "CANCELED"
+)
+
 var (
 	unsafeResourceName = regexp.MustCompile(`[^a-z0-9-]+`)
 
@@ -671,57 +679,6 @@ func (test *Test) WaitForInventory(vm *gcp.VM) (*osconfig.Inventory, error) {
 	return result, nil
 }
 
-// CreateGuestPolicy creates an OS Config v1beta GuestPolicy targeting the given VM and registers automatic cleanup.
-func (test *Test) CreateGuestPolicy(vm *gcp.VM, policy *osconfigv1beta.GuestPolicy) error {
-	test.t.Helper()
-
-	policyID := vm.Name
-	if policy.Assignment == nil {
-		policy.Assignment = &osconfigv1beta.Assignment{
-			InstanceNamePrefixes: []string{vm.Name},
-		}
-	}
-
-	fullName := fmt.Sprintf("projects/%s/guestPolicies/%s", test.Project, policyID)
-	test.t.Cleanup(func() {
-		cleanupCtx, cancel := context.WithTimeout(context.Background(), test.Suite.Config.CleanupTimeout)
-		defer cancel()
-		if err := test.Suite.Compute.DeleteGuestPolicy(cleanupCtx, fullName); err != nil {
-			test.t.Errorf("cleanup guest policy %s: %v", fullName, err)
-		}
-	})
-
-	test.t.Logf("Creating GuestPolicy %q for VM %q", policyID, vm.Name)
-	return test.Suite.Compute.CreateGuestPolicy(test.Context, test.Project, policyID, policy)
-}
-
-// WaitForGuestAttribute polls the instance until the guest attribute at queryPath is present.
-func (test *Test) WaitForGuestAttribute(vm *gcp.VM, queryPath string) error {
-	test.t.Helper()
-
-	test.t.Logf("Waiting for guest attribute %q on %q", queryPath, vm.Name)
-
-	return gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("guest attribute %s on %s", queryPath, vm.Name), func(ctx context.Context) (string, bool, error) {
-		entries, err := test.Suite.Compute.GetGuestAttributes(ctx, vm.Project, vm.Zone, vm.Name, queryPath)
-		if err != nil {
-			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
-				return fmt.Sprintf("guest attribute %q not yet present (%v)", queryPath, err), false, nil
-			}
-			return "", false, fmt.Errorf("read guest attribute %q: %w", queryPath, err)
-		}
-		if len(entries) == 0 {
-			return fmt.Sprintf("guest attribute %q empty", queryPath), false, nil
-		}
-		return fmt.Sprintf("found %d entries (first value=%q)", len(entries), entries[0].Value), true, nil
-	})
-}
-
-// AddMetadata updates or adds metadata items on the given VM.
-func (test *Test) AddMetadata(vm *gcp.VM, metadata map[string]string) error {
-	test.t.Helper()
-	test.t.Logf("Updating metadata on VM %q", vm.Name)
-	return test.Suite.Compute.AddInstanceMetadata(test.Context, vm.Project, vm.Zone, vm.Name, metadata)
-}
 // CreateOSPolicyAssignment creates an OS Config v1 OSPolicyAssignment targeting the given VM and registers automatic cleanup.
 func (test *Test) CreateOSPolicyAssignment(vm *gcp.VM, assignment *osconfig.OSPolicyAssignment) error {
 	test.t.Helper()
@@ -824,6 +781,122 @@ func (test *Test) WaitForPackages(vm *gcp.VM, wantInstalled, wantRemoved []strin
 
 		return fmt.Sprintf("verified packages (installed=%v, removed=%v)", wantInstalled, wantRemoved), true, nil
 	})
+}
+
+// ExecutePatchJob starts an OS Config PatchJob in the test project.
+func (test *Test) ExecutePatchJob(req *osconfig.ExecutePatchJobRequest) (*osconfig.PatchJob, error) {
+	test.t.Helper()
+
+	test.t.Logf("Executing PatchJob in project %q (filter: %+v)", test.Project, req.InstanceFilter)
+	return test.Suite.Compute.ExecutePatchJob(test.Context, test.Project, req)
+}
+
+// WaitForPatchJob polls the OS Config API until the specified PatchJob finishes and verifies that at least one instance succeeded.
+func (test *Test) WaitForPatchJob(jobName string) (*osconfig.PatchJob, error) {
+	test.t.Helper()
+
+	test.t.Logf("Waiting for PatchJob %q to complete", jobName)
+
+	var result *osconfig.PatchJob
+	err := gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("patch job %s", jobName), func(ctx context.Context) (string, bool, error) {
+		job, err := test.Suite.Compute.GetPatchJob(ctx, jobName)
+		if err != nil {
+			if gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("transient error fetching patch job (%v)", err), false, nil
+			}
+			return "", false, err
+		}
+
+		if isPatchJobFailureState(job.State) {
+			details := test.extractPatchJobFailureDetails(ctx, jobName)
+			return "", false, fmt.Errorf("patch job %s failed with state %s (error: %q, instance details: [%s])",
+				jobName, job.State, job.ErrorMessage, strings.Join(details, "; "))
+		}
+
+		if job.State == PatchJobStateSucceeded {
+			summary := job.InstanceDetailsSummary
+			if summary == nil || (summary.SucceededInstanceCount < 1 && summary.SucceededRebootRequiredInstanceCount < 1) {
+				return "", false, fmt.Errorf("patch job %s completed with no instances patched (summary: %+v)", jobName, summary)
+			}
+			result = job
+			return fmt.Sprintf("state=%s succeeded=%d rebootRequired=%d", job.State, summary.SucceededInstanceCount, summary.SucceededRebootRequiredInstanceCount), true, nil
+		}
+
+		return fmt.Sprintf("state=%s percentComplete=%.1f%%", job.State, job.PercentComplete), false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (test *Test) extractPatchJobFailureDetails(ctx context.Context, jobName string) []string {
+	details, err := test.Suite.Compute.ListPatchJobInstanceDetails(ctx, jobName)
+	if err != nil {
+		return []string{fmt.Sprintf("failed to list instance details: %v", err)}
+	}
+	var detailStrings []string
+	for _, d := range details {
+		detailStrings = append(detailStrings, fmt.Sprintf("%s: state=%s failure=%q", d.Name, d.State, d.FailureReason))
+	}
+	return detailStrings
+}
+
+func isPatchJobFailureState(state string) bool {
+	return state == PatchJobStateCompletedWithErrors || state == PatchJobStateTimedOut || state == PatchJobStateCanceled
+}
+
+// CreateGuestPolicy creates an OS Config v1beta GuestPolicy targeting the given VM and registers automatic cleanup.
+func (test *Test) CreateGuestPolicy(vm *gcp.VM, policy *osconfigv1beta.GuestPolicy) error {
+	test.t.Helper()
+
+	policyID := vm.Name
+	if policy.Assignment == nil {
+		policy.Assignment = &osconfigv1beta.Assignment{
+			InstanceNamePrefixes: []string{vm.Name},
+		}
+	}
+
+	fullName := fmt.Sprintf("projects/%s/guestPolicies/%s", test.Project, policyID)
+	test.t.Cleanup(func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), test.Suite.Config.CleanupTimeout)
+		defer cancel()
+		if err := test.Suite.Compute.DeleteGuestPolicy(cleanupCtx, fullName); err != nil {
+			test.t.Errorf("cleanup guest policy %s: %v", fullName, err)
+		}
+	})
+
+	test.t.Logf("Creating GuestPolicy %q for VM %q", policyID, vm.Name)
+	return test.Suite.Compute.CreateGuestPolicy(test.Context, test.Project, policyID, policy)
+}
+
+// WaitForGuestAttribute polls the instance until the guest attribute at queryPath is present.
+func (test *Test) WaitForGuestAttribute(vm *gcp.VM, queryPath string) error {
+	test.t.Helper()
+
+	test.t.Logf("Waiting for guest attribute %q on %q", queryPath, vm.Name)
+
+	return gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("guest attribute %s on %s", queryPath, vm.Name), func(ctx context.Context) (string, bool, error) {
+		entries, err := test.Suite.Compute.GetGuestAttributes(ctx, vm.Project, vm.Zone, vm.Name, queryPath)
+		if err != nil {
+			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("guest attribute %q not yet present (%v)", queryPath, err), false, nil
+			}
+			return "", false, fmt.Errorf("read guest attribute %q: %w", queryPath, err)
+		}
+		if len(entries) == 0 {
+			return fmt.Sprintf("guest attribute %q empty", queryPath), false, nil
+		}
+		return fmt.Sprintf("found %d entries (first value=%q)", len(entries), entries[0].Value), true, nil
+	})
+}
+
+// AddMetadata updates or adds metadata items on the given VM.
+func (test *Test) AddMetadata(vm *gcp.VM, metadata map[string]string) error {
+	test.t.Helper()
+	test.t.Logf("Updating metadata on VM %q", vm.Name)
+	return test.Suite.Compute.AddInstanceMetadata(test.Context, vm.Project, vm.Zone, vm.Name, metadata)
 }
 
 func resourceName(runID, testName, attempt string) string {
