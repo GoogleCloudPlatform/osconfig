@@ -40,6 +40,15 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/scheduler"
 	"github.com/google/uuid"
 	"google.golang.org/api/osconfig/v1"
+	osconfigv1beta "google.golang.org/api/osconfig/v1beta"
+)
+
+// Patch job completion states.
+const (
+	PatchJobStateSucceeded           = "SUCCEEDED"
+	PatchJobStateCompletedWithErrors = "COMPLETED_WITH_ERRORS"
+	PatchJobStateTimedOut            = "TIMED_OUT"
+	PatchJobStateCanceled            = "CANCELED"
 )
 
 var (
@@ -624,6 +633,7 @@ func (test *Test) CreateVM(image, machineType string, customMetadata map[string]
 		ServiceAccount: test.Suite.Config.ServiceAccount,
 		Metadata:       metadata,
 		Labels: map[string]string{
+			"name":        labelValue(planned.Name),
 			"e2e-run":     labelValue(test.Suite.RunID),
 			"e2e-test":    labelValue(test.TestName),
 			"e2e-attempt": labelValue(test.AttemptID),
@@ -652,7 +662,7 @@ func (test *Test) WaitForInventory(vm *gcp.VM) (*osconfig.Inventory, error) {
 			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
 				return fmt.Sprintf("inventory not yet published (%v)", err), false, nil
 			}
-			return "", false, fmt.Errorf("read inventory: %w", err)
+			return "", false, fmt.Errorf("failed to read inventory: %w", err)
 		}
 
 		if inv == nil || inv.OsInfo == nil || strings.TrimSpace(inv.OsInfo.Hostname) == "" {
@@ -667,6 +677,218 @@ func (test *Test) WaitForInventory(vm *gcp.VM) (*osconfig.Inventory, error) {
 	}
 
 	return result, nil
+}
+
+// CreateOSPolicyAssignment creates an OS Config v1 OSPolicyAssignment targeting the given VM and registers automatic cleanup.
+func (test *Test) CreateOSPolicyAssignment(vm *gcp.VM, assignment *osconfig.OSPolicyAssignment) error {
+	test.t.Helper()
+
+	assignmentID := vm.Name
+	fullName := fmt.Sprintf("projects/%s/locations/%s/osPolicyAssignments/%s", test.Project, test.Zone, assignmentID)
+	test.t.Cleanup(func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), test.Suite.Config.CleanupTimeout)
+		defer cancel()
+		if err := test.Suite.Compute.DeleteOSPolicyAssignment(cleanupCtx, fullName); err != nil {
+			test.t.Errorf("cleanup os policy assignment %s: %v", fullName, err)
+		}
+	})
+
+	test.t.Logf("Creating OSPolicyAssignment %q for VM %q", assignmentID, vm.Name)
+	return test.Suite.Compute.CreateOSPolicyAssignment(test.Context, test.Project, test.Zone, assignmentID, assignment)
+}
+
+const osPolicyStateCompliant = "COMPLIANT"
+
+// isOSPolicyAssignmentReportCompliant checks that the report contains wantCompliances policies and all OS policies and their resources are COMPLIANT.
+func isOSPolicyAssignmentReportCompliant(rep *osconfig.OSPolicyAssignmentReport, wantCompliances int) (string, bool) {
+	if rep == nil || len(rep.OsPolicyCompliances) != wantCompliances {
+		got := 0
+		if rep != nil {
+			got = len(rep.OsPolicyCompliances)
+		}
+		return fmt.Sprintf("waiting for %d os policy compliances, got %d", wantCompliances, got), false
+	}
+
+	for _, comp := range rep.OsPolicyCompliances {
+		if comp.ComplianceState != osPolicyStateCompliant {
+			return fmt.Sprintf("os policy %q in state %s (reason: %s)", comp.OsPolicyId, comp.ComplianceState, comp.ComplianceStateReason), false
+		}
+		if len(comp.OsPolicyResourceCompliances) == 0 {
+			return fmt.Sprintf("os policy %q resource compliances not yet populated", comp.OsPolicyId), false
+		}
+		for _, res := range comp.OsPolicyResourceCompliances {
+			if res.ComplianceState != osPolicyStateCompliant {
+				return fmt.Sprintf("os policy %q resource %q in state %s", comp.OsPolicyId, res.OsPolicyResourceId, res.ComplianceState), false
+			}
+		}
+	}
+
+	return "all os policies COMPLIANT", true
+}
+
+// WaitForOSPolicyCompliance polls the OS policy assignment report until all OS policies and resources are COMPLIANT.
+func (test *Test) WaitForOSPolicyCompliance(vm *gcp.VM, wantCompliances int) error {
+	test.t.Helper()
+
+	assignmentID := vm.Name
+	test.t.Logf("Waiting for OSPolicyAssignment %q compliance on %q (wantCompliances=%d)", assignmentID, vm.Name, wantCompliances)
+
+	return gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("os policy compliance for %s on %s", assignmentID, vm.Name), func(ctx context.Context) (string, bool, error) {
+		rep, err := test.Suite.Compute.GetOSPolicyAssignmentReport(ctx, vm.Project, vm.Zone, vm.Name, assignmentID)
+		if err != nil {
+			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("report not yet available (%v)", err), false, nil
+			}
+			return "", false, fmt.Errorf("failed to read os policy assignment report: %w", err)
+		}
+
+		msg, ok := isOSPolicyAssignmentReportCompliant(rep, wantCompliances)
+		return msg, ok, nil
+	})
+}
+
+// WaitForPackages polls the OS Config Inventory API until all wantInstalled packages are present
+// and all wantRemoved packages are absent.
+func (test *Test) WaitForPackages(vm *gcp.VM, wantInstalled, wantRemoved []string) error {
+	test.t.Helper()
+
+	test.t.Logf("Waiting for inventory packages on %q (wantInstalled=%v, wantRemoved=%v)", vm.Name, wantInstalled, wantRemoved)
+
+	return gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("inventory packages on %s", vm.Name), func(ctx context.Context) (string, bool, error) {
+		inv, err := test.Suite.Compute.GetInventory(ctx, vm.Project, vm.Zone, vm.Name, "FULL")
+		if err != nil {
+			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("inventory not yet published (%v)", err), false, nil
+			}
+			return "", false, fmt.Errorf("failed to read inventory: %w", err)
+		}
+
+		pkgs := ExtractInstalledPackages(inv)
+		if pkgs == nil || len(pkgs.AllPackageNames()) == 0 {
+			return "installed packages not yet populated in inventory", false, nil
+		}
+
+		for _, pkg := range wantInstalled {
+			if !pkgs.HasPackage(pkg) {
+				return fmt.Sprintf("package %q not yet installed in inventory", pkg), false, nil
+			}
+		}
+		for _, pkg := range wantRemoved {
+			if pkgs.HasPackage(pkg) {
+				return fmt.Sprintf("package %q still present in inventory", pkg), false, nil
+			}
+		}
+
+		return fmt.Sprintf("verified packages (installed=%v, removed=%v)", wantInstalled, wantRemoved), true, nil
+	})
+}
+
+// ExecutePatchJob starts an OS Config PatchJob in the test project.
+func (test *Test) ExecutePatchJob(req *osconfig.ExecutePatchJobRequest) (*osconfig.PatchJob, error) {
+	test.t.Helper()
+
+	test.t.Logf("Executing PatchJob in project %q (filter: %+v)", test.Project, req.InstanceFilter)
+	return test.Suite.Compute.ExecutePatchJob(test.Context, test.Project, req)
+}
+
+// WaitForPatchJob polls the OS Config API until the specified PatchJob finishes and verifies that at least one instance succeeded.
+func (test *Test) WaitForPatchJob(jobName string) (*osconfig.PatchJob, error) {
+	test.t.Helper()
+
+	test.t.Logf("Waiting for PatchJob %q to complete", jobName)
+
+	var result *osconfig.PatchJob
+	err := gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("patch job %s", jobName), func(ctx context.Context) (string, bool, error) {
+		job, err := test.Suite.Compute.GetPatchJob(ctx, jobName)
+		if err != nil {
+			if gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("transient error fetching patch job (%v)", err), false, nil
+			}
+			return "", false, err
+		}
+
+		if isPatchJobFailureState(job.State) {
+			details := test.extractPatchJobFailureDetails(ctx, jobName)
+			return "", false, fmt.Errorf("patch job %s failed with state %s (error: %q, instance details: [%s])",
+				jobName, job.State, job.ErrorMessage, strings.Join(details, "; "))
+		}
+
+		if job.State == PatchJobStateSucceeded {
+			summary := job.InstanceDetailsSummary
+			if summary == nil || (summary.SucceededInstanceCount < 1 && summary.SucceededRebootRequiredInstanceCount < 1) {
+				return "", false, fmt.Errorf("patch job %s completed with no instances patched (summary: %+v)", jobName, summary)
+			}
+			result = job
+			return fmt.Sprintf("state=%s succeeded=%d rebootRequired=%d", job.State, summary.SucceededInstanceCount, summary.SucceededRebootRequiredInstanceCount), true, nil
+		}
+
+		return fmt.Sprintf("state=%s percentComplete=%.1f%%", job.State, job.PercentComplete), false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (test *Test) extractPatchJobFailureDetails(ctx context.Context, jobName string) []string {
+	details, err := test.Suite.Compute.ListPatchJobInstanceDetails(ctx, jobName)
+	if err != nil {
+		return []string{fmt.Sprintf("failed to list instance details: %v", err)}
+	}
+	var detailStrings []string
+	for _, d := range details {
+		detailStrings = append(detailStrings, fmt.Sprintf("%s: state=%s failure=%q", d.Name, d.State, d.FailureReason))
+	}
+	return detailStrings
+}
+
+func isPatchJobFailureState(state string) bool {
+	return state == PatchJobStateCompletedWithErrors || state == PatchJobStateTimedOut || state == PatchJobStateCanceled
+}
+
+// CreateGuestPolicy creates an OS Config v1beta GuestPolicy targeting the given VM and registers automatic cleanup on test completion.
+func (test *Test) CreateGuestPolicy(vm *gcp.VM, policy *osconfigv1beta.GuestPolicy) error {
+	test.t.Helper()
+
+	policyID := vm.Name
+	policyName := fmt.Sprintf("projects/%s/guestPolicies/%s", test.Project, policyID)
+
+	test.t.Cleanup(func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), test.Suite.Config.CleanupTimeout)
+		defer cancel()
+		if err := test.Suite.Compute.DeleteGuestPolicy(cleanupCtx, policyName); err != nil {
+			test.t.Errorf("failed to cleanup guest policy %s: %v", policyName, err)
+		}
+	})
+
+	test.t.Logf("Creating GuestPolicy %q in project %q for VM %q", policyID, test.Project, vm.Name)
+	_, err := test.Suite.Compute.CreateGuestPolicy(test.Context, test.Project, policyID, policy)
+	return err
+}
+
+// WaitForPackageInManager polls the OS Config Inventory API until pkgName is reported as installed under the specified package manager.
+func (test *Test) WaitForPackageInManager(vm *gcp.VM, manager, pkgName string) error {
+	test.t.Helper()
+
+	test.t.Logf("Waiting for package %q (%s) to be installed and reported in inventory on %q", pkgName, manager, vm.Name)
+
+	return gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("package %q installed on %s", pkgName, vm.Name), func(ctx context.Context) (string, bool, error) {
+		inv, err := test.Suite.Compute.GetInventory(ctx, vm.Project, vm.Zone, vm.Name, "FULL")
+		if err != nil {
+			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("inventory not yet published (%v)", err), false, nil
+			}
+			return "", false, fmt.Errorf("failed to read inventory: %w", err)
+		}
+
+		pkgs := ExtractInstalledPackages(inv)
+		if pkgs == nil || !pkgs.HasPackageIn(manager, pkgName) {
+			return fmt.Sprintf("package %q not yet in %s inventory (total items: %d)", pkgName, manager, len(inv.Items)), false, nil
+		}
+
+		return fmt.Sprintf("package %q installed under %s", pkgName, manager), true, nil
+	})
 }
 
 func resourceName(runID, testName, attempt string) string {
