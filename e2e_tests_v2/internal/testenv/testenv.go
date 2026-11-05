@@ -852,6 +852,11 @@ func (test *Test) CreateGuestPolicy(vm *gcp.VM, policy *osconfigv1beta.GuestPoli
 	test.t.Helper()
 
 	policyID := vm.Name
+	if policy.Assignment == nil {
+		policy.Assignment = &osconfigv1beta.Assignment{
+			InstanceNamePrefixes: []string{vm.Name},
+		}
+	}
 	policyName := fmt.Sprintf("projects/%s/guestPolicies/%s", test.Project, policyID)
 
 	test.t.Cleanup(func() {
@@ -891,6 +896,33 @@ func (test *Test) WaitForPackageInManager(vm *gcp.VM, manager, pkgName string) e
 	})
 }
 
+// WaitForGuestAttribute polls the instance until the guest attribute at queryPath is present.
+func (test *Test) WaitForGuestAttribute(vm *gcp.VM, queryPath string) error {
+	test.t.Helper()
+
+	test.t.Logf("Waiting for guest attribute %q on %q", queryPath, vm.Name)
+
+	return gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("guest attribute %s on %s", queryPath, vm.Name), func(ctx context.Context) (string, bool, error) {
+		entries, err := test.Suite.Compute.GetGuestAttributes(ctx, vm.Project, vm.Zone, vm.Name, queryPath)
+		if err != nil {
+			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("guest attribute %q not yet present (%v)", queryPath, err), false, nil
+			}
+			return "", false, fmt.Errorf("read guest attribute %q: %w", queryPath, err)
+		}
+		if len(entries) == 0 {
+			return fmt.Sprintf("guest attribute %q empty", queryPath), false, nil
+		}
+		return fmt.Sprintf("found %d entries (first value=%q)", len(entries), entries[0].Value), true, nil
+	})
+}
+
+// AddMetadata updates or adds metadata items on the given VM.
+func (test *Test) AddMetadata(vm *gcp.VM, metadata map[string]string) error {
+	test.t.Helper()
+	test.t.Logf("Updating metadata on VM %q", vm.Name)
+	return test.Suite.Compute.AddInstanceMetadata(test.Context, vm.Project, vm.Zone, vm.Name, metadata)
+}
 func resourceName(runID, testName, attempt string) string {
 	base := labelValue(fmt.Sprintf("inv-%s-%s", runID, testName))
 	if len(base) > 53 {
