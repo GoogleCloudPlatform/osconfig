@@ -24,11 +24,16 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/config"
+	"golang.org/x/sync/semaphore"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 	"google.golang.org/api/osconfig/v1"
 	osconfigv1beta "google.golang.org/api/osconfig/v1beta"
+)
+
+const (
+	guestPolicyConcurrencyLimit = 5
 )
 
 // VM represents an active or planned Compute Engine instance.
@@ -59,6 +64,9 @@ type Client struct {
 	osconfig     *osconfig.Service
 	osconfigBeta *osconfigv1beta.Service
 	pollInterval time.Duration
+	// guestPolicySem limits concurrent OS Config v1beta GuestPolicy creations across concurrent tests
+	// to avoid exceeding the project-level API mutation rate limits (QPS) and backend transaction conflicts.
+	guestPolicySem *semaphore.Weighted
 }
 
 // NewClient initializes the Compute Engine and OS Config API clients using Application Default Credentials.
@@ -66,22 +74,23 @@ func NewClient(ctx context.Context, cfg config.Config) (*Client, error) {
 	var opts []option.ClientOption
 	computeService, err := compute.NewService(ctx, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("create compute service: %w", err)
+		return nil, fmt.Errorf("failed to create compute service: %w", err)
 	}
 	osconfigService, err := osconfig.NewService(ctx, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("create osconfig service: %w", err)
+		return nil, fmt.Errorf("failed to create osconfig service: %w", err)
 	}
 	osconfigBetaService, err := osconfigv1beta.NewService(ctx, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("create osconfig v1beta service: %w", err)
+		return nil, fmt.Errorf("failed to create osconfig v1beta service: %w", err)
 	}
 
 	return &Client{
-		compute:      computeService,
-		osconfig:     osconfigService,
-		osconfigBeta: osconfigBetaService,
-		pollInterval: cfg.PollInterval,
+		compute:        computeService,
+		osconfig:       osconfigService,
+		osconfigBeta:   osconfigBetaService,
+		pollInterval:   cfg.PollInterval,
+		guestPolicySem: semaphore.NewWeighted(guestPolicyConcurrencyLimit),
 	}, nil
 }
 
@@ -220,6 +229,33 @@ func (c *Client) ListPatchJobInstanceDetails(ctx context.Context, parent string)
 	return details, nil
 }
 
+// CreateGuestPolicy creates an OS Config v1beta GuestPolicy in the specified project.
+// It acquires guestPolicySem to limit concurrent creations across parallel tests and avoid project-level QPS rate limits.
+func (c *Client) CreateGuestPolicy(ctx context.Context, project, policyID string, policy *osconfigv1beta.GuestPolicy) (*osconfigv1beta.GuestPolicy, error) {
+	if c.guestPolicySem != nil {
+		if err := c.guestPolicySem.Acquire(ctx, 1); err != nil {
+			return nil, fmt.Errorf("failed to acquire guest policy semaphore: %w", err)
+		}
+		defer c.guestPolicySem.Release(1)
+	}
+
+	parent := fmt.Sprintf("projects/%s", project)
+	created, err := c.osconfigBeta.Projects.GuestPolicies.Create(parent, policy).GuestPolicyId(policyID).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create guest policy %s in %s: %w", policyID, parent, err)
+	}
+	return created, nil
+}
+
+// DeleteGuestPolicy deletes an OS Config v1beta GuestPolicy by its full resource name.
+func (c *Client) DeleteGuestPolicy(ctx context.Context, name string) error {
+	_, err := c.osconfigBeta.Projects.GuestPolicies.Delete(name).Context(ctx).Do()
+	if err != nil {
+		return fmt.Errorf("failed to delete guest policy %s: %w", name, err)
+	}
+	return nil
+}
+
 func (c *Client) waitZoneOperation(ctx context.Context, project, zone, name string) error {
 	var completed *compute.Operation
 	err := PollUntil(ctx, c.pollInterval, fmt.Sprintf("zonal operation %s", name), func(ctx context.Context) (string, bool, error) {
@@ -331,27 +367,6 @@ func (c *Client) GetOSPolicyAssignmentReport(ctx context.Context, project, zone,
 		return nil, fmt.Errorf("failed to get os policy assignment report %s: %w", name, err)
 	}
 	return report, nil
-}
-
-// CreateGuestPolicy creates an OS Config v1beta GuestPolicy.
-func (c *Client) CreateGuestPolicy(ctx context.Context, project, policyID string, policy *osconfigv1beta.GuestPolicy) error {
-	parent := fmt.Sprintf("projects/%s", project)
-	if _, err := c.osconfigBeta.Projects.GuestPolicies.Create(parent, policy).GuestPolicyId(policyID).Context(ctx).Do(); err != nil {
-		return fmt.Errorf("create guest policy %s in %s: %w", policyID, parent, err)
-	}
-	return nil
-}
-
-// DeleteGuestPolicy idempotently deletes an OS Config v1beta GuestPolicy by its full resource name.
-func (c *Client) DeleteGuestPolicy(ctx context.Context, name string) error {
-	_, err := c.osconfigBeta.Projects.GuestPolicies.Delete(name).Context(ctx).Do()
-	if IsNotFound(err) {
-		return nil
-	}
-	if err != nil {
-		return fmt.Errorf("failed to delete guest policy %s: %w", name, err)
-	}
-	return nil
 }
 
 // GetGuestAttributes retrieves guest attribute entries for an instance at queryPath.
