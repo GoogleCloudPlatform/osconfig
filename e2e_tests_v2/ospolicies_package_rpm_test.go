@@ -175,9 +175,8 @@ func TestOSPolicyPackageResourceRpm(t *testing.T) {
 				return err
 			})
 
-			test.Step("wait for agent install and prerequisites", func(ctx context.Context) error {
-				_, err := test.WaitForInventory(vm)
-				return err
+			test.Step("wait for initial package state in inventory", func(ctx context.Context) error {
+				return test.WaitForPackages(vm, nil, []string{"osconfig-agent-test", "gcsfuse"})
 			})
 
 			test.Step("create os policy assignment", func(ctx context.Context) error {
