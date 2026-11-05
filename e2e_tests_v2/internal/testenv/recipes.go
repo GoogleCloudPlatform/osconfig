@@ -247,14 +247,14 @@ func windowsRecipeSteps() []*osconfigv1beta.SoftwareRecipeStep {
 		{
 			ArchiveExtraction: &osconfigv1beta.SoftwareRecipeStepExtractArchive{
 				ArtifactId:  "tar-test",
-				Destination: "c:\\tar-test",
+				Destination: `\\?\c:\tar-test`,
 				Type:        "TAR_GZIP",
 			},
 		},
 		{
 			ArchiveExtraction: &osconfigv1beta.SoftwareRecipeStepExtractArchive{
 				ArtifactId:  "zip-test",
-				Destination: "c:\\zip-test",
+				Destination: `\\?\c:\zip-test`,
 				Type:        "ZIP",
 			},
 		},

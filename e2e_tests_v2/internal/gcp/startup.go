@@ -253,7 +253,7 @@ while ( ! (Test-Path c:\tar-test\tar\test.txt) ) {
 	case strings.Contains(img, "rhel") || strings.Contains(img, "centos") || strings.Contains(img, "rocky") || strings.Contains(img, "fedora"):
 		prereq = "systemctl stop google-osconfig-agent || true\ndnf install -y info || yum install -y info"
 	case strings.Contains(img, "suse") || strings.Contains(img, "sles") || strings.Contains(img, "opensuse"):
-		prereq = "systemctl stop google-osconfig-agent || true\nzypper -n remove ed || true"
+		prereq = "systemctl stop google-osconfig-agent || true\nzypper -n remove ed || true\nzypper -n install info || true"
 	}
 
 	stepsCheck := `
