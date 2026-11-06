@@ -18,7 +18,6 @@ package e2etests_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -55,11 +54,8 @@ func runZypperPatchTest(t *testing.T, tc patchJobTestCase, stepName, reqDesc str
 
 	var vm *gcp.VM
 	test.Step("create VM", func(ctx context.Context) error {
-		meta := map[string]string{
-			"osconfig-disabled-features": "guestpolicies",
-		}
 		var err error
-		vm, err = test.CreateVM(tc.image, tc.machineType, meta)
+		vm, err = test.CreateVM(tc.image, tc.machineType, patchTestMetadata(tc.extraMeta))
 		return err
 	})
 
@@ -69,17 +65,10 @@ func runZypperPatchTest(t *testing.T, tc patchJobTestCase, stepName, reqDesc str
 	})
 
 	test.Step(stepName, func(ctx context.Context) error {
-		req := &osconfig.ExecutePatchJobRequest{
-			Description: fmt.Sprintf("%s for %s", reqDesc, vm.Name),
-			InstanceFilter: &osconfig.PatchInstanceFilter{
-				Instances: []string{fmt.Sprintf("zones/%s/instances/%s", vm.Zone, vm.Name)},
-			},
-			PatchConfig: &osconfig.PatchConfig{
-				RebootConfig: "DEFAULT",
-				Zypper:       zypperSettings,
-			},
-			Duration: fmt.Sprintf("%ds", int(tc.timeout.Seconds())),
-		}
+		req := generateExecutePatchJobRequest(reqDesc, vm, &osconfig.PatchConfig{
+			RebootConfig: "DEFAULT",
+			Zypper:       zypperSettings,
+		}, tc.timeout)
 		job, err := test.ExecutePatchJob(req)
 		if err != nil {
 			return err

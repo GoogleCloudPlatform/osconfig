@@ -80,6 +80,18 @@ func patchConfigWithPrePostSteps() *osconfig.PatchConfig {
 	}
 }
 
+func prePostMetadata(tc patchJobTestCase) map[string]string {
+	meta := patchTestMetadata(tc.extraMeta)
+
+	scriptKey, defaultScript := gcp.DefaultStartupScript(tc.image)
+	if strings.Contains(strings.ToLower(tc.image), "windows") {
+		meta[scriptKey] = defaultScript + "\n" + windowsLocalPostPatchScript
+	} else {
+		meta[scriptKey] = defaultScript + "\n" + linuxLocalPrePatchScript
+	}
+	return meta
+}
+
 var prePostTestCases = []patchJobTestCase{
 	// Debian
 	{
@@ -193,22 +205,8 @@ func TestOSPatchPrePostSteps(t *testing.T) {
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
-				meta := map[string]string{
-					"osconfig-disabled-features": "guestpolicies",
-				}
-				for k, v := range tc.extraMeta {
-					meta[k] = v
-				}
-
-				scriptKey, defaultScript := gcp.DefaultStartupScript(tc.image)
-				if strings.Contains(strings.ToLower(tc.image), "windows") {
-					meta[scriptKey] = defaultScript + "\n" + windowsLocalPostPatchScript
-				} else {
-					meta[scriptKey] = defaultScript + "\n" + linuxLocalPrePatchScript
-				}
-
 				var err error
-				vm, err = test.CreateVM(tc.image, tc.machineType, meta)
+				vm, err = test.CreateVM(tc.image, tc.machineType, prePostMetadata(tc))
 				return err
 			})
 
@@ -218,14 +216,7 @@ func TestOSPatchPrePostSteps(t *testing.T) {
 			})
 
 			test.Step("execute and await patch job with pre and post steps", func(ctx context.Context) error {
-				req := &osconfig.ExecutePatchJobRequest{
-					Description: fmt.Sprintf("e2e pre/post steps patch job test for %s", vm.Name),
-					InstanceFilter: &osconfig.PatchInstanceFilter{
-						Instances: []string{fmt.Sprintf("zones/%s/instances/%s", vm.Zone, vm.Name)},
-					},
-					PatchConfig: patchConfigWithPrePostSteps(),
-					Duration:    fmt.Sprintf("%ds", int(tc.timeout.Seconds())),
-				}
+				req := generateExecutePatchJobRequest("e2e pre/post steps patch job test", vm, patchConfigWithPrePostSteps(), tc.timeout)
 				job, err := test.ExecutePatchJob(req)
 				if err != nil {
 					return err
