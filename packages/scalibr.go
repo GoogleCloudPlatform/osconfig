@@ -9,7 +9,6 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/osinfo"
 	scalibr "github.com/google/osv-scalibr"
 	"github.com/google/osv-scalibr/binary/platform"
-	"github.com/google/osv-scalibr/binary/proto/config_go_proto"
 	"github.com/google/osv-scalibr/extractor"
 	scalibrchoco "github.com/google/osv-scalibr/extractor/filesystem/os/chocolatey/metadata"
 	scalibrcos "github.com/google/osv-scalibr/extractor/filesystem/os/cos/metadata"
@@ -19,9 +18,23 @@ import (
 	scalibrwinget "github.com/google/osv-scalibr/extractor/filesystem/os/winget/metadata"
 	scalibrfs "github.com/google/osv-scalibr/fs"
 	"github.com/google/osv-scalibr/plugin"
+	"github.com/google/osv-scalibr/plugin/config"
 	pl "github.com/google/osv-scalibr/plugin/list"
 	"github.com/google/osv-scalibr/purl"
 )
+
+func extractLocations(pl extractor.PackageLocation) []string {
+	var locations []string
+	if path := pl.PathOrEmpty(); path != "" {
+		locations = append(locations, path)
+	}
+	for _, r := range pl.Related {
+		if path := r.PathOrEmpty(); path != "" {
+			locations = append(locations, path)
+		}
+	}
+	return locations
+}
 
 func pkgInfoFromDpkgExtractorPackage(pkg *extractor.Package, metadata *dpkgmetadata.Metadata) *PkgInfo {
 	source := Source{Name: metadata.SourceName, Version: metadata.SourceVersion}
@@ -38,7 +51,7 @@ func pkgInfoFromDpkgExtractorPackage(pkg *extractor.Package, metadata *dpkgmetad
 		Source:   source,
 		Type:     purl.TypeDebian,
 		Purl:     pkg.PURL().String(),
-		Location: pkg.Locations,
+		Location: extractLocations(pkg.Location),
 	}
 }
 
@@ -69,7 +82,7 @@ func pkgInfoFromRpmExtractorPackage(pkg *extractor.Package, metadata *scalibrrpm
 		Source:   source,
 		Type:     purl.TypeRPM,
 		Purl:     pkg.PURL().String(),
-		Location: pkg.Locations,
+		Location: extractLocations(pkg.Location),
 	}
 }
 
@@ -80,7 +93,7 @@ func pkgInfoFromCosExtractorPackage(pkg *extractor.Package, metadata *scalibrcos
 		Arch:     osinfo.Architecture,
 		Type:     purl.TypeCOS,
 		Purl:     pkg.PURL().String(),
-		Location: pkg.Locations,
+		Location: extractLocations(pkg.Location),
 	}
 }
 
@@ -96,7 +109,7 @@ func pkgInfoFromSnapExtractorPackage(pkg *extractor.Package, metadata *scalibrsn
 		Arch:     osinfo.NormalizeArchitecture(arch),
 		Type:     purl.TypeSnap,
 		Purl:     pkg.PURL().String(),
-		Location: pkg.Locations,
+		Location: extractLocations(pkg.Location),
 	}
 }
 
@@ -107,7 +120,7 @@ func pkgInfoFromGenericExtractorPackage(pkg *extractor.Package, pkgType string, 
 		Arch:     arch,
 		Type:     pkgType,
 		Purl:     pkg.PURL().String(),
-		Location: pkg.Locations,
+		Location: extractLocations(pkg.Location),
 	}
 }
 
@@ -149,7 +162,7 @@ func (p scalibrInstalledPackagesProvider) getScanConfig() (*scalibr.ScanConfig, 
 		scanRoots = append(scanRoots, scalibrfs.RealFSScanRoot(path))
 	}
 
-	plugins, err := pl.FromNames(p.extractors, &config_go_proto.PluginConfig{})
+	plugins, err := pl.FromNames(p.extractors, &config.PluginConfig{})
 	if err != nil {
 		return nil, err
 	}
