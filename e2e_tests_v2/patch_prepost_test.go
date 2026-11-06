@@ -81,7 +81,7 @@ func patchConfigWithPrePostSteps() *osconfig.PatchConfig {
 }
 
 func prePostMetadata(tc patchJobTestCase) map[string]string {
-	meta := patchTestMetadata(tc.extraMeta)
+	meta := generateVmMetadata(tc.extraMeta)
 
 	scriptKey, defaultScript := gcp.DefaultStartupScript(tc.image)
 	if strings.Contains(strings.ToLower(tc.image), "windows") {

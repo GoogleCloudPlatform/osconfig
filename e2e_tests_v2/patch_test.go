@@ -47,7 +47,7 @@ type patchJobTestCase struct {
 	extraMeta   map[string]string
 }
 
-func patchTestMetadata(extraMeta map[string]string) map[string]string {
+func generateVmMetadata(extraMeta map[string]string) map[string]string {
 	meta := map[string]string{
 		"osconfig-disabled-features": "guestpolicies",
 	}
@@ -180,7 +180,7 @@ func TestOSPatchJobExecution(t *testing.T) {
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
 				var err error
-				vm, err = test.CreateVM(tc.image, tc.machineType, patchTestMetadata(tc.extraMeta))
+				vm, err = test.CreateVM(tc.image, tc.machineType, generateVmMetadata(tc.extraMeta))
 				return err
 			})
 

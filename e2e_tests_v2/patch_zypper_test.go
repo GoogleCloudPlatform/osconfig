@@ -55,7 +55,7 @@ func runZypperPatchTest(t *testing.T, tc patchJobTestCase, stepName, reqDesc str
 	var vm *gcp.VM
 	test.Step("create VM", func(ctx context.Context) error {
 		var err error
-		vm, err = test.CreateVM(tc.image, tc.machineType, patchTestMetadata(tc.extraMeta))
+		vm, err = test.CreateVM(tc.image, tc.machineType, generateVmMetadata(tc.extraMeta))
 		return err
 	})
 
