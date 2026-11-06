@@ -60,48 +60,24 @@ var yumTestCases = []patchJobTestCase{
 	},
 }
 
-func runYumPatchTest(t *testing.T, tc patchJobTestCase, stepName, reqDesc string, yumSettings *osconfig.YumSettings) {
-	t.Helper()
-
-	test := testenv.New(t, tc.timeout)
-
-	var vm *gcp.VM
-	test.Step("create VM", func(ctx context.Context) error {
-		meta := map[string]string{
-			"osconfig-disabled-features": "guestpolicies",
-		}
-		for k, v := range tc.extraMeta {
-			meta[k] = v
-		}
-		var err error
-		vm, err = test.CreateVM(tc.image, tc.machineType, meta)
+func executeYumPatchJob(test *testenv.Test, vm *gcp.VM, timeout time.Duration, desc string, yumSettings *osconfig.YumSettings) error {
+	req := &osconfig.ExecutePatchJobRequest{
+		Description: fmt.Sprintf("%s for %s", desc, vm.Name),
+		InstanceFilter: &osconfig.PatchInstanceFilter{
+			Instances: []string{fmt.Sprintf("zones/%s/instances/%s", vm.Zone, vm.Name)},
+		},
+		PatchConfig: &osconfig.PatchConfig{
+			RebootConfig: "DEFAULT",
+			Yum:          yumSettings,
+		},
+		Duration: fmt.Sprintf("%ds", int(timeout.Seconds())),
+	}
+	job, err := test.ExecutePatchJob(req)
+	if err != nil {
 		return err
-	})
-
-	test.Step("wait for OS Config agent ready", func(ctx context.Context) error {
-		_, err := test.WaitForInventory(vm)
-		return err
-	})
-
-	test.Step(stepName, func(ctx context.Context) error {
-		req := &osconfig.ExecutePatchJobRequest{
-			Description: fmt.Sprintf("%s for %s", reqDesc, vm.Name),
-			InstanceFilter: &osconfig.PatchInstanceFilter{
-				Instances: []string{fmt.Sprintf("zones/%s/instances/%s", vm.Zone, vm.Name)},
-			},
-			PatchConfig: &osconfig.PatchConfig{
-				RebootConfig: "DEFAULT",
-				Yum:          yumSettings,
-			},
-			Duration: fmt.Sprintf("%ds", int(tc.timeout.Seconds())),
-		}
-		job, err := test.ExecutePatchJob(req)
-		if err != nil {
-			return err
-		}
-		_, err = test.WaitForPatchJob(job.Name)
-		return err
-	})
+	}
+	_, err = test.WaitForPatchJob(job.Name)
+	return err
 }
 
 // TestOSPatchYumExcludes verifies that YUM patching with security, minimal, and package excludes succeeds.
@@ -111,15 +87,33 @@ func TestOSPatchYumExcludes(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			runYumPatchTest(t, tc,
-				"execute and await patch job with YUM security, minimal, and excludes",
-				"e2e yum patch job test",
-				&osconfig.YumSettings{
+			test := testenv.New(t, tc.timeout)
+
+			var vm *gcp.VM
+			test.Step("create VM", func(ctx context.Context) error {
+				meta := map[string]string{
+					"osconfig-disabled-features": "guestpolicies",
+				}
+				for k, v := range tc.extraMeta {
+					meta[k] = v
+				}
+				var err error
+				vm, err = test.CreateVM(tc.image, tc.machineType, meta)
+				return err
+			})
+
+			test.Step("wait for OS Config agent ready", func(ctx context.Context) error {
+				_, err := test.WaitForInventory(vm)
+				return err
+			})
+
+			test.Step("execute and await patch job with YUM security, minimal, and excludes", func(ctx context.Context) error {
+				return executeYumPatchJob(test, vm, tc.timeout, "e2e yum patch job test", &osconfig.YumSettings{
 					Security: true,
 					Minimal:  true,
 					Excludes: []string{"pkg1", "pkg2", "/pkg3/"},
-				},
-			)
+				})
+			})
 		})
 	}
 }
@@ -131,13 +125,31 @@ func TestOSPatchYumExclusivePackages(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			runYumPatchTest(t, tc,
-				"execute and await patch job with YUM exclusive packages",
-				"e2e yum exclusive packages test",
-				&osconfig.YumSettings{
+			test := testenv.New(t, tc.timeout)
+
+			var vm *gcp.VM
+			test.Step("create VM", func(ctx context.Context) error {
+				meta := map[string]string{
+					"osconfig-disabled-features": "guestpolicies",
+				}
+				for k, v := range tc.extraMeta {
+					meta[k] = v
+				}
+				var err error
+				vm, err = test.CreateVM(tc.image, tc.machineType, meta)
+				return err
+			})
+
+			test.Step("wait for OS Config agent ready", func(ctx context.Context) error {
+				_, err := test.WaitForInventory(vm)
+				return err
+			})
+
+			test.Step("execute and await patch job with YUM exclusive packages", func(ctx context.Context) error {
+				return executeYumPatchJob(test, vm, tc.timeout, "e2e yum exclusive packages test", &osconfig.YumSettings{
 					ExclusivePackages: []string{"pkg1", "pk3"},
-				},
-			)
+				})
+			})
 		})
 	}
 }
