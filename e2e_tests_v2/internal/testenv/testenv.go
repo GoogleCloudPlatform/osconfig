@@ -891,6 +891,44 @@ func (test *Test) WaitForPackageInManager(vm *gcp.VM, manager, pkgName string) e
 	})
 }
 
+// SerialOutputCount returns the number of occurrences of substr in the instance's serial port 1 output.
+func (test *Test) SerialOutputCount(vm *gcp.VM, substr string) (int, error) {
+	test.t.Helper()
+	serial, err := test.Suite.Compute.SerialOutput(test.Context, vm.Project, vm.Zone, vm.Name)
+	if err != nil {
+		return 0, err
+	}
+	return strings.Count(serial, substr), nil
+}
+
+// WaitForSerialOutputCount polls the instance's serial port 1 output until substr appears at least minCount times.
+func (test *Test) WaitForSerialOutputCount(vm *gcp.VM, substr string, minCount int) (int, error) {
+	test.t.Helper()
+
+	test.t.Logf("Waiting for serial output %q (count >= %d) on %q", substr, minCount, vm.Name)
+
+	var result int
+	err := gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("serial output %q (count >= %d) on %s", substr, minCount, vm.Name), func(ctx context.Context) (string, bool, error) {
+		serial, err := test.Suite.Compute.SerialOutput(ctx, vm.Project, vm.Zone, vm.Name)
+		if err != nil {
+			if gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("transient error reading serial output (%v)", err), false, nil
+			}
+			return "", false, err
+		}
+		count := strings.Count(serial, substr)
+		if count < minCount {
+			return fmt.Sprintf("count(%q)=%d (want >= %d)", substr, count, minCount), false, nil
+		}
+		result = count
+		return fmt.Sprintf("count(%q)=%d", substr, count), true, nil
+	})
+	if err != nil {
+		return 0, err
+	}
+	return result, nil
+}
+
 func resourceName(runID, testName, attempt string) string {
 	base := labelValue(fmt.Sprintf("inv-%s-%s", runID, testName))
 	if len(base) > 53 {
