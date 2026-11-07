@@ -55,6 +55,10 @@ func Enqueue(ctx context.Context, name string, f func()) {
 // Subsequent calls to Close() will block.
 func Close() {
 	mx.Lock()
+	if tc == nil {
+		// Nothing was ever enqueued, so there is no queue to drain.
+		return
+	}
 	close(tc)
 	wg.Wait()
 }
