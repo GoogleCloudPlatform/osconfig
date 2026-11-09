@@ -47,6 +47,13 @@ var zypperTestCases = []patchJobTestCase{
 	},
 }
 
+func generateZypperPatchJobRequest(desc string, vm *gcp.VM, zypper *osconfig.ZypperSettings, timeout time.Duration) *osconfig.ExecutePatchJobRequest {
+	return generateExecutePatchJobRequest(desc, vm, &osconfig.PatchConfig{
+		RebootConfig: "DEFAULT",
+		Zypper:       zypper,
+	}, timeout)
+}
+
 func runZypperPatchTest(t *testing.T, tc patchJobTestCase, stepName, reqDesc string, zypperSettings *osconfig.ZypperSettings) {
 	t.Helper()
 
@@ -65,10 +72,7 @@ func runZypperPatchTest(t *testing.T, tc patchJobTestCase, stepName, reqDesc str
 	})
 
 	test.Step(stepName, func(ctx context.Context) error {
-		req := generateExecutePatchJobRequest(reqDesc, vm, &osconfig.PatchConfig{
-			RebootConfig: "DEFAULT",
-			Zypper:       zypperSettings,
-		}, tc.timeout)
+		req := generateZypperPatchJobRequest(reqDesc, vm, zypperSettings, tc.timeout)
 		job, err := test.ExecutePatchJob(req)
 		if err != nil {
 			return err
