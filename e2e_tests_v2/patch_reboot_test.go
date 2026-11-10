@@ -212,7 +212,7 @@ func TestOSPatchJobDoesNotReboot(t *testing.T) {
 				return err
 			})
 
-			test.Step("patch job with RebootConfig NEVER does not reboot", func(ctx context.Context) error {
+			test.Step("start patch job with RebootConfig NEVER", func(ctx context.Context) error {
 				req := &osconfig.ExecutePatchJobRequest{
 					Description: fmt.Sprintf("e2e patch job NEVER reboot test for %s", vm.Name),
 					InstanceFilter: &osconfig.PatchInstanceFilter{
