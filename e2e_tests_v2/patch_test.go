@@ -47,6 +47,27 @@ type patchJobTestCase struct {
 	extraMeta   map[string]string
 }
 
+func generateVmMetadata(extraMeta map[string]string) map[string]string {
+	meta := map[string]string{
+		"osconfig-disabled-features": "guestpolicies",
+	}
+	for k, v := range extraMeta {
+		meta[k] = v
+	}
+	return meta
+}
+
+func generateExecutePatchJobRequest(desc string, vm *gcp.VM, patchConfig *osconfig.PatchConfig, timeout time.Duration) *osconfig.ExecutePatchJobRequest {
+	return &osconfig.ExecutePatchJobRequest{
+		Description: fmt.Sprintf("%s for %s", desc, vm.Name),
+		InstanceFilter: &osconfig.PatchInstanceFilter{
+			Instances: []string{fmt.Sprintf("zones/%s/instances/%s", vm.Zone, vm.Name)},
+		},
+		PatchConfig: patchConfig,
+		Duration:    fmt.Sprintf("%ds", int(timeout.Seconds())),
+	}
+}
+
 // TestOSPatchJobExecution verifies basic OS Patch Job execution across supported
 // OS images using the default PatchConfig.
 // This migrates the "[Execute PatchJob]" tests from e2e_tests/test_suites/patch/patch.go.
@@ -158,14 +179,8 @@ func TestOSPatchJobExecution(t *testing.T) {
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
-				meta := map[string]string{
-					"osconfig-disabled-features": "guestpolicies",
-				}
-				for k, v := range tc.extraMeta {
-					meta[k] = v
-				}
 				var err error
-				vm, err = test.CreateVM(tc.image, tc.machineType, meta)
+				vm, err = test.CreateVM(tc.image, tc.machineType, generateVmMetadata(tc.extraMeta))
 				return err
 			})
 
@@ -175,16 +190,7 @@ func TestOSPatchJobExecution(t *testing.T) {
 			})
 
 			test.Step("execute and await patch job", func(ctx context.Context) error {
-				req := &osconfig.ExecutePatchJobRequest{
-					Description: fmt.Sprintf("e2e patch job test for %s", vm.Name),
-					InstanceFilter: &osconfig.PatchInstanceFilter{
-						Instances: []string{fmt.Sprintf("zones/%s/instances/%s", vm.Zone, vm.Name)},
-					},
-					PatchConfig: &osconfig.PatchConfig{
-						RebootConfig: "DEFAULT",
-					},
-					Duration: fmt.Sprintf("%ds", int(tc.timeout.Seconds())),
-				}
+				req := generateExecutePatchJobRequest("e2e patch job test", vm, &osconfig.PatchConfig{RebootConfig: "DEFAULT"}, tc.timeout)
 				job, err := test.ExecutePatchJob(req)
 				if err != nil {
 					return err
