@@ -323,6 +323,25 @@ func (c *Client) CreateOSPolicyAssignment(ctx context.Context, project, zone, as
 	return nil
 }
 
+// UpdateOSPolicyAssignment updates an existing OS Config v1 OSPolicyAssignment and waits for the rollout operation to complete.
+func (c *Client) UpdateOSPolicyAssignment(ctx context.Context, project, zone, assignmentID string, assignment *osconfig.OSPolicyAssignment) error {
+	name := fmt.Sprintf("projects/%s/locations/%s/osPolicyAssignments/%s", project, zone, assignmentID)
+
+	op, err := c.osconfig.Projects.Locations.OsPolicyAssignments.Patch(name, assignment).Context(ctx).Do()
+	if err != nil {
+		return fmt.Errorf("failed to update os policy assignment %s: %w", name, err)
+	}
+
+	if err := c.waitOSPolicyAssignmentOperation(ctx, op.Name); err != nil {
+		cancelCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_, _ = c.osconfig.Projects.Locations.OsPolicyAssignments.Operations.Cancel(op.Name, &osconfig.CancelOperationRequest{}).Context(cancelCtx).Do()
+		return fmt.Errorf("failed to wait for os policy assignment %s update: %w", assignmentID, err)
+	}
+
+	return nil
+}
+
 // DeleteOSPolicyAssignment idempotently deletes an OS Config v1 OSPolicyAssignment and waits for completion.
 func (c *Client) DeleteOSPolicyAssignment(ctx context.Context, name string) error {
 	op, err := c.osconfig.Projects.Locations.OsPolicyAssignments.Delete(name).Context(ctx).Do()

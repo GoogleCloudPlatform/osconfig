@@ -697,6 +697,15 @@ func (test *Test) CreateOSPolicyAssignment(vm *gcp.VM, assignment *osconfig.OSPo
 	return test.Suite.Compute.CreateOSPolicyAssignment(test.Context, test.Project, test.Zone, assignmentID, assignment)
 }
 
+// UpdateOSPolicyAssignment updates an existing OS Config v1 OSPolicyAssignment targeting the given VM and waits for the rollout.
+func (test *Test) UpdateOSPolicyAssignment(vm *gcp.VM, assignment *osconfig.OSPolicyAssignment) error {
+	test.t.Helper()
+
+	assignmentID := vm.Name
+	test.t.Logf("Updating OSPolicyAssignment %q for VM %q", assignmentID, vm.Name)
+	return test.Suite.Compute.UpdateOSPolicyAssignment(test.Context, test.Project, test.Zone, assignmentID, assignment)
+}
+
 const osPolicyStateCompliant = "COMPLIANT"
 
 // isOSPolicyAssignmentReportCompliant checks that the report contains wantCompliances policies and all OS policies and their resources are COMPLIANT.
