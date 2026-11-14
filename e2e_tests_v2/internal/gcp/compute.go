@@ -368,3 +368,64 @@ func (c *Client) GetOSPolicyAssignmentReport(ctx context.Context, project, zone,
 	}
 	return report, nil
 }
+
+// GetGuestAttributes retrieves guest attribute entries for an instance at queryPath.
+func (c *Client) GetGuestAttributes(ctx context.Context, project, zone, instance, queryPath string) ([]*compute.GuestAttributesEntry, error) {
+	resp, err := c.compute.Instances.GetGuestAttributes(project, zone, instance).QueryPath(queryPath).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get guest attributes %q for instance %s: %w", queryPath, instance, err)
+	}
+	if resp.QueryValue != nil && len(resp.QueryValue.Items) > 0 {
+		return resp.QueryValue.Items, nil
+	}
+	if resp.VariableValue != "" {
+		return []*compute.GuestAttributesEntry{{
+			Key:   resp.VariableKey,
+			Value: resp.VariableValue,
+		}}, nil
+	}
+	return nil, nil
+}
+
+// AddInstanceMetadata updates or adds metadata items on a running Compute Engine instance and waits for completion.
+func (c *Client) AddInstanceMetadata(ctx context.Context, project, zone, name string, updates map[string]string) error {
+	inst, err := c.compute.Instances.Get(project, zone, name).Context(ctx).Do()
+	if err != nil {
+		return fmt.Errorf("get instance %s for metadata update: %w", name, err)
+	}
+
+	metadata := inst.Metadata
+	if metadata == nil {
+		metadata = &compute.Metadata{}
+	}
+
+	var items []*compute.MetadataItems
+	for _, item := range metadata.Items {
+		if item == nil {
+			continue
+		}
+		if _, exists := updates[item.Key]; exists {
+			continue
+		}
+		items = append(items, item)
+	}
+	for k, v := range updates {
+		val := v
+		items = append(items, &compute.MetadataItems{
+			Key:   k,
+			Value: &val,
+		})
+	}
+	metadata.Items = items
+
+	op, err := c.compute.Instances.SetMetadata(project, zone, name, metadata).Context(ctx).Do()
+	if err != nil {
+		return fmt.Errorf("set metadata on instance %s: %w", name, err)
+	}
+
+	if err := c.waitZoneOperation(ctx, project, zone, op.Name); err != nil {
+		return fmt.Errorf("wait for metadata update on instance %s: %w", name, err)
+	}
+
+	return nil
+}
