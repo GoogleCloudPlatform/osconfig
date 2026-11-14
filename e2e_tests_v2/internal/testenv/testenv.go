@@ -185,10 +185,11 @@ func (pkgs *InstalledPackages) HasPackage(name string) bool {
 	return pkgs.HasPackages(name)
 }
 
-// HasPackageIn checks if a package with the given name exists under a specific package manager.
-func (pkgs *InstalledPackages) HasPackageIn(manager, name string) bool {
+// PackageVersionIn returns the version of a package with the given name under a specific package manager,
+// and a boolean indicating whether the package was found.
+func (pkgs *InstalledPackages) PackageVersionIn(manager, name string) (string, bool) {
 	if pkgs == nil {
-		return false
+		return "", false
 	}
 	target := strings.ToLower(strings.TrimSpace(name))
 	var list []*PackageInfo
@@ -213,10 +214,16 @@ func (pkgs *InstalledPackages) HasPackageIn(manager, name string) bool {
 
 	for _, p := range list {
 		if p != nil && strings.ToLower(strings.TrimSpace(p.Name)) == target {
-			return true
+			return p.Version, true
 		}
 	}
-	return false
+	return "", false
+}
+
+// HasPackageIn checks if a package with the given name exists under a specific package manager.
+func (pkgs *InstalledPackages) HasPackageIn(manager, name string) bool {
+	_, ok := pkgs.PackageVersionIn(manager, name)
+	return ok
 }
 
 // AllPackageNames returns all package names collected across all package managers.
@@ -889,6 +896,76 @@ func (test *Test) WaitForPackageInManager(vm *gcp.VM, manager, pkgName string) e
 
 		return fmt.Sprintf("package %q installed under %s", pkgName, manager), true, nil
 	})
+}
+
+// WaitForPackageVersion polls the OS Config Inventory API until pkgName is installed under manager with a version starting with wantVersionPrefix.
+func (test *Test) WaitForPackageVersion(vm *gcp.VM, manager, pkgName, wantVersionPrefix string) (*osconfig.Inventory, error) {
+	test.t.Helper()
+
+	test.t.Logf("Waiting for package %q (%s) version prefix %q in inventory on %q", pkgName, manager, wantVersionPrefix, vm.Name)
+
+	var result *osconfig.Inventory
+	err := gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("package %q version %q on %s", pkgName, wantVersionPrefix, vm.Name), func(ctx context.Context) (string, bool, error) {
+		inv, err := test.Suite.Compute.GetInventory(ctx, vm.Project, vm.Zone, vm.Name, "FULL")
+		if err != nil {
+			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("inventory not yet published (%v)", err), false, nil
+			}
+			return "", false, fmt.Errorf("read inventory: %w", err)
+		}
+
+		pkgs := ExtractInstalledPackages(inv)
+		version, ok := pkgs.PackageVersionIn(manager, pkgName)
+		if !ok {
+			return fmt.Sprintf("package %q not yet in %s inventory (total items: %d)", pkgName, manager, len(inv.Items)), false, nil
+		}
+		if !strings.HasPrefix(version, wantVersionPrefix) {
+			return fmt.Sprintf("package %q has version %q, want prefix %q", pkgName, version, wantVersionPrefix), false, nil
+		}
+
+		result = inv
+		return fmt.Sprintf("package %q installed with version %q", pkgName, version), true, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// WaitForPackageVersionChanged polls the OS Config Inventory API until pkgName is installed under manager with a version that does not start with oldVersionPrefix.
+func (test *Test) WaitForPackageVersionChanged(vm *gcp.VM, manager, pkgName, oldVersionPrefix string) (*osconfig.Inventory, error) {
+	test.t.Helper()
+
+	test.t.Logf("Waiting for package %q (%s) to update from version prefix %q on %q", pkgName, manager, oldVersionPrefix, vm.Name)
+
+	var result *osconfig.Inventory
+	err := gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("package %q updated from %q on %s", pkgName, oldVersionPrefix, vm.Name), func(ctx context.Context) (string, bool, error) {
+		inv, err := test.Suite.Compute.GetInventory(ctx, vm.Project, vm.Zone, vm.Name, "FULL")
+		if err != nil {
+			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("inventory not yet published (%v)", err), false, nil
+			}
+			return "", false, fmt.Errorf("read inventory: %w", err)
+		}
+
+		pkgs := ExtractInstalledPackages(inv)
+		version, ok := pkgs.PackageVersionIn(manager, pkgName)
+		if !ok {
+			return fmt.Sprintf("package %q not yet in %s inventory (total items: %d)", pkgName, manager, len(inv.Items)), false, nil
+		}
+		if strings.HasPrefix(version, oldVersionPrefix) {
+			return fmt.Sprintf("package %q still at old version %q", pkgName, version), false, nil
+		}
+
+		result = inv
+		return fmt.Sprintf("package %q updated to version %q", pkgName, version), true, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func resourceName(runID, testName, attempt string) string {
