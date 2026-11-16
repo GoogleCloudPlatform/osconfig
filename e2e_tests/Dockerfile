@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-FROM us-docker.pkg.dev/artifact-foundry-prod/docker-3p-trusted/golang:1.25
+FROM us-docker.pkg.dev/artifact-foundry-prod/docker-3p-trusted/golang:1.26
 
 RUN apt-get update && \
     apt-get install -y wget ca-certificates && \
