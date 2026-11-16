@@ -56,6 +56,17 @@ var aptTestCases = []patchJobTestCase{
 	},
 }
 
+func generateAptPatchJobRequest(desc string, vm *gcp.VM, excludes, exclusivePackages []string, timeout time.Duration) *osconfig.ExecutePatchJobRequest {
+	return generateExecutePatchJobRequest(desc, vm, &osconfig.PatchConfig{
+		RebootConfig: "DEFAULT",
+		Apt: &osconfig.AptSettings{
+			Type:              "DIST",
+			Excludes:          excludes,
+			ExclusivePackages: exclusivePackages,
+		},
+	}, timeout)
+}
+
 // TestOSPatchAptExcludes verifies that APT patching with dist-upgrade and package excludes succeeds.
 // This migrates "[APT dist-upgrade, excludes]" from e2e_tests/test_suites/patch/patch.go.
 func TestOSPatchAptExcludes(t *testing.T) {
@@ -67,14 +78,8 @@ func TestOSPatchAptExcludes(t *testing.T) {
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
-				meta := map[string]string{
-					"osconfig-disabled-features": "guestpolicies",
-				}
-				for k, v := range tc.extraMeta {
-					meta[k] = v
-				}
 				var err error
-				vm, err = test.CreateVM(tc.image, tc.machineType, meta)
+				vm, err = test.CreateVM(tc.image, tc.machineType, generateVmMetadata(tc.extraMeta))
 				return err
 			})
 
@@ -84,26 +89,19 @@ func TestOSPatchAptExcludes(t *testing.T) {
 			})
 
 			test.Step("execute and await patch job with APT excludes", func(ctx context.Context) error {
-				req := &osconfig.ExecutePatchJobRequest{
-					Description: fmt.Sprintf("e2e apt excludes patch job test for %s", vm.Name),
-					InstanceFilter: &osconfig.PatchInstanceFilter{
-						Instances: []string{fmt.Sprintf("zones/%s/instances/%s", vm.Zone, vm.Name)},
-					},
-					PatchConfig: &osconfig.PatchConfig{
-						RebootConfig: "DEFAULT",
-						Apt: &osconfig.AptSettings{
-							Type:     "DIST",
-							Excludes: []string{"pkg1", "/pkg2/"},
-						},
-					},
-					Duration: fmt.Sprintf("%ds", int(tc.timeout.Seconds())),
-				}
+				req := generateAptPatchJobRequest("e2e apt excludes patch job test", vm, []string{"pkg1", "/pkg2/"}, nil, tc.timeout)
 				job, err := test.ExecutePatchJob(req)
 				if err != nil {
 					return err
 				}
-				_, err = test.WaitForPatchJob(job.Name)
-				return err
+				pj, err := test.WaitForPatchJob(job.Name)
+				if err != nil {
+					return err
+				}
+				if pj.InstanceDetailsSummary.SucceededInstanceCount != 1 {
+					return fmt.Errorf("expected 1 succeeded instance after APT excludes patch job, got summary: %+v", pj.InstanceDetailsSummary)
+				}
+				return nil
 			})
 		})
 	}
@@ -120,14 +118,8 @@ func TestOSPatchAptExclusivePackages(t *testing.T) {
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
-				meta := map[string]string{
-					"osconfig-disabled-features": "guestpolicies",
-				}
-				for k, v := range tc.extraMeta {
-					meta[k] = v
-				}
 				var err error
-				vm, err = test.CreateVM(tc.image, tc.machineType, meta)
+				vm, err = test.CreateVM(tc.image, tc.machineType, generateVmMetadata(tc.extraMeta))
 				return err
 			})
 
@@ -137,26 +129,19 @@ func TestOSPatchAptExclusivePackages(t *testing.T) {
 			})
 
 			test.Step("execute and await patch job with APT exclusive packages", func(ctx context.Context) error {
-				req := &osconfig.ExecutePatchJobRequest{
-					Description: fmt.Sprintf("e2e apt exclusive packages patch job test for %s", vm.Name),
-					InstanceFilter: &osconfig.PatchInstanceFilter{
-						Instances: []string{fmt.Sprintf("zones/%s/instances/%s", vm.Zone, vm.Name)},
-					},
-					PatchConfig: &osconfig.PatchConfig{
-						RebootConfig: "DEFAULT",
-						Apt: &osconfig.AptSettings{
-							Type:              "DIST",
-							ExclusivePackages: []string{"pkg1"},
-						},
-					},
-					Duration: fmt.Sprintf("%ds", int(tc.timeout.Seconds())),
-				}
+				req := generateAptPatchJobRequest("e2e apt exclusive packages patch job test", vm, nil, []string{"pkg1"}, tc.timeout)
 				job, err := test.ExecutePatchJob(req)
 				if err != nil {
 					return err
 				}
-				_, err = test.WaitForPatchJob(job.Name)
-				return err
+				pj, err := test.WaitForPatchJob(job.Name)
+				if err != nil {
+					return err
+				}
+				if pj.InstanceDetailsSummary.SucceededInstanceCount != 1 {
+					return fmt.Errorf("expected 1 succeeded instance after APT exclusive packages patch job, got summary: %+v", pj.InstanceDetailsSummary)
+				}
+				return nil
 			})
 		})
 	}
@@ -232,14 +217,8 @@ func TestOSPatchAptDowngrade(t *testing.T) {
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
-				meta := map[string]string{
-					"osconfig-disabled-features": "guestpolicies",
-				}
-				for k, v := range tc.extraMeta {
-					meta[k] = v
-				}
 				var err error
-				vm, err = test.CreateVM(tc.image, tc.machineType, meta)
+				vm, err = test.CreateVM(tc.image, tc.machineType, generateVmMetadata(tc.extraMeta))
 				return err
 			})
 
@@ -249,25 +228,19 @@ func TestOSPatchAptDowngrade(t *testing.T) {
 			})
 
 			test.Step("execute and await patch job with APT downgrade", func(ctx context.Context) error {
-				req := &osconfig.ExecutePatchJobRequest{
-					Description: fmt.Sprintf("e2e apt downgrade patch job test for %s", vm.Name),
-					InstanceFilter: &osconfig.PatchInstanceFilter{
-						Instances: []string{fmt.Sprintf("zones/%s/instances/%s", vm.Zone, vm.Name)},
-					},
-					PatchConfig: &osconfig.PatchConfig{
-						RebootConfig: "DEFAULT",
-						Apt: &osconfig.AptSettings{
-							Type: "DIST",
-						},
-					},
-					Duration: fmt.Sprintf("%ds", int(tc.timeout.Seconds())),
-				}
+				req := generateAptPatchJobRequest("e2e apt downgrade patch job test", vm, nil, nil, tc.timeout)
 				job, err := test.ExecutePatchJob(req)
 				if err != nil {
 					return err
 				}
-				_, err = test.WaitForPatchJob(job.Name)
-				return err
+				pj, err := test.WaitForPatchJob(job.Name)
+				if err != nil {
+					return err
+				}
+				if pj.InstanceDetailsSummary.SucceededInstanceCount != 1 {
+					return fmt.Errorf("expected 1 succeeded instance after APT downgrade patch job, got summary: %+v", pj.InstanceDetailsSummary)
+				}
+				return nil
 			})
 		})
 	}
