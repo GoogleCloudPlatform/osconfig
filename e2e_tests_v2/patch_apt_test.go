@@ -56,14 +56,10 @@ var aptTestCases = []patchJobTestCase{
 	},
 }
 
-func generateAptPatchJobRequest(desc string, vm *gcp.VM, excludes, exclusivePackages []string, timeout time.Duration) *osconfig.ExecutePatchJobRequest {
+func generateAptPatchJobRequest(desc string, vm *gcp.VM, apt *osconfig.AptSettings, timeout time.Duration) *osconfig.ExecutePatchJobRequest {
 	return generateExecutePatchJobRequest(desc, vm, &osconfig.PatchConfig{
 		RebootConfig: "DEFAULT",
-		Apt: &osconfig.AptSettings{
-			Type:              "DIST",
-			Excludes:          excludes,
-			ExclusivePackages: exclusivePackages,
-		},
+		Apt:          apt,
 	}, timeout)
 }
 
@@ -89,7 +85,10 @@ func TestOSPatchAptExcludes(t *testing.T) {
 			})
 
 			test.Step("execute and await patch job with APT excludes", func(ctx context.Context) error {
-				req := generateAptPatchJobRequest("e2e apt excludes patch job test", vm, []string{"pkg1", "/pkg2/"}, nil, tc.timeout)
+				req := generateAptPatchJobRequest("e2e apt excludes patch job test", vm, &osconfig.AptSettings{
+					Type:     "DIST",
+					Excludes: []string{"pkg1", "/pkg2/"},
+				}, tc.timeout)
 				job, err := test.ExecutePatchJob(req)
 				if err != nil {
 					return err
@@ -129,7 +128,10 @@ func TestOSPatchAptExclusivePackages(t *testing.T) {
 			})
 
 			test.Step("execute and await patch job with APT exclusive packages", func(ctx context.Context) error {
-				req := generateAptPatchJobRequest("e2e apt exclusive packages patch job test", vm, nil, []string{"pkg1"}, tc.timeout)
+				req := generateAptPatchJobRequest("e2e apt exclusive packages patch job test", vm, &osconfig.AptSettings{
+					Type:              "DIST",
+					ExclusivePackages: []string{"pkg1"},
+				}, tc.timeout)
 				job, err := test.ExecutePatchJob(req)
 				if err != nil {
 					return err
@@ -228,7 +230,9 @@ func TestOSPatchAptDowngrade(t *testing.T) {
 			})
 
 			test.Step("execute and await patch job with APT downgrade", func(ctx context.Context) error {
-				req := generateAptPatchJobRequest("e2e apt downgrade patch job test", vm, nil, nil, tc.timeout)
+				req := generateAptPatchJobRequest("e2e apt downgrade patch job test", vm, &osconfig.AptSettings{
+					Type: "DIST",
+				}, tc.timeout)
 				job, err := test.ExecutePatchJob(req)
 				if err != nil {
 					return err
