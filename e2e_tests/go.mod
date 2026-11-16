@@ -1,6 +1,6 @@
 module github.com/GoogleCloudPlatform/osconfig/e2e_tests
 
-go 1.25.0
+go 1.26.0
 
 require (
 	cloud.google.com/go/longrunning v0.8.0
