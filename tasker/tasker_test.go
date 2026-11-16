@@ -18,6 +18,7 @@ import (
 	"context"
 	"strconv"
 	"testing"
+	"time"
 )
 
 var notes []int
@@ -45,4 +46,26 @@ func addToQueue(i int) {
 	Enqueue(context.Background(), strconv.Itoa(i), func() {
 		notes = append(notes, i)
 	})
+}
+
+// Close must not panic when nothing was ever enqueued: the agent calls it
+// on shutdown whether or not a task ran.
+func TestCloseWithoutEnqueue(t *testing.T) {
+	// Close keeps the mutex held after it returns, so release whatever
+	// state an earlier test left and start from an uninitialized queue.
+	_ = mx.TryLock() // held by an earlier Close, or free: either way it is ours now
+	mx.Unlock()
+	tc = nil
+	t.Cleanup(func() { mx.Unlock() })
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		Close()
+	}()
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("Close() blocked without any enqueued task")
+	}
 }
