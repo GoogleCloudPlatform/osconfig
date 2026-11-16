@@ -67,88 +67,66 @@ func generateYumPatchJobRequest(desc string, vm *gcp.VM, yum *osconfig.YumSettin
 	}, timeout)
 }
 
-// TestOSPatchYumExcludes verifies that YUM patching with security, minimal, and package excludes succeeds.
-// This migrates "[YUM security, minimal and excludes]" from e2e_tests/test_suites/patch/patch.go.
-func TestOSPatchYumExcludes(t *testing.T) {
-	for _, tc := range yumTestCases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			test := testenv.New(t, tc.timeout)
-
-			var vm *gcp.VM
-			test.Step("create VM", func(ctx context.Context) error {
-				var err error
-				vm, err = test.CreateVM(tc.image, tc.machineType, generateVmMetadata(tc.extraMeta))
-				return err
-			})
-
-			test.Step("wait for OS Config agent ready", func(ctx context.Context) error {
-				_, err := test.WaitForInventory(vm)
-				return err
-			})
-
-			test.Step("execute and await patch job with YUM security, minimal, and excludes", func(ctx context.Context) error {
-				req := generateYumPatchJobRequest("e2e yum patch job test", vm, &osconfig.YumSettings{
-					Security: true,
-					Minimal:  true,
-					Excludes: []string{"pkg1", "pkg2", "/pkg3/"},
-				}, tc.timeout)
-				job, err := test.ExecutePatchJob(req)
-				if err != nil {
-					return err
-				}
-				pj, err := test.WaitForPatchJob(job.Name)
-				if err != nil {
-					return err
-				}
-				if pj.InstanceDetailsSummary.SucceededInstanceCount != 1 {
-					return fmt.Errorf("expected 1 succeeded instance after YUM patch job, got summary: %+v", pj.InstanceDetailsSummary)
-				}
-				return nil
-			})
-		})
+// TestOSPatchYum verifies that YUM patching succeeds with various settings such as
+// security, minimal, package excludes, and exclusive packages.
+// This migrates "[YUM security, minimal and excludes]" and "[YUM exclusive patches]"
+// from e2e_tests/test_suites/patch/patch.go.
+func TestOSPatchYum(t *testing.T) {
+	yumSettingsCases := []struct {
+		name     string
+		settings *osconfig.YumSettings
+	}{
+		{
+			name: "excludes",
+			settings: &osconfig.YumSettings{
+				Security: true,
+				Minimal:  true,
+				Excludes: []string{"pkg1", "pkg2", "/pkg3/"},
+			},
+		},
+		{
+			name: "exclusive_packages",
+			settings: &osconfig.YumSettings{
+				ExclusivePackages: []string{"pkg1", "pk3"},
+			},
+		},
 	}
-}
 
-// TestOSPatchYumExclusivePackages verifies that YUM patching with ExclusivePackages succeeds.
-// This migrates "[YUM exclusive patches]" from e2e_tests/test_suites/patch/patch.go.
-func TestOSPatchYumExclusivePackages(t *testing.T) {
-	for _, tc := range yumTestCases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
+	for _, sc := range yumSettingsCases {
+		for _, tc := range yumTestCases {
+			t.Run(fmt.Sprintf("%s/%s", sc.name, tc.name), func(t *testing.T) {
+				t.Parallel()
 
-			test := testenv.New(t, tc.timeout)
+				test := testenv.New(t, tc.timeout)
 
-			var vm *gcp.VM
-			test.Step("create VM", func(ctx context.Context) error {
-				var err error
-				vm, err = test.CreateVM(tc.image, tc.machineType, generateVmMetadata(tc.extraMeta))
-				return err
-			})
-
-			test.Step("wait for OS Config agent ready", func(ctx context.Context) error {
-				_, err := test.WaitForInventory(vm)
-				return err
-			})
-
-			test.Step("execute and await patch job with YUM exclusive packages", func(ctx context.Context) error {
-				req := generateYumPatchJobRequest("e2e yum exclusive packages test", vm, &osconfig.YumSettings{
-					ExclusivePackages: []string{"pkg1", "pk3"},
-				}, tc.timeout)
-				job, err := test.ExecutePatchJob(req)
-				if err != nil {
+				var vm *gcp.VM
+				test.Step("create VM", func(ctx context.Context) error {
+					var err error
+					vm, err = test.CreateVM(tc.image, tc.machineType, generateVmMetadata(tc.extraMeta))
 					return err
-				}
-				pj, err := test.WaitForPatchJob(job.Name)
-				if err != nil {
+				})
+
+				test.Step("wait for OS Config agent ready", func(ctx context.Context) error {
+					_, err := test.WaitForInventory(vm)
 					return err
-				}
-				if pj.InstanceDetailsSummary.SucceededInstanceCount != 1 {
-					return fmt.Errorf("expected 1 succeeded instance after YUM exclusive packages patch job, got summary: %+v", pj.InstanceDetailsSummary)
-				}
-				return nil
+				})
+
+				test.Step("execute and await patch job with YUM settings", func(ctx context.Context) error {
+					req := generateYumPatchJobRequest(fmt.Sprintf("e2e yum %s patch job test", sc.name), vm, sc.settings, tc.timeout)
+					job, err := test.ExecutePatchJob(req)
+					if err != nil {
+						return err
+					}
+					pj, err := test.WaitForPatchJob(job.Name)
+					if err != nil {
+						return err
+					}
+					if pj.InstanceDetailsSummary.SucceededInstanceCount != 1 {
+						return fmt.Errorf("expected 1 succeeded instance after YUM patch job, got summary: %+v", pj.InstanceDetailsSummary)
+					}
+					return nil
+				})
 			})
-		})
+		}
 	}
 }
