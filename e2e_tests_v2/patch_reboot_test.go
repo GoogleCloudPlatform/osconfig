@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/gcp"
 	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/testenv"
@@ -27,6 +28,9 @@ import (
 )
 
 const (
+	rebootConfigDefault = "DEFAULT"
+	rebootConfigNever   = "NEVER"
+
 	bootRecord1Marker     = "OSCONFIG_E2E_BOOT_COUNT_1"
 	bootRecord2Marker     = "OSCONFIG_E2E_BOOT_COUNT_2"
 	rebootSetupDoneMarker = "OSCONFIG_E2E_REBOOT_SETUP_DONE"
@@ -181,6 +185,13 @@ var (
 	})
 )
 
+func generateRebootPatchJobRequest(desc string, vm *gcp.VM, rebootConfig string, timeout time.Duration) *osconfig.ExecutePatchJobRequest {
+	return generateExecutePatchJobRequest(desc, vm, &osconfig.PatchConfig{
+		RebootConfig: rebootConfig,
+		Apt:          &osconfig.AptSettings{Type: "DIST"},
+	}, timeout)
+}
+
 // TestOSPatchJobDoesNotReboot verifies that RebootConfig=NEVER prevents rebooting
 // even when a reboot is required, reporting SucceededRebootRequiredInstanceCount == 1.
 // This migrates "[PatchJob does not reboot]" from e2e_tests/test_suites/patch/patch.go.
@@ -193,14 +204,8 @@ func TestOSPatchJobDoesNotReboot(t *testing.T) {
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
-				meta := map[string]string{
-					"osconfig-disabled-features": "guestpolicies",
-				}
-				for k, v := range tc.ExtraMetadata {
-					meta[k] = v
-				}
 				var err error
-				vm, err = test.CreateVM(tc.Image, tc.MachineType, meta)
+				vm, err = test.CreateVM(tc.Image, tc.MachineType, generateVmMetadata(tc.ExtraMetadata))
 				return err
 			})
 
@@ -213,17 +218,7 @@ func TestOSPatchJobDoesNotReboot(t *testing.T) {
 			})
 
 			test.Step("start patch job with RebootConfig NEVER", func(ctx context.Context) error {
-				req := &osconfig.ExecutePatchJobRequest{
-					Description: fmt.Sprintf("e2e patch job NEVER reboot test for %s", vm.Name),
-					InstanceFilter: &osconfig.PatchInstanceFilter{
-						Instances: []string{fmt.Sprintf("zones/%s/instances/%s", vm.Zone, vm.Name)},
-					},
-					PatchConfig: &osconfig.PatchConfig{
-						RebootConfig: "NEVER",
-						Apt:          &osconfig.AptSettings{Type: "DIST"},
-					},
-					Duration: fmt.Sprintf("%ds", int(tc.Timeout.Seconds())),
-				}
+				req := generateRebootPatchJobRequest("e2e patch job NEVER reboot test", vm, rebootConfigNever, tc.Timeout)
 				job, err := test.ExecutePatchJob(req)
 				if err != nil {
 					return err
@@ -268,14 +263,8 @@ func TestOSPatchJobTriggersReboot(t *testing.T) {
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
-				meta := map[string]string{
-					"osconfig-disabled-features": "guestpolicies",
-				}
-				for k, v := range tc.ExtraMetadata {
-					meta[k] = v
-				}
 				var err error
-				vm, err = test.CreateVM(tc.Image, tc.MachineType, meta)
+				vm, err = test.CreateVM(tc.Image, tc.MachineType, generateVmMetadata(tc.ExtraMetadata))
 				return err
 			})
 
@@ -287,18 +276,8 @@ func TestOSPatchJobTriggersReboot(t *testing.T) {
 				return err
 			})
 
-			test.Step("patch job with RebootConfig DEFAULT triggers reboot", func(ctx context.Context) error {
-				req := &osconfig.ExecutePatchJobRequest{
-					Description: fmt.Sprintf("e2e patch job DEFAULT reboot test for %s", vm.Name),
-					InstanceFilter: &osconfig.PatchInstanceFilter{
-						Instances: []string{fmt.Sprintf("zones/%s/instances/%s", vm.Zone, vm.Name)},
-					},
-					PatchConfig: &osconfig.PatchConfig{
-						RebootConfig: "DEFAULT",
-						Apt:          &osconfig.AptSettings{Type: "DIST"},
-					},
-					Duration: fmt.Sprintf("%ds", int(tc.Timeout.Seconds())),
-				}
+			test.Step("start patch job with RebootConfig DEFAULT", func(ctx context.Context) error {
+				req := generateRebootPatchJobRequest("e2e patch job DEFAULT reboot test", vm, rebootConfigDefault, tc.Timeout)
 				job, err := test.ExecutePatchJob(req)
 				if err != nil {
 					return err
