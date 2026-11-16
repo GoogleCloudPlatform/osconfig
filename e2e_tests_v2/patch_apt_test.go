@@ -63,89 +63,67 @@ func generateAptPatchJobRequest(desc string, vm *gcp.VM, apt *osconfig.AptSettin
 	}, timeout)
 }
 
-// TestOSPatchAptExcludes verifies that APT patching with dist-upgrade and package excludes succeeds.
-// This migrates "[APT dist-upgrade, excludes]" from e2e_tests/test_suites/patch/patch.go.
-func TestOSPatchAptExcludes(t *testing.T) {
-	for _, tc := range aptTestCases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			test := testenv.New(t, tc.timeout)
-
-			var vm *gcp.VM
-			test.Step("create VM", func(ctx context.Context) error {
-				var err error
-				vm, err = test.CreateVM(tc.image, tc.machineType, generateVmMetadata(tc.extraMeta))
-				return err
-			})
-
-			test.Step("wait for OS Config agent ready", func(ctx context.Context) error {
-				_, err := test.WaitForInventory(vm)
-				return err
-			})
-
-			test.Step("execute and await patch job with APT excludes", func(ctx context.Context) error {
-				req := generateAptPatchJobRequest("e2e apt excludes patch job test", vm, &osconfig.AptSettings{
-					Type:     "DIST",
-					Excludes: []string{"pkg1", "/pkg2/"},
-				}, tc.timeout)
-				job, err := test.ExecutePatchJob(req)
-				if err != nil {
-					return err
-				}
-				pj, err := test.WaitForPatchJob(job.Name)
-				if err != nil {
-					return err
-				}
-				if pj.InstanceDetailsSummary.SucceededInstanceCount != 1 {
-					return fmt.Errorf("expected 1 succeeded instance after APT excludes patch job, got summary: %+v", pj.InstanceDetailsSummary)
-				}
-				return nil
-			})
-		})
+// TestOSPatchApt verifies that APT patching with dist-upgrade succeeds with various settings
+// such as package excludes and exclusive packages.
+// This migrates "[APT dist-upgrade, excludes]" and "[APT dist-upgrade, exclusive packages]"
+// from e2e_tests/test_suites/patch/patch.go.
+func TestOSPatchApt(t *testing.T) {
+	aptSettingsCases := []struct {
+		name     string
+		settings *osconfig.AptSettings
+	}{
+		{
+			name: "excludes",
+			settings: &osconfig.AptSettings{
+				Type:     "DIST",
+				Excludes: []string{"pkg1", "/pkg2/"},
+			},
+		},
+		{
+			name: "exclusive_packages",
+			settings: &osconfig.AptSettings{
+				Type:              "DIST",
+				ExclusivePackages: []string{"pkg1"},
+			},
+		},
 	}
-}
 
-// TestOSPatchAptExclusivePackages verifies that APT patching with dist-upgrade and exclusive packages succeeds.
-// This migrates "[APT dist-upgrade, exclusive packages]" from e2e_tests/test_suites/patch/patch.go.
-func TestOSPatchAptExclusivePackages(t *testing.T) {
-	for _, tc := range aptTestCases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
+	for _, sc := range aptSettingsCases {
+		for _, tc := range aptTestCases {
+			t.Run(fmt.Sprintf("%s/%s", sc.name, tc.name), func(t *testing.T) {
+				t.Parallel()
 
-			test := testenv.New(t, tc.timeout)
+				test := testenv.New(t, tc.timeout)
 
-			var vm *gcp.VM
-			test.Step("create VM", func(ctx context.Context) error {
-				var err error
-				vm, err = test.CreateVM(tc.image, tc.machineType, generateVmMetadata(tc.extraMeta))
-				return err
-			})
-
-			test.Step("wait for OS Config agent ready", func(ctx context.Context) error {
-				_, err := test.WaitForInventory(vm)
-				return err
-			})
-
-			test.Step("execute and await patch job with APT exclusive packages", func(ctx context.Context) error {
-				req := generateAptPatchJobRequest("e2e apt exclusive packages patch job test", vm, &osconfig.AptSettings{
-					Type:              "DIST",
-					ExclusivePackages: []string{"pkg1"},
-				}, tc.timeout)
-				job, err := test.ExecutePatchJob(req)
-				if err != nil {
+				var vm *gcp.VM
+				test.Step("create VM", func(ctx context.Context) error {
+					var err error
+					vm, err = test.CreateVM(tc.image, tc.machineType, generateVmMetadata(tc.extraMeta))
 					return err
-				}
-				pj, err := test.WaitForPatchJob(job.Name)
-				if err != nil {
+				})
+
+				test.Step("wait for OS Config agent ready", func(ctx context.Context) error {
+					_, err := test.WaitForInventory(vm)
 					return err
-				}
-				if pj.InstanceDetailsSummary.SucceededInstanceCount != 1 {
-					return fmt.Errorf("expected 1 succeeded instance after APT exclusive packages patch job, got summary: %+v", pj.InstanceDetailsSummary)
-				}
-				return nil
+				})
+
+				test.Step("execute and await patch job with APT settings", func(ctx context.Context) error {
+					req := generateAptPatchJobRequest(fmt.Sprintf("e2e apt %s patch job test", sc.name), vm, sc.settings, tc.timeout)
+					job, err := test.ExecutePatchJob(req)
+					if err != nil {
+						return err
+					}
+					pj, err := test.WaitForPatchJob(job.Name)
+					if err != nil {
+						return err
+					}
+					if pj.InstanceDetailsSummary.SucceededInstanceCount != 1 {
+						return fmt.Errorf("expected 1 succeeded instance after APT patch job, got summary: %+v", pj.InstanceDetailsSummary)
+					}
+					return nil
+				})
 			})
-		})
+		}
 	}
 }
 
