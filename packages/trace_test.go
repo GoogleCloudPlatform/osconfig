@@ -173,7 +173,7 @@ func TestTracingInstalledPackagesProvider_Scalibr(t *testing.T) {
 
 	wantPkgs := Packages{Deb: []*PkgInfo{
 		{Name: "7zip", Version: "24.09+dfsg-4", Arch: "x86_64", Source: Source{Name: "7zip", Version: "24.09+dfsg-4"}, Type: "deb", Purl: "pkg:deb/linux/7zip@24.09%2Bdfsg-4?arch=amd64", Location: []string{"var/lib/dpkg/status"}},
-		{Name: "llvm-16", Version: "1:16.0.6-27+build3", Arch: "x86_64", Source: Source{Name: "llvm-toolchain-16", Version: "1:16.0.6-27+build3"}, Type: "deb", Purl: "pkg:deb/linux/llvm-16@1%3A16.0.6-27%2Bbuild3?arch=amd64&source=llvm-toolchain-16", Location: []string{"var/lib/dpkg/status"}},
+		{Name: "llvm-16", Version: "1:16.0.6-27+build3", Arch: "x86_64", Source: Source{Name: "llvm-toolchain-16", Version: "1:16.0.6-27+build3"}, Type: "deb", Purl: "pkg:deb/linux/llvm-16@1:16.0.6-27%2Bbuild3?arch=amd64&source=llvm-toolchain-16", Location: []string{"var/lib/dpkg/status"}},
 	}}
 
 	tests := []struct {

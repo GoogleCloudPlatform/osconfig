@@ -24,6 +24,10 @@ import (
 	"github.com/google/osv-scalibr/plugin"
 )
 
+type unknownMetadata struct{}
+
+func (unknownMetadata) IsProtoable() {}
+
 func TestExtractedPackageMappings(t *testing.T) {
 	tests := []struct {
 		name string
@@ -36,36 +40,36 @@ func TestExtractedPackageMappings(t *testing.T) {
 			pkgs: []*extractor.Package{
 				{
 					Name: "7zip", Version: "24.09+dfsg-4", PURLType: "deb",
-					Locations: []string{"var/lib/dpkg/status"},
-					Metadata:  &dpkgmetadata.Metadata{PackageName: "7zip", Status: "install ok installed", SourceName: "", SourceVersion: "", PackageVersion: "24.09+dfsg-4", OSID: "debian", OSVersionCodename: "rodete", OSVersionID: "", Maintainer: "YOKOTA Hiroshi <yokota.hgml@gmail.com>", Architecture: "amd64"},
+					Location: extractor.LocationFromPath("var/lib/dpkg/status"),
+					Metadata: &dpkgmetadata.Metadata{PackageName: "7zip", Status: "install ok installed", SourceName: "", SourceVersion: "", PackageVersion: "24.09+dfsg-4", OSID: "debian", OSVersionCodename: "rodete", OSVersionID: "", Maintainer: "YOKOTA Hiroshi <yokota.hgml@gmail.com>", Architecture: "amd64"},
 				},
 				{
 					Name: "llvm-16", Version: "1:16.0.6-27+build3", PURLType: "deb",
-					Locations: []string{"var/lib/dpkg/status"},
-					Metadata:  &dpkgmetadata.Metadata{PackageName: "llvm-16", Status: "install ok installed", SourceName: "llvm-toolchain-16", SourceVersion: "", PackageVersion: "1:16.0.6-27+build3", OSID: "debian", OSVersionCodename: "rodete", OSVersionID: "", Maintainer: "LLVM Packaging Team <pkg-llvm-team@lists.alioth.debian.org>", Architecture: "amd64"},
+					Location: extractor.LocationFromPath("var/lib/dpkg/status"),
+					Metadata: &dpkgmetadata.Metadata{PackageName: "llvm-16", Status: "install ok installed", SourceName: "llvm-toolchain-16", SourceVersion: "", PackageVersion: "1:16.0.6-27+build3", OSID: "debian", OSVersionCodename: "rodete", OSVersionID: "", Maintainer: "LLVM Packaging Team <pkg-llvm-team@lists.alioth.debian.org>", Architecture: "amd64"},
 				},
 			},
 			want: Packages{Deb: []*PkgInfo{
 				{Name: "7zip", Version: "24.09+dfsg-4", Arch: "x86_64", Source: Source{Name: "7zip", Version: "24.09+dfsg-4"}, Type: "deb", Purl: "pkg:deb/debian/7zip@24.09%2Bdfsg-4?arch=amd64&distro=rodete", Location: []string{"var/lib/dpkg/status"}},
-				{Name: "llvm-16", Version: "1:16.0.6-27+build3", Arch: "x86_64", Source: Source{Name: "llvm-toolchain-16", Version: "1:16.0.6-27+build3"}, Type: "deb", Purl: "pkg:deb/debian/llvm-16@1%3A16.0.6-27%2Bbuild3?arch=amd64&distro=rodete&source=llvm-toolchain-16", Location: []string{"var/lib/dpkg/status"}},
+				{Name: "llvm-16", Version: "1:16.0.6-27+build3", Arch: "x86_64", Source: Source{Name: "llvm-toolchain-16", Version: "1:16.0.6-27+build3"}, Type: "deb", Purl: "pkg:deb/debian/llvm-16@1:16.0.6-27%2Bbuild3?arch=amd64&distro=rodete&source=llvm-toolchain-16", Location: []string{"var/lib/dpkg/status"}},
 			}},
 		},
 		{
 			name: "os/rpm extractor maps correctly",
 			pkgs: []*extractor.Package{
 				{
-					Name:      "acl",
-					Version:   "2.2.51-15.el7",
-					PURLType:  "rpm",
-					Locations: []string{"var/lib/rpm/Packages.db"},
-					Metadata:  &scalibrrpm.Metadata{PackageName: "acl", SourceRPM: "acl-2.2.51-15.el7.src.rpm", Epoch: 0, OSName: "CentOS Linux", OSID: "centos", OSVersionID: "7", OSBuildID: "", Vendor: "CentOS", Architecture: "x86_64", OSCPEName: ""},
+					Name:     "acl",
+					Version:  "2.2.51-15.el7",
+					PURLType: "rpm",
+					Location: extractor.LocationFromPath("var/lib/rpm/Packages.db"),
+					Metadata: &scalibrrpm.Metadata{PackageName: "acl", SourceRPM: "acl-2.2.51-15.el7.src.rpm", Epoch: 0, OSName: "CentOS Linux", OSID: "centos", OSVersionID: "7", OSBuildID: "", Vendor: "CentOS", Architecture: "x86_64", OSCPEName: ""},
 				},
 				{
-					Name:      "gpg-pubkey",
-					Version:   "352c64e5-52ae6884",
-					PURLType:  "rpm",
-					Locations: []string{"var/lib/rpm/Packages.db"},
-					Metadata:  &scalibrrpm.Metadata{PackageName: "gpg-pubkey", SourceRPM: "", Epoch: 0, OSName: "CentOS Linux", OSID: "centos", OSVersionID: "7", OSBuildID: "", Vendor: "", Architecture: "", OSCPEName: ""},
+					Name:     "gpg-pubkey",
+					Version:  "352c64e5-52ae6884",
+					PURLType: "rpm",
+					Location: extractor.LocationFromPath("var/lib/rpm/Packages.db"),
+					Metadata: &scalibrrpm.Metadata{PackageName: "gpg-pubkey", SourceRPM: "", Epoch: 0, OSName: "CentOS Linux", OSID: "centos", OSVersionID: "7", OSBuildID: "", Vendor: "", Architecture: "", OSCPEName: ""},
 				},
 			},
 			want: Packages{Rpm: []*PkgInfo{
@@ -78,18 +82,18 @@ func TestExtractedPackageMappings(t *testing.T) {
 			arch: "x86_64",
 			pkgs: []*extractor.Package{
 				{
-					Name:      "PySocks",
-					Version:   "17412.448.8",
-					PURLType:  "cos",
-					Locations: []string{"var/db/pkg/dev-python/PySocks-1.6.7-r1"},
-					Metadata:  &scalibrcos.Metadata{Name: "PySocks", Version: "17412.448.8", Category: "dev-python", OSVersion: "105", OSVersionID: "105", EbuildVersion: "1.6.7-r1"},
+					Name:     "PySocks",
+					Version:  "17412.448.8",
+					PURLType: "cos",
+					Location: extractor.LocationFromPath("var/db/pkg/dev-python/PySocks-1.6.7-r1"),
+					Metadata: &scalibrcos.Metadata{Name: "PySocks", Version: "17412.448.8", Category: "dev-python", OSVersion: "105", OSVersionID: "105", EbuildVersion: "1.6.7-r1"},
 				},
 				{
-					Name:      "chromeos-bsp",
-					Version:   "17412.448.8",
-					PURLType:  "cos",
-					Locations: []string{"var/db/pkg/virtual/chromeos-bsp-3-r1"},
-					Metadata:  &scalibrcos.Metadata{Name: "chromeos-bsp", Version: "17412.448.8", Category: "virtual", OSVersion: "105", OSVersionID: "105", EbuildVersion: "3-r1"},
+					Name:     "chromeos-bsp",
+					Version:  "17412.448.8",
+					PURLType: "cos",
+					Location: extractor.LocationFromPath("var/db/pkg/virtual/chromeos-bsp-3-r1"),
+					Metadata: &scalibrcos.Metadata{Name: "chromeos-bsp", Version: "17412.448.8", Category: "virtual", OSVersion: "105", OSVersionID: "105", EbuildVersion: "3-r1"},
 				},
 			},
 			want: Packages{COS: []*PkgInfo{
@@ -102,10 +106,10 @@ func TestExtractedPackageMappings(t *testing.T) {
 			arch: "x86_64",
 			pkgs: []*extractor.Package{
 				{
-					Name:      "core22",
-					Version:   "20240111",
-					PURLType:  "snap",
-					Locations: []string{"snap/core22/123/meta/snap.yaml"},
+					Name:     "core22",
+					Version:  "20240111",
+					PURLType: "snap",
+					Location: extractor.LocationFromPath("snap/core22/123/meta/snap.yaml"),
 					Metadata: &scalibrsnap.Metadata{
 						Name:          "core22",
 						Version:       "20240111",
@@ -122,11 +126,11 @@ func TestExtractedPackageMappings(t *testing.T) {
 			arch: "x86_64",
 			pkgs: []*extractor.Package{
 				{
-					Name:      "git",
-					Version:   "2.40.1",
-					PURLType:  "chocolatey",
-					Locations: []string{"C:\\ProgramData\\chocolatey\\lib\\git\\git.nuspec"},
-					Metadata:  &scalibrchoco.Metadata{Name: "git", Version: "2.40.1"},
+					Name:     "git",
+					Version:  "2.40.1",
+					PURLType: "chocolatey",
+					Location: extractor.LocationFromPath("C:\\ProgramData\\chocolatey\\lib\\git\\git.nuspec"),
+					Metadata: &scalibrchoco.Metadata{Name: "git", Version: "2.40.1"},
 				},
 			},
 			want: Packages{Chocolatey: []*PkgInfo{
@@ -138,11 +142,11 @@ func TestExtractedPackageMappings(t *testing.T) {
 			arch: "x86_64",
 			pkgs: []*extractor.Package{
 				{
-					Name:      "Microsoft.PowerToys",
-					Version:   "0.70.1",
-					PURLType:  "winget",
-					Locations: []string{"C:\\Program Files\\WindowsApps\\Microsoft.PowerToys\\AppxManifest.xml"},
-					Metadata:  &scalibrwinget.Metadata{Name: "Microsoft.PowerToys", Version: "0.70.1"},
+					Name:     "Microsoft.PowerToys",
+					Version:  "0.70.1",
+					PURLType: "winget",
+					Location: extractor.LocationFromPath("C:\\Program Files\\WindowsApps\\Microsoft.PowerToys\\AppxManifest.xml"),
+					Metadata: &scalibrwinget.Metadata{Name: "Microsoft.PowerToys", Version: "0.70.1"},
 				},
 			},
 			want: Packages{WinGet: []*PkgInfo{
@@ -156,7 +160,7 @@ func TestExtractedPackageMappings(t *testing.T) {
 					Name:     "unknown",
 					Version:  "1.0",
 					PURLType: "unknown",
-					Metadata: "invalid-metadata-type",
+					Metadata: unknownMetadata{},
 				},
 			},
 			want: Packages{},
@@ -237,7 +241,7 @@ func TestScalibrIntegration(t *testing.T) {
 			wantErr: nil,
 			wantPkgs: Packages{Deb: []*PkgInfo{
 				{Name: "7zip", Version: "24.09+dfsg-4", Arch: "x86_64", Source: Source{Name: "7zip", Version: "24.09+dfsg-4"}, Type: "deb", Purl: "pkg:deb/linux/7zip@24.09%2Bdfsg-4?arch=amd64", Location: []string{"var/lib/dpkg/status"}},
-				{Name: "llvm-16", Version: "1:16.0.6-27+build3", Arch: "x86_64", Source: Source{Name: "llvm-toolchain-16", Version: "1:16.0.6-27+build3"}, Type: "deb", Purl: "pkg:deb/linux/llvm-16@1%3A16.0.6-27%2Bbuild3?arch=amd64&source=llvm-toolchain-16", Location: []string{"var/lib/dpkg/status"}},
+				{Name: "llvm-16", Version: "1:16.0.6-27+build3", Arch: "x86_64", Source: Source{Name: "llvm-toolchain-16", Version: "1:16.0.6-27+build3"}, Type: "deb", Purl: "pkg:deb/linux/llvm-16@1:16.0.6-27%2Bbuild3?arch=amd64&source=llvm-toolchain-16", Location: []string{"var/lib/dpkg/status"}},
 			}},
 		},
 		{
@@ -256,7 +260,7 @@ func TestScalibrIntegration(t *testing.T) {
 			wantPkgs: Packages{
 				Deb: []*PkgInfo{
 					{Name: "7zip", Version: "24.09+dfsg-4", Arch: "x86_64", Source: Source{Name: "7zip", Version: "24.09+dfsg-4"}, Type: "deb", Purl: "pkg:deb/linux/7zip@24.09%2Bdfsg-4?arch=amd64", Location: []string{"var/lib/dpkg/status"}},
-					{Name: "llvm-16", Version: "1:16.0.6-27+build3", Arch: "x86_64", Source: Source{Name: "llvm-toolchain-16", Version: "1:16.0.6-27+build3"}, Type: "deb", Purl: "pkg:deb/linux/llvm-16@1%3A16.0.6-27%2Bbuild3?arch=amd64&source=llvm-toolchain-16", Location: []string{"var/lib/dpkg/status"}},
+					{Name: "llvm-16", Version: "1:16.0.6-27+build3", Arch: "x86_64", Source: Source{Name: "llvm-toolchain-16", Version: "1:16.0.6-27+build3"}, Type: "deb", Purl: "pkg:deb/linux/llvm-16@1:16.0.6-27%2Bbuild3?arch=amd64&source=llvm-toolchain-16", Location: []string{"var/lib/dpkg/status"}},
 				},
 			},
 		},
@@ -311,7 +315,7 @@ func TestScalibrIntegration(t *testing.T) {
 			wantPkgs: Packages{
 				Deb: []*PkgInfo{
 					{Name: "7zip", Version: "24.09+dfsg-4", Arch: "x86_64", Source: Source{Name: "7zip", Version: "24.09+dfsg-4"}, Type: "deb", Purl: "pkg:deb/linux/7zip@24.09%2Bdfsg-4?arch=amd64", Location: []string{"var/lib/dpkg/status"}},
-					{Name: "llvm-16", Version: "1:16.0.6-27+build3", Arch: "x86_64", Source: Source{Name: "llvm-toolchain-16", Version: "1:16.0.6-27+build3"}, Type: "deb", Purl: "pkg:deb/linux/llvm-16@1%3A16.0.6-27%2Bbuild3?arch=amd64&source=llvm-toolchain-16", Location: []string{"var/lib/dpkg/status"}},
+					{Name: "llvm-16", Version: "1:16.0.6-27+build3", Arch: "x86_64", Source: Source{Name: "llvm-toolchain-16", Version: "1:16.0.6-27+build3"}, Type: "deb", Purl: "pkg:deb/linux/llvm-16@1:16.0.6-27%2Bbuild3?arch=amd64&source=llvm-toolchain-16", Location: []string{"var/lib/dpkg/status"}},
 				},
 				ZypperPatches: []*ZypperPatch{
 					{Name: "PatchName", Category: "security", Severity: "critical", Summary: "Patch summary"},
@@ -335,7 +339,7 @@ func TestScalibrIntegration(t *testing.T) {
 			wantPkgs: Packages{
 				Deb: []*PkgInfo{
 					{Name: "7zip", Version: "24.09+dfsg-4", Arch: "x86_64", Source: Source{Name: "7zip", Version: "24.09+dfsg-4"}, Type: "deb", Purl: "pkg:deb/linux/7zip@24.09%2Bdfsg-4?arch=amd64", Location: []string{"var/lib/dpkg/status"}},
-					{Name: "llvm-16", Version: "1:16.0.6-27+build3", Arch: "x86_64", Source: Source{Name: "llvm-toolchain-16", Version: "1:16.0.6-27+build3"}, Type: "deb", Purl: "pkg:deb/linux/llvm-16@1%3A16.0.6-27%2Bbuild3?arch=amd64&source=llvm-toolchain-16", Location: []string{"var/lib/dpkg/status"}},
+					{Name: "llvm-16", Version: "1:16.0.6-27+build3", Arch: "x86_64", Source: Source{Name: "llvm-toolchain-16", Version: "1:16.0.6-27+build3"}, Type: "deb", Purl: "pkg:deb/linux/llvm-16@1:16.0.6-27%2Bbuild3?arch=amd64&source=llvm-toolchain-16", Location: []string{"var/lib/dpkg/status"}},
 				},
 			},
 		},

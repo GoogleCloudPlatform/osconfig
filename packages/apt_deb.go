@@ -323,7 +323,7 @@ func AptUpdates(ctx context.Context, opts ...AptGetUpgradeOption) ([]*PkgInfo, e
 	case AptGetFullUpgrade:
 		args = append(aptGetUpgradableArgs, aptGetFullUpgradeCmd)
 	default:
-		return nil, fmt.Errorf("unknown upgrade type: %q", aptOpts.upgradeType)
+		return nil, fmt.Errorf("unknown upgrade type: %v", aptOpts.upgradeType)
 	}
 
 	if _, err := AptUpdate(ctx); err != nil {
