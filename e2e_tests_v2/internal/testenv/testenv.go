@@ -25,6 +25,7 @@ import (
 	"io"
 	"maps"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"runtime/debug"
@@ -683,8 +684,10 @@ func (test *Test) WaitForInventory(vm *gcp.VM) (*osconfig.Inventory, error) {
 func (test *Test) CreateOSPolicyAssignment(vm *gcp.VM, assignment *osconfig.OSPolicyAssignment) error {
 	test.t.Helper()
 
-	assignmentID := vm.Name
-	fullName := fmt.Sprintf("projects/%s/locations/%s/osPolicyAssignments/%s", test.Project, test.Zone, assignmentID)
+	if assignment.Name == "" {
+		assignment.Name = vm.Name
+	}
+	fullName := fmt.Sprintf("projects/%s/locations/%s/osPolicyAssignments/%s", test.Project, test.Zone, path.Base(assignment.Name))
 	test.t.Cleanup(func() {
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), test.Suite.Config.CleanupTimeout)
 		defer cancel()
@@ -693,17 +696,19 @@ func (test *Test) CreateOSPolicyAssignment(vm *gcp.VM, assignment *osconfig.OSPo
 		}
 	})
 
-	test.t.Logf("Creating OSPolicyAssignment %q for VM %q", assignmentID, vm.Name)
-	return test.Suite.Compute.CreateOSPolicyAssignment(test.Context, test.Project, test.Zone, assignmentID, assignment)
+	test.t.Logf("Creating OSPolicyAssignment %q for VM %q", assignment.Name, vm.Name)
+	return test.Suite.Compute.CreateOSPolicyAssignment(test.Context, test.Project, test.Zone, assignment)
 }
 
 // UpdateOSPolicyAssignment updates an existing OS Config v1 OSPolicyAssignment targeting the given VM and waits for the rollout.
 func (test *Test) UpdateOSPolicyAssignment(vm *gcp.VM, assignment *osconfig.OSPolicyAssignment) error {
 	test.t.Helper()
 
-	assignmentID := vm.Name
-	test.t.Logf("Updating OSPolicyAssignment %q for VM %q", assignmentID, vm.Name)
-	return test.Suite.Compute.UpdateOSPolicyAssignment(test.Context, test.Project, test.Zone, assignmentID, assignment)
+	if assignment.Name == "" {
+		assignment.Name = vm.Name
+	}
+	test.t.Logf("Updating OSPolicyAssignment %q for VM %q", assignment.Name, vm.Name)
+	return test.Suite.Compute.UpdateOSPolicyAssignment(test.Context, test.Project, test.Zone, assignment)
 }
 
 const osPolicyStateCompliant = "COMPLIANT"
