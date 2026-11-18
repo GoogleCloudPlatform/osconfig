@@ -107,12 +107,15 @@ func TestOSPatchApt(t *testing.T) {
 					return err
 				})
 
-				test.Step("execute and await patch job with APT settings", func(ctx context.Context) error {
+				var job *osconfig.PatchJob
+				test.Step("execute patch job with APT settings", func(ctx context.Context) error {
+					var err error
 					req := generateAptPatchJobRequest(fmt.Sprintf("e2e apt %s patch job test", sc.name), vm, sc.settings, tc.timeout)
-					job, err := test.ExecutePatchJob(req)
-					if err != nil {
-						return err
-					}
+					job, err = test.ExecutePatchJob(req)
+					return err
+				})
+
+				test.Step("wait for patch job completion", func(ctx context.Context) error {
 					pj, err := test.WaitForPatchJob(job.Name)
 					if err != nil {
 						return err
@@ -207,14 +210,17 @@ func TestOSPatchAptDowngrade(t *testing.T) {
 				return err
 			})
 
-			test.Step("execute and await patch job with APT downgrade", func(ctx context.Context) error {
+			var job *osconfig.PatchJob
+			test.Step("execute patch job with APT downgrade", func(ctx context.Context) error {
+				var err error
 				req := generateAptPatchJobRequest("e2e apt downgrade patch job test", vm, &osconfig.AptSettings{
 					Type: "DIST",
 				}, tc.timeout)
-				job, err := test.ExecutePatchJob(req)
-				if err != nil {
-					return err
-				}
+				job, err = test.ExecutePatchJob(req)
+				return err
+			})
+
+			test.Step("wait for patch job completion", func(ctx context.Context) error {
 				pj, err := test.WaitForPatchJob(job.Name)
 				if err != nil {
 					return err
