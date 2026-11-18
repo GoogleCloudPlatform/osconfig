@@ -61,17 +61,18 @@ var (
 
 // InstalledPackages represents packages collected by the agent and exported to guest attributes.
 type InstalledPackages struct {
-	Yum    []*PackageInfo `json:"yum,omitempty"`
-	Rpm    []*PackageInfo `json:"rpm,omitempty"`
-	Apt    []*PackageInfo `json:"apt,omitempty"`
-	Deb    []*PackageInfo `json:"deb,omitempty"`
-	Zypper []*PackageInfo `json:"zypper,omitempty"`
-	COS    []*PackageInfo `json:"cos,omitempty"`
-	Gem    []*PackageInfo `json:"gem,omitempty"`
-	Pip    []*PackageInfo `json:"pip,omitempty"`
-	GooGet []*PackageInfo `json:"googet,omitempty"`
-	WUA    []*WUAPackage  `json:"wua,omitempty"`
-	QFE    []*QFEPackage  `json:"qfe,omitempty"`
+	Yum                []*PackageInfo        `json:"yum,omitempty"`
+	Rpm                []*PackageInfo        `json:"rpm,omitempty"`
+	Apt                []*PackageInfo        `json:"apt,omitempty"`
+	Deb                []*PackageInfo        `json:"deb,omitempty"`
+	Zypper             []*PackageInfo        `json:"zypper,omitempty"`
+	COS                []*PackageInfo        `json:"cos,omitempty"`
+	Gem                []*PackageInfo        `json:"gem,omitempty"`
+	Pip                []*PackageInfo        `json:"pip,omitempty"`
+	GooGet             []*PackageInfo        `json:"googet,omitempty"`
+	WUA                []*WUAPackage         `json:"wua,omitempty"`
+	QFE                []*QFEPackage         `json:"qfe,omitempty"`
+	WindowsApplication []*WindowsApplication `json:"windowsApplication,omitempty"`
 }
 
 // PackageTypes returns a sorted list of all package manager types that have at least one installed package.
@@ -157,6 +158,14 @@ type WUAPackage struct {
 // QFEPackage describes a Quick Fix Engineering package.
 type QFEPackage struct {
 	HotFixID string `json:"HotFixID"`
+}
+
+// WindowsApplication describes an installed Windows application from the registry.
+type WindowsApplication struct {
+	DisplayName    string         `json:"DisplayName"`
+	DisplayVersion string         `json:"DisplayVersion"`
+	Publisher      string         `json:"Publisher"`
+	InstallDate    *osconfig.Date `json:"InstallDate,omitempty"`
 }
 
 // HasPackages checks if all packages with the given names exist in any package list.
@@ -263,6 +272,29 @@ func (pkgs *InstalledPackages) HasWUA() bool {
 	return pkgs != nil && len(pkgs.WUA) > 0
 }
 
+// HasWindowsApplications checks if all Windows applications with the given display names exist in WindowsApplication.
+func (pkgs *InstalledPackages) HasWindowsApplications(names ...string) bool {
+	if pkgs == nil {
+		return false
+	}
+	if len(names) == 0 {
+		return true
+	}
+	installed := make(map[string]bool)
+	for _, app := range pkgs.WindowsApplication {
+		if app != nil && app.DisplayName != "" {
+			installed[strings.ToLower(strings.TrimSpace(app.DisplayName))] = true
+		}
+	}
+	for _, name := range names {
+		target := strings.ToLower(strings.TrimSpace(name))
+		if !installed[target] {
+			return false
+		}
+	}
+	return true
+}
+
 // ExtractInstalledPackages extracts installed package information from an OS Config Inventory object.
 func ExtractInstalledPackages(inv *osconfig.Inventory) *InstalledPackages {
 	if inv == nil {
@@ -317,6 +349,14 @@ func ExtractInstalledPackages(inv *osconfig.Inventory) *InstalledPackages {
 		if pkg.QfePackage != nil {
 			pkgs.QFE = append(pkgs.QFE, &QFEPackage{
 				HotFixID: pkg.QfePackage.HotFixId,
+			})
+		}
+		if pkg.WindowsApplication != nil {
+			pkgs.WindowsApplication = append(pkgs.WindowsApplication, &WindowsApplication{
+				DisplayName:    pkg.WindowsApplication.DisplayName,
+				DisplayVersion: pkg.WindowsApplication.DisplayVersion,
+				Publisher:      pkg.WindowsApplication.Publisher,
+				InstallDate:    pkg.WindowsApplication.InstallDate,
 			})
 		}
 	}
