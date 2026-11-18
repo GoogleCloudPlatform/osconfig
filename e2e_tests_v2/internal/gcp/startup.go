@@ -39,7 +39,8 @@ which google_osconfig_agent >/dev/null 2>&1 || which google-osconfig-agent >/dev
 }
 systemctl daemon-reload
 if ! systemctl is-active --quiet google-osconfig-agent; then
-  systemctl enable --now google-osconfig-agent || true
+  systemctl enable google-osconfig-agent || true
+  systemctl start google-osconfig-agent || true
 fi
 %s
 mkdir -p /var/lib/google
@@ -60,7 +61,8 @@ which google_osconfig_agent >/dev/null 2>&1 || which google-osconfig-agent >/dev
 }
 systemctl daemon-reload
 if ! systemctl is-active --quiet google-osconfig-agent; then
-  systemctl enable --now google-osconfig-agent || true
+  systemctl enable google-osconfig-agent || true
+  systemctl start google-osconfig-agent || true
 fi
 %s
 mkdir -p /var/lib/google
@@ -80,7 +82,8 @@ which google_osconfig_agent >/dev/null 2>&1 || which google-osconfig-agent >/dev
 }
 systemctl daemon-reload
 if ! systemctl is-active --quiet google-osconfig-agent; then
-  systemctl enable --now google-osconfig-agent || true
+  systemctl enable google-osconfig-agent || true
+  systemctl start google-osconfig-agent || true
 fi
 %s
 mkdir -p /var/lib/google
