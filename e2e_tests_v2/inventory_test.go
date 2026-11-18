@@ -19,6 +19,7 @@ package e2etests_test
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -29,16 +30,26 @@ import (
 	"google.golang.org/api/osconfig/v1"
 )
 
+const ensureWindowsInventoryTestStateScript = `$svc = Get-Service google_osconfig_agent -ErrorAction SilentlyContinue
+if ($svc -and $svc.Status -eq 'Running') {
+    Stop-Service google_osconfig_agent -Force -ErrorAction SilentlyContinue
+}
+googet addrepo sap https://packages.cloud.google.com/yuck/repos/google-cloud-sap-agent-windows
+googet -noconfirm install google-cloud-sap-agent.x86_64.2.7@580956190`
+
 type inventoryTestCase struct {
-	name             string
-	image            string
-	wantShortName    string
-	wantPackageTypes []string
-	wantPackages     []string
-	requireQFE       bool
-	requireWUA       bool
-	machineType      string
-	timeout          time.Duration
+	name                  string
+	image                 string
+	wantShortName         string
+	wantPackageTypes      []string
+	wantPackages          []string
+	wantWindowsApps       []string
+	wantAvailablePackages []string
+	requireQFE            bool
+	requireWUA            bool
+	requireWindowsOSInfo  bool
+	machineType           string
+	timeout               time.Duration
 }
 
 // TestOSInventory verifies that the OS Config agent reports system inventory
@@ -160,37 +171,46 @@ func TestOSInventory(t *testing.T) {
 		},
 		// Windows Server
 		{
-			name:             "windows-2016",
-			image:            "projects/windows-cloud/global/images/family/windows-2016",
-			wantShortName:    "windows",
-			wantPackageTypes: []string{"googet", "qfe", "wua"},
-			wantPackages:     []string{"googet"},
-			requireQFE:       true,
-			requireWUA:       true,
-			machineType:      "e2-standard-4",
-			timeout:          20 * time.Minute,
+			name:                  "windows-2016",
+			image:                 "projects/windows-cloud/global/images/family/windows-2016",
+			wantShortName:         "windows",
+			wantPackageTypes:      []string{"googet", "qfe", "wua"},
+			wantPackages:          []string{"googet"},
+			wantWindowsApps:       []string{"Google Cloud SDK", "GooGet - google-osconfig-agent", "GooGet - googet"},
+			wantAvailablePackages: []string{"google-cloud-sap-agent"},
+			requireQFE:            true,
+			requireWUA:            true,
+			requireWindowsOSInfo:  true,
+			machineType:           "e2-standard-4",
+			timeout:               25 * time.Minute,
 		},
 		{
-			name:             "windows-2019",
-			image:            "projects/windows-cloud/global/images/family/windows-2019",
-			wantShortName:    "windows",
-			wantPackageTypes: []string{"googet", "qfe", "wua"},
-			wantPackages:     []string{"googet"},
-			requireQFE:       true,
-			requireWUA:       true,
-			machineType:      "e2-standard-4",
-			timeout:          20 * time.Minute,
+			name:                  "windows-2019",
+			image:                 "projects/windows-cloud/global/images/family/windows-2019",
+			wantShortName:         "windows",
+			wantPackageTypes:      []string{"googet", "qfe", "wua"},
+			wantPackages:          []string{"googet"},
+			wantWindowsApps:       []string{"Google Cloud SDK", "GooGet - google-osconfig-agent", "GooGet - googet"},
+			wantAvailablePackages: []string{"google-cloud-sap-agent"},
+			requireQFE:            true,
+			requireWUA:            true,
+			requireWindowsOSInfo:  true,
+			machineType:           "e2-standard-4",
+			timeout:               25 * time.Minute,
 		},
 		{
-			name:             "windows-2022",
-			image:            "projects/windows-cloud/global/images/family/windows-2022",
-			wantShortName:    "windows",
-			wantPackageTypes: []string{"googet", "qfe", "wua"},
-			wantPackages:     []string{"googet"},
-			requireQFE:       true,
-			requireWUA:       true,
-			machineType:      "e2-standard-4",
-			timeout:          20 * time.Minute,
+			name:                  "windows-2022",
+			image:                 "projects/windows-cloud/global/images/family/windows-2022",
+			wantShortName:         "windows",
+			wantPackageTypes:      []string{"googet", "qfe", "wua"},
+			wantPackages:          []string{"googet"},
+			wantWindowsApps:       []string{"Google Cloud SDK", "GooGet - google-osconfig-agent", "GooGet - googet"},
+			wantAvailablePackages: []string{"google-cloud-sap-agent"},
+			requireQFE:            true,
+			requireWUA:            true,
+			requireWindowsOSInfo:  true,
+			machineType:           "e2-standard-4",
+			timeout:               25 * time.Minute,
 		},
 		// Container-Optimized OS (COS)
 		{
@@ -230,8 +250,15 @@ func TestOSInventory(t *testing.T) {
 
 			var vm *gcp.VM
 			test.Step("create VM", func(ctx context.Context) error {
+				var customMetadata map[string]string
+				if len(tc.wantAvailablePackages) > 0 && tc.wantShortName == "windows" {
+					scriptKey, scriptContent := gcp.StartupScript(tc.image, ensureWindowsInventoryTestStateScript, "")
+					customMetadata = map[string]string{
+						scriptKey: scriptContent,
+					}
+				}
 				var err error
-				vm, err = test.CreateVM(tc.image, tc.machineType, nil)
+				vm, err = test.CreateVM(tc.image, tc.machineType, customMetadata)
 				return err
 			})
 
@@ -242,47 +269,97 @@ func TestOSInventory(t *testing.T) {
 				return err
 			})
 
-			test.Step("validate OsInfo names", func(ctx context.Context) error {
-				if inv == nil || inv.OsInfo == nil {
-					t.Fatalf("inventory or OsInfo is nil")
-				}
-				if diff := cmp.Diff(vm.Name, inv.OsInfo.Hostname); diff != "" {
-					t.Errorf("hostname mismatch (-want +got):\n%s", diff)
-				}
-				if diff := cmp.Diff(tc.wantShortName, inv.OsInfo.ShortName); diff != "" {
-					t.Errorf("short name mismatch (-want +got):\n%s", diff)
-				}
-				return nil
+			test.Step("validate OsInfo", func(ctx context.Context) error {
+				return verifyOSConfigInventoryOsInfo(vm.Name, tc, inv)
 			})
 
-			test.Step("verify installed packages", func(ctx context.Context) error {
-				pkgs := testenv.ExtractInstalledPackages(inv)
-				if pkgs == nil || (len(pkgs.AllPackageNames()) == 0 && len(pkgs.WUA) == 0 && len(pkgs.QFE) == 0) {
-					return fmt.Errorf("no installed packages found in inventory items")
-				}
-
-				// 1. Verify package manager types
-				gotPackageTypes := pkgs.OSPackageTypes()
-				sortOpt := cmpopts.SortSlices(func(a, b string) bool { return a < b })
-				if diff := cmp.Diff(tc.wantPackageTypes, gotPackageTypes, sortOpt); diff != "" {
-					return fmt.Errorf("installed package types mismatch (-want +got):\n%s", diff)
-				}
-
-				// 2. Verify specific expected packages exist in the inventory
-				if !pkgs.HasPackages(tc.wantPackages...) {
-					return fmt.Errorf("expected packages %v not found in installed packages (total packages: %d)", tc.wantPackages, len(pkgs.AllPackageNames()))
-				}
-
-				// 3. Verify Windows QFE / WUA if required
-				if tc.requireQFE && !pkgs.HasQFE() {
-					return fmt.Errorf("expected at least one QFE package in installed packages, got 0")
-				}
-				if tc.requireWUA && !pkgs.HasWUA() {
-					return fmt.Errorf("expected at least one WUA package in installed packages, got 0")
-				}
-
-				return nil
+			test.Step("verify installed and available packages", func(ctx context.Context) error {
+				return verifyOSConfigInventoryPackages(ctx, test, vm, tc, inv)
 			})
 		})
 	}
+}
+
+func verifyOSConfigInventoryOsInfo(wantHostname string, tc inventoryTestCase, inv *osconfig.Inventory) error {
+	if inv == nil || inv.OsInfo == nil {
+		return fmt.Errorf("inventory or OsInfo is nil")
+	}
+	if diff := cmp.Diff(wantHostname, inv.OsInfo.Hostname); diff != "" {
+		return fmt.Errorf("hostname mismatch (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(tc.wantShortName, inv.OsInfo.ShortName); diff != "" {
+		return fmt.Errorf("short name mismatch (-want +got):\n%s", diff)
+	}
+	if tc.requireWindowsOSInfo {
+		if !strings.Contains(inv.OsInfo.LongName, "Microsoft Windows Server") {
+			return fmt.Errorf("expected OsInfo.LongName to contain %q, got %q", "Microsoft Windows Server", inv.OsInfo.LongName)
+		}
+		if inv.OsInfo.Architecture != "x86_64" {
+			return fmt.Errorf("expected OsInfo.Architecture %q, got %q", "x86_64", inv.OsInfo.Architecture)
+		}
+		if strings.TrimSpace(inv.OsInfo.Version) == "" {
+			return fmt.Errorf("expected non-empty OsInfo.Version")
+		}
+		if strings.TrimSpace(inv.OsInfo.KernelVersion) == "" {
+			return fmt.Errorf("expected non-empty OsInfo.KernelVersion")
+		}
+		if strings.TrimSpace(inv.OsInfo.KernelRelease) == "" {
+			return fmt.Errorf("expected non-empty OsInfo.KernelRelease")
+		}
+	}
+	return nil
+}
+
+func verifyOSConfigInventoryPackages(ctx context.Context, test *testenv.Test, vm *gcp.VM, tc inventoryTestCase, inv *osconfig.Inventory) error {
+	pkgs := testenv.ExtractInstalledPackages(inv)
+	if pkgs == nil || (len(pkgs.AllPackageNames()) == 0 && len(pkgs.WUA) == 0 && len(pkgs.QFE) == 0) {
+		return fmt.Errorf("no installed packages found in inventory items")
+	}
+
+	// 1. Verify package manager types
+	gotPackageTypes := pkgs.OSPackageTypes()
+	sortOpt := cmpopts.SortSlices(func(a, b string) bool { return a < b })
+	if diff := cmp.Diff(tc.wantPackageTypes, gotPackageTypes, sortOpt); diff != "" {
+		return fmt.Errorf("installed package types mismatch (-want +got):\n%s", diff)
+	}
+
+	// 2. Verify specific expected packages exist in the inventory
+	if !pkgs.HasPackages(tc.wantPackages...) {
+		return fmt.Errorf("expected packages %v not found in installed packages (total packages: %d)", tc.wantPackages, len(pkgs.AllPackageNames()))
+	}
+
+	// 3. Verify Windows QFE / WUA / WindowsApplication if required
+	if tc.requireQFE && !pkgs.HasQFE() {
+		return fmt.Errorf("expected at least one QFE package in installed packages, got 0")
+	}
+	if tc.requireWUA && !pkgs.HasWUA() {
+		return fmt.Errorf("expected at least one WUA package in installed packages, got 0")
+	}
+	if len(tc.wantWindowsApps) > 0 && !pkgs.HasWindowsApplications(tc.wantWindowsApps...) {
+		return fmt.Errorf("expected WindowsApplication entries %v not found (got %d WindowsApplication items)", tc.wantWindowsApps, len(pkgs.WindowsApplication))
+	}
+
+	// 4. Verify available package updates if required
+	if len(tc.wantAvailablePackages) > 0 {
+		avail := testenv.ExtractAvailablePackages(inv)
+		if avail != nil && avail.HasPackages(tc.wantAvailablePackages...) {
+			return nil
+		}
+		return gcp.PollUntil(ctx, test.Suite.Config.PollInterval, fmt.Sprintf("available packages %v on %s", tc.wantAvailablePackages, vm.Name), func(ctx context.Context) (string, bool, error) {
+			latestInv, err := test.Suite.Compute.GetInventory(ctx, vm.Project, vm.Zone, vm.Name, "FULL")
+			if err != nil {
+				if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
+					return fmt.Sprintf("inventory not yet available (%v)", err), false, nil
+				}
+				return "", false, fmt.Errorf("failed to read inventory: %w", err)
+			}
+			availPkgs := testenv.ExtractAvailablePackages(latestInv)
+			if availPkgs == nil || !availPkgs.HasPackages(tc.wantAvailablePackages...) {
+				return fmt.Sprintf("waiting for available packages %v in inventory", tc.wantAvailablePackages), false, nil
+			}
+			return fmt.Sprintf("verified available packages %v", tc.wantAvailablePackages), true, nil
+		})
+	}
+
+	return nil
 }
