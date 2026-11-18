@@ -1,0 +1,26 @@
+#!/usr/bin/make -f
+
+export DH_GOLANG_EXCLUDES := e2e_tests
+export DH_GOLANG_BUILDPKG := github.com/GoogleCloudPlatform/osconfig github.com/GoogleCloudPlatform/osconfig/agentconfig github.com/GoogleCloudPlatform/osconfig/agentendpoint github.com/GoogleCloudPlatform/osconfig/attributes github.com/GoogleCloudPlatform/osconfig/clog github.com/GoogleCloudPlatform/osconfig/external github.com/GoogleCloudPlatform/osconfig/inventory github.com/GoogleCloudPlatform/osconfig/osinfo github.com/GoogleCloudPlatform/osconfig/ospatch github.com/GoogleCloudPlatform/osconfig/packages github.com/GoogleCloudPlatform/osconfig/policies github.com/GoogleCloudPlatform/osconfig/policies/recipes github.com/GoogleCloudPlatform/osconfig/retryutil github.com/GoogleCloudPlatform/osconfig/tasker github.com/GoogleCloudPlatform/osconfig/util github.com/GoogleCloudPlatform/osconfig/util/mocks
+export DH_GOLANG_INSTALL_EXTRA := vendor/google.golang.org/protobuf/internal/editiondefaults/editions_defaults.binpb
+
+%:
+	dh $@ --builddirectory=_build --buildsystem=golang --with=golang
+
+override_dh_auto_configure:
+	cp -r debian/extra/vendor ./
+	dh_auto_configure
+
+override_dh_auto_build:
+	dh_auto_build -O--buildsystem=golang -- -ldflags="-s -w -X main.version=$(shell dpkg-parsechangelog -S Version)"
+
+override_dh_auto_install:
+	dh_auto_install -- --no-source
+	mv debian/google-osconfig-agent/usr/bin/osconfig debian/google-osconfig-agent/usr/bin/google_osconfig_agent
+	install -d debian/google-osconfig-agent/var/lib/google_osconfig_agent
+
+override_dh_installsystemd:
+	dh_installsystemd --no-restart-after-upgrade --no-restart-on-upgrade
+
+override_dh_clean:
+	dh_clean vendor/
