@@ -88,7 +88,7 @@ func gooPackageRepo() *osconfigv1beta.PackageRepository {
 // This test migrates the "Add a new package from new repository" scenario from
 // test_suites/guestpolicies/guest_policies.go.
 func TestGuestPoliciesPackageRepositories(t *testing.T) {
-	for _, tc := range guestPolicyOSTargets() {
+	for _, tc := range guestPolicyOSTargets {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
