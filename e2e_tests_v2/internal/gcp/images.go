@@ -48,6 +48,7 @@ const (
 	imageWindows2016 = "projects/windows-cloud/global/images/family/windows-2016"
 	imageWindows2019 = "projects/windows-cloud/global/images/family/windows-2019"
 	imageWindows2022 = "projects/windows-cloud/global/images/family/windows-2022"
+	imageWindows2025 = "projects/windows-cloud/global/images/family/windows-2025"
 
 	// WindowsWSUSSetupScript configures local WSUS settings for Windows test VMs.
 	WindowsWSUSSetupScript = `
@@ -98,6 +99,7 @@ var (
 		{Name: "windows-2016", Image: imageWindows2016, MachineType: "e2-standard-4", Timeout: DefaultWindowsTimeout, ExtraMetadata: WindowsPatchMetadata},
 		{Name: "windows-2019", Image: imageWindows2019, MachineType: "e2-standard-4", Timeout: DefaultWindowsTimeout, ExtraMetadata: WindowsPatchMetadata},
 		{Name: "windows-2022", Image: imageWindows2022, MachineType: "e2-standard-4", Timeout: DefaultWindowsTimeout, ExtraMetadata: WindowsPatchMetadata},
+		{Name: "windows-2025", Image: imageWindows2025, MachineType: "e2-standard-4", Timeout: DefaultWindowsTimeout, ExtraMetadata: WindowsPatchMetadata},
 	}
 
 	// AllTargets contains all supported OS targets across all families.
