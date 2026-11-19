@@ -27,6 +27,8 @@ import (
 	"google.golang.org/api/osconfig/v1"
 )
 
+const syntheticWindowsKB = "9999999"
+
 var (
 	windowsPatchMeta = map[string]string{
 		"sysprep-specialize-script-ps1": windowsSetWsus,
@@ -125,11 +127,141 @@ func TestOSPatchWindowsClassifications(t *testing.T) {
 	}
 }
 
+// TestOSPatchWindowsExcludes verifies that Windows Update patching with Excludes skips
+// the specified KB update, ensuring it is absent from installed inventory and remains available.
+func TestOSPatchWindowsExcludes(t *testing.T) {
+	for _, tc := range windowsPatchTestCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			test := testenv.New(t, tc.timeout)
+
+			var vm *gcp.VM
+			test.Step("create VM", func(ctx context.Context) error {
+				var err error
+				vm, err = test.CreateVM(tc.image, tc.machineType, generateVmMetadata(tc.extraMeta))
+				return err
+			})
+
+			var initialInv *osconfig.Inventory
+			var excludedKB string
+			test.Step("wait for initial inventory and select KB to exclude", func(ctx context.Context) error {
+				var err error
+				initialInv, err = test.WaitForInventory(vm)
+				if err != nil {
+					return err
+				}
+				excludedKB, _ = selectTargetKB(t, tc.name, initialInv)
+				return nil
+			})
+
+			var job *osconfig.PatchJob
+			test.Step("execute patch job with excluded KB", func(ctx context.Context) error {
+				var err error
+				req := generateWindowsPatchJobRequest("e2e windows patch job excludes test", vm, &osconfig.WindowsUpdateSettings{
+					Excludes: []string{excludedKB},
+				}, tc.timeout)
+				job, err = test.ExecutePatchJob(req)
+				return err
+			})
+
+			test.Step("wait for patch job completion", func(ctx context.Context) error {
+				pj, err := test.WaitForPatchJob(job.Name)
+				if err != nil {
+					return err
+				}
+				if pj.InstanceDetailsSummary.SucceededInstanceCount != 1 {
+					return fmt.Errorf("expected 1 succeeded instance after patch job, got summary: %+v", pj.InstanceDetailsSummary)
+				}
+				return nil
+			})
+
+			test.Step("verify excluded KB was not installed", func(ctx context.Context) error {
+				postInv, err := test.WaitForInventoryUpdate(vm, initialInv.UpdateTime)
+				if err != nil {
+					return fmt.Errorf("failed to get post-patch inventory: %w", err)
+				}
+				return verifyExcludedKB(postInv, excludedKB)
+			})
+		})
+	}
+}
+
+// TestOSPatchWindowsExclusivePatches verifies that Windows Update patching with ExclusivePatches
+// installs only the specified target KB while all other available updates remain pending.
+func TestOSPatchWindowsExclusivePatches(t *testing.T) {
+	for _, tc := range windowsPatchTestCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			test := testenv.New(t, tc.timeout)
+
+			var vm *gcp.VM
+			test.Step("create VM", func(ctx context.Context) error {
+				var err error
+				vm, err = test.CreateVM(tc.image, tc.machineType, generateVmMetadata(tc.extraMeta))
+				return err
+			})
+
+			var initialInv *osconfig.Inventory
+			var targetKB string
+			var otherKBs []string
+			test.Step("wait for initial inventory and select exclusive KB", func(ctx context.Context) error {
+				var err error
+				initialInv, err = test.WaitForInventory(vm)
+				if err != nil {
+					return err
+				}
+				targetKB, otherKBs = selectTargetKB(t, tc.name, initialInv)
+				return nil
+			})
+
+			var job *osconfig.PatchJob
+			test.Step("execute patch job with exclusive patch", func(ctx context.Context) error {
+				var err error
+				req := generateWindowsPatchJobRequest("e2e windows patch job exclusive patches test", vm, &osconfig.WindowsUpdateSettings{
+					ExclusivePatches: []string{targetKB},
+				}, tc.timeout)
+				job, err = test.ExecutePatchJob(req)
+				return err
+			})
+
+			test.Step("wait for patch job completion", func(ctx context.Context) error {
+				pj, err := test.WaitForPatchJob(job.Name)
+				if err != nil {
+					return err
+				}
+				if pj.InstanceDetailsSummary.SucceededInstanceCount != 1 {
+					return fmt.Errorf("expected 1 succeeded instance after patch job, got summary: %+v", pj.InstanceDetailsSummary)
+				}
+				return nil
+			})
+
+			test.Step("verify only target KB was installed and other updates remain pending", func(ctx context.Context) error {
+				return verifyExclusiveKB(test, vm, initialInv.UpdateTime, targetKB, otherKBs)
+			})
+		})
+	}
+}
+
 func generateWindowsPatchJobRequest(desc string, vm *gcp.VM, winSettings *osconfig.WindowsUpdateSettings, timeout time.Duration) *osconfig.ExecutePatchJobRequest {
 	return generateExecutePatchJobRequest(desc, vm, &osconfig.PatchConfig{
 		RebootConfig:  "DEFAULT",
 		WindowsUpdate: winSettings,
 	}, timeout)
+}
+
+// selectTargetKB returns the first available patchable KB along with any remaining KBs.
+// If the image currently has no pending non-definition WUA updates, a synthetic KB ID is returned.
+func selectTargetKB(t *testing.T, targetName string, inv *osconfig.Inventory) (string, []string) {
+	t.Helper()
+	availableKBs := testenv.ExtractPatchableWUAKBs(inv)
+	if len(availableKBs) == 0 {
+		t.Logf("no uninstalled WUA updates found on %s; using synthetic KB %s", targetName, syntheticWindowsKB)
+		return syntheticWindowsKB, nil
+	}
+	t.Logf("selected KB %s on %s (remaining available KBs: %v)", availableKBs[0], targetName, availableKBs[1:])
+	return availableKBs[0], availableKBs[1:]
 }
 
 func verifyKBsRemainPending(inv *osconfig.Inventory, kbs []string) error {
@@ -145,4 +277,33 @@ func verifyKBsRemainPending(inv *osconfig.Inventory, kbs []string) error {
 		}
 	}
 	return nil
+}
+
+func verifyExcludedKB(postInv *osconfig.Inventory, excludedKB string) error {
+	if excludedKB == syntheticWindowsKB {
+		if testenv.ExtractInstalledPackages(postInv).HasKB(excludedKB) {
+			return fmt.Errorf("excluded KB %s was installed, expected absent from installed inventory", excludedKB)
+		}
+		return nil
+	}
+	return verifyKBsRemainPending(postInv, []string{excludedKB})
+}
+
+func verifyExclusiveKB(test *testenv.Test, vm *gcp.VM, prevUpdateTime, targetKB string, otherKBs []string) error {
+	var (
+		postInv *osconfig.Inventory
+		err     error
+	)
+	if targetKB != syntheticWindowsKB {
+		postInv, err = test.WaitForKBInstalled(vm, targetKB)
+		if err != nil {
+			return fmt.Errorf("exclusive target KB %s was not installed: %w", targetKB, err)
+		}
+	} else {
+		postInv, err = test.WaitForInventoryUpdate(vm, prevUpdateTime)
+		if err != nil {
+			return fmt.Errorf("failed to get post-patch inventory: %w", err)
+		}
+	}
+	return verifyKBsRemainPending(postInv, otherKBs)
 }

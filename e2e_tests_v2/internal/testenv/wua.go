@@ -31,7 +31,7 @@ const (
 	wuaCategoryDriver     = "ebfc1fc5-71a4-4f7b-9aca-3b9a503104a0"
 
 	// defenderKB is the recurring Microsoft Defender Antivirus definition KB,
-	// which auto-installs out-of-band via the Defender background service.
+	// which auto-installs out-of-band and often omits KBArticleIDs in WUA COM queries.
 	defenderKB = "2267602"
 )
 
@@ -107,6 +107,49 @@ func (wua *WUAPackage) hasCategory(targetID, targetNameSubstring string) bool {
 	return false
 }
 
+func (wua *WUAPackage) isDefenderOrDefinition() bool {
+	titleLower := strings.ToLower(wua.Title)
+	if strings.Contains(titleLower, "defender") ||
+		strings.Contains(titleLower, "security intelligence") ||
+		strings.Contains(titleLower, "antivirus") {
+		return true
+	}
+	for _, cat := range wua.Categories {
+		if strings.EqualFold(cat.Name, "Definition Updates") || strings.EqualFold(cat.ID, wuaCategoryDefinition) {
+			return true
+		}
+	}
+	return wua.matchesKB(defenderKB)
+}
+
+// ExtractPatchableWUAKBs returns uninstalled, non-definition WUA KB IDs available on the VM.
+// Defender and definition updates are skipped because the WUA COM API often omits their KBArticleIDs
+// and the Defender background service auto-installs them out-of-band.
+func ExtractPatchableWUAKBs(inv *osconfig.Inventory) []string {
+	available := ExtractAvailablePackages(inv)
+	if available == nil {
+		return nil
+	}
+	installed := ExtractInstalledPackages(inv)
+	seen := make(map[string]bool)
+	var kbs []string
+
+	for _, wua := range available.WUA {
+		if wua == nil || wua.isDefenderOrDefinition() {
+			continue
+		}
+		for _, kb := range wua.KBArticleIDs {
+			clean := normalizeKB(kb)
+			if clean == "" || clean == defenderKB || seen[clean] || installed.HasKB(clean) {
+				continue
+			}
+			seen[clean] = true
+			kbs = append(kbs, clean)
+		}
+	}
+	return kbs
+}
+
 // ExtractDefinitionOrDriverOnlyKBs returns available uninstalled KB IDs classified as
 // DEFINITION or DRIVER that do not belong to CRITICAL or SECURITY classifications.
 func ExtractDefinitionOrDriverOnlyKBs(inv *osconfig.Inventory) []string {
@@ -141,12 +184,11 @@ func ExtractDefinitionOrDriverOnlyKBs(inv *osconfig.Inventory) []string {
 	return kbs
 }
 
-// WaitForInventoryUpdate polls the OS Config Inventory API until UpdateTime changes from prevUpdateTime.
-func (test *Test) WaitForInventoryUpdate(vm *gcp.VM, prevUpdateTime string) (*osconfig.Inventory, error) {
+func (test *Test) pollInventory(vm *gcp.VM, desc string, check func(inv *osconfig.Inventory) (string, bool)) (*osconfig.Inventory, error) {
 	test.t.Helper()
 
 	var result *osconfig.Inventory
-	err := gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("inventory update on %s", vm.Name), func(ctx context.Context) (string, bool, error) {
+	err := gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("%s on %s", desc, vm.Name), func(ctx context.Context) (string, bool, error) {
 		inv, err := test.Suite.Compute.GetInventory(ctx, vm.Project, vm.Zone, vm.Name, "FULL")
 		if err != nil {
 			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
@@ -154,14 +196,36 @@ func (test *Test) WaitForInventoryUpdate(vm *gcp.VM, prevUpdateTime string) (*os
 			}
 			return "", false, fmt.Errorf("failed to read inventory: %w", err)
 		}
-		if prevUpdateTime != "" && inv.UpdateTime == prevUpdateTime {
-			return fmt.Sprintf("inventory updateTime %s has not updated yet", inv.UpdateTime), false, nil
+		msg, done := check(inv)
+		if done {
+			result = inv
 		}
-		result = inv
-		return fmt.Sprintf("inventory updated at %s", inv.UpdateTime), true, nil
+		return msg, done, nil
 	})
 	if err != nil {
 		return nil, err
 	}
 	return result, nil
+}
+
+// WaitForInventoryUpdate polls the OS Config Inventory API until UpdateTime changes from prevUpdateTime.
+func (test *Test) WaitForInventoryUpdate(vm *gcp.VM, prevUpdateTime string) (*osconfig.Inventory, error) {
+	test.t.Helper()
+	return test.pollInventory(vm, "inventory update", func(inv *osconfig.Inventory) (string, bool) {
+		if prevUpdateTime != "" && inv.UpdateTime == prevUpdateTime {
+			return fmt.Sprintf("inventory updateTime %s has not updated yet", inv.UpdateTime), false
+		}
+		return fmt.Sprintf("inventory updated at %s", inv.UpdateTime), true
+	})
+}
+
+// WaitForKBInstalled polls the OS Config Inventory API until targetKB is present in installed packages.
+func (test *Test) WaitForKBInstalled(vm *gcp.VM, targetKB string) (*osconfig.Inventory, error) {
+	test.t.Helper()
+	return test.pollInventory(vm, fmt.Sprintf("KB %s installed in inventory", targetKB), func(inv *osconfig.Inventory) (string, bool) {
+		if ExtractInstalledPackages(inv).HasKB(targetKB) {
+			return fmt.Sprintf("KB %s is installed", targetKB), true
+		}
+		return fmt.Sprintf("waiting for KB %s in installed inventory", targetKB), false
+	})
 }
