@@ -217,12 +217,15 @@ func TestOSPatchJobDoesNotReboot(t *testing.T) {
 				return err
 			})
 
-			test.Step("start patch job with RebootConfig NEVER", func(ctx context.Context) error {
+			var job *osconfig.PatchJob
+			test.Step("execute patch job with RebootConfig NEVER", func(ctx context.Context) error {
+				var err error
 				req := generateRebootPatchJobRequest("e2e patch job NEVER reboot test", vm, rebootConfigNever, tc.Timeout)
-				job, err := test.ExecutePatchJob(req)
-				if err != nil {
-					return err
-				}
+				job, err = test.ExecutePatchJob(req)
+				return err
+			})
+
+			test.Step("wait for patch job completion", func(ctx context.Context) error {
 				pj, err := test.WaitForPatchJob(job.Name)
 				if err != nil {
 					return err
@@ -230,7 +233,10 @@ func TestOSPatchJobDoesNotReboot(t *testing.T) {
 				if pj.InstanceDetailsSummary.SucceededRebootRequiredInstanceCount != 1 || pj.InstanceDetailsSummary.SucceededInstanceCount != 0 {
 					return fmt.Errorf("expected SucceededRebootRequiredInstanceCount == 1 and SucceededInstanceCount == 0 for RebootConfig=NEVER, got summary: %+v", pj.InstanceDetailsSummary)
 				}
+				return nil
+			})
 
+			test.Step("verify VM did not reboot", func(ctx context.Context) error {
 				boot2Count, err := test.SerialOutputCount(vm, bootRecord2Marker)
 				if err != nil {
 					return fmt.Errorf("read boot 2 count from serial output after RebootConfig=NEVER: %w", err)
@@ -276,12 +282,15 @@ func TestOSPatchJobTriggersReboot(t *testing.T) {
 				return err
 			})
 
-			test.Step("start patch job with RebootConfig DEFAULT", func(ctx context.Context) error {
+			var job *osconfig.PatchJob
+			test.Step("execute patch job with RebootConfig DEFAULT", func(ctx context.Context) error {
+				var err error
 				req := generateRebootPatchJobRequest("e2e patch job DEFAULT reboot test", vm, rebootConfigDefault, tc.Timeout)
-				job, err := test.ExecutePatchJob(req)
-				if err != nil {
-					return err
-				}
+				job, err = test.ExecutePatchJob(req)
+				return err
+			})
+
+			test.Step("wait for patch job completion", func(ctx context.Context) error {
 				pj, err := test.WaitForPatchJob(job.Name)
 				if err != nil {
 					return err
@@ -289,7 +298,10 @@ func TestOSPatchJobTriggersReboot(t *testing.T) {
 				if pj.InstanceDetailsSummary.SucceededInstanceCount != 1 || pj.InstanceDetailsSummary.SucceededRebootRequiredInstanceCount != 0 {
 					return fmt.Errorf("expected SucceededInstanceCount == 1 and SucceededRebootRequiredInstanceCount == 0 after RebootConfig=DEFAULT reboot, got summary: %+v", pj.InstanceDetailsSummary)
 				}
+				return nil
+			})
 
+			test.Step("verify VM rebooted", func(ctx context.Context) error {
 				if _, err := test.WaitForSerialOutputCount(vm, bootRecord2Marker, 1); err != nil {
 					return fmt.Errorf("wait for reboot in serial output after RebootConfig=DEFAULT: %w", err)
 				}
