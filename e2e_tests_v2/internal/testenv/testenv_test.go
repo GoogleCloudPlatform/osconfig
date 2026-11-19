@@ -296,6 +296,21 @@ func TestExtractInstalledPackages(t *testing.T) {
 					},
 				},
 			},
+			"pkg-winapp-1": {
+				Type: "INSTALLED_PACKAGE",
+				InstalledPackage: &osconfig.InventorySoftwarePackage{
+					WindowsApplication: &osconfig.InventoryWindowsApplication{
+						DisplayName:    "Google Cloud SDK",
+						DisplayVersion: "450.0.0",
+						Publisher:      "Google",
+						InstallDate: &osconfig.Date{
+							Year:  2026,
+							Month: 1,
+							Day:   15,
+						},
+					},
+				},
+			},
 		},
 	}
 
@@ -312,6 +327,12 @@ func TestExtractInstalledPackages(t *testing.T) {
 	}
 	if !pkgs.HasWUA() {
 		t.Error("expected HasWUA() to be true")
+	}
+	if !pkgs.HasWindowsApplications("Google Cloud SDK") {
+		t.Error("expected HasWindowsApplications(\"Google Cloud SDK\") to be true")
+	}
+	if len(pkgs.WindowsApplication) != 1 || pkgs.WindowsApplication[0].Publisher != "Google" {
+		t.Errorf("unexpected WindowsApplication slice: %+v", pkgs.WindowsApplication)
 	}
 
 	types := pkgs.OSPackageTypes()
