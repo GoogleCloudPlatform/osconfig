@@ -361,7 +361,9 @@ func (c *Client) loadTaskFromState(ctx context.Context) error {
 		st.PatchTask.client = c
 		st.PatchTask.state = st
 		tasker.Enqueue(ctx, "PatchRun", func() {
-			st.PatchTask.run(ctx)
+			if err := st.PatchTask.run(ctx); err != nil {
+				clog.Errorf(ctx, "Error running resumed TaskType_APPLY_PATCHES: %v", err)
+			}
 		})
 	}
 

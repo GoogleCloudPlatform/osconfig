@@ -24,6 +24,8 @@ import (
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
 	"github.com/GoogleCloudPlatform/osconfig/util/utiltest"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // TestReportFailed verifies that reportFailed correctly reports a failed state to the server with the expected error message.
@@ -306,7 +308,7 @@ func TestPatchTaskErrorPaths(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.operation()
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr, utiltest.EquateErrorMessage)
 		})
 	}
 }
@@ -342,4 +344,249 @@ func withStateFile(path string, f func() error) error {
 
 func withInvalidStateFile(f func() error) error {
 	return withStateFile("/proc/invalid/path/state", f)
+}
+
+func withSystemRebootRequired(fn func(context.Context) (bool, error), f func()) {
+	orig := systemRebootRequired
+	systemRebootRequired = fn
+	defer func() { systemRebootRequired = orig }()
+	f()
+}
+
+// TestHandleErrorStateCanceledContext verifies that handleErrorState does not report FAILED when the agent context is canceled.
+func TestHandleErrorStateCanceledContext(t *testing.T) {
+	srv := newAgentEndpointServiceTestServer()
+	tc, err := newTestClient(context.Background(), srv)
+	if err != nil {
+		t.Fatalf("newTestClient error: %v", err)
+	}
+	defer tc.s.Stop()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	pt := &patchTask{
+		client: tc.client,
+		TaskID: "test-task",
+	}
+
+	err = pt.handleErrorState(ctx, "Failed to apply patches", context.Canceled)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("handleErrorState error = %v, want wrapping context.Canceled", err)
+	}
+	if srv.lastReportTaskCompleteRequest != nil {
+		t.Errorf("ReportTaskComplete should not be called when ctx is canceled, got %v", srv.lastReportTaskCompleteRequest)
+	}
+}
+
+// TestRunPostPatchPreservesStateOnCanceledContextAndRetriesOnResume simulates a reboot interrupting
+// ReportTaskComplete in the postPatch step and verifies the saved state is preserved and retried on resume.
+func TestRunPostPatchPreservesStateOnCanceledContextAndRetriesOnResume(t *testing.T) {
+	srv := newAgentEndpointServiceTestServer()
+	tc, err := newTestClient(context.Background(), srv)
+	if err != nil {
+		t.Fatalf("newTestClient error: %v", err)
+	}
+	defer tc.s.Stop()
+
+	stateFile := filepath.Join(t.TempDir(), "testState")
+	withSystemRebootRequired(func(context.Context) (bool, error) { return false, nil }, func() {
+		_ = withStateFile(stateFile, func() error {
+			pt := &patchTask{
+				client: tc.client,
+				TaskID: "test-task",
+				state:  &taskState{},
+				Task:   &applyPatchesTask{&agentendpointpb.ApplyPatchesTask{}},
+			}
+			if err := pt.setStep(postPatch); err != nil {
+				t.Fatalf("setStep error: %v", err)
+			}
+
+			// Simulate system shutdown canceling the agent context during completion reporting.
+			canceledCtx, cancel := context.WithCancel(context.Background())
+			cancel()
+
+			if err := pt.run(canceledCtx); err == nil {
+				t.Fatal("pt.run(canceledCtx) = nil, want error")
+			}
+			if srv.patchTaskComplete {
+				t.Fatal("patchTaskComplete = true, want false when ctx is canceled")
+			}
+
+			// State must remain persisted at postPatch for retry after reboot.
+			st, err := loadState(stateFile)
+			if err != nil {
+				t.Fatalf("loadState error: %v", err)
+			}
+			if st == nil || st.PatchTask == nil {
+				t.Fatal("saved PatchTask state was cleared on canceled completion report, want preserved")
+			}
+			utiltest.AssertEquals(t, st.PatchTask.TaskID, "test-task")
+			utiltest.AssertEquals(t, string(st.PatchTask.PatchStep), postPatch)
+
+			// Simulate next boot resuming from saved state.
+			st.PatchTask.client = tc.client
+			st.PatchTask.state = st
+			if err := st.PatchTask.run(context.Background()); err != nil {
+				t.Fatalf("resumed pt.run error: %v", err)
+			}
+			if !srv.patchTaskComplete {
+				t.Fatal("patchTaskComplete = false after resume, want true")
+			}
+			output := srv.lastReportTaskCompleteRequest.GetApplyPatchesTaskOutput()
+			if output == nil || output.GetState() != agentendpointpb.ApplyPatchesTaskOutput_SUCCEEDED {
+				t.Errorf("reported output = %v, want SUCCEEDED", output)
+			}
+
+			// State must now be cleared after successful completion report.
+			st, err = loadState(stateFile)
+			if err != nil {
+				t.Fatalf("loadState after completion error: %v", err)
+			}
+			if st != nil && st.PatchTask != nil {
+				t.Errorf("saved PatchTask state was not cleared after successful completion: %+v", st.PatchTask)
+			}
+			return nil
+		})
+	})
+}
+
+// TestRunPatchingPreservesStateOnCanceledContext verifies that a shutdown during the patching step
+// neither reports FAILED nor clears the saved task state.
+func TestRunPatchingPreservesStateOnCanceledContext(t *testing.T) {
+	srv := newAgentEndpointServiceTestServer()
+	tc, err := newTestClient(context.Background(), srv)
+	if err != nil {
+		t.Fatalf("newTestClient error: %v", err)
+	}
+	defer tc.s.Stop()
+
+	stateFile := filepath.Join(t.TempDir(), "testState")
+	_ = withStateFile(stateFile, func() error {
+		pt := &patchTask{
+			client: tc.client,
+			TaskID: "test-task",
+			state:  &taskState{},
+			Task:   &applyPatchesTask{&agentendpointpb.ApplyPatchesTask{}},
+		}
+		if err := pt.setStep(patching); err != nil {
+			t.Fatalf("setStep error: %v", err)
+		}
+
+		canceledCtx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		if err := pt.run(canceledCtx); err == nil {
+			t.Fatal("pt.run(canceledCtx) = nil, want error")
+		}
+		if srv.lastReportTaskCompleteRequest != nil {
+			t.Errorf("ReportTaskComplete should not be called on canceled ctx, got %v", srv.lastReportTaskCompleteRequest)
+		}
+
+		st, err := loadState(stateFile)
+		if err != nil {
+			t.Fatalf("loadState error: %v", err)
+		}
+		if st == nil || st.PatchTask == nil {
+			t.Fatal("saved PatchTask state was cleared on canceled patching step, want preserved")
+		}
+		utiltest.AssertEquals(t, string(st.PatchTask.PatchStep), patching)
+		return nil
+	})
+}
+
+// TestRunPostPatchStateClearingByServerError verifies that permanent backend rejections clear
+// saved state while transient/cancellation failures preserve it for retry.
+func TestRunPostPatchStateClearingByServerError(t *testing.T) {
+	tests := []struct {
+		name               string
+		serverErr          error
+		wantErr            bool
+		wantStatePreserved bool
+	}{
+		{
+			name:               "success clears state",
+			serverErr:          nil,
+			wantErr:            false,
+			wantStatePreserved: false,
+		},
+		{
+			name:               "Canceled preserves state",
+			serverErr:          status.Error(codes.Canceled, "context canceled"),
+			wantErr:            true,
+			wantStatePreserved: true,
+		},
+		{
+			name:               "InvalidArgument clears state",
+			serverErr:          status.Error(codes.InvalidArgument, "Invalid taskId"),
+			wantErr:            true,
+			wantStatePreserved: false,
+		},
+		{
+			name:               "FailedPrecondition clears state",
+			serverErr:          status.Error(codes.FailedPrecondition, "Task is not started yet"),
+			wantErr:            true,
+			wantStatePreserved: false,
+		},
+		{
+			name:               "NotFound clears state",
+			serverErr:          status.Error(codes.NotFound, "not found"),
+			wantErr:            true,
+			wantStatePreserved: false,
+		},
+		{
+			name:               "PermissionDenied clears state",
+			serverErr:          status.Error(codes.PermissionDenied, "permission denied"),
+			wantErr:            true,
+			wantStatePreserved: false,
+		},
+		{
+			name:               "Unimplemented clears state",
+			serverErr:          status.Error(codes.Unimplemented, "unimplemented"),
+			wantErr:            true,
+			wantStatePreserved: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			srv := newAgentEndpointServiceTestServer()
+			srv.reportTaskCompleteErr = tt.serverErr
+			tc, err := newTestClient(context.Background(), srv)
+			if err != nil {
+				t.Fatalf("newTestClient error: %v", err)
+			}
+			defer tc.s.Stop()
+
+			stateFile := filepath.Join(t.TempDir(), "testState")
+			withSystemRebootRequired(func(context.Context) (bool, error) { return false, nil }, func() {
+				_ = withStateFile(stateFile, func() error {
+					pt := &patchTask{
+						client: tc.client,
+						TaskID: "test-task",
+						state:  &taskState{},
+						Task:   &applyPatchesTask{&agentendpointpb.ApplyPatchesTask{}},
+					}
+					if err := pt.setStep(postPatch); err != nil {
+						t.Fatalf("setStep error: %v", err)
+					}
+
+					err := pt.run(context.Background())
+					if (err != nil) != tt.wantErr {
+						t.Fatalf("pt.run() error = %v, wantErr = %v", err, tt.wantErr)
+					}
+
+					st, err := loadState(stateFile)
+					if err != nil {
+						t.Fatalf("loadState error: %v", err)
+					}
+					statePreserved := st != nil && st.PatchTask != nil
+					if statePreserved != tt.wantStatePreserved {
+						t.Errorf("statePreserved = %v, want %v", statePreserved, tt.wantStatePreserved)
+					}
+					return nil
+				})
+			})
+		})
+	}
 }

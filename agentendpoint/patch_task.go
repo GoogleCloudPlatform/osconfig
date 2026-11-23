@@ -22,12 +22,14 @@ import (
 	"github.com/GoogleCloudPlatform/osconfig/agentconfig"
 	"github.com/GoogleCloudPlatform/osconfig/clog"
 	"github.com/GoogleCloudPlatform/osconfig/ospatch"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"cloud.google.com/go/osconfig/agentendpoint/apiv1/agentendpointpb"
 )
 
-func systemRebootRequired(ctx context.Context) (bool, error) {
+var systemRebootRequired = func(ctx context.Context) (bool, error) {
 	return ospatch.SystemRebootRequired(ctx)
 }
 
@@ -96,6 +98,10 @@ func (r *patchTask) handleErrorState(ctx context.Context, msg string, err error)
 	if err == errServerCancel {
 		return r.reportCanceled(ctx)
 	}
+	if ctx.Err() != nil {
+		clog.Warningf(ctx, "Context canceled while running patch task (%s); preserving task state: %v", msg, ctx.Err())
+		return fmt.Errorf("%s: %w", msg, ctx.Err())
+	}
 	return r.reportFailed(ctx, msg)
 }
 
@@ -122,9 +128,30 @@ func (r *patchTask) reportCompletedState(ctx context.Context, errMsg string, out
 		Output:       output,
 	}
 	if err := r.client.reportTaskComplete(ctx, req); err != nil {
-		return fmt.Errorf("error reporting completed state: %v", err)
+		return fmt.Errorf("error reporting completed state: %w", err)
 	}
 	return nil
+}
+
+// shouldClearState reports whether the persisted patch task state should be
+// cleared when run() exits. State is cleared once completion is acknowledged
+// (err == nil) or permanently rejected by the backend; it is preserved on
+// shutdown/cancellation or transient reporting failures so the agent can retry
+// reporting on the next boot.
+func shouldClearState(ctx context.Context, err error) bool {
+	if err == nil {
+		return true
+	}
+	if ctx.Err() != nil {
+		return false
+	}
+	if s, ok := status.FromError(err); ok {
+		switch s.Code() {
+		case codes.InvalidArgument, codes.FailedPrecondition, codes.NotFound, codes.PermissionDenied, codes.Unimplemented:
+			return true
+		}
+	}
+	return false
 }
 
 func (r *patchTask) reportContinuingState(ctx context.Context, patchState agentendpointpb.ApplyPatchesTaskProgress_State) error {
@@ -239,8 +266,12 @@ func (r *patchTask) run(ctx context.Context) (err error) {
 			r.reportFailed(ctx, err.Error())
 			return
 		}
-		r.complete(ctx)
-		if agentconfig.OSInventoryEnabled() {
+		if shouldClearState(ctx, err) {
+			r.complete(ctx)
+		} else {
+			clog.Warningf(ctx, "Preserving patch task state for retry after error: %v", err)
+		}
+		if err == nil && agentconfig.OSInventoryEnabled() {
 			go r.client.ReportInventory(ctx)
 		}
 	}()
@@ -279,7 +310,7 @@ func (r *patchTask) run(ctx context.Context) (err error) {
 		case postPatch:
 			isRebootRequired, err := systemRebootRequired(ctx)
 			if err != nil {
-				return r.reportFailed(ctx, fmt.Sprintf("Error checking if system reboot is required: %v", err))
+				return r.handleErrorState(ctx, fmt.Sprintf("Error checking if system reboot is required: %v", err), err)
 			}
 
 			finalState := agentendpointpb.ApplyPatchesTaskOutput_SUCCEEDED
@@ -290,7 +321,7 @@ func (r *patchTask) run(ctx context.Context) (err error) {
 			if err := r.reportCompletedState(ctx, "", &agentendpointpb.ReportTaskCompleteRequest_ApplyPatchesTaskOutput{
 				ApplyPatchesTaskOutput: &agentendpointpb.ApplyPatchesTaskOutput{State: finalState},
 			}); err != nil {
-				return fmt.Errorf("failed to report state %s: %v", finalState, err)
+				return fmt.Errorf("failed to report state %s: %w", finalState, err)
 			}
 			clog.Infof(ctx, "Successfully completed ApplyPatchesTask")
 			return nil

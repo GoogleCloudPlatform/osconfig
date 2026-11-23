@@ -144,6 +144,7 @@ type agentEndpointServiceTestServer struct {
 	applyConfigTaskComplete       bool
 	runTaskIDs                    []string
 	lastReportTaskCompleteRequest *agentendpointpb.ReportTaskCompleteRequest
+	reportTaskCompleteErr         error
 	taskDirective                 agentendpointpb.TaskDirective
 	registerAgentReq              *agentendpointpb.RegisterAgentRequest
 }
@@ -221,6 +222,9 @@ func (s *agentEndpointServiceTestServer) ReportTaskProgress(ctx context.Context,
 
 func (s *agentEndpointServiceTestServer) ReportTaskComplete(ctx context.Context, req *agentendpointpb.ReportTaskCompleteRequest) (*agentendpointpb.ReportTaskCompleteResponse, error) {
 	s.lastReportTaskCompleteRequest = req
+	if s.reportTaskCompleteErr != nil {
+		return nil, s.reportTaskCompleteErr
+	}
 	// Record what task types we have seen, when the complete is called for TaskType_APPLY_CONFIG_TASK, close the stream.
 	s.runTaskIDs = append(s.runTaskIDs, req.GetTaskId())
 	switch req.GetTaskType() {

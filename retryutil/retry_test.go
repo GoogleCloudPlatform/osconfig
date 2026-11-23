@@ -191,6 +191,21 @@ func TestRetryAPICall(t *testing.T) {
 	}
 }
 
+func TestRetryAPICallPreservesGRPCStatus(t *testing.T) {
+	currentSleeper = noOpSleeper{}
+	err := RetryAPICall(context.Background(), time.Minute, "test", func() error {
+		return status.Error(codes.InvalidArgument, "invalid taskId")
+	})
+	wrapped := fmt.Errorf("wrapped: %w", err)
+	s, ok := status.FromError(wrapped)
+	if !ok {
+		t.Fatalf("status.FromError(%v) returned ok=false, want true", wrapped)
+	}
+	if s.Code() != codes.InvalidArgument {
+		t.Errorf("status code = %v, want %v", s.Code(), codes.InvalidArgument)
+	}
+}
+
 func Test_defaultSleeper(t *testing.T) {
 	sleeper := defaultSleeper{}
 
