@@ -45,10 +45,11 @@ import (
 
 // Patch job completion states.
 const (
-	PatchJobStateSucceeded           = "SUCCEEDED"
-	PatchJobStateCompletedWithErrors = "COMPLETED_WITH_ERRORS"
-	PatchJobStateTimedOut            = "TIMED_OUT"
-	PatchJobStateCanceled            = "CANCELED"
+	PatchJobStateSucceeded                       = "SUCCEEDED"
+	PatchJobStateCompletedWithErrors             = "COMPLETED_WITH_ERRORS"
+	PatchJobStateTimedOut                        = "TIMED_OUT"
+	PatchJobStateCanceled                        = "CANCELED"
+	PatchJobInstanceStateSucceededRebootRequired = "SUCCEEDED_REBOOT_REQUIRED"
 )
 
 var (
@@ -166,6 +167,56 @@ type WindowsApplication struct {
 	DisplayVersion string         `json:"DisplayVersion"`
 	Publisher      string         `json:"Publisher"`
 	InstallDate    *osconfig.Date `json:"InstallDate,omitempty"`
+}
+
+// WindowsInstalledSnapshot holds a deterministically sorted snapshot of installed Windows packages
+// (GooGet, QFE, and non-Defender WUA updates) for before/after comparisons.
+type WindowsInstalledSnapshot struct {
+	GooGet []string
+	QFE    []string
+	WUA    []string
+}
+
+// SnapshotWindowsInstalledPackages extracts and sorts installed GooGet, QFE, and WUA packages
+// from an OS Config Inventory, excluding out-of-band Microsoft Defender definition updates.
+func SnapshotWindowsInstalledPackages(inv *osconfig.Inventory) WindowsInstalledSnapshot {
+	pkgs := ExtractInstalledPackages(inv)
+	if pkgs == nil {
+		return WindowsInstalledSnapshot{}
+	}
+
+	var snap WindowsInstalledSnapshot
+	for _, p := range pkgs.GooGet {
+		if p != nil {
+			snap.GooGet = append(snap.GooGet, fmt.Sprintf("%s@%s (%s)", p.Name, p.Version, p.Arch))
+		}
+	}
+	for _, q := range pkgs.QFE {
+		if q != nil {
+			snap.QFE = append(snap.QFE, strings.ToUpper(strings.TrimSpace(q.HotFixID)))
+		}
+	}
+	for _, w := range pkgs.WUA {
+		if w == nil || isOutOfBandDefenderWUA(w.Title) {
+			continue
+		}
+		snap.WUA = append(snap.WUA, strings.TrimSpace(w.Title))
+	}
+
+	sort.Strings(snap.GooGet)
+	sort.Strings(snap.QFE)
+	sort.Strings(snap.WUA)
+	return snap
+}
+
+// isOutOfBandDefenderWUA reports whether a WUA title belongs to Microsoft Defender
+// antivirus definition updates, which WinDefend auto-installs out-of-band during boot.
+func isOutOfBandDefenderWUA(title string) bool {
+	lower := strings.ToLower(title)
+	return strings.Contains(lower, "defender") ||
+		strings.Contains(lower, "security intelligence") ||
+		strings.Contains(lower, "antivirus") ||
+		strings.Contains(lower, "kb2267602")
 }
 
 // HasPackages checks if all packages with the given names exist in any package list.
@@ -719,6 +770,33 @@ func (test *Test) WaitForInventory(vm *gcp.VM) (*osconfig.Inventory, error) {
 	return result, nil
 }
 
+// WaitForInventoryUpdate polls the OS Config Inventory API until UpdateTime changes from prevUpdateTime.
+func (test *Test) WaitForInventoryUpdate(vm *gcp.VM, prevUpdateTime string) (*osconfig.Inventory, error) {
+	test.t.Helper()
+
+	test.t.Logf("Waiting for OS inventory update on %q (prevUpdateTime=%q)", vm.Name, prevUpdateTime)
+
+	var result *osconfig.Inventory
+	err := gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("inventory update on %s", vm.Name), func(ctx context.Context) (string, bool, error) {
+		inv, err := test.Suite.Compute.GetInventory(ctx, vm.Project, vm.Zone, vm.Name, "FULL")
+		if err != nil {
+			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("inventory not yet available (%v)", err), false, nil
+			}
+			return "", false, fmt.Errorf("failed to read inventory: %w", err)
+		}
+		if prevUpdateTime != "" && inv.UpdateTime == prevUpdateTime {
+			return fmt.Sprintf("inventory updateTime %s has not updated yet", inv.UpdateTime), false, nil
+		}
+		result = inv
+		return fmt.Sprintf("inventory updated at %s", inv.UpdateTime), true, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 // CreateOSPolicyAssignment creates an OS Config v1 OSPolicyAssignment targeting the given VM and registers automatic cleanup.
 func (test *Test) CreateOSPolicyAssignment(vm *gcp.VM, assignment *osconfig.OSPolicyAssignment) error {
 	test.t.Helper()
@@ -871,6 +949,12 @@ func (test *Test) WaitForPatchJob(jobName string) (*osconfig.PatchJob, error) {
 	return result, nil
 }
 
+// ListPatchJobInstanceDetails retrieves the per-instance execution details for a PatchJob.
+func (test *Test) ListPatchJobInstanceDetails(jobName string) ([]*osconfig.PatchJobInstanceDetails, error) {
+	test.t.Helper()
+	return test.Suite.Compute.ListPatchJobInstanceDetails(test.Context, jobName)
+}
+
 func (test *Test) extractPatchJobFailureDetails(ctx context.Context, jobName string) []string {
 	details, err := test.Suite.Compute.ListPatchJobInstanceDetails(ctx, jobName)
 	if err != nil {
@@ -928,6 +1012,33 @@ func (test *Test) WaitForPackageInManager(vm *gcp.VM, manager, pkgName string) e
 		}
 
 		return fmt.Sprintf("package %q installed under %s", pkgName, manager), true, nil
+	})
+}
+
+// WaitForSerialMarkers polls the instance's serial port 1 output until all markers appear.
+func (test *Test) WaitForSerialMarkers(vm *gcp.VM, markers ...string) error {
+	test.t.Helper()
+
+	test.t.Logf("Waiting for serial markers %v on %q", markers, vm.Name)
+
+	return gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("serial markers %v on %s", markers, vm.Name), func(ctx context.Context) (string, bool, error) {
+		serial, err := test.Suite.Compute.SerialOutput(ctx, vm.Project, vm.Zone, vm.Name)
+		if err != nil {
+			if gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("transient error reading serial output (%v)", err), false, nil
+			}
+			return "", false, err
+		}
+		var missing []string
+		for _, m := range markers {
+			if !strings.Contains(serial, m) {
+				missing = append(missing, m)
+			}
+		}
+		if len(missing) > 0 {
+			return fmt.Sprintf("waiting for serial markers %v", missing), false, nil
+		}
+		return fmt.Sprintf("found serial markers %v", markers), true, nil
 	})
 }
 
