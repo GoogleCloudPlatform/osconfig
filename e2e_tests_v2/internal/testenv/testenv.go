@@ -457,6 +457,7 @@ type Suite struct {
 	Compute   *gcp.Client
 	Scheduler *scheduler.Scheduler
 	Reporter  *junitxml.Reporter
+	Timing    *TimingRecorder
 	RunID     string
 }
 
@@ -484,33 +485,57 @@ func Init(cfg config.Config) error {
 		Compute:   computeClient,
 		Scheduler: sched,
 		Reporter:  junitxml.NewReporter(),
+		Timing:    NewTimingRecorder(runID, cfg),
 		RunID:     runID,
 	}
 	return nil
 }
 
-// Close writes the JUnit XML report to disk and cleans up suite resources.
+// Close writes the JUnit XML report and timing metrics to disk and cleans up suite resources.
 func Close() error {
 	globalMu.Lock()
 	suite := globalSuite
 	globalMu.Unlock()
 
-	if suite == nil || suite.Reporter == nil || suite.Config.ArtifactFile == "" {
+	if suite == nil {
 		return nil
 	}
-	return suite.Reporter.WriteToFile(suite.Config.ArtifactFile)
+
+	var timingErr error
+	if suite.Timing != nil {
+		suite.Timing.WriteSummary(os.Stdout)
+		if suite.Config.ArtifactFile != "" {
+			timingPath := filepath.Join(
+				filepath.Dir(suite.Config.ArtifactFile),
+				fmt.Sprintf("timings-%s-%s.json", suite.RunID, uuid.NewString()[:8]),
+			)
+			timingErr = suite.Timing.WriteJSON(timingPath)
+		}
+	}
+
+	var junitErr error
+	if suite.Reporter != nil && suite.Config.ArtifactFile != "" {
+		junitErr = suite.Reporter.WriteToFile(suite.Config.ArtifactFile)
+	}
+
+	if junitErr != nil {
+		return junitErr
+	}
+	return timingErr
 }
 
 // Test manages resources and assertions for an individual test case.
 type Test struct {
-	t         *testing.T
-	Suite     *Suite
-	Context   context.Context
-	AttemptID string
-	TestName  string
-	Project   string
-	Zone      string
-	failures  []string
+	t           *testing.T
+	Suite       *Suite
+	Context     context.Context
+	AttemptID   string
+	TestName    string
+	Project     string
+	Zone        string
+	failures    []string
+	steps       []StepTiming
+	lastStepEnd time.Time
 }
 
 // New creates and initializes a Test environment for the calling test.
@@ -542,10 +567,12 @@ func New(t *testing.T, timeout time.Duration) *Test {
 	acquireCtx, acquireCancel := context.WithTimeout(context.Background(), suite.Config.TestTimeout)
 	defer acquireCancel()
 
+	queueStart := time.Now()
 	lease, err := suite.Scheduler.Acquire(acquireCtx)
 	if err != nil {
 		t.Fatalf("acquire capacity lease: %v", err)
 	}
+	queueWait := time.Since(queueStart)
 	t.Cleanup(lease.Release)
 
 	testTimeout := suite.Config.TestTimeout
@@ -557,30 +584,46 @@ func New(t *testing.T, timeout time.Duration) *Test {
 	t.Cleanup(cancel)
 
 	attemptID := uuid.NewString()[:8]
+	start := time.Now()
 
 	test := &Test{
-		t:         t,
-		Suite:     suite,
-		Context:   ctx,
-		AttemptID: attemptID,
-		TestName:  t.Name(),
-		Project:   suite.Config.Project,
-		Zone:      suite.Config.Zone,
+		t:           t,
+		Suite:       suite,
+		Context:     ctx,
+		AttemptID:   attemptID,
+		TestName:    t.Name(),
+		Project:     suite.Config.Project,
+		Zone:        suite.Config.Zone,
+		lastStepEnd: start,
 	}
 
-	start := time.Now()
 	t.Cleanup(func() {
 		duration := time.Since(start)
-		suiteName := strings.Split(t.Name(), "/")[0]
+		cleanupDur := time.Since(test.lastStepEnd)
+		suiteName, osName, _ := strings.Cut(t.Name(), "/")
+		status := "passed"
 		var failureMsg string
 		if t.Failed() {
+			status = "failed"
 			if len(test.failures) > 0 {
 				failureMsg = strings.Join(test.failures, "\n")
 			} else {
 				failureMsg = "test failed"
 			}
+		} else if t.Skipped() {
+			status = "skipped"
 		}
 		suite.Reporter.Record(suiteName, t.Name(), "e2etests_test", duration, failureMsg, t.Skipped(), "")
+		suite.Timing.Record(TestTiming{
+			TestName:     t.Name(),
+			Suite:        suiteName,
+			OS:           osName,
+			Status:       status,
+			QueueWaitSec: roundSec(queueWait),
+			Steps:        test.steps,
+			CleanupSec:   roundSec(cleanupDur),
+			TotalSec:     roundSec(duration),
+		})
 	})
 
 	return test
@@ -596,6 +639,8 @@ func (test *Test) Step(name string, fn func(ctx context.Context) error) {
 	defer func() {
 		if r := recover(); r != nil {
 			elapsed := time.Since(start).Round(time.Millisecond)
+			test.steps = append(test.steps, StepTiming{Name: name, DurationSec: roundSec(elapsed), Status: "panicked"})
+			test.lastStepEnd = time.Now()
 			errMsg := fmt.Sprintf("step %q panicked after %s: %v\n%s", name, elapsed, r, debug.Stack())
 			test.failures = append(test.failures, errMsg)
 			test.t.Fatalf("%s", errMsg)
@@ -606,11 +651,15 @@ func (test *Test) Step(name string, fn func(ctx context.Context) error) {
 	elapsed := time.Since(start).Round(time.Millisecond)
 
 	if err != nil {
+		test.steps = append(test.steps, StepTiming{Name: name, DurationSec: roundSec(elapsed), Status: "failed"})
+		test.lastStepEnd = time.Now()
 		errMsg := fmt.Sprintf("step %q failed after %s: %v", name, elapsed, err)
 		test.failures = append(test.failures, errMsg)
 		test.t.Fatalf("%s", errMsg)
 	}
 
+	test.steps = append(test.steps, StepTiming{Name: name, DurationSec: roundSec(elapsed), Status: "passed"})
+	test.lastStepEnd = time.Now()
 	test.t.Logf("--- STEP PASSED: %s (%s) ---", name, elapsed)
 }
 
