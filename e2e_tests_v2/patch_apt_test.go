@@ -95,21 +95,23 @@ func TestOSPatchApt(t *testing.T) {
 
 				test := testenv.New(t, tc.timeout)
 
-				var vm *gcp.VM
+				var (
+					vm  *gcp.VM
+					job *osconfig.PatchJob
+					err error
+				)
+
 				test.Step("create VM", func(ctx context.Context) error {
-					var err error
 					vm, err = test.CreateVM(tc.image, tc.machineType, generateVmMetadata(tc.extraMeta))
 					return err
 				})
 
 				test.Step("wait for OS Config agent ready", func(ctx context.Context) error {
-					_, err := test.WaitForInventory(vm)
+					_, err = test.WaitForInventory(vm)
 					return err
 				})
 
-				var job *osconfig.PatchJob
 				test.Step("execute patch job with APT settings", func(ctx context.Context) error {
-					var err error
 					req := generateAptPatchJobRequest(fmt.Sprintf("e2e apt %s patch job test", sc.name), vm, sc.settings, tc.timeout)
 					job, err = test.ExecutePatchJob(req)
 					return err
@@ -198,21 +200,23 @@ func TestOSPatchAptDowngrade(t *testing.T) {
 
 			test := testenv.New(t, tc.timeout)
 
-			var vm *gcp.VM
+			var (
+				vm  *gcp.VM
+				job *osconfig.PatchJob
+				err error
+			)
+
 			test.Step("create VM", func(ctx context.Context) error {
-				var err error
 				vm, err = test.CreateVM(tc.image, tc.machineType, generateVmMetadata(tc.extraMeta))
 				return err
 			})
 
 			test.Step("wait for OS Config agent ready", func(ctx context.Context) error {
-				_, err := test.WaitForInventory(vm)
+				_, err = test.WaitForInventory(vm)
 				return err
 			})
 
-			var job *osconfig.PatchJob
 			test.Step("execute patch job with APT downgrade", func(ctx context.Context) error {
-				var err error
 				req := generateAptPatchJobRequest("e2e apt downgrade patch job test", vm, &osconfig.AptSettings{
 					Type: "DIST",
 				}, tc.timeout)
