@@ -160,6 +160,8 @@ func buildWindowsFileOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignm
 // TestOSPolicyFileResourceWindows verifies that the OS Config agent enforces File resource policies on Windows:
 // removing an existing file and creating files from content, GCS bucket, remote URI, and local path.
 func TestOSPolicyFileResourceWindows(t *testing.T) {
+	t.Parallel()
+
 	const wantCompliances = 2
 	tests := osPolicyFileWindowsTestCases()
 

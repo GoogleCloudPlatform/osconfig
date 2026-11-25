@@ -122,6 +122,8 @@ func buildAptPackageOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignme
 // TestOSPolicyPackageResourceApt verifies that the OS Config agent enforces APT package policies:
 // installing a missing package ("ed") and removing an installed package ("vim").
 func TestOSPolicyPackageResourceApt(t *testing.T) {
+	t.Parallel()
+
 	const wantCompliances = 1
 	tests := osPolicyPackageAptTestCases()
 

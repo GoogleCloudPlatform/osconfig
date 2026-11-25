@@ -72,6 +72,8 @@ func generateYumPatchJobRequest(desc string, vm *gcp.VM, yum *osconfig.YumSettin
 // This migrates "[YUM security, minimal and excludes]" and "[YUM exclusive patches]"
 // from e2e_tests/test_suites/patch/patch.go.
 func TestOSPatchYum(t *testing.T) {
+	t.Parallel()
+
 	yumSettingsCases := []struct {
 		name     string
 		settings *osconfig.YumSettings

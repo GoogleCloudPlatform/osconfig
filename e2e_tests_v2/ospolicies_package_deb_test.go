@@ -129,6 +129,8 @@ func buildDebPackageOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignme
 // TestOSPolicyPackageResourceDeb verifies that the OS Config agent installs local and remote deb packages:
 // a deb package from GCS with PullDeps: false and a deb package from Remote URI with PullDeps: true.
 func TestOSPolicyPackageResourceDeb(t *testing.T) {
+	t.Parallel()
+
 	const wantCompliances = 1
 	tests := osPolicyPackageDebTestCases()
 

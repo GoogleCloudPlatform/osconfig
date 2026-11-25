@@ -154,6 +154,8 @@ func buildRpmPackageOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignme
 // TestOSPolicyPackageResourceRpm verifies that the OS Config agent installs local and remote rpm packages:
 // an rpm package from GCS with PullDeps: false and an rpm package from Remote URI with PullDeps: true.
 func TestOSPolicyPackageResourceRpm(t *testing.T) {
+	t.Parallel()
+
 	const wantCompliances = 1
 	tests := osPolicyPackageRpmTestCases()
 

@@ -211,6 +211,8 @@ func buildLinuxFileOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignmen
 // TestOSPolicyFileResourceLinux verifies that the OS Config agent enforces File resource policies on Linux:
 // removing an existing file and creating files from content, GCS bucket, remote URI, and local path.
 func TestOSPolicyFileResourceLinux(t *testing.T) {
+	t.Parallel()
+
 	const wantCompliances = 2
 	tests := osPolicyFileLinuxTestCases()
 

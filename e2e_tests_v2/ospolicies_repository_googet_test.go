@@ -109,6 +109,8 @@ func buildGooGetRepositoryOSPolicyAssignment(vmName string) *osconfig.OSPolicyAs
 // TestOSPolicyRepositoryResourceGooGet verifies that the OS Config agent configures a GooGet repository
 // and installs a package ("google-cloud-sap-agent") from it on Windows instances.
 func TestOSPolicyRepositoryResourceGooGet(t *testing.T) {
+	t.Parallel()
+
 	const wantCompliances = 1
 	tests := osPolicyRepositoryGooGetTestCases()
 

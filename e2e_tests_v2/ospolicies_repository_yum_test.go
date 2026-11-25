@@ -128,6 +128,8 @@ func buildYumRepositoryOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssig
 // TestOSPolicyRepositoryResourceYum verifies that the OS Config agent configures a YUM repository
 // and installs a package ("gcsfuse") from it.
 func TestOSPolicyRepositoryResourceYum(t *testing.T) {
+	t.Parallel()
+
 	const wantCompliances = 1
 	tests := osPolicyRepositoryYumTestCases()
 

@@ -128,6 +128,8 @@ func waitForWindowsApplication(ctx context.Context, test *testenv.Test, vm *gcp.
 // TestOSPolicyPackageResourceMsi verifies that the OS Config agent installs an MSI package
 // (Chrome Enterprise MSI from GCS) on Windows VM instances.
 func TestOSPolicyPackageResourceMsi(t *testing.T) {
+	t.Parallel()
+
 	const wantCompliances = 1
 	tests := osPolicyPackageMsiTestCases()
 

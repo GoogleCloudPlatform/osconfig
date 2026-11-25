@@ -109,6 +109,8 @@ func buildZypperPackageOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssig
 // TestOSPolicyPackageResourceZypper verifies that the OS Config agent enforces Zypper package policies:
 // installing a missing package ("ed") and removing an installed package ("vim").
 func TestOSPolicyPackageResourceZypper(t *testing.T) {
+	t.Parallel()
+
 	const wantCompliances = 1
 	tests := osPolicyPackageZypperTestCases()
 

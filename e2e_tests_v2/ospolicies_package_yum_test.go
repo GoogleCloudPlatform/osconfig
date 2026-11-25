@@ -128,6 +128,8 @@ func buildYumPackageOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignme
 // TestOSPolicyPackageResourceYum verifies that the OS Config agent enforces YUM package policies:
 // installing a missing package ("ed") and removing an installed package ("nano").
 func TestOSPolicyPackageResourceYum(t *testing.T) {
+	t.Parallel()
+
 	const wantCompliances = 1
 	tests := osPolicyPackageYumTestCases()
 

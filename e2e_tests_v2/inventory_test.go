@@ -56,6 +56,8 @@ type inventoryTestCase struct {
 // (Hostname, ShortName, InstalledPackages) via the public OS Config API.
 // This test directly replaces test_suites/inventory/inventory.go using standard Go testing.
 func TestOSInventory(t *testing.T) {
+	t.Parallel()
+
 	testCases := []inventoryTestCase{
 		// Debian
 		{
