@@ -22,7 +22,9 @@ import (
 	"encoding/json"
 	"errors"
 	"testing"
+	"time"
 
+	"github.com/GoogleCloudPlatform/osconfig/e2e_tests_v2/internal/config"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/api/osconfig/v1"
@@ -382,5 +384,78 @@ func TestStepExecution(t *testing.T) {
 
 	if !executed {
 		t.Error("expected step function to execute")
+	}
+}
+
+func TestEffectiveTestDeadline(t *testing.T) {
+	now := time.Date(2026, 11, 24, 10, 0, 0, 0, time.UTC)
+	cleanup := 5 * time.Minute
+
+	tests := []struct {
+		name          string
+		testTimeout   time.Duration
+		goDeadline    time.Time
+		hasGoDeadline bool
+		want          time.Time
+	}{
+		{
+			name:          "no go test deadline uses testTimeout",
+			testTimeout:   60 * time.Minute,
+			hasGoDeadline: false,
+			want:          now.Add(60 * time.Minute),
+		},
+		{
+			name:          "go test deadline far enough uses testTimeout",
+			testTimeout:   60 * time.Minute,
+			goDeadline:    now.Add(90 * time.Minute),
+			hasGoDeadline: true,
+			want:          now.Add(60 * time.Minute),
+		},
+		{
+			name:          "go test deadline equals testTimeout reserves cleanup buffer",
+			testTimeout:   60 * time.Minute,
+			goDeadline:    now.Add(60 * time.Minute),
+			hasGoDeadline: true,
+			want:          now.Add(55 * time.Minute),
+		},
+		{
+			name:          "go test deadline shorter than testTimeout reserves cleanup buffer",
+			testTimeout:   60 * time.Minute,
+			goDeadline:    now.Add(20 * time.Minute),
+			hasGoDeadline: true,
+			want:          now.Add(15 * time.Minute),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := effectiveTestDeadline(now, tc.testTimeout, cleanup, tc.goDeadline, tc.hasGoDeadline)
+			if !got.Equal(tc.want) {
+				t.Errorf("effectiveTestDeadline() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestVMMaxRunDuration(t *testing.T) {
+	now := time.Date(2026, 11, 24, 10, 0, 0, 0, time.UTC)
+	suite := &Suite{
+		Config: config.Config{
+			TestTimeout:    60 * time.Minute,
+			CleanupTimeout: 5 * time.Minute,
+		},
+	}
+
+	ctx, cancel := context.WithDeadline(context.Background(), now.Add(40*time.Minute))
+	defer cancel()
+
+	testWithDeadline := &Test{Suite: suite, Context: ctx}
+	if got, want := testWithDeadline.vmMaxRunDuration(now), 50*time.Minute; got != want {
+		t.Errorf("vmMaxRunDuration(with deadline) = %v, want %v", got, want)
+	}
+
+	testNoDeadline := &Test{Suite: suite, Context: context.Background()}
+	if got, want := testNoDeadline.vmMaxRunDuration(now), 70*time.Minute; got != want {
+		t.Errorf("vmMaxRunDuration(no deadline) = %v, want %v", got, want)
 	}
 }

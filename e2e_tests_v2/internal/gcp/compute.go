@@ -34,6 +34,7 @@ import (
 
 const (
 	guestPolicyConcurrencyLimit = 5
+	minVMMaxRunDurationSeconds  = 120
 )
 
 // VM represents an active or planned Compute Engine instance.
@@ -56,6 +57,7 @@ type VMRequest struct {
 	ServiceAccount string
 	Metadata       map[string]string
 	Labels         map[string]string
+	MaxRunDuration time.Duration
 }
 
 // Client manages GCP API clients for Compute Engine and OS Config.
@@ -139,6 +141,13 @@ func (c *Client) CreateVM(ctx context.Context, req VMRequest) (*VM, error) {
 			Email:  req.ServiceAccount,
 			Scopes: []string{compute.CloudPlatformScope},
 		}},
+	}
+	if req.MaxRunDuration > 0 {
+		secs := max(int64(req.MaxRunDuration.Seconds()), minVMMaxRunDurationSeconds)
+		instance.Scheduling = &compute.Scheduling{
+			MaxRunDuration:            &compute.Duration{Seconds: secs},
+			InstanceTerminationAction: "DELETE",
+		}
 	}
 
 	op, err := c.compute.Instances.Insert(req.Project, req.Zone, instance).Context(ctx).Do()

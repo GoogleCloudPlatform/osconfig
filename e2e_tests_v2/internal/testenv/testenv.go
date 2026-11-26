@@ -49,6 +49,10 @@ const (
 	PatchJobStateCompletedWithErrors = "COMPLETED_WITH_ERRORS"
 	PatchJobStateTimedOut            = "TIMED_OUT"
 	PatchJobStateCanceled            = "CANCELED"
+
+	// vmMaxRunDurationBuffer is added beyond test timeout + cleanup timeout when setting GCE's
+	// automatic VM self-deletion TTL so normal test runs and cleanup are never interrupted.
+	vmMaxRunDurationBuffer = 5 * time.Minute
 )
 
 var (
@@ -539,7 +543,14 @@ func New(t *testing.T, timeout time.Duration) *Test {
 		globalMu.Unlock()
 	}
 
-	acquireCtx, acquireCancel := context.WithTimeout(context.Background(), suite.Config.TestTimeout)
+	testTimeout := suite.Config.TestTimeout
+	if timeout > 0 {
+		testTimeout = timeout
+	}
+
+	goDeadline, hasGoDeadline := t.Deadline()
+	acquireDeadline := effectiveTestDeadline(time.Now(), suite.Config.TestTimeout, suite.Config.CleanupTimeout, goDeadline, hasGoDeadline)
+	acquireCtx, acquireCancel := context.WithDeadline(context.Background(), acquireDeadline)
 	defer acquireCancel()
 
 	lease, err := suite.Scheduler.Acquire(acquireCtx)
@@ -548,12 +559,10 @@ func New(t *testing.T, timeout time.Duration) *Test {
 	}
 	t.Cleanup(lease.Release)
 
-	testTimeout := suite.Config.TestTimeout
-	if timeout > 0 {
-		testTimeout = timeout
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	// Recompute after acquiring the lease so testTimeout is measured from actual test start,
+	// while still leaving CleanupTimeout before go test's hard deadline for t.Cleanup handlers.
+	testDeadline := effectiveTestDeadline(time.Now(), testTimeout, suite.Config.CleanupTimeout, goDeadline, hasGoDeadline)
+	ctx, cancel := context.WithDeadline(context.Background(), testDeadline)
 	t.Cleanup(cancel)
 
 	attemptID := uuid.NewString()[:8]
@@ -678,6 +687,7 @@ func (test *Test) CreateVM(image, machineType string, customMetadata map[string]
 			"e2e-test":    labelValue(test.TestName),
 			"e2e-attempt": labelValue(test.AttemptID),
 		},
+		MaxRunDuration: test.vmMaxRunDuration(time.Now()),
 	}
 
 	test.t.Logf("Creating VM %q (image: %s, zone: %s)", planned.Name, image, planned.Zone)
@@ -929,6 +939,26 @@ func (test *Test) WaitForPackageInManager(vm *gcp.VM, manager, pkgName string) e
 
 		return fmt.Sprintf("package %q installed under %s", pkgName, manager), true, nil
 	})
+}
+
+func effectiveTestDeadline(now time.Time, testTimeout, cleanupBuffer time.Duration, goDeadline time.Time, hasGoDeadline bool) time.Time {
+	deadline := now.Add(testTimeout)
+	if !hasGoDeadline {
+		return deadline
+	}
+	safeDeadline := goDeadline.Add(-cleanupBuffer)
+	if safeDeadline.Before(deadline) {
+		return safeDeadline
+	}
+	return deadline
+}
+
+func (test *Test) vmMaxRunDuration(now time.Time) time.Duration {
+	remaining := test.Suite.Config.TestTimeout
+	if deadline, ok := test.Context.Deadline(); ok {
+		remaining = max(deadline.Sub(now), 0)
+	}
+	return max(remaining+test.Suite.Config.CleanupTimeout+vmMaxRunDurationBuffer, vmMaxRunDurationBuffer)
 }
 
 func resourceName(runID, testName, attempt string) string {
