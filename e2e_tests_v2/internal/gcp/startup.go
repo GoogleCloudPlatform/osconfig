@@ -38,9 +38,8 @@ which google_osconfig_agent >/dev/null 2>&1 || which google-osconfig-agent >/dev
   apt-get install -y google-osconfig-agent
 }
 systemctl daemon-reload
-if ! systemctl is-active --quiet google-osconfig-agent; then
-  systemctl enable --now google-osconfig-agent || true
-fi
+systemctl enable google-osconfig-agent || true
+systemctl restart google-osconfig-agent || true
 %s
 mkdir -p /var/lib/google
 touch /var/lib/google/osconfig_e2e_bootstrapped
@@ -59,9 +58,8 @@ which google_osconfig_agent >/dev/null 2>&1 || which google-osconfig-agent >/dev
   dnf install -y --nogpgcheck google-osconfig-agent || yum install -y --nogpgcheck google-osconfig-agent
 }
 systemctl daemon-reload
-if ! systemctl is-active --quiet google-osconfig-agent; then
-  systemctl enable --now google-osconfig-agent || true
-fi
+systemctl enable google-osconfig-agent || true
+systemctl restart google-osconfig-agent || true
 %s
 mkdir -p /var/lib/google
 touch /var/lib/google/osconfig_e2e_bootstrapped
@@ -79,9 +77,8 @@ which google_osconfig_agent >/dev/null 2>&1 || which google-osconfig-agent >/dev
   zypper --no-refresh -n -i --no-gpg-checks install google-osconfig-agent || zypper -n -i --no-gpg-checks install google-osconfig-agent
 }
 systemctl daemon-reload
-if ! systemctl is-active --quiet google-osconfig-agent; then
-  systemctl enable --now google-osconfig-agent || true
-fi
+systemctl enable google-osconfig-agent || true
+systemctl restart google-osconfig-agent || true
 %s
 mkdir -p /var/lib/google
 touch /var/lib/google/osconfig_e2e_bootstrapped
@@ -95,9 +92,7 @@ if [ -f /var/lib/google/osconfig_e2e_bootstrapped ]; then
   exit 0
 fi
 %s
-if ! systemctl is-active --quiet google-osconfig-agent; then
-  systemctl start google-osconfig-agent || true
-fi
+systemctl restart google-osconfig-agent || true
 %s
 mkdir -p /var/lib/google
 touch /var/lib/google/osconfig_e2e_bootstrapped

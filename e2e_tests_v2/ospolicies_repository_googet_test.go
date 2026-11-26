@@ -130,11 +130,6 @@ func TestOSPolicyRepositoryResourceGooGet(t *testing.T) {
 				return err
 			})
 
-			test.Step("wait for agent inventory", func(ctx context.Context) error {
-				_, err := test.WaitForInventory(vm)
-				return err
-			})
-
 			test.Step("create os policy assignment", func(ctx context.Context) error {
 				return test.CreateOSPolicyAssignment(vm, buildGooGetRepositoryOSPolicyAssignment(vm.Name))
 			})

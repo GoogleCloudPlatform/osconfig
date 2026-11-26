@@ -457,7 +457,6 @@ type Suite struct {
 	Compute   *gcp.Client
 	Scheduler *scheduler.Scheduler
 	Reporter  *junitxml.Reporter
-	Timing    *TimingRecorder
 	RunID     string
 }
 
@@ -485,57 +484,35 @@ func Init(cfg config.Config) error {
 		Compute:   computeClient,
 		Scheduler: sched,
 		Reporter:  junitxml.NewReporter(),
-		Timing:    NewTimingRecorder(runID, cfg),
 		RunID:     runID,
 	}
 	return nil
 }
 
-// Close writes the JUnit XML report and timing metrics to disk and cleans up suite resources.
+// Close writes the JUnit XML report to disk and cleans up suite resources.
 func Close() error {
 	globalMu.Lock()
 	suite := globalSuite
 	globalMu.Unlock()
 
-	if suite == nil {
+	if suite == nil || suite.Reporter == nil || suite.Config.ArtifactFile == "" {
 		return nil
 	}
-
-	var timingErr error
-	if suite.Timing != nil {
-		suite.Timing.WriteSummary(os.Stdout)
-		if suite.Config.ArtifactFile != "" {
-			timingPath := filepath.Join(
-				filepath.Dir(suite.Config.ArtifactFile),
-				fmt.Sprintf("timings-%s-%s.json", suite.RunID, uuid.NewString()[:8]),
-			)
-			timingErr = suite.Timing.WriteJSON(timingPath)
-		}
-	}
-
-	var junitErr error
-	if suite.Reporter != nil && suite.Config.ArtifactFile != "" {
-		junitErr = suite.Reporter.WriteToFile(suite.Config.ArtifactFile)
-	}
-
-	if junitErr != nil {
-		return junitErr
-	}
-	return timingErr
+	return suite.Reporter.WriteToFile(suite.Config.ArtifactFile)
 }
 
 // Test manages resources and assertions for an individual test case.
 type Test struct {
-	t           *testing.T
-	Suite       *Suite
-	Context     context.Context
-	AttemptID   string
-	TestName    string
-	Project     string
-	Zone        string
-	failures    []string
-	steps       []StepTiming
-	lastStepEnd time.Time
+	t                 *testing.T
+	Suite             *Suite
+	Context           context.Context
+	AttemptID         string
+	TestName          string
+	Project           string
+	Zone              string
+	failures          []string
+	vms               []gcp.VM
+	policyAssignments []string
 }
 
 // New creates and initializes a Test environment for the calling test.
@@ -567,12 +544,10 @@ func New(t *testing.T, timeout time.Duration) *Test {
 	acquireCtx, acquireCancel := context.WithTimeout(context.Background(), suite.Config.TestTimeout)
 	defer acquireCancel()
 
-	queueStart := time.Now()
 	lease, err := suite.Scheduler.Acquire(acquireCtx)
 	if err != nil {
 		t.Fatalf("acquire capacity lease: %v", err)
 	}
-	queueWait := time.Since(queueStart)
 	t.Cleanup(lease.Release)
 
 	testTimeout := suite.Config.TestTimeout
@@ -584,49 +559,76 @@ func New(t *testing.T, timeout time.Duration) *Test {
 	t.Cleanup(cancel)
 
 	attemptID := uuid.NewString()[:8]
-	start := time.Now()
 
 	test := &Test{
-		t:           t,
-		Suite:       suite,
-		Context:     ctx,
-		AttemptID:   attemptID,
-		TestName:    t.Name(),
-		Project:     suite.Config.Project,
-		Zone:        suite.Config.Zone,
-		lastStepEnd: start,
+		t:         t,
+		Suite:     suite,
+		Context:   ctx,
+		AttemptID: attemptID,
+		TestName:  t.Name(),
+		Project:   suite.Config.Project,
+		Zone:      suite.Config.Zone,
 	}
 
+	start := time.Now()
 	t.Cleanup(func() {
 		duration := time.Since(start)
-		cleanupDur := time.Since(test.lastStepEnd)
-		suiteName, osName, _ := strings.Cut(t.Name(), "/")
-		status := "passed"
+		suiteName := strings.Split(t.Name(), "/")[0]
 		var failureMsg string
 		if t.Failed() {
-			status = "failed"
 			if len(test.failures) > 0 {
 				failureMsg = strings.Join(test.failures, "\n")
 			} else {
 				failureMsg = "test failed"
 			}
-		} else if t.Skipped() {
-			status = "skipped"
 		}
 		suite.Reporter.Record(suiteName, t.Name(), "e2etests_test", duration, failureMsg, t.Skipped(), "")
-		suite.Timing.Record(TestTiming{
-			TestName:     t.Name(),
-			Suite:        suiteName,
-			OS:           osName,
-			Status:       status,
-			QueueWaitSec: roundSec(queueWait),
-			Steps:        test.steps,
-			CleanupSec:   roundSec(cleanupDur),
-			TotalSec:     roundSec(duration),
-		})
 	})
+	t.Cleanup(test.cleanup)
 
 	return test
+}
+
+// cleanup deletes VMs first and then initiates OSPolicyAssignment deletions so deletion rollouts
+// do not block waiting for live VMs.
+func (test *Test) cleanup() {
+	for i := len(test.vms) - 1; i >= 0; i-- {
+		vm := test.vms[i]
+		test.saveSerialLog(vm)
+
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), test.Suite.Config.CleanupTimeout)
+		if err := test.Suite.Compute.DeleteVM(cleanupCtx, vm.Project, vm.Zone, vm.Name); err != nil {
+			test.t.Errorf("cleanup instance %s/%s/%s: %v", vm.Project, vm.Zone, vm.Name, err)
+		}
+		cancel()
+	}
+
+	for i := len(test.policyAssignments) - 1; i >= 0; i-- {
+		fullName := test.policyAssignments[i]
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), test.Suite.Config.CleanupTimeout)
+		if err := test.Suite.Compute.StartDeleteOSPolicyAssignment(cleanupCtx, fullName); err != nil {
+			test.t.Errorf("cleanup os policy assignment %s: %v", fullName, err)
+		}
+		cancel()
+	}
+}
+
+func (test *Test) saveSerialLog(vm gcp.VM) {
+	diagCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	serial, err := test.Suite.Compute.SerialOutput(diagCtx, vm.Project, vm.Zone, vm.Name)
+	if err != nil || serial == "" {
+		return
+	}
+	artDir := filepath.Dir(test.Suite.Config.ArtifactFile)
+	if artDir != "" && artDir != "." {
+		_ = os.MkdirAll(artDir, 0o755)
+		logFile := filepath.Join(artDir, fmt.Sprintf("%s-serial.log", vm.Name))
+		_ = os.WriteFile(logFile, []byte(serial), 0o644)
+		return
+	}
+	logFile := fmt.Sprintf("%s-serial.log", vm.Name)
+	_ = os.WriteFile(logFile, []byte(serial), 0o644)
 }
 
 // Step executes a named phase of the test, recording timing and logging execution.
@@ -639,8 +641,6 @@ func (test *Test) Step(name string, fn func(ctx context.Context) error) {
 	defer func() {
 		if r := recover(); r != nil {
 			elapsed := time.Since(start).Round(time.Millisecond)
-			test.steps = append(test.steps, StepTiming{Name: name, DurationSec: roundSec(elapsed), Status: "panicked"})
-			test.lastStepEnd = time.Now()
 			errMsg := fmt.Sprintf("step %q panicked after %s: %v\n%s", name, elapsed, r, debug.Stack())
 			test.failures = append(test.failures, errMsg)
 			test.t.Fatalf("%s", errMsg)
@@ -651,15 +651,11 @@ func (test *Test) Step(name string, fn func(ctx context.Context) error) {
 	elapsed := time.Since(start).Round(time.Millisecond)
 
 	if err != nil {
-		test.steps = append(test.steps, StepTiming{Name: name, DurationSec: roundSec(elapsed), Status: "failed"})
-		test.lastStepEnd = time.Now()
 		errMsg := fmt.Sprintf("step %q failed after %s: %v", name, elapsed, err)
 		test.failures = append(test.failures, errMsg)
 		test.t.Fatalf("%s", errMsg)
 	}
 
-	test.steps = append(test.steps, StepTiming{Name: name, DurationSec: roundSec(elapsed), Status: "passed"})
-	test.lastStepEnd = time.Now()
 	test.t.Logf("--- STEP PASSED: %s (%s) ---", name, elapsed)
 }
 
@@ -673,28 +669,7 @@ func (test *Test) CreateVM(image, machineType string, customMetadata map[string]
 		Zone:    test.Zone,
 		Name:    name,
 	}
-
-	// Register serial output recording and idempotent VM deletion on test cleanup
-	test.t.Cleanup(func() {
-		diagCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-		defer cancel()
-		serial, err := test.Suite.Compute.SerialOutput(diagCtx, planned.Project, planned.Zone, planned.Name)
-		artDir := filepath.Dir(test.Suite.Config.ArtifactFile)
-		if err == nil && serial != "" && artDir != "" && artDir != "." {
-			_ = os.MkdirAll(artDir, 0o755)
-			logFile := filepath.Join(artDir, fmt.Sprintf("%s-serial.log", planned.Name))
-			_ = os.WriteFile(logFile, []byte(serial), 0o644)
-		} else if err == nil && serial != "" {
-			logFile := fmt.Sprintf("%s-serial.log", planned.Name)
-			_ = os.WriteFile(logFile, []byte(serial), 0o644)
-		}
-
-		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), test.Suite.Config.CleanupTimeout)
-		defer cleanupCancel()
-		if err := test.Suite.Compute.DeleteVM(cleanupCtx, planned.Project, planned.Zone, planned.Name); err != nil {
-			test.t.Errorf("cleanup instance %s/%s/%s: %v", planned.Project, planned.Zone, planned.Name, err)
-		}
-	})
+	test.vms = append(test.vms, planned)
 
 	metadata := map[string]string{
 		"enable-osconfig":            "true",
@@ -774,13 +749,7 @@ func (test *Test) CreateOSPolicyAssignment(vm *gcp.VM, assignment *osconfig.OSPo
 
 	assignmentID := vm.Name
 	fullName := fmt.Sprintf("projects/%s/locations/%s/osPolicyAssignments/%s", test.Project, test.Zone, assignmentID)
-	test.t.Cleanup(func() {
-		cleanupCtx, cancel := context.WithTimeout(context.Background(), test.Suite.Config.CleanupTimeout)
-		defer cancel()
-		if err := test.Suite.Compute.DeleteOSPolicyAssignment(cleanupCtx, fullName); err != nil {
-			test.t.Errorf("cleanup os policy assignment %s: %v", fullName, err)
-		}
-	})
+	test.policyAssignments = append(test.policyAssignments, fullName)
 
 	test.t.Logf("Creating OSPolicyAssignment %q for VM %q", assignmentID, vm.Name)
 	return test.Suite.Compute.CreateOSPolicyAssignment(test.Context, test.Project, test.Zone, assignmentID, assignment)

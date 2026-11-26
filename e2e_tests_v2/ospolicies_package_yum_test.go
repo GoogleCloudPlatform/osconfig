@@ -45,7 +45,7 @@ func osPolicyPackageYumTestCases() []ospoliciesPackageYumTestCase {
 		{
 			name:        "rhel-8",
 			image:       "projects/rhel-cloud/global/images/family/rhel-8",
-			machineType: "e2-medium",
+			machineType: "e2-standard-2",
 			timeout:     15 * time.Minute,
 		},
 		{
