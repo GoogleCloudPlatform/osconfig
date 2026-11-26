@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"path"
 	"strings"
 	"time"
 
@@ -305,8 +306,10 @@ func isHTTPStatus(err error, code int) bool {
 }
 
 // CreateOSPolicyAssignment creates an OS Config v1 OSPolicyAssignment and waits for the rollout operation to complete.
-func (c *Client) CreateOSPolicyAssignment(ctx context.Context, project, zone, assignmentID string, assignment *osconfig.OSPolicyAssignment) error {
+func (c *Client) CreateOSPolicyAssignment(ctx context.Context, project, zone string, assignment *osconfig.OSPolicyAssignment) error {
 	parent := fmt.Sprintf("projects/%s/locations/%s", project, zone)
+	assignmentID := path.Base(assignment.Name)
+	assignment.Name = fmt.Sprintf("%s/osPolicyAssignments/%s", parent, assignmentID)
 
 	op, err := c.osconfig.Projects.Locations.OsPolicyAssignments.Create(parent, assignment).OsPolicyAssignmentId(assignmentID).Context(ctx).Do()
 	if err != nil {
@@ -318,6 +321,27 @@ func (c *Client) CreateOSPolicyAssignment(ctx context.Context, project, zone, as
 		defer cancel()
 		_, _ = c.osconfig.Projects.Locations.OsPolicyAssignments.Operations.Cancel(op.Name, &osconfig.CancelOperationRequest{}).Context(cancelCtx).Do()
 		return fmt.Errorf("failed to wait for os policy assignment %s creation: %w", assignmentID, err)
+	}
+
+	return nil
+}
+
+// UpdateOSPolicyAssignment updates an existing OS Config v1 OSPolicyAssignment and waits for the rollout operation to complete.
+func (c *Client) UpdateOSPolicyAssignment(ctx context.Context, project, zone string, assignment *osconfig.OSPolicyAssignment) error {
+	assignmentID := path.Base(assignment.Name)
+	name := fmt.Sprintf("projects/%s/locations/%s/osPolicyAssignments/%s", project, zone, assignmentID)
+	assignment.Name = name
+
+	op, err := c.osconfig.Projects.Locations.OsPolicyAssignments.Patch(name, assignment).Context(ctx).Do()
+	if err != nil {
+		return fmt.Errorf("failed to update os policy assignment %s: %w", name, err)
+	}
+
+	if err := c.waitOSPolicyAssignmentOperation(ctx, op.Name); err != nil {
+		cancelCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_, _ = c.osconfig.Projects.Locations.OsPolicyAssignments.Operations.Cancel(op.Name, &osconfig.CancelOperationRequest{}).Context(cancelCtx).Do()
+		return fmt.Errorf("failed to wait for os policy assignment %s update: %w", assignmentID, err)
 	}
 
 	return nil
