@@ -27,13 +27,15 @@ import (
 )
 
 type fileEntry struct {
-	name    string
-	content []byte
+	name     string
+	content  []byte
+	typeflag byte
+	linkname string
 }
 
 func Test_extractTar(t *testing.T) {
 	chownActual := chownFunc
-	chown = func(string, int, int) error {
+	chown = func(*os.Root, string, int, int) error {
 		return nil
 	}
 
@@ -106,6 +108,150 @@ func Test_extractTar(t *testing.T) {
 
 	}
 }
+
+// Test_extractTarLinks verifies that links can not be used to create files outside of dst.
+func Test_extractTarLinks(t *testing.T) {
+	utiltest.OverrideVariable(t, &chown, func(*os.Root, string, int, int) error { return nil })
+
+	tests := []struct {
+		name string
+		// setup prepares dst before the extraction.
+		setup func(t *testing.T, dst string)
+		// entries returns entries of the archive, dst is provided to build absolute link targets.
+		entries func(dst string) []fileEntry
+		// wantErrRegexp is matched against the extraction error, nil means no error is expected.
+		wantErrRegexp *regexp.Regexp
+		// wantFiles maps the path of the file, relative to dst, to its expected content.
+		wantFiles map[string]string
+		// wantMissing lists the paths, relative to dst, that must not exist after the extraction.
+		wantMissing []string
+	}{
+		{
+			name: "symlinks and hard link pointing inside of dst, links are created",
+			entries: func(dst string) []fileEntry {
+				return []fileEntry{
+					{name: "dir/file", content: []byte("file")},
+					{name: "symlink", typeflag: tar.TypeSymlink, linkname: "dir/file"},
+					{name: "hardlink", typeflag: tar.TypeLink, linkname: "dir/file"},
+					{name: "dirlink", typeflag: tar.TypeSymlink, linkname: "dir"},
+					{name: "dirlink/file2", content: []byte("file2")},
+				}
+			},
+			wantFiles: map[string]string{"symlink": "file", "hardlink": "file", "dir/file2": "file2"},
+		},
+		{
+			name: "chained absolute symlinks pointing outside of dst, file is created inside of dst",
+			entries: func(dst string) []fileEntry {
+				return []fileEntry{
+					{name: "b", typeflag: tar.TypeSymlink, linkname: dst},
+					{name: "a", typeflag: tar.TypeSymlink, linkname: dst + "/b/.."},
+					{name: "a/escaped", content: []byte("escaped")},
+				}
+			},
+			wantFiles:   map[string]string{"a/escaped": "escaped"},
+			wantMissing: []string{"../escaped", "b"},
+		},
+		{
+			name: "chained relative symlinks pointing outside of dst, file is created inside of dst",
+			entries: func(dst string) []fileEntry {
+				return []fileEntry{
+					{name: "b", typeflag: tar.TypeSymlink, linkname: "."},
+					{name: "a", typeflag: tar.TypeSymlink, linkname: "b/.."},
+					{name: "a/escaped", content: []byte("escaped")},
+				}
+			},
+			wantFiles:   map[string]string{"a/escaped": "escaped"},
+			wantMissing: []string{"../escaped"},
+		},
+		{
+			name: "symlink pointing to missing file, symlink is skipped",
+			entries: func(dst string) []fileEntry {
+				return []fileEntry{
+					{name: "symlink", typeflag: tar.TypeSymlink, linkname: "missing"},
+				}
+			},
+			wantMissing: []string{"symlink"},
+		},
+		{
+			name: "hard link pointing outside of dst, link is skipped",
+			setup: func(t *testing.T, dst string) {
+				if err := os.WriteFile(filepath.Join(dst, "..", "outside"), []byte("outside"), 0644); err != nil {
+					t.Fatal(err)
+				}
+			},
+			entries: func(dst string) []fileEntry {
+				return []fileEntry{
+					{name: "hardlink", typeflag: tar.TypeLink, linkname: "../outside"},
+				}
+			},
+			wantMissing: []string{"hardlink"},
+		},
+		{
+			name: "hard link to symlink that points outside of dst from the new location, link is skipped",
+			entries: func(dst string) []fileEntry {
+				return []fileEntry{
+					{name: "dir/file", content: []byte("file")},
+					{name: "dir/sub/symlink", typeflag: tar.TypeSymlink, linkname: "../file"},
+					{name: "hardlink", typeflag: tar.TypeLink, linkname: "dir/sub/symlink"},
+				}
+			},
+			wantFiles:   map[string]string{"dir/sub/symlink": "file"},
+			wantMissing: []string{"hardlink"},
+		},
+		{
+			name: "symlink pointing outside of dst exists before the extraction, extraction fails",
+			setup: func(t *testing.T, dst string) {
+				if err := os.Symlink("..", filepath.Join(dst, "outside")); err != nil {
+					t.Fatal(err)
+				}
+			},
+			entries: func(dst string) []fileEntry {
+				return []fileEntry{
+					{name: "outside/escaped", content: []byte("escaped")},
+				}
+			},
+			wantErrRegexp: regexp.MustCompile("^mkdirat outside: "),
+			wantMissing:   []string{"../escaped"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir, tmpFile, err := getTempDirAndFile(t, "extractTar.tar")
+			if err != nil {
+				t.Fatalf("unable to create tmp file: %s", err)
+			}
+			t.Cleanup(func() { os.RemoveAll(tmpDir) })
+
+			// dst is a subdirectory of tmpDir, so files that get outside of dst are easy to detect.
+			dst := filepath.Join(tmpDir, "dst")
+			if err := os.Mkdir(dst, 0755); err != nil {
+				t.Fatal(err)
+			}
+			if tt.setup != nil {
+				tt.setup(t, dst)
+			}
+			ensureTar(t, tmpFile.Name(), tt.entries(dst))
+
+			err = extractTar(context.Background(), tmpFile.Name(), dst, agentendpointpb.SoftwareRecipe_Step_ExtractArchive_TAR)
+			if tt.wantErrRegexp == nil {
+				utiltest.AssertErrorMatch(t, err, nil)
+			} else if msg := fmt.Sprintf("%v", err); !tt.wantErrRegexp.MatchString(msg) {
+				t.Errorf("Unexpected error, expect message to match regexp %s, got %s", tt.wantErrRegexp, msg)
+			}
+
+			for path, wantContent := range tt.wantFiles {
+				utiltest.AssertFileContents(t, filepath.Join(dst, path), wantContent)
+			}
+			for _, path := range tt.wantMissing {
+				if _, err := os.Lstat(filepath.Join(dst, path)); !os.IsNotExist(err) {
+					t.Errorf("path %s must not exist, got Lstat error: %v", path, err)
+				}
+			}
+		})
+	}
+}
+
 func Test_extractZip(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -210,9 +356,11 @@ func ensureTar(t *testing.T, dst string, entries []fileEntry) {
 
 	for _, entry := range entries {
 		hdr := &tar.Header{
-			Name: entry.name,
-			Mode: 0600,
-			Size: int64(len(entry.content)),
+			Name:     entry.name,
+			Mode:     0600,
+			Size:     int64(len(entry.content)),
+			Typeflag: entry.typeflag,
+			Linkname: entry.linkname,
 		}
 
 		if err := w.WriteHeader(hdr); err != nil {
@@ -290,43 +438,105 @@ func setupSymlinkTest(t *testing.T) (dir, linkInside, linkOutside string) {
 		t.Fatal(err)
 	}
 
-	linkInside = filepath.Join(dir, "link_inside")
-	if err := os.Symlink(file, linkInside); err != nil {
+	linkInside = "link_inside"
+	if err := os.Symlink("file", filepath.Join(dir, linkInside)); err != nil {
 		t.Fatal(err)
 	}
-	linkOutside = filepath.Join(dir, "link_outside")
-	if err := os.Symlink(otherFile, linkOutside); err != nil {
+	linkOutside = "link_outside"
+	if err := os.Symlink("../other/other_file", filepath.Join(dir, linkOutside)); err != nil {
 		t.Fatal(err)
 	}
 
 	return dir, linkInside, linkOutside
 }
 
-// Test_ensureSymlinkBelongsToDir ensures that symlinks do not point to locations outside the designated directory.
-func Test_ensureSymlinkBelongsToDir(t *testing.T) {
+// Test_ensureLinkResolvesInRoot ensures that links pointing to locations outside of the root are removed.
+func Test_ensureLinkResolvesInRoot(t *testing.T) {
 	dir, linkInside, linkOutside := setupSymlinkTest(t)
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer root.Close()
 
 	tests := []struct {
-		name    string
-		link    string
-		wantErr error
+		name       string
+		link       string
+		wantErr    error
+		wantExists bool
 	}{
 		{
-			name:    "link target inside dir, want nil error",
-			link:    linkInside,
-			wantErr: nil,
+			name:       "link target inside root, want nil error and link kept",
+			link:       linkInside,
+			wantErr:    nil,
+			wantExists: true,
 		},
 		{
-			name:    "link target outside dir, want outside link error",
-			link:    linkOutside,
-			wantErr: fmt.Errorf("symlink %s, does not belongs to dir %s, rel ../other/other_file", linkOutside, dir),
+			name:       "link target outside root, want escape error and link removed",
+			link:       linkOutside,
+			wantErr:    fmt.Errorf("statat %s: path escapes from parent", linkOutside),
+			wantExists: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ensureSymlinkBelongsToDir(dir, tt.link)
-			utiltest.AssertErrorMatch(t, err, tt.wantErr)
+			err := ensureLinkResolvesInRoot(root, tt.link)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr, utiltest.EquateErrorMessage)
+
+			_, lstatErr := root.Lstat(tt.link)
+			utiltest.AssertEquals(t, lstatErr == nil, tt.wantExists)
 		})
+	}
+}
+
+// Test_mkFifo verifies that fifo can be created inside of the root only.
+func Test_mkFifo(t *testing.T) {
+	dir, _, _ := setupSymlinkTest(t)
+	if err := os.Symlink("../other", filepath.Join(dir, "dir_outside")); err != nil {
+		t.Fatal(err)
+	}
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer root.Close()
+
+	tests := []struct {
+		name     string
+		fifo     string
+		wantErr  error
+		wantFifo string
+	}{
+		{
+			name:     "path inside root, want nil error and fifo created",
+			fifo:     "fifo",
+			wantErr:  nil,
+			wantFifo: filepath.Join(dir, "fifo"),
+		},
+		{
+			name:    "path goes outside root through symlink, want escape error",
+			fifo:    "dir_outside/fifo",
+			wantErr: &os.PathError{Op: "openat", Path: "dir_outside", Err: fmt.Errorf("path escapes from parent")},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := mkFifo(root, tt.fifo, 0600)
+			utiltest.AssertErrorMatch(t, err, tt.wantErr, utiltest.EquateErrorMessage)
+			if tt.wantErr != nil {
+				return
+			}
+
+			info, err := os.Lstat(tt.wantFifo)
+			if err != nil {
+				t.Fatal(err)
+			}
+			utiltest.AssertEquals(t, info.Mode().Type(), os.ModeNamedPipe)
+		})
+	}
+
+	if _, err := os.Lstat(filepath.Join(dir, "..", "other", "fifo")); !os.IsNotExist(err) {
+		t.Errorf("fifo must not be created outside of the root, got Lstat error: %v", err)
 	}
 }
 

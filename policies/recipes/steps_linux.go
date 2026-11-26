@@ -18,19 +18,35 @@
 package recipes
 
 import (
+	"os"
+	"path/filepath"
+
 	"golang.org/x/sys/unix"
 )
 
-func mkCharDevice(path string, devMajor, devMinor uint32) error {
-	return unix.Mknod(path, unix.S_IFCHR, int(unix.Mkdev(devMajor, devMinor)))
+func mkCharDevice(root *os.Root, name string, devMajor, devMinor uint32) error {
+	return mknodInRoot(root, name, unix.S_IFCHR, int(unix.Mkdev(devMajor, devMinor)))
 }
 
-func mkBlockDevice(path string, devMajor, devMinor uint32) error {
-	return unix.Mknod(path, unix.S_IFBLK, int(unix.Mkdev(devMajor, devMinor)))
+func mkBlockDevice(root *os.Root, name string, devMajor, devMinor uint32) error {
+	return mknodInRoot(root, name, unix.S_IFBLK, int(unix.Mkdev(devMajor, devMinor)))
 }
 
-func mkFifo(path string, mode uint32) error {
-	return unix.Mkfifo(path, mode)
+func mkFifo(root *os.Root, name string, mode uint32) error {
+	return mknodInRoot(root, name, unix.S_IFIFO|mode, 0)
+}
+
+// mknodInRoot creates a filesystem node, device or fifo, by the path name relative to the root.
+// os.Root has no method to create such nodes, so the parent directory is opened through the root,
+// which ensures it is inside of the root, and the node is created relative to that directory.
+func mknodInRoot(root *os.Root, name string, mode uint32, dev int) error {
+	dir, err := root.Open(filepath.Dir(name))
+	if err != nil {
+		return err
+	}
+	defer dir.Close()
+
+	return unix.Mknodat(int(dir.Fd()), filepath.Base(name), mode, dev)
 }
 
 func createDefaultEnvironment() ([]string, error) {
