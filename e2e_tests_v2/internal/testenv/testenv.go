@@ -150,9 +150,17 @@ type PackageInfo struct {
 	Version string `json:"Version"`
 }
 
+// WUACategory describes a category associated with a Windows Update package.
+type WUACategory struct {
+	ID   string `json:"CategoryID,omitempty"`
+	Name string `json:"Name,omitempty"`
+}
+
 // WUAPackage describes a Windows Update Agent package.
 type WUAPackage struct {
-	Title string `json:"Title"`
+	Title        string        `json:"Title"`
+	KBArticleIDs []string      `json:"KBArticleIDs,omitempty"`
+	Categories   []WUACategory `json:"Categories,omitempty"`
 }
 
 // QFEPackage describes a Quick Fix Engineering package.
@@ -335,9 +343,7 @@ func ExtractInstalledPackages(inv *osconfig.Inventory) *InstalledPackages {
 			})
 		}
 		if pkg.WuaPackage != nil {
-			pkgs.WUA = append(pkgs.WUA, &WUAPackage{
-				Title: pkg.WuaPackage.Title,
-			})
+			pkgs.WUA = append(pkgs.WUA, extractWUAPackage(pkg.WuaPackage))
 		}
 		if pkg.QfePackage != nil {
 			pkgs.QFE = append(pkgs.QFE, &QFEPackage{
@@ -403,9 +409,7 @@ func ExtractAvailablePackages(inv *osconfig.Inventory) *InstalledPackages {
 			})
 		}
 		if pkg.WuaPackage != nil {
-			pkgs.WUA = append(pkgs.WUA, &WUAPackage{
-				Title: pkg.WuaPackage.Title,
-			})
+			pkgs.WUA = append(pkgs.WUA, extractWUAPackage(pkg.WuaPackage))
 		}
 		if pkg.QfePackage != nil {
 			pkgs.QFE = append(pkgs.QFE, &QFEPackage{
