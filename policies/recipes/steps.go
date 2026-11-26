@@ -129,28 +129,34 @@ func zipIsDir(name string) bool {
 	return strings.HasSuffix(name, "/")
 }
 
-func ensureSymlinkBelongsToDir(dirPath string, symlink string) error {
-	dirAbs, err := filepath.Abs(dirPath)
-	if err != nil {
-		return err
-	}
-	symlinkAbs, err := filepath.Abs(symlink)
-	if err != nil {
+// symlinkInRoot creates the symlink name, a path relative to the root, pointing to target.
+// The symlink is kept only if it points to an existing file inside of the root.
+func symlinkInRoot(root *os.Root, target, name string) error {
+	if err := root.Symlink(target, name); err != nil {
 		return err
 	}
 
-	evaluatedSymlinkAbs, err := filepath.EvalSymlinks(symlinkAbs)
-	if err != nil {
+	return ensureLinkResolvesInRoot(root, name)
+}
+
+// hardLinkInRoot creates the hard link name to target, both are paths relative to the root.
+// The link is kept only if it points to an existing file inside of the root.
+func hardLinkInRoot(root *os.Root, target, name string) error {
+	if err := root.Link(target, name); err != nil {
 		return err
 	}
 
-	rel, err := filepath.Rel(dirAbs, evaluatedSymlinkAbs)
-	if err != nil {
-		return err
-	}
+	// Target can be a symlink, then the link is one more symlink that is resolved from the new location.
+	return ensureLinkResolvesInRoot(root, name)
+}
 
-	if strings.HasPrefix(rel, "..") {
-		return fmt.Errorf("symlink %s, does not belongs to dir %s, rel %s", symlink, dirPath, rel)
+// ensureLinkResolvesInRoot removes the link name, a path relative to the root,
+// if it does not point to an existing file inside of the root.
+// The link is resolved by the root the same way OS does it, one path element at a time,
+// so neither "<symlink>/.." elements nor chains of symlinks can be used to bypass the check.
+func ensureLinkResolvesInRoot(root *os.Root, name string) error {
+	if _, err := root.Stat(name); err != nil {
+		return errors.Join(err, root.Remove(name))
 	}
 
 	return nil
@@ -317,6 +323,29 @@ func checkForConflicts(tr *tar.Reader, dst string) error {
 	return nil
 }
 
+// pathInRoot converts the path from the tar entry to the path relative to the extraction root.
+// Leading path separator is dropped, the same way filepath.Join(dst, path) does it.
+func pathInRoot(path string) string {
+	return filepath.Join(".", path)
+}
+
+// openRootDir opens dst, creating it if it does not exist, as the root directory of the extraction.
+// File operations performed through the returned root can not reach outside of dst,
+// including the ones that go through symlinks.
+func openRootDir(dst string) (*os.Root, error) {
+	// Empty dst is the current working directory, as it is for the paths built with filepath.Join(dst, name).
+	dst, err := filepath.Abs(dst)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := os.MkdirAll(dst, 0700); err != nil {
+		return nil, err
+	}
+
+	return os.OpenRoot(dst)
+}
+
 func extractTar(ctx context.Context, tarName string, dst string, archiveType agentendpointpb.SoftwareRecipe_Step_ExtractArchive_ArchiveType) error {
 	file, err := os.Open(tarName)
 	if err != nil {
@@ -341,6 +370,12 @@ func extractTar(ctx context.Context, tarName string, dst string, archiveType age
 	}
 	tr = tar.NewReader(decompressed)
 
+	root, err := openRootDir(dst)
+	if err != nil {
+		return err
+	}
+	defer root.Close()
+
 	for {
 		var err error
 		header, err := tr.Next()
@@ -359,25 +394,26 @@ func extractTar(ctx context.Context, tarName string, dst string, archiveType age
 			return err
 		}
 
-		filedir := filepath.Dir(filen)
+		// Files are created through the root by the path relative to it, this way they can not get outside of dst.
+		name := pathInRoot(header.Name)
 
-		if err := os.MkdirAll(filedir, 0700); err != nil {
+		if err := root.MkdirAll(filepath.Dir(name), 0700); err != nil {
 			return err
 		}
 		switch header.Typeflag {
 		case tar.TypeDir:
-			if err := os.MkdirAll(filen, os.FileMode(header.Mode)); err != nil {
+			if err := root.MkdirAll(name, os.FileMode(header.Mode).Perm()); err != nil {
 				return err
 			}
 			// Setting to correct permissions in case the directory has already been created
-			if err := os.Chmod(filen, os.FileMode(header.Mode)); err != nil {
+			if err := root.Chmod(name, os.FileMode(header.Mode)); err != nil {
 				return err
 			}
-			if err := chown(filen, header.Uid, header.Gid); err != nil {
+			if err := chown(root, name, header.Uid, header.Gid); err != nil {
 				return err
 			}
 		case tar.TypeReg, tar.TypeRegA:
-			dst, err := os.OpenFile(filen, os.O_RDWR|os.O_CREATE, os.FileMode(header.Mode))
+			dst, err := root.OpenFile(name, os.O_RDWR|os.O_CREATE, os.FileMode(header.Mode).Perm())
 			if err != nil {
 				return err
 			}
@@ -390,57 +426,50 @@ func extractTar(ctx context.Context, tarName string, dst string, archiveType age
 				return err
 			}
 		case tar.TypeLink:
-			if err := ensureSymlinkBelongsToDir(dst, header.Linkname); err != nil {
+			// Linkname of the hard link is a path of another archive entry, so it is relative to the root as well.
+			if err := hardLinkInRoot(root, pathInRoot(header.Linkname), name); err != nil {
 				clog.Infof(ctx,
-					"link %s resolved outside of destination %s, for the security reason it is not allowed", header.Linkname, dst)
+					"link %s resolved outside of destination %s, for the security reason it is not allowed: %v", header.Linkname, dst, err)
 				continue
-			}
-
-			if err := os.Link(header.Linkname, filen); err != nil {
-				return err
 			}
 			continue
 		case tar.TypeSymlink:
-			if err := ensureSymlinkBelongsToDir(dst, header.Linkname); err != nil {
+			if err := symlinkInRoot(root, header.Linkname, name); err != nil {
 				clog.Infof(ctx,
-					"symlink %s resolved outside of destination %s, for the security reason it is not allowed", header.Linkname, dst)
+					"symlink %s resolved outside of destination %s, for the security reason it is not allowed: %v", header.Linkname, dst, err)
 				continue
-			}
-
-			if err := os.Symlink(header.Linkname, filen); err != nil {
-				return err
 			}
 			continue
 		case tar.TypeChar:
-			if err := mkCharDevice(filen, uint32(header.Devmajor), uint32(header.Devminor)); err != nil {
+			if err := mkCharDevice(root, name, uint32(header.Devmajor), uint32(header.Devminor)); err != nil {
 				return err
 			}
 			if runtime.GOOS != "windows" {
-				if err := os.Chmod(filen, os.FileMode(header.Mode)); err != nil {
+				if err := root.Chmod(name, os.FileMode(header.Mode)); err != nil {
 					return err
 				}
 			}
 		case tar.TypeBlock:
-			if err := mkBlockDevice(filen, uint32(header.Devmajor), uint32(header.Devminor)); err != nil {
+			if err := mkBlockDevice(root, name, uint32(header.Devmajor), uint32(header.Devminor)); err != nil {
 				return err
 			}
 			if runtime.GOOS != "windows" {
-				if err := os.Chmod(filen, os.FileMode(header.Mode)); err != nil {
+				if err := root.Chmod(name, os.FileMode(header.Mode)); err != nil {
 					return err
 				}
 			}
 		case tar.TypeFifo:
-			if err := mkFifo(filen, uint32(header.Mode)); err != nil {
+			if err := mkFifo(root, name, uint32(header.Mode)); err != nil {
 				return err
 			}
 		default:
 			clog.Infof(ctx, "Unknown file type for tar entry %s\n", filen)
 			continue
 		}
-		if err := chown(filen, header.Uid, header.Gid); err != nil {
+		if err := chown(root, name, header.Uid, header.Gid); err != nil {
 			return err
 		}
-		if err := os.Chtimes(filen, header.AccessTime, header.ModTime); err != nil {
+		if err := root.Chtimes(name, header.AccessTime, header.ModTime); err != nil {
 			return err
 		}
 	}
@@ -584,10 +613,10 @@ func executeCommand(ctx context.Context, cmd string, args []string, workDir stri
 	return err
 }
 
-func chownFunc(file string, uid, gid int) error {
+func chownFunc(root *os.Root, name string, uid, gid int) error {
 	// os.Chown unsupported on windows
 	if runtime.GOOS == "windows" {
 		return nil
 	}
-	return os.Chown(file, uid, gid)
+	return root.Chown(name, uid, gid)
 }

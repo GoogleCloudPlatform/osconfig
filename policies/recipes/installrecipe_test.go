@@ -237,7 +237,7 @@ func TestInstallRecipe(t *testing.T) {
 			name: "valid extract archive step, expect success",
 			setup: func(t *testing.T) {
 				setupTestDBFromRecipes(t, nil)
-				utiltest.OverrideVariable(t, &chown, func(file string, uid, gid int) error { return nil })
+				utiltest.OverrideVariable(t, &chown, func(root *os.Root, name string, uid, gid int) error { return nil })
 			},
 			recipe: &agentendpointpb.SoftwareRecipe{
 				Name:    "recipe-archive-success",
