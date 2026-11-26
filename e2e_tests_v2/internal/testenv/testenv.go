@@ -28,6 +28,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime/debug"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -49,6 +50,14 @@ const (
 	PatchJobStateCompletedWithErrors = "COMPLETED_WITH_ERRORS"
 	PatchJobStateTimedOut            = "TIMED_OUT"
 	PatchJobStateCanceled            = "CANCELED"
+)
+
+// OS policy resource configuration step types.
+const (
+	OSPolicyConfigStepValidation                       = "VALIDATION"
+	OSPolicyConfigStepDesiredStateCheck                = "DESIRED_STATE_CHECK"
+	OSPolicyConfigStepDesiredStateEnforcement          = "DESIRED_STATE_ENFORCEMENT"
+	OSPolicyConfigStepDesiredStateCheckPostEnforcement = "DESIRED_STATE_CHECK_POST_ENFORCEMENT"
 )
 
 var (
@@ -769,11 +778,19 @@ func isOSPolicyAssignmentReportCompliant(rep *osconfig.OSPolicyAssignmentReport,
 // WaitForOSPolicyCompliance polls the OS policy assignment report until all OS policies and resources are COMPLIANT.
 func (test *Test) WaitForOSPolicyCompliance(vm *gcp.VM, wantCompliances int) error {
 	test.t.Helper()
+	_, err := test.WaitForOSPolicyComplianceReport(vm, wantCompliances)
+	return err
+}
+
+// WaitForOSPolicyComplianceReport polls the OS policy assignment report until all OS policies and resources are COMPLIANT and returns the report.
+func (test *Test) WaitForOSPolicyComplianceReport(vm *gcp.VM, wantCompliances int) (*osconfig.OSPolicyAssignmentReport, error) {
+	test.t.Helper()
 
 	assignmentID := vm.Name
 	test.t.Logf("Waiting for OSPolicyAssignment %q compliance on %q (wantCompliances=%d)", assignmentID, vm.Name, wantCompliances)
 
-	return gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("os policy compliance for %s on %s", assignmentID, vm.Name), func(ctx context.Context) (string, bool, error) {
+	var result *osconfig.OSPolicyAssignmentReport
+	err := gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("os policy compliance for %s on %s", assignmentID, vm.Name), func(ctx context.Context) (string, bool, error) {
 		rep, err := test.Suite.Compute.GetOSPolicyAssignmentReport(ctx, vm.Project, vm.Zone, vm.Name, assignmentID)
 		if err != nil {
 			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
@@ -783,8 +800,55 @@ func (test *Test) WaitForOSPolicyCompliance(vm *gcp.VM, wantCompliances int) err
 		}
 
 		msg, ok := isOSPolicyAssignmentReportCompliant(rep, wantCompliances)
+		if ok {
+			result = rep
+		}
 		return msg, ok, nil
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// VerifyOSPolicyResourceConfigSteps verifies that the specified OS policy resource in rep is COMPLIANT
+// and executed the exact sequence of wantSteps without any step errors.
+func VerifyOSPolicyResourceConfigSteps(rep *osconfig.OSPolicyAssignmentReport, policyID, resourceID string, wantSteps []string) error {
+	if rep == nil {
+		return fmt.Errorf("os policy assignment report is nil")
+	}
+
+	for _, comp := range rep.OsPolicyCompliances {
+		if comp.OsPolicyId != policyID {
+			continue
+		}
+		if comp.ComplianceState != osPolicyStateCompliant {
+			return fmt.Errorf("os policy %q compliance state is %q (reason: %q), want %q", policyID, comp.ComplianceState, comp.ComplianceStateReason, osPolicyStateCompliant)
+		}
+		for _, res := range comp.OsPolicyResourceCompliances {
+			if res.OsPolicyResourceId != resourceID {
+				continue
+			}
+			if res.ComplianceState != osPolicyStateCompliant {
+				return fmt.Errorf("os policy %q resource %q compliance state is %q (reason: %q), want %q", policyID, resourceID, res.ComplianceState, res.ComplianceStateReason, osPolicyStateCompliant)
+			}
+			gotSteps := make([]string, 0, len(res.ConfigSteps))
+			for _, step := range res.ConfigSteps {
+				if step.ErrorMessage != "" {
+					return fmt.Errorf("os policy %q resource %q config step %q reported error: %s", policyID, resourceID, step.Type, step.ErrorMessage)
+				}
+				gotSteps = append(gotSteps, step.Type)
+			}
+			if !slices.Equal(gotSteps, wantSteps) {
+				return fmt.Errorf("os policy %q resource %q config steps = %v, want %v", policyID, resourceID, gotSteps, wantSteps)
+			}
+			return nil
+		}
+		return fmt.Errorf("os policy %q resource %q not found in report", policyID, resourceID)
+	}
+
+	return fmt.Errorf("os policy %q not found in report", policyID)
 }
 
 // WaitForPackages polls the OS Config Inventory API until all wantInstalled packages are present
@@ -928,6 +992,33 @@ func (test *Test) WaitForPackageInManager(vm *gcp.VM, manager, pkgName string) e
 		}
 
 		return fmt.Sprintf("package %q installed under %s", pkgName, manager), true, nil
+	})
+}
+
+// WaitForSerialMarkers polls the instance's serial port 1 output until all markers appear.
+func (test *Test) WaitForSerialMarkers(vm *gcp.VM, markers ...string) error {
+	test.t.Helper()
+
+	test.t.Logf("Waiting for serial markers %v on %q", markers, vm.Name)
+
+	return gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("serial markers %v on %s", markers, vm.Name), func(ctx context.Context) (string, bool, error) {
+		serial, err := test.Suite.Compute.SerialOutput(ctx, vm.Project, vm.Zone, vm.Name)
+		if err != nil {
+			if gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("transient error reading serial output (%v)", err), false, nil
+			}
+			return "", false, err
+		}
+		var missing []string
+		for _, m := range markers {
+			if !strings.Contains(serial, m) {
+				missing = append(missing, m)
+			}
+		}
+		if len(missing) > 0 {
+			return fmt.Sprintf("waiting for serial markers %v", missing), false, nil
+		}
+		return fmt.Sprintf("found serial markers %v", markers), true, nil
 	})
 }
 
