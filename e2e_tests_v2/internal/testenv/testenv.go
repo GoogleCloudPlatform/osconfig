@@ -871,6 +871,41 @@ func (test *Test) WaitForPatchJob(jobName string) (*osconfig.PatchJob, error) {
 	return result, nil
 }
 
+// WaitForPatchJobRebooting polls the OS Config API until at least one instance in the
+// specified PatchJob enters the REBOOTING state.
+func (test *Test) WaitForPatchJobRebooting(jobName string) error {
+	test.t.Helper()
+
+	test.t.Logf("Waiting for PatchJob %q to enter REBOOTING state", jobName)
+
+	pollInterval := min(test.Suite.Config.PollInterval, 2*time.Second)
+	return gcp.PollUntil(test.Context, pollInterval, fmt.Sprintf("patch job %s REBOOTING state", jobName), func(ctx context.Context) (string, bool, error) {
+		job, err := test.Suite.Compute.GetPatchJob(ctx, jobName)
+		if err != nil {
+			if gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("transient error fetching patch job (%v)", err), false, nil
+			}
+			return "", false, err
+		}
+
+		if isPatchJobFailureState(job.State) {
+			details := test.extractPatchJobFailureDetails(ctx, jobName)
+			return "", false, fmt.Errorf("patch job %s failed with state %s before entering REBOOTING (error: %q, instance details: [%s])",
+				jobName, job.State, job.ErrorMessage, strings.Join(details, "; "))
+		}
+
+		if job.InstanceDetailsSummary != nil && job.InstanceDetailsSummary.RebootingInstanceCount > 0 {
+			return fmt.Sprintf("state=%s rebooting=%d", job.State, job.InstanceDetailsSummary.RebootingInstanceCount), true, nil
+		}
+
+		if job.State == PatchJobStateSucceeded {
+			return "", false, fmt.Errorf("patch job %s succeeded without transitioning through REBOOTING state (summary: %+v)", jobName, job.InstanceDetailsSummary)
+		}
+
+		return fmt.Sprintf("state=%s percentComplete=%.1f%% summary=%+v", job.State, job.PercentComplete, job.InstanceDetailsSummary), false, nil
+	})
+}
+
 func (test *Test) extractPatchJobFailureDetails(ctx context.Context, jobName string) []string {
 	details, err := test.Suite.Compute.ListPatchJobInstanceDetails(ctx, jobName)
 	if err != nil {
@@ -929,6 +964,44 @@ func (test *Test) WaitForPackageInManager(vm *gcp.VM, manager, pkgName string) e
 
 		return fmt.Sprintf("package %q installed under %s", pkgName, manager), true, nil
 	})
+}
+
+// SerialOutputCount returns the number of occurrences of substr in the instance's serial port 1 output.
+func (test *Test) SerialOutputCount(vm *gcp.VM, substr string) (int, error) {
+	test.t.Helper()
+	serial, err := test.Suite.Compute.SerialOutput(test.Context, vm.Project, vm.Zone, vm.Name)
+	if err != nil {
+		return 0, err
+	}
+	return strings.Count(serial, substr), nil
+}
+
+// WaitForSerialOutputCount polls the instance's serial port 1 output until substr appears at least minCount times.
+func (test *Test) WaitForSerialOutputCount(vm *gcp.VM, substr string, minCount int) (int, error) {
+	test.t.Helper()
+
+	test.t.Logf("Waiting for serial output %q (count >= %d) on %q", substr, minCount, vm.Name)
+
+	var result int
+	err := gcp.PollUntil(test.Context, test.Suite.Config.PollInterval, fmt.Sprintf("serial output %q (count >= %d) on %s", substr, minCount, vm.Name), func(ctx context.Context) (string, bool, error) {
+		serial, err := test.Suite.Compute.SerialOutput(ctx, vm.Project, vm.Zone, vm.Name)
+		if err != nil {
+			if gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("transient error reading serial output (%v)", err), false, nil
+			}
+			return "", false, err
+		}
+		count := strings.Count(serial, substr)
+		if count < minCount {
+			return fmt.Sprintf("count(%q)=%d (want >= %d)", substr, count, minCount), false, nil
+		}
+		result = count
+		return fmt.Sprintf("count(%q)=%d", substr, count), true, nil
+	})
+	if err != nil {
+		return 0, err
+	}
+	return result, nil
 }
 
 func resourceName(runID, testName, attempt string) string {
