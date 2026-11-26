@@ -115,8 +115,20 @@ func humanReadableError(err error, s *status.Status) error {
 	return errorFromStatus(s)
 }
 
+type statusError struct {
+	s *status.Status
+}
+
+func (e *statusError) Error() string {
+	return fmt.Sprintf("code: %q, message: %q, details: %q", e.s.Code(), e.s.Message(), e.s.Details())
+}
+
+func (e *statusError) GRPCStatus() *status.Status {
+	return e.s
+}
+
 func errorFromStatus(s *status.Status) error {
-	return fmt.Errorf("code: %q, message: %q, details: %q", s.Code(), s.Message(), s.Details())
+	return &statusError{s: s}
 }
 
 func isRetriable(s *status.Status) bool {
