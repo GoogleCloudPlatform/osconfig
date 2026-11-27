@@ -28,6 +28,29 @@ import (
 	"google.golang.org/api/osconfig/v1"
 )
 
+const (
+	msiTestBucket     = "osconfig-agent-end2end-test-resources"
+	msiTestObject     = "OSPolicies/googlechromestandaloneenterprise64.msi"
+	msiTestGeneration = 1720172515592258
+	msiTestRemoteURI  = "https://storage.googleapis.com/osconfig-agent-end2end-test-resources/OSPolicies/googlechromestandaloneenterprise64.msi"
+	msiTestSHA256     = "1c039398595da512b3b37c202ac8b4d0e04fe3f5e64b1acf81559a42154331f2"
+	msiTestLocalPath  = `C:\temp\test.msi`
+)
+
+const downloadLocalMsiScript = `$svc = Get-Service google_osconfig_agent -ErrorAction SilentlyContinue
+if ($svc -and $svc.Status -eq 'Running') {
+    Stop-Service google_osconfig_agent -Force -ErrorAction SilentlyContinue
+}
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+New-Item -ItemType Directory -Force -Path 'C:\temp' | Out-Null
+$tmpPath = '` + msiTestLocalPath + `.tmp'
+(New-Object System.Net.WebClient).DownloadFile('` + msiTestRemoteURI + `', $tmpPath)
+Move-Item -Force $tmpPath '` + msiTestLocalPath + `'`
+
+const preinstallLocalMsiScript = downloadLocalMsiScript + `
+$proc = Start-Process msiexec.exe -ArgumentList '/i', '` + msiTestLocalPath + `', '/qn', '/norestart' -Wait -NoNewWindow -PassThru
+Write-Output "Pre-install msiexec exit code: $($proc.ExitCode)"`
+
 type ospoliciesPackageMsiTestCase struct {
 	name        string
 	image       string
@@ -35,7 +58,14 @@ type ospoliciesPackageMsiTestCase struct {
 	timeout     time.Duration
 }
 
-// osPolicyPackageMsiTestCases returns the list of test cases for Msi package policy tests.
+type ospoliciesPackageMsiScenario struct {
+	name           string
+	mode           string
+	preAgentScript string
+	msi            *osconfig.OSPolicyResourcePackageResourceMSI
+}
+
+// osPolicyPackageMsiTestCases returns the list of Windows images for MSI package policy tests.
 func osPolicyPackageMsiTestCases() []ospoliciesPackageMsiTestCase {
 	return []ospoliciesPackageMsiTestCase{
 		// Windows Server
@@ -60,9 +90,63 @@ func osPolicyPackageMsiTestCases() []ospoliciesPackageMsiTestCase {
 	}
 }
 
-// buildMsiPackageOSPolicyAssignment constructs the OSPolicyAssignment for testing MSI packages.
-// It installs Chrome Enterprise MSI from GCS on the target VM.
-func buildMsiPackageOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignment {
+// osPolicyPackageMsiScenarios returns the MSI source, properties, and compliance scenarios to test.
+func osPolicyPackageMsiScenarios() []ospoliciesPackageMsiScenario {
+	return []ospoliciesPackageMsiScenario{
+		{
+			name: "gcs",
+			mode: "ENFORCEMENT",
+			msi: &osconfig.OSPolicyResourcePackageResourceMSI{
+				Source: &osconfig.OSPolicyResourceFile{
+					Gcs: &osconfig.OSPolicyResourceFileGcs{
+						Bucket:     msiTestBucket,
+						Object:     msiTestObject,
+						Generation: msiTestGeneration,
+					},
+				},
+			},
+		},
+		{
+			name: "remote_uri_with_properties",
+			mode: "ENFORCEMENT",
+			msi: &osconfig.OSPolicyResourcePackageResourceMSI{
+				Source: &osconfig.OSPolicyResourceFile{
+					Remote: &osconfig.OSPolicyResourceFileRemote{
+						Uri:            msiTestRemoteURI,
+						Sha256Checksum: msiTestSHA256,
+					},
+				},
+				Properties: []string{
+					`INSTALLFOLDER=C:\CustomMsiPath`,
+					"ALLUSERS=1",
+				},
+			},
+		},
+		{
+			name:           "local_path",
+			mode:           "ENFORCEMENT",
+			preAgentScript: downloadLocalMsiScript,
+			msi: &osconfig.OSPolicyResourcePackageResourceMSI{
+				Source: &osconfig.OSPolicyResourceFile{
+					LocalPath: msiTestLocalPath,
+				},
+			},
+		},
+		{
+			name:           "already_installed_validation",
+			mode:           "VALIDATION",
+			preAgentScript: preinstallLocalMsiScript,
+			msi: &osconfig.OSPolicyResourcePackageResourceMSI{
+				Source: &osconfig.OSPolicyResourceFile{
+					LocalPath: msiTestLocalPath,
+				},
+			},
+		},
+	}
+}
+
+// buildMsiPackageOSPolicyAssignment constructs an OSPolicyAssignment for the given MSI scenario.
+func buildMsiPackageOSPolicyAssignment(vmName, mode string, msi *osconfig.OSPolicyResourcePackageResourceMSI) *osconfig.OSPolicyAssignment {
 	return &osconfig.OSPolicyAssignment{
 		InstanceFilter: &osconfig.OSPolicyAssignmentInstanceFilter{
 			InclusionLabels: []*osconfig.OSPolicyAssignmentLabelSet{
@@ -78,7 +162,7 @@ func buildMsiPackageOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignme
 		OsPolicies: []*osconfig.OSPolicy{
 			{
 				Id:   "packageresourcemsi",
-				Mode: "ENFORCEMENT",
+				Mode: mode,
 				ResourceGroups: []*osconfig.OSPolicyResourceGroup{
 					{
 						Resources: []*osconfig.OSPolicyResource{
@@ -86,15 +170,7 @@ func buildMsiPackageOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignme
 								Id: "install-package",
 								Pkg: &osconfig.OSPolicyResourcePackageResource{
 									DesiredState: "INSTALLED",
-									Msi: &osconfig.OSPolicyResourcePackageResourceMSI{
-										Source: &osconfig.OSPolicyResourceFile{
-											Gcs: &osconfig.OSPolicyResourceFileGcs{
-												Bucket:     "osconfig-agent-end2end-test-resources",
-												Object:     "OSPolicies/googlechromestandaloneenterprise64.msi",
-												Generation: 1720172515592258,
-											},
-										},
-									},
+									Msi:          msi,
 								},
 							},
 						},
@@ -105,6 +181,56 @@ func buildMsiPackageOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignme
 	}
 }
 
+// isMsiValidationReportCompliant verifies that the report shows COMPLIANT with only VALIDATION and DESIRED_STATE_CHECK steps.
+func isMsiValidationReportCompliant(rep *osconfig.OSPolicyAssignmentReport) (string, bool) {
+	if rep == nil || len(rep.OsPolicyCompliances) != 1 {
+		got := 0
+		if rep != nil {
+			got = len(rep.OsPolicyCompliances)
+		}
+		return fmt.Sprintf("waiting for 1 os policy compliance, got %d", got), false
+	}
+
+	comp := rep.OsPolicyCompliances[0]
+	if comp.ComplianceState != "COMPLIANT" {
+		return fmt.Sprintf("os policy %q in state %s, want COMPLIANT", comp.OsPolicyId, comp.ComplianceState), false
+	}
+	if len(comp.OsPolicyResourceCompliances) != 1 {
+		return fmt.Sprintf("waiting for 1 resource compliance, got %d", len(comp.OsPolicyResourceCompliances)), false
+	}
+
+	res := comp.OsPolicyResourceCompliances[0]
+	if res.ComplianceState != "COMPLIANT" {
+		return fmt.Sprintf("resource %q in state %s, want COMPLIANT", res.OsPolicyResourceId, res.ComplianceState), false
+	}
+	if len(res.ConfigSteps) != 2 {
+		return fmt.Sprintf("expected 2 config steps (VALIDATION, DESIRED_STATE_CHECK), got %d", len(res.ConfigSteps)), false
+	}
+	if res.ConfigSteps[0].Type != "VALIDATION" || res.ConfigSteps[1].Type != "DESIRED_STATE_CHECK" {
+		return fmt.Sprintf("unexpected config steps: [%s, %s]", res.ConfigSteps[0].Type, res.ConfigSteps[1].Type), false
+	}
+
+	return "validation mode COMPLIANT report verified without enforcement", true
+}
+
+// waitForMsiValidationCompliant polls the OS policy assignment report until VALIDATION mode reports COMPLIANT without enforcement.
+func waitForMsiValidationCompliant(ctx context.Context, test *testenv.Test, vm *gcp.VM) error {
+	assignmentID := vm.Name
+	return gcp.PollUntil(ctx, test.Suite.Config.PollInterval, fmt.Sprintf("msi validation report for %s on %s", assignmentID, vm.Name), func(ctx context.Context) (string, bool, error) {
+		rep, err := test.Suite.Compute.GetOSPolicyAssignmentReport(ctx, vm.Project, vm.Zone, vm.Name, assignmentID)
+		if err != nil {
+			if gcp.IsNotFound(err) || gcp.IsTransientComputeError(err) {
+				return fmt.Sprintf("report not yet available (%v)", err), false, nil
+			}
+			return "", false, fmt.Errorf("failed to read os policy assignment report: %w", err)
+		}
+
+		msg, ok := isMsiValidationReportCompliant(rep)
+		return msg, ok, nil
+	})
+}
+
+// waitForWindowsApplication polls OS Config Inventory until an application matching appName is reported.
 func waitForWindowsApplication(ctx context.Context, test *testenv.Test, vm *gcp.VM, appName string) error {
 	return gcp.PollUntil(ctx, test.Suite.Config.PollInterval, fmt.Sprintf("windows application %s on %s", appName, vm.Name), func(ctx context.Context) (string, bool, error) {
 		inv, err := test.Suite.Compute.GetInventory(ctx, vm.Project, vm.Zone, vm.Name, "FULL")
@@ -125,44 +251,57 @@ func waitForWindowsApplication(ctx context.Context, test *testenv.Test, vm *gcp.
 	})
 }
 
-// TestOSPolicyPackageResourceMsi verifies that the OS Config agent installs an MSI package
-// (Chrome Enterprise MSI from GCS) on Windows VM instances.
+// TestOSPolicyPackageResourceMsi verifies that the OS Config agent installs and validates MSI packages
+// from GCS, remote HTTPS URI with SHA256 checksum and custom properties, local file path, and pre-installed state.
 func TestOSPolicyPackageResourceMsi(t *testing.T) {
 	const wantCompliances = 1
+	scenarios := osPolicyPackageMsiScenarios()
 	tests := osPolicyPackageMsiTestCases()
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+	for _, sc := range scenarios {
+		for _, tt := range tests {
+			t.Run(fmt.Sprintf("%s/%s", sc.name, tt.name), func(t *testing.T) {
+				t.Parallel()
 
-			test := testenv.New(t, tt.timeout)
+				test := testenv.New(t, tt.timeout)
 
-			var vm *gcp.VM
-			test.Step("create VM", func(ctx context.Context) error {
-				customMetadata := map[string]string{
-					"osconfig-disabled-features": "guestpolicies",
-				}
-				var err error
-				vm, err = test.CreateVM(tt.image, tt.machineType, customMetadata)
-				return err
+				var vm *gcp.VM
+				test.Step("create VM", func(ctx context.Context) error {
+					customMetadata := map[string]string{
+						"osconfig-disabled-features": "guestpolicies",
+					}
+					if sc.preAgentScript != "" {
+						scriptKey, scriptContent := gcp.StartupScript(tt.image, sc.preAgentScript, "")
+						customMetadata[scriptKey] = scriptContent
+					}
+					var err error
+					vm, err = test.CreateVM(tt.image, tt.machineType, customMetadata)
+					return err
+				})
+
+				test.Step("wait for agent inventory", func(ctx context.Context) error {
+					if sc.mode == "VALIDATION" {
+						return waitForWindowsApplication(ctx, test, vm, "Google Chrome")
+					}
+					_, err := test.WaitForInventory(vm)
+					return err
+				})
+
+				test.Step("create os policy assignment", func(ctx context.Context) error {
+					return test.CreateOSPolicyAssignment(vm, buildMsiPackageOSPolicyAssignment(vm.Name, sc.mode, sc.msi))
+				})
+
+				test.Step("wait for os policy compliance report", func(ctx context.Context) error {
+					if sc.mode == "VALIDATION" {
+						return waitForMsiValidationCompliant(ctx, test, vm)
+					}
+					return test.WaitForOSPolicyCompliance(vm, wantCompliances)
+				})
+
+				test.Step("verify package installed via inventory", func(ctx context.Context) error {
+					return waitForWindowsApplication(ctx, test, vm, "Google Chrome")
+				})
 			})
-
-			test.Step("wait for agent inventory", func(ctx context.Context) error {
-				_, err := test.WaitForInventory(vm)
-				return err
-			})
-
-			test.Step("create os policy assignment", func(ctx context.Context) error {
-				return test.CreateOSPolicyAssignment(vm, buildMsiPackageOSPolicyAssignment(vm.Name))
-			})
-
-			test.Step("wait for os policy compliance report", func(ctx context.Context) error {
-				return test.WaitForOSPolicyCompliance(vm, wantCompliances)
-			})
-
-			test.Step("verify package installed via inventory", func(ctx context.Context) error {
-				return waitForWindowsApplication(ctx, test, vm, "Google Chrome")
-			})
-		})
+		}
 	}
 }
