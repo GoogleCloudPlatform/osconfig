@@ -72,6 +72,8 @@ func generateExecutePatchJobRequest(desc string, vm *gcp.VM, patchConfig *osconf
 // OS images using the default PatchConfig.
 // This migrates the "[Execute PatchJob]" tests from e2e_tests/test_suites/patch/patch.go.
 func TestOSPatchJobExecution(t *testing.T) {
+	t.Parallel()
+
 	windowsMeta := map[string]string{
 		"sysprep-specialize-script-ps1": windowsSetWsus,
 	}

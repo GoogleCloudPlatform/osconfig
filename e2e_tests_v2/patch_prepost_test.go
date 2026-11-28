@@ -197,6 +197,8 @@ var prePostTestCases = []patchJobTestCase{
 // for both Linux and Windows instances using local and GCS-hosted scripts.
 // This migrates "[PatchJob runs pre-step and post-step]" from e2e_tests/test_suites/patch/patch.go.
 func TestOSPatchPrePostSteps(t *testing.T) {
+	t.Parallel()
+
 	for _, tc := range prePostTestCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()

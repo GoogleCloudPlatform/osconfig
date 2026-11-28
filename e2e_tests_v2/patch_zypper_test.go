@@ -86,6 +86,8 @@ func runZypperPatchTest(t *testing.T, tc patchJobTestCase, stepName, reqDesc str
 // WithUpdate, categories, and severities succeeds.
 // This migrates "[Zypper excludes, WithOptional, WithUpdate, Categories and Severities]" from e2e_tests/test_suites/patch/patch.go.
 func TestOSPatchZypperExcludes(t *testing.T) {
+	t.Parallel()
+
 	for _, tc := range zypperTestCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -109,6 +111,8 @@ func TestOSPatchZypperExcludes(t *testing.T) {
 // without error.
 // This migrates "[Zypper exclusivePatches]" from e2e_tests/test_suites/patch/patch.go.
 func TestOSPatchZypperExclusivePatches(t *testing.T) {
+	t.Parallel()
+
 	for _, tc := range zypperTestCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()

@@ -45,7 +45,7 @@ func osPolicyPackageRpmTestCases() []ospoliciesPackageRpmTestCase {
 		{
 			name:        "rhel-8",
 			image:       "projects/rhel-cloud/global/images/family/rhel-8",
-			machineType: "e2-medium",
+			machineType: "e2-standard-2",
 			timeout:     15 * time.Minute,
 		},
 		{
@@ -154,6 +154,8 @@ func buildRpmPackageOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssignme
 // TestOSPolicyPackageResourceRpm verifies that the OS Config agent installs local and remote rpm packages:
 // an rpm package from GCS with PullDeps: false and an rpm package from Remote URI with PullDeps: true.
 func TestOSPolicyPackageResourceRpm(t *testing.T) {
+	t.Parallel()
+
 	const wantCompliances = 1
 	tests := osPolicyPackageRpmTestCases()
 

@@ -40,7 +40,7 @@ func osPolicyRepositoryYumTestCases() []ospoliciesRepoYumTestCase {
 		{
 			name:        "rhel-8",
 			image:       "projects/rhel-cloud/global/images/family/rhel-8",
-			machineType: "e2-medium",
+			machineType: "e2-standard-2",
 			timeout:     15 * time.Minute,
 		},
 		{
@@ -128,6 +128,8 @@ func buildYumRepositoryOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssig
 // TestOSPolicyRepositoryResourceYum verifies that the OS Config agent configures a YUM repository
 // and installs a package ("gcsfuse") from it.
 func TestOSPolicyRepositoryResourceYum(t *testing.T) {
+	t.Parallel()
+
 	const wantCompliances = 1
 	tests := osPolicyRepositoryYumTestCases()
 

@@ -117,6 +117,8 @@ func buildGooGetPackageOSPolicyAssignment(vmName string) *osconfig.OSPolicyAssig
 // TestOSPolicyPackageResourceGooGet verifies that the OS Config agent enforces GooGet package policies:
 // installing a missing package ("google-compute-engine-ssh") and removing an installed package ("certgen").
 func TestOSPolicyPackageResourceGooGet(t *testing.T) {
+	t.Parallel()
+
 	const wantCompliances = 1
 	tests := osPolicyPackageGooGetTestCases()
 

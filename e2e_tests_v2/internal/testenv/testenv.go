@@ -503,14 +503,16 @@ func Close() error {
 
 // Test manages resources and assertions for an individual test case.
 type Test struct {
-	t         *testing.T
-	Suite     *Suite
-	Context   context.Context
-	AttemptID string
-	TestName  string
-	Project   string
-	Zone      string
-	failures  []string
+	t                 *testing.T
+	Suite             *Suite
+	Context           context.Context
+	AttemptID         string
+	TestName          string
+	Project           string
+	Zone              string
+	failures          []string
+	vms               []gcp.VM
+	policyAssignments []string
 }
 
 // New creates and initializes a Test environment for the calling test.
@@ -582,8 +584,49 @@ func New(t *testing.T, timeout time.Duration) *Test {
 		}
 		suite.Reporter.Record(suiteName, t.Name(), "e2etests_test", duration, failureMsg, t.Skipped(), "")
 	})
+	t.Cleanup(test.cleanup)
 
 	return test
+}
+
+// cleanup deletes VMs first and then initiates OSPolicyAssignment deletions so deletion rollouts
+// do not block waiting for live VMs.
+func (test *Test) cleanup() {
+	for i := len(test.vms) - 1; i >= 0; i-- {
+		vm := test.vms[i]
+		test.saveSerialLog(vm)
+
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), test.Suite.Config.CleanupTimeout)
+		if err := test.Suite.Compute.DeleteVM(cleanupCtx, vm.Project, vm.Zone, vm.Name); err != nil {
+			test.t.Errorf("cleanup instance %s/%s/%s: %v", vm.Project, vm.Zone, vm.Name, err)
+		}
+		cancel()
+	}
+
+	for i := len(test.policyAssignments) - 1; i >= 0; i-- {
+		fullName := test.policyAssignments[i]
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), test.Suite.Config.CleanupTimeout)
+		if err := test.Suite.Compute.StartDeleteOSPolicyAssignment(cleanupCtx, fullName); err != nil {
+			test.t.Errorf("cleanup os policy assignment %s: %v", fullName, err)
+		}
+		cancel()
+	}
+}
+
+// saveSerialLog fetches serial port 1 output from vm and writes it to the artifact directory.
+func (test *Test) saveSerialLog(vm gcp.VM) {
+	diagCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	serial, err := test.Suite.Compute.SerialOutput(diagCtx, vm.Project, vm.Zone, vm.Name)
+	if err != nil || serial == "" {
+		return
+	}
+	logFile := fmt.Sprintf("%s-serial.log", vm.Name)
+	if artDir := filepath.Dir(test.Suite.Config.ArtifactFile); artDir != "" && artDir != "." {
+		_ = os.MkdirAll(artDir, 0o755)
+		logFile = filepath.Join(artDir, logFile)
+	}
+	_ = os.WriteFile(logFile, []byte(serial), 0o644)
 }
 
 // Step executes a named phase of the test, recording timing and logging execution.
@@ -624,28 +667,7 @@ func (test *Test) CreateVM(image, machineType string, customMetadata map[string]
 		Zone:    test.Zone,
 		Name:    name,
 	}
-
-	// Register serial output recording and idempotent VM deletion on test cleanup
-	test.t.Cleanup(func() {
-		diagCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-		defer cancel()
-		serial, err := test.Suite.Compute.SerialOutput(diagCtx, planned.Project, planned.Zone, planned.Name)
-		artDir := filepath.Dir(test.Suite.Config.ArtifactFile)
-		if err == nil && serial != "" && artDir != "" && artDir != "." {
-			_ = os.MkdirAll(artDir, 0o755)
-			logFile := filepath.Join(artDir, fmt.Sprintf("%s-serial.log", planned.Name))
-			_ = os.WriteFile(logFile, []byte(serial), 0o644)
-		} else if err == nil && serial != "" {
-			logFile := fmt.Sprintf("%s-serial.log", planned.Name)
-			_ = os.WriteFile(logFile, []byte(serial), 0o644)
-		}
-
-		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), test.Suite.Config.CleanupTimeout)
-		defer cleanupCancel()
-		if err := test.Suite.Compute.DeleteVM(cleanupCtx, planned.Project, planned.Zone, planned.Name); err != nil {
-			test.t.Errorf("cleanup instance %s/%s/%s: %v", planned.Project, planned.Zone, planned.Name, err)
-		}
-	})
+	test.vms = append(test.vms, planned)
 
 	metadata := map[string]string{
 		"enable-osconfig":            "true",
@@ -725,13 +747,7 @@ func (test *Test) CreateOSPolicyAssignment(vm *gcp.VM, assignment *osconfig.OSPo
 
 	assignmentID := vm.Name
 	fullName := fmt.Sprintf("projects/%s/locations/%s/osPolicyAssignments/%s", test.Project, test.Zone, assignmentID)
-	test.t.Cleanup(func() {
-		cleanupCtx, cancel := context.WithTimeout(context.Background(), test.Suite.Config.CleanupTimeout)
-		defer cancel()
-		if err := test.Suite.Compute.DeleteOSPolicyAssignment(cleanupCtx, fullName); err != nil {
-			test.t.Errorf("cleanup os policy assignment %s: %v", fullName, err)
-		}
-	})
+	test.policyAssignments = append(test.policyAssignments, fullName)
 
 	test.t.Logf("Creating OSPolicyAssignment %q for VM %q", assignmentID, vm.Name)
 	return test.Suite.Compute.CreateOSPolicyAssignment(test.Context, test.Project, test.Zone, assignmentID, assignment)

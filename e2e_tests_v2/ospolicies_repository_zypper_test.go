@@ -109,6 +109,8 @@ func buildZypperRepositoryOSPolicyAssignment(vmName string) *osconfig.OSPolicyAs
 // TestOSPolicyRepositoryResourceZypper verifies that the OS Config agent configures a Zypper repository
 // and installs a package ("gcsfuse") from it.
 func TestOSPolicyRepositoryResourceZypper(t *testing.T) {
+	t.Parallel()
+
 	const wantCompliances = 1
 	tests := osPolicyRepositoryZypperTestCases()
 
