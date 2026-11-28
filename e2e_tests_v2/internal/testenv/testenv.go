@@ -613,6 +613,7 @@ func (test *Test) cleanup() {
 	}
 }
 
+// saveSerialLog fetches serial port 1 output from vm and writes it to the artifact directory.
 func (test *Test) saveSerialLog(vm gcp.VM) {
 	diagCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
@@ -620,14 +621,11 @@ func (test *Test) saveSerialLog(vm gcp.VM) {
 	if err != nil || serial == "" {
 		return
 	}
-	artDir := filepath.Dir(test.Suite.Config.ArtifactFile)
-	if artDir != "" && artDir != "." {
-		_ = os.MkdirAll(artDir, 0o755)
-		logFile := filepath.Join(artDir, fmt.Sprintf("%s-serial.log", vm.Name))
-		_ = os.WriteFile(logFile, []byte(serial), 0o644)
-		return
-	}
 	logFile := fmt.Sprintf("%s-serial.log", vm.Name)
+	if artDir := filepath.Dir(test.Suite.Config.ArtifactFile); artDir != "" && artDir != "." {
+		_ = os.MkdirAll(artDir, 0o755)
+		logFile = filepath.Join(artDir, logFile)
+	}
 	_ = os.WriteFile(logFile, []byte(serial), 0o644)
 }
 

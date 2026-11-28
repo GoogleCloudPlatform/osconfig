@@ -147,17 +147,19 @@ func (c *Client) CreateVM(ctx context.Context, req VMRequest) (*VM, error) {
 	}
 
 	var op *compute.Operation
+	retried := false
 	err := PollUntil(ctx, c.pollInterval, fmt.Sprintf("insert instance %s", req.Name), func(ctx context.Context) (string, bool, error) {
 		var insertErr error
 		op, insertErr = c.compute.Instances.Insert(req.Project, req.Zone, instance).Context(ctx).Do()
 		if insertErr == nil {
 			return "inserted", true, nil
 		}
-		if isHTTPStatus(insertErr, http.StatusConflict) {
+		if retried && isHTTPStatus(insertErr, http.StatusConflict) {
 			op = nil
 			return "instance already exists after retry", true, nil
 		}
 		if IsTransientComputeError(insertErr) {
+			retried = true
 			return fmt.Sprintf("transient insert error: %v", insertErr), false, nil
 		}
 		return "", false, insertErr
@@ -326,22 +328,12 @@ func isHTTPStatus(err error, code int) bool {
 	return errors.As(err, &apiErr) && apiErr.Code == code
 }
 
-// waitOSPolicyCreateSlot paces concurrent OSPolicyAssignment Create calls across tests.
-func (c *Client) waitOSPolicyCreateSlot(ctx context.Context) error {
-	c.osPolicyCreateMu.Lock()
-	now := time.Now()
-	slot := now
-	if c.nextOSPolicyCreate.After(slot) {
-		slot = c.nextOSPolicyCreate
-	}
-	c.nextOSPolicyCreate = slot.Add(osPolicyCreateMinInterval)
-	c.osPolicyCreateMu.Unlock()
-
-	wait := time.Until(slot)
-	if wait <= 0 {
+// sleepContext waits for duration d or until ctx is canceled.
+func sleepContext(ctx context.Context, d time.Duration) error {
+	if d <= 0 {
 		return nil
 	}
-	timer := time.NewTimer(wait)
+	timer := time.NewTimer(d)
 	defer timer.Stop()
 	select {
 	case <-ctx.Done():
@@ -349,6 +341,24 @@ func (c *Client) waitOSPolicyCreateSlot(ctx context.Context) error {
 	case <-timer.C:
 		return nil
 	}
+}
+
+// isRolloutInProgress reports whether err indicates an OSPolicyAssignment rollout is still active.
+func isRolloutInProgress(err error) bool {
+	return isHTTPStatus(err, http.StatusBadRequest) && strings.Contains(err.Error(), "rollout is currently in progress")
+}
+
+// waitOSPolicyCreateSlot paces concurrent OSPolicyAssignment Create calls across tests.
+func (c *Client) waitOSPolicyCreateSlot(ctx context.Context) error {
+	c.osPolicyCreateMu.Lock()
+	slot := time.Now()
+	if c.nextOSPolicyCreate.After(slot) {
+		slot = c.nextOSPolicyCreate
+	}
+	c.nextOSPolicyCreate = slot.Add(osPolicyCreateMinInterval)
+	c.osPolicyCreateMu.Unlock()
+
+	return sleepContext(ctx, time.Until(slot))
 }
 
 // CreateOSPolicyAssignment creates an OS Config v1 OSPolicyAssignment and waits for the rollout operation to complete.
@@ -370,12 +380,8 @@ func (c *Client) CreateOSPolicyAssignment(ctx context.Context, project, zone, as
 		if !IsTransientComputeError(createErr) {
 			return fmt.Errorf("failed to create os policy assignment %s in %s: %w", assignmentID, parent, createErr)
 		}
-		timer := time.NewTimer(backoff)
-		select {
-		case <-ctx.Done():
-			timer.Stop()
-			return fmt.Errorf("failed to create os policy assignment %s in %s: %w (last error: %v)", assignmentID, parent, ctx.Err(), createErr)
-		case <-timer.C:
+		if err := sleepContext(ctx, backoff); err != nil {
+			return fmt.Errorf("failed to create os policy assignment %s in %s: %w (last error: %v)", assignmentID, parent, err, createErr)
 		}
 		backoff = min(backoff*2, maxBackoff)
 	}
@@ -409,19 +415,18 @@ func (c *Client) DeleteOSPolicyAssignment(ctx context.Context, name string) erro
 // StartDeleteOSPolicyAssignment idempotently initiates deletion of an OS Config v1 OSPolicyAssignment
 // without waiting for the rollout LRO to finish. It retries briefly if a previous rollout is still canceling.
 func (c *Client) StartDeleteOSPolicyAssignment(ctx context.Context, name string) error {
-	const maxAttempts = 4
+	const (
+		maxAttempts = 4
+		retryDelay  = 5 * time.Second
+	)
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
 		_, err := c.osconfig.Projects.Locations.OsPolicyAssignments.Delete(name).Context(ctx).Do()
 		if err == nil || IsNotFound(err) {
 			return nil
 		}
-		if attempt < maxAttempts && (IsTransientComputeError(err) || (isHTTPStatus(err, http.StatusBadRequest) && strings.Contains(err.Error(), "rollout is currently in progress"))) {
-			timer := time.NewTimer(5 * time.Second)
-			select {
-			case <-ctx.Done():
-				timer.Stop()
-				return fmt.Errorf("failed to delete os policy assignment %s: %w", name, ctx.Err())
-			case <-timer.C:
+		if attempt < maxAttempts && (IsTransientComputeError(err) || isRolloutInProgress(err)) {
+			if sleepErr := sleepContext(ctx, retryDelay); sleepErr != nil {
+				return fmt.Errorf("failed to delete os policy assignment %s: %w", name, sleepErr)
 			}
 			continue
 		}
